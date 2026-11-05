@@ -167,5 +167,5 @@ def freie_bahn(df, pivot=None, mit_base=False, historie=None):
     im_knoten = next((z_ for z_ in z["knoten"] if z_[0] <= k <= z_[1]), None)   # Kurs in der Balance
     long["fest"] = _fest(long["bezug"], hochs, z["knoten"], im_knoten, True)
     short["fest"] = _fest(k, tiefs + alt, z["knoten"], im_knoten, False)
-    return {"long": long, "short": short, "im_knoten": im_knoten,
+    return {"long": long, "short": short, "im_knoten": im_knoten, "alte_pivots": alt,
             "profil": dict(p or {}, anker=i_anker, anker_art=art_anker, **z) if p else None}

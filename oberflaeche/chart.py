@@ -315,6 +315,37 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             spaete.append(f'<text x="{x0_g + 6:.1f}" y="{platz(x0_g + 6, (y_a + y_b) / 2 + 4, txt_g, 11, "start"):.1f}" '
                           f'fill="{TEXT_2}" font-size="11">{txt_g}</text>')
 
+        # Feine Marken (05.11.2026): Wendepunkte ohne Volumen („dünn“) zwischen Kurs und Festung – alte Käufer verkaufen
+        # dort bei Einstand, der Lauf kann kurz stocken (O'Neil, Minervini) – und alte Pivots unter dem Kurs als
+        # Unterstützung, solange seit dem Ausbruch kein Schluss darunter lag (O'Neil). Nur Striche, keine Bänder.
+        def _strich(i_, preis_, wort_):
+            if not (pmin <= preis_ <= pmax):
+                return
+            try:
+                xs_ = X(pos(df.index[i_])) if 0 <= i_ < len(df) and df.index[i_] >= d.index[0] else LINKS
+            except Exception:  # noqa: BLE001
+                xs_ = LINKS
+            A(f'<line x1="{xs_:.1f}" x2="{B - RECHTS}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{TEXT_2}" '
+              f'stroke-width="0.8" stroke-dasharray="2 4" opacity="0.7"><title>{wort_} {zahl(preis_)} $</title></line>')
+            t_ = f"{wort_} {zahl(preis_)} $"
+            xt_ = min(xs_ + 4, B - RECHTS - len(t_) * 6)      # Etikett am Anfang der Linie (am Hoch/Tief selbst)
+            spaete.append(f'<text x="{xt_:.1f}" y="{platz(xt_, Y(preis_) - 3 if preis_ > kurs_g else Y(preis_) + 11, t_, 10, "start", preis_ > kurs_g):.1f}" '
+                          f'fill="{TEXT_2}" font-size="10">{t_}</text>')
+        alte_ = {round(x_, 2) for _, x_ in bahn.get("alte_pivots") or ()}
+        lo_, hi_ = sorted((kurs_g, ende_g))
+        for i_, x_ in (bahn.get(seite_g) or {}).get("wend") or ():
+            if lo_ * 1.01 < x_ < hi_ * 0.99 and round(x_, 2) not in alte_:
+                try:
+                    import gelaende as _gl
+                    st_ = _gl.stellung(g_, x_)
+                except Exception:  # noqa: BLE001
+                    st_ = "Niemandsland"
+                if st_ in ("Niemandsland", "Wartesaal"):        # in Festung oder Knoten ist es keine dünne Marke
+                    _strich(i_, x_, "dünn")
+        for i_, x_ in sorted(bahn.get("alte_pivots") or (), key=lambda t: -t[1])[:2]:
+            if x_ > kurs_g * 0.8:
+                _strich(i_, x_, "alter Pivot")
+
     # Volumenprofil in eigener Spalte rechts neben dem Kursbild (verankert am 52-Wochen-Hoch bzw. am Tief)
     pr_ = bahn.get("profil")
     if pr_:
