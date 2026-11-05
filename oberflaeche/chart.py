@@ -156,7 +156,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
     pmax, pmin = max(oben) * 1.03, min(unten) * 0.95
 
     def Y(y):
-        return 20 + 400 * (1 - (np.log(y) - np.log(pmin)) / (np.log(pmax) - np.log(pmin)))
+        return 44 + 376 * (1 - (np.log(y) - np.log(pmin)) / (np.log(pmax) - np.log(pmin)))   # oben 44: Kopfleiste fürs Setup
 
     belegt = []                                  # schon gesetzte Beschriftungen (x0, x1, y), damit sich keine überlappen
 
@@ -204,7 +204,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             x0, x1 = X(j0) - halb, X(j1) + halb
             gz_ = gzonen[k_] if k_ < len(gzonen) else {}
             art_z = gz_.get("art")
-            farbe_z = TUERKIS if art_z == "Festung" else GRAU if art_z == "Wartesaal" else BLAU
+            farbe_z = TUERKIS if art_z == "Festung" else TEXT_3 if art_z == "Wartesaal" else BLAU
             letzte_z = k_ == len(zonen_) - 1
             steck_ = (f' · {art_z}, {gz_.get("zeichen") or gz_.get("lesart")} · Volumen {zahl(gz_["volumen"], 2)} × '
                       f'Jahresmedian · Tage Verkauf/Kauf {gz_["ab"]}/{gz_["auf"]}'
@@ -221,9 +221,10 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
               f'{steck_}'
               f'{_ausgang_text(ausgaenge.get(df.index[min(int(df.index.searchsorted(z_["beginn"])), len(df) - 1)].normalize()), df)}'
               f'</title></rect>')
-            if art_z in ("Festung", "Wartesaal") and x1 - x0 >= 80:   # Art und Volumen an der Zone (schmale: Maus)
-                t_z = f'{art_z} {zahl(gz_["volumen"], 1)}×'
-                spaete.append(f'<text x="{x0 + 4:.1f}" y="{Y(z_["hoch"]) - 4:.1f}" fill="{farbe_z}" font-size="11" '
+            if art_z and gz_.get("volumen") is not None and x1 - x0 >= 55:   # Art und Volumen in jeder breiten Zone
+                t_z = f'{art_z if art_z != "normal" else "Zone"} {zahl(gz_["volumen"], 2)}×'
+                spaete.append(f'<text x="{x0 + 4:.1f}" y="{platz(x0 + 4, Y(z_["hoch"]) + 13, t_z, 11, "start", False):.1f}" '
+                              f'fill="{farbe_z}" font-size="11" '
                               f'font-weight="600" stroke="#0E1217" stroke-width="3" paint-order="stroke">{t_z}</text>')
             if vor_ is not None and treppe:
                 treppe.append((x0, Y(vor_["poc"])))
@@ -266,7 +267,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         oben_y = min(Y(hoch_b), Y(pivot * 1.05) if pivot else Y(hoch_b)) - 12
         titel_ = f'{basename(muster)}{nr} · {fuss}'
         fh_ = form_hinweis(muster)
-        spaete.append(f'<text x="{X(N - 1) + 4:.1f}" y="{platz(X(N - 1) + 4, oben_y, titel_, 14, "end"):.1f}" fill="{BLAU}" '
+        spaete.append(f'<text x="{B - RECHTS:.1f}" y="{platz(B - RECHTS, 26, titel_, 14, "end", False):.1f}" fill="{BLAU}" '
                       f'font-size="14" font-weight="600" text-anchor="end">' + (f'<title>{fh_}</title>' if fh_ else "")
                       + f'{titel_}</text>')
 
@@ -282,7 +283,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         spaete.append(f'<text x="{X(ip_) - 8:.1f}" y="{platz(X(ip_) - 8, Y(sp_) - 6, f"Auslöser short {zahl(sp_)}", 13, "end"):.1f}" '
                       f'fill="{TEXT}" font-size="13" text-anchor="end">Auslöser short {zahl(sp_)}</text>')
         titel_s = f'Short · {kurz_["art"] if kurz_["art"] != "Base" else "Zone"} {werte.get("wochen")} {"Woche" if werte.get("wochen") == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
-        A(f'<text x="{X(N - 1) + 4:.1f}" y="{platz(X(N - 1) + 4, Y(werte["zone_oberkante"]) - 12, titel_s, 14, "end"):.1f}" '
+        A(f'<text x="{B - RECHTS:.1f}" y="{platz(B - RECHTS, 26, titel_s, 14, "end", False):.1f}" '
           f'fill="{ROT}" font-size="14" font-weight="600" text-anchor="end">{titel_s}</text>')
 
     # Angebot absorbiert: Linie durch die Tiefs der letzten drei Abschnitte und Kasten über der Enge (nur Tageschart)
@@ -315,10 +316,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             y_a, y_b = sorted((Y(kurs_g), Y(ende_g)))
             A(f'<rect x="{x0_g:.1f}" y="{y_a:.1f}" width="{B - RECHTS - x0_g:.1f}" height="{y_b - y_a:.1f}" '
               f'fill="url(#schraffur)"/>')
-            txt_g = ("freie Bahn ↑ bis " if seite_g == "long" else "Raum ↓ bis ") + \
-                    (f"Festung {zahl(ende_g)} $" if (g_.get("widerstand") if seite_g == "long" else g_.get("halt")) else "weit")
-            spaete.append(f'<text x="{x0_g + 6:.1f}" y="{platz(x0_g + 6, (y_a + y_b) / 2 + 4, txt_g, 11, "start"):.1f}" '
-                          f'fill="{TEXT_2}" font-size="11">{txt_g}</text>')
+            # kein Text in der Fläche: das Ziel-Etikett nennt die Festung, die Legende erklärt die Schraffur
 
         # Feine Marken (05.11.2026): Wendepunkte ohne Volumen („dünn“) zwischen Kurs und Festung – alte Käufer verkaufen
         # dort bei Einstand, der Lauf kann kurz stocken (O'Neil, Minervini) – und alte Pivots unter dem Kurs als

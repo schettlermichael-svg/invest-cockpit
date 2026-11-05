@@ -352,7 +352,7 @@ Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein F
 - Einbindung: Titelseite (Kachel „Gelände“ statt „Freie Bahn“, Karte „Gelände · Zonen und Volumen“ mit den letzten
   6 Zonen, Short-Seite), Lagekarte (Zeichen vor CRV und ATR), Depot-Karte (Verteilung, Dünne Spitze, Stellung des
   Stopps).
-- Chart: Festung türkis kräftig gefüllt (Rahmen 2,4), Wartesaal grau gestrichelt und leer, übrige Zonen blau wie bisher; breite Zonen tragen das Etikett „Festung 1,4ד bzw. „Wartesaal 0,8ד (Volumen × Jahresmedian); eine schraffierte Fläche „freie Bahn ↑
+- Chart: Festung türkis kräftig gefüllt (Rahmen 2,4), Wartesaal grau gestrichelt und leer, übrige Zonen blau wie bisher; jede Zone ab 55 px Breite trägt Art und Volumen × Jahresmedian („Festung 1,44ד, „Wartesaal 0,78ד, „Zone 0,98ד); Setup-Titel in einer Kopfleiste über dem Kursbild; kein Text mehr in der Schraffur; eine schraffierte Fläche „freie Bahn ↑
   bis Festung …“ bzw. „Raum ↓ bis …“; rechts unverändert das 52-Wochen-Profil mit POC, VAH, VAL. Die alten
   Freie-Bahn-Bänder und das Knotenband sind entfallen. Die „Raute“ wird nicht gezeichnet.
 - Feine Marken im Chart (05.11.2026): dünne Wendepunkte (Hoch/Tief außerhalb von Festung und Knoten) zwischen Kurs
