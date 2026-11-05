@@ -254,10 +254,14 @@ def _k_base(erk):
         sig = (erk.get("mp") or {}).get("signale") or []
         s_ = next((x for x in reversed(sig) if x["art"] == "S"), None)
         u_ = next((x for x in reversed(sig) if x["art"] == "U"), None)
-        zeile = (f"Bruch {s_['dir']} am {s_['tag']:%d.%m.} gescheitert" if s_ else "") + \
-                (f" · Umkehr {u_['dir']} am {u_['tag']:%d.%m.}" if u_ else "")
+        if s_ and u_ and s_["tag"] == u_["tag"]:
+            zeile = f"am {u_['tag']:%d.%m.}: Bruch {s_['dir']} gescheitert, Umkehr {u_['dir']}"
+        else:
+            zeile = " · ".join(t for t in (
+                f"Bruch {s_['dir']} gescheitert am {s_['tag']:%d.%m.}" if s_ else "",
+                f"Umkehr {u_['dir']} am {u_['tag']:%d.%m.}" if u_ else "") if t)
         return kachel("Base", "grau", "keine – Umkehr", zeile,
-                      "Keine Base: Die Zone ist erst eine Woche alt. Sie entstand aus einem Bruch, der gescheitert ist; "
+                      "Keine Base: Die Zone ist jünger als drei Wochen. Sie entstand aus einem Bruch, der gescheitert ist; "
                       "der Kurs hat sie in die Gegenrichtung verlassen (Umkehr nach einer gescheiterten Auktion, Dalton). "
                       "Eine Basennummer gibt es dafür nicht.")
     hist_ = erk.get("historie") or []
