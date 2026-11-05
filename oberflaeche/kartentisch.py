@@ -264,13 +264,14 @@ def _farbe(x):
 
 def ausbruch_text(x):
     """„U↑ 02.11. · Korrektur −41 % davor“ für die Ausbruchsfelder, sonst leer."""
+    import fussabdruck
     from gestaltung import zahl
     if (x or {}).get("reihe") not in ("konsolidierung", "flagge") or not x.get("ausbruch"):
         return ""
     v = x.get("vorlauf")
     art = "Korrektur" if x.get("bdir") == "↑" else "Anstieg"
     return (x["ausbruch"] + (f" · Volumen {zahl(x['vol_faktor'], 1)}-fach" if x.get("vol_faktor") else "")
-            + (f" · Spanne {zahl(x['atr_spanne'], 1)} × ATR" if x.get("atr_spanne") else "")
+            + (" · " + fussabdruck.spanne_text(x["atr_spanne"]) if x.get("atr_spanne") else "")
             + (f" · {art} {zahl(v, 0)} % davor" if v is not None else ""))
 
 

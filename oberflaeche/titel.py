@@ -369,7 +369,7 @@ def _k_ausbruch(erk):
     if a:
         return kachel("Ausbruch", a["ampel"], f"{zahl(a['faktor'], 1)}-faches Volumen",
                       f"am {erk['df_index'][a['index']]:%d.%m.%Y}"
-                      + (f" · Spanne {zahl(a['atr'], 1)} × ATR" if a.get("atr") else "")
+                      + (" · " + fussabdruck.spanne_text(a["atr"]) if a.get("atr") else "")
                       + ("" if a["schluss_darueber"] else " · Schluss unter Pivot"),
                       hilfe)
     return kachel("Ausbruch", "grau", "noch nicht",
