@@ -307,7 +307,10 @@ def _karte_zeigen(tk, x, liste):
 
 
 if _DIALOG:
-    _karte_zeigen = _DIALOG("Lagekarte", width="large")(_karte_zeigen)
+    try:                                    # ✕ löst einen Lauf aus: danach steht die Tabelle ohne Auswahl bereit
+        _karte_zeigen = _DIALOG("Lagekarte", width="large", on_dismiss="rerun")(_karte_zeigen)
+    except TypeError:                       # ältere Streamlit-Version
+        _karte_zeigen = _DIALOG("Lagekarte", width="large")(_karte_zeigen)
 
 
 def _tabelle(teil, nr):
@@ -329,9 +332,16 @@ def _tabelle(teil, nr):
                                 height=min(420, 35 * (len(zeilen) + 1) + 3),
                                 column_config={" ": st.column_config.TextColumn(" ", width="small")})
     reihen = ereignis.selection.rows if ereignis is not None else []
+    schluessel = f"tab_{nr}_{n}"
+    if st.session_state.get("tab_offen") == schluessel:
+        # Erster Lauf nach dem Pop-up (✕ oder ein Knopf darin): Auswahl verwerfen und die Tabelle sofort frisch
+        # aufbauen – der nächste Klick, auch auf dieselbe Zeile, öffnet das Pop-up mit einem Klick.
+        st.session_state.tab_offen = None
+        st.session_state[zaehler] = n + 1
+        st.rerun()
     if reihen:
         tk = zeilen[reihen[0]]["tk"]
-        st.session_state[zaehler] = n + 1          # nächster Lauf: Tabelle ohne Auswahl, das Pop-up öffnet nicht erneut
+        st.session_state.tab_offen = schluessel
         if _DIALOG:
             _karte_zeigen(tk, teil["titel"].get(tk), teil["liste"])
         else:
