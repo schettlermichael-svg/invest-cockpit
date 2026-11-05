@@ -370,3 +370,6 @@ Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein F
   - Short: „Erholung“ (Hoch der Erholung in Festung = starker Widerstand, in Wartesaal/Niemandsland = schwach);
     „Überdehnung im Gelände“ (ab 4 × ATR über dem GD50: Niemandsland darunter = Raum für einen Bruch, Festung = fängt ab).
   - Kachel „Zone“: Art, Volumen und Lesart der Zone vor den Belegen.
+- Etikettenspalte (05.11.2026): rechts neben den Kerzen 180 px nur für Preis-Beschriftungen (Pivot, Kaufzone, Auslöser short,
+  Ziel, Stopp A/B mit CRV, dünn, alter Pivot). Die Linien enden dort, die Etiketten stehen in Preisfolge so nah wie möglich
+  an ihrer Linie, ohne sich zu überlappen. Ziel-Etikett kurz („Ziel 224,66 $ · Festung“), Einzelheiten in der Karte Gelände.

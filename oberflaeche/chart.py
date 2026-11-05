@@ -16,6 +16,7 @@ from gestaltung import BLAU, GELB, GRAU, GRUEN, LILA, ORANGE, RAND, ROT, TEXT, T
 MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
 PHASENFARBE = {1: GRAU, 2: GRUEN, 3: GELB, 4: ROT}
 B, LINKS, RECHTS = 1344, 64, 104
+ETIKETT = 180               # eigene Spalte rechts neben den Kerzen nur für Preis-Beschriftungen (nichts überlappt)
 PROFIL_X, PROFIL_B = 1344 - 96, 70
 TREPPE = "#FFA657"           # POC-Treppe der Market-Profile-Zonen (heller als der AVWAP)
 TUERKIS = "#2EC4B6"          # Spalte des Volumenprofils rechts neben dem Kursbild
@@ -119,7 +120,8 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
     d = voll.iloc[-n_zeigen:]
     N = len(d)
     o, h, l, c, v = (d[s].to_numpy(float) for s in ("Open", "High", "Low", "Close", "Volume"))
-    breite = B - LINKS - RECHTS
+    breite = B - LINKS - RECHTS - ETIKETT
+    ENDE = LINKS + breite                        # rechtes Ende der Kerzen; dahinter die Etikettenspalte
 
     def X(i):
         return LINKS + breite * (i + 0.5) / N
@@ -171,6 +173,13 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             y += -(groesse + 2) if nach_oben else groesse + 2
         belegt.append((x0, x1, y))
         return y
+
+    spalte = []                                  # Etiketten der Preislinien, am Ende von oben nach unten gesetzt
+
+    def etikett(preis, text, farbe, fett=False):
+        """Beschriftung einer Preislinie in der Etikettenspalte rechts; gesetzt wird am Schluss in Preisfolge, jedes so
+        nah wie möglich an seiner Linie, ohne Überlappung (Reihenfolge bleibt wie die Linien)."""
+        spalte.append((float(preis), text, farbe, fett))
 
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} 760" width="100%" role="img" aria-label="Kurschart" '
          f'style="display:block;font-family:IBM Plex Sans,sans-serif">'
@@ -232,7 +241,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
                               f'<title>Volumen-POC {zahl(gz_["vpoc"])} $ – {zahl(abs(gz_["verschub"]) * 100, 0)} % der Spanne '
                               f'{"unter" if gz_["verschub"] < 0 else "über"} dem Zeit-POC {zahl(z_["poc"])} $ · '
                               f'{gz_.get("lesart")}{", ◆ bestätigt" if gz_.get("bestaetigt") else ""}</title></path>')
-            if art_z and gz_.get("volumen") is not None and x1 - x0 >= 55:   # Art und Volumen in jeder breiten Zone
+            if art_z and gz_.get("volumen") is not None and x1 - x0 >= 55 and x0 + 100 <= ENDE:   # Art und Volumen in jeder breiten Zone
                 t_z = f'{art_z if art_z != "normal" else "Zone"} {zahl(gz_["volumen"], 2)}×'
                 spaete.append(f'<text x="{x0 + 4:.1f}" y="{platz(x0 + 4, Y(z_["hoch"]) + 13, t_z, 11, "start", False):.1f}" '
                               f'fill="{farbe_z}" font-size="11" '
@@ -262,16 +271,13 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             # Pivot und Kaufzone beginnen an dem Hoch, das den Pivot setzt (letzte Enge; Doppelboden: Mittelspitze;
             # Cheat: Hoch der Pause) – mit Punkt, damit man sieht, woher der Pivot kommt
             ip = pos(df.index[_pivot_tag(df, werte["start_index"], werte.get("ende_index", len(df) - 1), pivot)])
-            A(f'<rect x="{X(ip):.1f}" y="{Y(pivot * 1.05):.1f}" width="{B - RECHTS - X(ip):.1f}" '
+            A(f'<rect x="{X(ip):.1f}" y="{Y(pivot * 1.05):.1f}" width="{ENDE - X(ip):.1f}" '
               f'height="{Y(pivot) - Y(pivot * 1.05):.1f}" fill="{GRUEN}" fill-opacity="0.14"/>')
-            A(f'<line x1="{X(ip):.1f}" x2="{B - RECHTS}" y1="{Y(pivot):.1f}" y2="{Y(pivot):.1f}" '
+            A(f'<line x1="{X(ip):.1f}" x2="{ENDE + 4}" y1="{Y(pivot):.1f}" y2="{Y(pivot):.1f}" '
               f'stroke="{TEXT}" stroke-width="1.5" stroke-dasharray="6 4"/>')
             spaete.append(f'<circle cx="{X(ip):.1f}" cy="{Y(pivot):.1f}" r="4" fill="{TEXT}"/>')
-            # Beschriftung links vom Punkt, damit Linie, Zone und Zahl zusammen gelesen werden
-            spaete.append(f'<text x="{X(ip) - 8:.1f}" y="{platz(X(ip) - 8, Y(pivot) - 6, f"Pivot {zahl(pivot)}", 13, "end"):.1f}" '
-                          f'fill="{TEXT}" font-size="13" text-anchor="end">Pivot {zahl(pivot)}</text>')
-            spaete.append(f'<text x="{X(ip) - 8:.1f}" y="{platz(X(ip) - 8, Y(pivot * 1.05) + 4, "Kaufzone +5 %", 13, "end"):.1f}" '
-                          f'fill="{GRUEN}" font-size="13" text-anchor="end">Kaufzone +5 %</text>')
+            etikett(pivot, f"Pivot {zahl(pivot)} $", TEXT, True)
+            etikett(pivot * 1.05, "Kaufzone bis +5 %", GRUEN)
         wo_ = werte.get("wochen") or round(werte.get("dauer_tage", 0) / 5)
         fuss = f'{wo_} {"Woche" if wo_ == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
         nr = f' · Base Nr. {werte["basenzahl"]}' if werte.get("basenzahl") else ""
@@ -287,12 +293,11 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         # Short: Auslöser = Unterkante des Rahmens, Verkaufszone bis −5 % (gespiegelt zur Kaufzone)
         sp_ = werte["pivot"]
         ip_ = pos(df.index[werte["start_index"]]) if df.index[werte["start_index"]] >= d.index[0] else 0
-        A(f'<rect x="{X(ip_):.1f}" y="{Y(sp_):.1f}" width="{B - RECHTS - X(ip_):.1f}" '
+        A(f'<rect x="{X(ip_):.1f}" y="{Y(sp_):.1f}" width="{ENDE - X(ip_):.1f}" '
           f'height="{Y(sp_ * 0.95) - Y(sp_):.1f}" fill="{ROT}" fill-opacity="0.12"/>'
-          f'<line x1="{X(ip_):.1f}" x2="{B - RECHTS}" y1="{Y(sp_):.1f}" y2="{Y(sp_):.1f}" stroke="{TEXT}" '
+          f'<line x1="{X(ip_):.1f}" x2="{ENDE + 4}" y1="{Y(sp_):.1f}" y2="{Y(sp_):.1f}" stroke="{TEXT}" '
           f'stroke-width="1.5" stroke-dasharray="6 4"/>')
-        spaete.append(f'<text x="{X(ip_) - 8:.1f}" y="{platz(X(ip_) - 8, Y(sp_) - 6, f"Auslöser short {zahl(sp_)}", 13, "end"):.1f}" '
-                      f'fill="{TEXT}" font-size="13" text-anchor="end">Auslöser short {zahl(sp_)}</text>')
+        etikett(sp_, f"Auslöser short {zahl(sp_)} $", TEXT, True)
         titel_s = f'Short · {kurz_["art"] if kurz_["art"] != "Base" else "Zone"} {werte.get("wochen")} {"Woche" if werte.get("wochen") == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
         A(f'<text x="{B - RECHTS:.1f}" y="{platz(B - RECHTS, 26, titel_s, 14, "end", False):.1f}" '
           f'fill="{ROT}" font-size="14" font-weight="600" text-anchor="end">{titel_s}</text>')
@@ -325,7 +330,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         if abs(ende_g / kurs_g - 1) >= 0.02:
             x0_g = LINKS + breite * 0.72
             y_a, y_b = sorted((Y(kurs_g), Y(ende_g)))
-            A(f'<rect x="{x0_g:.1f}" y="{y_a:.1f}" width="{B - RECHTS - x0_g:.1f}" height="{y_b - y_a:.1f}" '
+            A(f'<rect x="{x0_g:.1f}" y="{y_a:.1f}" width="{ENDE - x0_g:.1f}" height="{y_b - y_a:.1f}" '
               f'fill="url(#schraffur)"/>')
             # kein Text in der Fläche: das Ziel-Etikett nennt die Festung, die Legende erklärt die Schraffur
 
@@ -340,13 +345,10 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
                 xs_ = X(pos(df.index[i_])) if 0 <= i_ < len(df) and df.index[i_] >= d.index[0] else LINKS
             except Exception:  # noqa: BLE001
                 xs_ = LINKS
-            A(f'<line x1="{xs_:.1f}" x2="{B - RECHTS}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
+            A(f'<line x1="{xs_:.1f}" x2="{ENDE + 4}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
               f'stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9"><title>{wort_} {zahl(preis_)} $</title></line>')
             t_ = f"{wort_} {zahl(preis_)} $"
-            xt_ = min(xs_ + 4, B - RECHTS - len(t_) * 7)      # Etikett am Anfang der Linie (am Hoch/Tief selbst)
-            spaete.append(f'<text x="{xt_:.1f}" y="{platz(xt_, Y(preis_) - 4 if preis_ > kurs_g else Y(preis_) + 13, t_, 12, "start", preis_ > kurs_g):.1f}" '
-                          f'fill="{farbe_}" font-size="12" font-weight="600" stroke="#0E1217" stroke-width="3" '
-                          f'paint-order="stroke">{t_}</text>')
+            etikett(preis_, t_, farbe_, True)
         alte_ = {round(x_, 2) for _, x_ in bahn.get("alte_pivots") or ()}
         lo_, hi_ = sorted((kurs_g, ende_g))
         for i_, x_ in (bahn.get(seite_g) or {}).get("wend") or ():
@@ -399,23 +401,21 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
           f'<text x="{PROFIL_X}" y="28" fill="{TEXT_3}" font-size="11">seit {tag_:%d.%m.%Y}</text>')
 
     if crv_:                                     # CRV-Linien im rechten Fünftel: Ziel grün, Stopp A rot gestrichelt, Stopp B rot
-        x0_c, x1_c = LINKS + breite * 0.8, B - RECHTS
+        x0_c, x1_c = LINKS + breite * 0.8, ENDE + 4
         lang_ = crv_["seite"] == "long"
         linien_ = []
         if crv_.get("ziel"):
             linien_.append((crv_["ziel"], GRUEN if lang_ else ROT, "", 2,
-                            f'Ziel {zahl(crv_["ziel"])} $ ({crv_["art"]})'))
+                            f'Ziel {zahl(crv_["ziel"])} $ · {"Festung" if "Festung" in str(crv_["art"]) else "Knoten"}'))
         linien_.append((crv_["stopp_a"], ROT if lang_ else GRUEN, "6 4", 1.5,
-                        f'Stopp A {zahl(crv_["stopp_a"])} $' + (f' · CRV {zahl(crv_["crv_a"], 1)} : 1' if crv_.get("crv_a") else "")))
+                        f'Stopp A {zahl(crv_["stopp_a"])} $' + (f' · CRV {zahl(crv_["crv_a"], 1)}' if crv_.get("crv_a") else "")))
         if crv_.get("stopp_b"):
             linien_.append((crv_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
-                            f'Stopp B {zahl(crv_["stopp_b"])} $ (1,5 × ATR)'
-                            + (f' · CRV {zahl(crv_["crv_b"], 1)} : 1' if crv_.get("crv_b") else "")))
+                            f'Stopp B {zahl(crv_["stopp_b"])} $' + (f' · CRV {zahl(crv_["crv_b"], 1)}' if crv_.get("crv_b") else "")))
         for preis_, farbe_, strich_, dicke_, text_ in linien_:
             A(f'<line x1="{x0_c:.1f}" x2="{x1_c:.1f}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
               f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
-            spaete.append(f'<text x="{x1_c - 4:.1f}" y="{platz(x1_c - 4, Y(preis_) - 5, text_, 11, "end"):.1f}" '
-                          f'fill="{farbe_}" font-size="11" text-anchor="end">{text_}</text>')
+            etikett(preis_, text_, farbe_, True)
 
     # Kerzen
     bw = breite / N * 0.6
@@ -440,6 +440,12 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         linie(linien[k], farbe, dicke)
     if av is not None:
         linie(av, ORANGE, 2)
+    y_frei = 0.0                                 # Etikettenspalte: von oben nach unten, mindestens 13 px Abstand
+    for preis_, text_, farbe_, fett_ in sorted(spalte, key=lambda e: -e[0]):
+        y_ = max(Y(preis_) + 4, y_frei + 13)
+        y_frei = y_
+        spaete.append(f'<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe_}" font-size="11"'
+                      + (' font-weight="600"' if fett_ else "") + f'>{text_}</text>')
     for t_ in spaete:
         A(t_)
 
@@ -455,7 +461,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
           f'<text x="{X(i):.1f}" y="{y + 4:.1f}" fill="{BLAU}" font-size="12" text-anchor="middle">E</text>')
         if vs and vs[0] == tag:                  # derselbe Tag trägt schon das Dreieck mit der Zahl
             continue
-        xe_ = min(X(i), B - RECHTS - 24)
+        xe_ = min(X(i), ENDE - 24)
         A(f'<text x="{xe_:.1f}" y="{platz(xe_, y - 16, "+00,0 %", 12):.1f}" fill="{farbe}" font-size="12" text-anchor="middle">'
           f'{"+" if r >= 0 else "−"}{zahl(abs(r), 1)} %</text>')
 
