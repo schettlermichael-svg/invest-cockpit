@@ -381,7 +381,8 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
 - 8 Kacheln: Markt (①), Phase mit Trendvorlage, Relative Stärke, Branche, Fundament mit Reaktion auf die Zahlen (②),
   Setup mit Zustand der Zone und Volumen beim Auslöser, Base-Nummer, Absorption (③).
 - Chart: Kerzen, Volumen, GD50/150/200, Zonen (einheitlich blau) mit POC-Treppe, Pivot/Kaufzone bzw. Auslöser short,
-  RS-Linie gegen den S&P 500, Verkaufssignal, Zahlentermine, Phasenband; Ziel (+20 %, O'Neil) und Stopps in der
+  RS-Linie gegen den S&P 500, Verkaufssignal, Zahlentermine (E unter dem Volumen mit gestrichelter Linie nach oben,
+  wie bei TradingView), Phasenband; Ziel (+20 %, O'Neil) und Stopps in der
   Etikettenspalte.
 - Karten: Strömung in der Zone, Earnings + Fundament-Ampeln, Phase und Trend (sechs Merkmale), Warnzeichen, Lage und
   Plan, Position und Risiko.

@@ -314,20 +314,21 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         A(t_)
 
     vs = verkaufssignal(df, phasen)
-    # Gewinnmeldungen
+    # Gewinnmeldungen wie bei TradingView: „E“ unter dem Volumen, feine gestrichelte Linie nach oben durch Volumen und Kurs
+    # (unter allem anderen gezeichnet), daneben die Reaktion des ersten Tages
     for tag, r in reaktionen(df, gewinne):
         if tag < d.index[0]:
             continue
         i = pos(tag)
-        y = min(Y(l[i]) + 20, 410)
         farbe = GRUEN if r >= 0 else ROT
-        A(f'<circle cx="{X(i):.1f}" cy="{y:.1f}" r="11" fill="#161C24" stroke="{BLAU}"/>'
-          f'<text x="{X(i):.1f}" y="{y + 4:.1f}" fill="{BLAU}" font-size="12" text-anchor="middle">E</text>')
+        s.insert(1, f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="44" y2="572" stroke="{BLAU}" stroke-width="1" '
+                    f'stroke-dasharray="2 4" stroke-opacity="0.45"/>')
+        A(f'<circle cx="{X(i):.1f}" cy="582" r="8" fill="#161C24" stroke="{BLAU}"/>'
+          f'<text x="{X(i):.1f}" y="586" fill="{BLAU}" font-size="11" text-anchor="middle">E</text>'
+          f'<title>Zahlen am {tag:%d.%m.%Y}: erster Tag {"+" if r >= 0 else "−"}{zahl(abs(r), 1)} %</title>')
         if vs and vs[0] == tag:                  # derselbe Tag trägt schon das Dreieck mit der Zahl
             continue
-        xe_ = min(X(i), ENDE - 24)
-        A(f'<text x="{xe_:.1f}" y="{platz(xe_, y - 16, "+00,0 %", 12):.1f}" fill="{farbe}" font-size="12" text-anchor="middle">'
-          f'{"+" if r >= 0 else "−"}{zahl(abs(r), 1)} %</text>')
+        A(f'<text x="{X(i) + 11:.1f}" y="586" fill="{farbe}" font-size="11">{"+" if r >= 0 else "−"}{zahl(abs(r), 1)} %</text>')
 
     # Verkaufssignal
     if vs and vs[0] >= d.index[0]:
@@ -382,7 +383,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
             lo, hi = alle.min(), alle.max()
             rand = (hi - lo) * 0.06 or 1
             lo, hi = lo - rand, hi + rand
-            YR = lambda y: 604 + 116 * (1 - (y - lo) / (hi - lo))          # noqa: E731
+            YR = lambda y: 618 + 102 * (1 - (y - lo) / (hi - lo))          # noqa: E731
 
             kurz_ = 10 if ebene == "Tag" else 3
 
@@ -401,13 +402,13 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
                   f'fill="{farbe}" font-size="12"><tspan font-size="15" font-weight="700">{p_}</tspan> '
                   f'{zahl(alt, 0)} → {zahl(neu, 0)}</text></g>')
 
-            A(f'<text x="{LINKS}" y="594" fill="{TEXT_3}" font-size="12">RELATIVE STÄRKE SEIT {d.index[0]:%m/%Y} · '
+            A(f'<text x="{LINKS}" y="608" fill="{TEXT_3}" font-size="12">RELATIVE STÄRKE SEIT {d.index[0]:%m/%Y} · '
               f'<tspan fill="{BLAU}">— gegen S&amp;P 500</tspan>'
               + f'  · Pfeil = letzte {kurz_} {"Tage" if ebene == "Tag" else "Wochen"}</text>')
             A(f'<line x1="{LINKS}" x2="{ENDE}" y1="{YR(100):.1f}" y2="{YR(100):.1f}" stroke="{TEXT_3}" '
               f'stroke-width="1" stroke-dasharray="2 4"/>'
               f'<text x="{LINKS - 6}" y="{YR(100) + 4:.1f}" fill="{TEXT_3}" font-size="11" text-anchor="end">100</text>'
-              f'<text x="{B - RECHTS}" y="594" fill="{TEXT_3}" font-size="11" text-anchor="end">'
+              f'<text x="{B - RECHTS}" y="608" fill="{TEXT_3}" font-size="11" text-anchor="end">'
               f'100 = so stark wie der Index</text>')
             A('<polyline points="' + " ".join(f"{X(i):.1f},{YR(x):.1f}" for i, x in enumerate(rs) if not np.isnan(x))
               + f'" fill="none" stroke="{BLAU}" stroke-width="1.8"/>')
