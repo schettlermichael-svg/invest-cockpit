@@ -67,6 +67,40 @@ def karte(inhalt, titel=None, rand=RAND):
             f'padding:20px;display:flex;flex-direction:column;gap:14px">{kopf}{inhalt}</section>')
 
 
+STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),
+             ("front", "②", "Front", "Wo ist Rückenwind?"),
+             ("auswahl", "③", "Auswahl", "Wer führt, wer steht am Auslöser?"),
+             ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"),
+             ("truppe", "⑤", "Eigene Truppe", "Wie stehen meine Positionen?"),
+             ("anhang", "", "Anhang", "Wie lese ich die Instrumente?"))
+
+
+def station(anker):
+    """Überschrift einer Station der Übersicht (Trichter: breit oben, schmal auf der Titelseite) mit Sprungmarke."""
+    _, nr, name, frage = next(x for x in STATIONEN if x[0] == anker)
+    return (f'<div id="st-{anker}" style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;'
+            f'border-bottom:1px solid {RAND};padding:8px 0 10px;margin-top:8px;scroll-margin-top:60px">'
+            f'<h2 style="margin:0;font-size:28px;font-weight:600">{(nr + " " + t(name)).strip()}</h2>'
+            f'<span style="font-size:17px;color:{TEXT_2}">{t(frage)}</span></div>')
+
+
+def sprungleiste():
+    """Leiste unter dem Kopf: je Station ein Sprung."""
+    return ('<nav aria-label="Stationen" style="display:flex;flex-wrap:wrap;gap:8px">' + "".join(
+        f'<a href="#st-{a}" target="_self" style="border:1px solid {RAND};border-radius:8px;padding:6px 12px;'
+        f'font-size:15px;color:{TEXT};text-decoration:none;background:{KARTE}">{(nr + " " + t(n)).strip()} '
+        f'<span style="color:{TEXT_3}">· {t(f)}</span></a>' for a, nr, n, f in STATIONEN) + '</nav>')
+
+
+def klapp(titel, zeile_, inhalt):
+    """Karte zum Aufklappen: zu sieht man Titel und eine Zeile, aufgeklappt den Inhalt."""
+    return (f'<details style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
+            f'<summary style="cursor:pointer;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'
+            f'<span style="font-size:20px;font-weight:600">{t(titel)} ▾</span>'
+            f'<span style="font-size:15px;color:{TEXT_2}">{t(zeile_)}</span></summary>'
+            f'<div style="margin-top:14px">{inhalt}</div></details>')
+
+
 MITSCHRIFT = None             # dict, solange die Kacheln einer Titelseite gebaut werden
 
 

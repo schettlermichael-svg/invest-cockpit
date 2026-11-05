@@ -411,3 +411,11 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   CRV offen“; CRV 2 mit dem eigenen Durchschnittsgewinn ab 5 geschlossenen Trades (Minervini). Ampel grün ab 3 : 1, gelb ab
   2 : 1. Das CRV ist ein Maß, ob sich der Einsatz lohnt – kein Ausstieg: Gewinne laufen lassen, Stopp nachziehen.
   Chart: „1. Hürde … $“ gelb gepunktet, CRV an den Stopp-Etiketten; Etikettenspalte 200 px.
+
+## Übersicht als Trichter (05.11.2026)
+Die Übersicht ist der breite Rand des Trichters, die Titelseite der schmale Hals. Inhalt unverändert, nur geordnet nach
+Stationen mit ihrer Frage und einer Sprungleiste unter dem Kopf (`gestaltung.STATIONEN`, `station()`, `sprungleiste()`):
+① Lage (Markt-Ampel, Marktbreite, neue Hochs gegen Tiefs, Moral der Truppe, Wirtschaftswetter; Stimmungskurve
+aufklappbar) · ② Front (Frontkarte, Übergänge, Lagebild nach Sektoren) · ③ Auswahl (Setups, Ausbruchsfelder,
+★ Spitze, Meine Watchlists, Weitere, Frühaufklärung, Short) · ④ Termine (Neu seit gestern, Earnings 14 Tage) ·
+⑤ Eigene Truppe (Depotleiste) · Anhang (Instrumente, aufklappbar). Lagekarte mit 7 Ampelpunkten (dazu „Angebot“).

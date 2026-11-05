@@ -1,6 +1,12 @@
-"""Übersicht „Lage am Abend“: Kopf und Lageleiste (Wirtschaftswetter, Moral der Truppe,
-Markt-Ampel, Marktbreite), Kartentisch (Reihen mit Lagekarten, aus dem Abendlauf), Frontkarte der Sektoren, Übergänge,
-Stimmungskurve und Erklärung der Instrumente."""
+"""Übersicht „Lage am Abend“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
+Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
+  ① Lage           Markt-Ampel, Marktbreite, neue Hochs gegen Tiefs, Moral der Truppe, Wirtschaftswetter; Stimmungskurve
+  ② Front          Frontkarte, Übergänge, Lagebild nach Sektoren
+  ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Meine Watchlists, Weitere, Frühaufklärung, Short (kartentisch.plan)
+  ④ Termine        Neu seit gestern, Earnings 14 Tage
+  ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
+  Anhang           Instrumente von Quad und Pendel
+app.py setzt den Kartentisch (Lagebild bis ④) zwischen „oben“ und „unten“."""
 import os
 import sys
 import time
@@ -16,7 +22,8 @@ from stimmung import kurve  # noqa: E402
 from frontkarte import frontkarte  # noqa: E402
 import uebergaenge                                           # noqa: E402
 import depotleiste                                           # noqa: E402
-from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, karte, punkt, seite, t, zahl)  # noqa: E402
+from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, karte, klapp, punkt, seite, sprungleiste,
+                        station, t, zahl)  # noqa: E402
 
 QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 
@@ -130,10 +137,10 @@ def seite_uebersicht():
         pendel_ampel = schlimmste if pendel_ampel == "grün" or schlimmste == "rot" else pendel_ampel
     if p["ampel"] == "grün" and gegen:
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
+    import kartentisch
+    b = ((kartentisch.laden() or {}).get("barometer")) or {}
+    hl = ("grau" if not b else "grün" if b["hochs"] > 2 * b["tiefs"] else "rot" if b["tiefs"] > 2 * b["hochs"] else "gelb")
     kacheln = [
-        _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
-                f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
-        _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile),
         _kachel("Markt-Ampel", mr["ampel"], mr["zustand"], "",
                 f'seit {mr["seit"]:%d.%m.%Y} · {mr["text"]} · {a["text"]} · '
                 f'{zahl(abs(a["abstand_hoch_pct"]), 1)} % unter dem 52-Wochen-Hoch'
@@ -142,6 +149,12 @@ def seite_uebersicht():
                 f'{zahl(m["breite"], 0)} %', "↗" if m["breite_4w"] > 3 else "↘" if m["breite_4w"] < -3 else "→",
                 f'der 515 großen US-Werte über ihrem GD200 · {"+" if m["breite_4w"] >= 0 else "−"}'
                 f'{zahl(abs(m["breite_4w"]), 0)} Punkte in 4 Wochen' + (f" {warnung}" if warnung else "")),
+        _kachel("Neue Hochs gegen Tiefs", hl, f'{b["hochs"]} : {b["tiefs"]}' if b else "–", "",
+                "neue 52-Wochen-Hochs : -Tiefs heute im Revier – grün = mehr als doppelt so viele Hochs, rot = mehr als "
+                "doppelt so viele Tiefs (O'Neil, Weinstein)" if b else "kommt mit dem Abendlauf"),
+        _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile),
+        _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
+                f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
     ]
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "werkzeuge"))
     import nachtlauf
@@ -175,13 +188,15 @@ def seite_uebersicht():
                         f'BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise {zahl(q["cpi_rate"], 1)} %')
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     farbe = {"grün": "#56D364", "gelb": "#E3B341", "rot": "#FF7B72"}[p["ampel"]]
-    stimmung = karte(f'<div style="font-size:14px;color:{TEXT_2}">Wo der Gesamtmarkt im Zyklus steht – '
+    stimmung = klapp("Stimmungskurve", f'Gesamtmarkt: {p["zone"]} (vor 4 Wochen: {p["vor_4_wochen"]})',
+                     f'<div style="font-size:14px;color:{TEXT_2}">Wo der Gesamtmarkt im Zyklus steht – '
                      f'eingeordnet aus Kreditrisiko, Angstindex, Marktbreite und Überdehnung. Eine Einordnung, '
                      f'keine Vorhersage: Märkte überspringen Zonen oder durchlaufen sie mehrfach.</div>'
-                     + kurve([{"zone": p["zone"], "vorher": p["vor_4_wochen"], "name": "Gesamtmarkt", "farbe": farbe}]),
-                     "Stimmungskurve")
-    erkl = (f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
-            f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
-    # Der Kartentisch steht dazwischen und wird von app.py Stück für Stück mit Knöpfen gesetzt (kartentisch.plan)
-    return {"oben": seite(kopf + leiste + frontkarte(q) + uebergaenge.tafel(q) + depotleiste.leiste(), unten=24),
-            "unten": seite(stimmung + erkl, oben=24)}
+                     + kurve([{"zone": p["zone"], "vorher": p["vor_4_wochen"], "name": "Gesamtmarkt", "farbe": farbe}]))
+    erkl = klapp("Instrumente", "was hinter Wirtschaftswetter und Moral der Truppe steht",
+                 f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
+                 f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
+    # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.
+    return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste + stimmung
+                          + station("front") + frontkarte(q) + uebergaenge.tafel(q), unten=12),
+            "unten": seite(station("truppe") + depotleiste.leiste() + station("anhang") + erkl, oben=12)}

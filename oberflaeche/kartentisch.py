@@ -339,7 +339,7 @@ def plan(tisch=None):
     _abschnitt). Watchlist-Zugehörigkeit immer aus den Listen der App (nicht aus dem Stand des Abendlaufs) – ein Titel,
     der eben auf eine Liste kam, steht sofort im Watchlist-Abschnitt und nicht mehr in seiner Reihe."""
     import watchlists
-    from gestaltung import GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, karte, t, zahl
+    from gestaltung import KARTE, RAND, TEXT_2, TEXT_3, karte, station, t, zahl
     tisch = tisch if tisch is not None else laden()
     if not tisch:
         return [{"art": "html", "html": karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird '
@@ -348,19 +348,11 @@ def plan(tisch=None):
     tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l])
                                for tk, x in tisch["titel"].items()})
     b = tisch["barometer"]
-    hl = "grün" if b["hochs"] > 2 * b["tiefs"] else "rot" if b["tiefs"] > 2 * b["hochs"] else "gelb"
-    farbe = {"grün": GRUEN, "gelb": GELB, "rot": ROT}[hl]
     barometer = (
-        f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px">'
         f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
         f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:.06em;text-transform:uppercase">Setups</div>'
         f'<div style="font-size:26px;font-weight:600">{b["long_gruen"]} long · {b["short_gruen"]} short</div>'
-        f'<div style="font-size:14px;color:{TEXT_2}">grüne Setups unter {zahl(b["titel"], 0)} Titeln</div></div>'
-        f'<div title="Neue 52-Wochen-Hochs gegen neue 52-Wochen-Tiefs (Hoch/Boden-Check): grün = mehr als doppelt so viele '
-        f'Hochs, rot = mehr als doppelt so viele Tiefs" style="background:{KARTE};border:1px solid {RAND};border-radius:12px;'
-        f'padding:16px 20px"><div style="font-size:13px;color:{TEXT_3};letter-spacing:.06em;text-transform:uppercase">'
-        f'Neue Hochs gegen Tiefs</div><div style="font-size:26px;font-weight:600;color:{farbe}">{b["hochs"]} : {b["tiefs"]}'
-        f'</div><div style="font-size:14px;color:{TEXT_2}">52-Wochen-Hochs : -Tiefs heute</div></div></div>')
+        f'<div style="font-size:14px;color:{TEXT_2}">grüne Setups unter {zahl(b["titel"], 0)} Titeln</div></div>')
     namen = {k: n for k, n, _ in REIHEN}
     neu = tisch.get("neu") or []
     chip = ('<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {f};'
@@ -378,29 +370,36 @@ def plan(tisch=None):
     earn = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=f"{t(d)} · {t(r)}")
                     for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
-    teile = [{"art": "html", "html": barometer
-              + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
-              + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
-                       + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)}]
-    # Meine Watchlists: je Liste ein Abschnitt; jeder Titel einmal (im ersten Abschnitt, in dem er steht)
-    teile.append({"art": "html", "html": _kopf("Meine Watchlists", len(watchlists.alle()),
-                                                "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
-                                                "unter jeder Karte verschieben oder herausnehmen")})
-    gezeigt = set()
-    for name, liste in w.items():
-        eigene = [tk for tk in liste if tk not in gezeigt]
-        gezeigt.update(eigene)
-        if not eigene:
-            continue
-        da = sorted(((tk, tisch["titel"][tk]) for tk in eigene if tk in tisch["titel"]),
-                    key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
-        teile.append(_abschnitt(_kopf(name, len(eigene), "", h=3), da, name,
-                                [tk for tk in eigene if tk not in tisch["titel"]]))
+    # ② Front (Ende): Lagebild nach Sektoren · ③ Auswahl · ④ Termine – siehe uebersicht.py
+    teile = [{"art": "html", "html": lagebild(tisch)},
+             {"art": "html", "html": station("auswahl") + barometer}]
+
+    def watchlist_abschnitte():
+        """Meine Watchlists: je Liste ein Abschnitt; jeder Titel einmal (im ersten Abschnitt, in dem er steht)."""
+        teile.append({"art": "html", "html": _kopf("Meine Watchlists", len(watchlists.alle()),
+                                                    "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
+                                                    "unter jeder Karte verschieben oder herausnehmen")})
+        gezeigt = set()
+        for name, liste in w.items():
+            eigene = [tk for tk in liste if tk not in gezeigt]
+            gezeigt.update(eigene)
+            if not eigene:
+                continue
+            da = sorted(((tk, tisch["titel"][tk]) for tk in eigene if tk in tisch["titel"]),
+                        key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
+            teile.append(_abschnitt(_kopf(name, len(eigene), "", h=3), da, name,
+                                    [tk for tk in eigene if tk not in tisch["titel"]]))
+
     for key, name, text in REIHEN:
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
         teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
-    teile.append({"art": "html", "html": lagebild(tisch)
+        if key == "spitze":                    # Watchlists direkt nach ★ Spitze (05.11.2026)
+            watchlist_abschnitte()
+    teile.append({"art": "html", "html": station("termine")
+                  + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
+                  + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
+                           + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)
                   + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
                     f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
     return teile
