@@ -227,14 +227,15 @@ def watchlist_knopf(tk):
                 st.toast(f"{watchlists.einfuegen(text, ziel)} Titel neu in „{ziel}“")
 
 
-def _codestand():
+def _codestand(mit_watchlists=False):
     """Jüngste Änderungszeit der Programmdateien und der von Claude gelieferten Datendateien."""
     hier = os.path.dirname(os.path.abspath(__file__))
     code = max(os.path.getmtime(os.path.join(hier, d, f)) for d in ("kern", "oberflaeche")
                for f in os.listdir(os.path.join(hier, d)) if f.endswith(".py"))
     daten = [os.path.join(hier, "daten", x) for x in ("sic13/einschaetzung.json", "tv/revier.csv",
                                                        "steckbrief_de/beschreibungen.json")]
-    daten += [watchlists.DATEI, depot.DATEI]     # Watchlist oder Depot geändert: Seiten neu bauen
+    daten += [depot.DATEI] + ([watchlists.DATEI] if mit_watchlists else [])   # Depot geändert: Seiten neu bauen;
+    # Watchlists nur für den Kartentisch (Übersicht und Titelseiten hängen nicht von ihnen ab)
     tisch = os.path.join(hier, "daten", "kartentisch")
     if os.path.isdir(tisch):                     # neuer Kartentisch aus dem Abendlauf: Übersicht neu bauen
         daten += [os.path.join(tisch, f) for f in os.listdir(tisch) if f.endswith(".json")]
@@ -356,7 +357,7 @@ def _kartentisch_zeigen():
     except TypeError:                               # ältere Streamlit-Version ohne key
         huelle = st.container()
     with huelle:
-        for nr, teil in enumerate(_tischplan(_codestand())):
+        for nr, teil in enumerate(_tischplan(_codestand(mit_watchlists=True))):
             if teil["art"] == "html":
                 html(teil["html"])
                 continue
@@ -376,8 +377,10 @@ def zeigen(name, *args):
     """Seite als HTML ausgeben. st.markdown statt st.html: st.html entfernt die Inhalte
     eingebetteter SVG-Grafiken (den Chart)."""
     try:
-        with st.spinner("Lade und rechne …"):
-            html = _gebaut(name, _codestand(), *args)
+        html = uebersicht.abgelegt() if name == "uebersicht" else None   # vom Abendlauf gebaut: sofort da
+        if html is None:
+            with st.spinner("Lade und rechne …"):
+                html = _gebaut(name, _codestand(), *args)
         if isinstance(html, dict):                   # Übersicht: oben, Kartentisch mit Knöpfen, unten
             st.markdown(html["oben"], unsafe_allow_html=True)
             _kartentisch_zeigen()

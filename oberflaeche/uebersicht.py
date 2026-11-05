@@ -70,6 +70,36 @@ def _richtungsampel(r, gut="steigt"):
     return "grau" if r == "unklar" else ("grün" if r == gut else "rot")
 
 
+ABLAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "daten", "uebersicht.pkl.gz")
+
+
+def ablegen(teile):
+    """Vom Abendlauf gebaute Übersicht (ohne Kartentisch) speichern – die App zeigt sie dann sofort."""
+    import gzip
+    import pickle
+    os.makedirs(os.path.dirname(ABLAGE), exist_ok=True)
+    with gzip.open(ABLAGE + ".neu", "wb", compresslevel=3) as f:
+        pickle.dump(teile, f)
+    os.replace(ABLAGE + ".neu", ABLAGE)
+
+
+def abgelegt():
+    """Gespeicherte Übersicht oder None (fehlt, älter als heute früh, oder Programm bzw. Depot sind jünger)."""
+    import gzip
+    import pickle
+    import depot
+    import titel
+    try:
+        zeit = os.path.getmtime(ABLAGE)
+        juenger = [titel.codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else [])
+        if zeit < max(juenger) or time.time() - zeit > 30 * 3600:
+            return None
+        with gzip.open(ABLAGE, "rb") as f:
+            return pickle.load(f)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def seite_uebersicht():
     start = time.time()
     q, p, a = lage.quadrant(), lage.pendel(), lage.marktampel()

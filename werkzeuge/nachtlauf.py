@@ -93,7 +93,7 @@ def main():
 
     def lage():
         import uebersicht
-        uebersicht.seite_uebersicht()
+        uebersicht.ablegen(uebersicht.seite_uebersicht())   # die App zeigt sie morgens sofort
         return "Übersicht gebaut"
 
     def tisch():
