@@ -61,22 +61,27 @@ def _stufe1(tk):
         bewegt = z["wort"].startswith(("an der Schwelle", "Ausbruch"))
         if erk.get("short"):
             sh = erk["short"]
-            fehlt = sum(1 for _, ok, _ in sh["regeln"] if not ok)
-            info.update(abstand=abs(sh["abstand_pct"]), gruen=sh["setup"])
+            luecken = [n for n, ok, _ in sh["regeln"] if not ok]
+            fehlt = len(luecken)
+            info.update(abstand=abs(sh["abstand_pct"]), gruen=sh["setup"], luecken=luecken)
             if sh["setup"] or fehlt == 1:
                 info.update(reihe="short", stern=bool(sh["setup"] and bewegt and z["dir"] == "↓"))
         elif erk["muster"] and "pivot" in w:
             ab = (c[-1] / w["pivot"] - 1) * 100
             info.update(abstand=abs(ab), gruen=bool(erk["kaufsetup"]))
-            fehlt = len([g for g in (erk.get("hinweise") or []) if g.startswith(("Angebot von oben", "Daten gestört"))])
+            luecken = [g for g in (erk.get("hinweise") or []) if g.startswith(("Angebot von oben", "Daten gestört"))]
             if not erk["kaufsetup"]:
                 from titel import _fehlt_zum_kaufsetup, _trendvorlage
                 tv = sum(_trendvorlage(df).values())
-                fehlt += len(_fehlt_zum_kaufsetup(erk, info["phase"], tv))
+                luecken += [g for g in _fehlt_zum_kaufsetup(erk, info["phase"], tv) if g not in luecken]
+            fehlt = len(luecken)
+            info["luecken"] = luecken
             if erk["kaufsetup"] and bewegt and z["dir"] == "↑":
                 info.update(reihe="spitze", stern=True)
             elif erk["kaufsetup"] or fehlt == 1:
                 info["reihe"] = "weitere"
+        else:
+            info["luecken"] = ["kein Muster erkannt"]
         # Radar (Frühaufklärung): Zone an der Schwelle oder ein frischer Angriff (A, F, U in den letzten 5 Tagen) –
         # egal wie viele Regeln der Meister noch gelb sind; die fehlenden stehen auf der Karte
         n_ = len(a["tage"]) - 1
@@ -147,8 +152,8 @@ def laden():
 _REIHEN_CACHE = {}
 
 
-def reihe_von(tk):
-    """Reihe eines Titels im jüngsten Kartentisch (für die Richtungsfarbe der Titelseite); einmal je Tisch gelesen."""
+def eintrag_von(tk):
+    """Eintrag eines Titels im jüngsten Kartentisch (für Rahmen und Grund auf der Titelseite); einmal je Tisch gelesen."""
     if not os.path.isdir(SPEICHER):
         return None
     dateien = sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))
@@ -159,7 +164,8 @@ def reihe_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json.load(open(pfad, encoding="utf-8"))
-        _REIHEN_CACHE[schluessel] = {k: x.get("reihe") for k, x in tisch["titel"].items()}
+        felder = ("reihe", "stern", "gruen", "angriff", "zdir", "luecken")
+        _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
@@ -199,10 +205,16 @@ SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Zeile darun
 ZIEL = 'target="_blank" rel="noopener"'   # Titelseite im neuen Tab: die Übersicht bleibt an ihrer Stelle stehen
 
 
-def _farbe(x, sonst=None):
-    """Richtungsfarbe eines Titels: long grün, short rot; ohne Reihe die neutrale Randfarbe."""
-    from gestaltung import RAND
-    return lagekarte.RICHTUNG.get(lagekarte.richtung((x or {}).get("reihe")), sonst or RAND)
+def _farbe(x):
+    """Rahmenfarbe eines Titels: long grün, short rot (blass, solange das Setup nicht grün ist), offen gelb."""
+    return lagekarte.rahmen(x)[0]
+
+
+def _grundzeile(x):
+    """Grund als kleine Zeile über der Karte (leer, wenn nichts fehlt)."""
+    from gestaltung import TEXT_2, t
+    g = lagekarte.grund(x)
+    return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
 def _deepdive(tk, klein=False, x=None):
@@ -218,7 +230,8 @@ def _link(tk, x, kopf=""):
     """Karte mit einem einzigen Weg zur Titelseite: dem Knopf „Deep Dive →“ (die Karte selbst ist kein Link mehr).
     kopf: eine Zeile über der Karte (Watchlist-Reihe: eigentliche Reihe des Titels) rechts neben dem Knopf."""
     knopf = _deepdive(tk, x=x)
-    inhalt = lagekarte.faerben(x["karte"], lagekarte.richtung(x.get("reihe")))
+    inhalt = lagekarte.faerben(x["karte"], x)
+    kopf = kopf or _grundzeile(x)
     return (f'<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:'
             f'space-between;align-items:center;gap:8px">{kopf or "<span></span>"}{knopf}</div>{inhalt}</div>')
 
@@ -230,7 +243,8 @@ def _zeile(tk, x):
     return (f'<div style="display:grid;grid-template-columns:90px 22px 1fr 1fr 80px 120px;gap:10px;align-items:center;'
             f'padding:8px 4px 8px 10px;border-top:1px solid {RAND};border-left:3px solid {_farbe(x)};font-size:14px">'
             f'<b>{t(tk)}</b>{punkt(setup[0], 12)}'
-            f'<span>{t(setup[1])}</span><span style="color:{TEXT_2}">{t(x.get("zustand", ""))}</span>'
+            f'<span>{t(setup[1])}</span><span style="color:{TEXT_2}">{t(x.get("zustand", ""))}'
+            f'{"<br>" + t(lagekarte.grund(x)) if lagekarte.grund(x) else ""}</span>'
             f'<span style="font-family:IBM Plex Mono,monospace;text-align:right;color:{TEXT_2}">'
             f'{zahl(x.get("abstand", 0), 1)} %</span>{_deepdive(tk, klein=True, x=x)}</div>')
 
@@ -321,8 +335,12 @@ def _marken(x):
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
     if x.get("reihe") == "frueh" and x.get("angriff"):
         r += f" · {x['angriff']}"
-    return (f'<span style="border:1px solid {_farbe(x)};border-radius:6px;padding:2px 8px;font-size:13px;'
-            f'color:{TEXT_2}">{t(r or "keine Reihe")}</span>')
+    f, d = lagekarte.rahmen(x)
+    g = lagekarte.grund(x)
+    return (f'<span style="display:flex;flex-direction:column;gap:2px"><span style="border:{d}px solid {f};'
+            f'border-radius:6px;padding:2px 8px;font-size:13px;color:{TEXT_2};align-self:flex-start">'
+            f'{t(r or g or "noch keine Reihe")}</span>'
+            + (f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g and r else "") + '</span>')
 
 
 def _watchreihe(tisch):
@@ -406,8 +424,7 @@ def lagebild(tisch):
 
     def marke(tk, x):
         stern = x.get("stern") or x.get("reihe") == "spitze"     # ★ long: jeder Spitzenkandidat (auch ältere Tische)
-        rand = _farbe(x)                                   # long grün, short rot – ★ zeigt das Zeichen
-        dicke = 2 if stern else 1
+        rand, dicke = lagekarte.rahmen(x)                  # long grün, short rot, blass = Setup nicht grün, gelb = offen
         text = ("★ " if stern else "") + tk
         if x.get("reihe") == "frueh" and x.get("angriff"):
             text += " " + x["angriff"].split()[0]
@@ -424,6 +441,8 @@ def lagebild(tisch):
                                                              "U": "Umkehr nach gescheitertem Ausbruch"}.get(art, ""))
         if stern:
             zeilen.append("★ Setup grün, Zone bewegt sich in Richtung des Setups")
+        if lagekarte.grund(x):
+            zeilen.append(t(lagekarte.grund(x)))
         if x.get("listen"):
             zeilen.append("◆ Watchlist: " + t(", ".join(x["listen"])))
         if g:
@@ -469,7 +488,7 @@ def lagebild(tisch):
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []))}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Zeilen: Sektoren nach Feld der Frontkarte '
              f'(Führend → Erstarkend → Ermüdend → Abgehängt), darin nach Stärke. Jeder Titel genau einmal, in der Spalte '
-             f'seiner Reihe. Rahmen grün = long, rot = short (überall in der App) · ★ mit kräftigem Rahmen = Spitzenkandidat long bzw. Short an der Schwelle oder im Ausbruch · Radar mit '
+             f'seiner Reihe. Rahmen grün = long, rot = short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Spitzenkandidat long bzw. Short an der Schwelle oder im Ausbruch · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
              f'Auslöser (z. B. U↑) · ◆ = in deiner Watchlist · ⚑ = Themen-Gruppe Führend oder Erstarkend (Maus zeigt sie). '
              f'Sammeln sich Angriffe in einer Zeile, rückt dort ein Rudel vor.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

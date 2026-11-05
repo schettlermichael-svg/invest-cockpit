@@ -7,30 +7,66 @@ import re
 
 import numpy as np
 
-from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
+from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
 
 TREPPE = "#FFA657"
 PUNKTE = (("Markt", "Markt"), ("Phase", "Phase"), ("Zone", "Zone"), ("Branche", "Branche"),
           ("RS", "Relative Stärke"), ("Fundament", "Fundament"))
 
 
-RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot – nichts anderes
+RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot, offen gelb
+SCHWACH = "66"                                # Abstufung: Setup noch nicht grün → Rahmen in blasser Richtungsfarbe
 _SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px solid (#[0-9A-Fa-f]{6})'
                     r'(;border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">)')
 
 
-def richtung(reihe):
-    """long für Spitze, Weitere, Radar; short für die Short-Reihe; None ohne Reihe."""
-    return "short" if reihe == "short" else "long" if reihe in ("spitze", "weitere", "frueh") else None
+def richtung(x):
+    """long (Spitze, Weitere, Radar mit Auslöser/Zone ↑), short (Short-Reihe, Radar ↓) oder None (Richtung offen)."""
+    x = x or {}
+    reihe = x.get("reihe")
+    if reihe == "short":
+        return "short"
+    if reihe in ("spitze", "weitere"):
+        return "long"
+    if reihe == "frueh":
+        pfeil = (x.get("angriff") or "")[1:2] or x.get("zdir") or ""
+        return "long" if pfeil == "↑" else "short" if pfeil == "↓" else None
+    return None
 
 
-def faerben(html, rtg):
-    """Rahmen der Lagekarte und ihres Setup-Kastens in der Richtungsfarbe. Die Setup-Ampel bleibt als Punkt im
-    Kasten erhalten (auch bei Karten, die noch mit Ampelrahmen gespeichert wurden)."""
-    f = RICHTUNG.get(rtg)
-    if not f or not html:
+def rahmen(x):
+    """(Farbe, Dicke) des Titelrahmens – drei Stufen je Richtung:
+    kräftig (★ Spitze bzw. Short im Ausbruch) · voll (Setup grün) · blass (Setup noch nicht grün);
+    gelb, wenn keine Reihe oder die Richtung offen ist."""
+    x = x or {}
+    r = richtung(x)
+    if r is None:
+        return GELB, 1
+    f = RICHTUNG[r]
+    if x.get("stern") or x.get("reihe") == "spitze":
+        return f, 2
+    return (f, 1) if x.get("gruen") else (f + SCHWACH, 1)
+
+
+def grund(x):
+    """Was dem Titel zur nächsten Stufe fehlt (leer, wenn das Setup grün ist)."""
+    x = x or {}
+    luecken = x.get("luecken") or []
+    if richtung(x) is None:
+        kopf = "noch keine Reihe" if not x.get("reihe") else "Richtung offen"
+        return kopf + (" · " + "; ".join(luecken) if luecken else "")
+    if x.get("gruen") or not luecken:
+        return ""
+    return f'{len(luecken)} Regel{"n" if len(luecken) > 1 else ""} fehl{"en" if len(luecken) > 1 else "t"}: ' + "; ".join(luecken)
+
+
+def faerben(html, x):
+    """Rahmen der Lagekarte und ihres Setup-Kastens in der Stufe des Titels (rahmen). Die Setup-Ampel bleibt als
+    Punkt im Kasten erhalten (auch bei Karten, die noch mit Ampelrahmen gespeichert wurden)."""
+    if not html or x is None:
         return html
-    html = html.replace(f'border:1px solid {RAND};border-radius:14px', f'border:2px solid {f};border-radius:14px', 1)
+    f, d = rahmen(x)
+    html = html.replace(f'border:1px solid {RAND};border-radius:14px', f'border:{d}px solid {f};border-radius:14px', 1)
 
     def setup(m):
         alt = m.group(2)
