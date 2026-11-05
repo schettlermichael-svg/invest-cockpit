@@ -319,3 +319,11 @@ Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als
   Schreibrecht). Eine Claude-Aufgabe in der Cloud (stündlich 8–23 Uhr, Minute 13) vergleicht mit `tv_abgleich.json` und
   trägt nur die Änderungen in die gleichnamigen TradingView-Listen ein (neue Liste wird angelegt, keine Liste gelöscht,
   selbst in TradingView eingetragene Titel bleiben unberührt, Alarme tabu). Änderungen in TradingView fließen nicht zurück.
+
+## ATR-Zeichen (05.11.2026)
+`kern/atr.py`: ATR (14 Tage) = übliches Tagesrauschen. Auf jeder Lagekarte (Übersicht, Pop-up, Titelseite) vier
+Zeichen, kein Filter: Stopp im Rauschen (Einstieg → Stopp unter 1 × ATR rot, bis 1,5 gelb), zu weit gelaufen (über
+2 × ATR jenseits des Pivots rot „nicht nachjagen“), Enge (Spannen der letzten 5 Tage unter 0,6 × ATR grün), Überdehnung
+(Abstand vom GD50 ab 4 × ATR gelb, ab 6 rot). Short-Seite: Überdehnung über dem GD50 günstig (grün), darunter „nicht
+nachjagen“. Depot-Karte: Stoppabstand vom Kurs in ATR. Kachel „Ausbruch“: Volumen grün über dem 50-Tage-Schnitt, dazu
+„Spanne × ATR ↑ Vorstoß mit Kraft“ (über 1) bzw. „→ verhaltener Vorstoß“. Schwellen: unsere Setzung.
