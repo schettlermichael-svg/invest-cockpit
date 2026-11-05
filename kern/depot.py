@@ -69,7 +69,7 @@ def setzen(ticker, **werte):
 
 
 def schliessen(ticker, ausstieg=None):
-    """Position schließen; mit Ausstiegskurs wird der Trade in der Bilanz verbucht (Minervini-Abgleich im CRV)."""
+    """Position schließen; mit Ausstiegskurs wird der Trade in der Bilanz verbucht (Minervini-Abgleich bei den Stopps)."""
     d = laden()
     p = position(ticker)
     if p and ausstieg and p.get("einstieg"):

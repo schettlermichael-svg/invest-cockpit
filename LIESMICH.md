@@ -402,3 +402,7 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   mit Pfeil der letzten 10 Tage und Hinweiskasten der vier Bilder (Führer im Markt und Sektor usw.).
 - Volumenknoten wieder im Kursbild (05.11.2026, auf Wunsch): `volumenprofil.knoten()` (ab 60 % des größten geglätteten Volumens); blasses Band ab Beginn der 52 Wochen – nächster Knoten darüber rot (Widerstand), darunter grün (Unterstützung), Kurs im Knoten türkis mit „Kurs im Knoten … (Balance)“.
 - Strömung in der Zone entfällt (05.11.2026): die Zeichen, aus denen „an der Schwelle“ entsteht (Tageswerte, Tages-POC, Lage im Wertbereich) samt verlassener Zone und letzten Auslösern stehen im Hinweis der Setup-Kachel (`stroemung.druck`); Tagesspannen und Volumen (Druck ohne Richtung) und das Strömungsbild nach `_to_delete`. „Lage und Plan“ heißt „Plan“, ohne Einleitungssatz (wiederholte die Kacheln).
+- Kein festes Ziel, kein CRV (05.11.2026, Micky): Gewinne laufen lassen, Stopp nachziehen. `kern/crv.py` → `kern/stopps.py`
+  (alt nach `_to_delete`): Stopp A und Stopp B mit Abstand in % vom Einstieg, nächster Widerstand bzw. Halt in
+  Laufrichtung (altes Hoch/Tief der letzten 52 Wochen oder fallender/steigender GD150/GD200, ohne Obergrenze),
+  Minervini-Abgleich (Stopp gegen den eigenen Durchschnittsgewinn). Chart: Stopp-Linien und gelb gepunkteter Widerstand.

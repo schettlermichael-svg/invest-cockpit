@@ -3,7 +3,7 @@ Richtung zeigt.
 
 Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), Zonen des Market Profile mit POC-Treppe, Pivot und Kaufzone
 bis +5 % bzw. Auslöser short, Zahlentermine mit Reaktion, rotes Dreieck beim größten Tagesrückgang seit Beginn von
-Phase 2, Phasenband; rechts eine eigene Spalte für die Beschriftungen von Pivot, Ziel (+20 %) und Stopps, ganz
+Phase 2, Phasenband; rechts eine eigene Spalte für die Beschriftungen von Pivot, Stopps und nächstem Widerstand, ganz
 rechts das Volumenprofil der letzten 52 Wochen.
 Darunter Volumen mit 50er-Schnitt und ruhigen Tagen, ganz unten die relative Stärke gegen den S&P 500 und gestrichelt
 gegen den eigenen Sektor-ETF (beide links bei 100).
@@ -110,7 +110,7 @@ def _ausgang_text(b, df):
 def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, ausschnitt=None, sektor=None, sektor_name=""):
     """Kurschart der grünen Null (05.11.2026): nur, was nach O'Neil, Minervini und Weinstein die Richtung zeigt –
     Kerzen, Volumen, GD50/150/200, Zonen mit Pivot bzw. Auslöser, RS-Linie gegen den Markt, Verkaufssignal, Zahlen,
-    Phasenband; dazu Stopp und Ziel (+20 %) für den Plan. ausschnitt: Knopf aus AUSSCHNITT (z. B. „6 M“)."""
+    Phasenband; dazu die Stopps und der nächste Widerstand (kein festes Ziel). ausschnitt: Knopf aus AUSSCHNITT (z. B. „6 M“)."""
     werte = (erk or {}).get("werte", {})
     muster = (erk or {}).get("muster", [])
     voll = df if ebene == "Tag" else _woche(_verlaengert(df))
@@ -133,13 +133,15 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
 
     pivot = werte.get("pivot") if muster else None
 
-    try:                                         # geplantes CRV: Ziel, Stopp A, Stopp B als Linien rechts im Chart
+    try:                                         # Stopp A, Stopp B und nächster Widerstand als Linien rechts im Chart
         import atr as atr_modul
-        import crv as crv_modul
-        crv_ = crv_modul.linien(erk or {}, atr_modul.wert(df), df)
+        import stopps as stopps_modul
+        st_ = stopps_modul.linien(erk or {}, atr_modul.wert(df), df)
     except Exception:  # noqa: BLE001
-        crv_ = None
-    crv_preise = [x for x in ((crv_ or {}).get(k) for k in ("ziel", "stopp_a", "stopp_b")) if x]
+        st_ = None
+    w_st = (st_ or {}).get("widerstand")
+    crv_preise = [x for x in ((st_ or {}).get(k) for k in ("stopp_a", "stopp_b")) if x] + \
+        ([w_st[0]] if w_st and 0.75 <= w_st[0] / float(c[-1]) <= 1.3 else [])
     oben = [h.max()] + ([pivot * 1.06] if pivot else [])
     unten = [l.min()]
     oben, unten = oben + crv_preise, unten + crv_preise
@@ -329,21 +331,17 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         A(f'<text x="{PROFIL_X}" y="14" fill="{TEXT_3}" font-size="11">Profil {pr_["anker_art"]}</text>'
           f'<text x="{PROFIL_X}" y="28" fill="{TEXT_3}" font-size="11">seit {tag_:%d.%m.%Y}</text>')
 
-    if crv_:                                     # CRV-Linien im rechten Fünftel: Ziel grün, Stopp A rot gestrichelt, Stopp B rot
+    if st_:                                      # Stopps rechts: A rot gestrichelt, B rot; nächster Widerstand gelb gepunktet
         x0_c, x1_c = LINKS + breite * 0.8, ENDE + 4
-        lang_ = crv_["seite"] == "long"
-        linien_ = []
-        if crv_.get("ziel"):
-            linien_.append((crv_["ziel"], GRUEN if lang_ else ROT, "", 2,
-                            f'Ziel {zahl(crv_["ziel"])} $ · {"+" if lang_ else "−"}20 %'))
-        linien_.append((crv_["stopp_a"], ROT if lang_ else GRUEN, "6 4", 1.5,
-                        f'Stopp A {zahl(crv_["stopp_a"])} $' + (f' · CRV {zahl(crv_["crv_a"], 1)}' if crv_.get("crv_a") else "")))
-        if crv_.get("stopp_b"):
-            linien_.append((crv_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
-                            f'Stopp B {zahl(crv_["stopp_b"])} $' + (f' · CRV {zahl(crv_["crv_b"], 1)}' if crv_.get("crv_b") else "")))
-        if crv_.get("widerstand"):                # Weinstein: Stellung zwischen Einstieg und Ziel
-            w_ = crv_["widerstand"]
-            linien_.append((w_[0], GELB, "2 3", 1.4, f'{"Widerstand" if lang_ else "Halt"} {zahl(w_[0])} $ · {w_[1]}'))
+        lang_ = st_["seite"] == "long"
+        e_ = st_["einstieg"]
+        linien_ = [(st_["stopp_a"], ROT if lang_ else GRUEN, "6 4", 1.5,
+                    f'Stopp A {zahl(st_["stopp_a"])} $ · {zahl(st_["risiko_a"] / e_ * 100, 1)} %')]
+        if st_.get("stopp_b"):
+            linien_.append((st_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
+                            f'Stopp B {zahl(st_["stopp_b"])} $ · {zahl(st_["risiko_b"] / e_ * 100, 1)} %'))
+        if w_st and pmin <= w_st[0] <= pmax:      # Weinstein: dort kann der Lauf zuerst stocken – kein Ziel
+            linien_.append((w_st[0], GELB, "2 3", 1.4, f'{"Widerstand" if lang_ else "Halt"} {zahl(w_st[0])} $ · {w_st[1]}'))
         for preis_, farbe_, strich_, dicke_, text_ in linien_:
             A(f'<line x1="{x0_c:.1f}" x2="{x1_c:.1f}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
               f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
@@ -520,11 +518,11 @@ def legende(erk, ebene="Tag"):
         if (erk or {}).get("short"):
             eintraege += [(TEXT, "Auslöser short"), (ROT, "Verkaufszone bis −5 %")]
     if (erk.get("werte") or {}).get("pivot"):
-        eintraege += [(GRUEN, "rechts: Ziel = +20 % (O'Neil), Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR; "
-                                  "CRV = Ziel ÷ Stoppabstand"),
-                      (GELB, "Widerstand vor dem Ziel (Weinstein): altes Hoch der letzten 52 Wochen (seither nicht "
-                             "überstiegen) oder fallender GD150/GD200 zwischen Einstieg und Ziel; senkrechte Punktlinie = "
-                             "Beginn der 52 Wochen")]
+        eintraege += [(ROT, "rechts: Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR (Abstand vom Einstieg in %); "
+                                "kein festes Ziel – Gewinne laufen lassen, Stopp nachziehen"),
+                      (GELB, "nächster Widerstand (Weinstein): altes Hoch der letzten 52 Wochen (seither nicht "
+                             "überstiegen) oder fallender GD150/GD200 – dort kann der Lauf stocken; senkrechte Punktlinie "
+                             "= Beginn der 52 Wochen")]
     if (erk or {}).get("profil"):
         eintraege += [(TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
                                 "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "
