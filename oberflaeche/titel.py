@@ -20,6 +20,7 @@ import fruehwarnung                                   # noqa: E402
 import short_seite                                    # noqa: E402
 import avwap as avwap_modul                           # noqa: E402
 import depotleiste                                    # noqa: E402
+import depot                                          # noqa: E402
 import fussabdruck                                    # noqa: E402
 import freie_bahn                                     # noqa: E402
 import absorption                                     # noqa: E402
@@ -414,29 +415,57 @@ def _k_fundament(fund, ph):
                   + (_widerspruch(ph) if _widerspruch(ph) else ""))
 
 
-def _k_bahn(erk, ph):
-    """Luft nach oben und nach unten in einer Kachel; die Ampel gilt für die Seite, die zur Phase passt
-    (Phase 3/4: Short, sonst Long)."""
-    fb = erk.get("bahn")
-    if not fb:
-        return kachel("Freie Bahn", "grau", "–", "zu kurze Historie", "")
-    L, S = fb["long"], fb["short"]
-    oben = f"↑ {zahl(L['luft'], 0)} %" if L["marke"] else "↑ frei"
-    unten = f"↓ {zahl(S['luft'], 0)} %" if S["marke"] else "↓ frei"
-    kurz = lambda m: (m.get("art") or "").split(" (")[0]          # noqa: E731
-    ik = fb.get("im_knoten")
-    balance = f"im Knoten {zahl(ik[0], 0)}–{zahl(ik[1], 0)}\u00a0$ (Balance) · " if ik else ""
-    zeile = balance + (f"Widerstand {zahl(L['marke'])}\u00a0$ {kurz(L)}" if L["marke"] else "kein Widerstand darüber") + " · " + \
-            (f"Unterstützung {zahl(S['marke'])}\u00a0$ {kurz(S)}" if S["marke"] else "keine Unterstützung")
-    return kachel("Freie Bahn", (S if ph in (3, 4) else L)["ampel"], f"{oben} · {unten}", zeile,
-                  "↑ Luft bis zur nächsten Marke darüber (mit Base ab dem Pivot, sonst ab dem Kurs), ↓ bis zur "
-                  "nächsten darunter. Marken: frühere Hochs/Tiefs der letzten drei Jahre und Volumenknoten ab dem "
-                  "52-Wochen-Hoch (Auction Market Theory), dazu alte Pivots früherer Basen, die seit dem Ausbruch kein Schluss "
-                  "unterschritten hat (O'Neil: der alte Kaufpunkt wird zur Unterstützung). Doppelt = Hoch/Tief im Knoten, dreifach = dazu der AVWAP, "
-                  "dünn = Hoch/Tief ohne Volumen (wird oft überlaufen), verdeckt = Knoten ohne Wendepunkt. Die Ampel "
-                  "gilt in Phase 3 und 4 für den Short (↓), sonst für den Long (↑): grün ab 20 %, gelb ab 10 %.\n\n"
-                  + (f"Widerstand: {L['art']}" if L["marke"] else "") + ("\n" if L["marke"] and S["marke"] else "")
-                  + (f"Unterstützung: {S['art']}" if S["marke"] else ""))
+def _gelaende_karte(erk):
+    """Karte „Gelände“: alle Zeichen und der Steckbrief der letzten Zonen (Volumen, Druck, Art, Lesart)."""
+    g = erk.get("gelaende")
+    if not g:
+        return ""
+    zeilen = "".join(ampelzeile(f"{t_}: {x_}", a_, "") for a_, t_, x_ in g["zeichen"])
+    kopf = ("<tr>" + "".join(f'<th style="text-align:left;padding:4px 8px;color:{TEXT_3};font-weight:500">{h}</th>'
+                             for h in ("Zone", "Spanne $", "Wert (VAL–VAH)", "Zeit-POC", "Volumen-POC", "Volumen",
+                                       "Tage V/K", "Art", "Lesart")) + "</tr>")
+    reihen = ""
+    for z in reversed(g["zonen"][-6:]):
+        reihen += ("<tr>" + "".join(f'<td style="padding:4px 8px;border-top:1px solid {RAND}">{c}</td>' for c in (
+            f'{z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y}', f'{zahl(z["tief"], 0)}–{zahl(z["hoch"], 0)}',
+            f'{zahl(z["val"])}–{zahl(z["vah"])}', zahl(z["poc"]), zahl(z["vpoc"]) if z.get("vpoc") else "–",
+            f'{zahl(z["volumen"], 2)} ×' if z.get("volumen") else "–", f'{z["ab"]}/{z["auf"]}', t(z.get("art") or "–"),
+            t(z.get("zeichen") or z.get("lesart") or "–"))) + "</tr>")
+    tabelle = (f'<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">{kopf}{reihen}'
+               f'</table></div>')
+    hinweis = (f'<div style="font-size:13px;color:{TEXT_2}">Volumen = mittleres Tagesvolumen der Zone ÷ Median der 12 Monate '
+               f'bis zu ihrem Ende (Festung ab 1,2 ×, Wartesaal bis 0,9 ×). Tage V/K = Tage mit Verkaufs- bzw. Kaufdruck '
+               f'(O\'Neil). Volumen-POC aus den 30-Minuten-Kerzen der Zone.</div>')
+    return karte(zeilen + tabelle + hinweis, "Gelände · Zonen und Volumen")
+
+
+def _k_gelaende(erk, ph):
+    """Kachel „Gelände“ (05.11.2026, ersetzt „Freie Bahn“): Zone, in der der Kurs steht (Festung/Wartesaal, Lesart),
+    Raum bis zur nächsten Festung in Laufrichtung, Überhang. Im Hinweis bleibt alles, was die Freie Bahn wusste:
+    Wendepunkte der letzten drei Jahre, alte Pivots, AVWAP ab dem 52-Wochen-Hoch, doppelt/dreifach, dünn/verdeckt."""
+    g = erk.get("gelaende")
+    fb = erk.get("bahn") or {}
+    if not g:
+        return kachel("Gelände", "grau", "–", "keine Zonen (30-Minuten-Kerzen fehlen)", "")
+    zei = {t_: (a_, x_) for a_, t_, x_ in g["zeichen"]}
+    z = g["aktuell"]
+    wert = (z.get("zeichen") or (f'{z["art"]}, {z["lesart"]}' if z.get("art") else "Zone ohne Volumen"))
+    raum = zei.get("Raum ↑") or zei.get("Raum ↓")
+    ampel = zei.get("Zone", ("grau", ""))[0]
+    if ampel == "grau" and raum:
+        ampel = raum[0]
+    zeile = (raum[1] if raum else "") + (f' · Überhang {zei["Überhang"][1].split(" –")[0]}' if "Überhang" in zei else "")
+    L, S = fb.get("long") or {}, fb.get("short") or {}
+    marken = (("\n\nFrühere Marken: " + (f'Widerstand {zahl(L["marke"])} $ ({L["art"]})' if L.get("marke") else "kein Widerstand")
+               + " · " + (f'Unterstützung {zahl(S["marke"])} $ ({S["art"]})' if S.get("marke") else "keine Unterstützung"))
+              if fb else "")
+    return kachel("Gelände", ampel, wert, zeile,
+                  "Zonen des Market Profile mit ihrem Volumen (Auction Market Theory): Festung = viel Zeit und viel Volumen "
+                  "(feste Stellung), Wartesaal = viel Zeit, wenig Volumen (schwach), Niemandsland = kaum Handel (der Kurs "
+                  "läuft durch). Lesart aus O'Neils Verteilungs- und Akkumulationstagen; Lawinenhang = Wartesaal mit "
+                  "Verteilung, stille Akkumulation = Wartesaal mit Akkumulation (Minervini). Raum = Strecke bis zur "
+                  "nächsten Festung bzw. zum nächsten Volumenknoten in Laufrichtung; Überhang = Festungen bis +25 % über "
+                  "dem Kurs (O'Neil: overhead supply). Zeichen, kein Filter." + marken)
 
 
 def _k_ereignis(df, gewinne, fund):
@@ -507,7 +536,7 @@ def _kacheln(erk, ph, ph_reihe, tvp, fund, rs, df, rd, fd, mr, gewinne):
          _k_rs(erk, rs), _k_branche(df, rd),                           # Führung
          _k_base(erk), _k_absorption(erk, df),                        # Reife
          _k_ausbruch(erk), _k_ereignis(df, gewinne, fund), _k_zahlen(fd, fund),   # Auslöser
-         _k_bahn(erk, ph),                                             # Raum
+         _k_gelaende(erk, ph),                                         # Raum
          _k_fundament(fund, ph)]                                       # Treibstoff
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
             f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;flex:1 1 600px">{"".join(k)}</section>')
@@ -950,6 +979,21 @@ def _short_seite(df, erk, ph, rd, mr):
                              a_ue, "Abstand vom 50-Tage-Durchschnitt in ATR. Weit über dem GD50 ist eine Überdehnung für "
                                    "die Short-Seite günstig (grün ab 6 × ATR, gelb ab 4); weit darunter ist der Bruch "
                                    "schon gelaufen – ein Zeichen, kein Einstieg.")
+    g_ = erk.get("gelaende")
+    if g_:
+        z_ = g_["aktuell"]
+        if z_.get("lesart") == "Verteilung":
+            zeilen += ampelzeile(f'Gelände: Zone mit Verteilung ({z_.get("zeichen") or z_.get("art")}) – die späten Käufer '
+                                 f'werden zum Angebot', "grün", "O'Neil: Verteilungstage; Auction Market Theory: Akzeptanz "
+                                                                   "wird geräumt")
+        h_ = g_["halt"]
+        zeilen += ampelzeile(("Gelände darunter: " + (f'{zahl(g_["raum_ab"] * 100, 1)} % bis {h_[1]} bei {zahl(h_[0])} $'
+                                                        if h_ else "keine Festung darunter – Niemandsland")),
+                             "grün" if not h_ or g_["raum_ab"] >= 0.10 else "gelb" if g_["raum_ab"] >= 0.05 else "rot",
+                             "Raum bis zur nächsten festen Stellung darunter – so weit kann ein Bruch laufen")
+        if g_["raum_auf"] is not None and g_["raum_auf"] >= 0.08:
+            zeilen += ampelzeile(f'Squeeze-Raum: {zahl(g_["raum_auf"] * 100, 1)} % ohne feste Stellung darüber', "gelb",
+                                 "Scheitert der Bruch, steigt der Kurs schnell durch Niemandsland – Stopp knapp setzen")
     regeln = "".join(ampelzeile(n, a, x, "O'Neil: Shorts nur in früheren Führern, rund 5–7 Monate nach dem Top, wenn "
                                          "die ersten Erholungen gescheitert sind, und nur in liquiden Titeln.")
                      for n, a, x in short_seite.oneil_regeln(df))
@@ -1063,6 +1107,12 @@ def seite_titel(ticker, laufend=False, _stand=None):
         s50 = fussabdruck._schnitt50(df["Volume"].to_numpy(float), b["ausbruch"])
         b["vol_ausbruch"] = float(df["Volume"].iloc[b["ausbruch"]]) / s50 if s50 else None
     erk["bahn"] = freie_bahn.freie_bahn(df, w_.get("pivot") if erk["muster"] else None, bool(erk["muster"]), historie)
+    try:                                          # Gelände: Zonen + Volumen (Rückgrat um die Meister)
+        import gelaende
+        pl_ = depot.plan(erk)
+        erk["gelaende"] = gelaende.gelaende(tk, df, erk, stopp=pl_[2] if pl_ else None, seite=pl_[0] if pl_ else None)
+    except Exception:  # noqa: BLE001 – ohne 30-Minuten-Kerzen arbeitet das Cockpit mit den übrigen Ampeln
+        erk["gelaende"] = None
     try:
         erk["rs_rang"] = rs_rang.rang(tk)
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
@@ -1148,6 +1198,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
                                         stroemung_modul.HILFE.get(name, ""))
                              for name, amp, pf, txt in strom),
                    "Strömung in der Zone")]
+    teile.append(_gelaende_karte(erk))
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
     if fund and fund["zeichen"]:

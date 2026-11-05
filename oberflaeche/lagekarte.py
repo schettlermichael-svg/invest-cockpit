@@ -181,7 +181,8 @@ def _groesse(tk, erk):
 
 
 def _atr_zeilen(erk, df, kurs):
-    """ATR-Zeichen der Lagekarte: Stopp im Rauschen, zu weit gelaufen, Enge, Überdehnung (Zeichen, kein Filter)."""
+    """Zeichen unten auf der Lagekarte: Gelände (Zone, Raum, Überhang, Stellung hinter dem Stopp, dünne Spitze), geplantes
+    CRV und ATR (Stopp im Rauschen, zu weit gelaufen, Enge, Überdehnung) – Zeichen, kein Filter."""
     import atr
     import depot
     a = atr.wert(df)
@@ -189,12 +190,15 @@ def _atr_zeilen(erk, df, kurs):
         return ""
     pl = depot.plan(erk)
     import crv
-    z = crv.zeichen(erk, df, a) + [atr.stopp(pl[1], pl[2], a) if pl else None,
+    g = erk.get("gelaende")
+    gz = [(a_, f"{t_}: {x_}") for a_, t_, x_ in (g or {}).get("zeichen", [])
+          if t_ in ("Zone", "Raum ↑", "Raum ↓", "Überhang", "Stellung hinter dem Stopp", "Dünne Spitze")]
+    z = gz + crv.zeichen(erk, df, a) + [atr.stopp(pl[1], pl[2], a) if pl else None,
          atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
          atr.enge(df), atr.ueberdehnung(df, a)]
     zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'
                      for x in z if x)
-    return (f'<div title="ATR (14 Tage) = übliche Tagesbewegung des Titels; alle Abstände daran gemessen – Zeichen, '
+    return (f'<div title="Gelände (Zonen + Volumen), CRV und ATR (14 Tage) = übliche Tagesbewegung des Titels – Zeichen, '
             f'kein Filter" style="display:flex;flex-direction:column;gap:3px;font-size:13px;color:{TEXT_2}">'
             f'<span style="color:{TEXT_3}">ATR {zahl(a)} $ ({zahl(a / kurs * 100, 1)} % je Tag)</span>{zeilen}</div>')
 

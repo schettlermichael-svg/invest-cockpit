@@ -1,8 +1,9 @@
 """Geplantes Chance-Risiko-Verhältnis (05.11.2026) – vor dem Kauf, als Zeichen, kein Filter.
 
 Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot bzw. Auslöser; VAH/VAL der Zone oder ∓8 %).
-Ziel: der erste FESTE Widerstand (long) bzw. die erste feste Unterstützung (short) aus der Freien Bahn – dünne Marken
-(ein altes Hoch ohne Umsatz) zählen nicht. Stopp B: außerhalb des Tagesrauschens, mindestens 1,5 × ATR vom Einstieg
+Ziel: die nächste FESTE Stellung jenseits des Einstiegs aus dem Gelände (VAL einer alten Festung bzw. VAH beim Short,
+oder ein Volumenknoten des 52-Wochen-Profils); ohne Gelände der erste feste Widerstand der Freien Bahn. Wartesäle und
+dünne Marken zählen nicht. Stopp B: außerhalb des Tagesrauschens, mindestens 1,5 × ATR vom Einstieg
 (nur gezeigt, wenn A näher liegt). CRV = Chance ÷ Risiko; grün ab 3 : 1, gelb ab 2 : 1, rot darunter (unsere
 Setzung; Minervini will mindestens 2–3 : 1).
 Minervini-Abgleich: der Stopp soll höchstens die Hälfte, besser ein Drittel des eigenen Durchschnittsgewinns betragen –
@@ -30,13 +31,18 @@ def linien(erk, atr_wert):
     import depot
     pl = depot.plan(erk)
     fb = erk.get("bahn")
-    if not pl or not fb:
+    if not pl or not (fb or erk.get("gelaende")):
         return None
     seite, e, s_a, _ = pl
     r_a = abs(e - s_a)
     if r_a <= 0:
         return None
-    fest = (fb.get(seite) or {}).get("fest")
+    g = erk.get("gelaende")
+    if g:                                         # Gelände: nächste Festung (alte Zone mit Volumen) oder fester Knoten
+        import gelaende
+        fest = gelaende.ziel(g, e, seite)
+    else:
+        fest = (fb.get(seite) or {}).get("fest")
     if fest and (fest[0] <= e if seite == "long" else fest[0] >= e):
         fest = None
     r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert else None

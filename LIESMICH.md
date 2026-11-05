@@ -336,3 +336,23 @@ Zwei Werte: mit Setup-Stopp und mit Stopp außerhalb des Rauschens (1,5 × ATR, 
 Grün ab 3 : 1, gelb ab 2 : 1. Minervini-Abgleich: Stopp in % gegen den eigenen Durchschnittsgewinn (höchstens die
 Hälfte, besser ein Drittel), sobald 5 geschlossene Trades in der Bilanz stehen (`depot.schliessen(tk, ausstieg)`,
 `depot.bilanz()`; Ausstiegskurs beim Schließen der Position eintragen).
+
+## Gelände als Rückgrat (05.11.2026)
+`kern/gelaende.py`. Zeit (Market-Profile-Zonen) und Menge (Volumen) zusammen; die Meister (O'Neil, Minervini,
+Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein Filter, keine Messung als Urteil.
+- Steckbrief je Zone (30-Minuten-Kerzen): Volumen-POC, Volumen ÷ Median der 12 Monate bis zum Zonenende, Tage mit
+  Verkaufs-/Kaufdruck (Schluss ±0,2 % bei höherem Volumen als am Vortag, O'Neil), Lesart Verteilung/Akkumulation
+  (Unterschied ≥ 2 und ≥ 1,5 ×).
+- Art: Festung (ab 1,2 ×), Wartesaal (bis 0,9 ×), Schlachtfeld (Volumenknoten ohne Zone), Niemandsland.
+- Zeichen: Zone, Raum ↑/↓ bis zur nächsten Festung bzw. zum Knoten, Überhang (Festungen bis +25 %), Stellung hinter
+  dem Stopp, Rücktest, Wert wandert, Dünne Spitze, Squeeze-Raum (short), Lawinenhang (Wartesaal + Verteilung),
+  stille Akkumulation.
+- CRV-Ziel (`gelaende.ziel`): nächste Festung (VAL long, VAH short) oder 52-Wochen-Knoten jenseits von Einstieg UND
+  Kurs; ohne Gelände wie bisher `freie_bahn._fest`.
+- Einbindung: Titelseite (Kachel „Gelände“ statt „Freie Bahn“, Karte „Gelände · Zonen und Volumen“ mit den letzten
+  6 Zonen, Short-Seite), Lagekarte (Zeichen vor CRV und ATR), Depot-Karte (Verteilung, Dünne Spitze, Stellung des
+  Stopps).
+- Chart: Festung türkis kräftig, Wartesaal grau gestrichelt, übrige Zonen blau; eine schraffierte Fläche „freie Bahn ↑
+  bis Festung …“ bzw. „Raum ↓ bis …“; rechts unverändert das 52-Wochen-Profil mit POC, VAH, VAL. Die alten
+  Freie-Bahn-Bänder und das Knotenband sind entfallen. Die „Raute“ wird nicht gezeichnet.
+- Kartentisch: Gelände-Zeichen kommen über die Lagekarte aus dem nächtlichen Lauf.

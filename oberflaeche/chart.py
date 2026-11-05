@@ -140,8 +140,9 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
     pivot = werte.get("pivot") if muster else None
 
     bahn = (erk or {}).get("bahn") or {}
-    marke_l, marke_s = (bahn.get("long") or {}).get("marke"), (bahn.get("short") or {}).get("marke")
-    zone_l, zone_s = (bahn.get("long") or {}).get("zone"), (bahn.get("short") or {}).get("zone")
+    gel_ = (erk or {}).get("gelaende") or {}
+    marke_l = (gel_.get("widerstand") or (None,))[0]     # nächste feste Stellung darüber/darunter (Gelände) im Bild
+    marke_s = (gel_.get("halt") or (None,))[0]
     try:                                         # geplantes CRV: Ziel, Stopp A, Stopp B als Linien rechts im Chart
         import atr as atr_modul
         import crv as crv_modul
@@ -149,8 +150,8 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
     except Exception:  # noqa: BLE001
         crv_ = None
     crv_preise = [x for x in ((crv_ or {}).get(k) for k in ("ziel", "stopp_a", "stopp_b")) if x]
-    oben = [h.max()] + ([pivot * 1.06] if pivot else []) + ([marke_l] if marke_l else []) + ([zone_l[1]] if zone_l else [])
-    unten = [l.min()] + ([marke_s] if marke_s else []) + ([zone_s[0]] if zone_s else [])
+    oben = [h.max()] + ([pivot * 1.06] if pivot else []) + ([marke_l] if marke_l and marke_l < h.max() * 1.35 else [])
+    unten = [l.min()] + ([marke_s] if marke_s and marke_s > l.min() * 0.7 else [])
     oben, unten = oben + crv_preise, unten + crv_preise
     pmax, pmin = max(oben) * 1.03, min(unten) * 0.95
 
@@ -173,7 +174,9 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
 
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} 760" width="100%" role="img" aria-label="Kurschart" '
          f'style="display:block;font-family:IBM Plex Sans,sans-serif">'
-         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>']
+         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
+         '<defs><pattern id="schraffur" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+         '<line x1="0" y1="0" x2="0" y2="8" stroke="#8B95A5" stroke-width="1" stroke-opacity="0.35"/></pattern></defs>']
     A = s.append
     for k in range(5):
         yv = pmin * (pmax / pmin) ** (k / 4)
@@ -188,6 +191,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         halb = breite / N / 2
         treppe, vor_ = [], None
         zonen_ = mp_["zonen"]
+        gzonen = ((erk or {}).get("gelaende") or {}).get("zonen") or []   # Steckbrief je Zone (Gelände)
         # Ausgang je verlassener Zone (aus der Basenhistorie) für den Hinweis am Rahmen
         ausgaenge = {df.index[b["beginn"]].normalize(): b for b in (erk or {}).get("historie") or []}
         for k_, z_ in enumerate(zonen_):
@@ -198,12 +202,22 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             j0 = pos(z_["beginn"]) if z_["beginn"] >= d.index[0] else 0
             j1 = N - 1 if k_ == len(zonen_) - 1 else pos(z_["ende"])
             x0, x1 = X(j0) - halb, X(j1) + halb
+            gz_ = gzonen[k_] if k_ < len(gzonen) else {}
+            art_z = gz_.get("art")
+            farbe_z = TUERKIS if art_z == "Festung" else GRAU if art_z == "Wartesaal" else BLAU
+            letzte_z = k_ == len(zonen_) - 1
+            steck_ = (f' · {art_z}, {gz_.get("zeichen") or gz_.get("lesart")} · Volumen {zahl(gz_["volumen"], 2)} × '
+                      f'Jahresmedian · Tage Verkauf/Kauf {gz_["ab"]}/{gz_["auf"]}'
+                      + (f' · Volumen-POC {zahl(gz_["vpoc"])} $' if gz_.get("vpoc") else "")) if art_z else ""
             A(f'<rect x="{x0:.1f}" y="{Y(z_["vah"]):.1f}" width="{x1 - x0:.1f}" height="{Y(z_["val"]) - Y(z_["vah"]):.1f}" '
-              f'fill="{BLAU}" fill-opacity="0.11"/>'
+              f'fill="{farbe_z}" fill-opacity="{0.22 if art_z == "Festung" else 0.06 if art_z == "Wartesaal" else 0.11}"/>'
               f'<rect x="{x0:.1f}" y="{Y(z_["hoch"]):.1f}" width="{x1 - x0:.1f}" height="{Y(z_["tief"]) - Y(z_["hoch"]):.1f}" '
-              f'fill="none" stroke="{BLAU}" stroke-opacity="{0.75 if k_ == len(zonen_) - 1 else 0.35}" stroke-width="1" rx="3">'
+              f'fill="none" stroke="{farbe_z}" stroke-opacity="{0.9 if art_z == "Festung" or letzte_z else 0.45}" '
+              f'stroke-width="{1.4 if art_z == "Festung" else 1}" rx="3"'
+              + (' stroke-dasharray="5 4"' if art_z == "Wartesaal" else "") + '>'
               f'<title>Zone {z_["beginn"]:%d.%m.%Y}–{z_["ende"]:%d.%m.%Y}, {z_["wochen"]} Wochen · Rahmen '
               f'{zahl(z_["tief"])}–{zahl(z_["hoch"])} $ · Wert {zahl(z_["val"])}–{zahl(z_["vah"])} $ · POC {zahl(z_["poc"])} $'
+              f'{steck_}'
               f'{_ausgang_text(ausgaenge.get(df.index[min(int(df.index.searchsorted(z_["beginn"])), len(df) - 1)].normalize()), df)}'
               f'</title></rect>')
             if vor_ is not None and treppe:
@@ -281,36 +295,25 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             A(f'<text x="{(xa_ + xb_) / 2:.1f}" y="{platz((xa_ + xb_) / 2, Y(el_) + 30, f"Enge {zahl(eng_, 1)} %", 11, nach_oben=False):.1f}" '
               f'fill="{TEXT_2}" font-size="11" text-anchor="middle">Enge {zahl(eng_, 1)} %</text>')
 
-    pr_a = bahn.get("profil")
-    x_knoten = (X(pos(df.index[pr_a["anker"]])) if pr_a and df.index[pr_a["anker"]] >= d.index[0] else LINKS)
-    # Freie Bahn: je Seite die nächste Marke – Volumenknoten als blasses Band, früheres Hoch/Tief als Linie;
-    # eine Beschriftung je Seite mit der Art der Marke (doppelt, dreifach, dünn, verdeckt)
-    for seite_, farbe_ in (("long", ROT), ("short", GRUEN)):
-        m_ = bahn.get(seite_) or {}
-        if not m_.get("marke"):
-            continue
-        k_ = (m_.get("knoten") or [None])[0]
-        if k_:
-            A(f'<rect x="{x_knoten:.1f}" y="{Y(k_[1]):.1f}" width="{B - RECHTS - x_knoten:.1f}" height="{Y(k_[0]) - Y(k_[1]):.1f}" '
-              f'fill="{farbe_}" fill-opacity="0.07"/>')
-        w_ = (m_.get("wend") or [None])[0]
-        if w_ and df.index[w_[0]] >= d.index[0] - pd.Timedelta(days=1100):
-            x0_ = X(pos(df.index[w_[0]])) if df.index[w_[0]] >= d.index[0] else LINKS
-            A(f'<line x1="{x0_:.1f}" x2="{B - RECHTS}" y1="{Y(w_[1]):.1f}" y2="{Y(w_[1]):.1f}" stroke="{farbe_}" '
-              f'stroke-opacity="0.55" stroke-width="1.5" stroke-dasharray="6 4"/>')
-        y_ = Y(m_["marke"])
-        art_ = (m_.get("art") or "").split(" (")[0]
-        text_ = (f'Widerstand {zahl(m_["marke"])} $ {art_} (+{zahl(m_["luft"], 1)} % über dem {"Pivot" if pivot else "Kurs"})'
-                 if seite_ == "long" else f'Unterstützung {zahl(m_["marke"])} $ {art_} (−{zahl(m_["luft"], 1)} % unter dem Kurs)')
-        spaete.append(f'<text x="{B - RECHTS - 4:.1f}" y="{platz(B - RECHTS - 4, y_ + (-6 if seite_ == "long" else 15), text_, 11, "end", seite_ == "long"):.1f}" '
-                      f'fill="{farbe_}" font-size="11" text-anchor="end">{text_}</text>')
-
-    ik_ = bahn.get("im_knoten")
-    if ik_:
-        A(f'<rect x="{x_knoten:.1f}" y="{Y(ik_[1]):.1f}" width="{B - RECHTS - x_knoten:.1f}" height="{Y(ik_[0]) - Y(ik_[1]):.1f}" '
-          f'fill="{TUERKIS}" fill-opacity="0.08"/>')
-        spaete.append(f'<text x="{x_knoten + 6:.1f}" y="{platz(x_knoten + 6, Y(ik_[1]) + 14, "Kurs im Knoten 000–000 $ (Balance)", 11, "start", False):.1f}" '
-                      f'fill="{TUERKIS}" font-size="11">Kurs im Knoten {zahl(ik_[0])}–{zahl(ik_[1])} $ (Balance)</text>')
+    # Gelände: EINE schraffierte Fläche zwischen Kurs und nächster fester Stellung in Laufrichtung (Niemandsland bzw.
+    # schwaches Gelände – dort läuft der Kurs schnell). Die frühere Wiederholung des 52-Wochen-Profils im Kursbild
+    # (Knoten-Bänder, Linien „dünn/doppelt“, „Kurs im Knoten“) entfällt: das zeigen Zonen, Profilspalte und Ziel-Linie.
+    g_ = (erk or {}).get("gelaende")
+    if g_:
+        seite_g = (crv_ or {}).get("seite") or (erk or {}).get("seite") or "long"
+        kurs_g = float(c[-1])
+        ende_g = (g_["widerstand"][0] if g_.get("widerstand") else pmax) if seite_g == "long" else \
+                 (g_["halt"][0] if g_.get("halt") else pmin)
+        ende_g = min(max(ende_g, pmin), pmax)
+        if abs(ende_g / kurs_g - 1) >= 0.02:
+            x0_g = LINKS + breite * 0.72
+            y_a, y_b = sorted((Y(kurs_g), Y(ende_g)))
+            A(f'<rect x="{x0_g:.1f}" y="{y_a:.1f}" width="{B - RECHTS - x0_g:.1f}" height="{y_b - y_a:.1f}" '
+              f'fill="url(#schraffur)"/>')
+            txt_g = ("freie Bahn ↑ bis " if seite_g == "long" else "Raum ↓ bis ") + \
+                    (f"Festung {zahl(ende_g)} $" if (g_.get("widerstand") if seite_g == "long" else g_.get("halt")) else "weit")
+            spaete.append(f'<text x="{x0_g + 6:.1f}" y="{platz(x0_g + 6, (y_a + y_b) / 2 + 4, txt_g, 11, "start"):.1f}" '
+                          f'fill="{TEXT_2}" font-size="11">{txt_g}</text>')
 
     # Volumenprofil in eigener Spalte rechts neben dem Kursbild (verankert am 52-Wochen-Hoch bzw. am Tief)
     pr_ = bahn.get("profil")
@@ -366,11 +369,6 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
               f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
             spaete.append(f'<text x="{x1_c - 4:.1f}" y="{platz(x1_c - 4, Y(preis_) - 5, text_, 11, "end"):.1f}" '
                           f'fill="{farbe_}" font-size="11" text-anchor="end">{text_}</text>')
-
-    if pivot and bahn.get("long") and not marke_l:
-        text_ = "über dem Pivot kein Widerstand (kein früheres Hoch und kein Volumenknoten)"
-        A(f'<text x="{B - RECHTS - 4:.1f}" y="{platz(B - RECHTS - 4, Y(pivot) - 6, text_, 11, "end"):.1f}" '
-          f'fill="{TEXT_2}" font-size="11" text-anchor="end">{text_}</text>')
 
     # Kerzen
     bw = breite / N * 0.6
@@ -539,17 +537,16 @@ def legende(erk, ebene="Tag", kurz=()):
     if muster:
         eintraege += [(TEXT, "Pivot"), (GRUEN, "Kaufzone bis +5 %"), (TEXT_2, "Tiefs-Linie und Enge")]
     bahn = (erk or {}).get("bahn") or {}
-    if (bahn.get("long") or {}).get("marke"):
-        eintraege.append((ROT, "Widerstand: Linie = früheres Hoch, Band = Volumenknoten"))
-    if (bahn.get("short") or {}).get("marke"):
-        eintraege.append((GRUEN, "Unterstützung: Linie = früheres Tief, Band = Volumenknoten"))
-    if (erk.get("werte") or {}).get("pivot") and bahn:
-        eintraege.append((GRUEN, "rechts: Ziel = erster fester Widerstand (CRV), Stopp A = Stopp des Setups, "
+    if (erk.get("werte") or {}).get("pivot") and (bahn or (erk or {}).get("gelaende")):
+        eintraege.append((GRUEN, "rechts: Ziel = nächste Festung (CRV), Stopp A = Stopp des Setups, "
                                  "Stopp B = 1,5 × ATR außerhalb des Rauschens"))
     if bahn.get("profil"):
         eintraege.append((TUERKIS, "Volumenprofil rechts: kräftig = viel Volumen (Knoten), blass = wenig (Lücke); POC = meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); ▸ = Kurs"))
     if (erk or {}).get("mp"):
-        eintraege += [(BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit)"),
+        eintraege += [(TUERKIS, "Festung: Zone mit viel Volumen (Rahmen kräftig, Fläche gefüllt)"),
+                      (GRAU, "Wartesaal: Zone mit wenig Volumen (gestrichelt)"),
+                      (BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit); "
+                             "schraffiert = schwaches Gelände bis zur nächsten Festung; Maus auf eine Zone = Steckbrief"),
                       (TREPPE, "POC-Treppe; ↑/↓ = Wochenwert hat die Zone verlassen")]
         if (erk or {}).get("short"):
             eintraege += [(TEXT, "Auslöser short"), (ROT, "Verkaufszone bis −5 %")]
