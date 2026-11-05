@@ -210,16 +210,21 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
                       f'Jahresmedian · Tage Verkauf/Kauf {gz_["ab"]}/{gz_["auf"]}'
                       + (f' · Volumen-POC {zahl(gz_["vpoc"])} $' if gz_.get("vpoc") else "")) if art_z else ""
             A(f'<rect x="{x0:.1f}" y="{Y(z_["vah"]):.1f}" width="{x1 - x0:.1f}" height="{Y(z_["val"]) - Y(z_["vah"]):.1f}" '
-              f'fill="{farbe_z}" fill-opacity="{0.22 if art_z == "Festung" else 0.06 if art_z == "Wartesaal" else 0.11}"/>'
+              f'fill="{farbe_z}" fill-opacity="{0.38 if art_z == "Festung" else 0.04 if art_z == "Wartesaal" else 0.11}"/>'
               f'<rect x="{x0:.1f}" y="{Y(z_["hoch"]):.1f}" width="{x1 - x0:.1f}" height="{Y(z_["tief"]) - Y(z_["hoch"]):.1f}" '
-              f'fill="none" stroke="{farbe_z}" stroke-opacity="{0.9 if art_z == "Festung" or letzte_z else 0.45}" '
-              f'stroke-width="{1.4 if art_z == "Festung" else 1}" rx="3"'
-              + (' stroke-dasharray="5 4"' if art_z == "Wartesaal" else "") + '>'
+              f'fill="{farbe_z}" fill-opacity="{0.10 if art_z == "Festung" else 0}" stroke="{farbe_z}" '
+              f'stroke-opacity="{1 if art_z in ("Festung", "Wartesaal") or letzte_z else 0.45}" '
+              f'stroke-width="{2.4 if art_z == "Festung" else 1.4 if art_z == "Wartesaal" else 1}" rx="3"'
+              + (' stroke-dasharray="7 5"' if art_z == "Wartesaal" else "") + '>'
               f'<title>Zone {z_["beginn"]:%d.%m.%Y}–{z_["ende"]:%d.%m.%Y}, {z_["wochen"]} Wochen · Rahmen '
               f'{zahl(z_["tief"])}–{zahl(z_["hoch"])} $ · Wert {zahl(z_["val"])}–{zahl(z_["vah"])} $ · POC {zahl(z_["poc"])} $'
               f'{steck_}'
               f'{_ausgang_text(ausgaenge.get(df.index[min(int(df.index.searchsorted(z_["beginn"])), len(df) - 1)].normalize()), df)}'
               f'</title></rect>')
+            if art_z in ("Festung", "Wartesaal") and x1 - x0 >= 80:   # Art und Volumen an der Zone (schmale: Maus)
+                t_z = f'{art_z} {zahl(gz_["volumen"], 1)}×'
+                spaete.append(f'<text x="{x0 + 4:.1f}" y="{Y(z_["hoch"]) - 4:.1f}" fill="{farbe_z}" font-size="11" '
+                              f'font-weight="600" stroke="#0E1217" stroke-width="3" paint-order="stroke">{t_z}</text>')
             if vor_ is not None and treppe:
                 treppe.append((x0, Y(vor_["poc"])))
             treppe += [(x0, Y(z_["poc"])), (x1, Y(z_["poc"]))]
@@ -576,8 +581,8 @@ def legende(erk, ebene="Tag", kurz=()):
     if bahn.get("profil"):
         eintraege.append((TUERKIS, "Volumenprofil rechts: kräftig = viel Volumen (Knoten), blass = wenig (Lücke); POC = meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); ▸ = Kurs"))
     if (erk or {}).get("mp"):
-        eintraege += [(TUERKIS, "Festung: Zone mit viel Volumen (Rahmen kräftig, Fläche gefüllt)"),
-                      (GRAU, "Wartesaal: Zone mit wenig Volumen (gestrichelt)"),
+        eintraege += [(TUERKIS, "Festung: Zone mit viel Volumen (kräftig gefüllt; Zahl = Volumen × Jahresmedian)"),
+                      (GRAU, "Wartesaal: Zone mit wenig Volumen (gestrichelt, leer)"),
                       (GELB, "dünn: altes Hoch/Tief ohne Volumen im Weg – kurzes Stocken möglich (gestrichelt)"),
                       (TEXT, "alter Pivot: frühere Ausbruchsmarke, trägt als Unterstützung (gestrichelt)"),
                       (BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit); "
