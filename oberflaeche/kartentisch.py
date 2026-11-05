@@ -176,9 +176,15 @@ def _neu(vorher, jetzt):
 SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Zeile darunter (aufklappbar) – nichts wird gefiltert
 
 
-def _link(tk, inhalt):
-    return (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="text-decoration:none;color:inherit;'
-            f'display:block">{inhalt}</a>')
+def _link(tk, inhalt, kopf=""):
+    """Karte mit einem einzigen Weg zur Titelseite: dem Knopf „Deep Dive →“ (die Karte selbst ist kein Link mehr).
+    kopf: eine Zeile über der Karte (Watchlist-Reihe: eigentliche Reihe des Titels) rechts neben dem Knopf."""
+    from gestaltung import BLAU, KARTE, RAND
+    knopf = (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="border:1px solid {BLAU};border-radius:8px;'
+             f'padding:4px 12px;font-size:14px;font-weight:600;color:{BLAU};text-decoration:none;background:{KARTE};'
+             f'white-space:nowrap">Deep Dive →</a>')
+    return (f'<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:'
+            f'space-between;align-items:center;gap:8px">{kopf or "<span></span>"}{knopf}</div>{inhalt}</div>')
 
 
 def _zeile(tk, x):
@@ -273,15 +279,14 @@ def html(tisch=None):
 
 
 def _marken(x):
-    """Marken über der Karte eines Watchlist-Titels: eigentliche Reihe und die Listen."""
+    """Eine Marke über der Karte eines Watchlist-Titels: seine eigentliche Reihe (die Liste steht schon in der
+    Abschnittsüberschrift)."""
     from gestaltung import BLAU, RAND, TEXT_2, t
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
     if x.get("reihe") == "frueh" and x.get("angriff"):
         r += f" · {x['angriff']}"
-    teile = [r or "keine Reihe"] + x.get("listen", [])
-    return ('<div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px">'
-            + "".join(f'<span style="border:1px solid {BLAU if i == 0 and r else RAND};border-radius:6px;padding:2px 8px;'
-                      f'font-size:13px;color:{TEXT_2}">{t(m)}</span>' for i, m in enumerate(teile)) + '</div>')
+    return (f'<span style="border:1px solid {BLAU if r else RAND};border-radius:6px;padding:2px 8px;font-size:13px;'
+            f'color:{TEXT_2}">{t(r or "keine Reihe")}</span>')
 
 
 def _watchreihe(tisch):
@@ -311,7 +316,7 @@ def _watchreihe(tisch):
                 f'font-weight:500">{len(eigene)}</span></h3>')
         if sichtbar:
             teil += ('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">'
-                     + "".join(_link(tk, _marken(x) + x["karte"]) for tk, x in sichtbar) + '</div>')
+                     + "".join(_link(tk, x["karte"], _marken(x)) for tk, x in sichtbar) + '</div>')
         if rest or fehlen:
             teil += (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
                      f'alle weiteren {len(rest) + len(fehlen)} zeigen</summary>'
