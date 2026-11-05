@@ -360,14 +360,29 @@ def lagebild(tisch):
             text += " " + x["angriff"].split()[0]
         if x.get("listen"):
             text += " ◆"
-        tip = x.get("zustand", "")
         g = gruppen.get(tk)
         if g:
             text += " ⚑"
-            tip += f' · Themen-Gruppe {" · ".join(g["mitglieder"][:3])} ({g["feld"]})'
-        return (f'<a href="?seite=Titelseite&t={tk}" target="_self" title="{t(tip)}" style="border:1px solid {rand};'
+        zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
+                  f"Zone: {t(x.get('zustand', '–'))}"]
+        if x.get("reihe") == "frueh" and x.get("angriff"):
+            art = x["angriff"][0]
+            zeilen.append(f"Auslöser {t(x['angriff'])}: " + {"A": "Ausbruch aus reifer Zone", "F": "Fortsetzung (Flagge)",
+                                                             "U": "Umkehr nach gescheitertem Ausbruch"}.get(art, ""))
+        if stern:
+            zeilen.append("★ Setup grün, Zone bewegt sich in Richtung des Setups")
+        if x.get("listen"):
+            zeilen.append("◆ Watchlist: " + t(", ".join(x["listen"])))
+        if g:
+            zeilen.append(f"⚑ Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))
+                          + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))
+        tip = "<br>".join(zeilen)
+        return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
+                f'<a href="?seite=Titelseite&t={tk}" target="_self" style="display:inline-block;border:1px solid {rand};'
                 f'border-radius:6px;padding:2px 7px;font-size:13px;font-family:IBM Plex Mono,monospace;color:inherit;'
-                f'text-decoration:none;white-space:nowrap">{t(text)}</a>')
+                f'text-decoration:none;white-space:nowrap">{t(text)}</a>'
+                f'<span class="hinweis-tip" style="left:0;right:auto;width:320px;font-family:IBM Plex Sans,system-ui">'
+                f'{tip}</span></span>')
 
     def zelle(liste):
         liste = sorted(liste, key=lambda p: _ordnung(p[1]))
