@@ -85,24 +85,14 @@ def _aktualisieren(tk):
 
 
 def chart_knoepfe(tk):
-    """Knöpfe direkt über dem Chart: Zeitebene, Ausschnitt, GD10/GD20 (nur Tag), Kurse aktualisieren, TradingView,
-    Watchlist."""
-    k0, k1, k2, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2, 2])
+    """Knöpfe direkt über dem Chart: Zeitebene, Ausschnitt, Kurse aktualisieren, TradingView, Watchlist, Position."""
+    k0, k1, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2])
     with k0:
         ebene = st.radio("Zeitebene", ["Tag", "Woche"], horizontal=True, key="ebene")
     with k1:
         wahl = list(chart.AUSSCHNITT[ebene])
         aus = st.radio("Ausschnitt", wahl, horizontal=True, key=f"ausschnitt_{ebene}",
                        index=wahl.index(chart.AUSSCHNITT_START[ebene]))
-    kurz = ()
-    with k2:
-        if ebene == "Tag":
-            a, b = st.columns(2)
-            with a:
-                g10 = st.checkbox("GD10", key="gd10")
-            with b:
-                g20 = st.checkbox("GD20", key="gd20")
-            kurz = tuple(k for k, an in ((10, g10), (20, g20)) if an)
     with k3:
         st.button("↻ Kurse aktualisieren", use_container_width=True, on_click=_aktualisieren, args=(tk,))
     with k4:
@@ -111,7 +101,7 @@ def chart_knoepfe(tk):
         watchlist_knopf(tk)
     with k6:
         position_knopf(tk)
-    return ebene, aus, kurz
+    return ebene, aus
 
 
 def _fenster(titel_):
@@ -411,8 +401,8 @@ elif ticker:
             with st.spinner("Lade und rechne …"):
                 teile = _gebaut("titel", _codestand(), *args)
         st.markdown(teile["oben"], unsafe_allow_html=True)
-        ebene, aus, kurz = chart_knoepfe(ticker)
-        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, kurz), unsafe_allow_html=True)
+        ebene, aus = chart_knoepfe(ticker)
+        st.markdown(titel.chartkarte(teile["chart"], ebene, aus), unsafe_allow_html=True)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)

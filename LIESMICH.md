@@ -373,3 +373,21 @@ Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein F
 - Etikettenspalte (05.11.2026): rechts neben den Kerzen 180 px nur für Preis-Beschriftungen (Pivot, Kaufzone, Auslöser short,
   Ziel, Stopp A/B mit CRV, dünn, alter Pivot). Die Linien enden dort, die Etiketten stehen in Preisfolge so nah wie möglich
   an ihrer Linie, ohne sich zu überlappen. Ziel-Etikett kurz („Ziel 224,66 $ · Festung“), Einzelheiten in der Karte Gelände.
+
+## Grüne Null – Titelseite (05.11.2026)
+Leitfrage für jedes Element: Zeigt es nach O'Neil, Minervini und Weinstein die Richtung? Vier Stationen: ① Lage (darf ich
+angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie viel, wann raus?).
+- Kopf: Name, Branche, Kurs, Abstand zum 52-Wochen-Hoch, nächster Zahlentermin (gelb innerhalb von 10 Tagen).
+- 8 Kacheln: Markt (①), Phase mit Trendvorlage, Relative Stärke, Branche, Fundament mit Reaktion auf die Zahlen (②),
+  Setup mit Zustand der Zone und Volumen beim Auslöser, Base-Nummer, Absorption (③).
+- Chart: Kerzen, Volumen, GD50/150/200, Zonen (einheitlich blau) mit POC-Treppe, Pivot/Kaufzone bzw. Auslöser short,
+  RS-Linie gegen den S&P 500, Verkaufssignal, Zahlentermine, Phasenband; Ziel (+20 %, O'Neil) und Stopps in der
+  Etikettenspalte.
+- Karten: Strömung in der Zone, Earnings + Fundament-Ampeln, Phase und Trend (sechs Merkmale), Warnzeichen, Lage und
+  Plan, Position und Risiko.
+- CRV: Ziel = Einstieg +20 % (Short −20 %) nach O'Neil (`kern/crv.py`).
+- Entfernt (nach `_to_delete/gruene_null_titelseite`: gelaende.py, freie_bahn.py, volumenprofil.py, avwap.py): Gelände
+  (Festung/Wartesaal, ◆, Lawine, freie Bahn), Volumenprofil-Spalte, AVWAP und AVWAP-Liste, Marken „dünn“/„alter
+  Pivot“, RS gegen Sektor, GD10/GD20-Schalter, SIC-13-Karte, Lagekarte neben den Kacheln, Firmenbeschreibung,
+  Stimmungskurve, Rudel und Rotation, Kacheln Zone/Ausbruch/Ereignis/Nächste Zahlen (in Setup, Fundament und Kopf
+  aufgegangen). Grund: Sie zeigen nicht die Richtung (Messung 05.11.: Festung/Wartesaal und Strecke ohne Richtung).

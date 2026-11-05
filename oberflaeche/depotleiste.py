@@ -101,23 +101,6 @@ def titelkarte(tk, df, erk):
             kopf += ampelzeile(st_[1].replace("vom Einstieg", "vom Kurs"), st_[0],
                                f"ATR (14 Tage) {zahl(a_)} {w}: übliche Tagesbewegung – unter 1 × ATR liegt der Stopp im "
                                f"Rauschen")
-        g_ = (erk or {}).get("gelaende")
-        if g_:                                   # Gelände nach dem Kauf: Fährte der laufenden Zone, Stellung hinter dem Stopp
-            import gelaende
-            z_ = g_["aktuell"]
-            if z_.get("lesart") == "Verteilung" or z_.get("zeichen") == "Lawinenhang":
-                kopf += ampelzeile(f'Gelände: {z_.get("zeichen") or "Verteilung"} in der laufenden Zone (Tage Verkauf/Kauf '
-                                   f'{z_["ab"]}/{z_["auf"]})', "rot" if lang else "grün",
-                                   "O'Neil: Verteilungstage – die großen Adressen verkaufen")
-            for a_, t_, x_ in g_["zeichen"]:
-                if t_ == "Dünne Spitze":
-                    kopf += ampelzeile(f"Gelände: {x_}", a_, "")
-            if p.get("stopp"):
-                st_ = gelaende.stellung(g_, float(p["stopp"]))
-                kopf += ampelzeile(f'Stopp {zahl(p["stopp"])} {w} liegt {gelaende.im(st_)}',
-                                   "grün" if st_ in ("Festung", "Volumenknoten") else "gelb" if st_ == "Wartesaal" else "rot",
-                                   "Ein Stopp hinter einer Festung ist geschützt; im Niemandsland rauscht der Kurs bis zur "
-                                   "nächsten Stellung durch")
         return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df, erk)),
                      "Position und Risiko · nach dem Kauf")
     pl = depot.plan(erk)

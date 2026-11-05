@@ -18,16 +18,11 @@ import tpo_daten                                      # noqa: E402
 import fundament                                      # noqa: E402
 import fruehwarnung                                   # noqa: E402
 import short_seite                                    # noqa: E402
-import avwap as avwap_modul                           # noqa: E402
 import depotleiste                                    # noqa: E402
-import depot                                          # noqa: E402
 import fussabdruck                                    # noqa: E402
-import freie_bahn                                     # noqa: E402
-import gelaende                                       # noqa: E402
 import absorption                                     # noqa: E402
 import rs_rang                                        # noqa: E402
 import phase as phasen_modul                          # noqa: E402
-import marktdaten                                     # noqa: E402
 import namen_de                                       # noqa: E402
 import marktrichtung                                  # noqa: E402
 import rudel                                          # noqa: E402
@@ -39,49 +34,11 @@ import stroemung as stroemung_modul                   # noqa: E402
 import stroemungsbild                                 # noqa: E402
 import lagekarte                                      # noqa: E402
 import gestaltung                                     # noqa: E402
-import lage as lage_modul                             # noqa: E402
 from chart import chart, legende, reaktionen           # noqa: E402
-from stimmung import kurve                             # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, form_hinweis, kachel, karte, seite,  # noqa: E402
                         t, zahl)
 
 PHASENTEXT = {1: "Bodenbildung", 2: "Aufwärtstrend", 3: "Gipfelphase", 4: "Abwärtstrend"}
-PHASENAMPEL = {1: "grau", 2: "grün", 3: "gelb", 4: "rot"}
-
-
-def _sic13_karte(k):
-    """SIC-13 · Sovereign Investment Compass: fünf Ebenen, elf Kriterien, bei jedem Titel dieselben."""
-    from gestaltung import AMPEL
-    spalten = ""
-    for ebene, nummern in sic13.EBENEN:
-        zeilen = ""
-        for n in nummern:
-            v = k["kriterien"][n]
-            zeilen += (f'<div title="{t(sic13.FRAGE[n])}" style="display:flex;flex-direction:column;gap:3px;padding:8px 0;'
-                       f'border-top:1px solid {RAND}">'
-                       f'<div style="display:flex;align-items:center;gap:8px">'
-                       f'<span style="width:12px;height:12px;border-radius:50%;flex-shrink:0;background:{AMPEL[v["ampel"]]}"></span>'
-                       f'<span style="font-size:14px;font-weight:600;flex:1">{n} · {t(sic13.NAMEN[n])}</span>'
-                       f'<span style="font-size:13px;color:{TEXT_2}">{t(v["wort"])}</span></div>'
-                       f'<div style="font-size:13px;color:{TEXT_2};line-height:1.5">{t(v["zeile"])}</div>'
-                       f'<div style="font-size:11px;color:{TEXT_3};letter-spacing:0.04em">{t(v["art"])}</div></div>')
-        spalten += (f'<div style="display:flex;flex-direction:column"><div style="font-size:12px;letter-spacing:0.06em;'
-                    f'text-transform:uppercase;color:{TEXT_3};padding-bottom:6px">{t(ebene)}</div>{zeilen}</div>')
-    tor = k["torwaechter"]
-    kopf = ""
-    if tor == "rot":
-        kopf = (f'<div style="font-size:14px;color:#FF7B72">Ebene 0 nicht bestanden – nach SIC-13 K.O. '
-                f'Alle Angaben bleiben sichtbar.</div>')
-    elif tor == "gelb":
-        kopf = f'<div style="font-size:14px;color:#E3B341">Ebene 0 nur zur Hälfte bestanden.</div>'
-    fuss = (f'<div style="font-size:12px;color:{TEXT_3}">Einschätzung: Claude (Wissensstand Juni 2026, aus Beschreibung '
-            f'und Branchenkenntnis), wird vom Nachtlauf aus Jahresbericht und Telefonkonferenz zu den Zahlen erneuert. '
-            f'Gemessen: Kurse (10 Jahre), SEC-Quartalszahlen, TradingView. Maus auf ein Kriterium zeigt seine Frage aus SIC-13 '
-            f'und die Schwellen.</div>')
-    return karte(kopf + f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">'
-                 f'{spalten}</div>' + fuss, "SIC-13 · Strukturelle Überlegenheit vor der technischen Analyse")
-
-
 def _tv_symbol(tk):
     """BÖRSE:TICKER für TradingView aus daten/tv/revier.csv; ohne Eintrag nur der Ticker (TradingView sucht dann)."""
     import watchlists
@@ -93,7 +50,22 @@ def _tv_symbol(tk):
     return f"{ex}:{sym}" if ex else sym
 
 
-def _kopf(tk, sb, df):
+def _termin(fd):
+    """„ · Zahlen am Di 12.11. (in 7 Tagen)“ – innerhalb von 10 Tagen gelb markiert (O'Neil: nicht kurz davor kaufen)."""
+    termin = (fd or {}).get("termin")
+    if termin is None or not len(termin) or not termin["datum"].iloc[0]:
+        return ""
+    tag = pd.Timestamp(termin["datum"].iloc[0])
+    bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
+    if bis < 0:
+        return ""
+    farbe = GELB if bis <= 10 else TEXT_2
+    return (f' · <span style="color:{farbe}">Zahlen {WOCHENTAGE[tag.weekday()]} {tag:%d.%m.}'
+            f' ({"heute" if bis == 0 else "morgen" if bis == 1 else f"in {bis} Tagen"})</span>')
+
+
+def _kopf(tk, sb, df, fd=None):
+    """Kopf: Name, Branche, Kurs, Abstand zum 52-Wochen-Hoch (Trendvorlage) und der nächste Zahlentermin."""
     k = df["Close"].iloc[-1]
     letzte = df.iloc[-252:]
     hoch = letzte["High"].max()
@@ -110,7 +82,7 @@ def _kopf(tk, sb, df):
             f'<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 560px;max-width:900px">'
             f'<h1 style="margin:0;font-size:36px;font-weight:600">{t(sb.get("name", tk))} '
             f'<span style="color:{TEXT_3};font-weight:500">· {t(tk.upper())}</span></h1>'
-            f'<div style="font-size:15px;color:{TEXT_2};line-height:1.6">{t(zeile)}</div>{_steckbrief(tk, sb)}</div>'
+            f'<div style="font-size:15px;color:{TEXT_2};line-height:1.6">{t(zeile)}{_termin(fd)}</div></div>'
             f'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:0 0 auto;margin-left:auto">'
             f'<span style="font-family:IBM Plex Mono,monospace;font-size:34px;font-weight:500">{zahl(k)} $</span>'
             f'<span style="font-size:14px;color:{TEXT_2}">'
@@ -225,10 +197,7 @@ def _k_zone(erk):
                       "Die Zonen werden aus 30-Minuten-Kerzen gerechnet (Market Profile). Für diesen Titel fehlen sie; "
                       "werkzeuge/tpo_laden.py lädt sie.")
     z = a["zustand"]
-    g_ = (erk.get("gelaende") or {}).get("aktuell") or {}
-    art_ = (f'{g_["art"] if g_["art"] != "normal" else "Zone"} {zahl(g_["volumen"], 2)}×, {gelaende.lesart_text(g_)}'
-            if g_.get("art") and g_.get("volumen") is not None else "")     # Gelände: Besatzung und Fährte der Zone
-    return kachel("Zone", z["ampel"], z["wort"], " · ".join(([art_] if art_ else []) + z["belege"][:2]),
+    return kachel("Zone", z["ampel"], z["wort"], " · ".join(z["belege"][:3]),
                   "Market Profile (Steidlmayer, Dalton) aus 30-Minuten-Kerzen. Die Zone besteht aus Wochen, deren "
                   "Wertbereich (70 % der Zeit) sich überlappt. Balance: Tageswerte wechseln, POC pendelt. An der Schwelle: "
                   "mindestens 3 der letzten 5 Tageswerte höher (tiefer), keiner ganz dagegen, Tages-POC steigt (fällt), "
@@ -239,8 +208,19 @@ def _k_zone(erk):
 
 
 def _k_setup(erk, ph):
-    """Setup-Kachel long/short: Seite nach Weinstein (Phase 1/2 long, 3/4 short), Ampeln der jeweiligen Meister."""
+    """Setup-Kachel long/short (grüne Null: Setup, Zustand der Zone und Volumen beim Auslöser in einer Kachel): Seite nach
+    Weinstein (Phase 1/2 long, 3/4 short), Ampeln der jeweiligen Meister."""
     w, sh = erk["werte"], erk.get("short")
+    mp_ = erk.get("mp")
+    zone_ = mp_["zustand"]["wort"] if mp_ else ""
+    a_ = (erk.get("fuss") or {}).get("ausbruch")
+    vol_ = f'Volumen {zahl(a_["faktor"], 1)}-fach' if a_ else ""
+
+    def kachel(name, ampel, wert, zeile, hilfe):
+        zeile = " · ".join(x for x in (zone_, zeile, vol_) if x)
+        hilfe += ("\n\nZone: Balance, an der Schwelle, Ausbruch (Tag n) oder bestätigt (Market Profile). Volumen am "
+                  "Ausbruchstag gegen den 50-Tage-Schnitt: über dem Schnitt grün (Minervini), O'Neil verlangt 40–50 % darüber.")
+        return gestaltung.kachel(name, ampel, wert, zeile, hilfe)
     if sh:
         ab = sh["abstand_pct"]
         return kachel("Setup", "grün" if sh["setup"] else "gelb", f"short · {'Zone' if sh['art'] == 'Base' else sh['art']} "
@@ -355,33 +335,6 @@ def _k_absorption(erk, df):
                   "dem Prüfstand gemessen.")
 
 
-def _k_ausbruch(erk):
-    fu = erk.get("fuss") or {}
-    if not erk["muster"]:
-        hist = erk.get("historie") or []
-        x = hist[-1].get("vol_ausbruch") if hist else None
-        if x is None:
-            return kachel("Ausbruch", "grau", "keiner", "keine Base, kein früherer Ausbruch in drei Jahren", "")
-        return kachel("Ausbruch", _vol_ampel(x), f"vorheriger {zahl(x, 1)}-fach",
-                      f"Volumen am {erk['df_index'][hist[-1]['ausbruch']]:%d.%m.%Y} · {hist[-1]['ausgang']}",
-                      "Zurzeit keine Base und damit kein Ausbruch. Gezeigt wird das Volumen am letzten Ausbruch gegen den "
-                      "50-Tage-Schnitt und wie er ausging. Grün: über dem Schnitt (Minervini); O'Neil verlangt 40–50 % "
-                      "darüber.")
-    a = fu.get("ausbruch")
-    hilfe = ("Volumen am Ausbruchstag gegen den 50-Tage-Schnitt: grün darüber (Minervini: mehr als üblich), rot darunter. "
-             "O'Neil verlangt 40–50 % darüber. Spanne: wie weit der Kurs am Ausbruchstag lief, gemessen an der "
-             "durchschnittlichen Tagesspanne (ATR, 14 Tage) – über 1 × ATR ein Vorstoß mit Kraft.")
-    if a:
-        return kachel("Ausbruch", a["ampel"], f"{zahl(a['faktor'], 1)}-faches Volumen",
-                      f"am {erk['df_index'][a['index']]:%d.%m.%Y}"
-                      + (" · " + fussabdruck.spanne_text(a["atr"]) if a.get("atr") else "")
-                      + ("" if a["schluss_darueber"] else " · Schluss unter Pivot"),
-                      hilfe)
-    return kachel("Ausbruch", "grau", "noch nicht",
-                  f"über {zahl(erk['werte']['pivot'])}\u00a0$ mit mehr als {_mio(fu['noetig'])} Stück" if fu.get("noetig")
-                  else "Pivot noch nicht überschritten", hilfe)
-
-
 def _k_branche(df, rd):
     r = (rd or {}).get("rudel")
     mg = (rd or {}).get("m_gruppe")
@@ -401,9 +354,11 @@ def _k_branche(df, rd):
                   "Weinstein: Gekauft wird nur in einer starken Gruppe. Titel zur Branche: letzte 3 Monate.")
 
 
-def _k_fundament(fund, ph):
+def _k_fundament(fund, ph, df=None, gewinne=None):
+    """Fundament (CAN SLIM C/A) und die Reaktion des Kurses auf die letzten Zahlen (O'Neil) in einer Kachel."""
     if not fund:
         return kachel("Fundament", "grau", "–", "keine Daten", "")
+    ev = _ereignis(df, gewinne, fund) if df is not None else None
     gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün")
     rot = sum(1 for a, _ in fund["punkte"].values() if a == "rot")
     ampel = "grün" if gruen >= 5 and rot == 0 else "rot" if rot >= 3 else "gelb"
@@ -414,79 +369,22 @@ def _k_fundament(fund, ph):
     zeile = (" · ".join(teile) + " zum Vorjahr") if teile else "Gewinn, Umsatz, Marge, Schätzungen"
     if ampel == "grün" and _widerspruch(ph):
         ampel, zeile = "gelb", "Widerspruch: Zahlen stark, Kurs fällt"
+    if ev and ev[0] != "grau":                   # Reaktion auf die letzten Zahlen (O'Neil)
+        zeile = f"{ev[1]} · {zeile}"
+        if ev[0] == "rot" and ampel == "grün":
+            ampel = "gelb"
     return kachel("Fundament", ampel, f"{gruen} von 7 grün", zeile,
                   "Sieben Prüfpunkte zu Gewinn, Umsatz, Marge und Schätzungen (Liste weiter unten). "
-                  + (_widerspruch(ph) if _widerspruch(ph) else ""))
+                  + (_widerspruch(ph) if _widerspruch(ph) else "")
+                  + (f"\n\nReaktion auf die letzten Zahlen: {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
 
 
-def _gelaende_karte(erk):
-    """Karte „Gelände“: alle Zeichen und der Steckbrief der letzten Zonen (Volumen, Druck, Art, Lesart)."""
-    import gelaende
-    g = erk.get("gelaende")
-    if not g:
-        return ""
-    zeilen = "".join(ampelzeile(f"{t_}: {x_}", a_, "") for a_, t_, x_ in g["zeichen"])
-    kopf = ("<tr>" + "".join(f'<th style="text-align:left;padding:4px 8px;color:{TEXT_3};font-weight:500">{h}</th>'
-                             for h in ("Zone", "Spanne $", "Wert (VAL–VAH)", "Zeit-POC", "Volumen-POC ◆",
-                                       "Lage Zeit / ◆", "Volumen", "Tage V/K", "Art", "Lesart")) + "</tr>")
-    reihen = ""
-    for z in reversed(g["zonen"][-6:]):
-        reihen += ("<tr>" + "".join(f'<td style="padding:4px 8px;border-top:1px solid {RAND}">{c}</td>' for c in (
-            f'{z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y}', f'{zahl(z["tief"], 0)}–{zahl(z["hoch"], 0)}',
-            f'{zahl(z["val"])}–{zahl(z["vah"])}', zahl(z["poc"]), zahl(z["vpoc"]) if z.get("vpoc") else "–",
-            (f'{zahl(z["lage_zeit"] * 100, 0)} % / {zahl(z["lage_vol"] * 100, 0)} %' + (" ◆" if z.get("raute") else ""))
-            if z.get("lage_vol") is not None else "–",
-            f'{zahl(z["volumen"], 2)} ×' if z.get("volumen") else "–", f'{z["ab"]}/{z["auf"]}', t(z.get("art") or "–"),
-            t((z["zeichen"] + " · " if z.get("zeichen") else "") + gelaende.lesart_text(z)))) + "</tr>")
-    tabelle = (f'<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">{kopf}{reihen}'
-               f'</table></div>')
-    hinweis = (f'<div style="font-size:13px;color:{TEXT_2}">Volumen = mittleres Tagesvolumen der Zone ÷ Median der 12 Monate '
-               f'bis zu ihrem Ende (Festung ab 1,2 ×, Wartesaal bis 0,9 ×). Tage V/K = Tage mit Verkaufs- bzw. Kaufdruck '
-               f'(O\'Neil: Schluss ±0,2 % bei mehr Volumen als am Vortag). Volumen-POC (◆) aus den 30-Minuten-Kerzen der Zone; '
-               f'Lage = Höhe von Zeit-POC und ◆ in der Zonenspanne (0 % = Tief, 100 % = Hoch). Lesart aus den Tagen; '
-               f'„◆ bestätigt“, wenn die Raute mindestens 20 % neben dem Zeit-POC liegt und die Richtung passt (Zeit oben, '
-               f'Geschäft unten + Verkaufsdruck = Verteilung; Geschäft oben + Kaufdruck = Akkumulation), sonst „nur Tage“.</div>')
-    return karte(zeilen + tabelle + hinweis, "Gelände · Zonen und Volumen")
-
-
-def _k_gelaende(erk, ph):
-    """Kachel „Gelände“ (05.11.2026, ersetzt „Freie Bahn“): Zone, in der der Kurs steht (Festung/Wartesaal, Lesart),
-    Raum bis zur nächsten Festung in Laufrichtung, Überhang. Im Hinweis bleibt alles, was die Freie Bahn wusste:
-    Wendepunkte der letzten drei Jahre, alte Pivots, AVWAP ab dem 52-Wochen-Hoch, doppelt/dreifach, dünn/verdeckt."""
-    g = erk.get("gelaende")
-    fb = erk.get("bahn") or {}
-    if not g:
-        return kachel("Gelände", "grau", "–", "keine Zonen (30-Minuten-Kerzen fehlen)", "")
-    zei = {t_: (a_, x_) for a_, t_, x_ in g["zeichen"]}
-    z = g["aktuell"]
-    import gelaende
-    wert = (z.get("zeichen") or (f'{z["art"]}, {gelaende.lesart_text(z)}' if z.get("art") else "Zone ohne Volumen"))
-    raum = zei.get("Lawinengefahr ↓") if (erk.get("short") or erk.get("seite") == "short") else zei.get("Freie Bahn ↑")
-    ampel = zei.get("Zone", ("grau", ""))[0]
-    if ampel == "grau" and raum:
-        ampel = raum[0]
-    zeile = (raum[1] if raum else "") + (f' · Überhang {zei["Überhang"][1].split(" –")[0]}' if "Überhang" in zei else "")
-    L, S = fb.get("long") or {}, fb.get("short") or {}
-    marken = (("\n\nFrühere Marken: " + (f'Widerstand {zahl(L["marke"])} $ ({L["art"]})' if L.get("marke") else "kein Widerstand")
-               + " · " + (f'Unterstützung {zahl(S["marke"])} $ ({S["art"]})' if S.get("marke") else "keine Unterstützung"))
-              if fb else "")
-    return kachel("Gelände", ampel, wert, zeile,
-                  "Zonen des Market Profile mit ihrem Volumen (Auction Market Theory): Festung = viel Zeit und viel Volumen "
-                  "(feste Stellung), Wartesaal = viel Zeit, wenig Volumen (schwach), Niemandsland = kaum Handel (der Kurs "
-                  "läuft durch). Lesart aus O'Neils Verteilungs- und Akkumulationstagen; Lawinenhang = Wartesaal mit "
-                  "Verteilung, stille Akkumulation = Wartesaal mit Akkumulation (Minervini). Freie Bahn ↑ / "
-                  "Lawinengefahr ↓ = schwaches Gelände (Wartesaal, Niemandsland) bis zur nächsten Festung bzw. zum "
-                  "nächsten Volumenknoten, in % und in ATR; Überhang = Festungen bis +25 % über "
-                  "dem Kurs (O'Neil: overhead supply). Zeichen, kein Filter." + marken)
-
-
-def _k_ereignis(df, gewinne, fund):
-    """Die letzten Zahlen als Ereignis (Auction Market Theory: das Ereignis, das die Balance bricht), gelesen nach
-    O'Neils Kursreaktion: Tag 1, Tage 2–10 und Erholung; gute Zahlen, die der Kurs hält, gegen „gute Nachricht,
-    schlechte Reaktion“."""
+def _ereignis(df, gewinne, fund):
+    """Die letzten Zahlen als Ereignis, gelesen nach O'Neils Kursreaktion: Tag 1, Tage 2–10 und Erholung; gute Zahlen,
+    die der Kurs hält, gegen „gute Nachricht, schlechte Reaktion“. (Ampel, Wert, Zeile, Hilfe) oder None."""
     r = _reaktion_zeilen(df, gewinne)
     if not r:
-        return kachel("Ereignis", "grau", "–", "keine Gewinnmeldung im Kurszeitraum", "")
+        return None
     tag, prozent, vor = r["tag"], r["prozent"], r["vor"]
     k = float(df["Close"].iloc[-1])
     tage = len(df) - 1 - df.index.get_loc(tag)
@@ -506,7 +404,7 @@ def _k_ereignis(df, gewinne, fund):
         ampel = "grau"
     zeile += f" · Kurs {'über' if k >= vor else 'unter'} {zahl(vor)} $ vor den Zahlen"
     ablesung = "\n".join(f"{n}: {x}" for n, _, x in r["zeilen"])
-    return kachel("Ereignis", ampel, wert, zeile,
+    return (ampel, wert, zeile,
                   "Die letzten Zahlen als Ereignis, das eine Seitwärtsphase brechen kann (O'Neil). Zahlen angenommen: "
                   "positiver erster Tag, die Gewinne halten in den Tagen 2–10, der Kurs fällt nie unter den Schluss vor "
                   "den Zahlen – das ist die Marke für den Stopp. Teils angenommen: positiver erster Tag, danach Gewinne "
@@ -540,21 +438,15 @@ def _zuletzt(fund):
 
 
 def _kacheln(erk, ph, ph_reihe, tvp, fund, rs, df, rd, fd, mr, gewinne):
-    """Die dreizehn Kacheln der Titelseite: bei jedem Titel dieselben, in derselben Reihenfolge, gleich groß.
-    Fehlt ein Wert, steht ein grauer Punkt mit dem Grund. Erklärung und Zahlen stehen im Hinweis (Maus darauf)."""
-    # Reihenfolge der Knoten: Erlaubnis, Führung, Reife, Auslöser, Raum, Treibstoff
-    k = [_k_markt(mr), _k_phase(ph, ph_reihe, tvp), _k_zone(erk),
-         _k_setup(erk, ph),   # Erlaubnis
-         _k_rs(erk, rs), _k_branche(df, rd),                           # Führung
-         _k_base(erk), _k_absorption(erk, df),                        # Reife
-         _k_ausbruch(erk), _k_ereignis(df, gewinne, fund), _k_zahlen(fd, fund),   # Auslöser
-         _k_gelaende(erk, ph),                                         # Raum
-         _k_fundament(fund, ph)]                                       # Treibstoff
+    """Die acht Kacheln der Titelseite (grüne Null, 05.11.2026): nur, was nach den Meistern die Richtung zeigt – bei
+    jedem Titel dieselben, in derselben Reihenfolge. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
+    _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte der Übersicht, hier nicht gezeigt
+    k = [_k_markt(mr),                                                 # ① Lage: darf ich angreifen?
+         _k_phase(ph, ph_reihe, tvp), _k_rs(erk, rs), _k_branche(df, rd),
+         _k_fundament(fund, ph, df, gewinne),                          # ② Auswahl: wer führt?
+         _k_setup(erk, ph), _k_base(erk), _k_absorption(erk, df)]      # ③ Einstieg: wann?
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
-            f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;flex:1 1 600px">{"".join(k)}</section>')
-
-
-ZYKLUS = [(1, "Boden"), (2, "Aufwärts"), (3, "Gipfel"), (4, "Abwärts")]
+            f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(k)}</section>')
 
 
 def _marktzeichen(mr):
@@ -592,36 +484,8 @@ def _warnzeichen(erk):
     return karte(zeilen or f'<div style="color:{TEXT_2};font-size:15px">Keine Warnzeichen.</div>', "Warnzeichen")
 
 
-def _stimmung_punkte(tk, df, ph_reihe, etf, branche=None):
-    """Titel und seine Branche (sonst sein Sektor) als Punkte der Stimmungskurve, je mit dem Stand vor 4 Wochen."""
-    punkte = []
-    zone = phasen_modul.stimmungszone(df, ph_reihe)
-    if zone:
-        punkte.append({"zone": zone, "vorher": phasen_modul.stimmungszone(df, ph_reihe, df.index[-21]),
-                       "name": tk, "farbe": "#7DB4FF"})
-    bdf = rudel.branche_kurse(branche) if branche else None
-    if bdf is not None and len(bdf) >= 300:
-        bph = phasen_modul.phasen(bdf)
-        bzone = phasen_modul.stimmungszone(bdf, bph)
-        if bzone:
-            punkte.append({"zone": bzone, "vorher": phasen_modul.stimmungszone(bdf, bph, bdf.index[-21]),
-                           "name": f"Branche {namen_de.branche(branche)}", "farbe": "#D2A8FF"})
-    elif etf:
-        try:
-            sdf = daten.kurse(etf)
-            sph = phasen_modul.phasen(sdf)
-            szone = phasen_modul.stimmungszone(sdf, sph)
-            if szone:
-                punkte.append({"zone": szone, "vorher": phasen_modul.stimmungszone(sdf, sph, sdf.index[-21]),
-                               "name": f"{sektoren.SEKTOREN[etf]} ({etf})", "farbe": "#D2A8FF"})
-        except Exception:
-            pass
-    return punkte
-
-
-def _phase_zyklus(tk, df, ph, ph_reihe, krit, etf, branche=None):
-    """Phase und Zyklus: wo Titel und Branche auf der Stimmungskurve stehen (Bild), die sechs Merkmale eines
-    Aufwärtstrends mit ✓/✗ und die Warnzeichen der Phase."""
+def _phase_zyklus(ph, krit):
+    """Phase (Weinstein): die sechs Merkmale eines Aufwärtstrends mit ✓/✗ und die Warnzeichen der Phase."""
     if not krit or not krit.get("kriterien"):
         return karte(f'<div style="color:{TEXT_2}">Zu kurze Historie für Phase und Zyklus.</div>', "Phase und Zyklus")
     satz = {
@@ -634,63 +498,13 @@ def _phase_zyklus(tk, df, ph, ph_reihe, krit, etf, branche=None):
            "mindestens 25 % über dem 52-Wochen-Tief liegt und ein Wochenschluss das Hoch der letzten 26 Wochen "
            "übertrifft.",
     }.get(ph, "")
-    punkte = _stimmung_punkte(tk, df, ph_reihe, etf, branche)
-    bild = ""
-    if punkte:
-        zeile = " · ".join(f'{p["name"]}: {p["zone"]}' + (f' (vor 4 Wochen {p["vorher"]})' if p["vorher"] and
-                                                           p["vorher"] != p["zone"] else "") for p in punkte)
-        legende_text = (f'Aus Phase, Überdehnung und Volumen. Überhitzung: Kurs mindestens '
-                        f'{phasen_modul.UEBERDEHNT_GD200 * 100:.0f} % über dem GD200 oder mindestens '
-                        f'{phasen_modul.CLIMAX_ANSTIEG * 100:.0f} % Anstieg in drei Wochen; Kapitulation: mindestens '
-                        f'{phasen_modul.KAPITULATION_RUECKGANG * 100:.0f} % unter dem Hoch und ein Abwärtstag mit '
-                        f'{phasen_modul.KAPITULATION_VOLUMEN:.0f}-fachem Volumen. Hohler Punkt: Stand vor 4 Wochen.')
-        bild = (f'<div style="font-size:15px;font-weight:500">{t(zeile)}</div>' + kurve(punkte)
-                + f'<div style="font-size:13px;color:{TEXT_3};line-height:1.5">{t(legende_text)}</div>')
     k = krit["kriterien"]
     merkmale = (f'<div style="font-size:15px;font-weight:600;padding-top:6px">{sum(k.values())} von 6 Merkmalen eines '
                 f'Aufwärtstrends erfüllt</div>' + "".join(ampelzeile(n, "grün" if ok else "rot", "") for n, ok in k.items())
                 + "".join(ampelzeile(w, "rot", "") for w in krit.get("warnungen", [])))
     kopf = (f'<p style="margin:0;font-size:14px;color:{TEXT_2};line-height:1.6">'
             f'{t((f"Phase {ph}: {PHASENTEXT[ph]}. " if ph else "") + satz)}</p>')
-    return karte(kopf + bild + merkmale, "Phase und Zyklus")
-
-
-RS_BILDER = [("beide steigen", "Führer im Markt und in seinem Sektor"),
-             ("gegen S&P 500 fällt, gegen Sektor steigt", "der Sektor ist schwach, der Titel darin einer der Besten"),
-             ("gegen S&P 500 steigt, gegen Sektor fällt", "läuft nur mit dem starken Sektor mit, darin kein Führer"),
-             ("beide fallen", "schwächer als Markt und Sektor")]
-
-
-def _rs_lesart(df, index, sek, etf):
-    """Hinweiskasten beim Überfahren des RS-Feldes im Chart: das heutige Bild (Richtung der letzten
-    3 Monate; unter ±2 % gilt eine Linie als seitwärts) und die vier Bilder. Die Zone liegt genau über
-    dem RS-Feld des Charts (SVG-Koordinaten y 600–724 von 760, x ab 64 von 1344)."""
-    if index is None:
-        return ""
-
-    def richtung(bezug):
-        r = (df["Close"] / bezug.reindex(df.index, method="ffill")).dropna()
-        if len(r) < 64:
-            return None, None
-        a = (r.iloc[-1] / r.iloc[-64] - 1) * 100
-        return (1 if a > 2 else -1 if a < -2 else 0), a
-
-    rm, am = richtung(index["Close"])
-    rk, ak = richtung(sek) if sek is not None else (None, None)
-    if rm is None:
-        return ""
-    zahlen = f"gegen S&P 500 {_vorzeichen(am, 0)} %" + (f", gegen {etf} {_vorzeichen(ak, 0)} %" if ak is not None else "")
-    heute_i = {(1, 1): 0, (-1, 1): 1, (1, -1): 2, (-1, -1): 3}.get((rm, rk)) if rm and rk else None
-    heute = (f"{RS_BILDER[heute_i][0]}: {RS_BILDER[heute_i][1]}" if heute_i is not None
-             else "kein klares Bild – mindestens eine Linie läuft seitwärts (weniger als ±2 %)")
-    liste = "".join(f'<div style="{"color:#E6EAF0;font-weight:600" if i == heute_i else ""}">'
-                    f'{"▶ " if i == heute_i else "• "}{t(b)}: {t(m)}</div>' for i, (b, m) in enumerate(RS_BILDER))
-    tip = (f'<div class="hinweis-tip"><div style="font-size:14px;color:#E6EAF0;font-weight:600">Heute: {t(heute)}</div>'
-           f'<div>Letzte 3 Monate: {t(zahlen)}</div>'
-           f'<div style="margin:6px 0 4px">Linie 100 = so stark wie der Index; steigt die Linie, gewinnt der Titel dazu.</div>'
-           f'{liste}</div>')
-    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{24 / 1344 * 100:.2f}%;'
-            f'top:{600 / 760 * 100:.2f}%;height:{124 / 760 * 100:.2f}%">{tip}</div>')
+    return karte(kopf + merkmale, "Phase und Trend")
 
 
 def _trendvorlage(df):
@@ -760,20 +574,6 @@ def _lagebeurteilung(ph, erk, tv, fund):
 
 
 WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
-
-
-def _steckbrief(tk, sb):
-    """Was die Firma macht, auf Deutsch; solange keine deutsche Fassung vorliegt, die ersten zwei Sätze von Yahoo."""
-    de = namen_de.beschreibung(tk)
-    if de:
-        return f'<div style="font-size:14px;color:{TEXT_2};line-height:1.6;max-width:900px">{t(de)}</div>'
-    text = (sb.get("beschreibung") or "").strip()
-    if not text:
-        return ""
-    saetze = [s.strip() for s in text.replace("Inc.", "Inc").split(". ") if s.strip()]
-    kurz = ". ".join(saetze[:2]).rstrip(".") + "."
-    return (f'<div style="font-size:14px;color:{TEXT_2};line-height:1.6;max-width:900px">{t(kurz)} '
-            f'<span style="color:{TEXT_3}">(noch englisch – die deutsche Fassung ergänzt der Nachtlauf)</span></div>')
 
 
 def _vorzeichen(x, stellen=1):
@@ -959,21 +759,6 @@ def _szenario(df, erk, ph, mr=None, rd=None, gewinne=None):
     return "".join(teile), BLAU
 
 
-def _avwap_karte(df, erk):
-    """AVWAP-Liste (aus dem SEPA-Scanner): feste Anker in der Zone, alle zugleich; Ampel über allen / dazwischen / unter."""
-    al = avwap_modul.liste(df, erk)
-    k = float(df["Close"].iloc[-1])
-    zeilen = "".join(ampelzeile(f'{x["name"]} ({x["tag"]:%d.%m.%Y})', "grün" if x["abstand"] >= 0 else "rot",
-                                f'{zahl(x["wert"])} $ · Kurs {_vorzeichen(x["abstand"])} %') for x in al["anker"])
-    kopf = ampelzeile(f'Kurs {zahl(k)} $ über {al["ueber"]} von {al["von"]} AVWAP', al["ampel"],
-                      "über allen: Käufer aller Anker im Gewinn, kein Angebot von oben · dazwischen: Kampfzone · unter "
-                      "allen: jeder Anstieg trifft auf Verkäufer, die raus wollen (für Shorts umgekehrt)",
-                      "Anchored VWAP = volumengewichteter Durchschnittspreis ab dem Anker: der Einstand aller, die "
-                      "seitdem gekauft haben. Anker: Beginn, Tief, größtes Volumen und Hoch der aktuellen Zone sowie das "
-                      "52-Wochen-Hoch.")
-    return karte(kopf + zeilen, "AVWAP-Liste")
-
-
 def _short_seite(df, erk, ph, rd, mr):
     """Short-Seite nach Weinstein und O'Neil: drei Einstiege mit Kursmarke und Stopp, O'Neils Regeln, Gruppenregel."""
     ein = short_seite.einstiege(df, erk, ph)
@@ -991,21 +776,6 @@ def _short_seite(df, erk, ph, rd, mr):
                              a_ue, "Abstand vom 50-Tage-Durchschnitt in ATR. Weit über dem GD50 ist eine Überdehnung für "
                                    "die Short-Seite günstig (grün ab 6 × ATR, gelb ab 4); weit darunter ist der Bruch "
                                    "schon gelaufen – ein Zeichen, kein Einstieg.")
-    g_ = erk.get("gelaende")
-    if g_:
-        z_ = g_["aktuell"]
-        if z_.get("lesart") == "Verteilung":
-            zeilen += ampelzeile(f'Gelände: Zone mit {gelaende.lesart_text(z_)} ({z_.get("zeichen") or z_.get("art")}) – die späten Käufer '
-                                 f'werden zum Angebot', "grün", "O'Neil: Verteilungstage; Auction Market Theory: Akzeptanz "
-                                                                   "wird geräumt")
-        h_ = g_["halt"]
-        zeilen += ampelzeile(("Gelände darunter: " + (f'{zahl(g_["raum_ab"] * 100, 1)} % bis {h_[1]} bei {zahl(h_[0])} $'
-                                                        if h_ else "keine Festung darunter – Niemandsland")),
-                             "grün" if not h_ or g_["raum_ab"] >= 0.10 else "gelb" if g_["raum_ab"] >= 0.05 else "rot",
-                             "Raum bis zur nächsten festen Stellung darunter – so weit kann ein Bruch laufen")
-        if g_["raum_auf"] is not None and g_["raum_auf"] >= 0.08:
-            zeilen += ampelzeile(f'Squeeze-Raum: {zahl(g_["raum_auf"] * 100, 1)} % ohne feste Stellung darüber', "gelb",
-                                 "Scheitert der Bruch, steigt der Kurs schnell durch Niemandsland – Stopp knapp setzen")
     regeln = "".join(ampelzeile(n, a, x, "O'Neil: Shorts nur in früheren Führern, rund 5–7 Monate nach dem Top, wenn "
                                          "die ersten Erholungen gescheitert sind, und nur in liquiden Titeln.")
                      for n, a, x in short_seite.oneil_regeln(df))
@@ -1013,21 +783,17 @@ def _short_seite(df, erk, ph, rd, mr):
             + rudelkarte.gruppenregel(rd, mr, ph, "short"))
 
 
-def _vol_ampel(x):
-    return "grün" if x > 1.0 else "rot"         # über dem 50-Tage-Schnitt (05.11.2026)
-
-
 def tv_link(tk):
     """Adresse des Titels in TradingView (mit Börse, z. B. NYSE:HWM) – für den Knopf über dem Chart."""
     return f"https://www.tradingview.com/chart/?symbol={_tv_symbol(tk)}"
 
 
-def chartkarte(z, ebene="Tag", ausschnitt=None, kurz=()):
+def chartkarte(z, ebene="Tag", ausschnitt=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
     gezeichnet (Zeitebene, Ausschnitt, GD10/GD20), ohne die Seite neu zu rechnen."""
-    return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(z["erk"], ebene, kurz)}</div>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["erk"], z["ph_reihe"], z["index"], z["gewinne"], z["sek"], z["etf"], ausschnitt, kurz)}'
-                       f'{z["rs_lesart"]}</div>'), oben=0, unten=0)
+    return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(z["erk"], ebene)}</div>'
+                       + f'<div style="position:relative">{chart(z["df"], ebene, z["erk"], z["ph_reihe"], z["index"], z["gewinne"], ausschnitt)}'
+                       f'</div>'), oben=0, unten=0)
 
 
 def _eintrag(tk):
@@ -1118,13 +884,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
         # Volumen am Ausbruchstag der Tabelle (erster Schluss über dem Pivot), damit Datum und Volumen zusammenpassen
         s50 = fussabdruck._schnitt50(df["Volume"].to_numpy(float), b["ausbruch"])
         b["vol_ausbruch"] = float(df["Volume"].iloc[b["ausbruch"]]) / s50 if s50 else None
-    erk["bahn"] = freie_bahn.freie_bahn(df, w_.get("pivot") if erk["muster"] else None, bool(erk["muster"]), historie)
-    try:                                          # Gelände: Zonen + Volumen (Rückgrat um die Meister)
-        import gelaende
-        pl_ = depot.plan(erk)
-        erk["gelaende"] = gelaende.gelaende(tk, df, erk, stopp=pl_[2] if pl_ else None, seite=pl_[0] if pl_ else None)
-    except Exception:  # noqa: BLE001 – ohne 30-Minuten-Kerzen arbeitet das Cockpit mit den übrigen Ampeln
-        erk["gelaende"] = None
     try:
         erk["rs_rang"] = rs_rang.rang(tk)
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
@@ -1147,24 +906,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:
         mr = None
     etf = sektoren.sektor_von(sb.get("sektor", ""))
-    try:
-        sek = marktdaten.yahoo(etf) if etf else None
-    except Exception:
-        sek = None
     rd = rudelkarte.daten(tk, df, etf)
     erk["gruppe_korrektur"] = _gruppe_korrektur(df, erk, rd)
-
-    try:
-        quad, rot_sek = lage_modul.quadrant(), sektoren.rotation()
-    except Exception:
-        quad, rot_sek = None, None
-    spy = (rd or {}).get("spy")
-    if spy is None:
-        try:
-            spy = marktdaten.yahoo("SPY")
-        except Exception:
-            spy = None
-    kompass = sic13.kompass(tk, df, spy, sb.get("sektor", ""), etf, fund, quad, rot_sek)
     hinweis_laufend = ""
     if df.attrs.get("laufend"):
         hinweis_laufend = (f'<div style="border:1px solid #5A4A1A;background:#2A2410;color:#E3B341;border-radius:10px;'
@@ -1180,12 +923,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
     finally:
         gestaltung.MITSCHRIFT = None
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
-    lage_block = (f'<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">'
-                  f'<div style="flex:0 1 460px;min-width:340px">{lagekarte.faerben(lk, _eintrag(tk))}</div>'
-                  f'{leiste}</div>')
-    oben = [_kopf(tk, sb, df) + hinweis_laufend, _sic13_karte(kompass), lage_block]
-    zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
-                "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
+    oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
+    zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne}
     # Strömung in der Zone: Base, sonst Base im Aufbau, sonst die letzten 60 Tage
     z_start = w_.get("start_index") if "start_index" in w_ else len(df) - 60
     if erk.get("mp"):
@@ -1210,7 +949,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
                                         stroemung_modul.HILFE.get(name, ""))
                              for name, amp, pf, txt in strom),
                    "Strömung in der Zone")]
-    teile.append(_gelaende_karte(erk))
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
     if fund and fund["zeichen"]:
@@ -1226,10 +964,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
                            "Halter). Zählt nicht zu den sieben Prüfpunkten."))
     raster = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
     teile.append(f'{raster}{_earnings_feld(fd if fund else None)}{karte(links, "Fundament-Ampeln")}</div>')
-    branche = rd["rudel"]["name"] if rd and rd["rudel"]["art"] == "Branche" else None
-    teile.append(f'{raster}{_phase_zyklus(tk, df, ph, ph_reihe, krit, etf, branche)}'
-                 f'{rudelkarte.karte_rudel(rd)}</div>')
-    teile.append(f'{raster}{_avwap_karte(df, erk)}{_warnzeichen(erk)}</div>')
+    teile.append(f'{raster}{_phase_zyklus(ph, krit)}{_warnzeichen(erk)}</div>')
     lage = f'<p style="margin:0;font-size:16px;line-height:1.65">{t(_lagebeurteilung(ph, erk, tv, fund))}</p>'
     plan, rand = _szenario(df, erk, ph, mr, rd, gewinne) if len(df) >= 260 else ("", BLAU)
     teile.append(karte(lage + plan, "Lage und Plan", rand=rand))
