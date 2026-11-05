@@ -4,7 +4,8 @@ Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot bzw. Ausl�
 Ziel nach O'Neil: +20 % über dem Einstieg (Short: −20 %) – dort nimmt er Gewinne. Stopp B: außerhalb des Tagesrauschens,
 mindestens 1,5 × ATR vom Einstieg (nur gezeigt, wenn A näher liegt). CRV = Chance ÷ Risiko; grün ab 3 : 1, gelb ab 2 : 1,
 rot darunter (Minervini will mindestens 2–3 : 1).
-Widerstand vor dem Ziel (Weinstein): das nächste alte Hoch der letzten zwei Jahre, das seither nicht überstiegen wurde,
+Widerstand vor dem Ziel (Weinstein): das nächste alte Hoch der letzten 52 Wochen (Minervini: 52-Wochen-Hoch; ältere
+Hochs sind ausgewaschen), das seither nicht überstiegen wurde,
 oder ein fallender GD150/GD200 zwischen Einstieg und Ziel (Short gespiegelt: altes Tief bzw. steigender Durchschnitt).
 Weinstein kauft am liebsten dort, wo über dem Ausbruch wenig Widerstand liegt – sonst wird der Weg zäh.
 Minervini-Abgleich: der Stopp soll höchstens die Hälfte, besser ein Drittel des eigenen Durchschnittsgewinns betragen –
@@ -27,7 +28,7 @@ def _ampel(x):
     return "grün" if x >= 3 else "gelb" if x >= 2 else "rot"
 
 
-FENSTER, JAHRE2 = 10, 504     # Wendepunkt: höchstes Hoch ±10 Tage; Suche über zwei Jahre
+FENSTER, JAHR = 10, 252       # Wendepunkt: höchstes Hoch ±10 Tage; Suche über 52 Wochen (ältere Hochs sind ausgewaschen)
 
 
 def widerstand(df, seite, e, ziel):
@@ -36,7 +37,7 @@ def widerstand(df, seite, e, ziel):
         return None
     h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
     n = len(h)
-    a = max(0, n - JAHRE2)
+    a = max(0, n - JAHR)
     lang = seite == "long"
     lo_, hi_ = (e * 1.01, ziel) if lang else (ziel, e * 0.99)
     kand = []

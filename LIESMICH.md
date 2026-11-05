@@ -387,8 +387,8 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
 - Karten: Strömung in der Zone, Earnings + Fundament-Ampeln, Phase und Trend (sechs Merkmale), Warnzeichen, Lage und
   Plan, Position und Risiko.
 - CRV: Ziel = Einstieg +20 % (Short −20 %) nach O'Neil (`kern/crv.py`).
-- Widerstand vor dem Ziel (Weinstein, `crv.widerstand`): nächstes altes Hoch der letzten zwei Jahre, das seither nicht
-  überstiegen wurde, oder fallender GD150/GD200 zwischen Einstieg und Ziel (Short: altes Tief bzw. steigender GD);
+- Widerstand vor dem Ziel (Weinstein, `crv.widerstand`): nächstes altes Hoch der letzten 52 Wochen (ältere sind ausgewaschen),
+  das seither nicht überstiegen wurde, oder fallender GD150/GD200 zwischen Einstieg und Ziel (Short: altes Tief bzw. steigender GD);
   gelb gepunktet im Chart, als Zeile auf der Lagekarte (rot unter 10 % Abstand, gelb darüber, grün = freie Bahn).
 - Entfernt (nach `_to_delete/gruene_null_titelseite`: gelaende.py, freie_bahn.py, volumenprofil.py, avwap.py): Gelände
   (Festung/Wartesaal, ◆, Lawine, freie Bahn), Volumenprofil-Spalte, AVWAP und AVWAP-Liste, Marken „dünn“/„alter
