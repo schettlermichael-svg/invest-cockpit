@@ -143,6 +143,10 @@ def _stufe2(tk):
     import titel
     try:
         r = titel.seite_titel(tk)
+        try:
+            titel.ablegen(tk, r)                 # für „Deep Dive“: die Titelseite liegt morgens fertig bereit
+        except Exception:  # noqa: BLE001
+            pass
         return tk, r["lagekarte"], r["kacheln"]
     except Exception:  # noqa: BLE001
         return tk, None, None

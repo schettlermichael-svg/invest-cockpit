@@ -970,6 +970,46 @@ def _eintrag(tk):
         return None
 
 
+# ── Abgelegte Titelseiten (05.11.2026): der Abendlauf baut für jeden Titel des Kartentischs ohnehin die volle
+# Titelseite (Stufe 2) – sie wird gespeichert, damit „Deep Dive“ sie sofort zeigt statt sie neu zu rechnen (Kurse,
+# 30-Minuten-Kerzen, Zahlen aus dem Netz). Gültig, solange danach weder Programm noch Depot geändert wurden;
+# „Kurse aktualisieren“ rechnet wie bisher neu.
+ABLAGE = os.path.join(HIER, "..", "daten", "titelseiten")
+
+
+def codezeit():
+    """Jüngste Änderungszeit der Programmdateien (kern, oberflaeche)."""
+    return max(os.path.getmtime(os.path.join(HIER, "..", d, f)) for d in ("kern", "oberflaeche")
+               for f in os.listdir(os.path.join(HIER, "..", d)) if f.endswith(".py"))
+
+
+def ablegen(tk, teile):
+    import gzip
+    import pickle
+    os.makedirs(ABLAGE, exist_ok=True)
+    pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
+    with gzip.open(pfad + ".neu", "wb", compresslevel=3) as f:
+        pickle.dump(teile, f, protocol=pickle.HIGHEST_PROTOCOL)
+    os.replace(pfad + ".neu", pfad)
+
+
+def abgelegt(tk):
+    """Gespeicherte Titelseite oder None (fehlt, oder Programm bzw. Depot sind jünger)."""
+    import gzip
+    import pickle
+    import depot
+    pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
+    try:
+        zeit = os.path.getmtime(pfad)
+        juenger = [codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else [])
+        if zeit < max(juenger):
+            return None
+        with gzip.open(pfad, "rb") as f:
+            return pickle.load(f)
+    except Exception:  # noqa: BLE001 – dann wird gerechnet
+        return None
+
+
 def seite_titel(ticker, laufend=False, _stand=None):
     """Gibt drei Teile zurück: oben (Kopf bis Kacheln), chart (Zwischenstand für chartkarte), unten (ab Frühere Basen).
     Zwischen oben und Chart setzt app.py die Chart-Knöpfe. laufend=True: mit der unvollständigen Kerze des laufenden Börsentags (Knopf „Kurse aktualisieren“);

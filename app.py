@@ -399,8 +399,10 @@ elif ticker:
     lauf = st.session_state.get("laufend")
     args = (ticker, True, lauf[1]) if lauf and lauf[0] == ticker else (ticker,)
     try:
-        with st.spinner("Lade und rechne …"):
-            teile = _gebaut("titel", _codestand(), *args)
+        teile = titel.abgelegt(ticker) if len(args) == 1 else None   # vom Abendlauf fertig gebaut: sofort da
+        if teile is None:
+            with st.spinner("Lade und rechne …"):
+                teile = _gebaut("titel", _codestand(), *args)
         st.markdown(teile["oben"], unsafe_allow_html=True)
         ebene, aus, kurz = chart_knoepfe(ticker)
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, kurz), unsafe_allow_html=True)
