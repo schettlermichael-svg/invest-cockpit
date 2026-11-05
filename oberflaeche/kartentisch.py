@@ -176,13 +176,21 @@ def _neu(vorher, jetzt):
 SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Zeile darunter (aufklappbar) – nichts wird gefiltert
 
 
+ZIEL = 'target="_blank" rel="noopener"'   # Titelseite im neuen Tab: die Übersicht bleibt an ihrer Stelle stehen
+
+
+def _deepdive(tk, klein=False):
+    """Der eine Weg zur Titelseite – überall gleich beschriftet, öffnet einen neuen Tab."""
+    from gestaltung import BLAU, KARTE
+    return (f'<a href="?seite=Titelseite&t={tk}" {ZIEL} style="border:1px solid {BLAU};border-radius:8px;'
+            f'padding:{"2px 8px" if klein else "4px 12px"};font-size:{13 if klein else 14}px;font-weight:600;color:{BLAU};'
+            f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')
+
+
 def _link(tk, inhalt, kopf=""):
     """Karte mit einem einzigen Weg zur Titelseite: dem Knopf „Deep Dive →“ (die Karte selbst ist kein Link mehr).
     kopf: eine Zeile über der Karte (Watchlist-Reihe: eigentliche Reihe des Titels) rechts neben dem Knopf."""
-    from gestaltung import BLAU, KARTE, RAND
-    knopf = (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="border:1px solid {BLAU};border-radius:8px;'
-             f'padding:4px 12px;font-size:14px;font-weight:600;color:{BLAU};text-decoration:none;background:{KARTE};'
-             f'white-space:nowrap">Deep Dive →</a>')
+    knopf = _deepdive(tk)
     return (f'<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:'
             f'space-between;align-items:center;gap:8px">{kopf or "<span></span>"}{knopf}</div>{inhalt}</div>')
 
@@ -191,12 +199,11 @@ def _zeile(tk, x):
     from gestaltung import RAND, TEXT_2, punkt, t, zahl
     kl = x.get("kacheln") or {}
     setup = kl.get("Setup", ("grau", "–", ""))
-    return (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="display:grid;grid-template-columns:90px 22px 1fr '
-            f'1fr 110px;gap:10px;align-items:center;padding:8px 4px;border-top:1px solid {RAND};text-decoration:none;'
-            f'color:inherit;font-size:14px"><b>{t(tk)}</b>{punkt(setup[0], 12)}<span>{t(setup[1])}</span>'
-            f'<span style="color:{TEXT_2}">{t(x.get("zustand", ""))}</span>'
+    return (f'<div style="display:grid;grid-template-columns:90px 22px 1fr 1fr 80px 120px;gap:10px;align-items:center;'
+            f'padding:8px 4px;border-top:1px solid {RAND};font-size:14px"><b>{t(tk)}</b>{punkt(setup[0], 12)}'
+            f'<span>{t(setup[1])}</span><span style="color:{TEXT_2}">{t(x.get("zustand", ""))}</span>'
             f'<span style="font-family:IBM Plex Mono,monospace;text-align:right;color:{TEXT_2}">'
-            f'{zahl(x.get("abstand", 0), 1)} %</span></a>')
+            f'{zahl(x.get("abstand", 0), 1)} %</span>{_deepdive(tk, klein=True)}</div>')
 
 
 def _klapp(titel, zeile, inhalt):
@@ -236,7 +243,7 @@ def html(tisch=None):
         f'</div><div style="font-size:14px;color:{TEXT_2}">52-Wochen-Hochs : -Tiefs heute</div></div></div>')
     namen = {k: n for k, n, _ in REIHEN}
     neu = tisch.get("neu") or []
-    neu_html = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_self" style="border:1px solid {RAND};'
+    neu_html = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {RAND};'
                         f'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none">'
                         f'<b>{t(tk)}</b> <span style="color:{TEXT_2}">{t(text)}</span></a>' for tk, text in neu[:60])
                 or f'<span style="color:{TEXT_2}">nichts Neues gegenüber dem letzten Lauf</span>')
@@ -248,7 +255,7 @@ def html(tisch=None):
             termine.append((tage, tk, w[2].split(" ·")[0],
                             "Watchlist" if x.get("listen") else namen.get(x.get("reihe"), "")))
     termine.sort()
-    earn = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_self" style="border:1px solid {RAND};border-radius:8px;'
+    earn = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {RAND};border-radius:8px;'
                     f'padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{t(tk)}</b> '
                     f'<span style="color:{TEXT_2}">{t(d)} · {t(r)}</span></a>' for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
@@ -321,7 +328,7 @@ def _watchreihe(tisch):
             teil += (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
                      f'alle weiteren {len(rest) + len(fehlen)} zeigen</summary>'
                      + "".join(_zeile(tk, x) for tk, x in rest)
-                     + "".join(f'<a href="?seite=Titelseite&t={tk}" target="_self" style="display:block;padding:8px 4px;'
+                     + "".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:block;padding:8px 4px;'
                                f'border-top:1px solid {RAND};color:inherit;text-decoration:none;font-size:14px"><b>{t(tk)}'
                                f'</b> <span style="color:{TEXT_2}">neu – wird im Abendlauf gerechnet</span></a>'
                                for tk in fehlen) + '</details>')
@@ -394,7 +401,7 @@ def lagebild(tisch):
                           + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))
         tip = "<br>".join(zeilen)
         return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
-                f'<a href="?seite=Titelseite&t={tk}" target="_self" style="display:inline-block;border:1px solid {rand};'
+                f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:inline-block;border:1px solid {rand};'
                 f'border-radius:6px;padding:2px 7px;font-size:13px;font-family:IBM Plex Mono,monospace;color:inherit;'
                 f'text-decoration:none;white-space:nowrap">{t(text)}</a>'
                 f'<span class="hinweis-tip" style="left:0;right:auto;width:320px;font-family:IBM Plex Sans,system-ui">'

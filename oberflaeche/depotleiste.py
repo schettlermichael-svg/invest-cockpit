@@ -62,7 +62,7 @@ def leiste():
                        + (f'{zahl(p["stopp"])} {w}, {zahl(ab, 1)} % entfernt' if ab is not None else "fehlt"),
                        wichtig[1]))
     liste = "".join(
-        f'<a href="?seite=Titelseite&t={tk}" target="_self" style="display:grid;grid-template-columns:22px 90px 1fr;'
+        f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:grid;grid-template-columns:22px 90px 1fr;'
         f'gap:10px;align-items:center;padding:8px 4px;border-top:1px solid {RAND};color:inherit;text-decoration:none">'
         f'{punkt(a, 12)}<b>{t(tk)}</b><span>{t(text)}<br><span style="color:{TEXT_2};font-size:14px">{t(zz)}</span>'
         f'</span></a>' for tk, a, text, zz in zeilen) or f'<div style="color:{TEXT_2}">keine offenen Positionen</div>'
