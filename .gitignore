@@ -1,0 +1,15 @@
+# nur Code gehört nach GitHub – Daten, Zugänge und persönliche Einstellungen bleiben auf Mac bzw. Server
+zugang/
+daten/
+pruefgalerie/
+vorschau/
+_to_delete/
+einstellungen/*_schluessel.txt
+einstellungen/depot.json
+einstellungen/watchlists.json
+einstellungen/revier.csv
+einstellungen/sec_kontakt.txt
+__pycache__/
+.venv/
+.DS_Store
+*.neu

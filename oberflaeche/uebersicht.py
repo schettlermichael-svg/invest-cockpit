@@ -1,0 +1,156 @@
+"""Übersicht „Lage am Abend“: Kopf und Lageleiste (Wirtschaftswetter, Moral der Truppe,
+Markt-Ampel, Marktbreite), Kartentisch (Reihen mit Lagekarten, aus dem Abendlauf), Frontkarte der Sektoren, Übergänge,
+Stimmungskurve und Erklärung der Instrumente."""
+import os
+import sys
+import time
+
+HIER = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HIER, "..", "kern"))
+sys.path.insert(0, HIER)
+
+import lage                                                  # noqa: E402
+import marktdaten                                            # noqa: E402
+import marktrichtung                                         # noqa: E402
+from stimmung import kurve  # noqa: E402
+from frontkarte import frontkarte  # noqa: E402
+import uebergaenge                                           # noqa: E402
+import kartentisch                                           # noqa: E402
+import depotleiste                                           # noqa: E402
+from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, karte, punkt, seite, t, zahl)  # noqa: E402
+
+QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
+
+
+def _kachel(label, ampel, wert, pfeil, zeile):
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:20px;'
+            f'display:flex;flex-direction:column;gap:10px">'
+            f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(label)}</div>'
+            f'<div style="display:flex;align-items:center;gap:12px">'
+            f'<span style="width:22px;height:22px;border-radius:50%;background:{AMPEL[ampel]};flex-shrink:0"></span>'
+            f'<span style="font-size:26px;font-weight:600">{t(wert)}</span>'
+            f'<span style="font-size:24px;color:{TEXT_2}">{t(pfeil)}</span></div>'
+            f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div></div>')
+
+
+# Instrumente, die als Stand in Prozent vorliegen (alle übrigen: Veränderung zum Vorjahr)
+STAND = ("Weekly Economic Index", "GDPNow", "Breakeven-Inflation 5 Jahre")
+
+
+def _pendel_instrumente(m):
+    """Die vier Instrumente des Pendels als Ampeln: Name → (Ampel, Text)."""
+    stress = lambda rang: "grün" if rang >= 60 else "gelb" if rang >= 30 else "rot"   # noqa: E731
+    return {
+        "Kreditrisiko": (stress(m["kredit_rang"]),
+                         f'Hochzins gegen Staatsanleihen: Rang {zahl(m["kredit_rang"], 0)} von 100 in 10 Jahren '
+                         f'(100 = ruhig), {"+" if m["kredit_4w"] >= 0 else "−"}{zahl(abs(m["kredit_4w"]), 1)} Punkte in 4 Wochen'),
+        "Angstindex (VIX)": (stress(100 - m["vix_rang"]),
+                             f'{zahl(m["vix"], 1)} · Rang {zahl(m["vix_rang"], 0)} von 100 in 10 Jahren (100 = höchste Angst)'),
+        "Marktbreite": ("grün" if m["breite"] >= 60 else "gelb" if m["breite"] >= 40 else "rot",
+                        f'{zahl(m["breite"], 0)} % über GD200, vor 4 Wochen {zahl(m["breite"] - m["breite_4w"], 0)} %'),
+        "Überdehnung (Levy)": ("gelb" if m["levy"] >= 1.10 else "grün" if m["levy"] >= 1.0 else "rot",
+                               f'S&P 500 zum 26-Wochen-Schnitt: {zahl(m["levy"], 2)}'),
+    }
+
+
+def _bewegung(vorher, jetzt):
+    """Wie sich das Pendel in 4 Wochen bewegt hat, in Worten statt Pfeil."""
+    if vorher == jetzt:
+        return f"Seit 4 Wochen unverändert {jetzt}."
+    schritt = (lage.ZONEN.index(jetzt) - lage.ZONEN.index(vorher)) % len(lage.ZONEN)
+    if schritt <= 3:
+        return f"Vor 4 Wochen {vorher}: Der Zyklus läuft weiter."
+    if vorher in ("Überhitzung", "Topbildung"):
+        return f"Vor 4 Wochen {vorher}: Das Pendel schwingt zurück, die Überhitzung baut sich ab."
+    if vorher in ("Frühe Erholung", "Gesunder Aufwärtstrend"):
+        return f"Vor 4 Wochen {vorher}: Die Erholung hat einen Rückschlag erlitten."
+    return f"Vor 4 Wochen {vorher}: Das Pendel schwingt zurück."
+
+
+def _richtungsampel(r, gut="steigt"):
+    return "grau" if r == "unklar" else ("grün" if r == gut else "rot")
+
+
+def seite_uebersicht():
+    start = time.time()
+    q, p, a = lage.quadrant(), lage.pendel(), lage.marktampel()
+    mr = marktrichtung.richtung()
+    br = marktdaten.breite()
+    breite_zeichen = marktdaten.breite_pruefung()       # Plausibilitätswächter (Abdeckung, Sprünge, Quelle)
+    warnung = " ".join(f"⚠ {text}." for _, text in breite_zeichen)
+    schlimmste = "rot" if any(a == "rot" for a, _ in breite_zeichen) else "gelb" if breite_zeichen else None
+    m = p["messwerte"]
+    stand = br.index[-1]
+
+    w, i = q["wachstum"], q["inflation"]
+
+    def achse(name, a):
+        zahl_dafuer = a["steigt"] if a["richtung"] == "steigt" else a["fällt"]
+        return f'{name} {a["richtung"]} ({zahl_dafuer} von {a["von"]})'
+
+    amtlich = (f'Amtliche Zahlen noch Quad {q["amtlich"]}: Wechsel möglich.' if q["wechsel_moeglich"]
+               else f'Amtliche Zahlen bestätigen Quad {q["amtlich"]}.')
+    quad_zeile = f'{achse("Wachstum", w)}, {achse("Inflation", i)}. {amtlich} Typische Führer: {q["fuehrer"]}.'
+
+    instr = _pendel_instrumente(m)
+    gegen = [n for n, (a, _) in instr.items() if a != "grün"]
+    pendel_ampel = "gelb" if p["ampel"] == "grün" and len(gegen) >= 2 else p["ampel"]
+    pendel_zeile = _bewegung(p["vor_4_wochen"], p["zone"])
+    if breite_zeichen:
+        pendel_zeile += " ⚠ Marktbreite unsicher – Zone nur unter Vorbehalt."
+        pendel_ampel = schlimmste if pendel_ampel == "grün" or schlimmste == "rot" else pendel_ampel
+    if p["ampel"] == "grün" and gegen:
+        pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
+    kacheln = [
+        _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
+                f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
+        _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile),
+        _kachel("Markt-Ampel", mr["ampel"], mr["zustand"], "",
+                f'seit {mr["seit"]:%d.%m.%Y} · {mr["text"]} · {a["text"]} · '
+                f'{zahl(abs(a["abstand_hoch_pct"]), 1)} % unter dem 52-Wochen-Hoch'
+                + "".join(f" ⚠ {text}." for _, text in mr["zeichen"])),
+        _kachel("Marktbreite", schlimmste or ("grün" if m["breite"] >= 60 else "gelb" if m["breite"] >= 40 else "rot"),
+                f'{zahl(m["breite"], 0)} %', "↗" if m["breite_4w"] > 3 else "↘" if m["breite_4w"] < -3 else "→",
+                f'der 515 großen US-Werte über ihrem GD200 · {"+" if m["breite_4w"] >= 0 else "−"}'
+                f'{zahl(abs(m["breite_4w"]), 0)} Punkte in 4 Wochen' + (f" {warnung}" if warnung else "")),
+    ]
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "werkzeuge"))
+    import nachtlauf
+    _nacht = nachtlauf.stand()
+    kopf = (f'<header style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;'
+            f'gap:16px;border-bottom:1px solid {RAND};padding-bottom:16px">'
+            f'<div style="display:flex;flex-direction:column;gap:4px">'
+            f'<div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:{TEXT_3}">SEPA · Invest Cockpit</div>'
+            f'<h1 style="margin:0;font-size:32px;font-weight:600">Lage am Abend</h1></div>'
+            f'<div style="display:flex;gap:16px;font-size:14px;color:{TEXT_2}">'
+            f'<span>Stand {stand:%d.%m.%Y}</span>'
+            f'<span title="Datenampel aus dem Protokoll des Nachtlaufs (daten/nachtlauf/protokoll.json)" '
+            f'style="display:flex;gap:6px;align-items:center">{punkt(_nacht[0], 10)}{t(_nacht[1])}</span>'
+            f'<span style="font-family:IBM Plex Mono,monospace;color:{TEXT_3}">geladen in {zahl(time.time() - start, 1)} s</span>'
+            f'</div></header>')
+    leiste = (f'<section aria-label="Lageleiste" style="display:grid;grid-template-columns:repeat(auto-fit,'
+              f'minmax(240px,1fr));gap:16px">{"".join(kacheln)}</section>')
+
+    def zeile(achse_name, n, r, alt, neu):
+        if alt != alt:
+            return "keine Daten"
+        art = "Wert" if n in STAND else "Veränderung zum Vorjahr"
+        umgekehrt = " – mehr Anträge heißt weniger Wachstum" if "Erstanträge" in n else ""
+        return (f"{achse_name} {r}: {art} vor 13 Wochen {zahl(alt, 1)} %, heute {zahl(neu, 1)} %{umgekehrt}")
+
+    makro = "".join(ampelzeile(f"Wachstum · {n}", _richtungsampel(r), zeile("Wachstum", n, r, alt, neu))
+                    for n, (r, d, alt, neu) in w["instrumente"].items())
+    makro += "".join(ampelzeile(f"Inflation · {n}", "grau" if r == "unklar" else "gelb" if r == "steigt" else "blau",
+                                zeile("Inflation", n, r, alt, neu)) for n, (r, d, alt, neu) in i["instrumente"].items())
+    makro += ampelzeile("Amtlich (Bestätigung)", "blau",
+                        f'BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise {zahl(q["cpi_rate"], 1)} %')
+    pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
+    farbe = {"grün": "#56D364", "gelb": "#E3B341", "rot": "#FF7B72"}[p["ampel"]]
+    stimmung = karte(f'<div style="font-size:14px;color:{TEXT_2}">Wo der Gesamtmarkt im Zyklus steht – '
+                     f'eingeordnet aus Kreditrisiko, Angstindex, Marktbreite und Überdehnung. Eine Einordnung, '
+                     f'keine Vorhersage: Märkte überspringen Zonen oder durchlaufen sie mehrfach.</div>'
+                     + kurve([{"zone": p["zone"], "vorher": p["vor_4_wochen"], "name": "Gesamtmarkt", "farbe": farbe}]),
+                     "Stimmungskurve")
+    erkl = (f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
+            f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
+    return seite(kopf + leiste + frontkarte(q) + uebergaenge.tafel(q) + depotleiste.leiste() + kartentisch.html() + stimmung + erkl)

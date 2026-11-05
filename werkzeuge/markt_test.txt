@@ -1,0 +1,62 @@
+Daten: S&P 500 02.01.1985–30.10.2026, Volumen ab 1985, Nasdaq 02.01.1985–30.10.2026, Volumen ab 1985
+
+Follow-Through-Schwelle +1.0 %
+  🟢 Boden Okt. 1990 (Buch: Tag 5)                FTD 18.10.1990 (S&P 500, Tag 5, +2.3 %)
+  🟢 1. Versuch Sept. 1998 (Buch: Tag 5, scheiterte) FTD 08.09.1998 (Nasdaq, Tag 5, +6.0 %)
+  🟢 Boden Okt. 1998 (Buch: Tag 5/6)              FTD 14.10.1998 (S&P 500, Tag 4, +1.1 %)
+  🟢 Boden März 2003, Nasdaq (Buch: Tag 4)        FTD 17.03.2003 (S&P 500, Tag 4, +3.5 %)
+  🟢 Boden März 2009 (IBD-Datum)                  FTD 12.03.2009 (S&P 500, Tag 3, +4.1 %)
+  🟢 S&P 500 Juli 1990                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 23.07.1990 (+5 Tage)
+  🟢 S&P 500 Febr. 1994                           vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 10.02.1994 (+6 Tage)
+  🟢 S&P 500 Juli 1998                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 4 Distributionstage; Korrektur ab 21.07.1998 (+2 Tage)
+  🟢 Nasdaq März 2000                             vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 30.03.2000 (+14 Tage)
+  🟢 Nasdaq Sept. 2000                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 2 Distributionstage; Korrektur ab 12.09.2000 (+6 Tage)
+  🔴 Nasdaq Okt. 2007                             vor dem Hoch: Korrektur, am Hoch 1 Distributionstage; Korrektur ab 24.10.2007 (-5 Tage)
+  Orientierung seit 1990: 7.0 Korrekturen je Jahr, 4.2 FTD je Jahr, davon 59 % binnen 25 Tagen gescheitert; Tage: Bestätigter Aufwärtstrend 54 %, Korrektur 32 %, Aufwärtstrend unter Druck 13 %
+
+Follow-Through-Schwelle +1.25 %
+  🟢 Boden Okt. 1990 (Buch: Tag 5)                FTD 18.10.1990 (S&P 500, Tag 5, +2.3 %)
+  🟢 1. Versuch Sept. 1998 (Buch: Tag 5, scheiterte) FTD 08.09.1998 (Nasdaq, Tag 5, +6.0 %)
+  🟢 Boden Okt. 1998 (Buch: Tag 5/6)              FTD 14.10.1998 (Nasdaq, Tag 4, +2.1 %)
+  🟢 Boden März 2003, Nasdaq (Buch: Tag 4)        FTD 17.03.2003 (S&P 500, Tag 4, +3.5 %)
+  🟢 Boden März 2009 (IBD-Datum)                  FTD 12.03.2009 (S&P 500, Tag 3, +4.1 %)
+  🟢 S&P 500 Juli 1990                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 23.07.1990 (+5 Tage)
+  🟢 S&P 500 Febr. 1994                           vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 10.02.1994 (+6 Tage)
+  🟢 S&P 500 Juli 1998                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 4 Distributionstage; Korrektur ab 21.07.1998 (+2 Tage)
+  🟢 Nasdaq März 2000                             vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 5 Distributionstage; Korrektur ab 10.03.2000 (+0 Tage)
+  🟢 Nasdaq Sept. 2000                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 2 Distributionstage; Korrektur ab 12.09.2000 (+6 Tage)
+  🔴 Nasdaq Okt. 2007                             vor dem Hoch: Korrektur, am Hoch 1 Distributionstage; Korrektur ab 24.10.2007 (-5 Tage)
+  Orientierung seit 1990: 6.7 Korrekturen je Jahr, 3.7 FTD je Jahr, davon 60 % binnen 25 Tagen gescheitert; Tage: Bestätigter Aufwärtstrend 52 %, Korrektur 35 %, Aufwärtstrend unter Druck 13 %
+
+Follow-Through-Schwelle +1.5 %
+  🟢 Boden Okt. 1990 (Buch: Tag 5)                FTD 18.10.1990 (S&P 500, Tag 5, +2.3 %)
+  🟢 1. Versuch Sept. 1998 (Buch: Tag 5, scheiterte) FTD 08.09.1998 (Nasdaq, Tag 5, +6.0 %)
+  🟢 Boden Okt. 1998 (Buch: Tag 5/6)              FTD 14.10.1998 (Nasdaq, Tag 4, +2.1 %)
+  🔴 Boden März 2003, Nasdaq (Buch: Tag 4)        kein FTD in ±2 Tagen; letzter davor 27.02.2003
+  🟢 Boden März 2009 (IBD-Datum)                  FTD 12.03.2009 (S&P 500, Tag 3, +4.1 %)
+  🟢 S&P 500 Juli 1990                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 23.07.1990 (+5 Tage)
+  🟢 S&P 500 Febr. 1994                           vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 10.02.1994 (+6 Tage)
+  🟢 S&P 500 Juli 1998                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 4 Distributionstage; Korrektur ab 21.07.1998 (+2 Tage)
+  🟢 Nasdaq März 2000                             vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 5 Distributionstage; Korrektur ab 10.03.2000 (+0 Tage)
+  🟢 Nasdaq Sept. 2000                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 2 Distributionstage; Korrektur ab 12.09.2000 (+6 Tage)
+  🟢 Nasdaq Okt. 2007                             vor dem Hoch: Aufwärtstrend unter Druck, am Hoch 1 Distributionstage; Korrektur ab 24.10.2007 (-5 Tage)
+  Orientierung seit 1990: 6.4 Korrekturen je Jahr, 3.1 FTD je Jahr, davon 58 % binnen 25 Tagen gescheitert; Tage: Bestätigter Aufwärtstrend 51 %, Korrektur 37 %, Aufwärtstrend unter Druck 12 %
+
+Follow-Through-Schwelle +1.7 %
+  🟢 Boden Okt. 1990 (Buch: Tag 5)                FTD 18.10.1990 (S&P 500, Tag 5, +2.3 %)
+  🟢 1. Versuch Sept. 1998 (Buch: Tag 5, scheiterte) FTD 08.09.1998 (Nasdaq, Tag 5, +6.0 %)
+  🟢 Boden Okt. 1998 (Buch: Tag 5/6)              FTD 14.10.1998 (Nasdaq, Tag 4, +2.1 %)
+  🟢 Boden März 2003, Nasdaq (Buch: Tag 4)        FTD 17.03.2003 (S&P 500, Tag 4, +3.5 %)
+  🟢 Boden März 2009 (IBD-Datum)                  FTD 12.03.2009 (S&P 500, Tag 3, +4.1 %)
+  🟢 S&P 500 Juli 1990                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 23.07.1990 (+5 Tage)
+  🟢 S&P 500 Febr. 1994                           vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 3 Distributionstage; Korrektur ab 10.02.1994 (+6 Tage)
+  🟢 S&P 500 Juli 1998                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 4 Distributionstage; Korrektur ab 21.07.1998 (+2 Tage)
+  🟢 Nasdaq März 2000                             vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 5 Distributionstage; Korrektur ab 10.03.2000 (+0 Tage)
+  🟢 Nasdaq Sept. 2000                            vor dem Hoch: Bestätigter Aufwärtstrend, am Hoch 2 Distributionstage; Korrektur ab 12.09.2000 (+6 Tage)
+  🟢 Nasdaq Okt. 2007                             vor dem Hoch: Aufwärtstrend unter Druck, am Hoch 1 Distributionstage; Korrektur ab 24.10.2007 (-5 Tage)
+  Orientierung seit 1990: 6.3 Korrekturen je Jahr, 2.9 FTD je Jahr, davon 58 % binnen 25 Tagen gescheitert; Tage: Bestätigter Aufwärtstrend 50 %, Korrektur 38 %, Aufwärtstrend unter Druck 12 %
+
+Treffer je Schwelle: +1.0 %: 10/11, +1.25 %: 10/11, +1.5 %: 10/11, +1.7 %: 11/11
+Gewählt: +1.7 %
+
+Heute: Korrektur seit 22.10.2026 · Distributionstage S&P 500 7 · Nasdaq 4 in 5 Wochen · noch kein Erholungsversuch

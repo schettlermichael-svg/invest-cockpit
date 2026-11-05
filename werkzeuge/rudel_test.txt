@@ -1,0 +1,89 @@
+Stand 30.10.2026: 1859 Titel mit mindestens 120 Tagen
+🟢 1. HWM: GE 0.60 eng (Aerospace & Defense), ATI 0.57 eng (Metal Fabrication), CW 0.56 eng (Aerospace & Defense), HXL 0.53 eng (Aerospace & Defense), CRS 0.51 eng (Metal Fabrication)
+      Ø Gleichlauf zu den Verwandten 0.55 gegen Ø zum Industriesektor (274 Titel) 0.13; Thema: Aerospace & Defense
+🟢 2. KI-Gruppen von selbst: 3
+      Thema 4 „Semiconductor Equipment & Materials · Electronic Components“ (53 Titel, Gleichlauf 0.48): 9 KI-Titel – AMAT, ASML, CIEN, COHR, KLAC, LITE, LRCX, MU, TSM
+      Thema 11 „Engineering & Construction · Electrical Equipment & Parts“ (18 Titel, Gleichlauf 0.49): 4 KI-Titel – ETN, GEV, PWR, VRT
+      Thema 27 „Capital Markets · Software - Infrastructure“ (9 Titel, Gleichlauf 0.59): 3 KI-Titel – CRWV, IREN, NBIS
+🟢 3. JPM–BAC: 0.68 (erwartet ab 0.5)
+🟢 3. XOM–CVX: 0.83 (erwartet ab 0.5)
+🟢 3. Gold-Minen gemeinsam: Gold · Copper
+🟢 4. XOM–ADBE: 0.00 (erwartet unter 0.35)
+
+Themen-Gruppen: 70, darin 1003 Titel
+   1. Software - Application · Software - Infrastructure            86 Titel, Gleichlauf 0.5: CRM HUBS NOW ADBE WDAY INTU DOCU BOX FRSH ASAN
+   2. Banks - Regional · Credit Services                            72 Titel, Gleichlauf 0.64: AXP COF SYF ALLY OMF BFH USB PNC TFC FITB
+   3. Residential Construction · Packaging & Containers             61 Titel, Gleichlauf 0.49: HD LOW SHW PPG RPM DHI PHM TOL KBH MTH
+   4. Semiconductor Equipment & Materials · Electronic Components   53 Titel, Gleichlauf 0.48: MU SNDK STX WDC TSM ASX AMAT LRCX KLAC ONTO
+   5. REIT - Retail · REIT - Industrial                             48 Titel, Gleichlauf 0.5: PLD EGP TRNO FR STAG REXR LXP O NNN ADC
+   6. Utilities - Regulated Electric · Utilities - Regulated Gas    43 Titel, Gleichlauf 0.58: NEE SO DUK XEL WEC AEE LNT CNP CMS DTE
+   7. Oil & Gas E&P · Oil & Gas Integrated                          42 Titel, Gleichlauf 0.58: XOM CVX SHEL BP TTE E EQNR COP EOG DVN
+   8. Insurance - Property & Casualty · Insurance Brokers           41 Titel, Gleichlauf 0.47: V MA AON MRSH AJG BRO WTW RYAN GSHD KNSL
+   9. Gold · Copper                                                 35 Titel, Gleichlauf 0.66: FCX SCCO HBM ERO BHP RIO TECK VALE NEM AEM
+  10. Packaged Foods · Household & Personal Products                19 Titel, Gleichlauf 0.49: KO CCEP PEP PG CL CHD UL KMB CLX HSY
+  11. Engineering & Construction · Electrical Equipment & Parts     18 Titel, Gleichlauf 0.49: GEV VRT ETN NVT PWR FIX EME MYRG MTZ STRL
+  12. Software - Infrastructure · Software - Application            16 Titel, Gleichlauf 0.51: CRWD PANW OKTA RBRK ZS SAIL S TENB QLYS NTSK
+  13. REIT - Hotel & Motel · Lodging                                16 Titel, Gleichlauf 0.55: HLT MAR H IHG TNL HGV HST PK APLE DRH
+  14. Trucking · Integrated Freight & Logistics                     15 Titel, Gleichlauf 0.51: ODFL SAIA ARCB XPO JBHT KNX WERN SNDR TFII R
+  15. Drug Manufacturers - General · Biotechnology                  13 Titel, Gleichlauf 0.47: LLY JNJ AMGN NVS RPRX AZN GSK MRK PFE BMY
+  16. Semiconductors                                                13 Titel, Gleichlauf 0.53: TXN ADI MCHP ON NXPI STM GFS LSCC DIOD VSH
+  17. Diagnostics & Research · Medical Devices                      13 Titel, Gleichlauf 0.49: TMO DHR RGEN A MTD RVTY BRKR WAT BIO IQV
+  18. Specialty Industrial Machinery · Industrial Distribution      13 Titel, Gleichlauf 0.46: PH WAB AIT CR AME WCC RBC TKR NPO HLIO
+  19. Oil & Gas Midstream · Marine Shipping                         13 Titel, Gleichlauf 0.65: FRO DHT INSW TNK TEN ECO STNG TRMD HAFN CMBT
+  20. Airlines · Travel Services                                    12 Titel, Gleichlauf 0.53: AAL DAL UAL ALGT ALK LUV SKYW RCL CCL NCLH
+  21. Oil & Gas Midstream                                           12 Titel, Gleichlauf 0.56: WMB KMI DTM AM TRGP OKE ENB TRP PBA SOBO
+  22. Specialty Industrial Machinery · Tools & Accessories          12 Titel, Gleichlauf 0.47: PCAR ITW AOS IR SNA DOV IEX NDSN LECO ESAB
+  23. Aerospace & Defense                                           11 Titel, Gleichlauf 0.48: RTX LMT NOC LHX GD HII AVAV KTOS KRMN MRCY
+  24. Asset Management                                              11 Titel, Gleichlauf 0.64: BX KKR ARES APO CG TPG OWL HLNE STEP BN
+  25. Insurance - Life · Asset Management                           11 Titel, Gleichlauf 0.53: MET PRU PFG CRBG EQH VOYA LNC JXN RGA CNO
+  26. Oil & Gas Equipment & Services                                10 Titel, Gleichlauf 0.54: SLB WFRD HAL NOV BKR FTI TS OII WHD INVX
+  27. Capital Markets · Software - Infrastructure                    9 Titel, Gleichlauf 0.59: NBIS CRWV IREN APLD WULF CORZ HUT RIOT GLXY
+  28. Banks - Diversified · Capital Markets                          9 Titel, Gleichlauf 0.51: JPM BAC WFC C GS MS BNY STT NTRS
+  29. Medical Devices · Medical Instruments & Supplies               9 Titel, Gleichlauf 0.45: MDT SYK STE ABT COO ALC SNN GEHC PHG
+  30. Aerospace & Defense · Communication Equipment                  9 Titel, Gleichlauf 0.5: RKLB LUNR ASTS FLY VOYG PL VSAT IRDM MDA
+  31. Oil & Gas Refining & Marketing · Specialty Chemicals           9 Titel, Gleichlauf 0.68: VLO MPC PSX DINO PBF DK PARR CVI CLMT
+  32. REIT - Healthcare Facilities · REIT - Residential              9 Titel, Gleichlauf 0.66: WELL VTR AHR OHI CTRE SBRA LTC NHI JAN
+  33. Oil & Gas E&P · Oil & Gas Integrated                           9 Titel, Gleichlauf 0.61: EQT EXE RRC AR GPOR CRK CNX BKV NFG
+  34. Software - Infrastructure · Information Technology Services    9 Titel, Gleichlauf 0.47: FISV FIS GPN EEFT TOST DXC PAY FLYW FOUR
+  35. Aerospace & Defense                                            8 Titel, Gleichlauf 0.47: GE HWM SARO HEI VSEC AIR LOAR TDG
+  36. Computer Hardware · Other Industrial Metals & Mining           8 Titel, Gleichlauf 0.55: IONQ QBTS RGTI OKLO LEU XE MP USAR
+  37. Real Estate Services · Internet Content & Information          8 Titel, Gleichlauf 0.55: CBRE JLL CWK NMRK CIGI CSGP Z FSV
+  38. Banks - Diversified · Banks - Regional                         8 Titel, Gleichlauf 0.54: HSBC SAN BBVA BCS NWG DB ING UBS
+  39. Capital Markets                                                8 Titel, Gleichlauf 0.53: EVR MC PJT PIPR HLI LAZ JEF PWP
+  40. Insurance - Specialty · Insurance - Property & Casualty        8 Titel, Gleichlauf 0.6: FNF FAF STC MTG NMIH ESNT ACT RDN
+  41. Staffing & Employment Services · Information Technology Serv   8 Titel, Gleichlauf 0.49: RHI MAN KFY TNET NSP CNXC HRB FA
+  42. Capital Markets · Software - Application                       7 Titel, Gleichlauf 0.58: MSTR COIN BMNR CRCL ASST HOOD BLSH
+  43. Healthcare Plans                                               7 Titel, Gleichlauf 0.47: UNH CVS ELV HUM CNC MOH OSCR
+  44. Farm & Heavy Construction Machinery · Tools & Accessories      7 Titel, Gleichlauf 0.49: DE CNH AGCO ALG OSK TEX TTC
+  45. Steel · Metal Fabrication                                      7 Titel, Gleichlauf 0.5: NUE STLD RS CMC CLF MT TX
+  46. Specialty Chemicals · Chemicals                                7 Titel, Gleichlauf 0.57: DOW LYB CE OLN WLK EMN CC
+  47. Apparel Manufacturing · Luxury Goods                           7 Titel, Gleichlauf 0.45: RL LEVI PVH VFC COLM CPRI KTB
+  48. Information Technology Services · Consulting Services          7 Titel, Gleichlauf 0.49: CACI LDOS BAH SAIC KBR AMTM PSN
+  49. REIT - Office                                                  7 Titel, Gleichlauf 0.72: BXP VNO SLG CUZ HIW KRC DEI
+  50. Building Products & Equipment · Farm & Heavy Construction Ma   6 Titel, Gleichlauf 0.48: CAT CMI ENS TT JCI MOD
+  51. Capital Markets · Asset Management                             6 Titel, Gleichlauf 0.57: SCHW AMP RJF SF LPLA SEIC
+  52. Asset Management                                               6 Titel, Gleichlauf 0.45: BLK IVZ FHI APAM BEN TROW
+  53. Restaurants                                                    6 Titel, Gleichlauf 0.47: EAT DRI CAKE TXRH BJRI CBRL
+  54. Auto & Truck Dealerships                                       6 Titel, Gleichlauf 0.65: PAG LAD AN GPI ABG SAH
+  55. Travel Services · Internet Content & Information               5 Titel, Gleichlauf 0.52: BKNG EXPE ABNB CARG YELP
+  56. Financial Data & Stock Exchanges                               5 Titel, Gleichlauf 0.63: SPGI MCO MSCI ICE NDAQ
+  57. Credit Services · Software - Application                       5 Titel, Gleichlauf 0.45: SOFI AFRM UPST DAVE SEZL
+  58. Health Information Services · Diagnostics & Research           5 Titel, Gleichlauf 0.46: ILMN TWST TXG TEM SDGR
+  59. Railroads                                                      5 Titel, Gleichlauf 0.7: UNP NSC CSX CP CNI
+  60. Waste Management                                               5 Titel, Gleichlauf 0.59: WM RSG WCN CWST GFL
+  61. Drug Manufacturers - Specialty & Generic · Residential Const   5 Titel, Gleichlauf 0.47: ZTS IBP VNT GPGI PLNT
+  62. Beverages - Brewers · Beverages - Wineries & Distilleries      5 Titel, Gleichlauf 0.48: STZ TAP SAM BUD DEO
+  63. Banks - Diversified                                            5 Titel, Gleichlauf 0.73: RY TD BNS CM BMO
+  64. REIT - Mortgage                                                5 Titel, Gleichlauf 0.57: NLY DX ARR STWD BXMT
+  65. Resorts & Casinos                                              5 Titel, Gleichlauf 0.46: CZR MGM PENN BYD RRR
+  66. Auto Parts                                                     5 Titel, Gleichlauf 0.52: ALV LEA MGA GNTX VC
+  67. Asset Management                                               5 Titel, Gleichlauf 0.59: ARCC OBDC HTGC MAIN FSK
+  68. Biotechnology                                                  5 Titel, Gleichlauf 0.48: CRSP BEAM NTLA ABCL ABSI
+  69. Consulting Services · Specialty Business Services              5 Titel, Gleichlauf 0.49: CBZ HURN FCN EXPO CRAI
+  70. Specialty Chemicals                                            5 Titel, Gleichlauf 0.49: FUL AVNT IOSP CBT KWR
+
+Rudel HWM (Branche Aerospace & Defense): 5 von 39 im Trend, 7 nahe am Hoch, Ampel rot, Einsamer Wolf: False; Mansfield der Gruppe {'wert': -12.8, 'richtung': 0.8, 'ampel': 'gelb'}
+Mansfield HWM: {'wert': -20.9, 'richtung': -10.1, 'ampel': 'rot'}
+Einsame Wölfe im Revier: 91 – V, MA, APH, RTX, DE, ABNB, LMT, DAL, JCI, ROST, EBAY, EMR, ITW, AME, ROK, CF, CART, JHX, ETSY, SPG, ANF, GRMN, CDW, W, EXPD
+
+Ergebnis: 6 von 6 Prüfungen bestanden

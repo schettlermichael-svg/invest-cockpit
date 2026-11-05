@@ -1,0 +1,154 @@
+"""Lagekarte (4.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite, Übersicht (Kartentisch) und in
+den Watchlists. Aufbau: Kopf mit Setup, Chips (Zone, RS, Phase, Base), Belegzeile der Zone, Kleinchart 6 Monate mit
+Zonenrahmen, Wertbereich und POC-Treppe, sechs Ampelpunkte (Markt, Phase, Zone, Branche, RS, Fundament – dieselben
+Ampeln wie die Kacheln, Maus darauf zeigt deren Zeile), Abstand zum Pivot bzw. Auslöser, Fußzeile mit Stopp und
+nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den Kacheln bzw. der Erkennung."""
+import numpy as np
+
+from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
+
+TREPPE = "#FFA657"
+PUNKTE = (("Markt", "Markt"), ("Phase", "Phase"), ("Zone", "Zone"), ("Branche", "Branche"),
+          ("RS", "Relative Stärke"), ("Fundament", "Fundament"))
+
+
+def _chip(text, ampel=None):
+    f = AMPEL.get(ampel) if ampel else None
+    rand = f if f else RAND
+    farbe = f if f else TEXT_2
+    return (f'<span style="border:1px solid {rand};color:{farbe};border-radius:6px;padding:3px 9px;font-size:13px;'
+            f'white-space:nowrap">{t(text)}</span>')
+
+
+def _kleinchart(df, erk, tage=126):
+    d = df.iloc[-tage:]
+    c = d["Close"].to_numpy(float)
+    W, H, P = 420, 120, 6
+    werte = list(d["High"]) + list(d["Low"])
+    mp = erk.get("mp")
+    zonen = [z for z in (mp or {}).get("zonen", []) if z["ende"] >= d.index[0]]
+    pivot = (erk.get("werte") or {}).get("pivot") if (erk.get("muster") or erk.get("short")) else None
+    lo, hi = min(werte), max(werte)
+    if pivot:
+        lo, hi = min(lo, pivot), max(hi, pivot)
+    lo, hi = lo * 0.985, hi * 1.015
+
+    def X(i):
+        return P + (W - 2 * P) * i / max(1, len(c) - 1)
+
+    def Y(p):
+        return P + (H - 2 * P) * (1 - (np.log(p) - np.log(lo)) / (np.log(hi) - np.log(lo)))
+
+    def pos(tag):
+        return min(int(d.index.searchsorted(tag)), len(c) - 1)
+    s = [f'<svg viewBox="0 0 {W} {H}" width="100%" style="display:block;margin:10px 0 6px" role="img" '
+         f'aria-label="Kleinchart 6 Monate mit Zonen">']
+    treppe, vor = [], None
+    for k, z in enumerate(zonen):
+        letzte = k == len(zonen) - 1
+        x0 = X(pos(z["beginn"])) if z["beginn"] >= d.index[0] else P
+        x1 = W - P if letzte else X(pos(z["ende"]))
+        s.append(f'<rect x="{x0:.1f}" y="{Y(z["vah"]):.1f}" width="{max(1, x1 - x0):.1f}" '
+                 f'height="{max(1, Y(z["val"]) - Y(z["vah"])):.1f}" fill="{BLAU}" fill-opacity="0.13"/>'
+                 f'<rect x="{x0:.1f}" y="{Y(z["hoch"]):.1f}" width="{max(1, x1 - x0):.1f}" '
+                 f'height="{max(1, Y(z["tief"]) - Y(z["hoch"])):.1f}" fill="none" stroke="{BLAU}" '
+                 f'stroke-opacity="{0.9 if letzte else 0.35}" stroke-width="1"'
+                 + (' stroke-dasharray="4 3"' if letzte else "") + '/>')
+        if vor is not None and treppe:
+            treppe.append((x0, Y(vor["poc"])))
+        treppe += [(x0, Y(z["poc"])), (x1, Y(z["poc"]))]
+        vor = z
+    if len(treppe) >= 2:
+        s.append(f'<polyline points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in treppe)}" fill="none" '
+                 f'stroke="{TREPPE}" stroke-width="2"/>')
+    if pivot:
+        s.append(f'<line x1="{P}" x2="{W - P}" y1="{Y(pivot):.1f}" y2="{Y(pivot):.1f}" stroke="{TEXT_2}" '
+                 f'stroke-width="1" stroke-dasharray="5 4"/>')
+    s.append(f'<polyline points="{" ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(c))}" fill="none" '
+             f'stroke="{TEXT}" stroke-width="1.5"/>')
+    s.append("</svg>")
+    return "".join(s)
+
+
+def _abstand(erk, kurs):
+    """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe)."""
+    w = erk.get("werte") or {}
+    if erk.get("short") and "pivot" in w:
+        ab = (kurs / w["pivot"] - 1) * 100
+        anteil = min(1.0, max(0.0, 1 - ab / 10)) if ab >= 0 else 1.0
+        return "Abstand zum Auslöser (short)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, ROT
+    if erk.get("muster") and "pivot" in w:
+        ab = (kurs / w["pivot"] - 1) * 100
+        anteil = min(1.0, max(0.0, 1 + ab / 10)) if ab <= 0 else 1.0
+        return "Abstand zum Pivot (long)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, \
+            (GRUEN if 0 <= ab <= 5 else BLAU)
+    return "Abstand zum Pivot", "kein Setup", 0.0, GRAU
+
+
+def _stopp(erk):
+    w = erk.get("werte") or {}
+    if erk.get("short") and "pivot" in w:
+        p, val = w["pivot"], w.get("val")
+        if val and val <= p * 1.08:
+            return f"Stopp: Schluss über {zahl(val)} $ (VAL)"
+        return f"Stopp: {zahl(p * 1.08)} $ (+8 %)"
+    if erk.get("muster") and "pivot" in w:
+        p, vah = w["pivot"], w.get("vah")
+        if vah and p * 0.92 <= vah < p:
+            return f"Stopp: Schluss unter {zahl(vah)} $ (VAH)"
+        return f"Stopp: {zahl(p * 0.92)} $ (−8 %)"
+    return "kein Einstieg"
+
+
+def _groesse(tk, erk):
+    """Stückzahl und Risiko für das Setup (Schritt 9) – nur mit eingetragenem Konto."""
+    import depot
+    pl = depot.plan(erk)
+    if not pl:
+        return ""
+    sz = depot.stueckzahl(tk, pl[1], pl[2])
+    if not sz:
+        return ""
+    anteil = f" · {zahl(sz['anteil'], 0)} % des Kontos" if sz.get("anteil") else ""
+    return (f'<div style="font-size:13px;color:{TEXT_2}">Stück {sz["stueck"]} · Risiko {zahl(sz["risiko"], 0)} €'
+            f'{anteil}</div>')
+
+
+def karte(tk, branche, erk, kacheln, df, liste=None):
+    """kacheln: {Beschriftung: (Ampel, Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
+    def kz(name, default=("grau", "–", "")):
+        return kacheln.get(name, default)
+    setup = kz("Setup")
+    zone = kz("Zone")
+    rs = kz("Relative Stärke")
+    phase = kz("Phase")
+    base = kz("Base")
+    kurs = float(df["Close"].iloc[-1])
+    titel_, wert_, anteil, farbe_ = _abstand(erk, kurs)
+    punkte = "".join(
+        f'<div title="{t(name)}: {t(kz(k)[1])} · {t(kz(k)[2])}" style="display:flex;flex-direction:column;'
+        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{punkt(kz(k)[0], 14)}{name}</div>'
+        for name, k in PUNKTE)
+    zahlen = kz("Nächste Zahlen")
+    zahlen_text = f"Zahlen {zahlen[1]}" if zahlen[1] != "–" else "kein Zahlentermin"
+    return (
+        f'<article aria-label="Lagekarte {t(tk)}" style="background:{KARTE};border:1px solid {RAND};border-radius:14px;'
+        f'padding:16px 18px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box">'
+        f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'
+        f'<div><div style="font-size:26px;font-weight:600">{t(tk.upper())}</div>'
+        f'<div style="font-size:14px;color:{TEXT_2}">{t(branche)}</div>'
+        + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
+        f'</div><div title="{t(setup[2])}" style="background:#1C2430;border:1px solid {AMPEL.get(setup[0], RAND)};'
+        f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">{t(setup[1])}</div></div>'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Zone: " + zone[1], zone[0])}'
+        f'{_chip(rs[1], rs[0])}{_chip(phase[1], phase[0])}{_chip("Base " + base[1], base[0])}</div>'
+        f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'
+        f'{_kleinchart(df, erk)}'
+        f'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">{punkte}</div>'
+        f'<div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px">'
+        f'<span>{titel_}</span><span style="font-family:IBM Plex Mono,monospace">{wert_}</span></div>'
+        f'<div style="height:6px;background:#0F141B;border-radius:3px"><div style="width:{anteil * 100:.0f}%;height:6px;'
+        f'background:{farbe_};border-radius:3px"></div></div>'
+        f'<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:{TEXT_2};'
+        f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{_stopp(erk)}</span>'
+        f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk)}</article>')
