@@ -241,13 +241,15 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
                           f'fill="{TEXT}" font-size="13" text-anchor="end">Pivot {zahl(pivot)}</text>')
             spaete.append(f'<text x="{X(ip) - 8:.1f}" y="{platz(X(ip) - 8, Y(pivot * 1.05) + 4, "Kaufzone +5 %", 13, "end"):.1f}" '
                           f'fill="{GRUEN}" font-size="13" text-anchor="end">Kaufzone +5 %</text>')
-        fuss = f'{werte.get("wochen") or round(werte.get("dauer_tage", 0) / 5)} Wochen, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
-        nr = f' Nr. {werte["basenzahl"]}' if werte.get("basenzahl") else ""
+        wo_ = werte.get("wochen") or round(werte.get("dauer_tage", 0) / 5)
+        fuss = f'{wo_} {"Woche" if wo_ == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
+        nr = f' · Base Nr. {werte["basenzahl"]}' if werte.get("basenzahl") else ""
         oben_y = min(Y(hoch_b), Y(pivot * 1.05) if pivot else Y(hoch_b)) - 12
         titel_ = f'{basename(muster)}{nr} · {fuss}'
         fh_ = form_hinweis(muster)
-        A(f'<text x="{X(N - 1) + 4:.1f}" y="{platz(X(N - 1) + 4, oben_y, titel_, 14, "end"):.1f}" fill="{BLAU}" font-size="14" '
-          f'font-weight="600" text-anchor="end">' + (f'<title>{fh_}</title>' if fh_ else "") + f'{titel_}</text>')
+        spaete.append(f'<text x="{X(N - 1) + 4:.1f}" y="{platz(X(N - 1) + 4, oben_y, titel_, 14, "end"):.1f}" fill="{BLAU}" '
+                      f'font-size="14" font-weight="600" text-anchor="end">' + (f'<title>{fh_}</title>' if fh_ else "")
+                      + f'{titel_}</text>')
 
     kurz_ = (erk or {}).get("short")
     if kurz_ and "pivot" in werte:
@@ -260,7 +262,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
           f'stroke-width="1.5" stroke-dasharray="6 4"/>')
         spaete.append(f'<text x="{X(ip_) - 8:.1f}" y="{platz(X(ip_) - 8, Y(sp_) - 6, f"Auslöser short {zahl(sp_)}", 13, "end"):.1f}" '
                       f'fill="{TEXT}" font-size="13" text-anchor="end">Auslöser short {zahl(sp_)}</text>')
-        titel_s = f'Short · {kurz_["art"] if kurz_["art"] != "Base" else "Zone"} {werte.get("wochen")} Wochen, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
+        titel_s = f'Short · {kurz_["art"] if kurz_["art"] != "Base" else "Zone"} {werte.get("wochen")} {"Woche" if werte.get("wochen") == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
         A(f'<text x="{X(N - 1) + 4:.1f}" y="{platz(X(N - 1) + 4, Y(werte["zone_oberkante"]) - 12, titel_s, 14, "end"):.1f}" '
           f'fill="{ROT}" font-size="14" font-weight="600" text-anchor="end">{titel_s}</text>')
 
