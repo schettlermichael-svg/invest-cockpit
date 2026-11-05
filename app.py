@@ -139,6 +139,37 @@ def position_knopf(tk):
             st.rerun()
 
 
+def watchlists_verwalten():
+    """Übersicht: alle Watchlists pflegen – Liste wählen, Ticker einfügen, Titel herausnehmen, neue Liste anlegen.
+    (Einzelne Titel auch über „☆ Watchlist“ auf der Titelseite.) Herausgenommen aus der letzten Liste = gelöscht."""
+    w = watchlists.laden()
+    with _fenster(f"◆ Watchlists ({len(watchlists.alle())})"):
+        namen = list(w) or [watchlists.STANDARD]
+        name = st.selectbox("Liste", namen, key="wl_verw_liste")
+        drin = w.get(name, [])
+        st.caption(f"{len(drin)} Titel: " + ", ".join(drin[:60]) + (" …" if len(drin) > 60 else ""))
+        with st.form("wl_verw_neu", clear_on_submit=True):
+            text = st.text_area("Ticker hinzufügen", height=70, placeholder="z. B. NVDA, ANET, XETR:RHM – auch ganze Listen "
+                                "aus Finviz oder TradingView einfügen")
+            if st.form_submit_button("Hinzufügen", use_container_width=True):
+                st.toast(f"{watchlists.einfuegen(text, name)} Titel neu in „{name}“")
+                st.rerun()
+        if drin:
+            with st.form("wl_verw_weg"):
+                weg = st.multiselect("Titel herausnehmen", drin)
+                if st.form_submit_button("Herausnehmen", use_container_width=True) and weg:
+                    for tk in weg:
+                        watchlists.setzen(tk, name, False)
+                    st.toast(f"{len(weg)} Titel aus „{name}“ genommen")
+                    st.rerun()
+        with st.form("wl_verw_liste_neu", clear_on_submit=True):
+            neu = st.text_input("Neue Liste anlegen", placeholder="Name")
+            erster = st.text_input("erster Titel", placeholder="Ticker")
+            if st.form_submit_button("Anlegen", use_container_width=True) and neu.strip() and erster.strip():
+                watchlists.einfuegen(erster, neu.strip())
+                st.rerun()
+
+
 def konto_knopf():
     """Übersicht: Konto und Risiko je Trade (Voreinstellung 1 %, auf Wunsch einstellbar)."""
     d = depot.laden()
@@ -209,7 +240,9 @@ def zeigen(name, *args):
 
 
 if ansicht == "Übersicht":
-    _, k_ = st.columns([10, 2])
+    _, w_, k_ = st.columns([8, 2, 2])
+    with w_:
+        watchlists_verwalten()
     with k_:
         konto_knopf()
     zeigen("uebersicht")
