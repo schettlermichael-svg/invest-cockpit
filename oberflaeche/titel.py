@@ -360,16 +360,20 @@ def _k_ausbruch(erk):
         return kachel("Ausbruch", _vol_ampel(x), f"vorheriger {zahl(x, 1)}-fach",
                       f"Volumen am {erk['df_index'][hist[-1]['ausbruch']]:%d.%m.%Y} · {hist[-1]['ausgang']}",
                       "Zurzeit keine Base und damit kein Ausbruch. Gezeigt wird das Volumen am letzten Ausbruch gegen den "
-                      "50-Tage-Schnitt und wie er ausging. O'Neil: mindestens 40–50 % über dem Schnitt.")
+                      "50-Tage-Schnitt und wie er ausging. Grün: über dem Schnitt (Minervini); O'Neil verlangt 40–50 % "
+                      "darüber.")
     a = fu.get("ausbruch")
-    hilfe = "Volumen am Ausbruchstag gegen den 50-Tage-Schnitt. O'Neil: mindestens 40–50 % darüber."
+    hilfe = ("Volumen am Ausbruchstag gegen den 50-Tage-Schnitt: grün darüber (Minervini: mehr als üblich), rot darunter. "
+             "O'Neil verlangt 40–50 % darüber. Spanne: wie weit der Kurs am Ausbruchstag lief, gemessen an der "
+             "durchschnittlichen Tagesspanne (ATR, 14 Tage) – über 1 × ATR ein Vorstoß mit Kraft.")
     if a:
         return kachel("Ausbruch", a["ampel"], f"{zahl(a['faktor'], 1)}-faches Volumen",
-                      f"am {erk['df_index'][a['index']]:%d.%m.%Y} · Buch: ab 1,4-fach"
+                      f"am {erk['df_index'][a['index']]:%d.%m.%Y}"
+                      + (f" · Spanne {zahl(a['atr'], 1)} × ATR" if a.get("atr") else "")
                       + ("" if a["schluss_darueber"] else " · Schluss unter Pivot"),
                       hilfe)
     return kachel("Ausbruch", "grau", "noch nicht",
-                  f"über {zahl(erk['werte']['pivot'])}\u00a0$ mit mindestens {_mio(fu['noetig'])} Stück" if fu.get("noetig")
+                  f"über {zahl(erk['werte']['pivot'])}\u00a0$ mit mehr als {_mio(fu['noetig'])} Stück" if fu.get("noetig")
                   else "Pivot noch nicht überschritten", hilfe)
 
 
@@ -945,7 +949,7 @@ def _short_seite(df, erk, ph, rd, mr):
 
 
 def _vol_ampel(x):
-    return "grün" if x >= 1.4 else "gelb" if x >= 1.0 else "rot"
+    return "grün" if x > 1.0 else "rot"         # über dem 50-Tage-Schnitt (05.11.2026)
 
 
 def tv_link(tk):

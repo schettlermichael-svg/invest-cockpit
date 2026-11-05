@@ -123,6 +123,8 @@ def _ausbruchsfeld(info, a, df):
     faktor = float(vol.iloc[-1] / vol.iloc[-51:-1].mean()) if len(vol) > 20 else None
     if not faktor or faktor <= 1:                # Ausbruch ohne erhöhtes Volumen (nicht über dem 50-Tage-Schnitt)
         return
+    import fussabdruck
+    spanne = fussabdruck.atr_spanne(h, len(h) - 1)
     if d == "↑":
         hoch_i = h["High"].idxmax()
         vorlauf = (h.loc[hoch_i:, "Low"].min() / h["High"].max() - 1) * 100
@@ -135,6 +137,7 @@ def _ausbruchsfeld(info, a, df):
     info.update(reihe="konsolidierung" if reif else "flagge", bdir=d, ausloeser=True,
                 stern=bool(passt and info.get("gruen")), vorlauf=round(float(vorlauf), 1),
                 ausbruch=f"{akt['art']}{d} {tag:%d.%m.}", tage_seit=n_ - akt["seit"], vol_faktor=round(faktor, 1),
+                atr_spanne=round(spanne, 1) if spanne else None,
                 abstand=info.get("abstand", 0.0))
 
 
@@ -267,6 +270,7 @@ def ausbruch_text(x):
     v = x.get("vorlauf")
     art = "Korrektur" if x.get("bdir") == "↑" else "Anstieg"
     return (x["ausbruch"] + (f" · Volumen {zahl(x['vol_faktor'], 1)}-fach" if x.get("vol_faktor") else "")
+            + (f" · Spanne {zahl(x['atr_spanne'], 1)} × ATR" if x.get("atr_spanne") else "")
             + (f" · {art} {zahl(v, 0)} % davor" if v is not None else ""))
 
 
