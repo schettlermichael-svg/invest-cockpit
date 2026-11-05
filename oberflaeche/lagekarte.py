@@ -180,6 +180,24 @@ def _groesse(tk, erk):
             f'{anteil}</div>')
 
 
+def _atr_zeilen(erk, df, kurs):
+    """ATR-Zeichen der Lagekarte: Stopp im Rauschen, zu weit gelaufen, Enge, Überdehnung (Zeichen, kein Filter)."""
+    import atr
+    import depot
+    a = atr.wert(df)
+    if not a:
+        return ""
+    pl = depot.plan(erk)
+    z = [atr.stopp(pl[1], pl[2], a) if pl else None,
+         atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
+         atr.enge(df), atr.ueberdehnung(df, a)]
+    zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'
+                     for x in z if x)
+    return (f'<div title="ATR (14 Tage) = übliche Tagesbewegung des Titels; alle Abstände daran gemessen – Zeichen, '
+            f'kein Filter" style="display:flex;flex-direction:column;gap:3px;font-size:13px;color:{TEXT_2}">'
+            f'<span style="color:{TEXT_3}">ATR {zahl(a)} $ ({zahl(a / kurs * 100, 1)} % je Tag)</span>{zeilen}</div>')
+
+
 def karte(tk, branche, erk, kacheln, df, liste=None):
     """kacheln: {Beschriftung: (Ampel, Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
     def kz(name, default=("grau", "–", "")):
@@ -219,4 +237,4 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'background:{farbe_};border-radius:3px"></div></div>'
         f'<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:{TEXT_2};'
         f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{_stopp(erk)}</span>'
-        f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk)}</article>')
+        f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk)}{_atr_zeilen(erk, df, kurs)}</article>')

@@ -94,6 +94,13 @@ def titelkarte(tk, df, erk):
             puffer = abs(p["stopp"] / ko["schwelle"] - 1) * 100
             kopf += ampelzeile(f'Abstand Stopp → Knock-out {zahl(puffer, 1)} %', "grün" if puffer >= 3 else "rot",
                                "der eigene Stopp muss vor der Knock-out-Schwelle liegen, mit Puffer für Lücken (ab 3 %)")
+        import atr
+        a_ = atr.wert(df)
+        st_ = atr.stopp(float(df["Close"].iloc[-1]), p.get("stopp"), a_) if p.get("stopp") else None
+        if st_:                                  # Abstand vom heutigen Kurs zum Stopp, gemessen an der ATR
+            kopf += ampelzeile(st_[1].replace("vom Einstieg", "vom Kurs"), st_[0],
+                               f"ATR (14 Tage) {zahl(a_)} {w}: übliche Tagesbewegung – unter 1 × ATR liegt der Stopp im "
+                               f"Rauschen")
         return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df, erk)),
                      "Position und Risiko · nach dem Kauf")
     pl = depot.plan(erk)
@@ -113,7 +120,11 @@ def titelkarte(tk, df, erk):
     text = (f'<p style="margin:0;font-size:16px;line-height:1.65">{seite_.capitalize()} bei {zahl(e)} {w}, Stopp '
             f'{zahl(s)} {w} ({t(regel)}, {zahl(abs(s / e - 1) * 100, 1)} %). Risiko je Trade '
             f'{zahl(depot.risiko_euro(d), 0)} € ({zahl(d["risiko_pct"], 2)} %).</p>')
-    zeilen = ampelzeile(f'Aktie: {a["stueck"]} Stück', "gelb" if (a.get("anteil") or 0) > depot.KLUMPEN else "grün",
+    import atr
+    st_ = atr.stopp(e, s, atr.wert(df))
+    zeilen = (ampelzeile(st_[1], st_[0], "ATR (14 Tage): übliche Tagesbewegung – unter 1 × ATR liegt der Stopp im "
+                                         "Rauschen") if st_ else "")
+    zeilen += ampelzeile(f'Aktie: {a["stueck"]} Stück', "gelb" if (a.get("anteil") or 0) > depot.KLUMPEN else "grün",
                         f'Positionswert {zahl(a["wert"], 0)} € = {zahl(a["anteil"], 0)} % des Kontos'
                         + (" – Klumpen (Minervini: höchstens 20–25 % je Titel)" if (a.get("anteil") or 0) > depot.KLUMPEN
                            else "") + f' · Risiko {zahl(a["risiko"], 0)} €')

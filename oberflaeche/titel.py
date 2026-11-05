@@ -941,6 +941,15 @@ def _short_seite(df, erk, ph, rd, mr):
             + (f'{" · ".join(da)} liegt vor.' if da else "kein Einstieg liegt vor – Marken für den Fall der Fälle:")
             + '</p>')
     zeilen = "".join(ampelzeile(n, a, x) for n, a, x in ein)
+    import atr
+    ue = atr.ueberdehnung(df)
+    if ue:                                       # Überdehnung: der Boden, auf dem ein Bruch gedeiht (Zeichen)
+        # über dem GD50 überdehnt: günstig für Short (grün); unter dem GD50 überdehnt: der Bruch ist gelaufen (rot)
+        a_ue = {"rot": "grün", "grün": "grau"}.get(ue[0], ue[0]) if ue[2] >= 0 else ue[0]
+        zeilen += ampelzeile(f"Überdehnung: {ue[1]}" + (" – nicht nachjagen" if ue[2] < 0 and ue[0] == "rot" else ""),
+                             a_ue, "Abstand vom 50-Tage-Durchschnitt in ATR. Weit über dem GD50 ist eine Überdehnung für "
+                                   "die Short-Seite günstig (grün ab 6 × ATR, gelb ab 4); weit darunter ist der Bruch "
+                                   "schon gelaufen – ein Zeichen, kein Einstieg.")
     regeln = "".join(ampelzeile(n, a, x, "O'Neil: Shorts nur in früheren Führern, rund 5–7 Monate nach dem Top, wenn "
                                          "die ersten Erholungen gescheitert sind, und nur in liquiden Titeln.")
                      for n, a, x in short_seite.oneil_regeln(df))
