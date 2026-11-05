@@ -73,7 +73,7 @@ def _stufe1(tk):
                 tv = sum(_trendvorlage(df).values())
                 fehlt += len(_fehlt_zum_kaufsetup(erk, info["phase"], tv))
             if erk["kaufsetup"] and bewegt and z["dir"] == "↑":
-                info["reihe"] = "spitze"
+                info.update(reihe="spitze", stern=True)
             elif erk["kaufsetup"] or fehlt == 1:
                 info["reihe"] = "weitere"
         # Radar (Frühaufklärung): Zone an der Schwelle oder ein frischer Angriff (A, F, U in den letzten 5 Tagen) –
@@ -353,8 +353,9 @@ def lagebild(tisch):
         zellen.setdefault((_sektor_etf(tk, rv), x.get("reihe")), []).append((tk, x))
 
     def marke(tk, x):
-        rand = GRUEN if x.get("stern") and x.get("reihe") != "short" else ROT if x.get("stern") else RAND
-        text = ("★ " if x.get("stern") else "") + tk
+        stern = x.get("stern") or x.get("reihe") == "spitze"     # ★ long: jeder Spitzenkandidat (auch ältere Tische)
+        rand = GRUEN if stern and x.get("reihe") != "short" else ROT if stern else RAND
+        text = ("★ " if stern else "") + tk
         if x.get("reihe") == "frueh" and x.get("angriff"):
             text += " " + x["angriff"].split()[0]
         if x.get("listen"):
