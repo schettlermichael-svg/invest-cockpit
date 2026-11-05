@@ -132,7 +132,7 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
     try:                                         # geplantes CRV: Ziel, Stopp A, Stopp B als Linien rechts im Chart
         import atr as atr_modul
         import crv as crv_modul
-        crv_ = crv_modul.linien(erk or {}, atr_modul.wert(df))
+        crv_ = crv_modul.linien(erk or {}, atr_modul.wert(df), df)
     except Exception:  # noqa: BLE001
         crv_ = None
     crv_preise = [x for x in ((crv_ or {}).get(k) for k in ("ziel", "stopp_a", "stopp_b")) if x]
@@ -280,6 +280,9 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         if crv_.get("stopp_b"):
             linien_.append((crv_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
                             f'Stopp B {zahl(crv_["stopp_b"])} $' + (f' · CRV {zahl(crv_["crv_b"], 1)}' if crv_.get("crv_b") else "")))
+        if crv_.get("widerstand"):                # Weinstein: Stellung zwischen Einstieg und Ziel
+            w_ = crv_["widerstand"]
+            linien_.append((w_[0], GELB, "2 3", 1.4, f'{"Widerstand" if lang_ else "Halt"} {zahl(w_[0])} $ · {w_[1]}'))
         for preis_, farbe_, strich_, dicke_, text_ in linien_:
             A(f'<line x1="{x0_c:.1f}" x2="{x1_c:.1f}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
               f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
@@ -447,8 +450,10 @@ def legende(erk, ebene="Tag"):
         if (erk or {}).get("short"):
             eintraege += [(TEXT, "Auslöser short"), (ROT, "Verkaufszone bis −5 %")]
     if (erk.get("werte") or {}).get("pivot"):
-        eintraege.append((GRUEN, "rechts: Ziel = +20 % (O'Neil), Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR; "
-                                 "CRV = Ziel ÷ Stoppabstand"))
+        eintraege += [(GRUEN, "rechts: Ziel = +20 % (O'Neil), Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR; "
+                                  "CRV = Ziel ÷ Stoppabstand"),
+                      (GELB, "Widerstand vor dem Ziel (Weinstein): altes Hoch oder fallender GD150/GD200 zwischen "
+                             "Einstieg und Ziel")]
     eintraege.append((ROT, "▼ größter Tagesrückgang seit Beginn des Anstiegs (O'Neil-Verkaufsregel)"))
     erklaerung = (f'<span title="Zonen nach dem Market Profile (30-Minuten-Kerzen): Rahmen = Hoch und Tief der Zone, '
                   f'Fläche = Wertbereich (70 % der Zeit), orange Treppe = POC je Zone, ↑/↓ = Wochenwert hat die Zone '
