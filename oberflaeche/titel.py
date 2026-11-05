@@ -169,7 +169,7 @@ def _k_phase(ph, ph_reihe, tvp):
                   PHASENTEXT[ph] + (f" seit {seit:%d.%m.%Y}" if seit is not None else "")
                   + f" · Trendvorlage {sum(tvp.values())} von 7",
                   "Phasen nach Weinstein: gekauft wird in Phase 2, geshortet in Phase 4. Vorlage = Minervinis "
-                  "Trendvorlage (sieben Punkte zu Kurs und Durchschnitten); was fehlt, steht in „Lage und Plan“.")
+                  "Trendvorlage (sieben Punkte zu Kurs und Durchschnitten); was fehlt, steht in der Karte „Plan“.")
 
 
 AUSLOESER_HILFE = (
@@ -242,7 +242,7 @@ def _k_setup(erk, ph, df=None):
                       f"Pivot {zahl(w['pivot'])} $ · {lage}",
                       "Long nach O'Neil und Minervini: Pivot = Oberkante des Rahmens der Zone (A↑: Schluss darüber, "
                       "Tageswert ganz darüber), Kaufzone bis +5 %. Zone ab 3 Wochen = Base; jüngere Zone nach einem Lauf "
-                      "nach oben = Flagge. Grün = Kaufsetup (alle Regeln erfüllt), gelb = eine Regel fehlt (siehe „Lage und Plan“).")
+                      "nach oben = Flagge. Grün = Kaufsetup (alle Regeln erfüllt), gelb = eine Regel fehlt (siehe Karte „Plan“).")
     grund = next((h for h in erk["hinweise"]), "keine reife Zone")
     return kachel("Setup", "grau", f"{erk.get('seite', 'long')} · keines", grund,
                   "Seite nach Weinstein: Phase 1 und 2 long, Phase 3 und 4 short.")
@@ -291,13 +291,14 @@ def _k_rs(erk, rs):
     rang = (erk.get("rs_rang") or (None, ""))[0]
     if rang is None:
         return kachel("Relative Stärke", rs[0], rs[1], rs[2], "")
-    return kachel("Relative Stärke", "grün" if rang >= 90 else "gelb" if rang >= 80 else "rot", f"Rang {rang}",
-                  f"12 Monate besser als {rang} % von {tausend(len(rs_rang.raenge()[0]))} Titeln"
+    return kachel("Relative Stärke", "grün" if rang >= 90 else "gelb" if rang >= 80 else "rot", f"{rang} von 99",
+                  f"stärker als {rang} % der {tausend(len(rs_rang.raenge()[0]))} Titel (12 Monate)"
                   + (" · Linie am Hoch" if rs[1] == "Hoch" else ""),
                   "RS-Rang 1–99 wie das RS-Rating von IBD: Kursentwicklung der letzten zwölf Monate, das jüngste "
                   "Quartal doppelt gewichtet, verglichen mit den Titeln unseres Reviers (größere US-Werte; IBD "
                   "vergleicht mit über 6.000 Aktien, unser Rang ist daher strenger). O'Neil kauft ab 80, am liebsten "
-                  "ab 90.")
+                  "ab 90. Die Zahl ist kein Platz in einer Rangliste: 16 heißt, nur 16 % der Titel liefen schwächer, 84 % "
+                  "stärker.")
 
 
 def tausend(n):
@@ -311,27 +312,27 @@ def _k_absorption(erk, df):
     fu = erk.get("fuss") or {}
     tage = (f" · {fu['akk']} Kauf- gegen {fu['dist']} Verkaufstage" if fu.get("verhaeltnis") is not None else "")
     a = erk.get("absorption")
-    wort = {"grün": "aufgenommen", "gelb": "teilweise", "rot": "nicht aufgenommen"}
+    wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
     if erk["muster"] and a:
         tiefs = "steigen" if a["steigend"] else "halten" if a["halten"] else "fallen"
         tiefe = a["eng"] / a["verhaeltnis"] if a["verhaeltnis"] else None
         t = a["trocken"]
         zeile = (f"Tiefs {tiefs} · Spanne 2 Wochen {zahl(a['eng'], 0)} %" + (f" (Base {zahl(tiefe, 0)} %)" if tiefe else "")
                  + (f" · Volumen {zahl(t, 1)}-fach" if t is not None else "") + tage)
-        return kachel("Absorption", a["ampel"], wort[a["ampel"]], zeile,
+        return kachel("Angebot aufgenommen", a["ampel"], wort[a["ampel"]], zeile,
                       "Nehmen die Käufer das Angebot der Base auf? Ja, wenn am rechten Rand die Tiefs halten oder steigen, "
                       "die Spanne der letzten zwei Wochen auf ein Drittel der Base schrumpft (oder unter 5 % liegt) und das "
                       "Volumen unter dem 50-Tage-Schnitt bleibt (bis 0,8-fach grün). Kauf- und Verkaufstage: Volumen "
                       "mindestens 1,25-fach, Schluss höher bzw. tiefer (O'Neil, Minervini).")
     l, v = df["Low"].to_numpy(float), df["Volume"].to_numpy(float)
     if len(l) < 60:
-        return kachel("Absorption", "grau", "–", "zu kurze Historie", "")
+        return kachel("Angebot aufgenommen", "grau", "–", "zu kurze Historie", "")
     t3 = [l[-30:-20].min(), l[-20:-10].min(), l[-10:].min()]
     halten = t3[1] >= t3[0] * 0.99 and t3[2] >= t3[1] * 0.99
     steigen = halten and t3[2] > t3[0] * 1.01
     vol = v[-10:].mean() / v[-60:-10].mean()
     ampel = "grün" if halten and vol <= 0.8 else "rot" if not halten and vol > 1.0 else "gelb"
-    return kachel("Absorption", ampel, wort[ampel],
+    return kachel("Angebot aufgenommen", ampel, wort[ampel],
                   f"Tiefs {'steigen' if steigen else 'halten' if halten else 'fallen'} · Volumen {zahl(vol, 1)}-fach"
                   + (tage + " seit dem Hoch" if tage else ""),
                   "Ohne Base: Halten die Tiefs der letzten sechs Wochen, und wird das Volumen der letzten zwei Wochen "
@@ -685,7 +686,7 @@ def _noetig_text(erk):
 
 def _szenario(df, erk, ph, mr=None, rd=None, gewinne=None):
     """Wann ein Long- (oder Short-) Szenario aktiv wird – mit Kursmarken aus den Regeln. Liefert Inhalt und
-    Rahmenfarbe für die Karte „Lage und Plan“."""
+    Rahmenfarbe für die Karte „Plan“."""
     c, h, l = df["Close"], df["High"], df["Low"]
     k = float(c.iloc[-1])
     g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))

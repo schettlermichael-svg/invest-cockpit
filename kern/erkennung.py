@@ -389,9 +389,9 @@ def _short_pruefen(df, c, werte, phase, art):
     fallend = bool(len(c) >= 171 and gd150 < float(np.mean(c[-170:-20])))
     ab = (c[-1] / werte["pivot"] - 1) * 100
     regeln = [("Phase 3 oder 4 (Weinstein)", phase in SHORT_PHASEN, f"Phase {phase}"),
-              ("Kurs unter dem 30-Wochen-Durchschnitt", bool(c[-1] < gd150), f"{c[-1]:.2f} gegen {gd150:.2f}"),
+              ("Kurs unter dem 30-Wochen-Durchschnitt", bool(c[-1] < gd150), f"{c[-1]:.2f} gegen {gd150:.2f}".replace(".", ",")),
               ("30-Wochen-Durchschnitt fällt", fallend, "vor 4 Wochen höher" if fallend else "steigt noch"),
-              ("Zone reif oder Fortsetzung", True, f"{art}, {werte['wochen']} Wochen")]
+              ("Zone reif oder Fortsetzung", True, f"{art}, {werte['wochen']} {'Woche' if werte['wochen'] == 1 else 'Wochen'}")]
     lage = ("in der Verkaufszone" if -5 <= ab <= 0 else f"{-ab:.1f} % unter dem Auslöser, ausgedehnt" if ab < -5
             else f"Kurs {ab:.1f} % über dem Auslöser")
     return {"art": art, "setup": all(r[1] for r in regeln), "regeln": regeln, "abstand_pct": round(ab, 1), "lage": lage}
