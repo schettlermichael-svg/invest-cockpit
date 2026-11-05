@@ -198,6 +198,12 @@ Die ersten 12 Titel je Abschnitt als Karte, die übrigen als Tabelle in derselbe
 Setup grün, Abstand); Klick auf eine Zeile öffnet die Lagekarte im Pop-up (✕ schließt). Rahmen überall: grün long,
 rot short, kräftig = ★, voll = Setup grün, blass = Setup nicht grün, gelb = noch keine Reihe/Richtung offen, dazu der
 Grund, was fehlt. Watchlist-Zugehörigkeit gilt sofort (aus den Listen der App, nicht aus dem Abendlauf).
+Felder „Ausbruch aus der Konsolidierung“ und „Flagge“ (05.11.2026), ganz oben vor den Spitzenkandidaten, ohne
+Doppelung (gehen jeder anderen Reihe vor): die laufende Bewegung des Market Profile hält noch (kein S, keine neue reife
+Zone), begann vor höchstens 10 Handelstagen, und das Volumen am Ausbruchstag lag über dem 50-Tage-Schnitt.
+Konsolidierung = A oder U (bzw. B aus einer Zone ≥ 3 Wochen), Flagge = F (bzw. B aus junger Zone). Long und short
+(Rahmen grün/rot). Über der Karte: Auslöser, Volumenfaktor, Vorlauf (Korrektur vom Hoch bzw. Anstieg vom Tief) –
+Zeichen, kein Filter; Phase, Trendvorlage und RS sperren nicht (stehen als Ampeln und „Was fehlt“).
 Nur den Kartentisch rechnen: `python3 werkzeuge/tpo_laden.py kartentisch`.
 
 ### Markt-Ampel mit Zonen, Auslöser U, Seite nach der Bewegung (04.11.2026)

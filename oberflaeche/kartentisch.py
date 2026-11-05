@@ -29,7 +29,12 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
-REIHEN = [("spitze", "★ Spitzenkandidaten", "Setup grün, die Zone bewegt sich schon in Richtung des Setups"),
+REIHEN = [("konsolidierung", "Ausbruch aus der Konsolidierung",
+           "frischer Ausbruch (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Zone von mindestens 3 Wochen, der noch hält – "
+           "auch nach tiefer Korrektur bzw. Überdehnung; long grün, short rot; Phase, Trendvorlage und RS sperren nicht"),
+          ("flagge", "Flagge", "frische Fortsetzung (F, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer jungen Zone unter 3 Wochen, in "
+                               "Richtung der Bewegung davor, die noch hält"),
+          ("spitze", "★ Spitzenkandidaten", "Setup grün, die Zone bewegt sich schon in Richtung des Setups"),
           ("weitere", "Weitere Kandidaten", "Setup grün, Zone noch in Balance – oder genau eine Regel fehlt"),
           ("frueh", "Frühaufklärung", "Radar: Zone an der Schwelle oder frischer Angriff (A, F, U in 5 Tagen) – Regeln "
                     "der Meister noch nicht alle grün"),
@@ -89,9 +94,48 @@ def _stufe1(tk):
         if "reihe" not in info and (frisch or z["wort"].startswith("an der Schwelle")):
             info.update(reihe="frueh", ausloeser=bool(frisch), abstand=info.get("abstand", 0.0),
                         angriff=(f"{frisch[-1]['art']}{frisch[-1]['dir']} {frisch[-1]['tag']:%d.%m.}" if frisch else None))
+        _ausbruchsfeld(info, a, df)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
+
+
+FRISCH_TAGE = 10              # Ausbruchsfelder: Auslöser höchstens 10 Handelstage alt (und er hält noch)
+
+
+def _ausbruchsfeld(info, a, df):
+    """Ausbruch aus der Konsolidierung (A, U; B aus reifer Zone) bzw. Flagge (F; B aus junger Zone): die laufende
+    Bewegung des Market Profile hält noch (kein S, keine neue reife Zone) und begann vor höchstens FRISCH_TAGE
+    Handelstagen, mit Volumen am Ausbruchstag über dem 50-Tage-Schnitt. Geht vor jeder anderen Reihe (keine Doppelung). Vorlauf = Korrektur vom Hoch (long) bzw. Anstieg
+    vom Tief (short) bis zum Ausbruch – nur ein Zeichen, kein Filter."""
+    from marketprofile import ZONE_REIF
+    akt = a.get("aktiv")
+    if not akt or akt.get("art") not in ("A", "U", "F", "B"):
+        return
+    n_ = len(a["tage"]) - 1
+    if n_ - akt["seit"] > FRISCH_TAGE - 1:
+        return
+    reif = akt["art"] in ("A", "U") or (akt["art"] == "B" and (akt["zone"].get("wochen") or 0) >= ZONE_REIF)
+    d = akt["dir"]
+    tag = a["tage"][akt["seit"]]["tag"]
+    h = df.loc[:tag].iloc[-250:]
+    vol = h["Volume"]
+    faktor = float(vol.iloc[-1] / vol.iloc[-51:-1].mean()) if len(vol) > 20 else None
+    if not faktor or faktor <= 1:                # Ausbruch ohne erhöhtes Volumen (nicht über dem 50-Tage-Schnitt)
+        return
+    if d == "↑":
+        hoch_i = h["High"].idxmax()
+        vorlauf = (h.loc[hoch_i:, "Low"].min() / h["High"].max() - 1) * 100
+    else:
+        tief_i = h["Low"].idxmin()
+        vorlauf = (h.loc[tief_i:, "High"].max() / h["Low"].min() - 1) * 100
+    passt = (info.get("seite") == "long") == (d == "↑")
+    if not passt:                                # Setup der Erkennung zeigt noch auf die Gegenseite
+        info.update(gruen=False, luecken=[f"Setup noch auf der Gegenseite ({info.get('seite')})"])
+    info.update(reihe="konsolidierung" if reif else "flagge", bdir=d, ausloeser=True,
+                stern=bool(passt and info.get("gruen")), vorlauf=round(float(vorlauf), 1),
+                ausbruch=f"{akt['art']}{d} {tag:%d.%m.}", tage_seit=n_ - akt["seit"], vol_faktor=round(faktor, 1),
+                abstand=info.get("abstand", 0.0))
 
 
 def _stufe2(tk):
@@ -128,9 +172,10 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")
     vorher = laden()
     ergebnis = {"stand": stand, "erzeugt": time.strftime("%d.%m.%Y %H:%M"),
-                "barometer": {"long_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("seite") == "long"
-                                                 and x.get("reihe") in ("spitze", "weitere")),
-                              "short_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("reihe") == "short"),
+                "barometer": {"long_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("reihe")
+                                                 and lagekarte.richtung(x) == "long"),
+                              "short_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("reihe")
+                                                  and lagekarte.richtung(x) == "short"),
                               "hochs": sum(x["hoch52"] for x in stufe1), "tiefs": sum(x["tief52"] for x in stufe1),
                               "titel": len(stufe1)},
                 "titel": {x["tk"]: {k: v for k, v in x.items() if k != "tk"} for x in in_reihe},
@@ -164,12 +209,12 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json.load(open(pfad, encoding="utf-8"))
-        felder = ("reihe", "stern", "gruen", "angriff", "zdir", "luecken")
+        felder = ("reihe", "stern", "gruen", "angriff", "zdir", "luecken", "bdir", "ausbruch", "vorlauf")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"spitze": 3, "short": 2, "weitere": 2, "frueh": 1, None: 0}
+RANG = {"konsolidierung": 4, "flagge": 3, "spitze": 3, "short": 2, "weitere": 2, "frueh": 1, None: 0}
 
 
 def _neu(vorher, jetzt):
@@ -210,10 +255,21 @@ def _farbe(x):
     return lagekarte.rahmen(x)[0]
 
 
+def ausbruch_text(x):
+    """„U↑ 02.11. · Korrektur −41 % davor“ für die Ausbruchsfelder, sonst leer."""
+    from gestaltung import zahl
+    if (x or {}).get("reihe") not in ("konsolidierung", "flagge") or not x.get("ausbruch"):
+        return ""
+    v = x.get("vorlauf")
+    art = "Korrektur" if x.get("bdir") == "↑" else "Anstieg"
+    return (x["ausbruch"] + (f" · Volumen {zahl(x['vol_faktor'], 1)}-fach" if x.get("vol_faktor") else "")
+            + (f" · {art} {zahl(v, 0)} % davor" if v is not None else ""))
+
+
 def _grundzeile(x):
-    """Grund als kleine Zeile über der Karte (leer, wenn nichts fehlt)."""
+    """Ausbruch und Grund als kleine Zeile über der Karte (leer, wenn nichts zu sagen ist)."""
     from gestaltung import TEXT_2, t
-    g = lagekarte.grund(x)
+    g = " · ".join(z for z in (ausbruch_text(x), lagekarte.grund(x)) if z)
     return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
@@ -233,7 +289,8 @@ def zeile(tk, x):
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
-            "Zone": x.get("zustand", ""), "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
+            "Zone": " · ".join(z for z in (x.get("zustand", ""), ausbruch_text(x)) if z),
+            "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
 def _klapp(titel, zeile_, inhalt):
@@ -347,6 +404,8 @@ def _marken(x):
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
     if x.get("reihe") == "frueh" and x.get("angriff"):
         r += f" · {x['angriff']}"
+    if ausbruch_text(x):
+        r += f" · {ausbruch_text(x)}"
     f, d = lagekarte.rahmen(x)
     g = lagekarte.grund(x)
     return (f'<span style="display:flex;flex-direction:column;gap:2px"><span style="border:{d}px solid {f};'
@@ -359,7 +418,7 @@ def _marken(x):
 # Ein Bild unter den Reihen: Zeilen = Sektoren (Feld der Frontkarte, stärkste zuerst), Spalten = Reihen. Jeder Titel
 # genau einmal, in der Spalte seiner Reihe; Watchlist-Titel mit ◆, ohne Reihe in der letzten Spalte. Die Themen-Gruppe
 # steht als ⚑ am Ticker, wenn sie im Feld Führend oder Erstarkend ist (O'Neil: Führer kommen im Rudel).
-SPALTEN = [("spitze", "★ Spitze"), ("frueh", "Radar"), ("weitere", "Weitere"), ("short", "Short"),
+SPALTEN = [("konsolidierung", "Ausbruch"), ("flagge", "Flagge"), ("spitze", "★ Spitze"), ("frueh", "Radar"), ("weitere", "Weitere"), ("short", "Short"),
            (None, "◆ ohne Reihe")]
 FELD_ORDNUNG = {"Führend": 0, "Erstarkend": 1, "Ermüdend": 2, "Abgehängt": 3}
 ZELLE = 8                     # Marken je Zelle sichtbar, der Rest aufklappbar – nichts wird gefiltert
@@ -400,6 +459,8 @@ def lagebild(tisch):
         text = ("★ " if stern else "") + tk
         if x.get("reihe") == "frueh" and x.get("angriff"):
             text += " " + x["angriff"].split()[0]
+        if x.get("ausbruch"):
+            text += " " + x["ausbruch"].split()[0]
         if x.get("listen"):
             text += " ◆"
         g = gruppen.get(tk)
@@ -413,6 +474,8 @@ def lagebild(tisch):
                                                              "U": "Umkehr nach gescheitertem Ausbruch"}.get(art, ""))
         if stern:
             zeilen.append("★ Setup grün, Zone bewegt sich in Richtung des Setups")
+        if ausbruch_text(x):
+            zeilen.append("Ausbruch " + t(ausbruch_text(x)))
         if lagekarte.grund(x):
             zeilen.append(t(lagekarte.grund(x)))
         if x.get("listen"):
@@ -441,7 +504,7 @@ def lagebild(tisch):
 
     etfs = sorted({e for e, _ in zellen}, key=lambda e: (FELD_ORDNUNG.get(rot.get(e, {}).get("feld"), 9),
                                                          -rot.get(e, {}).get("staerke", 0), e))
-    raster = "190px repeat(5, minmax(0, 1fr))"
+    raster = f"190px repeat({len(SPALTEN)}, minmax(0, 1fr))"
     kopf = (f'<div style="display:grid;grid-template-columns:{raster};gap:10px;padding:6px 0;font-size:13px;color:{TEXT_3};'
             f'letter-spacing:.05em;text-transform:uppercase"><span>Sektor · Feld · Stärke</span>'
             + "".join(f'<span>{t(n)} ({sum(len(v) for (e, r), v in zellen.items() if r == k)})</span>'

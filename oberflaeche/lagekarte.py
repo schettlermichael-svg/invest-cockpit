@@ -26,6 +26,8 @@ def richtung(x):
     reihe = x.get("reihe")
     if reihe == "short":
         return "short"
+    if reihe in ("konsolidierung", "flagge"):
+        return "long" if x.get("bdir") == "↑" else "short" if x.get("bdir") == "↓" else None
     if reihe in ("spitze", "weitere"):
         return "long"
     if reihe == "frueh":
