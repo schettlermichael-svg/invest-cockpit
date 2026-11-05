@@ -142,8 +142,16 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
     bahn = (erk or {}).get("bahn") or {}
     marke_l, marke_s = (bahn.get("long") or {}).get("marke"), (bahn.get("short") or {}).get("marke")
     zone_l, zone_s = (bahn.get("long") or {}).get("zone"), (bahn.get("short") or {}).get("zone")
+    try:                                         # geplantes CRV: Ziel, Stopp A, Stopp B als Linien rechts im Chart
+        import atr as atr_modul
+        import crv as crv_modul
+        crv_ = crv_modul.linien(erk or {}, atr_modul.wert(df))
+    except Exception:  # noqa: BLE001
+        crv_ = None
+    crv_preise = [x for x in ((crv_ or {}).get(k) for k in ("ziel", "stopp_a", "stopp_b")) if x]
     oben = [h.max()] + ([pivot * 1.06] if pivot else []) + ([marke_l] if marke_l else []) + ([zone_l[1]] if zone_l else [])
     unten = [l.min()] + ([marke_s] if marke_s else []) + ([zone_s[0]] if zone_s else [])
+    oben, unten = oben + crv_preise, unten + crv_preise
     pmax, pmin = max(oben) * 1.03, min(unten) * 0.95
 
     def Y(y):
@@ -338,6 +346,25 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         A(f'<text x="{PROFIL_X}" y="14" fill="{TEXT_3}" font-size="11">Profil {pr_["anker_art"]}</text>'
           f'<text x="{PROFIL_X}" y="28" fill="{TEXT_3}" font-size="11">seit {tag_:%d.%m.%Y}</text>')
 
+    if crv_:                                     # CRV-Linien im rechten Fünftel: Ziel grün, Stopp A rot gestrichelt, Stopp B rot
+        x0_c, x1_c = LINKS + breite * 0.8, B - RECHTS
+        lang_ = crv_["seite"] == "long"
+        linien_ = []
+        if crv_.get("ziel"):
+            linien_.append((crv_["ziel"], GRUEN if lang_ else ROT, "", 2,
+                            f'Ziel {zahl(crv_["ziel"])} $ ({crv_["art"]})'))
+        linien_.append((crv_["stopp_a"], ROT if lang_ else GRUEN, "6 4", 1.5,
+                        f'Stopp A {zahl(crv_["stopp_a"])} $' + (f' · CRV {zahl(crv_["crv_a"], 1)} : 1' if crv_.get("crv_a") else "")))
+        if crv_.get("stopp_b"):
+            linien_.append((crv_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
+                            f'Stopp B {zahl(crv_["stopp_b"])} $ (1,5 × ATR)'
+                            + (f' · CRV {zahl(crv_["crv_b"], 1)} : 1' if crv_.get("crv_b") else "")))
+        for preis_, farbe_, strich_, dicke_, text_ in linien_:
+            A(f'<line x1="{x0_c:.1f}" x2="{x1_c:.1f}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
+              f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
+            spaete.append(f'<text x="{x1_c - 4:.1f}" y="{platz(x1_c - 4, Y(preis_) - 5, text_, 11, "end"):.1f}" '
+                          f'fill="{farbe_}" font-size="11" text-anchor="end">{text_}</text>')
+
     if pivot and bahn.get("long") and not marke_l:
         text_ = "über dem Pivot kein Widerstand (kein früheres Hoch und kein Volumenknoten)"
         A(f'<text x="{B - RECHTS - 4:.1f}" y="{platz(B - RECHTS - 4, Y(pivot) - 6, text_, 11, "end"):.1f}" '
@@ -514,6 +541,9 @@ def legende(erk, ebene="Tag", kurz=()):
         eintraege.append((ROT, "Widerstand: Linie = früheres Hoch, Band = Volumenknoten"))
     if (bahn.get("short") or {}).get("marke"):
         eintraege.append((GRUEN, "Unterstützung: Linie = früheres Tief, Band = Volumenknoten"))
+    if (erk.get("werte") or {}).get("pivot") and bahn:
+        eintraege.append((GRUEN, "rechts: Ziel = erster fester Widerstand (CRV), Stopp A = Stopp des Setups, "
+                                 "Stopp B = 1,5 × ATR außerhalb des Rauschens"))
     if bahn.get("profil"):
         eintraege.append((TUERKIS, "Volumenprofil rechts: kräftig = viel Volumen (Knoten), blass = wenig (Lücke); POC = meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); ▸ = Kurs"))
     if (erk or {}).get("mp"):
