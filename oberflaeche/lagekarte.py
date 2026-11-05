@@ -1,6 +1,6 @@
 """Lagekarte (4.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite, Übersicht (Kartentisch) und in
 den Watchlists. Aufbau: Kopf mit Setup, Chips (Zone, RS, Phase, Base), Belegzeile der Zone, Kleinchart 6 Monate mit
-Zonenrahmen, Wertbereich und POC-Treppe, sechs Ampelpunkte (Markt, Phase, Zone, Branche, RS, Fundament – dieselben
+Zonenrahmen, Wertbereich und POC-Treppe, sieben Ampelpunkte (Markt, Phase, Zone, Branche, RS, Fundament, Angebot aufgenommen – dieselben
 Ampeln wie die Kacheln, Maus darauf zeigt deren Zeile), Abstand zum Pivot bzw. Auslöser, Fußzeile mit Stopp und
 nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den Kacheln bzw. der Erkennung."""
 import re
@@ -11,7 +11,7 @@ from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, T
 
 TREPPE = "#FFA657"
 PUNKTE = (("Markt", "Markt"), ("Phase", "Phase"), ("Zone", "Zone"), ("Branche", "Branche"),
-          ("RS", "Relative Stärke"), ("Fundament", "Fundament"))
+          ("RS", "Relative Stärke"), ("Fundament", "Fundament"), ("Angebot", "Angebot aufgenommen"))
 
 
 RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot, offen gelb
@@ -229,10 +229,10 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
         f'{AMPEL.get(setup[0], GRAU)};margin-right:6px"></span>{t(setup[1])}</div></div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Zone: " + zone[1], zone[0])}'
-        f'{_chip(rs[1], rs[0])}{_chip(phase[1], phase[0])}{_chip("Base " + base[1], base[0])}</div>'
+        f'{_chip("RS " + rs[1], rs[0])}{_chip(phase[1], phase[0])}{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'
         f'{_kleinchart(df, erk)}'
-        f'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px">{punkte}</div>'
+        f'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">{punkte}</div>'
         f'<div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px">'
         f'<span>{titel_}</span><span style="font-family:IBM Plex Mono,monospace">{wert_}</span></div>'
         f'<div style="height:6px;background:#0F141B;border-radius:3px"><div style="width:{anteil * 100:.0f}%;height:6px;'
