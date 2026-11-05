@@ -304,6 +304,10 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         A(f'<polygon points="{PROFIL_X - 2},{y_k:.1f} {PROFIL_X - 10},{y_k - 5:.1f} {PROFIL_X - 10},{y_k + 5:.1f}" '
           f'fill="{TEXT}"/>')
         tag_ = df.index[pr_["anker"]]
+        if tag_ >= d.index[0]:                    # Beginn des 52-Wochen-Fensters (Profil und Widerstände vor dem Ziel)
+            s.insert(1, f'<line x1="{x_anker:.1f}" x2="{x_anker:.1f}" y1="44" y2="420" stroke="{TEXT_3}" stroke-width="1" '
+                        f'stroke-dasharray="1 5" stroke-opacity="0.8"/>')
+            A(f'<text x="{x_anker + 4:.1f}" y="56" fill="{TEXT_3}" font-size="11">52 Wochen ab {tag_:%d.%m.%y}</text>')
         A(f'<text x="{PROFIL_X}" y="14" fill="{TEXT_3}" font-size="11">Profil {pr_["anker_art"]}</text>'
           f'<text x="{PROFIL_X}" y="28" fill="{TEXT_3}" font-size="11">seit {tag_:%d.%m.%Y}</text>')
 
@@ -491,8 +495,9 @@ def legende(erk, ebene="Tag"):
     if (erk.get("werte") or {}).get("pivot"):
         eintraege += [(GRUEN, "rechts: Ziel = +20 % (O'Neil), Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR; "
                                   "CRV = Ziel ÷ Stoppabstand"),
-                      (GELB, "Widerstand vor dem Ziel (Weinstein): altes Hoch oder fallender GD150/GD200 zwischen "
-                             "Einstieg und Ziel")]
+                      (GELB, "Widerstand vor dem Ziel (Weinstein): altes Hoch der letzten 52 Wochen (seither nicht "
+                             "überstiegen) oder fallender GD150/GD200 zwischen Einstieg und Ziel; senkrechte Punktlinie = "
+                             "Beginn der 52 Wochen")]
     if (erk or {}).get("profil"):
         eintraege.append((TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
                                    "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "

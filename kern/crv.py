@@ -91,10 +91,11 @@ def zeichen(erk, df, atr_wert):
     if w:
         abst = abs(w[0] / li["einstieg"] - 1) * 100
         aus.append(("gelb" if abst >= 10 else "rot",
-                    f"{'Widerstand' if lang else 'Halt'} vor dem Ziel: {_geld(w[0])} $ ({w[1]}), {_z(abst)} % "
+                    f"{'Widerstand' if lang else 'Halt'} vor dem Ziel (letzte 52 Wochen): {_geld(w[0])} $ ({w[1]}), {_z(abst)} % "
                     f"{'über' if lang else 'unter'} dem Einstieg – Weinstein: der Weg wird zäh"))
     else:
-        aus.append(("grün", f"Kein {'Widerstand' if lang else 'Halt'} bis zum Ziel – freie Bahn (Weinstein)"))
+        aus.append(("grün", f"Kein {'Widerstand' if lang else 'Halt'} bis zum Ziel in den letzten 52 Wochen – freie Bahn "
+                            f"(Weinstein)"))
     if li["crv_b"]:
         aus.append((_ampel(li["crv_b"]), f"CRV {_z(li['crv_b'])} : 1 mit Stopp außerhalb des Rauschens "
                                          f"({_geld(li['stopp_b'])} $ = 1,5 × ATR)"))

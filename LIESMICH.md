@@ -397,3 +397,4 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   aufgegangen). Grund: Sie zeigen nicht die Richtung (Messung 05.11.: Festung/Wartesaal und Strecke ohne Richtung).
 - Volumenprofil 52 Wochen wieder im Chart (05.11.2026, auf Wunsch): Spalte ganz rechts mit POC (gepunktete Linie im
   Kursbild), VAH/VAL und Kursmarke; `kern/volumenprofil.py` auf `profil()` verschlankt, `erk["profil"]` in `titel.py`.
+- 52-Wochen-Fenster sichtbar (05.11.2026): senkrechte Punktlinie „52 Wochen ab …“ im Chart (gilt für Profil und Widerstände; im 1-Jahres-Ausschnitt am linken Rand, ab 2 J mitten im Bild), Legende und Lagekarte nennen „letzte 52 Wochen“.
