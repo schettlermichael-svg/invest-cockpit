@@ -406,3 +406,8 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   (alt nach `_to_delete`): Stopp A und Stopp B mit Abstand in % vom Einstieg, nächster Widerstand bzw. Halt in
   Laufrichtung (altes Hoch/Tief der letzten 52 Wochen oder fallender/steigender GD150/GD200, ohne Obergrenze),
   Minervini-Abgleich (Stopp gegen den eigenen Durchschnittsgewinn). Chart: Stopp-Linien und gelb gepunkteter Widerstand.
+- CRV wieder da, ohne festes Ziel (05.11.2026, Micky): CRV 1 bis zur ersten Hürde (nächstes von: altes Hoch der letzten 52
+  Wochen, fallender GD150/GD200, nächster Volumenknoten des 52-Wochen-Profils; Short gespiegelt), ohne Hürde „freie Bahn,
+  CRV offen“; CRV 2 mit dem eigenen Durchschnittsgewinn ab 5 geschlossenen Trades (Minervini). Ampel grün ab 3 : 1, gelb ab
+  2 : 1. Das CRV ist ein Maß, ob sich der Einsatz lohnt – kein Ausstieg: Gewinne laufen lassen, Stopp nachziehen.
+  Chart: „1. Hürde … $“ gelb gepunktet, CRV an den Stopp-Etiketten; Etikettenspalte 200 px.

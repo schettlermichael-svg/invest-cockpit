@@ -1,10 +1,15 @@
-"""Stopps vor dem Kauf (grüne Null, 05.11.2026) – kein festes Ziel, kein CRV: Gewinne laufen lassen, Stopp nachziehen.
+"""Stopps und CRV vor dem Kauf (grüne Null, 05.11.2026) – Gewinne laufen lassen, Stopp nachziehen; das CRV ist ein Maß,
+ob sich der Einsatz lohnt, kein Ausstieg.
 
 Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot bzw. Auslöser; VAH/VAL der Zone oder ∓8 %).
 Stopp B: außerhalb des Tagesrauschens, mindestens 1,5 × ATR vom Einstieg (nur gezeigt, wenn A näher liegt).
 Nächster Widerstand über dem Einstieg (Weinstein): das nächste alte Hoch der letzten 52 Wochen, das seither nicht
 überstiegen wurde (ältere Hochs sind ausgewaschen), oder ein fallender GD150/GD200 (Short gespiegelt: altes Tief bzw.
-steigender Durchschnitt) – dort kann der Lauf zuerst stocken; kein Ziel.
+steigender Durchschnitt) oder der nächste Volumenknoten des 52-Wochen-Profils (Auction Market Theory: der Preis wandert
+von Wert zu Wert) – die erste Hürde, an der der Lauf stocken kann.
+CRV 1 = Abstand bis zur ersten Hürde ÷ Stoppabstand (Weinstein/AMT, bewusst vorsichtig); ohne Hürde „freie Bahn“.
+CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand (Minervini), sobald MIN_TRADES geschlossene Trades vorliegen.
+Ampel: grün ab 3 : 1, gelb ab 2 : 1 (Minervini: Stopp höchstens die Hälfte, besser ein Drittel des Gewinns).
 Minervini-Abgleich: der Stopp soll höchstens die Hälfte, besser ein Drittel des eigenen Durchschnittsgewinns betragen –
 aus den geschlossenen Trades im Depot (depot.bilanz), sobald mindestens MIN_TRADES vorliegen.
 """
@@ -21,8 +26,12 @@ def _geld(x):
     return f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def widerstand(df, seite, e):
-    """Nächste Stellung jenseits des Einstiegs in Laufrichtung: (Preis, Art) oder None."""
+def _ampel(x):
+    return "grün" if x >= 3 else "gelb" if x >= 2 else "rot"
+
+
+def widerstand(df, seite, e, knoten=()):
+    """Erste Hürde jenseits des Einstiegs in Laufrichtung: (Preis, Art) oder None."""
     if df is None or len(df) < 60:
         return None
     h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
@@ -42,13 +51,19 @@ def widerstand(df, seite, e):
             jetzt, vorher = float(gd.iloc[-1]), float(gd.iloc[-21])
             if (lang and jetzt > e * 1.01 and jetzt < vorher) or (not lang and jetzt < e * 0.99 and jetzt > vorher):
                 kand.append((jetzt, f"GD{k} {'fallend' if lang else 'steigend'}"))
+    for k0, k1 in knoten or ():                 # Volumenknoten des 52-Wochen-Profils: nächster Wert in Laufrichtung
+        if lang and k0 > e * 1.01:
+            kand.append((float(k0), f"Volumenknoten {_geld(k0)}–{_geld(k1)} $"))
+        if not lang and k1 < e * 0.99:
+            kand.append((float(k1), f"Volumenknoten {_geld(k0)}–{_geld(k1)} $"))
     if not kand:
         return None
     return (min if lang else max)(kand, key=lambda t: t[0])
 
 
 def linien(erk, atr_wert, df=None):
-    """Einstieg, Stopp A, Stopp B (oder None), nächster Widerstand – für Lagekarte und Chart; None ohne Plan."""
+    """Einstieg, Stopp A, Stopp B (oder None), erste Hürde, CRV bis zur Hürde und mit dem eigenen Durchschnittsgewinn – für
+    Lagekarte und Chart; None ohne Plan."""
     import depot
     pl = depot.plan(erk)
     if not pl:
@@ -58,14 +73,21 @@ def linien(erk, atr_wert, df=None):
     if r_a <= 0:
         return None
     r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert else None
-    return {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a,
-            "stopp_b": (e - r_b if seite == "long" else e + r_b) if r_b else None, "risiko_b": r_b,
-            "widerstand": widerstand(df, seite, e)}
+    w = widerstand(df, seite, e, ((erk.get("profil") or {}).get("knoten")))
+    erg = {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a,
+           "stopp_b": (e - r_b if seite == "long" else e + r_b) if r_b else None, "risiko_b": r_b, "widerstand": w}
+    if w:
+        chance = abs(w[0] - e)
+        erg["crv_a"], erg["crv_b"] = chance / r_a, (chance / r_b if r_b else None)
+    b = depot.bilanz()
+    if b and b["anzahl"] >= MIN_TRADES and b["schnitt_gewinn"]:
+        erg["schnitt"] = b["schnitt_gewinn"]
+        erg["crv_schnitt"] = (e * b["schnitt_gewinn"] / 100) / r_a
+    return erg
 
 
 def zeichen(erk, df, atr_wert):
     """Liste (Ampel, Text) für die Lagekarte."""
-    import depot
     li = linien(erk, atr_wert, df)
     if not li:
         return []
@@ -76,17 +98,15 @@ def zeichen(erk, df, atr_wert):
                        if li["stopp_b"] else "") + " – danach nachziehen")]
     w = li["widerstand"]
     if w:
-        abst = abs(w[0] / e - 1) * 100
-        aus.append(("rot" if abst < 10 else "gelb",
-                    f"Nächster {'Widerstand' if lang else 'Halt'} (letzte 52 Wochen): {_geld(w[0])} $ ({w[1]}), "
-                    f"{_z(abst)} % {'über' if lang else 'unter'} dem Einstieg – Weinstein: dort kann der Lauf stocken"))
+        aus.append((_ampel(li["crv_a"]),
+                    f"CRV bis zur ersten Hürde {_z(li['crv_a'])} : 1"
+                    + (f" (mit Stopp B {_z(li['crv_b'])} : 1)" if li.get("crv_b") else "")
+                    + f" · Hürde {_geld(w[0])} $ ({w[1]}), {_z(abs(w[0] / e - 1) * 100)} % "
+                    f"{'über' if lang else 'unter'} dem Einstieg"))
     else:
-        aus.append(("grün", f"Kein {'Widerstand' if lang else 'Halt'} in den letzten 52 Wochen – freie Bahn (Weinstein)"))
-    b = depot.bilanz()
-    if b and b["anzahl"] >= MIN_TRADES and b["schnitt_gewinn"]:
-        stopp_pct = li["risiko_a"] / e * 100
-        anteil = stopp_pct / b["schnitt_gewinn"]
-        a_ = "grün" if anteil <= 1 / 3 else "gelb" if anteil <= 0.5 else "rot"
-        aus.append((a_, f"Stopp {_z(stopp_pct)} % = {_z(anteil * 100)} % deines Durchschnittsgewinns "
-                        f"({_z(b['schnitt_gewinn'])} %) – Minervini: höchstens die Hälfte, besser ein Drittel"))
+        aus.append(("grün", "Keine Hürde in den letzten 52 Wochen – freie Bahn (Weinstein), CRV offen"))
+    if li.get("crv_schnitt"):
+        aus.append((_ampel(li["crv_schnitt"]),
+                    f"CRV mit deinem Durchschnittsgewinn ({_z(li['schnitt'])} %) {_z(li['crv_schnitt'])} : 1 – "
+                    f"Minervini: Stopp höchstens die Hälfte, besser ein Drittel des Gewinns"))
     return aus

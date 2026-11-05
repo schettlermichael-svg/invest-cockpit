@@ -19,7 +19,7 @@ PHASENFARBE = {1: GRAU, 2: GRUEN, 3: GELB, 4: ROT}
 B, LINKS, RECHTS = 1344, 64, 104
 PROFIL_X, PROFIL_B = 1344 - 96, 70   # Spalte des 52-Wochen-Volumenprofils ganz rechts
 TUERKIS = "#2EC4B6"          # Volumenprofil
-ETIKETT = 180               # eigene Spalte rechts neben den Kerzen nur für Preis-Beschriftungen (nichts überlappt)
+ETIKETT = 200               # eigene Spalte rechts neben den Kerzen nur für Preis-Beschriftungen (nichts überlappt)
 TREPPE = "#FFA657"           # POC-Treppe der Market-Profile-Zonen
 SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trends, kräftig
 
@@ -336,12 +336,15 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         lang_ = st_["seite"] == "long"
         e_ = st_["einstieg"]
         linien_ = [(st_["stopp_a"], ROT if lang_ else GRUEN, "6 4", 1.5,
-                    f'Stopp A {zahl(st_["stopp_a"])} $ · {zahl(st_["risiko_a"] / e_ * 100, 1)} %')]
+                    f'Stopp A {zahl(st_["stopp_a"])} $ · {zahl(st_["risiko_a"] / e_ * 100, 1)} %'
+                    + (f' · CRV {zahl(st_["crv_a"], 1)}' if st_.get("crv_a") else ""))]
         if st_.get("stopp_b"):
             linien_.append((st_["stopp_b"], ROT if lang_ else GRUEN, "", 1.5,
-                            f'Stopp B {zahl(st_["stopp_b"])} $ · {zahl(st_["risiko_b"] / e_ * 100, 1)} %'))
-        if w_st and pmin <= w_st[0] <= pmax:      # Weinstein: dort kann der Lauf zuerst stocken – kein Ziel
-            linien_.append((w_st[0], GELB, "2 3", 1.4, f'{"Widerstand" if lang_ else "Halt"} {zahl(w_st[0])} $ · {w_st[1]}'))
+                            f'Stopp B {zahl(st_["stopp_b"])} $ · {zahl(st_["risiko_b"] / e_ * 100, 1)} %'
+                            + (f' · CRV {zahl(st_["crv_b"], 1)}' if st_.get("crv_b") else "")))
+        if w_st and pmin <= w_st[0] <= pmax:      # erste Hürde (Weinstein/AMT): Maß fürs CRV, kein Ausstieg
+            art_w = w_st[1].split(" ")[0] if w_st[1].startswith("Volumenknoten") else w_st[1]
+            linien_.append((w_st[0], GELB, "2 3", 1.4, f'1. Hürde {zahl(w_st[0])} $ · {art_w}'))
         for preis_, farbe_, strich_, dicke_, text_ in linien_:
             A(f'<line x1="{x0_c:.1f}" x2="{x1_c:.1f}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
               f'stroke-width="{dicke_}"' + (f' stroke-dasharray="{strich_}"' if strich_ else "") + '/>')
@@ -519,10 +522,10 @@ def legende(erk, ebene="Tag"):
             eintraege += [(TEXT, "Auslöser short"), (ROT, "Verkaufszone bis −5 %")]
     if (erk.get("werte") or {}).get("pivot"):
         eintraege += [(ROT, "rechts: Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR (Abstand vom Einstieg in %); "
-                                "kein festes Ziel – Gewinne laufen lassen, Stopp nachziehen"),
-                      (GELB, "nächster Widerstand (Weinstein): altes Hoch der letzten 52 Wochen (seither nicht "
-                             "überstiegen) oder fallender GD150/GD200 – dort kann der Lauf stocken; senkrechte Punktlinie "
-                             "= Beginn der 52 Wochen")]
+                                "CRV = Abstand bis zur 1. Hürde ÷ Stoppabstand – Gewinne laufen lassen, Stopp nachziehen"),
+                      (GELB, "1. Hürde (Weinstein, Auction Market Theory): altes Hoch der letzten 52 Wochen, fallender "
+                             "GD150/GD200 oder nächster Volumenknoten – die nächste davon; senkrechte Punktlinie = Beginn "
+                             "der 52 Wochen")]
     if (erk or {}).get("profil"):
         eintraege += [(TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
                                 "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "

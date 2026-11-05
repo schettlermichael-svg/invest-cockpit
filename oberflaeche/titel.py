@@ -579,7 +579,7 @@ def _rs_lesart(df, index, sek, etf):
            f'<div>Letzte 3 Monate: {t(zahlen)}</div>'
            f'<div style="margin:6px 0 4px">Linie 100 = so stark wie der Index; steigt die Linie, gewinnt der Titel dazu.</div>'
            f'{liste}</div>')
-    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{(104 + 180) / 1344 * 100:.2f}%;'
+    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{(104 + 200) / 1344 * 100:.2f}%;'
             f'top:{604 / 760 * 100:.2f}%;height:{120 / 760 * 100:.2f}%">{tip}</div>')
 
 
