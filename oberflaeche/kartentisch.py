@@ -193,6 +193,16 @@ def _zeile(tk, x):
             f'{zahl(x.get("abstand", 0), 1)} %</span></a>')
 
 
+def _klapp(titel, zeile, inhalt):
+    """Karte zum Aufklappen (Übersicht kürzer): zu sieht man Titel und eine Zeile, aufgeklappt den Inhalt."""
+    from gestaltung import KARTE, RAND, TEXT_2, t
+    return (f'<details style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
+            f'<summary style="cursor:pointer;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'
+            f'<span style="font-size:20px;font-weight:600">{t(titel)} ▾</span>'
+            f'<span style="font-size:15px;color:{TEXT_2}">{t(zeile)}</span></summary>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">{inhalt}</div></details>')
+
+
 def _ordnung(x):
     return (not x.get("stern"), not x.get("ausloeser"), not x.get("gruen"), x.get("abstand", 99))
 
@@ -228,7 +238,7 @@ def html(tisch=None):
     for tk, x in tisch["titel"].items():
         w = ((x.get("kacheln") or {}).get("Nächste Zahlen") or ("", "", ""))
         tage = 0 if w[1] == "heute" else 1 if w[1] == "morgen" else (int(w[1].split()[1]) if w[1].startswith("in ") else 99)
-        if tage <= 14:
+        if 0 <= tage <= 14:                    # vergangene Termine („in -1 Tagen“ älterer Tische) nicht mitzählen
             termine.append((tage, tk, w[2].split(" ·")[0],
                             "Watchlist" if x.get("listen") else namen.get(x.get("reihe"), "")))
     termine.sort()
@@ -237,8 +247,9 @@ def html(tisch=None):
                     f'<span style="color:{TEXT_2}">{t(d)} · {t(r)}</span></a>' for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
     teile = [barometer,
-             karte(f'<div style="display:flex;flex-wrap:wrap;gap:8px">{neu_html}</div>', "Neu seit gestern"),
-             karte(f'<div style="display:flex;flex-wrap:wrap;gap:8px">{earn}</div>', "Earnings 14 Tage")]
+             _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html),
+             _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
+                    + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)]
     teile.append(_watchreihe(tisch))
     for key, name, text in REIHEN:
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x.get("listen")),

@@ -475,6 +475,10 @@ def _k_zahlen(fd, fund):
         return kachel("Nächste Zahlen", "grau", "–", "kein Termin bekannt", "")
     tag = pd.Timestamp(termin["datum"].iloc[0])
     bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
+    if bis < 0:                                  # Termin liegt hinter uns, Yahoo kennt den nächsten noch nicht
+        return kachel("Nächste Zahlen", "grau", "noch offen",
+                      f"zuletzt gemeldet {WOCHENTAGE[tag.weekday()]} {tag:%d.%m.%Y}" + _zuletzt(fund),
+                      "Der letzte Termin liegt hinter uns; der nächste ist noch nicht angekündigt.")
     nah = 0 <= bis <= 10
     return kachel("Nächste Zahlen", "gelb" if nah else "grün",
                   "heute" if bis == 0 else "morgen" if bis == 1 else f"in {bis} Tagen",
