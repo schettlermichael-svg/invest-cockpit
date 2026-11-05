@@ -8,7 +8,8 @@ Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weit
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Market-Profile-Zonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlists, Positionen, geöffnete Titel, Gesamtmarkt) und Wechselkurse
   5. Lage: Wirtschaftswetter, Pendel, Marktbreite, Frontkarte, Marktrichtung (Übersicht einmal bauen = alle Quellen frisch)
-  6. TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login): Aktienzahl, Rückkäufe, Margen, Zahlentermine
+  6. freitags Revier-Pflege (kern/revier_pflege.py: Zugänge nach den Revier-Regeln, Abgänge nur gemeldet)
+     und TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login): Aktienzahl, Rückkäufe, Margen, Zahlentermine
   7. Kartentisch (Erkennung aller Titel, volle Titelseite der Titel in Reihen und Watchlists, Fundamentdaten inklusive)
   8. Massive-Durchgänge für Lücken der 30-Minuten-Kerzen bis spätestens 07:00 Uhr (Erstbefüllung, neue Titel)
 Protokoll: daten/nachtlauf/protokoll.json – die Übersicht zeigt daraus die Datenampel im Kopf. Am Ende eine
@@ -102,6 +103,10 @@ def main():
         p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("spitze", "frueh")}
         return f"{len(t_['titel'])} Titel auf dem Tisch, {len(t_['neu'])} Neuigkeiten"
 
+    def revier():
+        import revier_pflege
+        return revier_pflege.pflegen()
+
     def tradingview():
         import tv_kennzahlen
         return tv_kennzahlen.aktualisieren(alle)
@@ -111,6 +116,8 @@ def main():
     schritt("30-Minuten-Kerzen (Yahoo)", kerzen_neu)
     schritt("Tageskurse und Wechselkurse", tageskurse)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
+    if datetime.now().weekday() == 4:            # freitags: Revier-Pflege (Zugänge, Abgänge gemeldet)
+        schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("Kartentisch", tisch)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")

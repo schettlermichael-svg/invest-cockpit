@@ -294,3 +294,11 @@ Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als
   (Mo–Fr 22:45 Berlin), Caddy mit https unter `2-31-188-241.sslip.io` und Passwort (Benutzer micky).
 - `werkzeuge/server/uebertragen.sh`: Ordner vom Mac auf den Server (rsync, ohne _to_delete) und App neu starten.
 - Geplant: Code über privaten GitHub-Speicher `schettlermichael-svg/invest-cockpit`, Server holt Änderungen selbst.
+- Seit 05.11.2026 auf dem Server, ohne Claude und ohne Mac: TradingView-Kennzahlen (`kern/tv_kennzahlen.py`, Screener-
+  Schnittstelle, Test 1.889 Titel = 100 %) und freitags die Revier-Pflege (`kern/revier_pflege.py`: Zugänge nach den
+  Revier-Regeln mit Sektor/Branche von Yahoo, höchstens 40 je Woche, Abgänge nur gemeldet). Neue Titel haben zunächst
+  den englischen Yahoo-Steckbrief und noch keine SIC-13-Einschätzung (ergänzt Claude auf Zuruf).
+- Code kommt über GitHub (`schettlermichael-svg/invest-cockpit`, privat, nur Code): Der Server schaut alle 5 Minuten nach
+  (`invest-update.timer`, `/usr/local/bin/invest-aktualisieren`, Deploy key nur lesend) und startet die App neu.
+  `werkzeuge/server/uebertragen.sh` schickt nur noch Code (Daten auf dem Server sind das Original).
+- Die geplante Claude-Aufgabe (00:37, Mac) ist gelöscht (05.11.2026). Scalable folgt, sobald der Konnektor verbunden ist.
