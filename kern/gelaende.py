@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 FESTUNG, WARTESAAL = 1.2, 0.9
+RAUTE = 0.20            # Volumen-POC mindestens 20 % der Zonenspanne neben dem Zeit-POC = ◆ deutlich
 FAECHER = 40
 NAH = 0.01
 UEBERHANG_BIS = 0.25            # Überhang: Festungen bis 25 % über dem Kurs
@@ -45,6 +46,8 @@ def steckbrief(z, k30, df):
             i = int(np.argmax(v))
             s["vpoc"] = float((g[i] + g[i + 1]) / 2)
             s["verschub"] = (s["vpoc"] - z["poc"]) / (z["hoch"] - z["tief"])
+            s["lage_zeit"] = (z["poc"] - z["tief"]) / (z["hoch"] - z["tief"])      # 0 = Zonentief, 1 = Zonenhoch
+            s["lage_vol"] = (s["vpoc"] - z["tief"]) / (z["hoch"] - z["tief"])
     d = df.loc[a:e - pd.Timedelta(days=1)]
     vorher = df["Volume"].loc[:e].iloc[-252:]
     med = float(vorher.median()) if len(vorher) >= 60 else None
@@ -60,6 +63,13 @@ def steckbrief(z, k30, df):
         s["lesart"] = "Akkumulation"
     else:
         s["lesart"] = "neutral"
+    # Raute (Volumen-POC) deutlich neben dem Zeit-POC: ab 20 % der Spanne. Sie bestätigt die Lesart, wenn die Richtung
+    # passt – Zeit oben, großes Geschäft unten an fallenden Tagen = Verteilung; großes Geschäft oben an steigenden
+    # Tagen = Akkumulation (Konzept „Gelände“, Regel „◆ deutlich“). Allein entscheidet sie nicht.
+    vs = s.get("verschub")
+    s["raute"] = vs is not None and abs(vs) >= RAUTE
+    s["bestaetigt"] = bool(s["raute"] and ((s["lesart"] == "Verteilung" and vs < 0) or
+                                           (s["lesart"] == "Akkumulation" and vs > 0)))
     s["zeichen"] = ("Lawinenhang" if s["art"] == "Wartesaal" and s["lesart"] == "Verteilung" else
                     "stille Akkumulation" if s["art"] == "Wartesaal" and s["lesart"] == "Akkumulation" else None)
     return s
@@ -96,6 +106,12 @@ def gelaende(tk, df, erk, stopp=None, seite=None):
     # Halt darunter / Widerstand darüber: Kante der nächsten Festung (VAH unten, VAL oben) oder eines festen Knotens
     unten = [(z["vah"], f'Festung {z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y}') for z in festungen if z["vah"] < kurs * (1 - NAH)]
     oben = [(z["val"], f'Festung {z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y}') for z in festungen if z["val"] > kurs * (1 + NAH)]
+    # Steht der Kurs IN einer alten Festung, ist deren Wertbereich die nächste Stellung: VAL darunter hält, VAH darüber
+    # bremst (sonst würde die Lawine durch die Festung hindurch bis zur nächsten gemessen)
+    unten += [(z["val"], f'Festung {z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y} (Kurs darin)') for z in festungen
+              if z["val"] < kurs * (1 - NAH) <= z["vah"]]
+    oben += [(z["vah"], f'Festung {z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y} (Kurs darin)') for z in festungen
+             if z["val"] <= kurs * (1 + NAH) < z["vah"]]
     unten += [(kn[1], "Volumenknoten") for kn in knoten if kn[1] < kurs * (1 - NAH)]
     oben += [(kn[0], "Volumenknoten") for kn in knoten if kn[0] > kurs * (1 + NAH)]
     halt = max(unten, key=lambda x: x[0]) if unten else None
@@ -141,6 +157,20 @@ def ziel(g, einstieg, seite):
     return (min if seite == "long" else max)(kand, key=lambda t: t[0])
 
 
+def im(st):
+    """„in einer Festung“, „in einem Wartesaal“, „in einem Volumenknoten“, „im Niemandsland“."""
+    return {"Festung": "in einer Festung", "Wartesaal": "in einem Wartesaal", "Volumenknoten": "in einem Volumenknoten"}.get(
+        st, "im Niemandsland")
+
+
+def lesart_text(z):
+    """Lesart einer Zone mit Bestätigung durch die Raute: „Verteilung, ◆ bestätigt“ bzw. „Verteilung, nur Tage“."""
+    l_ = z.get("lesart") or "neutral"
+    if l_ == "neutral":
+        return l_
+    return f'{l_}, ◆ bestätigt' if z.get("bestaetigt") else f'{l_}, nur Tage'
+
+
 def _zeichen(g, df, erk, stopp, seite):
     """Zeichen des Geländes als Liste (Ampel, Titel, Text) – angezeigt und gedeutet, nie gefiltert."""
     aus = []
@@ -159,32 +189,59 @@ def _zeichen(g, df, erk, stopp, seite):
             a = {"Akkumulation": "grün", "Verteilung": "rot"}.get(z["lesart"], "grau")
             if seite == "short" and a in ("grün", "rot"):
                 a = "rot" if a == "grün" else "grün"
-            t = f'{z["art"]}, {z["lesart"]}'
+            t = f'{z["art"]}, {lesart_text(z)}'
         aus.append((a, "Zone", f'{t} · Volumen {_z(z["volumen"], 2)} × Jahresmedian · Tage Verkauf/Kauf '
                                f'{z["ab"]}/{z["auf"]}'))
-    # 2. Gelände in Laufrichtung: Raum bis zur nächsten Festung
-    if seite == "long":
-        w = g["widerstand"]
-        if w:
-            r = g["raum_auf"] * 100
-            aus.append(("grün" if r >= 10 else "gelb" if r >= 5 else "rot", "Raum ↑",
-                        f'{_z(r)} % bis {w[1]} bei {_z(w[0], 2)} $' + (" – der Ausbruch läuft sich schnell fest" if r < 5
-                                                                     else " – freie Bahn" if r >= 10 else "")))
-        else:
-            aus.append(("grün", "Raum ↑", "keine Festung darüber – freie Bahn"))
+    # 2. Gelände in Laufrichtung: schwaches Gelände (Wartesaal, Niemandsland) bis zur nächsten Festung bzw. zum
+    #    nächsten Knoten – in % und in ATR, mit Ort der Festung. Nach oben „freie Bahn ↑“, nach unten „Lawinengefahr ↓“
+    #    (für Short eine Einladung, für Long-Halter eine Warnung).
+    import atr as _atr
+    a_ = _atr.wert(df)
+    in_atr = lambda preis: f' = {_z(abs(kurs - preis) / a_, 1)} × ATR' if a_ else ""          # noqa: E731
+    w = g["widerstand"]
+    if w:
+        r = g["raum_auf"] * 100
+        aus.append((("grün" if r >= 10 else "gelb" if r >= 5 else "rot") if seite == "long" else "grau", "Freie Bahn ↑",
+                    (f'{_z(r)} %{in_atr(w[0])} bis zum Rand der {w[1].replace(" (Kurs darin)", "")}, in der der Kurs steht, bei {_z(w[0], 2)} $'
+                     if "Kurs darin" in w[1] else f'{_z(r)} % schwaches Gelände{in_atr(w[0])} bis {w[1]} bei {_z(w[0], 2)} $')
+                    + ((" – der Ausbruch läuft sich schnell fest" if r < 5 else "") if seite == "long" else "")))
+    elif seite == "long":
+        aus.append(("grün", "Freie Bahn ↑", "keine Festung darüber – freie Bahn"))
+    h = g["halt"]
+    if h:
+        r = g["raum_ab"] * 100
+        a = ("grün" if r >= 10 else "gelb" if r >= 5 else "rot") if seite == "short" else \
+            ("rot" if r >= 10 else "gelb" if r >= 5 else "grün")
+        aus.append((a, "Lawinengefahr ↓",
+                    (f'{_z(r)} %{in_atr(h[0])} bis zum Rand der {h[1].replace(" (Kurs darin)", "")}, in der der Kurs steht, bei {_z(h[0], 2)} $'
+                     if "Kurs darin" in h[1] else f'{_z(r)} % schwaches Gelände{in_atr(h[0])} bis {h[1]} bei {_z(h[0], 2)} $')
+                    + (" – Niemandsland, die Lawine hat Raum" if r >= 10 else
+                       " – eine Festung fängt den Fall bald auf" if r < 5 else "")))
     else:
-        h = g["halt"]
-        if h:
-            r = g["raum_ab"] * 100
-            aus.append(("grün" if r >= 10 else "gelb" if r >= 5 else "rot", "Raum ↓",
-                        f'{_z(r)} % bis {h[1]} bei {_z(h[0], 2)} $' + (" – Niemandsland, die Lawine hat Raum" if r >= 10
-                                                                     else " – der Bruch wird bald aufgefangen" if r < 5 else "")))
-        else:
-            aus.append(("grün", "Raum ↓", "keine Festung darunter – Niemandsland bis weit hinab"))
+        aus.append(("grün" if seite == "short" else "rot", "Lawinengefahr ↓",
+                    "keine Festung darunter – Niemandsland bis weit hinab"))
+    if seite == "short":
         # Squeeze: Raum über dem Short-Einstieg
         if g["raum_auf"] is not None and g["raum_auf"] >= 0.08:
             aus.append(("gelb", "Squeeze-Raum ↑", f'{_z(g["raum_auf"] * 100)} % ohne feste Stellung darüber – scheitert '
                                                    f'der Bruch, steigt der Kurs schnell; Stopp knapp setzen'))
+        # Gescheiterte Erholung: woran ist die letzte Erholung (Hoch der letzten 15 Tage) gestoßen?
+        hoch15 = float(df["High"].iloc[-15:].max())
+        if hoch15 >= kurs * 1.03:
+            st = stellung(g, hoch15)
+            aus.append(("grün" if st in ("Festung", "Volumenknoten") else "gelb", "Erholung",
+                        f'Hoch der Erholung {_z(hoch15, 2)} $ {im(st)}'
+                        + (" – an der Festung abgeprallt, starker Widerstand" if st in ("Festung", "Volumenknoten")
+                           else " – schwacher Widerstand, die Erholung kann durchgehen")))
+    # Überdehnung mit Gelände: überdehnt über dem GD50 (ab 4 × ATR) und was darunter liegt
+    if a_ and len(df) >= 50:
+        ueber = (kurs - float(df["Close"].iloc[-50:].mean())) / a_
+        if ueber >= 4:
+            weit = not h or g["raum_ab"] >= 0.10
+            aus.append((("grün" if weit else "gelb") if seite == "short" else ("rot" if weit else "gelb"),
+                        "Überdehnung im Gelände",
+                        f'{_z(ueber, 1)} × ATR über dem GD50 – ' + ("darunter Niemandsland, ein Bruch hat Raum" if weit
+                                                                   else "eine Festung direkt darunter fängt den ersten Stoß ab")))
     # 3. Überhang (O'Neil: overhead supply)
     if seite == "long":
         u = g["ueberhang"]
@@ -195,8 +252,8 @@ def _zeichen(g, df, erk, stopp, seite):
     if stopp:
         st = stellung(g, stopp)
         a = "grün" if st in ("Festung", "Volumenknoten") else "gelb" if st == "Wartesaal" else "rot"
-        aus.append((a, "Stellung hinter dem Stopp", f'Stopp {_z(stopp, 2)} $ liegt in {"einer " if st != "Niemandsland" else ""}'
-                                                     f'{st}' + (" – geschützt" if a == "grün" else
+        aus.append((a, "Stellung hinter dem Stopp", f'Stopp {_z(stopp, 2)} $ liegt {im(st)}'
+                                                     + (" – geschützt" if a == "grün" else
                                                                 " – rauscht durch bis zur nächsten Stellung" if a == "rot" else
                                                                 " – schwacher Schutz")))
     # 5. Rücktest der letzten Bewegung

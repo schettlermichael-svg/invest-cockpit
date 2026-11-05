@@ -206,7 +206,8 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
             art_z = gz_.get("art")
             farbe_z = TUERKIS if art_z == "Festung" else TEXT_3 if art_z == "Wartesaal" else BLAU
             letzte_z = k_ == len(zonen_) - 1
-            steck_ = (f' · {art_z}, {gz_.get("zeichen") or gz_.get("lesart")} · Volumen {zahl(gz_["volumen"], 2)} × '
+            steck_ = (f' · {art_z}, {gz_.get("zeichen") + ", " if gz_.get("zeichen") else ""}{gz_.get("lesart")}'
+                      f'{" (◆ bestätigt)" if gz_.get("bestaetigt") else " (nur Tage)" if gz_.get("lesart") != "neutral" else ""} · Volumen {zahl(gz_["volumen"], 2)} × '
                       f'Jahresmedian · Tage Verkauf/Kauf {gz_["ab"]}/{gz_["auf"]}'
                       + (f' · Volumen-POC {zahl(gz_["vpoc"])} $' if gz_.get("vpoc") else "")) if art_z else ""
             A(f'<rect x="{x0:.1f}" y="{Y(z_["vah"]):.1f}" width="{x1 - x0:.1f}" height="{Y(z_["val"]) - Y(z_["vah"]):.1f}" '
@@ -221,6 +222,16 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
               f'{steck_}'
               f'{_ausgang_text(ausgaenge.get(df.index[min(int(df.index.searchsorted(z_["beginn"])), len(df) - 1)].normalize()), df)}'
               f'</title></rect>')
+            if gz_.get("raute") and gz_.get("vpoc"):          # ◆ Volumen-POC, deutlich neben dem Zeit-POC (≥ 20 % der Spanne)
+                yr_ = Y(gz_["vpoc"])
+                farbe_r = ROT if gz_.get("bestaetigt") and gz_.get("lesart") == "Verteilung" else \
+                          GRUEN if gz_.get("bestaetigt") else TEXT
+                xr_ = x1 - 12                                     # innen am rechten Rand, frei von Markern am Zonenende
+                spaete.append(f'<path d="M{xr_:.1f},{yr_ - 8:.1f} L{xr_ + 7:.1f},{yr_:.1f} L{xr_:.1f},{yr_ + 8:.1f} '
+                              f'L{xr_ - 7:.1f},{yr_:.1f} Z" fill="{farbe_r}" stroke="#0E1217" stroke-width="1.5">'
+                              f'<title>Volumen-POC {zahl(gz_["vpoc"])} $ – {zahl(abs(gz_["verschub"]) * 100, 0)} % der Spanne '
+                              f'{"unter" if gz_["verschub"] < 0 else "über"} dem Zeit-POC {zahl(z_["poc"])} $ · '
+                              f'{gz_.get("lesart")}{", ◆ bestätigt" if gz_.get("bestaetigt") else ""}</title></path>')
             if art_z and gz_.get("volumen") is not None and x1 - x0 >= 55:   # Art und Volumen in jeder breiten Zone
                 t_z = f'{art_z if art_z != "normal" else "Zone"} {zahl(gz_["volumen"], 2)}×'
                 spaete.append(f'<text x="{x0 + 4:.1f}" y="{platz(x0 + 4, Y(z_["hoch"]) + 13, t_z, 11, "start", False):.1f}" '
@@ -581,6 +592,8 @@ def legende(erk, ebene="Tag", kurz=()):
     if (erk or {}).get("mp"):
         eintraege += [(TUERKIS, "Festung: Zone mit viel Volumen (kräftig gefüllt; Zahl = Volumen × Jahresmedian)"),
                       (GRAU, "Wartesaal: Zone mit wenig Volumen (gestrichelt, leer)"),
+                      (TEXT, "◆ Volumen-POC der Zone, wenn er deutlich (≥ 20 % der Spanne) neben dem Zeit-POC liegt – "
+                             "rot = bestätigt Verteilung, grün = bestätigt Akkumulation, weiß = ohne passende Tage"),
                       (GELB, "dünn: altes Hoch/Tief ohne Volumen im Weg – kurzes Stocken möglich (gestrichelt)"),
                       (TEXT, "alter Pivot: frühere Ausbruchsmarke, trägt als Unterstützung (gestrichelt)"),
                       (BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit); "

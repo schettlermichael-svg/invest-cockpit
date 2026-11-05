@@ -23,6 +23,7 @@ import depotleiste                                    # noqa: E402
 import depot                                          # noqa: E402
 import fussabdruck                                    # noqa: E402
 import freie_bahn                                     # noqa: E402
+import gelaende                                       # noqa: E402
 import absorption                                     # noqa: E402
 import rs_rang                                        # noqa: E402
 import phase as phasen_modul                          # noqa: E402
@@ -224,7 +225,10 @@ def _k_zone(erk):
                       "Die Zonen werden aus 30-Minuten-Kerzen gerechnet (Market Profile). Für diesen Titel fehlen sie; "
                       "werkzeuge/tpo_laden.py lädt sie.")
     z = a["zustand"]
-    return kachel("Zone", z["ampel"], z["wort"], " · ".join(z["belege"][:3]),
+    g_ = (erk.get("gelaende") or {}).get("aktuell") or {}
+    art_ = (f'{g_["art"] if g_["art"] != "normal" else "Zone"} {zahl(g_["volumen"], 2)}×, {gelaende.lesart_text(g_)}'
+            if g_.get("art") and g_.get("volumen") is not None else "")     # Gelände: Besatzung und Fährte der Zone
+    return kachel("Zone", z["ampel"], z["wort"], " · ".join(([art_] if art_ else []) + z["belege"][:2]),
                   "Market Profile (Steidlmayer, Dalton) aus 30-Minuten-Kerzen. Die Zone besteht aus Wochen, deren "
                   "Wertbereich (70 % der Zeit) sich überlappt. Balance: Tageswerte wechseln, POC pendelt. An der Schwelle: "
                   "mindestens 3 der letzten 5 Tageswerte höher (tiefer), keiner ganz dagegen, Tages-POC steigt (fällt), "
@@ -417,25 +421,31 @@ def _k_fundament(fund, ph):
 
 def _gelaende_karte(erk):
     """Karte „Gelände“: alle Zeichen und der Steckbrief der letzten Zonen (Volumen, Druck, Art, Lesart)."""
+    import gelaende
     g = erk.get("gelaende")
     if not g:
         return ""
     zeilen = "".join(ampelzeile(f"{t_}: {x_}", a_, "") for a_, t_, x_ in g["zeichen"])
     kopf = ("<tr>" + "".join(f'<th style="text-align:left;padding:4px 8px;color:{TEXT_3};font-weight:500">{h}</th>'
-                             for h in ("Zone", "Spanne $", "Wert (VAL–VAH)", "Zeit-POC", "Volumen-POC", "Volumen",
-                                       "Tage V/K", "Art", "Lesart")) + "</tr>")
+                             for h in ("Zone", "Spanne $", "Wert (VAL–VAH)", "Zeit-POC", "Volumen-POC ◆",
+                                       "Lage Zeit / ◆", "Volumen", "Tage V/K", "Art", "Lesart")) + "</tr>")
     reihen = ""
     for z in reversed(g["zonen"][-6:]):
         reihen += ("<tr>" + "".join(f'<td style="padding:4px 8px;border-top:1px solid {RAND}">{c}</td>' for c in (
             f'{z["beginn"]:%d.%m.}–{z["ende"]:%d.%m.%y}', f'{zahl(z["tief"], 0)}–{zahl(z["hoch"], 0)}',
             f'{zahl(z["val"])}–{zahl(z["vah"])}', zahl(z["poc"]), zahl(z["vpoc"]) if z.get("vpoc") else "–",
+            (f'{zahl(z["lage_zeit"] * 100, 0)} % / {zahl(z["lage_vol"] * 100, 0)} %' + (" ◆" if z.get("raute") else ""))
+            if z.get("lage_vol") is not None else "–",
             f'{zahl(z["volumen"], 2)} ×' if z.get("volumen") else "–", f'{z["ab"]}/{z["auf"]}', t(z.get("art") or "–"),
-            t(z.get("zeichen") or z.get("lesart") or "–"))) + "</tr>")
+            t((z["zeichen"] + " · " if z.get("zeichen") else "") + gelaende.lesart_text(z)))) + "</tr>")
     tabelle = (f'<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:13px;width:100%">{kopf}{reihen}'
                f'</table></div>')
     hinweis = (f'<div style="font-size:13px;color:{TEXT_2}">Volumen = mittleres Tagesvolumen der Zone ÷ Median der 12 Monate '
                f'bis zu ihrem Ende (Festung ab 1,2 ×, Wartesaal bis 0,9 ×). Tage V/K = Tage mit Verkaufs- bzw. Kaufdruck '
-               f'(O\'Neil). Volumen-POC aus den 30-Minuten-Kerzen der Zone.</div>')
+               f'(O\'Neil: Schluss ±0,2 % bei mehr Volumen als am Vortag). Volumen-POC (◆) aus den 30-Minuten-Kerzen der Zone; '
+               f'Lage = Höhe von Zeit-POC und ◆ in der Zonenspanne (0 % = Tief, 100 % = Hoch). Lesart aus den Tagen; '
+               f'„◆ bestätigt“, wenn die Raute mindestens 20 % neben dem Zeit-POC liegt und die Richtung passt (Zeit oben, '
+               f'Geschäft unten + Verkaufsdruck = Verteilung; Geschäft oben + Kaufdruck = Akkumulation), sonst „nur Tage“.</div>')
     return karte(zeilen + tabelle + hinweis, "Gelände · Zonen und Volumen")
 
 
@@ -449,8 +459,9 @@ def _k_gelaende(erk, ph):
         return kachel("Gelände", "grau", "–", "keine Zonen (30-Minuten-Kerzen fehlen)", "")
     zei = {t_: (a_, x_) for a_, t_, x_ in g["zeichen"]}
     z = g["aktuell"]
-    wert = (z.get("zeichen") or (f'{z["art"]}, {z["lesart"]}' if z.get("art") else "Zone ohne Volumen"))
-    raum = zei.get("Raum ↑") or zei.get("Raum ↓")
+    import gelaende
+    wert = (z.get("zeichen") or (f'{z["art"]}, {gelaende.lesart_text(z)}' if z.get("art") else "Zone ohne Volumen"))
+    raum = zei.get("Lawinengefahr ↓") if (erk.get("short") or erk.get("seite") == "short") else zei.get("Freie Bahn ↑")
     ampel = zei.get("Zone", ("grau", ""))[0]
     if ampel == "grau" and raum:
         ampel = raum[0]
@@ -463,8 +474,9 @@ def _k_gelaende(erk, ph):
                   "Zonen des Market Profile mit ihrem Volumen (Auction Market Theory): Festung = viel Zeit und viel Volumen "
                   "(feste Stellung), Wartesaal = viel Zeit, wenig Volumen (schwach), Niemandsland = kaum Handel (der Kurs "
                   "läuft durch). Lesart aus O'Neils Verteilungs- und Akkumulationstagen; Lawinenhang = Wartesaal mit "
-                  "Verteilung, stille Akkumulation = Wartesaal mit Akkumulation (Minervini). Raum = Strecke bis zur "
-                  "nächsten Festung bzw. zum nächsten Volumenknoten in Laufrichtung; Überhang = Festungen bis +25 % über "
+                  "Verteilung, stille Akkumulation = Wartesaal mit Akkumulation (Minervini). Freie Bahn ↑ / "
+                  "Lawinengefahr ↓ = schwaches Gelände (Wartesaal, Niemandsland) bis zur nächsten Festung bzw. zum "
+                  "nächsten Volumenknoten, in % und in ATR; Überhang = Festungen bis +25 % über "
                   "dem Kurs (O'Neil: overhead supply). Zeichen, kein Filter." + marken)
 
 
@@ -983,7 +995,7 @@ def _short_seite(df, erk, ph, rd, mr):
     if g_:
         z_ = g_["aktuell"]
         if z_.get("lesart") == "Verteilung":
-            zeilen += ampelzeile(f'Gelände: Zone mit Verteilung ({z_.get("zeichen") or z_.get("art")}) – die späten Käufer '
+            zeilen += ampelzeile(f'Gelände: Zone mit {gelaende.lesart_text(z_)} ({z_.get("zeichen") or z_.get("art")}) – die späten Käufer '
                                  f'werden zum Angebot', "grün", "O'Neil: Verteilungstage; Auction Market Theory: Akzeptanz "
                                                                    "wird geräumt")
         h_ = g_["halt"]

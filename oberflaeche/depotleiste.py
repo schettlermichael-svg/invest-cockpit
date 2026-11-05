@@ -114,7 +114,7 @@ def titelkarte(tk, df, erk):
                     kopf += ampelzeile(f"Gelände: {x_}", a_, "")
             if p.get("stopp"):
                 st_ = gelaende.stellung(g_, float(p["stopp"]))
-                kopf += ampelzeile(f'Stopp {zahl(p["stopp"])} {w} liegt in {"einer " if st_ != "Niemandsland" else ""}{st_}',
+                kopf += ampelzeile(f'Stopp {zahl(p["stopp"])} {w} liegt {gelaende.im(st_)}',
                                    "grün" if st_ in ("Festung", "Volumenknoten") else "gelb" if st_ == "Wartesaal" else "rot",
                                    "Ein Stopp hinter einer Festung ist geschützt; im Niemandsland rauscht der Kurs bis zur "
                                    "nächsten Stellung durch")

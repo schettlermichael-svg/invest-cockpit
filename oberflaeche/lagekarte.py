@@ -191,8 +191,10 @@ def _atr_zeilen(erk, df, kurs):
     pl = depot.plan(erk)
     import crv
     g = erk.get("gelaende")
+    short_ = bool(erk.get("short")) or (pl and pl[0] == "short")
+    richtung_ = ("Lawinengefahr ↓", "Erholung", "Squeeze-Raum ↑") if short_ else ("Freie Bahn ↑", "Überhang")
     gz = [(a_, f"{t_}: {x_}") for a_, t_, x_ in (g or {}).get("zeichen", [])
-          if t_ in ("Zone", "Raum ↑", "Raum ↓", "Überhang", "Stellung hinter dem Stopp", "Dünne Spitze")]
+          if t_ in ("Zone", "Stellung hinter dem Stopp", "Dünne Spitze", "Überdehnung im Gelände") + richtung_]
     z = gz + crv.zeichen(erk, df, a) + [atr.stopp(pl[1], pl[2], a) if pl else None,
          atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
          atr.enge(df), atr.ueberdehnung(df, a)]

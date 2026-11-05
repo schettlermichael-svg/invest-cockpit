@@ -354,8 +354,19 @@ Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein F
   Stopps).
 - Chart: Festung türkis kräftig gefüllt (Rahmen 2,4), Wartesaal grau gestrichelt und leer, übrige Zonen blau wie bisher; jede Zone ab 55 px Breite trägt Art und Volumen × Jahresmedian („Festung 1,44ד, „Wartesaal 0,78ד, „Zone 0,98ד); Setup-Titel in einer Kopfleiste über dem Kursbild; kein Text mehr in der Schraffur; eine schraffierte Fläche „freie Bahn ↑
   bis Festung …“ bzw. „Raum ↓ bis …“; rechts unverändert das 52-Wochen-Profil mit POC, VAH, VAL. Die alten
-  Freie-Bahn-Bänder und das Knotenband sind entfallen. Die „Raute“ wird nicht gezeichnet.
+  Freie-Bahn-Bänder und das Knotenband sind entfallen.
 - Feine Marken im Chart (05.11.2026): dünne Wendepunkte (Hoch/Tief außerhalb von Festung und Knoten) zwischen Kurs
   und nächster Festung sowie bis zu zwei alte Pivots unter dem Kurs (bis −20 %) als gestrichelte Linien ab ihrem Tag (dünn gelb, alter Pivot weiß, beide in der Legende),
   Etikett am Anfang der Linie (`freie_bahn` liefert dazu `alte_pivots`).
 - Kartentisch: Gelände-Zeichen kommen über die Lagekarte aus dem nächtlichen Lauf.
+- Nachtrag 05.11.2026 (Abgleich mit dem Konzept, nichts darf fehlen):
+  - ◆ Volumen-POC je Zone: Lage von Zeit-POC und ◆ in % der Zonenspanne (Tabelle „Lage Zeit / ◆“); liegt ◆ mindestens 20 %
+    neben dem Zeit-POC, wird er im Chart innen am rechten Zonenrand gezeichnet (rot = bestätigt Verteilung, grün = bestätigt
+    Akkumulation, weiß = ohne passende Tage).
+  - Lesart: aus den Tagen mit Verkaufs-/Kaufdruck; „◆ bestätigt“, wenn die Raute deutlich ist und die Richtung passt
+    (Zeit oben, Geschäft unten + Verkaufsdruck = Verteilung; Geschäft oben + Kaufdruck = Akkumulation), sonst „nur Tage“.
+  - „Freie Bahn ↑“ und „Lawinengefahr ↓“ (statt „Raum“): schwaches Gelände bis zur nächsten Festung bzw. zum Knoten in % und
+    in ATR, mit Ort; steht der Kurs in einer alten Festung, zählt deren Wertbereich als nächste Stellung.
+  - Short: „Erholung“ (Hoch der Erholung in Festung = starker Widerstand, in Wartesaal/Niemandsland = schwach);
+    „Überdehnung im Gelände“ (ab 4 × ATR über dem GD50: Niemandsland darunter = Raum für einen Bruch, Festung = fängt ab).
+  - Kachel „Zone“: Art, Volumen und Lesart der Zone vor den Belegen.
