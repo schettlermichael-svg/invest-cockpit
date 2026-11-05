@@ -25,6 +25,7 @@ import rs_rang                                        # noqa: E402
 import phase as phasen_modul                          # noqa: E402
 import namen_de                                       # noqa: E402
 import marktrichtung                                  # noqa: E402
+import marktdaten                                     # noqa: E402
 import rudel                                          # noqa: E402
 import rudelkarte                                     # noqa: E402
 import quellen                                        # noqa: E402
@@ -576,6 +577,45 @@ def _lagebeurteilung(ph, erk, tv, fund):
 WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
 
 
+RS_BILDER = [("beide steigen", "Führer im Markt und in seinem Sektor"),
+             ("gegen S&P 500 fällt, gegen Sektor steigt", "der Sektor ist schwach, der Titel darin einer der Besten"),
+             ("gegen S&P 500 steigt, gegen Sektor fällt", "läuft nur mit dem starken Sektor mit, darin kein Führer"),
+             ("beide fallen", "schwächer als Markt und Sektor")]
+
+
+def _rs_lesart(df, index, sek, etf):
+    """Hinweiskasten beim Überfahren des RS-Feldes im Chart: das heutige Bild (Richtung der letzten
+    3 Monate; unter ±2 % gilt eine Linie als seitwärts) und die vier Bilder. Die Zone liegt genau über
+    dem RS-Feld des Charts (SVG-Koordinaten y 604–724 von 760, x von 64 bis zur Etikettenspalte)."""
+    if index is None:
+        return ""
+
+    def richtung(bezug):
+        r = (df["Close"] / bezug.reindex(df.index, method="ffill")).dropna()
+        if len(r) < 64:
+            return None, None
+        a = (r.iloc[-1] / r.iloc[-64] - 1) * 100
+        return (1 if a > 2 else -1 if a < -2 else 0), a
+
+    rm, am = richtung(index["Close"])
+    rk, ak = richtung(sek) if sek is not None else (None, None)
+    if rm is None:
+        return ""
+    zahlen = f"gegen S&P 500 {_vorzeichen(am, 0)} %" + (f", gegen {etf} {_vorzeichen(ak, 0)} %" if ak is not None else "")
+    heute_i = {(1, 1): 0, (-1, 1): 1, (1, -1): 2, (-1, -1): 3}.get((rm, rk)) if rm and rk else None
+    heute = (f"{RS_BILDER[heute_i][0]}: {RS_BILDER[heute_i][1]}" if heute_i is not None
+             else "kein klares Bild – mindestens eine Linie läuft seitwärts (weniger als ±2 %)")
+    liste = "".join(f'<div style="{"color:#E6EAF0;font-weight:600" if i == heute_i else ""}">'
+                    f'{"▶ " if i == heute_i else "• "}{t(b)}: {t(m)}</div>' for i, (b, m) in enumerate(RS_BILDER))
+    tip = (f'<div class="hinweis-tip"><div style="font-size:14px;color:#E6EAF0;font-weight:600">Heute: {t(heute)}</div>'
+           f'<div>Letzte 3 Monate: {t(zahlen)}</div>'
+           f'<div style="margin:6px 0 4px">Linie 100 = so stark wie der Index; steigt die Linie, gewinnt der Titel dazu.</div>'
+           f'{liste}</div>')
+    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{(104 + 180) / 1344 * 100:.2f}%;'
+            f'top:{604 / 760 * 100:.2f}%;height:{120 / 760 * 100:.2f}%">{tip}</div>')
+
+
+
 def _vorzeichen(x, stellen=1):
     return f'{"+" if x >= 0 else "−"}{zahl(abs(x), stellen)}'
 
@@ -792,8 +832,8 @@ def chartkarte(z, ebene="Tag", ausschnitt=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
     gezeichnet (Zeitebene, Ausschnitt, GD10/GD20), ohne die Seite neu zu rechnen."""
     return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(z["erk"], ebene)}</div>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["erk"], z["ph_reihe"], z["index"], z["gewinne"], ausschnitt)}'
-                       f'</div>'), oben=0, unten=0)
+                       + f'<div style="position:relative">{chart(z["df"], ebene, z["erk"], z["ph_reihe"], z["index"], z["gewinne"], ausschnitt, z.get("sek"), z.get("etf", ""))}'
+                       f'{z.get("rs_lesart", "")}</div>'), oben=0, unten=0)
 
 
 def _eintrag(tk):
@@ -913,6 +953,10 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:
         mr = None
     etf = sektoren.sektor_von(sb.get("sektor", ""))
+    try:                                          # Sektor-ETF für die RS-Linie gegen den Sektor
+        sek = marktdaten.yahoo(etf) if etf else None
+    except Exception:  # noqa: BLE001
+        sek = None
     rd = rudelkarte.daten(tk, df, etf)
     erk["gruppe_korrektur"] = _gruppe_korrektur(df, erk, rd)
     hinweis_laufend = ""
@@ -931,7 +975,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gestaltung.MITSCHRIFT = None
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
     oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
-    zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne}
+    zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
+                "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
     # Strömung in der Zone: Base, sonst Base im Aufbau, sonst die letzten 60 Tage
     z_start = w_.get("start_index") if "start_index" in w_ else len(df) - 60
     if erk.get("mp"):

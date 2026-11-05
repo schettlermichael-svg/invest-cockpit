@@ -5,7 +5,8 @@ Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), Zonen des Market Prof
 bis +5 % bzw. Auslöser short, Zahlentermine mit Reaktion, rotes Dreieck beim größten Tagesrückgang seit Beginn von
 Phase 2, Phasenband; rechts eine eigene Spalte für die Beschriftungen von Pivot, Ziel (+20 %) und Stopps, ganz
 rechts das Volumenprofil der letzten 52 Wochen.
-Darunter Volumen mit 50er-Schnitt und ruhigen Tagen, ganz unten die relative Stärke gegen den S&P 500 (links bei 100).
+Darunter Volumen mit 50er-Schnitt und ruhigen Tagen, ganz unten die relative Stärke gegen den S&P 500 und gestrichelt
+gegen den eigenen Sektor-ETF (beide links bei 100).
 """
 import numpy as np
 import pandas as pd
@@ -106,7 +107,7 @@ def _ausgang_text(b, df):
             f"{'Setup' if b.get('kaufsetup') else 'kein Setup'}")
 
 
-def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, ausschnitt=None):
+def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, ausschnitt=None, sektor=None, sektor_name=""):
     """Kurschart der grünen Null (05.11.2026): nur, was nach O'Neil, Minervini und Weinstein die Richtung zeigt –
     Kerzen, Volumen, GD50/150/200, Zonen mit Pivot bzw. Auslöser, RS-Linie gegen den Markt, Verkaufssignal, Zahlen,
     Phasenband; dazu Stopp und Ziel (+20 %) für den Plan. ausschnitt: Knopf aus AUSSCHNITT (z. B. „6 M“)."""
@@ -415,7 +416,8 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
             if not np.isnan(v50[i]) and v[i] <= 0.5 * v50[i]:
                 A(f'<circle cx="{X(i):.1f}" cy="{570 - 90 * v[i] / vmax - 8:.1f}" r="4" fill="{GELB}"/>')
 
-    # RS-Linie gegen den S&P 500, links bei 100 (O'Neil: macht die RS-Linie neue Hochs vor dem Kurs, führt der Titel)
+    # RS-Linien gegen den S&P 500 und gestrichelt gegen den Sektor-ETF, beide links bei 100, gemeinsame Skala (O'Neil: macht
+    # die RS-Linie neue Hochs vor dem Kurs, führt der Titel; gegen den Sektor: führt er seine Gruppe oder läuft er nur mit)
     if index is not None:
         def relativ(bezug):
             bx = bezug if ebene == "Tag" else bezug.resample("W-FRI").last()
@@ -424,8 +426,9 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
             return r / r[gueltig[0]] * 100 if len(gueltig) > 5 else None
 
         rs = relativ(index["Close"])
+        rk = relativ(sektor) if sektor is not None else None
         if rs is not None:
-            alle = np.concatenate([rs[~np.isnan(rs)], [100.0]])
+            alle = np.concatenate([rs[~np.isnan(rs)], rk[~np.isnan(rk)] if rk is not None else [], [100.0]])
             lo, hi = alle.min(), alle.max()
             rand = (hi - lo) * 0.06 or 1
             lo, hi = lo - rand, hi + rand
@@ -450,15 +453,22 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
 
             A(f'<text x="{LINKS}" y="608" fill="{TEXT_3}" font-size="12">RELATIVE STÄRKE SEIT {d.index[0]:%m/%Y} · '
               f'<tspan fill="{BLAU}">— gegen S&amp;P 500</tspan>'
+              + (f'  <tspan fill="{LILA}">- - gegen Sektor {sektor_name}</tspan>' if rk is not None else "")
               + f'  · Pfeil = letzte {kurz_} {"Tage" if ebene == "Tag" else "Wochen"}</text>')
             A(f'<line x1="{LINKS}" x2="{ENDE}" y1="{YR(100):.1f}" y2="{YR(100):.1f}" stroke="{TEXT_3}" '
               f'stroke-width="1" stroke-dasharray="2 4"/>'
               f'<text x="{LINKS - 6}" y="{YR(100) + 4:.1f}" fill="{TEXT_3}" font-size="11" text-anchor="end">100</text>'
               f'<text x="{B - RECHTS}" y="608" fill="{TEXT_3}" font-size="11" text-anchor="end">'
               f'100 = so stark wie der Index</text>')
+            if rk is not None:
+                A('<polyline points="' + " ".join(f"{X(i):.1f},{YR(x):.1f}" for i, x in enumerate(rk)
+                                                   if not np.isnan(x))
+                  + f'" fill="none" stroke="{LILA}" stroke-width="1.5" stroke-dasharray="5 4"/>')
             A('<polyline points="' + " ".join(f"{X(i):.1f},{YR(x):.1f}" for i, x in enumerate(rs) if not np.isnan(x))
               + f'" fill="none" stroke="{BLAU}" stroke-width="1.8"/>')
             pfeil(rs, BLAU, "gegen S&amp;P 500")
+            if rk is not None:
+                pfeil(rk, LILA, f"gegen Sektor {sektor_name}")
             # RS-Linie auf neuem Hoch, während der Kurs es noch nicht ist
             letzte = 20 if ebene == "Tag" else 4
             if np.nanmax(rs[-letzte:]) >= np.nanmax(rs) and c[-letzte:].max() < h.max():

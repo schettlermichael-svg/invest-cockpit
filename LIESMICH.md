@@ -392,9 +392,11 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   gelb gepunktet im Chart, als Zeile auf der Lagekarte (rot unter 10 % Abstand, gelb darüber, grün = freie Bahn).
 - Entfernt (nach `_to_delete/gruene_null_titelseite`: gelaende.py, freie_bahn.py, avwap.py): Gelände
   (Festung/Wartesaal, ◆, Lawine, freie Bahn), AVWAP und AVWAP-Liste, Marken „dünn“/„alter
-  Pivot“, RS gegen Sektor, GD10/GD20-Schalter, SIC-13-Karte, Lagekarte neben den Kacheln, Firmenbeschreibung,
+  Pivot“, GD10/GD20-Schalter, SIC-13-Karte, Lagekarte neben den Kacheln, Firmenbeschreibung,
   Stimmungskurve, Rudel und Rotation, Kacheln Zone/Ausbruch/Ereignis/Nächste Zahlen (in Setup, Fundament und Kopf
   aufgegangen). Grund: Sie zeigen nicht die Richtung (Messung 05.11.: Festung/Wartesaal und Strecke ohne Richtung).
 - Volumenprofil 52 Wochen wieder im Chart (05.11.2026, auf Wunsch): Spalte ganz rechts mit POC (gepunktete Linie im
   Kursbild), VAH/VAL und Kursmarke; `kern/volumenprofil.py` auf `profil()` verschlankt, `erk["profil"]` in `titel.py`.
 - 52-Wochen-Fenster sichtbar (05.11.2026): senkrechte Punktlinie „52 Wochen ab …“ im Chart (gilt für Profil und Widerstände; im 1-Jahres-Ausschnitt am linken Rand, ab 2 J mitten im Bild), Legende und Lagekarte nennen „letzte 52 Wochen“.
+- RS-Linie gegen den Sektor-ETF wieder im Chart (05.11.2026, auf Wunsch): gestrichelt neben der RS-Linie gegen den S&P 500,
+  mit Pfeil der letzten 10 Tage und Hinweiskasten der vier Bilder (Führer im Markt und Sektor usw.).
