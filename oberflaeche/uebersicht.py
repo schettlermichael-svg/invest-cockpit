@@ -15,7 +15,6 @@ import marktrichtung                                         # noqa: E402
 from stimmung import kurve  # noqa: E402
 from frontkarte import frontkarte  # noqa: E402
 import uebergaenge                                           # noqa: E402
-import kartentisch                                           # noqa: E402
 import depotleiste                                           # noqa: E402
 from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, karte, punkt, seite, t, zahl)  # noqa: E402
 
@@ -153,4 +152,6 @@ def seite_uebersicht():
                      "Stimmungskurve")
     erkl = (f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
             f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
-    return seite(kopf + leiste + frontkarte(q) + uebergaenge.tafel(q) + depotleiste.leiste() + kartentisch.html() + stimmung + erkl)
+    # Der Kartentisch steht dazwischen und wird von app.py Stück für Stück mit Knöpfen gesetzt (kartentisch.plan)
+    return {"oben": seite(kopf + leiste + frontkarte(q) + uebergaenge.tafel(q) + depotleiste.leiste(), unten=24),
+            "unten": seite(stimmung + erkl, oben=24)}

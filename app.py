@@ -20,6 +20,8 @@ from gestaltung import BLAU, KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
 import chart  # noqa: E402
 import titel  # noqa: E402
 import uebersicht  # noqa: E402
+import kartentisch  # noqa: E402
+import gestaltung  # noqa: E402
 import watchlists  # noqa: E402
 import depot  # noqa: E402
 
@@ -33,6 +35,10 @@ header[data-testid="stHeader"], footer, #MainMenu, [data-testid="stToolbar"],
 .stApp {{background:{SEITE}; color:{TEXT}; font-family:'IBM Plex Sans',system-ui,sans-serif}}
 .block-container {{max-width:1440px; padding:16px 0 0 0 !important}}
 div[data-testid="stHorizontalBlock"] {{max-width:1392px; margin:0 auto; padding:0 24px; align-items:end}}
+div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padding:0; max-width:none; align-items:center}}
+.st-key-kartentisch div[data-testid="stHorizontalBlock"] {{align-items:flex-start}}
+.st-key-kartentisch div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{align-items:center}}
+.st-key-kartentisch [data-testid="stExpander"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
 .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{background:{KARTE}; color:{TEXT};
   border:1px solid {RAND}; border-radius:10px; min-height:44px; font-size:16px}}
 .stTextInput label, .stRadio label p {{color:{TEXT_2} !important; font-size:14px}}
@@ -235,13 +241,139 @@ def _codestand():
     return max([code] + [os.path.getmtime(x) for x in daten if os.path.exists(x)])
 
 
+# ── Kartentisch auf der Übersicht: Karten mit Knöpfen, übrige Titel als Tabelle, Lagekarte im Pop-up ──
+@st.cache_resource(show_spinner=False, max_entries=2)
+def _tischplan(codestand):
+    """Kartentisch-Plan einmal je Code-/Datenstand (cache_resource: die großen Karten werden nicht kopiert)."""
+    return kartentisch.plan()
+
+
+def _rgba(farbe):
+    """'#3FB95066' → 'rgba(63,185,80,0.4)' (die Tabelle versteht keine achtstelligen Farben)."""
+    h = farbe.lstrip("#")
+    a = int(h[6:8], 16) / 255 if len(h) == 8 else 1
+    return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{a:.2f})"
+
+
+def _verschieben(tk, von, nach):
+    watchlists.setzen(tk, nach, True)
+    watchlists.setzen(tk, von, False)
+    st.toast(f"{tk}: „{von}“ → „{nach}“")
+
+
+def _herausnehmen(tk, liste):
+    watchlists.setzen(tk, liste, False)
+    st.toast(f"{tk} aus „{liste}“ genommen")
+
+
+def _watch_aktionen(tk, liste, schluessel):
+    """Im Watchlist-Abschnitt: in eine andere Liste verschieben oder herausnehmen. Sonst: je Liste ein Haken."""
+    namen = list(watchlists.laden()) or [watchlists.STANDARD]
+    if liste:
+        with _fenster(f"◆ {liste}"):
+            for n in namen:
+                if n != liste:
+                    st.button(f"→ nach „{n}“ verschieben", key=f"{schluessel}mv_{tk}_{n}", use_container_width=True,
+                              on_click=_verschieben, args=(tk, liste, n))
+            st.button(f"✕ aus „{liste}“ herausnehmen", key=f"{schluessel}rm_{tk}", use_container_width=True,
+                      on_click=_herausnehmen, args=(tk, liste))
+        return
+    drin = watchlists.listen_von(tk)
+    with _fenster(f"★ Watchlist ({len(drin)})" if drin else "☆ Watchlist"):
+        for n in namen:
+            sl = f"{schluessel}wl_{tk}_{n}"
+            st.session_state[sl] = n in drin
+            st.checkbox(n, key=sl, on_change=_watch_setzen, args=(tk, n, sl))
+
+
+def _knopfleiste(tk, liste, schluessel):
+    a, b = st.columns(2)
+    with a:
+        _watch_aktionen(tk, liste, schluessel)
+    with b:
+        st.link_button("Deep Dive →", f"?seite=Titelseite&t={tk}", use_container_width=True)
+
+
+_DIALOG = getattr(st, "dialog", None) or getattr(st, "experimental_dialog", None)
+
+
+def _karte_zeigen(tk, x, liste):
+    """Lagekarte eines Tabellen-Titels im Pop-up (✕ oben rechts schließt es), darunter dieselben Knöpfe."""
+    if x and x.get("karte"):
+        st.markdown(kartentisch.karte_html(x, kartentisch._marken(x) if liste else ""), unsafe_allow_html=True)
+    else:
+        st.markdown(f"**{tk}**: noch keine Lagekarte – sie wird im Abendlauf gerechnet.")
+    _knopfleiste(tk, liste, "dlg_")
+
+
+if _DIALOG:
+    _karte_zeigen = _DIALOG("Lagekarte", width="large")(_karte_zeigen)
+
+
+def _tabelle(teil, nr):
+    """Die übrigen Titel eines Abschnitts als Tabelle, in derselben Rangfolge wie die Karten. Farbfeld links =
+    Rahmenstufe. Klick auf eine Zeile öffnet die Lagekarte im Pop-up."""
+    import pandas as pd
+    zeilen = teil["zeilen"]
+    if not zeilen:
+        return
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Zone": z["Zone"],
+                        "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
+    farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
+    stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
+    zaehler = f"tab_n_{nr}"
+    n = st.session_state.setdefault(zaehler, 0)
+    with st.expander(f"alle weiteren {len(zeilen)} zeigen · Zeile anklicken öffnet die Lagekarte"):
+        ereignis = st.dataframe(stil, hide_index=True, use_container_width=True, on_select="rerun",
+                                selection_mode="single-row", key=f"tab_{nr}_{n}",
+                                height=min(420, 35 * (len(zeilen) + 1) + 3),
+                                column_config={" ": st.column_config.TextColumn(" ", width="small")})
+    reihen = ereignis.selection.rows if ereignis is not None else []
+    if reihen:
+        tk = zeilen[reihen[0]]["tk"]
+        st.session_state[zaehler] = n + 1          # nächster Lauf: Tabelle ohne Auswahl, das Pop-up öffnet nicht erneut
+        if _DIALOG:
+            _karte_zeigen(tk, teil["titel"].get(tk), teil["liste"])
+        else:
+            st.link_button(f"{tk}: Deep Dive →", f"?seite=Titelseite&t={tk}")
+
+
+def _kartentisch_zeigen():
+    def html(h):
+        st.markdown(gestaltung.seite(h, oben=12, unten=12), unsafe_allow_html=True)
+    try:
+        huelle = st.container(key="kartentisch")
+    except TypeError:                               # ältere Streamlit-Version ohne key
+        huelle = st.container()
+    with huelle:
+        for nr, teil in enumerate(_tischplan(_codestand())):
+            if teil["art"] == "html":
+                html(teil["html"])
+                continue
+            html(teil["kopf"] + ("" if teil["karten"] or teil["zeilen"]
+                                 else f'<div style="color:{TEXT_2};font-size:15px">zurzeit keine</div>'))
+            name = f"{nr}_{teil['liste'] or 'reihe'}"
+            karten = teil["karten"]
+            for i in range(0, len(karten), 3):
+                for spalte, (tk, x, h) in zip(st.columns(3), karten[i:i + 3]):
+                    with spalte:
+                        st.markdown(h, unsafe_allow_html=True)
+                        _knopfleiste(tk, teil["liste"], f"k{name}_")
+            _tabelle(teil, name)
+
+
 def zeigen(name, *args):
     """Seite als HTML ausgeben. st.markdown statt st.html: st.html entfernt die Inhalte
     eingebetteter SVG-Grafiken (den Chart)."""
     try:
         with st.spinner("Lade und rechne …"):
             html = _gebaut(name, _codestand(), *args)
-        st.markdown(html, unsafe_allow_html=True)
+        if isinstance(html, dict):                   # Übersicht: oben, Kartentisch mit Knöpfen, unten
+            st.markdown(html["oben"], unsafe_allow_html=True)
+            _kartentisch_zeigen()
+            st.markdown(html["unten"], unsafe_allow_html=True)
+        else:
+            st.markdown(html, unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 

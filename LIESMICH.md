@@ -192,7 +192,13 @@ Dazu zeigt der Kartentisch:
 - „Neu seit gestern“: neu in einer Reihe, vorgerückt, Phasenwechsel;
 - „Earnings 14 Tage“.
 
-Ein Klick auf eine Karte öffnet die Titelseite. Nur den Kartentisch rechnen: `python3 werkzeuge/tpo_laden.py kartentisch`.
+Bedienung (05.11.2026): Unter jeder Karte zwei Knöpfe der App – „☆ Watchlist“ (je Liste ein Haken; im
+Watchlist-Abschnitt stattdessen „→ nach … verschieben“ und „✕ herausnehmen“) und „Deep Dive →“ (Titelseite im neuen Tab).
+Die ersten 12 Titel je Abschnitt als Karte, die übrigen als Tabelle in derselben Rangfolge (★, frischer Auslöser,
+Setup grün, Abstand); Klick auf eine Zeile öffnet die Lagekarte im Pop-up (✕ schließt). Rahmen überall: grün long,
+rot short, kräftig = ★, voll = Setup grün, blass = Setup nicht grün, gelb = noch keine Reihe/Richtung offen, dazu der
+Grund, was fehlt. Watchlist-Zugehörigkeit gilt sofort (aus den Listen der App, nicht aus dem Abendlauf).
+Nur den Kartentisch rechnen: `python3 werkzeuge/tpo_laden.py kartentisch`.
 
 ### Markt-Ampel mit Zonen, Auslöser U, Seite nach der Bewegung (04.11.2026)
 

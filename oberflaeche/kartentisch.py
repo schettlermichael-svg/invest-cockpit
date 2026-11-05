@@ -199,10 +199,10 @@ def _neu(vorher, jetzt):
 
 
 # ── Darstellung auf der Übersicht ──
-SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Zeile darunter (aufklappbar) – nichts wird gefiltert
-
-
-ZIEL = 'target="_blank" rel="noopener"'   # Titelseite im neuen Tab: die Übersicht bleibt an ihrer Stelle stehen
+# Die Übersicht zeigt den Kartentisch nicht mehr als einen HTML-Block, sondern Stück für Stück (plan): HTML-Teile,
+# dazwischen Abschnitte mit Karten, unter jeder Karte echte Knöpfe der App (Watchlist, Deep Dive) und die übrigen
+# Titel als anklickbare Tabelle (Klick → Lagekarte im Pop-up). app.py setzt die Knöpfe.
+SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Tabellenzeile darunter – nichts wird gefiltert
 
 
 def _farbe(x):
@@ -217,45 +217,32 @@ def _grundzeile(x):
     return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
-def _deepdive(tk, klein=False, x=None):
-    """Der eine Weg zur Titelseite – überall gleich beschriftet, öffnet einen neuen Tab; Rahmen in Richtungsfarbe."""
-    from gestaltung import KARTE, TEXT
-    f = _farbe(x)
-    return (f'<a href="?seite=Titelseite&t={tk}" {ZIEL} style="border:1px solid {f};border-radius:8px;'
-            f'padding:{"2px 8px" if klein else "4px 12px"};font-size:{13 if klein else 14}px;font-weight:600;color:{TEXT};'
-            f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')
-
-
-def _link(tk, x, kopf=""):
-    """Karte mit einem einzigen Weg zur Titelseite: dem Knopf „Deep Dive →“ (die Karte selbst ist kein Link mehr).
-    kopf: eine Zeile über der Karte (Watchlist-Reihe: eigentliche Reihe des Titels) rechts neben dem Knopf."""
-    knopf = _deepdive(tk, x=x)
-    inhalt = lagekarte.faerben(x["karte"], x)
+def karte_html(x, kopf=""):
+    """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
+    Grund, was fehlt)."""
     kopf = kopf or _grundzeile(x)
-    return (f'<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:'
-            f'space-between;align-items:center;gap:8px">{kopf or "<span></span>"}{knopf}</div>{inhalt}</div>')
+    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}'
+            f'{lagekarte.faerben(x["karte"], x)}</div>')
 
 
-def _zeile(tk, x):
-    from gestaltung import RAND, TEXT_2, punkt, t, zahl
-    kl = x.get("kacheln") or {}
-    setup = kl.get("Setup", ("grau", "–", ""))
-    return (f'<div style="display:grid;grid-template-columns:90px 22px 1fr 1fr 80px 120px;gap:10px;align-items:center;'
-            f'padding:8px 4px 8px 10px;border-top:1px solid {RAND};border-left:3px solid {_farbe(x)};font-size:14px">'
-            f'<b>{t(tk)}</b>{punkt(setup[0], 12)}'
-            f'<span>{t(setup[1])}</span><span style="color:{TEXT_2}">{t(x.get("zustand", ""))}'
-            f'{"<br>" + t(lagekarte.grund(x)) if lagekarte.grund(x) else ""}</span>'
-            f'<span style="font-family:IBM Plex Mono,monospace;text-align:right;color:{TEXT_2}">'
-            f'{zahl(x.get("abstand", 0), 1)} %</span>{_deepdive(tk, klein=True, x=x)}</div>')
+def zeile(tk, x):
+    """Eine Tabellenzeile für die übrigen Titel (Reihenfolge wie die Karten)."""
+    from gestaltung import GELB, zahl
+    if x is None:
+        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Zone": "",
+                "Abstand %": "", "Was fehlt": ""}
+    setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
+    return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
+            "Zone": x.get("zustand", ""), "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
-def _klapp(titel, zeile, inhalt):
+def _klapp(titel, zeile_, inhalt):
     """Karte zum Aufklappen (Übersicht kürzer): zu sieht man Titel und eine Zeile, aufgeklappt den Inhalt."""
     from gestaltung import KARTE, RAND, TEXT_2, t
     return (f'<details style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
             f'<summary style="cursor:pointer;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'
             f'<span style="font-size:20px;font-weight:600">{t(titel)} ▾</span>'
-            f'<span style="font-size:15px;color:{TEXT_2}">{t(zeile)}</span></summary>'
+            f'<span style="font-size:15px;color:{TEXT_2}">{t(zeile_)}</span></summary>'
             f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">{inhalt}</div></details>')
 
 
@@ -263,13 +250,37 @@ def _ordnung(x):
     return (not x.get("stern"), not x.get("ausloeser"), not x.get("gruen"), x.get("abstand", 99))
 
 
-def html(tisch=None):
-    """Kartentisch für die Übersicht: Führer-Barometer, Neu seit gestern, Earnings 14 Tage, Reihen."""
-    from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, karte, t, zahl
+def _kopf(name, zahl_, text, h=2):
+    from gestaltung import TEXT_2, TEXT_3, t
+    groesse = 26 if h == 2 else 19
+    return (f'<div style="display:flex;align-items:baseline;gap:14px;margin:12px 0 4px"><h{h} style="margin:0;'
+            f'font-size:{groesse}px">{t(name)} <span style="color:{TEXT_3};font-weight:500">{zahl_}</span></h{h}>'
+            + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + f'</div>')
+
+
+def _abschnitt(kopf, liste, liste_name=None, fehlen=()):
+    """Ein Abschnitt für app.py: Karten (die ersten SICHTBAR mit Lagekarte) und Tabelle der übrigen."""
+    sichtbar = [(tk, x) for tk, x in liste[:SICHTBAR] if x.get("karte")]
+    rest = liste[SICHTBAR:] + [(tk, x) for tk, x in liste[:SICHTBAR] if not x.get("karte")]
+    return {"art": "abschnitt", "kopf": kopf, "liste": liste_name,
+            "karten": [(tk, x, karte_html(x, _marken(x) if liste_name else "")) for tk, x in sichtbar],
+            "zeilen": [zeile(tk, x) for tk, x in rest] + [zeile(tk, None) for tk in fehlen],
+            "titel": {tk: x for tk, x in rest}}
+
+
+def plan(tisch=None):
+    """Kartentisch für die Übersicht als Folge von Teilen: {"art": "html", "html": …} oder ein Abschnitt (siehe
+    _abschnitt). Watchlist-Zugehörigkeit immer aus den Listen der App (nicht aus dem Stand des Abendlaufs) – ein Titel,
+    der eben auf eine Liste kam, steht sofort im Watchlist-Abschnitt und nicht mehr in seiner Reihe."""
+    import watchlists
+    from gestaltung import GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, karte, t, zahl
     tisch = tisch if tisch is not None else laden()
     if not tisch:
-        return karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird im Abendlauf gerechnet '
-                     f'(<code>python3 werkzeuge/tpo_laden.py</code>). Noch liegt kein Ergebnis vor.</p>', "Kartentisch")
+        return [{"art": "html", "html": karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird '
+                                              f'im Abendlauf gerechnet. Noch liegt kein Ergebnis vor.</p>', "Kartentisch")}]
+    w = watchlists.laden()
+    tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l])
+                               for tk, x in tisch["titel"].items()})
     b = tisch["barometer"]
     hl = "grün" if b["hochs"] > 2 * b["tiefs"] else "rot" if b["tiefs"] > 2 * b["hochs"] else "gelb"
     farbe = {"grün": GRUEN, "gelb": GELB, "rot": ROT}[hl]
@@ -286,52 +297,53 @@ def html(tisch=None):
         f'</div><div style="font-size:14px;color:{TEXT_2}">52-Wochen-Hochs : -Tiefs heute</div></div></div>')
     namen = {k: n for k, n, _ in REIHEN}
     neu = tisch.get("neu") or []
-    neu_html = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {_farbe(tisch["titel"].get(tk))};'
-                        f'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none">'
-                        f'<b>{t(tk)}</b> <span style="color:{TEXT_2}">{t(text)}</span></a>' for tk, text in neu[:60])
+    chip = ('<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {f};'
+            'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{tk}</b> '
+            '<span style="color:' + TEXT_2 + '">{text}</span></a>')
+    neu_html = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=t(text)) for tk, text in neu[:60])
                 or f'<span style="color:{TEXT_2}">nichts Neues gegenüber dem letzten Lauf</span>')
     termine = []
     for tk, x in tisch["titel"].items():
-        w = ((x.get("kacheln") or {}).get("Nächste Zahlen") or ("", "", ""))
-        tage = 0 if w[1] == "heute" else 1 if w[1] == "morgen" else (int(w[1].split()[1]) if w[1].startswith("in ") else 99)
+        z = ((x.get("kacheln") or {}).get("Nächste Zahlen") or ("", "", ""))
+        tage = 0 if z[1] == "heute" else 1 if z[1] == "morgen" else (int(z[1].split()[1]) if z[1].startswith("in ") else 99)
         if 0 <= tage <= 14:                    # vergangene Termine („in -1 Tagen“ älterer Tische) nicht mitzählen
-            termine.append((tage, tk, w[2].split(" ·")[0],
-                            "Watchlist" if x.get("listen") else namen.get(x.get("reihe"), "")))
+            termine.append((tage, tk, z[2].split(" ·")[0], "Watchlist" if x["listen"] else namen.get(x.get("reihe"), "")))
     termine.sort()
-    earn = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {_farbe(tisch["titel"].get(tk))};border-radius:8px;'
-                    f'padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{t(tk)}</b> '
-                    f'<span style="color:{TEXT_2}">{t(d)} · {t(r)}</span></a>' for _, tk, d, r in termine)
+    earn = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=f"{t(d)} · {t(r)}")
+                    for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
-    teile = [barometer,
-             _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html),
-             _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
-                    + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)]
-    teile.append(_watchreihe(tisch))
+    teile = [{"art": "html", "html": barometer
+              + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
+              + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
+                       + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)}]
+    # Meine Watchlists: je Liste ein Abschnitt; jeder Titel einmal (im ersten Abschnitt, in dem er steht)
+    teile.append({"art": "html", "html": _kopf("Meine Watchlists", len(watchlists.alle()),
+                                                "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
+                                                "unter jeder Karte verschieben oder herausnehmen")})
+    gezeigt = set()
+    for name, liste in w.items():
+        eigene = [tk for tk in liste if tk not in gezeigt]
+        gezeigt.update(eigene)
+        if not eigene:
+            continue
+        da = sorted(((tk, tisch["titel"][tk]) for tk in eigene if tk in tisch["titel"]),
+                    key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
+        teile.append(_abschnitt(_kopf(name, len(eigene), "", h=3), da, name,
+                                [tk for tk in eigene if tk not in tisch["titel"]]))
     for key, name, text in REIHEN:
-        liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x.get("listen")),
+        liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
-        sichtbar = [(tk, x) for tk, x in liste[:SICHTBAR] if x.get("karte")]
-        rest = liste[SICHTBAR:] + [(tk, x) for tk, x in liste[:SICHTBAR] if not x.get("karte")]
-        kopf = (f'<div style="display:flex;align-items:baseline;gap:14px;margin:12px 0 4px"><h2 style="margin:0;'
-                f'font-size:26px">{t(name)} <span style="color:{TEXT_3};font-weight:500">{len(liste)}</span></h2>'
-                f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span></div>')
-        raster = (f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">'
-                  + "".join(_link(tk, x) for tk, x in sichtbar) + '</div>') if sichtbar else \
-            f'<div style="color:{TEXT_2};font-size:15px">zurzeit keine</div>'
-        weitere = (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
-                   f'alle weiteren {len(rest)} zeigen</summary>' + "".join(_zeile(tk, x) for tk, x in rest)
-                   + '</details>') if rest else ""
-        teile.append(kopf + raster + weitere)
-    teile.append(lagebild(tisch))
-    teile.append(f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
-                 f'Klick auf eine Karte öffnet die Titelseite</div>')
-    return "".join(teile)
+        teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
+    teile.append({"art": "html", "html": lagebild(tisch)
+                  + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
+                    f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
+    return teile
 
 
 def _marken(x):
     """Eine Marke über der Karte eines Watchlist-Titels: seine eigentliche Reihe (die Liste steht schon in der
     Abschnittsüberschrift)."""
-    from gestaltung import BLAU, RAND, TEXT_2, t
+    from gestaltung import TEXT_2, t
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
     if x.get("reihe") == "frueh" and x.get("angriff"):
         r += f" · {x['angriff']}"
@@ -341,46 +353,6 @@ def _marken(x):
             f'border-radius:6px;padding:2px 8px;font-size:13px;color:{TEXT_2};align-self:flex-start">'
             f'{t(r or g or "noch keine Reihe")}</span>'
             + (f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g and r else "") + '</span>')
-
-
-def _watchreihe(tisch):
-    """Reihe „Meine Watchlists“: je Liste ein Abschnitt; jeder Titel einmal (im ersten Abschnitt, in dem er steht).
-    Titel, die erst nach dem letzten Abendlauf dazukamen, stehen als Zeile „wird im Abendlauf gerechnet“."""
-    import watchlists
-    from gestaltung import BLAU, RAND, TEXT_2, TEXT_3, t
-    w = watchlists.laden()
-    kopf = (f'<div style="display:flex;align-items:baseline;gap:14px;margin:12px 0 4px"><h2 style="margin:0;'
-            f'font-size:26px">Meine Watchlists <span style="color:{TEXT_3};font-weight:500">{len(watchlists.alle())}'
-            f'</span></h2><span style="font-size:15px;color:{TEXT_2}">jeder Titel immer, egal welche Ampel – die '
-            f'Marke zeigt seine Reihe; Pflege über „Watchlist“ auf der Titelseite</span></div>')
-    if not w:
-        return kopf + f'<div style="color:{TEXT_2};font-size:15px">noch keine Titel</div>'
-    gezeigt, teile = set(), [kopf]
-    for name, liste in w.items():
-        eigene = [tk for tk in liste if tk not in gezeigt]
-        gezeigt.update(eigene)
-        if not eigene:
-            continue
-        da = sorted(((tk, tisch["titel"][tk]) for tk in eigene if tk in tisch["titel"]),
-                    key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
-        fehlen = [tk for tk in eigene if tk not in tisch["titel"]]
-        sichtbar = [(tk, x) for tk, x in da[:SICHTBAR] if x.get("karte")]
-        rest = da[SICHTBAR:] + [(tk, x) for tk, x in da[:SICHTBAR] if not x.get("karte")]
-        teil = (f'<h3 style="margin:14px 0 6px;font-size:19px">{t(name)} <span style="color:{TEXT_3};'
-                f'font-weight:500">{len(eigene)}</span></h3>')
-        if sichtbar:
-            teil += ('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">'
-                     + "".join(_link(tk, x, _marken(x)) for tk, x in sichtbar) + '</div>')
-        if rest or fehlen:
-            teil += (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
-                     f'alle weiteren {len(rest) + len(fehlen)} zeigen</summary>'
-                     + "".join(_zeile(tk, x) for tk, x in rest)
-                     + "".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:block;padding:8px 4px;'
-                               f'border-top:1px solid {RAND};color:inherit;text-decoration:none;font-size:14px"><b>{t(tk)}'
-                               f'</b> <span style="color:{TEXT_2}">neu – wird im Abendlauf gerechnet</span></a>'
-                               for tk in fehlen) + '</details>')
-        teile.append(teil)
-    return "".join(teile)
 
 
 # ── Lagekarte nach Sektoren (4.11.2026) ──
