@@ -126,3 +126,16 @@ def einfuegen(text, name=STANDARD):
     ziel.extend(neu)
     speichern(w)
     return len(neu)
+
+
+def liste_loeschen(name):
+    """Ganze Liste entfernen. Titel, die in keiner anderen Liste stehen, gelten als gelöscht (tpo_daten.vergessen:
+    ohne Revier fallen sie aus dem Abendlauf). Gibt die Zahl der so gelöschten Titel zurück."""
+    w = laden()
+    titel = w.pop(name, [])
+    speichern(w)
+    import tpo_daten
+    weg = [t for t in titel if not listen_von(t)]
+    for t in weg:
+        tpo_daten.vergessen(t)
+    return len(weg)

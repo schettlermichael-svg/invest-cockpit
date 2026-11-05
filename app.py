@@ -162,6 +162,13 @@ def watchlists_verwalten():
                         watchlists.setzen(tk, name, False)
                     st.toast(f"{len(weg)} Titel aus „{name}“ genommen")
                     st.rerun()
+        with st.form("wl_verw_liste_weg", clear_on_submit=True):
+            sicher = st.checkbox(f"Liste „{name}“ wirklich löschen")
+            if st.form_submit_button("Liste löschen", use_container_width=True) and sicher:
+                n = watchlists.liste_loeschen(name)
+                st.toast(f"„{name}“ gelöscht · {n} Titel standen in keiner anderen Liste und fallen aus dem Abendlauf "
+                         "(außer sie gehören zum Revier)")
+                st.rerun()
         with st.form("wl_verw_liste_neu", clear_on_submit=True):
             neu = st.text_input("Neue Liste anlegen", placeholder="Name")
             erster = st.text_input("erster Titel", placeholder="Ticker")
