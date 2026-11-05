@@ -961,6 +961,15 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, kurz=()):
                        f'{z["rs_lesart"]}</div>'), oben=0, unten=0)
 
 
+def _reihe(tk):
+    """Reihe des Titels im jüngsten Kartentisch – bestimmt die Richtungsfarbe (long grün, short rot)."""
+    try:
+        import kartentisch
+        return kartentisch.reihe_von(tk)
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def seite_titel(ticker, laufend=False, _stand=None):
     """Gibt drei Teile zurück: oben (Kopf bis Kacheln), chart (Zwischenstand für chartkarte), unten (ab Frühere Basen).
     Zwischen oben und Chart setzt app.py die Chart-Knöpfe. laufend=True: mit der unvollständigen Kerze des laufenden Börsentags (Knopf „Kurse aktualisieren“);
@@ -1057,7 +1066,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gestaltung.MITSCHRIFT = None
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
     lage_block = (f'<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">'
-                  f'<div style="flex:0 1 460px;min-width:340px">{lk}</div>{leiste}</div>')
+                  f'<div style="flex:0 1 460px;min-width:340px">{lagekarte.faerben(lk, lagekarte.richtung(_reihe(tk)))}</div>'
+                  f'{leiste}</div>')
     oben = [_kopf(tk, sb, df) + hinweis_laufend, _sic13_karte(kompass), lage_block]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}

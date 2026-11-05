@@ -3,6 +3,8 @@ den Watchlists. Aufbau: Kopf mit Setup, Chips (Zone, RS, Phase, Base), Belegzeil
 Zonenrahmen, Wertbereich und POC-Treppe, sechs Ampelpunkte (Markt, Phase, Zone, Branche, RS, Fundament – dieselben
 Ampeln wie die Kacheln, Maus darauf zeigt deren Zeile), Abstand zum Pivot bzw. Auslöser, Fußzeile mit Stopp und
 nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den Kacheln bzw. der Erkennung."""
+import re
+
 import numpy as np
 
 from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
@@ -10,6 +12,32 @@ from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2,
 TREPPE = "#FFA657"
 PUNKTE = (("Markt", "Markt"), ("Phase", "Phase"), ("Zone", "Zone"), ("Branche", "Branche"),
           ("RS", "Relative Stärke"), ("Fundament", "Fundament"))
+
+
+RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot – nichts anderes
+_SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px solid (#[0-9A-Fa-f]{6})'
+                    r'(;border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">)')
+
+
+def richtung(reihe):
+    """long für Spitze, Weitere, Radar; short für die Short-Reihe; None ohne Reihe."""
+    return "short" if reihe == "short" else "long" if reihe in ("spitze", "weitere", "frueh") else None
+
+
+def faerben(html, rtg):
+    """Rahmen der Lagekarte und ihres Setup-Kastens in der Richtungsfarbe. Die Setup-Ampel bleibt als Punkt im
+    Kasten erhalten (auch bei Karten, die noch mit Ampelrahmen gespeichert wurden)."""
+    f = RICHTUNG.get(rtg)
+    if not f or not html:
+        return html
+    html = html.replace(f'border:1px solid {RAND};border-radius:14px', f'border:2px solid {f};border-radius:14px', 1)
+
+    def setup(m):
+        alt = m.group(2)
+        ampel = "" if alt.upper() == RAND.upper() else (f'<span style="display:inline-block;width:10px;height:10px;'
+                                                        f'border-radius:50%;background:{alt};margin-right:6px"></span>')
+        return f'{m.group(1)}1px solid {f}{m.group(3)}{ampel}'
+    return _SETUP.sub(setup, html, count=1)
 
 
 def _chip(text, ampel=None):
@@ -138,8 +166,10 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<div><div style="font-size:26px;font-weight:600">{t(tk.upper())}</div>'
         f'<div style="font-size:14px;color:{TEXT_2}">{t(branche)}</div>'
         + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
-        f'</div><div title="{t(setup[2])}" style="background:#1C2430;border:1px solid {AMPEL.get(setup[0], RAND)};'
-        f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">{t(setup[1])}</div></div>'
+        f'</div><div title="{t(setup[2])}" style="background:#1C2430;border:1px solid {RAND};'
+        f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">'
+        f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
+        f'{AMPEL.get(setup[0], GRAU)};margin-right:6px"></span>{t(setup[1])}</div></div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Zone: " + zone[1], zone[0])}'
         f'{_chip(rs[1], rs[0])}{_chip(phase[1], phase[0])}{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'

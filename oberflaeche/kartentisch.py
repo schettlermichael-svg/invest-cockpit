@@ -27,6 +27,7 @@ import pandas as pd
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
+import lagekarte                                      # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
 REIHEN = [("spitze", "★ Spitzenkandidaten", "Setup grün, die Zone bewegt sich schon in Richtung des Setups"),
           ("weitere", "Weitere Kandidaten", "Setup grün, Zone noch in Balance – oder genau eine Regel fehlt"),
@@ -143,6 +144,25 @@ def laden():
     return json.load(open(os.path.join(SPEICHER, dateien[-1]), encoding="utf-8")) if dateien else None
 
 
+_REIHEN_CACHE = {}
+
+
+def reihe_von(tk):
+    """Reihe eines Titels im jüngsten Kartentisch (für die Richtungsfarbe der Titelseite); einmal je Tisch gelesen."""
+    if not os.path.isdir(SPEICHER):
+        return None
+    dateien = sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))
+    if not dateien:
+        return None
+    pfad = os.path.join(SPEICHER, dateien[-1])
+    schluessel = (pfad, os.path.getmtime(pfad))
+    if schluessel not in _REIHEN_CACHE:
+        _REIHEN_CACHE.clear()
+        tisch = json.load(open(pfad, encoding="utf-8"))
+        _REIHEN_CACHE[schluessel] = {k: x.get("reihe") for k, x in tisch["titel"].items()}
+    return _REIHEN_CACHE[schluessel].get(tk)
+
+
 RANG = {"spitze": 3, "short": 2, "weitere": 2, "frueh": 1, None: 0}
 
 
@@ -179,18 +199,26 @@ SICHTBAR = 12                 # je Reihe als Karte; die übrigen als Zeile darun
 ZIEL = 'target="_blank" rel="noopener"'   # Titelseite im neuen Tab: die Übersicht bleibt an ihrer Stelle stehen
 
 
-def _deepdive(tk, klein=False):
-    """Der eine Weg zur Titelseite – überall gleich beschriftet, öffnet einen neuen Tab."""
-    from gestaltung import BLAU, KARTE
-    return (f'<a href="?seite=Titelseite&t={tk}" {ZIEL} style="border:1px solid {BLAU};border-radius:8px;'
-            f'padding:{"2px 8px" if klein else "4px 12px"};font-size:{13 if klein else 14}px;font-weight:600;color:{BLAU};'
+def _farbe(x, sonst=None):
+    """Richtungsfarbe eines Titels: long grün, short rot; ohne Reihe die neutrale Randfarbe."""
+    from gestaltung import RAND
+    return lagekarte.RICHTUNG.get(lagekarte.richtung((x or {}).get("reihe")), sonst or RAND)
+
+
+def _deepdive(tk, klein=False, x=None):
+    """Der eine Weg zur Titelseite – überall gleich beschriftet, öffnet einen neuen Tab; Rahmen in Richtungsfarbe."""
+    from gestaltung import KARTE, TEXT
+    f = _farbe(x)
+    return (f'<a href="?seite=Titelseite&t={tk}" {ZIEL} style="border:1px solid {f};border-radius:8px;'
+            f'padding:{"2px 8px" if klein else "4px 12px"};font-size:{13 if klein else 14}px;font-weight:600;color:{TEXT};'
             f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')
 
 
-def _link(tk, inhalt, kopf=""):
+def _link(tk, x, kopf=""):
     """Karte mit einem einzigen Weg zur Titelseite: dem Knopf „Deep Dive →“ (die Karte selbst ist kein Link mehr).
     kopf: eine Zeile über der Karte (Watchlist-Reihe: eigentliche Reihe des Titels) rechts neben dem Knopf."""
-    knopf = _deepdive(tk)
+    knopf = _deepdive(tk, x=x)
+    inhalt = lagekarte.faerben(x["karte"], lagekarte.richtung(x.get("reihe")))
     return (f'<div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:'
             f'space-between;align-items:center;gap:8px">{kopf or "<span></span>"}{knopf}</div>{inhalt}</div>')
 
@@ -200,10 +228,11 @@ def _zeile(tk, x):
     kl = x.get("kacheln") or {}
     setup = kl.get("Setup", ("grau", "–", ""))
     return (f'<div style="display:grid;grid-template-columns:90px 22px 1fr 1fr 80px 120px;gap:10px;align-items:center;'
-            f'padding:8px 4px;border-top:1px solid {RAND};font-size:14px"><b>{t(tk)}</b>{punkt(setup[0], 12)}'
+            f'padding:8px 4px 8px 10px;border-top:1px solid {RAND};border-left:3px solid {_farbe(x)};font-size:14px">'
+            f'<b>{t(tk)}</b>{punkt(setup[0], 12)}'
             f'<span>{t(setup[1])}</span><span style="color:{TEXT_2}">{t(x.get("zustand", ""))}</span>'
             f'<span style="font-family:IBM Plex Mono,monospace;text-align:right;color:{TEXT_2}">'
-            f'{zahl(x.get("abstand", 0), 1)} %</span>{_deepdive(tk, klein=True)}</div>')
+            f'{zahl(x.get("abstand", 0), 1)} %</span>{_deepdive(tk, klein=True, x=x)}</div>')
 
 
 def _klapp(titel, zeile, inhalt):
@@ -243,7 +272,7 @@ def html(tisch=None):
         f'</div><div style="font-size:14px;color:{TEXT_2}">52-Wochen-Hochs : -Tiefs heute</div></div></div>')
     namen = {k: n for k, n, _ in REIHEN}
     neu = tisch.get("neu") or []
-    neu_html = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {RAND};'
+    neu_html = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {_farbe(tisch["titel"].get(tk))};'
                         f'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none">'
                         f'<b>{t(tk)}</b> <span style="color:{TEXT_2}">{t(text)}</span></a>' for tk, text in neu[:60])
                 or f'<span style="color:{TEXT_2}">nichts Neues gegenüber dem letzten Lauf</span>')
@@ -255,7 +284,7 @@ def html(tisch=None):
             termine.append((tage, tk, w[2].split(" ·")[0],
                             "Watchlist" if x.get("listen") else namen.get(x.get("reihe"), "")))
     termine.sort()
-    earn = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {RAND};border-radius:8px;'
+    earn = ("".join(f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {_farbe(tisch["titel"].get(tk))};border-radius:8px;'
                     f'padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{t(tk)}</b> '
                     f'<span style="color:{TEXT_2}">{t(d)} · {t(r)}</span></a>' for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
@@ -273,7 +302,7 @@ def html(tisch=None):
                 f'font-size:26px">{t(name)} <span style="color:{TEXT_3};font-weight:500">{len(liste)}</span></h2>'
                 f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span></div>')
         raster = (f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">'
-                  + "".join(_link(tk, x["karte"]) for tk, x in sichtbar) + '</div>') if sichtbar else \
+                  + "".join(_link(tk, x) for tk, x in sichtbar) + '</div>') if sichtbar else \
             f'<div style="color:{TEXT_2};font-size:15px">zurzeit keine</div>'
         weitere = (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
                    f'alle weiteren {len(rest)} zeigen</summary>' + "".join(_zeile(tk, x) for tk, x in rest)
@@ -292,7 +321,7 @@ def _marken(x):
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
     if x.get("reihe") == "frueh" and x.get("angriff"):
         r += f" · {x['angriff']}"
-    return (f'<span style="border:1px solid {BLAU if r else RAND};border-radius:6px;padding:2px 8px;font-size:13px;'
+    return (f'<span style="border:1px solid {_farbe(x)};border-radius:6px;padding:2px 8px;font-size:13px;'
             f'color:{TEXT_2}">{t(r or "keine Reihe")}</span>')
 
 
@@ -323,7 +352,7 @@ def _watchreihe(tisch):
                 f'font-weight:500">{len(eigene)}</span></h3>')
         if sichtbar:
             teil += ('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:16px">'
-                     + "".join(_link(tk, x["karte"], _marken(x)) for tk, x in sichtbar) + '</div>')
+                     + "".join(_link(tk, x, _marken(x)) for tk, x in sichtbar) + '</div>')
         if rest or fehlen:
             teil += (f'<details style="margin-top:10px"><summary style="cursor:pointer;color:{BLAU};font-size:15px">'
                      f'alle weiteren {len(rest) + len(fehlen)} zeigen</summary>'
@@ -377,7 +406,8 @@ def lagebild(tisch):
 
     def marke(tk, x):
         stern = x.get("stern") or x.get("reihe") == "spitze"     # ★ long: jeder Spitzenkandidat (auch ältere Tische)
-        rand = GRUEN if stern and x.get("reihe") != "short" else ROT if stern else RAND
+        rand = _farbe(x)                                   # long grün, short rot – ★ zeigt das Zeichen
+        dicke = 2 if stern else 1
         text = ("★ " if stern else "") + tk
         if x.get("reihe") == "frueh" and x.get("angriff"):
             text += " " + x["angriff"].split()[0]
@@ -401,7 +431,7 @@ def lagebild(tisch):
                           + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))
         tip = "<br>".join(zeilen)
         return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
-                f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:inline-block;border:1px solid {rand};'
+                f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:inline-block;border:{dicke}px solid {rand};'
                 f'border-radius:6px;padding:2px 7px;font-size:13px;font-family:IBM Plex Mono,monospace;color:inherit;'
                 f'text-decoration:none;white-space:nowrap">{t(text)}</a>'
                 f'<span class="hinweis-tip" style="left:0;right:auto;width:320px;font-family:IBM Plex Sans,system-ui">'
@@ -439,7 +469,7 @@ def lagebild(tisch):
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []))}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Zeilen: Sektoren nach Feld der Frontkarte '
              f'(Führend → Erstarkend → Ermüdend → Abgehängt), darin nach Stärke. Jeder Titel genau einmal, in der Spalte '
-             f'seiner Reihe. ★ grün = Spitzenkandidat long, ★ rot = Short an der Schwelle oder im Ausbruch · Radar mit '
+             f'seiner Reihe. Rahmen grün = long, rot = short (überall in der App) · ★ mit kräftigem Rahmen = Spitzenkandidat long bzw. Short an der Schwelle oder im Ausbruch · Radar mit '
              f'Auslöser (z. B. U↑) · ◆ = in deiner Watchlist · ⚑ = Themen-Gruppe Führend oder Erstarkend (Maus zeigt sie). '
              f'Sammeln sich Angriffe in einer Zeile, rückt dort ein Rudel vor.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

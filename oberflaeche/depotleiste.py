@@ -6,7 +6,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 import daten  # noqa: E402
 import depot  # noqa: E402
-from gestaltung import RAND, TEXT_2, TEXT_3, ampelzeile, karte, punkt, t, zahl  # noqa: E402
+from gestaltung import GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, ampelzeile, karte, punkt, t, zahl  # noqa: E402
 
 
 def _datum(x):
@@ -56,17 +56,24 @@ def leiste():
         z = depot.nach_dem_kauf(p, df)
         wichtig = next((x for x in z if x[0] == "rot"), None) or next((x for x in z if x[0] == "gelb"), None) or z[0]
         ko = p.get("ko") or {}
-        zeilen.append((p["ticker"], wichtig[0],
+        zeilen.append((p["ticker"], lang, wichtig[0],
                        f'{"long" if lang else "short"} · {p["stueck"]} Stück{" Knock-out" if ko else ""} · Kurs {zahl(k)} {w} '
                        f'({"+" if g >= 0 else "−"}{zahl(abs(g), 1)} %) · Stopp '
                        + (f'{zahl(p["stopp"])} {w}, {zahl(ab, 1)} % entfernt' if ab is not None else "fehlt"),
                        wichtig[1]))
     liste = "".join(
-        f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:grid;grid-template-columns:22px 90px 1fr;'
-        f'gap:10px;align-items:center;padding:8px 4px;border-top:1px solid {RAND};color:inherit;text-decoration:none">'
+        f'<div style="display:grid;grid-template-columns:22px 90px 1fr 120px;gap:10px;align-items:center;'
+        f'padding:8px 4px 8px 10px;border-top:1px solid {RAND};border-left:3px solid {GRUEN if lang else ROT}">'
         f'{punkt(a, 12)}<b>{t(tk)}</b><span>{t(text)}<br><span style="color:{TEXT_2};font-size:14px">{t(zz)}</span>'
-        f'</span></a>' for tk, a, text, zz in zeilen) or f'<div style="color:{TEXT_2}">keine offenen Positionen</div>'
+        f'</span>{_deepdive(tk, lang)}</div>' for tk, lang, a, text, zz in zeilen) or f'<div style="color:{TEXT_2}">keine offenen Positionen</div>'
     return karte(kopf + liste, "Depot · Positionen und Hitze")
+
+
+def _deepdive(tk, lang):
+    """Derselbe Knopf wie auf dem Kartentisch: „Deep Dive →“, neuer Tab, Rahmen long grün / short rot."""
+    return (f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid '
+            f'{GRUEN if lang else ROT};border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600;color:{TEXT};'
+            f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')
 
 
 def titelkarte(tk, df, erk):
