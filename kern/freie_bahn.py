@@ -127,6 +127,28 @@ def _seite(bezug, wend, knoten, avwap, oben, pivots=()):
             "zone": zone if "knoten" in teile else None}
 
 
+def _fest(bezug, wend, knoten, im_knoten, oben):
+    """Erster FESTER Widerstand (oben) bzw. feste Unterstützung (unten) für das CRV (05.11.2026): dünne Marken (ein Hoch
+    oder Tief ohne Umsatz) werden übersprungen. Fest ist: die Kante des Knotens, in dem der Kurs gerade steht (Rand der
+    Balance), der Rand des nächsten Knotens oder ein Hoch/Tief in einem Knoten. (Preis, Art) oder None."""
+    kand = []
+    if im_knoten:
+        kante = im_knoten[1] if oben else im_knoten[0]
+        if (kante > bezug * (1 + NAH)) if oben else (kante < bezug * (1 - NAH)):
+            kand.append((kante, "Rand der Balance"))
+    for z in knoten:
+        x = z[0] if oben else z[1]
+        if (x > bezug * (1 + NAH)) if oben else (x < bezug * (1 - NAH)):
+            kand.append((x, "Knoten"))
+    andere = [z for z in knoten if z is not im_knoten and tuple(z) != tuple(im_knoten or ())]
+    for _, x in wend:                              # ein Hoch innerhalb der Balance, in der der Kurs steht, ist nicht fest
+        if ((x > bezug * (1 + NAH)) if oben else (x < bezug * (1 - NAH))) and any(nah_zone(x, z) for z in andere):
+            kand.append((x, "Hoch im Knoten" if oben else "Tief im Knoten"))
+    if not kand:
+        return None
+    return (min if oben else max)(kand, key=lambda t: t[0])
+
+
 def freie_bahn(df, pivot=None, mit_base=False, historie=None):
     """Liefert {'long': {...}, 'short': {...}, 'profil': {...}} – je Seite Bezug, Marke, Art, Luft in %, Ampel und die
     Marken für den Chart; dazu das Volumenprofil mit Anker, Knoten und Lücken."""
@@ -143,5 +165,7 @@ def freie_bahn(df, pivot=None, mit_base=False, historie=None):
     short = _seite(k, tiefs + alt, z["knoten"], av, False, alt)
     long["ampel"], short["ampel"] = _ampel(long["luft"]), _ampel(short["luft"])
     im_knoten = next((z_ for z_ in z["knoten"] if z_[0] <= k <= z_[1]), None)   # Kurs in der Balance
+    long["fest"] = _fest(long["bezug"], hochs, z["knoten"], im_knoten, True)
+    short["fest"] = _fest(k, tiefs + alt, z["knoten"], im_knoten, False)
     return {"long": long, "short": short, "im_knoten": im_knoten,
             "profil": dict(p or {}, anker=i_anker, anker_art=art_anker, **z) if p else None}

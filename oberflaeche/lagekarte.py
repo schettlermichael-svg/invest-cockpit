@@ -188,7 +188,8 @@ def _atr_zeilen(erk, df, kurs):
     if not a:
         return ""
     pl = depot.plan(erk)
-    z = [atr.stopp(pl[1], pl[2], a) if pl else None,
+    import crv
+    z = crv.zeichen(erk, df, a) + [atr.stopp(pl[1], pl[2], a) if pl else None,
          atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
          atr.enge(df), atr.ueberdehnung(df, a)]
     zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'

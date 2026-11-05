@@ -327,3 +327,12 @@ Zeichen, kein Filter: Stopp im Rauschen (Einstieg → Stopp unter 1 × ATR rot, 
 (Abstand vom GD50 ab 4 × ATR gelb, ab 6 rot). Short-Seite: Überdehnung über dem GD50 günstig (grün), darunter „nicht
 nachjagen“. Depot-Karte: Stoppabstand vom Kurs in ATR. Kachel „Ausbruch“: Volumen grün über dem 50-Tage-Schnitt, dazu
 „Spanne × ATR ↑ Vorstoß mit Kraft“ (über 1) bzw. „→ verhaltener Vorstoß“. Schwellen: unsere Setzung.
+
+## Geplantes CRV (05.11.2026)
+`kern/crv.py`, auf jeder Lagekarte (Übersicht, Pop-up, Titelseite), Zeichen, kein Filter. Einstieg und Setup-Stopp wie
+`depot.plan`; Ziel = erster FESTER Widerstand bzw. feste Unterstützung (`freie_bahn._fest`: Rand der Balance, in der
+der Kurs steht, Rand des nächsten Knotens oder ein Hoch/Tief in einem anderen Knoten – dünne Hochs zählen nicht).
+Zwei Werte: mit Setup-Stopp und mit Stopp außerhalb des Rauschens (1,5 × ATR, nur wenn der Setup-Stopp näher liegt).
+Grün ab 3 : 1, gelb ab 2 : 1. Minervini-Abgleich: Stopp in % gegen den eigenen Durchschnittsgewinn (höchstens die
+Hälfte, besser ein Drittel), sobald 5 geschlossene Trades in der Bilanz stehen (`depot.schliessen(tk, ausstieg)`,
+`depot.bilanz()`; Ausstiegskurs beim Schließen der Position eintragen).

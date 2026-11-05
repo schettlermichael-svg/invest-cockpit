@@ -140,9 +140,13 @@ def position_knopf(tk):
                 depot.setzen(tk, seite=seite_, stueck=int(stueck), einstieg=einstieg or None, stopp=stopp or None,
                              ko={"schwelle": schwelle, "bezug": bezug} if schwelle and bezug else None)
                 st.rerun()
-        if p and st.button("Position schließen", key=f"zu_{tk}", use_container_width=True):
-            depot.schliessen(tk)
-            st.rerun()
+        if p:
+            with st.form(f"zu_{tk}"):
+                aus = st.number_input("Ausstiegskurs (für deine Bilanz, Minervini-Abgleich)", min_value=0.0,
+                                      format="%.2f", value=0.0)
+                if st.form_submit_button("Position schließen", use_container_width=True):
+                    depot.schliessen(tk, aus or None)
+                    st.rerun()
 
 
 def watchlists_verwalten():

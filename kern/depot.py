@@ -68,10 +68,30 @@ def setzen(ticker, **werte):
     speichern(d)
 
 
-def schliessen(ticker):
+def schliessen(ticker, ausstieg=None):
+    """Position schließen; mit Ausstiegskurs wird der Trade in der Bilanz verbucht (Minervini-Abgleich im CRV)."""
     d = laden()
+    p = position(ticker)
+    if p and ausstieg and p.get("einstieg"):
+        lang = p.get("seite", "long") == "long"
+        ergebnis = ((ausstieg / p["einstieg"] - 1) if lang else (1 - ausstieg / p["einstieg"])) * 100
+        d.setdefault("geschlossen", []).append({"ticker": p["ticker"], "seite": p.get("seite", "long"),
+                                                "einstieg": p["einstieg"], "ausstieg": ausstieg,
+                                                "ergebnis_pct": round(ergebnis, 2), "datum": time.strftime("%Y-%m-%d")})
     d["positionen"] = [p for p in d["positionen"] if p["ticker"] != ticker.upper()]
     speichern(d)
+
+
+def bilanz():
+    """Eigene Zahlen aus den geschlossenen Trades: Anzahl, Trefferquote, Durchschnittsgewinn und -verlust in %."""
+    g = laden().get("geschlossen") or []
+    if not g:
+        return None
+    gew = [x["ergebnis_pct"] for x in g if x["ergebnis_pct"] > 0]
+    ver = [-x["ergebnis_pct"] for x in g if x["ergebnis_pct"] <= 0]
+    return {"anzahl": len(g), "treffer_pct": len(gew) / len(g) * 100,
+            "schnitt_gewinn": sum(gew) / len(gew) if gew else None,
+            "schnitt_verlust": sum(ver) / len(ver) if ver else None}
 
 
 def uebernehmen(liste, quelle="Scalable"):
