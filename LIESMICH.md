@@ -356,6 +356,6 @@ Weinstein) entscheiden, das Gelände zeigt, wo sie kämpfen. Nur Zeichen, kein F
   bis Festung …“ bzw. „Raum ↓ bis …“; rechts unverändert das 52-Wochen-Profil mit POC, VAH, VAL. Die alten
   Freie-Bahn-Bänder und das Knotenband sind entfallen. Die „Raute“ wird nicht gezeichnet.
 - Feine Marken im Chart (05.11.2026): dünne Wendepunkte (Hoch/Tief außerhalb von Festung und Knoten) zwischen Kurs
-  und nächster Festung sowie bis zu zwei alte Pivots unter dem Kurs (bis −20 %) als gepunktete Striche ab ihrem Tag,
+  und nächster Festung sowie bis zu zwei alte Pivots unter dem Kurs (bis −20 %) als gestrichelte Linien ab ihrem Tag (dünn gelb, alter Pivot weiß, beide in der Legende),
   Etikett am Anfang der Linie (`freie_bahn` liefert dazu `alte_pivots`).
 - Kartentisch: Gelände-Zeichen kommen über die Lagekarte aus dem nächtlichen Lauf.

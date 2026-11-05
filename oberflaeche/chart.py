@@ -319,18 +319,20 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, sekt
         # dort bei Einstand, der Lauf kann kurz stocken (O'Neil, Minervini) – und alte Pivots unter dem Kurs als
         # Unterstützung, solange seit dem Ausbruch kein Schluss darunter lag (O'Neil). Nur Striche, keine Bänder.
         def _strich(i_, preis_, wort_):
+            farbe_ = GELB if wort_ == "dünn" else TEXT       # gelb = schwache Stellung, weiß = alte Unterstützung
             if not (pmin <= preis_ <= pmax):
                 return
             try:
                 xs_ = X(pos(df.index[i_])) if 0 <= i_ < len(df) and df.index[i_] >= d.index[0] else LINKS
             except Exception:  # noqa: BLE001
                 xs_ = LINKS
-            A(f'<line x1="{xs_:.1f}" x2="{B - RECHTS}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{TEXT_2}" '
-              f'stroke-width="0.8" stroke-dasharray="2 4" opacity="0.7"><title>{wort_} {zahl(preis_)} $</title></line>')
+            A(f'<line x1="{xs_:.1f}" x2="{B - RECHTS}" y1="{Y(preis_):.1f}" y2="{Y(preis_):.1f}" stroke="{farbe_}" '
+              f'stroke-width="1.4" stroke-dasharray="6 4" opacity="0.9"><title>{wort_} {zahl(preis_)} $</title></line>')
             t_ = f"{wort_} {zahl(preis_)} $"
-            xt_ = min(xs_ + 4, B - RECHTS - len(t_) * 6)      # Etikett am Anfang der Linie (am Hoch/Tief selbst)
-            spaete.append(f'<text x="{xt_:.1f}" y="{platz(xt_, Y(preis_) - 3 if preis_ > kurs_g else Y(preis_) + 11, t_, 10, "start", preis_ > kurs_g):.1f}" '
-                          f'fill="{TEXT_2}" font-size="10">{t_}</text>')
+            xt_ = min(xs_ + 4, B - RECHTS - len(t_) * 7)      # Etikett am Anfang der Linie (am Hoch/Tief selbst)
+            spaete.append(f'<text x="{xt_:.1f}" y="{platz(xt_, Y(preis_) - 4 if preis_ > kurs_g else Y(preis_) + 13, t_, 12, "start", preis_ > kurs_g):.1f}" '
+                          f'fill="{farbe_}" font-size="12" font-weight="600" stroke="#0E1217" stroke-width="3" '
+                          f'paint-order="stroke">{t_}</text>')
         alte_ = {round(x_, 2) for _, x_ in bahn.get("alte_pivots") or ()}
         lo_, hi_ = sorted((kurs_g, ende_g))
         for i_, x_ in (bahn.get(seite_g) or {}).get("wend") or ():
@@ -576,6 +578,8 @@ def legende(erk, ebene="Tag", kurz=()):
     if (erk or {}).get("mp"):
         eintraege += [(TUERKIS, "Festung: Zone mit viel Volumen (Rahmen kräftig, Fläche gefüllt)"),
                       (GRAU, "Wartesaal: Zone mit wenig Volumen (gestrichelt)"),
+                      (GELB, "dünn: altes Hoch/Tief ohne Volumen im Weg – kurzes Stocken möglich (gestrichelt)"),
+                      (TEXT, "alter Pivot: frühere Ausbruchsmarke, trägt als Unterstützung (gestrichelt)"),
                       (BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit); "
                              "schraffiert = schwaches Gelände bis zur nächsten Festung; Maus auf eine Zone = Steckbrief"),
                       (TREPPE, "POC-Treppe; ↑/↓ = Wochenwert hat die Zone verlassen")]
