@@ -400,3 +400,4 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
 - 52-Wochen-Fenster sichtbar (05.11.2026): senkrechte Punktlinie „52 Wochen ab …“ im Chart (gilt für Profil und Widerstände; im 1-Jahres-Ausschnitt am linken Rand, ab 2 J mitten im Bild), Legende und Lagekarte nennen „letzte 52 Wochen“.
 - RS-Linie gegen den Sektor-ETF wieder im Chart (05.11.2026, auf Wunsch): gestrichelt neben der RS-Linie gegen den S&P 500,
   mit Pfeil der letzten 10 Tage und Hinweiskasten der vier Bilder (Führer im Markt und Sektor usw.).
+- Volumenknoten wieder im Kursbild (05.11.2026, auf Wunsch): `volumenprofil.knoten()` (ab 60 % des größten geglätteten Volumens); blasses Band ab Beginn der 52 Wochen – nächster Knoten darüber rot (Widerstand), darunter grün (Unterstützung), Kurs im Knoten türkis mit „Kurs im Knoten … (Balance)“.

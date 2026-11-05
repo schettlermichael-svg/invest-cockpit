@@ -1,12 +1,13 @@
 """Volumenprofil nach der Auction Market Theory: wie viel Volumen bei welchem Preis gehandelt wurde.
 
 Aus Tageskerzen genähert: Das Volumen jedes Tages wird gleichmäßig über seine Tagesspanne (Tief bis Hoch) verteilt.
-Im Chart über die letzten 52 Wochen (JAHR) als Spalte rechts. Wertbereich: die 70 % des Volumens um den meistgehandelten Preis (Point of Control).
+Im Chart über die letzten 52 Wochen (JAHR) als Spalte rechts. Knoten (High Volume Node): zusammenhängende Preiszonen
+mit mindestens 60 % des größten geglätteten Volumens – dort hat der Markt den Preis akzeptiert. Wertbereich: die 70 % des Volumens um den meistgehandelten Preis (Point of Control).
 """
 import numpy as np
 
 FAECHER = 48
-WERT = 0.70
+KNOTEN, WERT = 0.60, 0.70   # Knoten: mindestens 60 % des größten (geglätteten) Volumens
 JAHR = 252
 
 
@@ -43,3 +44,19 @@ def profil(df, start, ende=None):
             summe += vol[a]
     return {"grenzen": grenzen, "volumen": vol, "mitte": mitte, "poc": float(mitte[i_poc]),
             "wert_unten": float(grenzen[a]), "wert_oben": float(grenzen[b + 1])}
+
+
+def knoten(p):
+    """Knoten als Preiszonen [(unten, oben)] aus dem geglätteten Profil."""
+    v = np.convolve(p["volumen"], np.ones(3) / 3, mode="same")
+    g, maske, aus, i = p["grenzen"], v >= KNOTEN * v.max(), [], 0
+    while i < len(maske):
+        if maske[i]:
+            j = i
+            while j + 1 < len(maske) and maske[j + 1]:
+                j += 1
+            aus.append((float(g[i]), float(g[j + 1])))
+            i = j + 1
+        else:
+            i += 1
+    return aus

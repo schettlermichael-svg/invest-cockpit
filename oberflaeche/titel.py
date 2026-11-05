@@ -928,7 +928,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
         import volumenprofil
         i_vp = max(0, len(df) - volumenprofil.JAHR)
         p_vp = volumenprofil.profil(df, i_vp)
-        erk["profil"] = dict(p_vp, anker=i_vp, anker_art="52 Wochen") if p_vp else None
+        erk["profil"] = dict(p_vp, anker=i_vp, anker_art="52 Wochen", knoten=volumenprofil.knoten(p_vp)) if p_vp else None
     except Exception:  # noqa: BLE001
         erk["profil"] = None
     try:

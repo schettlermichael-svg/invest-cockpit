@@ -292,6 +292,23 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
         spaete.append(f'<text x="{x_anker + 4:.1f}" y="{platz(x_anker + 4, y_poc - 5, "POC 000,00 $", 11, "start"):.1f}" '
                       f'fill="{TUERKIS}" font-size="11">POC {zahl(pr_["poc"])} $</text>')
         A(f'<text x="{PROFIL_X + PROFIL_B + 6}" y="{y_poc + 4:.1f}" fill="{TUERKIS}" font-size="11">POC</text>')
+        # Knoten (viel Volumen = akzeptierter Preis) als blasse Bänder im Kursbild ab Beginn der 52 Wochen: der nächste
+        # darüber rot (Widerstand), der nächste darunter grün (Unterstützung); steht der Kurs in einem Knoten, türkis
+        kurs_ = float(c[-1])
+        kn_ = pr_.get("knoten") or []
+        im_ = next((k for k in kn_ if k[0] <= kurs_ <= k[1]), None)
+        ueber_ = min((k for k in kn_ if k[0] > kurs_), key=lambda k: k[0], default=None)
+        unter_ = max((k for k in kn_ if k[1] < kurs_), key=lambda k: k[1], default=None)
+        for k_, farbe_k, deck_ in ((ueber_, ROT, 0.08), (unter_, GRUEN, 0.08), (im_, TUERKIS, 0.10)):
+            if k_ and k_[1] >= pmin and k_[0] <= pmax:
+                yo_k, yu_k = Y(min(k_[1], pmax)), Y(max(k_[0], pmin))
+                s.insert(1, f'<rect x="{x_anker:.1f}" y="{yo_k:.1f}" width="{ENDE - x_anker:.1f}" height="{yu_k - yo_k:.1f}" '
+                            f'fill="{farbe_k}" fill-opacity="{deck_}"><title>Volumenknoten {zahl(k_[0])}–{zahl(k_[1])} $'
+                            f'</title></rect>')
+        if im_:
+            t_im = f"Kurs im Knoten {zahl(im_[0])}–{zahl(im_[1])} $ (Balance)"
+            spaete.append(f'<text x="{x_anker + 6:.1f}" y="{platz(x_anker + 6, Y(min(im_[1], pmax)) + 14, t_im, 11, "start", False):.1f}" '
+                          f'fill="{TUERKIS}" font-size="11">{t_im}</text>')
         # Wertbereich (70 % des Volumens): Klammer am rechten Rand der Spalte
         for wert_, name_ in ((pr_["wert_oben"], "VAH"), (pr_["wert_unten"], "VAL")):
             if pmin <= wert_ <= pmax:
@@ -509,9 +526,11 @@ def legende(erk, ebene="Tag"):
                              "überstiegen) oder fallender GD150/GD200 zwischen Einstieg und Ziel; senkrechte Punktlinie = "
                              "Beginn der 52 Wochen")]
     if (erk or {}).get("profil"):
-        eintraege.append((TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
-                                   "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "
-                                   "▸ = Kurs"))
+        eintraege += [(TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
+                                "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "
+                                "▸ = Kurs"),
+                      (TUERKIS, "Volumenknoten als blasses Band: rot = nächster darüber (Widerstand), grün = nächster "
+                                "darunter (Unterstützung), türkis = Kurs im Knoten (Balance)")]
     eintraege.append((ROT, "▼ größter Tagesrückgang seit Beginn des Anstiegs (O'Neil-Verkaufsregel)"))
     erklaerung = (f'<span title="Zonen nach dem Market Profile (30-Minuten-Kerzen): Rahmen = Hoch und Tief der Zone, '
                   f'Fläche = Wertbereich (70 % der Zeit), orange Treppe = POC je Zone, ↑/↓ = Wochenwert hat die Zone '
