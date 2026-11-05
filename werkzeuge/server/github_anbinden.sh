@@ -33,6 +33,8 @@ cat > /etc/systemd/system/invest-update.service <<EOF
 Description=Invest Cockpit: neuen Code aus GitHub holen
 [Service]
 Type=oneshot
+Environment=HOME=/root
+Environment="GIT_SSH_COMMAND=ssh -i /root/.ssh/github_invest -o StrictHostKeyChecking=accept-new"
 ExecStart=/usr/local/bin/invest-aktualisieren
 EOF
 cat > /etc/systemd/system/invest-update.timer <<EOF
