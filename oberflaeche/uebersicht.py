@@ -1,6 +1,7 @@
 """Übersicht „Lage am Abend“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
 Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
-  ① Lage           Markt-Ampel, Marktbreite, neue Hochs gegen Tiefs, Moral der Truppe, Wirtschaftswetter; Stimmungskurve
+  ① Lage           Markt je System (Minervini, Kullamägi), O'Neils Marktrichtung als Zeichen, Marktbreite, neue Hochs
+                   gegen Tiefs, Moral der Truppe, Wirtschaftswetter; Stimmungskurve
   ② Front          Frontkarte, Übergänge, Lagebild nach Sektoren
   ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Meine Watchlists, Weitere, Frühaufklärung, Short (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage
@@ -140,8 +141,17 @@ def seite_uebersicht():
     import kartentisch
     b = ((kartentisch.laden() or {}).get("barometer")) or {}
     hl = ("grau" if not b else "grün" if b["hochs"] > 2 * b["tiefs"] else "rot" if b["tiefs"] > 2 * b["hochs"] else "gelb")
+    import markt_systeme
+    try:
+        mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
+        km = markt_systeme.kullamaegi()
+    except Exception:  # noqa: BLE001
+        mm = km = None
     kacheln = [
-        _kachel("Markt-Ampel", mr["ampel"], mr["zustand"], "",
+        _kachel("Markt · Minervini", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",
+        _kachel("Markt · Kullamägi", km["ampel"], km["wort"], "",
+                km["text"] + " – Breakout und Episodic Pivot nur im Aufwärtstrend") if km else "",
+        _kachel("Marktrichtung O'Neil (Zeichen)", mr["ampel"], mr["zustand"], "",
                 f'seit {mr["seit"]:%d.%m.%Y} · {mr["text"]} · {a["text"]} · '
                 f'{zahl(abs(a["abstand_hoch_pct"]), 1)} % unter dem 52-Wochen-Hoch'
                 + "".join(f" ⚠ {text}." for _, text in mr["zeichen"])),

@@ -52,6 +52,13 @@ def punkt(farbe, groesse=18):
             f'border-radius:50%;background:{f};flex-shrink:0"></span>')
 
 
+def punkt2(m, k, groesse=18):
+    """Geteilter Punkt der zwei Systeme: links Minervini, rechts Kullamägi (None = gilt für das System nicht, grau)."""
+    fm, fk = AMPEL.get(m or "grau", GRAU), AMPEL.get(k or "grau", GRAU)
+    return (f'<span style="display:inline-block;width:{groesse}px;height:{groesse}px;border-radius:50%;flex-shrink:0;'
+            f'background:linear-gradient(90deg,{fm} 50%,{fk} 50%);box-shadow:inset 0 0 0 1px #0E1217"></span>')
+
+
 def seite(inhalt, oben=32, unten=48):
     """Äußerer Rahmen: Seitenhintergrund, Schrift, maximale Breite 1392 px. oben/unten: Innenabstand (die Titelseite
     besteht aus drei Blöcken mit den Chart-Knöpfen von Streamlit dazwischen)."""
@@ -118,6 +125,33 @@ def kachel(beschriftung, ampel, wert, zeile="", hilfe=""):
             f'<div style="display:flex;align-items:center;gap:10px;min-width:0">{punkt(ampel)}'
             f'<span style="font-size:22px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(wert)}</span></div>'
             f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;'
+            f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>')
+
+
+SYSTEM = {"M": "Minervini", "K": "Kullamägi"}
+
+
+def kachel2(beschriftung, m, k, zeile="", hilfe=""):
+    """Kachel der zwei Systeme (05.11.2026): je eine Zeile mit Ampel und Wort für Minervini (M) und Kullamägi (K).
+    m, k = (Ampel, Wort) oder None, wenn das System diesen Punkt nicht kennt (grau, „gilt nicht“)."""
+    m_, k_ = m or ("grau", "gilt nicht"), k or ("grau", "gilt nicht")
+    if MITSCHRIFT is not None:
+        MITSCHRIFT[beschriftung] = ((m_[0] if m else None, k_[0] if k else None), f"M {m_[1]} · K {k_[1]}", str(zeile))
+    titel = f' title="{t(hilfe).replace(chr(10), "&#10;")}"' if hilfe else ""
+    zeile = str(zeile).replace(" %", "\u00a0%").replace(" $", "\u00a0$")
+    zeichen = f'<span style="float:right;color:{TEXT_3};text-transform:none">ⓘ</span>' if hilfe else ""
+
+    def reihe(kurz, x, gilt):
+        farbe = TEXT if gilt else TEXT_3
+        return (f'<div style="display:flex;align-items:center;gap:8px;min-width:0">'
+                f'<span style="font-size:12px;color:{TEXT_3};width:12px">{kurz}</span>{punkt(x[0], 14)}'
+                f'<span style="font-size:18px;font-weight:600;color:{farbe};white-space:nowrap;overflow:hidden;'
+                f'text-overflow:ellipsis">{t(x[1])}</span></div>')
+    return (f'<div{titel} style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
+            f'display:flex;flex-direction:column;gap:4px;height:136px;box-sizing:border-box;overflow:hidden">'
+            f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(beschriftung)}{zeichen}</div>'
+            + reihe("M", m_, bool(m)) + reihe("K", k_, bool(k)) +
+            f'<div style="font-size:13px;color:{TEXT_2};line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;'
             f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>')
 
 

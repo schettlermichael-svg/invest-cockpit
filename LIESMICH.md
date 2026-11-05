@@ -419,3 +419,32 @@ Stationen mit ihrer Frage und einer Sprungleiste unter dem Kopf (`gestaltung.STA
 aufklappbar) · ② Front (Frontkarte, Übergänge, Lagebild nach Sektoren) · ③ Auswahl (Setups, Ausbruchsfelder,
 ★ Spitze, Meine Watchlists, Weitere, Frühaufklärung, Short) · ④ Termine (Neu seit gestern, Earnings 14 Tage) ·
 ⑤ Eigene Truppe (Depotleiste) · Anhang (Instrumente, aufklappbar). Lagekarte mit 7 Ampelpunkten (dazu „Angebot“).
+
+## Zwei Systeme: Minervini und Kullamägi (05.11.2026)
+Micky modelliert zwei getrennte Systeme. Jedes hat eigene Regeln für „grün“, Markt, Stopp und Ausstieg. O'Neil und
+Weinstein bleiben nur als Zeichen (Verteilungstage, Basennummer, CAN SLIM S/I, Phase); Weinsteins Stufe 2 lebt in
+Minervinis Trendvorlage weiter. Short nur noch als Parabolic Short (Kullamägi); die bisherigen Short-Einstiege
+(Phase 3/4, gescheiterte Erholung, Nackenlinie, O'Neils frühere Führer) liegen in `_to_delete/zwei_systeme`.
+Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und Base erkennt.
+
+- `kern/system_minervini.py` – grün = Trendvorlage 7 Punkte + RS ab 70 (8. Punkt) + Zahlen wachsen (Gewinn und Umsatz
+  nicht rot) + reife Zone mit Pivot (höchstens 50 % tief) + Enge/VCP (grün oder teilweise; Flagge zu kurz = im Chart
+  prüfen). Gelb = eine Regel fehlt. Stopp unter der letzten Kontraktion, höchstens 8 %.
+- `kern/system_kullamaegi.py` – Breakout (Führer = oberste 2 % nach 1/3/6 Monaten, `kern/fuehrer_rang.py`, plus
+  Konsolidierung 1–3 Wochen nach einem Schub), Episodic Pivot (Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch,
+  Volumen ab 3-fach – Micky; 10-fach = ideal; grün mit Nachricht/Zahlen; in den letzten 10 Tagen, Kurs hält das Tief),
+  Parabolic Short (Serie steigender Schlüsse, ab 300 % unter 2 Mrd. $ Börsenwert, sonst 50 % – Blog; grün an Tag 3–5).
+  Stopp am Tagestief, kein Trade weiter als eine Tagesspanne (ADTR 20 Tage). Ausstieg: Teilgewinn Tag 3–5, Einstand,
+  Rest bis Schluss unter 10er/20er. Quelle: Interview mit Jack Schwager (Market Wizards).
+- `kern/parabolic.py` – Nachtlauf sucht im ganzen US-Markt (Massive, rund 12.000 Titel) nach 300 % in Folge,
+  Umsatz ab 5 Mio. $ → `daten/parabolic.json`, auf der Übersicht unter „Parabolic Short · Kullamägi“.
+- `kern/markt_systeme.py` – Markt je System: Kullamägi 10er über 20er, beide steigend (S&P 500 und Nasdaq);
+  Minervini (Umsetzung der App, keine Buchformel): Indizes über GD50/GD200 und mehr neue Hochs als Tiefs. Kein Filter.
+- Titelseite: acht Kacheln – Markt, Trend, Stärke, Fundament, Setup, Enge mit je einer M- und einer K-Ampel
+  (`gestaltung.kachel2`), Branche und Base als Zeichen. Karte „Plan“ je System mit Regeln, Marken, Stopp, Ausstieg.
+- Lagekarte: Setup je System oben rechts, acht geteilte Punkte (links M, rechts K, `gestaltung.punkt2`).
+- Kartentisch-Reihen: ★ Spitze M, Weitere M, Episodic Pivot K, Breakout K, Parabolic Short K, Ausbruchsfelder (nur nach
+  oben), Frühaufklärung (nur nach oben). Watchlists nach ★ Spitze M.
+- Depot: Feld „System“ je Position (M/K) bestimmt die Zeichen nach dem Kauf; kein festes Gewinnziel mehr.
+- Nachtlauf: Schritt „RS-Rang, Führer-Rang, Parabolic Short“ vor dem Kartentisch; „Lage“ läuft nach dem Kartentisch.
+- Gemessen am 05.11.2026 (700 Revier-Titel, Kurse bis 04.11.): Minervini 26 grün / 57 gelb, Kullamägi 21 grün / 41 gelb.

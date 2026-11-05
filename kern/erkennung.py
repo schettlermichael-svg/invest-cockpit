@@ -358,9 +358,9 @@ def _erkenne_mp(df, woche=False, index=None):
              "kontraktionen": kontraktionen(bh, bl),
              "kontraktionen_lage": [(start + x, start + y, t) for x, y, t in kontraktionen_lage(bh, bl)]}
     if seite == "short":
-        werte["pivot"] = tief                    # Auslöser short: Unterkante des Rahmens
+        # Short nur noch als Parabolic Short (System Kullamägi, 05.11.2026); die Zone nach unten bleibt als Lagebild
+        werte["pivot"] = tief                    # Unterkante des Rahmens
         basis["werte"] = werte
-        basis["short"] = _short_pruefen(df, c, werte, phase, art)
         if art == "Umkehr":
             basis["hinweise"].append("Umkehr ↓ nach gescheitertem Bruch nach oben (Dalton)")
         basis["muster"] = []
@@ -380,21 +380,6 @@ def _erkenne_mp(df, woche=False, index=None):
     if tiefe > 35 and art == "Base":
         r["hinweise"].append("tief (über 35 %: nur nach einem Bärenmarkt, O'Neil)")
     return r
-
-
-def _short_pruefen(df, c, werte, phase, art):
-    """Short nach Weinstein (Phase 3/4, Kurs unter dem fallenden 30-Wochen-Durchschnitt) und O'Neil (Leerverkauf beim
-    Bruch der Unterkante; nicht ausgedehnt: höchstens 5 % unter dem Auslöser)."""
-    gd150 = gd(c, 150)
-    fallend = bool(len(c) >= 171 and gd150 < float(np.mean(c[-170:-20])))
-    ab = (c[-1] / werte["pivot"] - 1) * 100
-    regeln = [("Phase 3 oder 4 (Weinstein)", phase in SHORT_PHASEN, f"Phase {phase}"),
-              ("Kurs unter dem 30-Wochen-Durchschnitt", bool(c[-1] < gd150), f"{c[-1]:.2f} gegen {gd150:.2f}".replace(".", ",")),
-              ("30-Wochen-Durchschnitt fällt", fallend, "vor 4 Wochen höher" if fallend else "steigt noch"),
-              ("Zone reif oder Fortsetzung", True, f"{art}, {werte['wochen']} {'Woche' if werte['wochen'] == 1 else 'Wochen'}")]
-    lage = ("in der Verkaufszone" if -5 <= ab <= 0 else f"{-ab:.1f} % unter dem Auslöser, ausgedehnt" if ab < -5
-            else f"Kurs {ab:.1f} % über dem Auslöser")
-    return {"art": art, "setup": all(r[1] for r in regeln), "regeln": regeln, "abstand_pct": round(ab, 1), "lage": lage}
 
 
 def _historie_mp(df, index, tage):
