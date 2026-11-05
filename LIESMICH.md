@@ -302,3 +302,8 @@ Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als
   (`invest-update.timer`, `/usr/local/bin/invest-aktualisieren`, Deploy key nur lesend) und startet die App neu.
   `werkzeuge/server/uebertragen.sh` schickt nur noch Code (Daten auf dem Server sind das Original).
 - Die geplante Claude-Aufgabe (00:37, Mac) ist gelöscht (05.11.2026). Scalable folgt, sobald der Konnektor verbunden ist.
+- Watchlists App → TradingView (ab 05.11.2026, nur diese Richtung, von Micky freigegeben): Der Server legt
+  `einstellungen/watchlists.json` alle 10 Minuten auf den GitHub-Zweig `daten` (`invest-watchlist.timer`, Deploy key mit
+  Schreibrecht). Eine Claude-Aufgabe in der Cloud (stündlich 8–23 Uhr, Minute 13) vergleicht mit `tv_abgleich.json` und
+  trägt nur die Änderungen in die gleichnamigen TradingView-Listen ein (neue Liste wird angelegt, keine Liste gelöscht,
+  selbst in TradingView eingetragene Titel bleiben unberührt, Alarme tabu). Änderungen in TradingView fließen nicht zurück.
