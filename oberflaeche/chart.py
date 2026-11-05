@@ -3,7 +3,8 @@ Richtung zeigt.
 
 Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), Zonen des Market Profile mit POC-Treppe, Pivot und Kaufzone
 bis +5 % bzw. Auslöser short, Zahlentermine mit Reaktion, rotes Dreieck beim größten Tagesrückgang seit Beginn von
-Phase 2, Phasenband; rechts eine eigene Spalte für die Beschriftungen von Pivot, Ziel (+20 %) und Stopps.
+Phase 2, Phasenband; rechts eine eigene Spalte für die Beschriftungen von Pivot, Ziel (+20 %) und Stopps, ganz
+rechts das Volumenprofil der letzten 52 Wochen.
 Darunter Volumen mit 50er-Schnitt und ruhigen Tagen, ganz unten die relative Stärke gegen den S&P 500 (links bei 100).
 """
 import numpy as np
@@ -14,7 +15,9 @@ from gestaltung import BLAU, GELB, GRAU, GRUEN, LILA, RAND, ROT, TEXT, TEXT_2, T
 
 MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
 PHASENFARBE = {1: GRAU, 2: GRUEN, 3: GELB, 4: ROT}
-B, LINKS, RECHTS = 1344, 64, 24
+B, LINKS, RECHTS = 1344, 64, 104
+PROFIL_X, PROFIL_B = 1344 - 96, 70   # Spalte des 52-Wochen-Volumenprofils ganz rechts
+TUERKIS = "#2EC4B6"          # Volumenprofil
 ETIKETT = 180               # eigene Spalte rechts neben den Kerzen nur für Preis-Beschriftungen (nichts überlappt)
 TREPPE = "#FFA657"           # POC-Treppe der Market-Profile-Zonen
 SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trends, kräftig
@@ -268,6 +271,42 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
               f'fill="{TEXT_2}" font-size="11" text-anchor="middle">Enge {zahl(eng_, 1)} %</text>')
 
 
+    # Volumenprofil in eigener Spalte rechts neben dem Kursbild – die letzten 52 Wochen: wo die Masse der Ware liegt
+    # (POC = Magnet, VAH/VAL = Wertbereich 70 % des Volumens); passt zum 52-Wochen-Fenster für Widerstände
+    pr_ = (erk or {}).get("profil")
+    if pr_:
+        vmax_ = float(np.max(pr_["volumen"])) or 1.0
+        for g0_, g1_, v_ in zip(pr_["grenzen"][:-1], pr_["grenzen"][1:], pr_["volumen"]):
+            if g1_ < pmin or g0_ > pmax:
+                continue
+            yo_, yu_ = Y(min(g1_, pmax)), Y(max(g0_, pmin))
+            # Türkis, Deckkraft nach Stärke: kräftig bei viel Volumen (Knoten), schwach bei wenig (Lücken)
+            A(f'<rect x="{PROFIL_X}" y="{yo_ + 0.5:.1f}" width="{PROFIL_B * v_ / vmax_:.1f}" height="{max(0.5, yu_ - yo_ - 1):.1f}" '
+              f'fill="{TUERKIS}" fill-opacity="{0.12 + 0.83 * (v_ / vmax_) ** 1.5:.2f}"/>')
+        y_poc = Y(pr_["poc"])
+        # POC als Linie vom Anker bis zur Profilspalte (der faire Preis seit dem Anker, wirkt wie ein Magnet)
+        x_anker = X(pos(df.index[pr_["anker"]])) if df.index[pr_["anker"]] >= d.index[0] else LINKS
+        A(f'<line x1="{x_anker:.1f}" x2="{PROFIL_X + PROFIL_B + 4}" y1="{y_poc:.1f}" y2="{y_poc:.1f}" stroke="{TUERKIS}" '
+          f'stroke-width="1.2" stroke-dasharray="2 4" stroke-opacity="0.9"/>')
+        spaete.append(f'<text x="{x_anker + 4:.1f}" y="{platz(x_anker + 4, y_poc - 5, "POC 000,00 $", 11, "start"):.1f}" '
+                      f'fill="{TUERKIS}" font-size="11">POC {zahl(pr_["poc"])} $</text>')
+        A(f'<text x="{PROFIL_X + PROFIL_B + 6}" y="{y_poc + 4:.1f}" fill="{TUERKIS}" font-size="11">POC</text>')
+        # Wertbereich (70 % des Volumens): Klammer am rechten Rand der Spalte
+        for wert_, name_ in ((pr_["wert_oben"], "VAH"), (pr_["wert_unten"], "VAL")):
+            if pmin <= wert_ <= pmax:
+                A(f'<line x1="{PROFIL_X + PROFIL_B - 6}" x2="{PROFIL_X + PROFIL_B + 4}" y1="{Y(wert_):.1f}" '
+                  f'y2="{Y(wert_):.1f}" stroke="{TEXT_2}" stroke-width="1.5"/>'
+                  f'<text x="{PROFIL_X + PROFIL_B + 6}" y="{Y(wert_) + 4:.1f}" fill="{TEXT_2}" font-size="11">{name_}</text>')
+        A(f'<line x1="{PROFIL_X + PROFIL_B - 1}" x2="{PROFIL_X + PROFIL_B - 1}" y1="{Y(min(pr_["wert_oben"], pmax)):.1f}" '
+          f'y2="{Y(max(pr_["wert_unten"], pmin)):.1f}" stroke="{TEXT_2}" stroke-opacity="0.6"/>')
+        # Kursmarke: wo der Kurs im Profil steht
+        y_k = Y(float(c[-1]))
+        A(f'<polygon points="{PROFIL_X - 2},{y_k:.1f} {PROFIL_X - 10},{y_k - 5:.1f} {PROFIL_X - 10},{y_k + 5:.1f}" '
+          f'fill="{TEXT}"/>')
+        tag_ = df.index[pr_["anker"]]
+        A(f'<text x="{PROFIL_X}" y="14" fill="{TEXT_3}" font-size="11">Profil {pr_["anker_art"]}</text>'
+          f'<text x="{PROFIL_X}" y="28" fill="{TEXT_3}" font-size="11">seit {tag_:%d.%m.%Y}</text>')
+
     if crv_:                                     # CRV-Linien im rechten Fünftel: Ziel grün, Stopp A rot gestrichelt, Stopp B rot
         x0_c, x1_c = LINKS + breite * 0.8, ENDE + 4
         lang_ = crv_["seite"] == "long"
@@ -454,6 +493,10 @@ def legende(erk, ebene="Tag"):
                                   "CRV = Ziel ÷ Stoppabstand"),
                       (GELB, "Widerstand vor dem Ziel (Weinstein): altes Hoch oder fallender GD150/GD200 zwischen "
                              "Einstieg und Ziel")]
+    if (erk or {}).get("profil"):
+        eintraege.append((TUERKIS, "Volumenprofil 52 Wochen rechts: kräftig = viel Volumen, blass = wenig; POC = "
+                                   "meistgehandelter Preis (gepunktet im Chart); VAH/VAL = Wertbereich (70 % des Volumens); "
+                                   "▸ = Kurs"))
     eintraege.append((ROT, "▼ größter Tagesrückgang seit Beginn des Anstiegs (O'Neil-Verkaufsregel)"))
     erklaerung = (f'<span title="Zonen nach dem Market Profile (30-Minuten-Kerzen): Rahmen = Hoch und Tief der Zone, '
                   f'Fläche = Wertbereich (70 % der Zeit), orange Treppe = POC je Zone, ↑/↓ = Wochenwert hat die Zone '

@@ -390,8 +390,10 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
 - Widerstand vor dem Ziel (Weinstein, `crv.widerstand`): nächstes altes Hoch der letzten 52 Wochen (ältere sind ausgewaschen),
   das seither nicht überstiegen wurde, oder fallender GD150/GD200 zwischen Einstieg und Ziel (Short: altes Tief bzw. steigender GD);
   gelb gepunktet im Chart, als Zeile auf der Lagekarte (rot unter 10 % Abstand, gelb darüber, grün = freie Bahn).
-- Entfernt (nach `_to_delete/gruene_null_titelseite`: gelaende.py, freie_bahn.py, volumenprofil.py, avwap.py): Gelände
-  (Festung/Wartesaal, ◆, Lawine, freie Bahn), Volumenprofil-Spalte, AVWAP und AVWAP-Liste, Marken „dünn“/„alter
+- Entfernt (nach `_to_delete/gruene_null_titelseite`: gelaende.py, freie_bahn.py, avwap.py): Gelände
+  (Festung/Wartesaal, ◆, Lawine, freie Bahn), AVWAP und AVWAP-Liste, Marken „dünn“/„alter
   Pivot“, RS gegen Sektor, GD10/GD20-Schalter, SIC-13-Karte, Lagekarte neben den Kacheln, Firmenbeschreibung,
   Stimmungskurve, Rudel und Rotation, Kacheln Zone/Ausbruch/Ereignis/Nächste Zahlen (in Setup, Fundament und Kopf
   aufgegangen). Grund: Sie zeigen nicht die Richtung (Messung 05.11.: Festung/Wartesaal und Strecke ohne Richtung).
+- Volumenprofil 52 Wochen wieder im Chart (05.11.2026, auf Wunsch): Spalte ganz rechts mit POC (gepunktete Linie im
+  Kursbild), VAH/VAL und Kursmarke; `kern/volumenprofil.py` auf `profil()` verschlankt, `erk["profil"]` in `titel.py`.

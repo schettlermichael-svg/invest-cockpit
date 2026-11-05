@@ -884,6 +884,13 @@ def seite_titel(ticker, laufend=False, _stand=None):
         # Volumen am Ausbruchstag der Tabelle (erster Schluss über dem Pivot), damit Datum und Volumen zusammenpassen
         s50 = fussabdruck._schnitt50(df["Volume"].to_numpy(float), b["ausbruch"])
         b["vol_ausbruch"] = float(df["Volume"].iloc[b["ausbruch"]]) / s50 if s50 else None
+    try:                                          # Volumenprofil der letzten 52 Wochen für die Spalte rechts im Chart
+        import volumenprofil
+        i_vp = max(0, len(df) - volumenprofil.JAHR)
+        p_vp = volumenprofil.profil(df, i_vp)
+        erk["profil"] = dict(p_vp, anker=i_vp, anker_art="52 Wochen") if p_vp else None
+    except Exception:  # noqa: BLE001
+        erk["profil"] = None
     try:
         erk["rs_rang"] = rs_rang.rang(tk)
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
