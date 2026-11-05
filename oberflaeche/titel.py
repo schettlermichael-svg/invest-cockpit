@@ -32,11 +32,10 @@ import quellen                                        # noqa: E402
 import sektoren                                       # noqa: E402
 import sic13                                          # noqa: E402
 import stroemung as stroemung_modul                   # noqa: E402
-import stroemungsbild                                 # noqa: E402
 import lagekarte                                      # noqa: E402
 import gestaltung                                     # noqa: E402
 from chart import chart, legende, reaktionen           # noqa: E402
-from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, form_hinweis, kachel, karte, seite,  # noqa: E402
+from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, kachel, karte, seite,  # noqa: E402
                         t, zahl)
 
 PHASENTEXT = {1: "Bodenbildung", 2: "Aufwärtstrend", 3: "Gipfelphase", 4: "Abwärtstrend"}
@@ -208,7 +207,7 @@ def _k_zone(erk):
                   "Schluss zurück im Wertbereich der verlassenen Zone.\n\n" + AUSLOESER_HILFE)
 
 
-def _k_setup(erk, ph):
+def _k_setup(erk, ph, df=None):
     """Setup-Kachel long/short (grüne Null: Setup, Zustand der Zone und Volumen beim Auslöser in einer Kachel): Seite nach
     Weinstein (Phase 1/2 long, 3/4 short), Ampeln der jeweiligen Meister."""
     w, sh = erk["werte"], erk.get("short")
@@ -219,8 +218,12 @@ def _k_setup(erk, ph):
 
     def kachel(name, ampel, wert, zeile, hilfe):
         zeile = " · ".join(x for x in (zone_, zeile, vol_) if x)
-        hilfe += ("\n\nZone: Balance, an der Schwelle, Ausbruch (Tag n) oder bestätigt (Market Profile). Volumen am "
-                  "Ausbruchstag gegen den 50-Tage-Schnitt: über dem Schnitt grün (Minervini), O'Neil verlangt 40–50 % darüber.")
+        hilfe += ("\n\nZone: Balance, an der Schwelle, Ausbruch (Tag n) oder bestätigt (Market Profile). An der Schwelle = "
+                  "Schluss im oberen (unteren) Drittel des Wertbereichs oder darüber, mindestens 3 der letzten 5 Tageswerte "
+                  "höher (tiefer), keiner ganz dagegen, Tages-POC steigt (fällt). Volumen am Ausbruchstag gegen den "
+                  "50-Tage-Schnitt: über dem Schnitt grün (Minervini), O'Neil verlangt 40–50 % darüber.")
+        if mp_ and df is not None:
+            hilfe += "\n\nDruck in der Zone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(mp_, df))
         return gestaltung.kachel(name, ampel, wert, zeile, hilfe)
     if sh:
         ab = sh["abstand_pct"]
@@ -445,7 +448,7 @@ def _kacheln(erk, ph, ph_reihe, tvp, fund, rs, df, rd, fd, mr, gewinne):
     k = [_k_markt(mr),                                                 # ① Lage: darf ich angreifen?
          _k_phase(ph, ph_reihe, tvp), _k_rs(erk, rs), _k_branche(df, rd),
          _k_fundament(fund, ph, df, gewinne),                          # ② Auswahl: wer führt?
-         _k_setup(erk, ph), _k_base(erk), _k_absorption(erk, df)]      # ③ Einstieg: wann?
+         _k_setup(erk, ph, df), _k_base(erk), _k_absorption(erk, df)]      # ③ Einstieg: wann?
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
             f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(k)}</section>')
 
@@ -537,41 +540,6 @@ def _fehlt_zum_kaufsetup(erk, ph, tv=None):
         gruende.append(f'Base {zahl(w["tiefe_pct"], 0)} % tief (über 50 %)')
     gruende += [h for h in erk["hinweise"] if h.startswith("Daten gestört")]
     return gruende
-
-
-def _lagebeurteilung(ph, erk, tv, fund):
-    saetze = [f"Phase {ph}: {PHASENTEXT.get(ph, '')}." if ph else ""]
-    if erk.get("mp"):
-        z_ = erk["mp"]["zustand"]
-        saetze.append(f"Zone: {z_['wort']} ({z_['belege'][0]}).")
-    sh_ = erk.get("short")
-    if sh_:
-        fehlt_ = [n for n, ok, _ in sh_["regeln"] if not ok]
-        saetze.append(f"Seite short (Phase {ph}): Auslöser {zahl(erk['werte']['pivot'])} $ (Unterkante der Zone), "
-                      f"{sh_['lage'].replace('.', ',')}. " + ("Alle Regeln für ein Short-Setup sind erfüllt."
-                      if sh_["setup"] else "Kein Short-Setup: " + ", ".join(fehlt_) + " fehlt."))
-        return " ".join(s for s in saetze if s)
-    if erk["muster"]:
-        w = erk["werte"]
-        fh = form_hinweis(erk["muster"])
-        saetze.append(f'Erkannt: {basename(erk["muster"])} Nr. {w.get("basenzahl", "–")}'
-                      + (f' ({fh.replace("Form-Hinweis: ", "Form: ")})' if fh else "") + f', Pivot {zahl(w["pivot"])} $.')
-    else:
-        saetze.append("Keine kaufbare Base erkannt.")
-    if erk["kaufsetup"]:
-        saetze.append("Alle Bedingungen für ein Kaufsetup sind erfüllt.")
-    else:
-        gruende = _fehlt_zum_kaufsetup(erk, ph, tv)
-        saetze.append("Kein Kaufsetup: " + ", ".join(gruende) + "." if gruende else "Kein Kaufsetup.")
-    if fund:
-        rot = [n for n, (a, _) in fund["punkte"].items() if a == "rot"]
-        if rot:
-            saetze.append("Fundament rot bei: " + ", ".join(rot) + ".")
-        gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün")
-        if gruen >= 5 and not rot and _widerspruch(ph):
-            saetze.append(f"Gegenprobe: Die Zahlen sind stark ({gruen} von 7 grün), der Kurs steht aber in Phase {ph}. "
-                          "Der Markt nimmt eine Abschwächung vorweg; die Zahlen allein sind kein Kaufgrund.")
-    return " ".join(s for s in saetze if s)
 
 
 WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
@@ -947,7 +915,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:
         fd, fund, gewinne = None, None, None
     tvp = _trendvorlage(df)
-    tv = sum(tvp.values())
     try:
         mr = marktrichtung.richtung()
     except Exception:
@@ -977,30 +944,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
-    # Strömung in der Zone: Base, sonst Base im Aufbau, sonst die letzten 60 Tage
-    z_start = w_.get("start_index") if "start_index" in w_ else len(df) - 60
-    if erk.get("mp"):
-        a_mp = erk["mp"]
-        z_beginn = a_mp["wochen"][a_mp["stand"][-1]["von"]]["tag"]
-        alt_ = stroemung_modul.stroemung(df, int(df.index.searchsorted(z_beginn)), index, erk.get("fuss"))
-        strom = stroemung_modul.stroemung_mp(a_mp, df) + [r for r in alt_ if r[0].startswith(("Fußabdruck", "RS"))]
-        einleitung = ((f'<b>Vorläufig (Stand {a_mp["vorlaeufig"]} Uhr):</b> mit den 30-Minuten-Kerzen des laufenden Tages '
-                       f'(Yahoo, bis 15 Minuten verzögert); Auslöser gelten erst mit dem Schlusskurs. ')
-                      if a_mp.get("vorlaeufig") is not None else "") + (
-                      f'Zone seit {z_beginn:%d.%m.%Y} (Market Profile: Wochen aus 30-Minuten-Kerzen, Wertbereich 70 % der '
-                      f'Zeit). Tageswert zum Vortag: ▲ ganz höher · △ überlappend höher · ▬ unverändert · ▽ überlappend '
-                      f'tiefer · ▼ ganz tiefer. ↑ Long, ↓ Short, ◆ Druck ohne Richtung.')
-    else:
-        strom = stroemung_modul.stroemung(df, z_start, index, erk.get("fuss"))
-        einleitung = (f'Für diesen Titel fehlen die 30-Minuten-Kerzen (werkzeuge/tpo_laden.py). Bis dahin: Zeichen der letzten '
-                      f'60 Tage seit {df.index[max(0, z_start)]:%d.%m.%Y}. ↑ Long, ↓ Short, ◆ Druck ohne Richtung.')
-    bild_ = stroemungsbild.bild(erk["mp"]) if erk.get("mp") else ""
-    teile = [karte(f'<div style="font-size:14px;color:{TEXT_2}">{einleitung}</div>' + bild_
-                   + "".join(ampelzeile(f"{pf} {name}", amp, txt,
-                                        AUSLOESER_HILFE if name == "Letzte Auslöser" else
-                                        stroemung_modul.HILFE.get(name, ""))
-                             for name, amp, pf, txt in strom),
-                   "Strömung in der Zone")]
+    teile = []
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
     if fund and fund["zeichen"]:
@@ -1017,9 +961,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
     raster = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
     teile.append(f'{raster}{_earnings_feld(fd if fund else None)}{karte(links, "Fundament-Ampeln")}</div>')
     teile.append(f'{raster}{_phase_zyklus(ph, krit)}{_warnzeichen(erk)}</div>')
-    lage = f'<p style="margin:0;font-size:16px;line-height:1.65">{t(_lagebeurteilung(ph, erk, tv, fund))}</p>'
     plan, rand = _szenario(df, erk, ph, mr, rd, gewinne) if len(df) >= 260 else ("", BLAU)
-    teile.append(karte(lage + plan, "Lage und Plan", rand=rand))
+    teile.append(karte(plan, "Plan", rand=rand))
     teile.append(depotleiste.titelkarte(tk, df, erk))
     return {"oben": seite("".join(oben), unten=8), "chart": zwischen, "unten": seite("".join(teile), oben=8),
             "lagekarte": lk, "kacheln": k_info}
