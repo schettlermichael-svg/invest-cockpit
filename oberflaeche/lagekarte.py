@@ -1,17 +1,17 @@
-"""Lagekarte (4.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite, Übersicht (Kartentisch) und in
-den Watchlists. Aufbau: Kopf mit Setup, Chips (Zone, RS, Phase, Base), Belegzeile der Zone, Kleinchart 6 Monate mit
-Zonenrahmen, Wertbereich und POC-Treppe, sieben Ampelpunkte (Markt, Phase, Zone, Branche, RS, Fundament, Angebot aufgenommen – dieselben
-Ampeln wie die Kacheln, Maus darauf zeigt deren Zeile), Abstand zum Pivot bzw. Auslöser, Fußzeile mit Stopp und
-nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den Kacheln bzw. der Erkennung."""
+"""Lagekarte (4.11.2026, Zwei Systeme seit 05.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite,
+Übersicht (Kartentisch) und in den Watchlists. Aufbau: Kopf mit dem Setup je System (M = Minervini, K = Kullamägi),
+Chips (Zone, Stärke, Trend, Base), Belegzeile der Zone, Kleinchart 6 Monate mit Zonenrahmen, Wertbereich und
+POC-Treppe, acht Ampelpunkte wie die Kacheln (geteilter Punkt: links M, rechts K; Maus darauf zeigt die Zeile),
+Abstand zum Pivot, Fußzeile mit Stopp und nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den
+Kacheln bzw. der Erkennung."""
 import re
 
 import numpy as np
 
-from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
+from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, punkt2, t, zahl
 
 TREPPE = "#FFA657"
-PUNKTE = (("Markt", "Markt"), ("Phase", "Phase"), ("Zone", "Zone"), ("Branche", "Branche"),
-          ("RS", "Relative Stärke"), ("Fundament", "Fundament"), ("Angebot", "Angebot aufgenommen"))
+PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Branche", "Base")
 
 
 RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot, offen gelb
@@ -21,18 +21,16 @@ _SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px 
 
 
 def richtung(x):
-    """long (Spitze, Weitere, Radar mit Auslöser/Zone ↑), short (Short-Reihe, Radar ↓) oder None (Richtung offen)."""
+    """long (Reihen der Systeme, Ausbruchsfelder, Radar), short (Parabolic Short) oder None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
-    if reihe == "short":
+    if reihe == "k_parabolic":
         return "short"
-    if reihe in ("konsolidierung", "flagge"):
-        return "long" if x.get("bdir") == "↑" else "short" if x.get("bdir") == "↓" else None
-    if reihe in ("spitze", "weitere"):
+    if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "konsolidierung", "flagge"):
         return "long"
     if reihe == "frueh":
         pfeil = (x.get("angriff") or "")[1:2] or x.get("zdir") or ""
-        return "long" if pfeil == "↑" else "short" if pfeil == "↓" else None
+        return "long" if pfeil == "↑" else None
     return None
 
 
@@ -45,7 +43,7 @@ def rahmen(x):
     if r is None:
         return GELB, 1
     f = RICHTUNG[r]
-    if x.get("stern") or x.get("reihe") == "spitze":
+    if x.get("stern") or x.get("reihe") == "m_spitze":
         return f, 2
     return (f, 1) if x.get("gruen") else (f + SCHWACH, 1)
 
@@ -93,7 +91,7 @@ def _kleinchart(df, erk, tage=126):
     werte = list(d["High"]) + list(d["Low"])
     mp = erk.get("mp")
     zonen = [z for z in (mp or {}).get("zonen", []) if z["ende"] >= d.index[0]]
-    pivot = (erk.get("werte") or {}).get("pivot") if (erk.get("muster") or erk.get("short")) else None
+    pivot = _pivot(erk)
     lo, hi = min(werte), max(werte)
     if pivot:
         lo, hi = min(lo, pivot), max(hi, pivot)
@@ -136,34 +134,39 @@ def _kleinchart(df, erk, tage=126):
     return "".join(s)
 
 
+def _pivot(erk):
+    """Pivot des Systems, das das Setup liefert: Minervini zuerst, dann Kullamägi (EP: Hoch des Sprungtags, Breakout:
+    Oberkante der Zone); ohne Systeme die Zone."""
+    sy = erk.get("systeme") or {}
+    m, k = sy.get("m") or {}, sy.get("k") or {}
+    if m.get("pivot"):
+        return m["pivot"]
+    h = k.get("haupt") or {}
+    if h.get("pivot") and h.get("ampel") != "rot":
+        return h["pivot"]
+    return (erk.get("werte") or {}).get("pivot") if erk.get("muster") else None
+
+
 def _abstand(erk, kurs):
     """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe)."""
-    w = erk.get("werte") or {}
-    if erk.get("short") and "pivot" in w:
-        ab = (kurs / w["pivot"] - 1) * 100
-        anteil = min(1.0, max(0.0, 1 - ab / 10)) if ab >= 0 else 1.0
-        return "Abstand zum Auslöser (short)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, ROT
-    if erk.get("muster") and "pivot" in w:
-        ab = (kurs / w["pivot"] - 1) * 100
+    ps = ((erk.get("systeme") or {}).get("k") or {}).get("parabolic")
+    p = _pivot(erk)
+    if p:
+        ab = (kurs / p - 1) * 100
         anteil = min(1.0, max(0.0, 1 + ab / 10)) if ab <= 0 else 1.0
         return "Abstand zum Pivot (long)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, \
             (GRUEN if 0 <= ab <= 5 else BLAU)
+    if ps:
+        return f"Parabolic Short, Tag {ps['tag']}", f"+{zahl(ps['gewinn'], 0)} %", 1.0, ROT
     return "Abstand zum Pivot", "kein Setup", 0.0, GRAU
 
 
 def _stopp(erk):
-    w = erk.get("werte") or {}
-    if erk.get("short") and "pivot" in w:
-        p, val = w["pivot"], w.get("val")
-        if val and val <= p * 1.08:
-            return f"Stopp: Schluss über {zahl(val)} $ (VAL)"
-        return f"Stopp: {zahl(p * 1.08)} $ (+8 %)"
-    if erk.get("muster") and "pivot" in w:
-        p, vah = w["pivot"], w.get("vah")
-        if vah and p * 0.92 <= vah < p:
-            return f"Stopp: Schluss unter {zahl(vah)} $ (VAH)"
-        return f"Stopp: {zahl(p * 0.92)} $ (−8 %)"
-    return "kein Einstieg"
+    import depot
+    pl = depot.plan(erk)
+    if not pl:
+        return "kein Einstieg"
+    return f"Stopp {zahl(pl[2])} $ · {pl[3]}"
 
 
 def _groesse(tk, erk):
@@ -200,21 +203,48 @@ def _atr_zeilen(erk, df, kurs):
             f'<span style="color:{TEXT_3}">ATR {zahl(a)} $ ({zahl(a / kurs * 100, 1)} % je Tag)</span>{zeilen}</div>')
 
 
+def _setup_kasten(kacheln, erk):
+    """Kasten oben rechts: das Setup je System. Der äußere Rahmen wird von faerben() eingefärbt."""
+    sy = erk.get("systeme") or {}
+    m, k = sy.get("m") or {}, sy.get("k") or {}
+    s_ = kacheln.get("Setup", ((None, None), "", ""))
+    zeile = s_[2]
+    am = s_[0][0] if isinstance(s_[0], tuple) else s_[0]
+    ak = s_[0][1] if isinstance(s_[0], tuple) else None
+    kw = (k.get("haupt") or {}).get("art") if (k.get("haupt") or {}).get("ampel") not in (None, "rot") else None
+    if not kw and k.get("parabolic"):
+        kw = f"Parabolic Short Tag {k['parabolic']['tag']}"
+    zeilen = (f'<div><span style="color:{TEXT_3};font-size:12px">M</span> '
+              f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
+              f'{AMPEL.get(am or "grau", GRAU)};margin:0 4px"></span>{t(m.get("setup", "–"))}</div>'
+              f'<div><span style="color:{TEXT_3};font-size:12px">K</span> '
+              f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
+              f'{AMPEL.get(ak or "grau", GRAU)};margin:0 4px"></span>{t(kw or "keines")}</div>')
+    return (f'<div title="{t(zeile)}" style="background:#1C2430;border:1px solid {RAND};'
+            f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">{zeilen}</div>')
+
+
 def karte(tk, branche, erk, kacheln, df, liste=None):
-    """kacheln: {Beschriftung: (Ampel, Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
+    """kacheln: {Beschriftung: (Ampel oder (Ampel M, Ampel K), Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
     def kz(name, default=("grau", "–", "")):
         return kacheln.get(name, default)
-    setup = kz("Setup")
     zone = kz("Zone")
-    rs = kz("Relative Stärke")
-    phase = kz("Phase")
-    base = kz("Base")
+    staerke, trend, base = kz("Stärke"), kz("Trend"), kz("Base")
+
+    def ampel_m(x):
+        return x[0][0] if isinstance(x[0], tuple) else x[0]
+
+    def wort_m(x):
+        return x[1].split(" · K ")[0].replace("M ", "", 1) if isinstance(x[0], tuple) else x[1]
     kurs = float(df["Close"].iloc[-1])
     titel_, wert_, anteil, farbe_ = _abstand(erk, kurs)
+
+    def pkt(x):
+        return punkt2(x[0][0], x[0][1], 14) if isinstance(x[0], tuple) else punkt(x[0], 14)
     punkte = "".join(
-        f'<div title="{t(name)}: {t(kz(k)[1])} · {t(kz(k)[2])}" style="display:flex;flex-direction:column;'
-        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{punkt(kz(k)[0], 14)}{name}</div>'
-        for name, k in PUNKTE)
+        f'<div title="{t(name)}: {t(kz(name)[1])} · {t(kz(name)[2])}" style="display:flex;flex-direction:column;'
+        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{pkt(kz(name))}{name}</div>'
+        for name in PUNKTE)
     zahlen = kz("Nächste Zahlen")
     zahlen_text = f"Zahlen {zahlen[1]}" if zahlen[1] != "–" else "kein Zahlentermin"
     return (
@@ -224,19 +254,18 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<div><div style="font-size:26px;font-weight:600">{t(tk.upper())}</div>'
         f'<div style="font-size:14px;color:{TEXT_2}">{t(branche)}</div>'
         + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
-        f'</div><div title="{t(setup[2])}" style="background:#1C2430;border:1px solid {RAND};'
-        f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">'
-        f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
-        f'{AMPEL.get(setup[0], GRAU)};margin-right:6px"></span>{t(setup[1])}</div></div>'
+        f'</div>{_setup_kasten(kacheln, erk)}</div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Zone: " + zone[1], zone[0])}'
-        f'{_chip("RS " + rs[1], rs[0])}{_chip(phase[1], phase[0])}{_chip("Base " + base[1], base[0])}</div>'
+        f'{_chip(wort_m(staerke), ampel_m(staerke))}{_chip(wort_m(trend), ampel_m(trend))}'
+        f'{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'
         f'{_kleinchart(df, erk)}'
-        f'<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">{punkte}</div>'
+        f'<div title="Geteilter Punkt: links Minervini (M), rechts Kullamägi (K); grau = gilt für das System nicht" '
+        f'style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">{punkte}</div>'
         f'<div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px">'
         f'<span>{titel_}</span><span style="font-family:IBM Plex Mono,monospace">{wert_}</span></div>'
         f'<div style="height:6px;background:#0F141B;border-radius:3px"><div style="width:{anteil * 100:.0f}%;height:6px;'
         f'background:{farbe_};border-radius:3px"></div></div>'
         f'<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:{TEXT_2};'
-        f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{_stopp(erk)}</span>'
+        f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{t(_stopp(erk))}</span>'
         f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk)}{_atr_zeilen(erk, df, kurs)}</article>')

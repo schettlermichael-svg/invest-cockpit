@@ -197,17 +197,26 @@ def _deutsch(text):
 
 
 def plan(erk):
-    """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None."""
+    """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
+    Zwei Systeme (05.11.2026): zuerst Minervini (Pivot, Tief der letzten Kontraktion, höchstens 8 %), dann Kullamägi
+    (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Parabolic Short: Stopp
+    am Tageshoch), sonst die Zone."""
+    sy = erk.get("systeme") or {}
+    m, k = sy.get("m") or {}, sy.get("k") or {}
+    if m.get("pivot") and m.get("ampel") != "rot":
+        return "long", float(m["pivot"]), float(m["stopp"]), "unter der letzten Kontraktion, höchstens 8 % (Minervini)"
+    h = k.get("haupt") or {}
+    if h.get("pivot") and h.get("ampel") != "rot" and k.get("adtr"):
+        stopp = h.get("stopp") or float(h["pivot"]) - float(k["adtr"])
+        return "long", float(h["pivot"]), float(stopp), "Tagestief, höchstens eine Tagesspanne (Kullamägi)"
+    ps = k.get("parabolic")
+    if ps:
+        return "short", float(erk.get("kurs") or ps["stopp"]), float(ps["stopp"]), "Tageshoch (Kullamägi)"
     w = erk.get("werte") or {}
     if "pivot" not in w:
         return None
     p = float(w["pivot"])
-    if erk.get("short"):
-        val = w.get("val")
-        if val and val <= p * 1.08:
-            return "short", p, float(val), "Schluss über dem VAL"
-        return "short", p, p * 1.08, "+8 %"
-    if erk.get("muster"):
+    if erk.get("muster") and erk.get("seite") == "long":
         vah = w.get("vah")
         if vah and p * 0.92 <= vah < p:
             return "long", p, float(vah), "Schluss unter dem VAH"
@@ -220,7 +229,10 @@ def nach_dem_kauf(p, df, erk=None):
 
 
 def _nach_dem_kauf(p, df, erk=None):
-    """Zeichen nach dem Kauf (O'Neil, Minervini) als Liste (Ampel, Text)."""
+    """Zeichen nach dem Kauf als Liste (Ampel, Text) – je nach System der Position (05.11.2026):
+    Minervini (M, Vorgabe): Stopp vor dem Kauf, Verlustgrenze, Stopp auf Einstand ab 2R, Squat, Tennisball, Reset.
+    Kullamägi (K): Teilgewinn in den ersten 3–5 Tagen und Stopp auf Einstand, dann Schluss unter dem 10er (schnelle
+    Titel) bzw. 20er als Ausstieg für den Rest. Kein festes Gewinnziel (Gewinne laufen lassen, Stopp nachziehen)."""
     import pandas as pd
     aus = []
     if df is None or not p.get("einstieg"):
@@ -235,8 +247,25 @@ def _nach_dem_kauf(p, df, erk=None):
     r_mult = ((k - e) if lang else (e - k)) / r1 if r1 else None
     if not s:
         aus.append(("rot", "kein Stopp gesetzt – jede Position braucht einen Stopp vor dem Kauf (Minervini)"))
+    if p.get("system") == "K":
+        tage = len(seit) - 1
+        g10, g20 = float(c[-10:].mean()), float(c[-20:].mean())
+        if 3 <= tage <= 5 and g > 0 and s and ((s < e) if lang else (s > e)):
+            aus.append(("gelb", f"Tag {tage} nach dem Kauf, {g:+.1f} %: Teilgewinn nehmen und den Stopp für den Rest auf "
+                                f"Einstand {e:.2f} ziehen (Kullamägi)"))
+        if tage >= 1 and lang:
+            if k < g20:
+                aus.append(("rot", f"Schluss unter dem 20-Tage-Durchschnitt ({g20:.2f}) – Rest verkaufen (Kullamägi)"))
+            elif k < g10:
+                aus.append(("gelb", f"Schluss unter dem 10-Tage-Durchschnitt ({g10:.2f}) – Ausstieg für weit gelaufene "
+                                    f"Titel; sonst gilt der 20er ({g20:.2f}) (Kullamägi)"))
+            else:
+                aus.append(("grün", f"über 10er ({g10:.2f}) und 20er ({g20:.2f}) – laufen lassen (Kullamägi)"))
+        if not s:
+            aus.append(("rot", "kein Stopp – Kullamägi: Stopp am Tagestief des Einstiegstags"))
+        return aus
     if g <= -VERLUSTGRENZE * 100:
-        aus.append(("rot", f"Verlustgrenze: {g:.1f} % – O'Neil verkauft spätestens bei −8 % ohne Ausnahme"))
+        aus.append(("rot", f"Verlustgrenze: {g:.1f} % – höchstens 8 % Verlust, ohne Ausnahme (Minervini, O'Neil)"))
     if s and r_mult is not None and r_mult >= 2 and ((s < e) if lang else (s > e)):
         aus.append(("gelb", f"Stopp nachziehen: {r_mult:.1f}R Gewinn – Stopp mindestens auf Einstand {e:.2f} (Minervini)"))
     w = (erk or {}).get("werte") or {}
@@ -263,10 +292,8 @@ def _nach_dem_kauf(p, df, erk=None):
     if lang and piv and e >= piv * 0.98 and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))
-    if g >= 20:
-        schnell = len(seit) <= 15 and g >= 20
-        aus.append(("grün", f"+{g:.0f} %: " + ("in höchstens 3 Wochen – O'Neil hält solche Titel 8 Wochen" if schnell
-                                              else "Gewinnziel 20–25 % erreicht – Teilgewinn erwägen (O'Neil)")))
+    if g >= 20 and len(seit) <= 15:
+        aus.append(("grün", f"+{g:.0f} % in höchstens 3 Wochen – Zeichen eines Führers; laufen lassen, Stopp nachziehen"))
     if not aus:
         aus.append(("grün", f"läuft nach Plan: {g:+.1f} %" + (f", {r_mult:.1f}R" if r_mult is not None else "")))
     return aus

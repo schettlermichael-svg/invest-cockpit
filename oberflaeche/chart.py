@@ -244,20 +244,6 @@ def chart(df, ebene="Tag", erk=None, phasen=None, index=None, gewinne=None, auss
                       f'font-size="14" font-weight="600" text-anchor="end">' + (f'<title>{fh_}</title>' if fh_ else "")
                       + f'{titel_}</text>')
 
-    kurz_ = (erk or {}).get("short")
-    if kurz_ and "pivot" in werte:
-        # Short: Auslöser = Unterkante des Rahmens, Verkaufszone bis −5 % (gespiegelt zur Kaufzone)
-        sp_ = werte["pivot"]
-        ip_ = pos(df.index[werte["start_index"]]) if df.index[werte["start_index"]] >= d.index[0] else 0
-        A(f'<rect x="{X(ip_):.1f}" y="{Y(sp_):.1f}" width="{ENDE - X(ip_):.1f}" '
-          f'height="{Y(sp_ * 0.95) - Y(sp_):.1f}" fill="{ROT}" fill-opacity="0.12"/>'
-          f'<line x1="{X(ip_):.1f}" x2="{ENDE + 4}" y1="{Y(sp_):.1f}" y2="{Y(sp_):.1f}" stroke="{TEXT}" '
-          f'stroke-width="1.5" stroke-dasharray="6 4"/>')
-        etikett(sp_, f"Auslöser short {zahl(sp_)} $", TEXT, True)
-        titel_s = f'Short · {kurz_["art"] if kurz_["art"] != "Base" else "Zone"} {werte.get("wochen")} {"Woche" if werte.get("wochen") == 1 else "Wochen"}, Tiefe {zahl(werte.get("tiefe_pct", 0), 0)} %'
-        A(f'<text x="{B - RECHTS:.1f}" y="{platz(B - RECHTS, 26, titel_s, 14, "end", False):.1f}" '
-          f'fill="{ROT}" font-size="14" font-weight="600" text-anchor="end">{titel_s}</text>')
-
     # Angebot absorbiert: Linie durch die Tiefs der letzten drei Abschnitte und Kasten über der Enge (nur Tageschart)
     ab_ = (erk or {}).get("absorption")
     if ab_ and muster and ebene == "Tag":
@@ -518,8 +504,6 @@ def legende(erk, ebene="Tag"):
     if (erk or {}).get("mp"):
         eintraege += [(BLAU, "Zone (Market Profile): Rahmen = Hoch und Tief, Fläche = Wertbereich (70 % der Zeit)"),
                       (TREPPE, "POC-Treppe; ↑/↓ = Wochenwert hat die Zone verlassen")]
-        if (erk or {}).get("short"):
-            eintraege += [(TEXT, "Auslöser short"), (ROT, "Verkaufszone bis −5 %")]
     if (erk.get("werte") or {}).get("pivot"):
         eintraege += [(ROT, "rechts: Stopp A = Stopp des Setups, Stopp B = 1,5 × ATR (Abstand vom Einstieg in %); "
                                 "CRV = Abstand bis zur 1. Hürde ÷ Stoppabstand – Gewinne laufen lassen, Stopp nachziehen"),

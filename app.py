@@ -116,6 +116,9 @@ def position_knopf(tk):
         with st.form(f"pos_{tk}"):
             seite_ = st.radio("Seite", ["long", "short"], horizontal=True,
                               index=0 if not p or p.get("seite", "long") == "long" else 1)
+            systeme_ = ["Minervini", "Kullamägi"]
+            system_ = st.radio("System (bestimmt Stopp nachziehen und Ausstieg)", systeme_, horizontal=True,
+                               index=1 if (p or {}).get("system") == "K" else 0)
             stueck = st.number_input("Stück", min_value=0, step=1, value=int(p["stueck"]) if p else 0)
             einstieg = st.number_input("Einstieg (Kurs des Titels)", min_value=0.0, format="%.2f",
                                        value=float(p["einstieg"] or 0) if p else 0.0)
@@ -127,7 +130,8 @@ def position_knopf(tk):
             bezug = st.number_input("Bezugsverhältnis (z. B. 0,1)", min_value=0.0, format="%.3f",
                                     value=float(ko.get("bezug") or 0))
             if st.form_submit_button("Speichern", use_container_width=True):
-                depot.setzen(tk, seite=seite_, stueck=int(stueck), einstieg=einstieg or None, stopp=stopp or None,
+                depot.setzen(tk, seite=seite_, system="K" if system_ == "Kullamägi" else "M", stueck=int(stueck),
+                             einstieg=einstieg or None, stopp=stopp or None,
                              ko={"schwelle": schwelle, "bezug": bezug} if schwelle and bezug else None)
                 st.rerun()
         if p:

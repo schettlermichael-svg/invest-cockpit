@@ -1,18 +1,21 @@
-"""Kartentisch (4.11.2026): alle Titel des Abendlaufs einmal durchgerechnet, in Reihen geordnet, als Lagekarten.
+"""Kartentisch (4.11.2026, Zwei Systeme seit 05.11.2026): alle Titel des Abendlaufs einmal durchgerechnet, in Reihen
+geordnet, als Lagekarten. Die Reihen ordnen, sie filtern nicht – jeder Titel bleibt über die Titelseite erreichbar.
 
-Reihen (ordnen, filtern nicht – jeder Titel bleibt über die Titelseite erreichbar):
-  ★ Spitzenkandidaten  Setup grün (alle Regeln der Meister) und Zone an der Schwelle oder im Ausbruch in Richtung des
-                       Setups – long
-  Weitere Kandidaten   Setup grün, Zone in Balance; oder Setup gelb, weil genau eine Regel fehlt – long
-  Frühaufklärung       Radar: Zone an der Schwelle oder frischer Angriff (A, F, U in den letzten 5 Tagen), egal wie
-                       viele Regeln noch gelb sind (beide Richtungen; frische Angriffe zuerst)
-  Short                Short-Setups nach denselben Stufen (★ = an der Schwelle oder im Ausbruch ↓)
-  Meine Watchlists     jeder Titel aus einstellungen/watchlists.json, immer, egal ob grün, gelb oder rot; er steht nur
-                       hier (nicht doppelt), seine eigentliche Reihe als Marke auf der Karte; je Liste ein Abschnitt,
-                       ein Titel in mehreren Listen steht im ersten, die anderen Listen als Marke
-Innerhalb einer Reihe nach Abstand zum Pivot bzw. Auslöser, die nächsten zuerst.
+System Minervini (M):
+  ★ Spitze M          Setup grün (alle Regeln) und die Zone steht an der Schwelle oder bricht nach oben aus
+  Weitere M           Setup grün in Balance oder genau eine Regel fehlt
+System Kullamägi (K):
+  Episodic Pivot      Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, Kurs hält das Tief
+  Breakout            Führer (oberste 1–2 %) mit Konsolidierung 1–3 Wochen (gelb: knapp)
+  Parabolic Short     Serie steigender Tage im Revier (300 % kleine, 50 % große Werte) – dazu die Liste aus dem
+                      ganzen US-Markt (parabolic.py)
+Beide:
+  Meine Watchlists    jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
+  Ausbruchsfelder     frischer Ausbruch (A/U) bzw. Flagge (F) der Zone nach oben, mit Volumen, für Titel ohne Reihe
+  Frühaufklärung      Radar: Zone an der Schwelle oder frischer Angriff nach oben
+Ein Titel steht in genau einer Reihe (Vorrang in der Reihenfolge oben); die Lagekarte zeigt das Setup beider Systeme.
 
-Rechnung in zwei Stufen: 1. alle Titel nur Erkennung und Zone (schnell, mehrere Prozesse) → Reihe; 2. für die Titel
+Rechnung in zwei Stufen: 1. alle Titel Erkennung, Zone und beide Systeme (mehrere Prozesse) → Reihe; 2. für die Titel
 in einer Reihe die volle Titelseite (dieselben Kacheln, dieselbe Lagekarte). Ergebnis: daten/kartentisch/<Datum>.json;
 die Übersicht liest nur diese Datei.
 """
@@ -29,22 +32,48 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
-REIHEN = [("konsolidierung", "Ausbruch aus der Konsolidierung",
-           "frischer Ausbruch (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Zone von mindestens 3 Wochen, der noch hält – "
-           "auch nach tiefer Korrektur bzw. Überdehnung; long grün, short rot; Phase, Trendvorlage und RS sperren nicht"),
-          ("flagge", "Flagge", "frische Fortsetzung (F, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer jungen Zone unter 3 Wochen, in "
-                               "Richtung der Bewegung davor, die noch hält"),
-          ("spitze", "★ Spitzenkandidaten", "Setup grün, die Zone bewegt sich schon in Richtung des Setups"),
-          ("weitere", "Weitere Kandidaten", "Setup grün, Zone noch in Balance – oder genau eine Regel fehlt"),
-          ("frueh", "Frühaufklärung", "Radar: Zone an der Schwelle oder frischer Angriff (A, F, U in 5 Tagen) – Regeln "
-                    "der Meister noch nicht alle grün"),
-          ("short", "Short", "Short-Setups (★ = Zone an der Schwelle oder im Ausbruch ↓)")]
+REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), die Zone steht an der Schwelle oder bricht "
+                                               "nach oben aus"),
+          ("m_weitere", "Weitere · Minervini", "Setup grün in Balance – oder genau eine Regel fehlt"),
+          ("k_ep", "Episodic Pivot · Kullamägi", "Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, "
+                                                 "Kurs hält das Tief des Sprungtags; grün mit Nachricht (Zahlen)"),
+          ("k_breakout", "Breakout · Kullamägi", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit Konsolidierung von 1–3 "
+                                                 "Wochen; gelb = Führer knapp oder Konsolidierung bis 8 Wochen"),
+          ("k_parabolic", "Parabolic Short · Kullamägi", "Serie steigender Tage im Revier: ab 300 % (kleine Werte) bzw. "
+                                                         "50 % (große Werte, Schwelle aus seinem Blog); grün an Tag 3–5"),
+          ("konsolidierung", "Ausbruch aus der Konsolidierung",
+           "frischer Ausbruch nach oben (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Zone "
+           "von mindestens 3 Wochen, der noch hält – für Titel, die in keinem System stehen"),
+          ("flagge", "Flagge", "frische Fortsetzung nach oben (F, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) "
+                               "aus einer jungen Zone unter 3 Wochen – für Titel, die in keinem System stehen"),
+          ("frueh", "Frühaufklärung", "Radar: Zone an der Schwelle oder frischer Angriff nach oben (A, F, U in 5 Tagen)")]
+WATCHLISTS_NACH = "m_spitze"
+
+
+def _fund_gespeichert(tk):
+    """Fundament-Ampeln aus dem Zwischenspeicher, ohne Abruf (Stufe 1 rechnet über das ganze Revier)."""
+    import fundament
+    import quellen
+    pfad = os.path.join(quellen.SPEICHER, f"{tk.upper()}.json")
+    if not os.path.exists(pfad):
+        return None, None
+    try:
+        fd = quellen._aus_json(json.load(open(pfad, encoding="utf-8")))
+        return fundament.ampeln(fd), fd.get("gewinne")
+    except Exception:  # noqa: BLE001
+        return None, None
 
 
 def _stufe1(tk):
-    """Erkennung und Zone eines Titels aus dem Speicher; Reihe oder None."""
+    """Erkennung, Zone und beide Systeme eines Titels aus dem Speicher; Reihe oder None."""
+    import absorption
     import daten
     import erkennung
+    import rs_rang
+    import system_kullamaegi
+    import system_minervini
+    import titel
+    from chart import reaktionen
     try:
         df = daten.kurse_gespeichert(tk)
         index = daten.kurse_gespeichert(daten.INDEX)
@@ -55,46 +84,58 @@ def _stufe1(tk):
         a = erk.get("mp")
         if not a:
             return None
+        erk["kurs"] = float(df["Close"].iloc[-1])
+        w = erk.get("werte") or {}
+        erk["absorption"] = (absorption.absorption(df, w["start_index"], w["pivot"], w.get("ende_index"))
+                             if erk["muster"] and "start_index" in w else None)
+        fund, gewinne = _fund_gespeichert(tk)
+        try:
+            rang = rs_rang.rang(tk)[0]
+        except Exception:  # noqa: BLE001
+            rang = None
+        m = system_minervini.pruefen(df, erk, rang, fund)
+        gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
+        k = system_kullamaegi.pruefen(df, erk, gtage, titel.boersenwert(tk), tk)
         z = a["zustand"]
         c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
         ph = erkennung._phase_von(df)
         info = {"tk": tk, "zustand": z["wort"], "zdir": z["dir"], "seite": erk.get("seite"),
                 "phase": int(ph[-1]) if ph is not None else None,
                 "hoch52": bool(len(h) >= 252 and h[-1] >= h[-252:].max()),
-                "tief52": bool(len(l) >= 252 and l[-1] <= l[-252:].min())}
-        w = erk.get("werte") or {}
-        bewegt = z["wort"].startswith(("an der Schwelle", "Ausbruch"))
-        if erk.get("short"):
-            sh = erk["short"]
-            luecken = [n for n, ok, _ in sh["regeln"] if not ok]
-            fehlt = len(luecken)
-            info.update(abstand=abs(sh["abstand_pct"]), gruen=sh["setup"], luecken=luecken)
-            if sh["setup"] or fehlt == 1:
-                info.update(reihe="short", stern=bool(sh["setup"] and bewegt and z["dir"] == "↓"))
-        elif erk["muster"] and "pivot" in w:
-            ab = (c[-1] / w["pivot"] - 1) * 100
-            info.update(abstand=abs(ab), gruen=bool(erk["kaufsetup"]))
-            luecken = [g for g in (erk.get("hinweise") or []) if g.startswith(("Angebot von oben", "Daten gestört"))]
-            if not erk["kaufsetup"]:
-                from titel import _fehlt_zum_kaufsetup, _trendvorlage
-                tv = sum(_trendvorlage(df).values())
-                luecken += [g for g in _fehlt_zum_kaufsetup(erk, info["phase"], tv) if g not in luecken]
-            fehlt = len(luecken)
-            info["luecken"] = luecken
-            if erk["kaufsetup"] and bewegt and z["dir"] == "↑":
-                info.update(reihe="spitze", stern=True)
-            elif erk["kaufsetup"] or fehlt == 1:
-                info["reihe"] = "weitere"
-        else:
-            info["luecken"] = ["kein Muster erkannt"]
-        # Radar (Frühaufklärung): Zone an der Schwelle oder ein frischer Angriff (A, F, U in den letzten 5 Tagen) –
-        # egal wie viele Regeln der Meister noch gelb sind; die fehlenden stehen auf der Karte
+                "tief52": bool(len(l) >= 252 and l[-1] <= l[-252:].min()),
+                "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
+                "k": {"ampel": k["ampel"], "setup": k["setup"],
+                      "parabolic": (k["parabolic"] or {}).get("ampel")}}
+        bewegt = z["wort"].startswith(("an der Schwelle", "Ausbruch")) and z["dir"] == "↑"
+        hk = k.get("haupt") or {}
+        if m["pivot"]:
+            info["abstand"] = abs((c[-1] / m["pivot"] - 1) * 100)
+        elif hk.get("pivot"):
+            info["abstand"] = abs((c[-1] / hk["pivot"] - 1) * 100)
+        info["gruen"] = m["ampel"] == "grün" or (hk.get("ampel") == "grün")
+        info["luecken"] = ([f"M: {x}" for x in info["m"]["fehlt"]] if m["ampel"] != "grün" else [])
+        if k.get("ep") and k["ep"]["ampel"] != "rot":
+            info.update(reihe="k_ep", stern=k["ep"]["ampel"] == "grün", gruen=k["ep"]["ampel"] == "grün")
+        elif k.get("parabolic"):
+            ps = k["parabolic"]
+            info.update(reihe="k_parabolic", stern=ps["ampel"] == "grün", gruen=ps["ampel"] == "grün",
+                        abstand=0.0, luecken=[] if ps["ampel"] == "grün" else [f"K: Tag {ps['tag']} (erst Tag 3–5)"])
+        elif m["ampel"] == "grün" and bewegt:
+            info.update(reihe="m_spitze", stern=True)
+        elif k.get("breakout") and k["breakout"]["ampel"] != "rot":
+            b = k["breakout"]
+            info.update(reihe="k_breakout", stern=b["ampel"] == "grün" and bewegt, gruen=b["ampel"] == "grün",
+                        luecken=[f"K: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
+        elif m["ampel"] in ("grün", "gelb"):
+            info["reihe"] = "m_weitere"
+        # Radar (Frühaufklärung): Zone an der Schwelle oder ein frischer Angriff nach oben (A, F, U in 5 Tagen)
         n_ = len(a["tage"]) - 1
-        frisch = [x for x in a["signale"] if x["art"] in ("A", "F", "U") and x["i"] >= n_ - 4]
-        if "reihe" not in info and (frisch or z["wort"].startswith("an der Schwelle")):
+        frisch = [x for x in a["signale"] if x["art"] in ("A", "F", "U") and x["dir"] == "↑" and x["i"] >= n_ - 4]
+        if "reihe" not in info:
+            _ausbruchsfeld(info, a, df)
+        if "reihe" not in info and (frisch or (z["wort"].startswith("an der Schwelle") and z["dir"] == "↑")):
             info.update(reihe="frueh", ausloeser=bool(frisch), abstand=info.get("abstand", 0.0),
                         angriff=(f"{frisch[-1]['art']}{frisch[-1]['dir']} {frisch[-1]['tag']:%d.%m.}" if frisch else None))
-        _ausbruchsfeld(info, a, df)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
@@ -117,6 +158,8 @@ def _ausbruchsfeld(info, a, df):
         return
     reif = akt["art"] in ("A", "U") or (akt["art"] == "B" and (akt["zone"].get("wochen") or 0) >= ZONE_REIF)
     d = akt["dir"]
+    if d != "↑":                                 # Short nur noch als Parabolic Short (Kullamägi, 05.11.2026)
+        return
     tag = a["tage"][akt["seit"]]["tag"]
     h = df.loc[:tag].iloc[-250:]
     vol = h["Volume"]
@@ -131,11 +174,8 @@ def _ausbruchsfeld(info, a, df):
     else:
         tief_i = h["Low"].idxmin()
         vorlauf = (h.loc[tief_i:, "High"].max() / h["Low"].min() - 1) * 100
-    passt = (info.get("seite") == "long") == (d == "↑")
-    if not passt:                                # Setup der Erkennung zeigt noch auf die Gegenseite
-        info.update(gruen=False, luecken=[f"Setup noch auf der Gegenseite ({info.get('seite')})"])
     info.update(reihe="konsolidierung" if reif else "flagge", bdir=d, ausloeser=True,
-                stern=bool(passt and info.get("gruen")), vorlauf=round(float(vorlauf), 1),
+                stern=False, vorlauf=round(float(vorlauf), 1),
                 ausbruch=f"{akt['art']}{d} {tag:%d.%m.}", tage_seit=n_ - akt["seit"], vol_faktor=round(faktor, 1),
                 atr_spanne=round(spanne, 1) if spanne else None,
                 abstand=info.get("abstand", 0.0))
@@ -179,10 +219,9 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")
     vorher = laden()
     ergebnis = {"stand": stand, "erzeugt": time.strftime("%d.%m.%Y %H:%M"),
-                "barometer": {"long_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("reihe")
-                                                 and lagekarte.richtung(x) == "long"),
-                              "short_gruen": sum(1 for x in stufe1 if x.get("gruen") and x.get("reihe")
-                                                  and lagekarte.richtung(x) == "short"),
+                "barometer": {"m_gruen": sum(1 for x in stufe1 if (x.get("m") or {}).get("ampel") == "grün"),
+                              "k_gruen": sum(1 for x in stufe1 if (x.get("k") or {}).get("ampel") == "grün"),
+                              "k_parabolic": sum(1 for x in stufe1 if (x.get("k") or {}).get("parabolic") == "grün"),
                               "hochs": sum(x["hoch52"] for x in stufe1), "tiefs": sum(x["tief52"] for x in stufe1),
                               "titel": len(stufe1)},
                 "titel": {x["tk"]: {k: v for k, v in x.items() if k != "tk"} for x in in_reihe},
@@ -221,28 +260,35 @@ def eintrag_von(tk):
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"konsolidierung": 4, "flagge": 3, "spitze": 3, "short": 2, "weitere": 2, "frueh": 1, None: 0}
+RANG = {"m_spitze": 5, "k_ep": 5, "k_parabolic": 4, "k_breakout": 4, "m_weitere": 3, "konsolidierung": 2, "flagge": 2,
+        "frueh": 1, None: 0}
+
+
+ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)"}
 
 
 def _neu(vorher, jetzt):
-    """Neu seit gestern: neu in einer Reihe, vorgerückt, Phasenwechsel."""
+    """Neu seit gestern: neu in einer Reihe, vorgerückt, Phasenwechsel. Reihen älterer Tische (vor den zwei Systemen)
+    werden mit ihrem alten Namen genannt."""
     if not vorher:
         return []
     alt, neu = vorher.get("titel", {}), jetzt["titel"]
     aus = []
-    name = dict((k, n) for k, n, _ in REIHEN)
+    name = dict(ALTE_REIHEN, **{k: n for k, n, _ in REIHEN})
     name[None] = "keine Reihe"
     for tk, x in neu.items():
         r_alt = (alt.get(tk) or {}).get("reihe")
+        r_neu = x.get("reihe")
         if x.get("listen"):                      # Watchlist-Titel: jeder Wechsel der Reihe, auch abwärts
-            if tk in alt and (r_alt != x.get("reihe") or (x.get("stern") and not alt[tk].get("stern"))):
-                aus.append((tk, f"◆ {name[r_alt]} → {name[x.get('reihe')]}"))
+            if tk in alt and (r_alt != r_neu or (x.get("stern") and not alt[tk].get("stern"))):
+                aus.append((tk, f"◆ {name.get(r_alt, r_alt)} → {name.get(r_neu, r_neu)}"))
+            continue
+        if r_neu is None:
             continue
         if r_alt is None:
-            aus.append((tk, f"neu in {dict((k, n) for k, n, _ in REIHEN)[x['reihe']]}"))
-        elif RANG[x["reihe"]] > RANG[r_alt] or (x.get("stern") and not alt[tk].get("stern")):
-            aus.append((tk, f"vorgerückt: {dict((k, n) for k, n, _ in REIHEN)[r_alt]} → "
-                            f"{dict((k, n) for k, n, _ in REIHEN)[x['reihe']]}"))
+            aus.append((tk, f"neu in {name.get(r_neu, r_neu)}"))
+        elif RANG.get(r_neu, 0) > RANG.get(r_alt, 0) or (x.get("stern") and not alt[tk].get("stern")):
+            aus.append((tk, f"vorgerückt: {name.get(r_alt, r_alt)} → {name.get(r_neu, r_neu)}"))
     pa = vorher.get("phasen", {})
     for tk, p in jetzt["phasen"].items():
         if pa.get(tk) and p and pa[tk] != p:
@@ -348,11 +394,15 @@ def plan(tisch=None):
     tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l])
                                for tk, x in tisch["titel"].items()})
     b = tisch["barometer"]
+    if "m_gruen" in b:
+        zahlen_ = f'{b["m_gruen"]} Minervini · {b["k_gruen"]} Kullamägi · {b["k_parabolic"]} Parabolic Short'
+    else:                                         # Tisch von vor den zwei Systemen
+        zahlen_ = f'{b.get("long_gruen", 0)} long · {b.get("short_gruen", 0)} short'
     barometer = (
         f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
-        f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:.06em;text-transform:uppercase">Setups</div>'
-        f'<div style="font-size:26px;font-weight:600">{b["long_gruen"]} long · {b["short_gruen"]} short</div>'
-        f'<div style="font-size:14px;color:{TEXT_2}">grüne Setups unter {zahl(b["titel"], 0)} Titeln</div></div>')
+        f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:.06em;text-transform:uppercase">Grüne Setups</div>'
+        f'<div style="font-size:24px;font-weight:600">{zahlen_}</div>'
+        f'<div style="font-size:14px;color:{TEXT_2}">unter {zahl(b["titel"], 0)} Titeln des Reviers</div></div>')
     namen = {k: n for k, n, _ in REIHEN}
     neu = tisch.get("neu") or []
     chip = ('<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {f};'
@@ -394,8 +444,10 @@ def plan(tisch=None):
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
         teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
-        if key == "spitze":                    # Watchlists direkt nach ★ Spitze (05.11.2026)
+        if key == WATCHLISTS_NACH:             # Watchlists direkt nach ★ Spitze (05.11.2026)
             watchlist_abschnitte()
+        if key == "k_parabolic":               # dazu der ganze US-Markt (Small Caps außerhalb des Reviers)
+            teile.append({"art": "html", "html": parabolic_markt()})
     teile.append({"art": "html", "html": station("termine")
                   + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
                   + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
@@ -403,6 +455,28 @@ def plan(tisch=None):
                   + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
                     f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
     return teile
+
+
+def parabolic_markt():
+    """Parabolic-Short-Kandidaten aus dem ganzen US-Markt (Nachtlauf, parabolic.py) als Marken mit TradingView-Link."""
+    import parabolic
+    from gestaltung import AMPEL, KARTE, TEXT_2, t, zahl
+    d = parabolic.laden()
+    if not d:
+        inhalt = f'<span style="color:{TEXT_2}">kommt mit dem nächsten Nachtlauf</span>'
+        zeile_ = "noch keine Suche"
+    else:
+        tr = d["treffer"]
+        zeile_ = (f'{len(tr)} Kandidaten · Stand {d["stand"]} · ab 300 % in Folge, Umsatz ab 5 Mio. $; '
+                  f'grün = Tag 3–5 (Kullamägi: nie am ersten Tag, selten am zweiten)')
+        inhalt = "".join(
+            f'<a href="https://www.tradingview.com/chart/?symbol={t(x["ticker"])}" target="_blank" rel="noopener" '
+            f'style="border:1px solid {AMPEL[x["ampel"]]};border-radius:8px;padding:4px 10px;font-size:14px;'
+            f'color:inherit;text-decoration:none;background:{KARTE}"><b>{t(x["ticker"])}</b> '
+            f'<span style="color:{TEXT_2}">Tag {x["tag"]} · +{zahl(x["gewinn"], 0)} % · {zahl(x["kurs"])} $ · '
+            f'{zahl(x["umsatz_mio"], 0)} Mio. $</span></a>' for x in tr) or \
+            f'<span style="color:{TEXT_2}">zurzeit keine Serie ab 300 %</span>'
+    return _klapp("Parabolic Short im ganzen US-Markt", zeile_, inhalt)
 
 
 def _marken(x):
@@ -426,7 +500,8 @@ def _marken(x):
 # Ein Bild unter den Reihen: Zeilen = Sektoren (Feld der Frontkarte, stärkste zuerst), Spalten = Reihen. Jeder Titel
 # genau einmal, in der Spalte seiner Reihe; Watchlist-Titel mit ◆, ohne Reihe in der letzten Spalte. Die Themen-Gruppe
 # steht als ⚑ am Ticker, wenn sie im Feld Führend oder Erstarkend ist (O'Neil: Führer kommen im Rudel).
-SPALTEN = [("konsolidierung", "Ausbruch"), ("flagge", "Flagge"), ("spitze", "★ Spitze"), ("frueh", "Radar"), ("weitere", "Weitere"), ("short", "Short"),
+SPALTEN = [("m_spitze", "★ M"), ("m_weitere", "Weitere M"), ("k_ep", "EP K"), ("k_breakout", "Breakout K"),
+           ("k_parabolic", "Parabolic K"), ("konsolidierung", "Ausbruch"), ("flagge", "Flagge"), ("frueh", "Radar"),
            (None, "◆ ohne Reihe")]
 FELD_ORDNUNG = {"Führend": 0, "Erstarkend": 1, "Ermüdend": 2, "Abgehängt": 3}
 ZELLE = 8                     # Marken je Zelle sichtbar, der Rest aufklappbar – nichts wird gefiltert
@@ -462,7 +537,7 @@ def lagebild(tisch):
         zellen.setdefault((_sektor_etf(tk, rv), x.get("reihe")), []).append((tk, x))
 
     def marke(tk, x):
-        stern = x.get("stern") or x.get("reihe") == "spitze"     # ★ long: jeder Spitzenkandidat (auch ältere Tische)
+        stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # ★: jeder Spitzenkandidat (auch ältere Tische)
         rand, dicke = lagekarte.rahmen(x)                  # long grün, short rot, blass = Setup nicht grün, gelb = offen
         text = ("★ " if stern else "") + tk
         if x.get("reihe") == "frueh" and x.get("angriff"):
@@ -531,7 +606,7 @@ def lagebild(tisch):
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []))}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Zeilen: Sektoren nach Feld der Frontkarte '
              f'(Führend → Erstarkend → Ermüdend → Abgehängt), darin nach Stärke. Jeder Titel genau einmal, in der Spalte '
-             f'seiner Reihe. Rahmen grün = long, rot = short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Spitzenkandidat long bzw. Short an der Schwelle oder im Ausbruch · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
+             f'seiner Reihe. Spalten M = System Minervini, K = System Kullamägi · Rahmen grün = long, rot = Parabolic Short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Setup grün und Zone im Ausbruch (bzw. Parabolic Short an Tag 3–5) · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
              f'Auslöser (z. B. U↑) · ◆ = in deiner Watchlist · ⚑ = Themen-Gruppe Führend oder Erstarkend (Maus zeigt sie). '
              f'Sammeln sich Angriffe in einer Zeile, rückt dort ein Rudel vor.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

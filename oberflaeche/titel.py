@@ -17,7 +17,6 @@ import erkennung                                      # noqa: E402
 import tpo_daten                                      # noqa: E402
 import fundament                                      # noqa: E402
 import fruehwarnung                                   # noqa: E402
-import short_seite                                    # noqa: E402
 import depotleiste                                    # noqa: E402
 import fussabdruck                                    # noqa: E402
 import absorption                                     # noqa: E402
@@ -33,10 +32,14 @@ import sektoren                                       # noqa: E402
 import sic13                                          # noqa: E402
 import stroemung as stroemung_modul                   # noqa: E402
 import lagekarte                                      # noqa: E402
+import markt_systeme                                  # noqa: E402
+import system_minervini                               # noqa: E402
+import system_kullamaegi                              # noqa: E402
+import fuehrer_rang                                   # noqa: E402
 import gestaltung                                     # noqa: E402
 from chart import chart, legende, reaktionen           # noqa: E402
-from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, kachel, karte, seite,  # noqa: E402
-                        t, zahl)
+from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, kachel, kachel2, karte,  # noqa: E402
+                        seite, t, zahl)
 
 PHASENTEXT = {1: "Bodenbildung", 2: "Aufwärtstrend", 3: "Gipfelphase", 4: "Abwärtstrend"}
 def _tv_symbol(tk):
@@ -56,6 +59,8 @@ def _termin(fd):
     if termin is None or not len(termin) or not termin["datum"].iloc[0]:
         return ""
     tag = pd.Timestamp(termin["datum"].iloc[0])
+    if pd.isna(tag):
+        return ""
     bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
     if bis < 0:
         return ""
@@ -91,20 +96,6 @@ def _kopf(tk, sb, df, fd=None):
             f'</div></div></header>')
 
 
-def _rs_richtung(df, index):
-    if index is None:
-        return "grau", "–", "kein Index"
-    rs = (df["Close"] / index["Close"].reindex(df.index, method="ffill")).dropna()
-    if len(rs) < 70:
-        return "grau", "–", "zu kurze Historie"
-    aend = (rs.iloc[-1] / rs.iloc[-64] - 1) * 100
-    neu_hoch = rs.iloc[-1] >= rs.iloc[-252:].max() * 0.99
-    if neu_hoch:
-        return "grün", "Hoch", "RS-Linie am 52-Wochen-Hoch"
-    return ("grün" if aend > 2 else "rot" if aend < -2 else "gelb",
-            f'{"+" if aend >= 0 else "−"}{zahl(abs(aend), 0)} %', "RS gegen S&P 500, letzte 3 Monate")
-
-
 def _widerspruch(ph):
     """Text der Gegenprobe Zahlen gegen Kurs, wenn starke Zahlen auf Phase 3 oder 4 treffen."""
     if ph in (3, 4):
@@ -133,10 +124,6 @@ def _gruppe_korrektur(df, erk, rd):
         return None
 
 
-def _mio(x):
-    return f"{zahl(x / 1e6, 1)} Mio." if x >= 1e6 else f"{zahl(x / 1e3, 0)} Tsd."
-
-
 PHASE_AMPEL = {1: "gelb", 2: "grün", 3: "gelb", 4: "rot"}
 
 
@@ -145,31 +132,6 @@ def _seit(ph_reihe):
         return None
     anders = ph_reihe[ph_reihe != ph_reihe.iloc[-1]]
     return ph_reihe[ph_reihe.index > anders.index[-1]].index[0] if len(anders) else ph_reihe.index[0]
-
-
-def _k_markt(mr):
-    if not mr:
-        return kachel("Markt", "grau", "–", "Marktrichtung nicht verfügbar", "")
-    dt = mr.get("distributionstage") or {}
-    kurz = {"Bestätigter Aufwärtstrend": "Aufwärtstrend", "Aufwärtstrend unter Druck": "unter Druck"}.get(mr["zustand"], mr["zustand"])
-    zeile = f"{mr['zustand']} seit {mr['seit']:%d.%m.%Y}" + (f" · Verteilungstage {max(dt.values())}" if dt else "")
-    zeile += "".join(f" · {n} {w}" for n, w in (mr.get("zonen") or {}).items())
-    return kachel("Markt", mr["ampel"], kurz, zeile,
-                  "Marktrichtung nach O'Neil aus S&P 500 und Nasdaq: Verteilungstage (Index fällt mit mehr Volumen), "
-                  "Erholungsversuch, Follow-Through-Day. Drei von vier Aktien folgen dem Markt; gekauft wird im "
-                  "bestätigten Aufwärtstrend. Korrektur erst, wenn zu den Verteilungstagen die Zone (Market Profile) von "
-                  "S&P 500 oder Nasdaq nach unten bricht – sonst bleibt es „unter Druck“ (wie IBD bei Indizes nahe am Hoch).")
-
-
-def _k_phase(ph, ph_reihe, tvp):
-    if not ph:
-        return kachel("Phase", "grau", "–", "zu kurze Historie")
-    seit = _seit(ph_reihe)
-    return kachel("Phase", PHASE_AMPEL[ph], f"Phase {ph}",
-                  PHASENTEXT[ph] + (f" seit {seit:%d.%m.%Y}" if seit is not None else "")
-                  + f" · Trendvorlage {sum(tvp.values())} von 7",
-                  "Phasen nach Weinstein: gekauft wird in Phase 2, geshortet in Phase 4. Vorlage = Minervinis "
-                  "Trendvorlage (sieben Punkte zu Kurs und Durchschnitten); was fehlt, steht in der Karte „Plan“.")
 
 
 AUSLOESER_HILFE = (
@@ -205,47 +167,6 @@ def _k_zone(erk):
                   "Tageswert ganz außerhalb, Zone mindestens 3 Wochen alt (F bei jüngerer Zone nach einem Lauf in dieselbe "
                   "Richtung). Bestätigt (B): Wochenwert ganz außerhalb, die POC-Treppe macht eine Stufe. Gescheitert (S): "
                   "Schluss zurück im Wertbereich der verlassenen Zone.\n\n" + AUSLOESER_HILFE)
-
-
-def _k_setup(erk, ph, df=None):
-    """Setup-Kachel long/short (grüne Null: Setup, Zustand der Zone und Volumen beim Auslöser in einer Kachel): Seite nach
-    Weinstein (Phase 1/2 long, 3/4 short), Ampeln der jeweiligen Meister."""
-    w, sh = erk["werte"], erk.get("short")
-    mp_ = erk.get("mp")
-    zone_ = mp_["zustand"]["wort"] if mp_ else ""
-    a_ = (erk.get("fuss") or {}).get("ausbruch")
-    vol_ = f'Volumen {zahl(a_["faktor"], 1)}-fach' if a_ else ""
-
-    def kachel(name, ampel, wert, zeile, hilfe):
-        zeile = " · ".join(x for x in (zone_, zeile, vol_) if x)
-        hilfe += ("\n\nZone: Balance, an der Schwelle, Ausbruch (Tag n) oder bestätigt (Market Profile). An der Schwelle = "
-                  "Schluss im oberen (unteren) Drittel des Wertbereichs oder darüber, mindestens 3 der letzten 5 Tageswerte "
-                  "höher (tiefer), keiner ganz dagegen, Tages-POC steigt (fällt). Volumen am Ausbruchstag gegen den "
-                  "50-Tage-Schnitt: über dem Schnitt grün (Minervini), O'Neil verlangt 40–50 % darüber.")
-        if mp_ and df is not None:
-            hilfe += "\n\nDruck in der Zone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(mp_, df))
-        return gestaltung.kachel(name, ampel, wert, zeile, hilfe)
-    if sh:
-        ab = sh["abstand_pct"]
-        return kachel("Setup", "grün" if sh["setup"] else "gelb", f"short · {'Zone' if sh['art'] == 'Base' else sh['art']} "
-                      f"{w.get('wochen')} W.", f"Auslöser {zahl(w['pivot'])} $ · {sh['lage'].replace('.', ',')}",
-                      "Short nach Weinstein und O'Neil: Phase 3 oder 4, Kurs unter dem fallenden 30-Wochen-Durchschnitt, "
-                      "Auslöser = Unterkante des Rahmens der Zone (A↓: Schluss darunter, Tageswert ganz darunter). "
-                      "Verkaufszone bis −5 %. Grün = alle Regeln erfüllt: "
-                      + "; ".join(f"{n} {'✓' if ok else '✗'} ({x})" for n, ok, x in sh["regeln"]))
-    if erk["muster"]:
-        ab = (erk["kurs"] / w["pivot"] - 1) * 100
-        lage = ("in der Kaufzone" if 0 <= ab <= 5 else f"{zahl(ab, 1)} % über Pivot, ausgedehnt" if ab > 5
-                else f"Kurs {zahl(-ab, 1)} % darunter")
-        art = "Zone" if erk["muster"][0] == "Base" else erk["muster"][0]
-        return kachel("Setup", "grün" if erk["kaufsetup"] else "gelb", f"long · {art} {w.get('wochen')} W.",
-                      f"Pivot {zahl(w['pivot'])} $ · {lage}",
-                      "Long nach O'Neil und Minervini: Pivot = Oberkante des Rahmens der Zone (A↑: Schluss darüber, "
-                      "Tageswert ganz darüber), Kaufzone bis +5 %. Zone ab 3 Wochen = Base; jüngere Zone nach einem Lauf "
-                      "nach oben = Flagge. Grün = Kaufsetup (alle Regeln erfüllt), gelb = eine Regel fehlt (siehe Karte „Plan“).")
-    grund = next((h for h in erk["hinweise"]), "keine reife Zone")
-    return kachel("Setup", "grau", f"{erk.get('seite', 'long')} · keines", grund,
-                  "Seite nach Weinstein: Phase 1 und 2 long, Phase 3 und 4 short.")
 
 
 def _k_base(erk):
@@ -291,59 +212,6 @@ def _k_base(erk):
                   "O'Neil erlaubt höchstens das 2- bis 3-Fache." + bilanz)
 
 
-def _k_rs(erk, rs):
-    rang = (erk.get("rs_rang") or (None, ""))[0]
-    if rang is None:
-        return kachel("Relative Stärke", rs[0], rs[1], rs[2], "")
-    return kachel("Relative Stärke", "grün" if rang >= 90 else "gelb" if rang >= 80 else "rot", f"{rang} von 99",
-                  f"stärker als {rang} % der {tausend(len(rs_rang.raenge()[0]))} Titel (12 Monate)"
-                  + (" · Linie am Hoch" if rs[1] == "Hoch" else ""),
-                  "RS-Rang 1–99 wie das RS-Rating von IBD: Kursentwicklung der letzten zwölf Monate, das jüngste "
-                  "Quartal doppelt gewichtet, verglichen mit den Titeln unseres Reviers (größere US-Werte; IBD "
-                  "vergleicht mit über 6.000 Aktien, unser Rang ist daher strenger). O'Neil kauft ab 80, am liebsten "
-                  "ab 90. Die Zahl ist kein Platz in einer Rangliste: 16 heißt, nur 16 % der Titel liefen schwächer, 84 % "
-                  "stärker.")
-
-
-def tausend(n):
-    return f"{int(n):,}".replace(",", ".")
-
-
-def _k_absorption(erk, df):
-    """Nehmen die Käufer das Angebot auf? Am rechten Rand der Base: Tiefs, Spanne und Volumen (gemessen, sie tragen die
-    Ampel), dazu die Kauf- und Verkaufstage mit hohem Volumen als Beleg. Ohne Base dieselbe Frage am rechten Rand des
-    Kurses (Zeichen, nicht gemessen)."""
-    fu = erk.get("fuss") or {}
-    tage = (f" · {fu['akk']} Kauf- gegen {fu['dist']} Verkaufstage" if fu.get("verhaeltnis") is not None else "")
-    a = erk.get("absorption")
-    wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
-    if erk["muster"] and a:
-        tiefs = "steigen" if a["steigend"] else "halten" if a["halten"] else "fallen"
-        tiefe = a["eng"] / a["verhaeltnis"] if a["verhaeltnis"] else None
-        t = a["trocken"]
-        zeile = (f"Tiefs {tiefs} · Spanne 2 Wochen {zahl(a['eng'], 0)} %" + (f" (Base {zahl(tiefe, 0)} %)" if tiefe else "")
-                 + (f" · Volumen {zahl(t, 1)}-fach" if t is not None else "") + tage)
-        return kachel("Angebot aufgenommen", a["ampel"], wort[a["ampel"]], zeile,
-                      "Nehmen die Käufer das Angebot der Base auf? Ja, wenn am rechten Rand die Tiefs halten oder steigen, "
-                      "die Spanne der letzten zwei Wochen auf ein Drittel der Base schrumpft (oder unter 5 % liegt) und das "
-                      "Volumen unter dem 50-Tage-Schnitt bleibt (bis 0,8-fach grün). Kauf- und Verkaufstage: Volumen "
-                      "mindestens 1,25-fach, Schluss höher bzw. tiefer (O'Neil, Minervini).")
-    l, v = df["Low"].to_numpy(float), df["Volume"].to_numpy(float)
-    if len(l) < 60:
-        return kachel("Angebot aufgenommen", "grau", "–", "zu kurze Historie", "")
-    t3 = [l[-30:-20].min(), l[-20:-10].min(), l[-10:].min()]
-    halten = t3[1] >= t3[0] * 0.99 and t3[2] >= t3[1] * 0.99
-    steigen = halten and t3[2] > t3[0] * 1.01
-    vol = v[-10:].mean() / v[-60:-10].mean()
-    ampel = "grün" if halten and vol <= 0.8 else "rot" if not halten and vol > 1.0 else "gelb"
-    return kachel("Angebot aufgenommen", ampel, wort[ampel],
-                  f"Tiefs {'steigen' if steigen else 'halten' if halten else 'fallen'} · Volumen {zahl(vol, 1)}-fach"
-                  + (tage + " seit dem Hoch" if tage else ""),
-                  "Ohne Base: Halten die Tiefs der letzten sechs Wochen, und wird das Volumen der letzten zwei Wochen "
-                  "ruhiger als der 50-Tage-Schnitt? Erst dann kann sich eine Base bilden. Zeichen, ohne Base nicht auf "
-                  "dem Prüfstand gemessen.")
-
-
 def _k_branche(df, rd):
     r = (rd or {}).get("rudel")
     mg = (rd or {}).get("m_gruppe")
@@ -361,31 +229,6 @@ def _k_branche(df, rd):
                   f"{namen_de.branche(r['name'])}. Stärke zum Markt = Mansfield-RS (Weinstein): die Linie Branche ÷ S&P 500 gegen ihr "
                   "52-Wochen-Mittel. Rückenwind = über dem Mittel (Wert über 0) und steigend, Gegenwind = darunter und fallend. Angezeigt: Wert vor 4 Wochen → heute. "
                   "Weinstein: Gekauft wird nur in einer starken Gruppe. Titel zur Branche: letzte 3 Monate.")
-
-
-def _k_fundament(fund, ph, df=None, gewinne=None):
-    """Fundament (CAN SLIM C/A) und die Reaktion des Kurses auf die letzten Zahlen (O'Neil) in einer Kachel."""
-    if not fund:
-        return kachel("Fundament", "grau", "–", "keine Daten", "")
-    ev = _ereignis(df, gewinne, fund) if df is not None else None
-    gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün")
-    rot = sum(1 for a, _ in fund["punkte"].values() if a == "rot")
-    ampel = "grün" if gruen >= 5 and rot == 0 else "rot" if rot >= 3 else "gelb"
-    def letzt(name):
-        a_, txt = fund["punkte"].get(name, ("grau", ""))
-        return None if a_ == "grau" else txt.split(" / ")[-1].split(" (")[0]
-    teile = [f"{n} {x}" for n, x in (("Gewinn", letzt("Quartalsgewinn zum Vorjahr")), ("Umsatz", letzt("Umsatz"))) if x]
-    zeile = (" · ".join(teile) + " zum Vorjahr") if teile else "Gewinn, Umsatz, Marge, Schätzungen"
-    if ampel == "grün" and _widerspruch(ph):
-        ampel, zeile = "gelb", "Widerspruch: Zahlen stark, Kurs fällt"
-    if ev and ev[0] != "grau":                   # Reaktion auf die letzten Zahlen (O'Neil)
-        zeile = f"{ev[1]} · {zeile}"
-        if ev[0] == "rot" and ampel == "grün":
-            ampel = "gelb"
-    return kachel("Fundament", ampel, f"{gruen} von 7 grün", zeile,
-                  "Sieben Prüfpunkte zu Gewinn, Umsatz, Marge und Schätzungen (Liste weiter unten). "
-                  + (_widerspruch(ph) if _widerspruch(ph) else "")
-                  + (f"\n\nReaktion auf die letzten Zahlen: {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
 
 
 def _ereignis(df, gewinne, fund):
@@ -426,6 +269,8 @@ def _k_zahlen(fd, fund):
     if termin is None or not len(termin) or not termin["datum"].iloc[0]:
         return kachel("Nächste Zahlen", "grau", "–", "kein Termin bekannt", "")
     tag = pd.Timestamp(termin["datum"].iloc[0])
+    if pd.isna(tag):
+        return kachel("Nächste Zahlen", "grau", "–", "kein Termin bekannt", "")
     bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
     if bis < 0:                                  # Termin liegt hinter uns, Yahoo kennt den nächsten noch nicht
         return kachel("Nächste Zahlen", "grau", "noch offen",
@@ -446,24 +291,182 @@ def _zuletzt(fund):
     return f" · zuletzt {x} {'über' if not x.startswith('−') else 'unter'} Erwartung"
 
 
-def _kacheln(erk, ph, ph_reihe, tvp, fund, rs, df, rd, fd, mr, gewinne):
-    """Die acht Kacheln der Titelseite (grüne Null, 05.11.2026): nur, was nach den Meistern die Richtung zeigt – bei
-    jedem Titel dieselben, in derselben Reihenfolge. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
-    _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte der Übersicht, hier nicht gezeigt
-    k = [_k_markt(mr),                                                 # ① Lage: darf ich angreifen?
-         _k_phase(ph, ph_reihe, tvp), _k_rs(erk, rs), _k_branche(df, rd),
-         _k_fundament(fund, ph, df, gewinne),                          # ② Auswahl: wer führt?
-         _k_setup(erk, ph, df), _k_base(erk), _k_absorption(erk, df)]      # ③ Einstieg: wann?
+# ── Zwei Systeme (05.11.2026): Minervini (M) und Kullamägi (K) getrennt, je Kachel eine Ampel pro System ──
+def _k2_markt(mm, km, mr):
+    m = (mm["ampel"], mm["wort"]) if mm else ("grau", "–")
+    k = (km["ampel"], km["wort"]) if km else ("grau", "–")
+    oneil = (f"O'Neil: {mr['zustand']} seit {mr['seit']:%d.%m.%Y}" if mr else "")
+    return kachel2("Markt", m, k, oneil,
+                   "M – " + (mm["regel"] + "\n" + mm["text"] if mm else "keine Daten") + "\n\nK – "
+                   + (km["regel"] + "\n" + km["text"] if km else "keine Daten")
+                   + ("\n\nZeichen O'Neil (keine Regel mehr): " + mr["text"] if mr else ""))
+
+
+def _k2_trend(m, ph, ph_reihe):
+    tv = m["trendvorlage"]
+    n = sum(tv.values()) if tv else 0
+    mm = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
+    seit = _seit(ph_reihe) if ph else None
+    zeile = (f"Weinstein: Phase {ph} {PHASENTEXT[ph]}"
+             + (f" seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")) if ph else ""
+    return kachel2("Trend", mm, None, zeile,
+                   "M – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
+                   "der Kachel „Stärke“). Sie entspricht Weinsteins Stufe 2: "
+                   + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in tv.items())
+                   + "\n\nK – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
+                   + "\n\nPhase nach Weinstein nur noch als Zeichen.")
+
+
+def _k2_staerke(m, k, rang):
+    mm = (("grün" if rang >= 70 else "gelb" if rang >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
+        else ("grau", "kein RS-Rang")
+    fr = k["fuehrer"]
+    best = max((v for v in (fr or {}).values() if v == v), default=None)
+    kk = (k["fuehrer_ampel"], f"besser als {zahl(best, 1 if best >= 90 else 0)} %") if best is not None else ("grau", "–")
+    return kachel2("Stärke", mm, kk, fuehrer_rang.text(fr),
+                   "M – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
+                   "unserem Revier. Minervini verlangt mindestens 70 – der achte Punkt der Trendvorlage. Die Zahl ist "
+                   "kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\n\nK – Kullamägi sucht die ein bis "
+                   "zwei Prozent mit den größten Kursanstiegen über 1, 3 und 6 Monate. Grün = in einem Zeitraum unter "
+                   "den obersten 2 %, gelb = oberste 5 %. Angezeigt: der beste der drei Zeiträume.")
+
+
+def _k2_fundament(m, k, fund, ph, df, gewinne):
+    z = next(r for r in m["regeln"] if r[0] == "Zahlen wachsen")
+    if not fund:
+        mm = ("grau", "keine Daten")
+    else:
+        pk = fund["punkte"]
+        g, u = pk.get("Quartalsgewinn zum Vorjahr", ("grau", ""))[0], pk.get("Umsatz", ("grau", ""))[0]
+        mm = ("grün" if g == "grün" and u == "grün" else "rot" if "rot" in (g, u) else "gelb",
+              "wachsen" if z[1] else "zu schwach")
+    ep = k.get("ep")
+    kk = ((("grün", "Zahlen am Sprungtag") if ep["regeln"][2][1] else ("gelb", "Nachricht prüfen"))
+          if ep else None)
+    ev = _ereignis(df, gewinne, fund) if (df is not None and fund) else None
+    zeile = z[2] + (f" · {ev[1]}" if ev and ev[0] != "grau" else "")
+    gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün") if fund else 0
+    return kachel2("Fundament", mm, kk, zeile,
+                   "M – Minervini kauft Führer mit wachsenden Zahlen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot "
+                   f"(grün ab 25 %). Alle sieben Prüfpunkte: {gruen} von 7 grün (Liste weiter unten). "
+                   + (_widerspruch(ph) or "")
+                   + "\n\nK – Beim Breakout schaut Kullamägi nicht auf die Zahlen (rein technisch). Beim Episodic Pivot "
+                     "braucht er eine Nachricht, die den Markt zur Neubewertung zwingt – oft überraschend starke Zahlen."
+                   + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
+
+
+def _k2_setup(m, k, erk, df):
+    mm = (m["ampel"], m["setup"] if m["setup"] != "keines" else "keines")
+    ps = k.get("parabolic")
+    h = k.get("haupt")
+    if ps and (not h or h["ampel"] == "rot"):
+        kk = (ps["ampel"], f"Parabolic Short Tag {ps['tag']}")
+    else:
+        kk = ((h["ampel"], h["art"] + (f" vor {h['tage_her']} T." if h["art"] == "Episodic Pivot" and h["tage_her"] else ""))
+              if h and h["ampel"] != "rot" else ("rot", "keines"))
+    z = (erk.get("mp") or {}).get("zustand") or {}
+    teile = [z.get("wort", "")]
+    if m.get("pivot"):
+        teile.append(f"Pivot {zahl(m['pivot'])} $ · {m['lage']}")
+    hilfe = ("M – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
+             + "\n\nK – " + "\n".join(
+                 f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
+                 for x in (k.get("ep"), k.get("breakout"), ps) if x))
+    if erk.get("mp") and df is not None:
+        hilfe += "\n\nDruck in der Zone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(erk["mp"], df))
+    return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe + "\n\n" + AUSLOESER_HILFE)
+
+
+def _k2_enge(m, k, erk, df):
+    a = erk.get("absorption")
+    eng = next(r for r in m["regeln"] if r[0] == "Enge (VCP)")
+    wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
+    mm = (a["ampel"], wort[a["ampel"]]) if a else ("grau", "nicht messbar")
+    b = k.get("breakout") or {}
+    kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
+    kk = (("grün" if kons[1] else "gelb" if b.get("wochen") and b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
+          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Zone")
+    zeile = eng[2]
+    if a:
+        tiefs = "steigen" if a["steigend"] else "halten" if a["halten"] else "fallen"
+        zeile = f"Tiefs {tiefs}" + (f" · Volumen {zahl(a['trocken'], 1)}-fach" if a.get("trocken") is not None else "")
+    return kachel2("Enge", mm, kk, zeile,
+                   "M – Minervinis VCP: am rechten Rand halten oder steigen die Tiefs, die Spanne schrumpft auf ein "
+                   "Drittel der Base (oder unter 5 %), das Volumen trocknet aus (bis 0,8-fach des 50-Tage-Schnitts).\n\n"
+                   "K – Kullamägi: kurze Konsolidierung, meist 1–3 Wochen, nach einem Schub nach oben, vorzugsweise bei "
+                   "reduziertem Volumen. Gelb bis 8 Wochen.")
+
+
+def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km):
+    """Die acht Kacheln der Titelseite (Zwei Systeme, 05.11.2026): sechs mit je einer Ampel für Minervini (M) und
+    Kullamägi (K), Branche und Base als Zeichen. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
+    _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte, hier nicht gezeigt
+    rang = (erk.get("rs_rang") or (None, ""))[0]
+    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe), _k2_staerke(m, k, rang),
+          _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), _k2_enge(m, k, erk, df),
+          _k_branche(df, rd), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
-            f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(k)}</section>')
+            f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(kl)}</section>')
 
 
-def _marktzeichen(mr):
-    """Zeichen „Markt in Korrektur“ / „Markt unter Druck“ (O'Neil: 3 von 4 Aktien folgen dem Markt) – kein Filter."""
-    if not mr or mr["ampel"] == "grün":
-        return None
-    return (mr["ampel"], f'Markt {"in Korrektur" if mr["zustand"] == "Korrektur" else "unter Druck"} seit '
-                         f'{mr["seit"]:%d.%m.%Y} – 3 von 4 Aktien folgen dem Markt (O\'Neil)')
+def _plan(m, k, mm, km, df):
+    """Karte „Plan“ der zwei Systeme: je System die Regeln mit ✓/✗, Marken, Stopp und Ausstieg."""
+    c, h, l = df["Close"], df["High"], df["Low"]
+    kurs = float(c.iloc[-1])
+    teile = []
+    # System Minervini
+    kopf = {"grün": "🟢 <b>Minervini: Setup steht</b>", "gelb": "🟡 <b>Minervini: eine Regel fehlt</b>",
+            "rot": "⚪ <b>Minervini: kein Setup</b>"}[m["ampel"]]
+    teile.append(f'<p style="margin:0;font-size:16px">{kopf} · Markt {mm["wort"] if mm else "–"}</p>')
+    teile.append("".join(ampelzeile(n, "grün" if ok else "rot", x) for n, ok, x in m["regeln"]))
+    if m.get("pivot"):
+        vorbehalt = ("" if m["ampel"] == "grün" else
+                     "Erst wenn die fehlenden Regeln erfüllt sind – bis dahin nur Marken: ")
+        teile.append(f'<p style="margin:0;font-size:15px;line-height:1.6">{vorbehalt}Kauf über dem Pivot '
+                     f'{zahl(m["pivot"])} $, Kaufzone bis {zahl(m["pivot"] * 1.05)} $ ({t(m["lage"])}). Stopp '
+                     f'{zahl(m["stopp"])} $ ({_vorzeichen((m["stopp"] / m["pivot"] - 1) * 100)} % vom Pivot). '
+                     f'{t(m["ausstieg"])}</p>')
+    elif len(c) >= 260:
+        g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
+        tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
+        marken = []
+        if kurs < max(g150, g200):
+            marken.append((max(g150, g200), "Kurs über GD150 und GD200"))
+        if kurs < 1.30 * tief52:
+            marken.append((1.30 * tief52, "mindestens 30 % über dem 52-Wochen-Tief"))
+        if kurs < 0.75 * hoch52:
+            marken.append((0.75 * hoch52, "höchstens 25 % unter dem 52-Wochen-Hoch"))
+        if kurs < g50:
+            marken.append((g50, "GD50 zurückerobert"))
+        if marken:
+            teile.append(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Marken zur Trendvorlage (die nächste zuerst):</p>'
+                         + "".join(ampelzeile(f"{zahl(p_)} $ ({_vorzeichen((p_ / kurs - 1) * 100)} %)", "grau", x)
+                                   for p_, x in sorted(marken)))
+    # System Kullamägi
+    hk = k.get("haupt")
+    kopf = ("🟢 <b>Kullamägi: " + hk["art"] + " steht</b>" if hk and hk["ampel"] == "grün"
+            else "🟡 <b>Kullamägi: " + hk["art"] + " fast</b>" if hk and hk["ampel"] == "gelb"
+            else "⚪ <b>Kullamägi: kein Long-Setup</b>")
+    teile.append(f'<p style="margin:12px 0 0;font-size:16px">{kopf} · Markt {km["wort"] if km else "–"}'
+                 + (" – Breakout und EP nur im Aufwärtstrend" if km and km["ampel"] != "grün" else "") + '</p>')
+    for x in (k.get("ep"), k.get("breakout")):
+        if x:
+            teile.append(f'<p style="margin:0;font-size:14px;color:{TEXT_2}">{x["art"]}</p>'
+                         + "".join(ampelzeile(n, "grün" if ok else "rot", y) for n, ok, y in x["regeln"]))
+    if hk and hk["ampel"] != "rot":
+        ziel = (f'über dem Hoch des Sprungtags {zahl(hk["pivot"])} $' if hk["art"] == "Episodic Pivot"
+                else f'beim Ausbruch über die Oberkante {zahl(hk["pivot"])} $' if hk.get("pivot") else "beim Ausbruch")
+        teile.append(f'<p style="margin:0;font-size:15px;line-height:1.6">Einstieg {ziel}: über dem Hoch der ersten '
+                     f'5-, 30- oder 60-Minuten-Kerze (je länger, desto weniger Fehlausbrüche). {t(k["ausstieg"])}</p>')
+    ps = k.get("parabolic")
+    if ps:
+        teile.append(f'<p style="margin:12px 0 0;font-size:16px">{"🔴" if ps["ampel"] == "grün" else "🟡"} '
+                     f'<b>Parabolic Short (Kullamägi)</b> – Tag {ps["tag"]}, +{zahl(ps["gewinn"], 0)} %</p>'
+                     + "".join(ampelzeile(n, "grün" if ok else "gelb", y) for n, ok, y in ps["regeln"])
+                     + f'<p style="margin:0;font-size:15px">{t(ps["ausloeser"])}. Stopp am Tageshoch '
+                       f'({zahl(ps["stopp"])} $ heute). Ziel 10er/20er. Unabhängig vom Markt.</p>')
+    rand = GRUEN if "grün" in (m["ampel"], (hk or {}).get("ampel")) else ROT if ps and ps["ampel"] == "grün" else BLAU
+    return "".join(teile), rand
 
 
 def _ist_warnung(h):
@@ -516,37 +519,6 @@ def _phase_zyklus(ph, krit):
     return karte(kopf + merkmale, "Phase und Trend")
 
 
-def _trendvorlage(df):
-    """Die sieben Punkte der Trendvorlage (ohne RS-Rating): Kurzname → erfüllt?"""
-    c, h, l = (df[s].to_numpy(float) for s in ("Close", "High", "Low"))
-    if len(c) < 260:
-        return {}
-    g50, g150, g200 = c[-50:].mean(), c[-150:].mean(), c[-200:].mean()
-    g200_vor = c[-222:-22].mean()
-    k = c[-1]
-    return {"Kurs über GD150/200": k > g150 and k > g200, "GD150 über GD200": g150 > g200,
-            "GD200 steigt": g200 > g200_vor, "GD50 über GD150/200": g50 > g150 and g50 > g200,
-            "Kurs über GD50": k > g50, "30 % über Tief": k >= 1.30 * l[-252:].min(),
-            "höchstens 25 % unter Hoch": k >= 0.75 * h[-252:].max()}
-
-
-def _fehlt_zum_kaufsetup(erk, ph, tv=None):
-    """Gründe, warum ein erkanntes Muster kein Kaufsetup ist (dieselben Bedingungen wie in der Erkennung)."""
-    w, gruende = erk["werte"], []
-    if ph and ph != 2:
-        gruende.append(f"Phase {ph} statt Phase 2")
-    if tv is not None and tv < 7:
-        gruende.append(f"Trendvorlage nur {tv} von 7")
-    if not erk["muster"]:
-        gruende.append("keine Base")
-    if (w.get("korrektur_x_markt") or 0) > 3:
-        gruende.append(f'Korrektur {zahl(w["korrektur_x_markt"], 1)}-fach zum Markt (Buch: höchstens 2–3-fach)')
-    if (w.get("tiefe_pct") or 0) > 50:
-        gruende.append(f'Base {zahl(w["tiefe_pct"], 0)} % tief (über 50 %)')
-    gruende += [h for h in erk["hinweise"] if h.startswith("Daten gestört")]
-    return gruende
-
-
 WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
 
 
@@ -588,7 +560,6 @@ def _rs_lesart(df, index, sek, etf):
             f'top:{604 / 760 * 100:.2f}%;height:{120 / 760 * 100:.2f}%">{tip}</div>')
 
 
-
 def _vorzeichen(x, stellen=1):
     return f'{"+" if x >= 0 else "−"}{zahl(abs(x), stellen)}'
 
@@ -621,7 +592,7 @@ def _earnings_feld(fd):
     g = fd["gewinne"]
     zeilen = []
     termin = fd.get("termin")
-    if termin is not None and len(termin) and termin["datum"].iloc[0]:
+    if termin is not None and len(termin) and termin["datum"].iloc[0] and not pd.isna(pd.Timestamp(termin["datum"].iloc[0])):
         tag = pd.Timestamp(termin["datum"].iloc[0])
         bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
         ampel = "gelb" if 0 <= bis <= 10 else "grün"
@@ -678,122 +649,6 @@ def _reaktion_zeilen(df, gewinne):
         else:
             zeilen.append(("Erholung", "rot", f'unter dem Ausgangskurs von {zahl(vor)} $ geblieben'))
     return {"tag": tag, "prozent": prozent, "vor": vor, "zeilen": zeilen}
-
-
-def _noetig_text(erk):
-    fu = erk.get("fuss") or {}
-    a = fu.get("ausbruch")
-    if a:
-        return f' (am Ausbruch {zahl(a["faktor"], 1)}-fach)'
-    return f' (mindestens {_mio(fu["noetig"])} Stück)' if fu.get("noetig") else ""
-
-
-def _szenario(df, erk, ph, mr=None, rd=None, gewinne=None):
-    """Wann ein Long- (oder Short-) Szenario aktiv wird – mit Kursmarken aus den Regeln. Liefert Inhalt und
-    Rahmenfarbe für die Karte „Plan“."""
-    c, h, l = df["Close"], df["High"], df["Low"]
-    k = float(c.iloc[-1])
-    g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
-    tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
-    w = erk["werte"]
-    if erk["kaufsetup"]:
-        p = w["pivot"]
-        lage = w.get("kontraktionen_lage") or []
-        # Stopp: unter dem Tief der letzten Kontraktion (Minervini), wenn es unter dem Pivot liegt; sonst die
-        # Verlustgrenze 8 % unter dem Kaufpunkt (O'Neil) – beides offen benannt
-        tief_k = float(df["Low"].iloc[lage[-1][1]]) if lage else None
-        if erk.get("mp") and "vah" in w and p * 0.92 <= w["vah"] < p:
-            # Market Profile: der Ausbruch ist gescheitert, sobald ein Schluss zurück im Wertbereich der Zone liegt
-            stopp, stopp_text = w["vah"], "bei einem Schluss unter dem VAH der Zone (zurück in der Balance)"
-        elif tief_k is not None and tief_k < p:
-            stopp, stopp_text = tief_k, "unter dem Tief der letzten Kontraktion"
-        else:
-            stopp, stopp_text = p * 0.92, "an der Verlustgrenze 8 % unter dem Kaufpunkt (O'Neil)"
-        abstand = (k / p - 1) * 100
-        markt = f' ⚠ {t(_marktzeichen(mr)[1])}.' if _marktzeichen(mr) else ""
-        regel = rudelkarte.gruppenregel(rd, mr, ph, "long")
-        if abstand > 5:
-            # Ausbruch erfolgt, Kurs über der Kaufzone: nicht nachlaufen (Minervini, O'Neil)
-            return (f'<p style="margin:0;font-size:16px;line-height:1.65">🟡 <b>Ausgebrochen, Kurs ausgedehnt:</b> '
-                         f'{zahl(k)} $ liegt {zahl(abstand, 1)} % über dem Pivot {zahl(p)} $ und damit über der Kaufzone '
-                         f'(bis {zahl(p * 1.05)} $). Kein Nachkauf: Einstieg erst bei einem Rücksetzer in die Kaufzone '
-                         f'oder aus der nächsten Base. Wer seit dem Ausbruch dabei ist: Stopp {stopp_text} bei '
-                         f'{zahl(stopp)} $.{markt}</p>' + regel, GELB)
-        return (f'<p style="margin:0;font-size:16px;line-height:1.65">🟢 <b>Long-Szenario aktiv:</b> Kauf über dem '
-                     f'Pivot {zahl(p)} $, Kaufzone bis {zahl(p * 1.05)} $. Stopp {stopp_text} '
-                     f'bei {zahl(stopp)} $ ({_vorzeichen((stopp / p - 1) * 100)} % vom Pivot). Ausbruch mit Volumen '
-                     f'deutlich über dem 50-Tage-Schnitt{_noetig_text(erk)}.{markt}</p>' + regel, GRUEN)
-    marken = []                                   # Kursleiter: die nächste Hürde zuerst
-    if k < max(g150, g200):
-        marken.append((max(g150, g200), "Kurs über GD150 und GD200"))
-    if k < 1.30 * tief52:
-        marken.append((1.30 * tief52, "mindestens 30 % über dem 52-Wochen-Tief"))
-    if k < 0.75 * hoch52:
-        marken.append((0.75 * hoch52, "höchstens 25 % unter dem 52-Wochen-Hoch"))
-    if k < g50:
-        marken.append((g50, "GD50 zurückerobert"))
-    leiter = [f"{zahl(preis)} $ ({_vorzeichen((preis / k - 1) * 100)} %) · {text}" for preis, text in sorted(marken)]
-    bedingungen = []
-    if ph and ph != 2:
-        bedingungen.append("alle sechs Merkmale eines Aufwärtstrends erfüllt sind, einschließlich steigendem GD200")
-    if not erk["muster"]:
-        bedingungen.append("sich eine Base von mindestens 3 Wochen mit kleiner werdenden Rücksetzern und "
-                           "versiegendem Volumen bildet")
-    elif not erk["kaufsetup"]:
-        if k >= w["pivot"]:
-            # Ausbruch schon erfolgt: dann fehlt nicht der Ausbruch, sondern eine andere Bedingung – die nennen
-            fehlt = _fehlt_zum_kaufsetup(erk, ph)
-            bedingungen.append(f'der Ausbruch über den Pivot {zahl(w["pivot"])} $ ist schon erfolgt '
-                               f'(Kurs {zahl((k / w["pivot"] - 1) * 100, 1)} % darüber); kein Kaufsetup, weil: '
-                               + (", ".join(fehlt) if fehlt else "die Trendvorlage nicht erfüllt ist")
-                               + " – Einstieg erst aus der nächsten Base")
-        else:
-            bedingungen.append(f'der Kurs über den Pivot {zahl(w["pivot"])} $ ausbricht, solange die übrigen Bedingungen erfüllt sind')
-    liste = lambda zeilen: (f'<ul style="margin:0;padding-left:22px;font-size:15px;line-height:1.7">'   # noqa: E731
-                            + "".join(f"<li>{t(z)}</li>" for z in zeilen) + "</ul>")
-    ausgebrochen = bool(erk["muster"] and not erk["kaufsetup"] and k >= w["pivot"] and not leiter)
-    kopf = ("🟡 <b>Ausgebrochen, aber kein Kaufsetup</b>" if ausgebrochen
-            else "🟢 <b>Long-Szenario wird aktiv, wenn</b>")
-    teile = [f'<p style="margin:0;font-size:16px;line-height:1.65">{kopf}</p>']
-    if leiter:
-        teile.append(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">der Kurs diese Marken überwindet '
-                     f'(Abstand vom heutigen Schluss, die nächste Hürde zuerst):</p>' + liste(leiter))
-    if bedingungen:
-        teile.append(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">{"und wenn außerdem" if leiter else ""}'
-                     f'</p>' + liste(bedingungen))
-    teile.append(rudelkarte.gruppenregel(rd, mr, ph, "long"))
-    if ph in (3, 4) or erk.get("seite") == "short":
-        zr = _reaktion_zeilen(df, gewinne)
-        if zr and zr["prozent"] > 0 and k >= zr["vor"] and len(df) - 1 - df.index.get_loc(zr["tag"]) <= 63:
-            teile.append(f'<p style="margin:0;font-size:15px;color:#E3B341">⚠ Zahlen am {zr["tag"]:%d.%m.} angenommen '
-                         f'(Tag 1 +{zahl(zr["prozent"], 1)} %, Kurs über {zahl(zr["vor"])} $ vor den Zahlen) – O\'Neil '
-                         f'shortet nicht gegen eine positive Zahlenreaktion.</p>')
-        teile.append(_short_seite(df, erk, ph, rd, mr))
-    return "".join(teile), BLAU
-
-
-def _short_seite(df, erk, ph, rd, mr):
-    """Short-Seite nach Weinstein und O'Neil: drei Einstiege mit Kursmarke und Stopp, O'Neils Regeln, Gruppenregel."""
-    ein = short_seite.einstiege(df, erk, ph)
-    da = [n for n, a, _ in ein if a == "grün"]
-    kopf = (f'<p style="margin:0;font-size:16px;line-height:1.65">🔴 <b>Short-Seite:</b> '
-            + (f'{" · ".join(da)} liegt vor.' if da else "kein Einstieg liegt vor – Marken für den Fall der Fälle:")
-            + '</p>')
-    zeilen = "".join(ampelzeile(n, a, x) for n, a, x in ein)
-    import atr
-    ue = atr.ueberdehnung(df)
-    if ue:                                       # Überdehnung: der Boden, auf dem ein Bruch gedeiht (Zeichen)
-        # über dem GD50 überdehnt: günstig für Short (grün); unter dem GD50 überdehnt: der Bruch ist gelaufen (rot)
-        a_ue = {"rot": "grün", "grün": "grau"}.get(ue[0], ue[0]) if ue[2] >= 0 else ue[0]
-        zeilen += ampelzeile(f"Überdehnung: {ue[1]}" + (" – nicht nachjagen" if ue[2] < 0 and ue[0] == "rot" else ""),
-                             a_ue, "Abstand vom 50-Tage-Durchschnitt in ATR. Weit über dem GD50 ist eine Überdehnung für "
-                                   "die Short-Seite günstig (grün ab 6 × ATR, gelb ab 4); weit darunter ist der Bruch "
-                                   "schon gelaufen – ein Zeichen, kein Einstieg.")
-    regeln = "".join(ampelzeile(n, a, x, "O'Neil: Shorts nur in früheren Führern, rund 5–7 Monate nach dem Top, wenn "
-                                         "die ersten Erholungen gescheitert sind, und nur in liquiden Titeln.")
-                     for n, a, x in short_seite.oneil_regeln(df))
-    return (kopf + zeilen + f'<p style="margin:8px 0 0;font-size:15px;color:{TEXT_2}">Regeln nach O\'Neil:</p>' + regeln
-            + rudelkarte.gruppenregel(rd, mr, ph, "short"))
 
 
 def tv_link(tk):
@@ -858,6 +713,41 @@ def abgelegt(tk):
         return None
 
 
+_SPEICHER = {}
+
+
+def maerkte():
+    """Markt je System (Minervini, Kullamägi), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Kartentisch."""
+    schluessel = pd.Timestamp.now().strftime("%Y%m%d%H")
+    if _SPEICHER.get("markt", (None,))[0] != schluessel:
+        try:
+            import kartentisch
+            b = (kartentisch.laden() or {}).get("barometer") or {}
+            mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
+        except Exception:  # noqa: BLE001
+            mm = None
+        try:
+            km = markt_systeme.kullamaegi()
+        except Exception:  # noqa: BLE001
+            km = None
+        _SPEICHER["markt"] = (schluessel, mm, km)
+    return _SPEICHER["markt"][1], _SPEICHER["markt"][2]
+
+
+def boersenwert(tk):
+    """Börsenwert in Mrd. $ aus dem Revier (für die Schwelle des Parabolic Short) oder None."""
+    if "revier" not in _SPEICHER:
+        try:
+            rv = pd.read_csv(os.path.join(HIER, "..", "einstellungen", "revier.csv"), keep_default_na=False)
+            _SPEICHER["revier"] = {r["ticker"]: r["boersenwert_mrd"] for r in rv.to_dict("records")}
+        except Exception:  # noqa: BLE001
+            _SPEICHER["revier"] = {}
+    try:
+        return float(_SPEICHER["revier"].get(tk.upper()))
+    except (TypeError, ValueError):
+        return None
+
+
 def seite_titel(ticker, laufend=False, _stand=None):
     """Gibt drei Teile zurück: oben (Kopf bis Kacheln), chart (Zwischenstand für chartkarte), unten (ab Frühere Basen).
     Zwischen oben und Chart setzt app.py die Chart-Knöpfe. laufend=True: mit der unvollständigen Kerze des laufenden Börsentags (Knopf „Kurse aktualisieren“);
@@ -919,7 +809,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gewinne = fd["gewinne"]
     except Exception:
         fd, fund, gewinne = None, None, None
-    tvp = _trendvorlage(df)
     try:
         mr = marktrichtung.richtung()
     except Exception:
@@ -939,9 +828,14 @@ def seite_titel(ticker, laufend=False, _stand=None):
                            f'sind vorläufig bis Börsenschluss – O\'Neil und Minervini urteilen über Schlusskurs und '
                            f'Tagesvolumen.</div>')
     erk["fruehwarnung"] = fruehwarnung.zeichen(df, erk, ph)
+    gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
+    m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund)
+    k_ = system_kullamaegi.pruefen(df, erk, gtage, boersenwert(tk), tk)
+    mm_, km_ = maerkte()
+    erk["systeme"] = {"m": m_, "k": k_}
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
     try:
-        leiste = _kacheln(erk, ph, ph_reihe, tvp, fund, _rs_richtung(df, index), df, rd, fd if fund else None, mr, gewinne)
+        leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, mr, gewinne, m_, k_, mm_, km_)
         k_info = dict(gestaltung.MITSCHRIFT)
     finally:
         gestaltung.MITSCHRIFT = None
@@ -966,7 +860,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     raster = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
     teile.append(f'{raster}{_earnings_feld(fd if fund else None)}{karte(links, "Fundament-Ampeln")}</div>')
     teile.append(f'{raster}{_phase_zyklus(ph, krit)}{_warnzeichen(erk)}</div>')
-    plan, rand = _szenario(df, erk, ph, mr, rd, gewinne) if len(df) >= 260 else ("", BLAU)
+    plan, rand = _plan(m_, k_, mm_, km_, df)
     teile.append(karte(plan, "Plan", rand=rand))
     teile.append(depotleiste.titelkarte(tk, df, erk))
     return {"oben": seite("".join(oben), unten=8), "chart": zwischen, "unten": seite("".join(teile), oben=8),
