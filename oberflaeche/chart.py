@@ -3,7 +3,7 @@
 Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), auf Wunsch GD10 und GD20 (Kullamägi, nur Tageschart), die
 Zonen des VCP-Scanners (Baustein 1: Base, Flagge, Konsolidierung mit Vorgeschichte, Fahnenstange und grobem ZigZag) –
 „Aktuell“ nur das Setup jetzt, „Historie“ dazu alle abgeschlossenen Zonen mit ↑ am Ausbruch.
-Darunter Volumen mit 50er-Schnitt, ganz unten die relative Stärke gegen den S&P 500 und gestrichelt gegen den eigenen
+Darunter Volumen mit 50er-Schnitt und dem Austrocknungsband (grün = Volumen deutlich unter dem Schnitt), ganz unten die relative Stärke gegen den S&P 500 und gestrichelt gegen den eigenen
 Sektor-ETF (beide links bei 100).
 Der frühere Chart (Market-Profile-Zonen, POC-Treppe, Pivot, Stopps, Volumenprofil, Phasenband, Zahlentermine) liegt in
 _to_delete/chart_vor_vcp_2026-11-06.py.
@@ -161,6 +161,15 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     v50 = voll["Volume"].rolling(50 if ebene == "Tag" else 10).mean().reindex(d.index).to_numpy(float)
     pkt = " ".join(f"{X(i):.1f},{570 - 90 * x / vmax:.1f}" for i, x in enumerate(v50) if not np.isnan(x))
     A(f'<polyline points="{pkt}" fill="none" stroke="{TEXT}" stroke-width="1.2"/>')
+    # Austrocknungsband: je Balken das Volumen am Schnitt – kräftig grün bis 50 %, blass grün bis 75 %, sonst grau
+    for i in range(N):
+        if np.isnan(v50[i]) or not v50[i]:
+            continue
+        q = v[i] / v50[i]
+        farbe, deck = (GRUEN, 0.95) if q <= 0.5 else (GRUEN, 0.4) if q <= 0.75 else (TEXT_3, 0.25)
+        A(f'<rect x="{X(i) - breite / N / 2:.1f}" y="577" width="{breite / N + 0.3:.1f}" height="9" fill="{farbe}" '
+          f'fill-opacity="{deck}"><title>{d.index[i]:%d.%m.%Y}: Volumen {zahl(q * 100, 0)} % vom Schnitt</title></rect>')
+    A(f'<text x="{ENDE + 8:.1f}" y="585" fill="{TEXT_3}" font-size="11">Austrocknen</text>')
 
     # RS-Linien gegen den S&P 500 und gestrichelt gegen den Sektor-ETF, beide links bei 100
     if index is not None:
@@ -312,7 +321,8 @@ def legende(ebene="Tag", gd_kurz=False):
         eintraege += [(GD_KURZ[10], "GD10"), (GD_KURZ[20], "GD20")]
     eintraege += [(BLAU, "Base"), (GELB, "Flagge"), (LILA, "Konsolidierung (nach Absturz)"),
                   (GELB, "Pfeil gelb = Vorgeschichte"), (GRUEN, "Pfeil grün = Fahnenstange · ↑ = Ausbruch"),
-                  (TEXT_3, "ZigZag (2 × ATR)")]
+                  (TEXT_3, "ZigZag (2 × ATR)"),
+                  (GRUEN, "Band unter dem Volumen: kräftig grün = höchstens 50 % vom Schnitt, blass = bis 75 %")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'
                    f'<span style="width:18px;height:4px;border-radius:2px;background:{f}"></span>{t(n)}</span>'
                    for f, n in eintraege)
