@@ -86,13 +86,19 @@ def _aktualisieren(tk):
 
 def chart_knoepfe(tk):
     """Knöpfe direkt über dem Chart: Zeitebene, Ausschnitt, Kurse aktualisieren, TradingView, Watchlist, Position."""
-    k0, k1, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2])
+    k0, k1, k2, k7, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2, 2, 2])
     with k0:
         ebene = st.radio("Zeitebene", ["Tag", "Woche"], horizontal=True, key="ebene")
     with k1:
         wahl = list(chart.AUSSCHNITT[ebene])
         aus = st.radio("Ausschnitt", wahl, horizontal=True, key=f"ausschnitt_{ebene}",
                        index=wahl.index(chart.AUSSCHNITT_START[ebene]))
+    with k2:
+        zonen_ansicht = st.radio("Zonen", chart.ZONE_ANSICHT, horizontal=True, key="zonen_ansicht",
+                          help="Aktuell: nur das Setup jetzt (Zone, Vorgeschichte, Fahnenstange). Historie: dazu alle "
+                               "abgeschlossenen Basen und Flaggen mit ↑ am Ausbruch.")
+    with k7:
+        gd_kurz = st.checkbox("GD10 · GD20", key="gd_kurz", help="Kullamägis Linien (nur im Tageschart)")
     with k3:
         st.button("↻ Kurse aktualisieren", use_container_width=True, on_click=_aktualisieren, args=(tk,))
     with k4:
@@ -101,7 +107,7 @@ def chart_knoepfe(tk):
         watchlist_knopf(tk)
     with k6:
         position_knopf(tk)
-    return ebene, aus
+    return ebene, aus, zonen_ansicht, gd_kurz
 
 
 def _fenster(titel_):
@@ -348,7 +354,7 @@ def _tabelle(teil, nr):
     zeilen = teil["zeilen"]
     if not zeilen:
         return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Zone": z["Zone"],
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Wertzone": z["Wertzone"],
                         "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
     farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
@@ -436,8 +442,8 @@ elif ticker:
             with st.spinner("Lade und rechne …"):
                 teile = _gebaut("titel", _codestand(), *args)
         st.markdown(teile["oben"], unsafe_allow_html=True)
-        ebene, aus = chart_knoepfe(ticker)
-        st.markdown(titel.chartkarte(teile["chart"], ebene, aus), unsafe_allow_html=True)
+        ebene, aus, zonen_ansicht, gd_kurz = chart_knoepfe(ticker)
+        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz), unsafe_allow_html=True)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)

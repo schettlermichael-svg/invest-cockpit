@@ -2,7 +2,7 @@
 Phasengrenzen:
   · Bruch unter den 10-Wochen-Durchschnitt (GD50) mit hohem Volumen (mindestens 1,4-faches 50-Tage-Mittel) in den
     letzten 10 Tagen
-  · Unterstützung der Gipfelzone gebrochen: Schluss unter der Unterkante der Market-Profile-Zone, nachdem der Titel in
+  · Unterstützung der Gipfelzone gebrochen: Schluss unter der Unterkante der Wertzone, nachdem der Titel in
     Phase 2 oder 3 lief
 """
 import re
@@ -40,7 +40,7 @@ def _zeichen(df, erk, phase):
     u = w.get("zone_unterkante")
     if u and c[-1] < u:
         aus.append(("rot", f"Frühwarnung (Weinstein): Unterstützung der Gipfelzone gebrochen – Schluss {c[-1]:.2f} unter "
-                           f"der Unterkante der Zone {u:.2f} in Phase {phase}"))
+                           f"der Unterkante der Wertzone {u:.2f} in Phase {phase}"))
     return aus
 
 

@@ -1,6 +1,6 @@
 """Lagekarte (4.11.2026, Zwei Systeme seit 05.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite,
 Übersicht (Kartentisch) und in den Watchlists. Aufbau: Kopf mit dem Setup je System (M = Minervini, K = Kullamägi),
-Chips (Zone, Stärke, Trend, Base), Belegzeile der Zone, Kleinchart 6 Monate mit Zonenrahmen, Wertbereich und
+Chips (Wertzone, Stärke, Trend, Base), Belegzeile der Wertzone, Kleinchart 6 Monate mit Wertzonenrahmen, Wertbereich und
 POC-Treppe, acht Ampelpunkte wie die Kacheln (geteilter Punkt: links M, rechts K; Maus darauf zeigt die Zeile),
 Abstand zum Pivot, Fußzeile mit Stopp und nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den
 Kacheln bzw. der Erkennung."""
@@ -106,7 +106,7 @@ def _kleinchart(df, erk, tage=126):
     def pos(tag):
         return min(int(d.index.searchsorted(tag)), len(c) - 1)
     s = [f'<svg viewBox="0 0 {W} {H}" width="100%" style="display:block;margin:10px 0 6px" role="img" '
-         f'aria-label="Kleinchart 6 Monate mit Zonen">']
+         f'aria-label="Kleinchart 6 Monate mit Wertzonen">']
     treppe, vor = [], None
     for k, z in enumerate(zonen):
         letzte = k == len(zonen) - 1
@@ -136,7 +136,7 @@ def _kleinchart(df, erk, tage=126):
 
 def _pivot(erk):
     """Pivot des Systems, das das Setup liefert: Minervini zuerst, dann Kullamägi (EP: Hoch des Sprungtags, Breakout:
-    Oberkante der Zone); ohne Systeme die Zone."""
+    Oberkante der Wertzone); ohne Systeme die Wertzone."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     if m.get("pivot"):
@@ -228,7 +228,7 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
     """kacheln: {Beschriftung: (Ampel oder (Ampel M, Ampel K), Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
     def kz(name, default=("grau", "–", "")):
         return kacheln.get(name, default)
-    zone = kz("Zone")
+    zone = kz("Wertzone")
     staerke, trend, base = kz("Stärke"), kz("Trend"), kz("Base")
 
     def ampel_m(x):
@@ -255,7 +255,7 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<div style="font-size:14px;color:{TEXT_2}">{t(branche)}</div>'
         + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
         f'</div>{_setup_kasten(kacheln, erk)}</div>'
-        f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Zone: " + zone[1], zone[0])}'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Wertzone: " + zone[1], zone[0])}'
         f'{_chip(wort_m(staerke), ampel_m(staerke))}{_chip(wort_m(trend), ampel_m(trend))}'
         f'{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'

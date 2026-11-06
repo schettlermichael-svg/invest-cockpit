@@ -187,7 +187,7 @@ def letztes_markttief(index, bis):
 def basenzahl(df, index=None):
     """Zählt die Bases seit Beginn der aktuellen Phase 2 bzw. seit dem letzten Markttief nach
     einer Korrektur ab 15 % – was später liegt (Buch: Basis 1 und 2 entstehen meist aus einer
-    Marktkorrektur). Eine Base = verlassene Market-Profile-Zone ↑ ab 4 Wochen. Die laufende Base zählt mit."""
+    Marktkorrektur). Eine Base = verlassene Wertzone ↑ ab 4 Wochen. Die laufende Base zählt mit."""
     if len(df) < 300:
         return None
     ph = phasen(df)
@@ -197,8 +197,8 @@ def basenzahl(df, index=None):
     if markt is not None and markt > beginn_t:
         beginn_t = markt
     beginn = min(int(np.searchsorted(df.index, beginn_t)), len(df) - 1)
-    # gezählt werden verlassene Market-Profile-Zonen ↑ ab 4 Wochen seit dem Beginn, jede neue Stufe erst 20 % über
-    # der zuletzt gezählten (IBD/O'Neil); die laufende Zone zählt mit
+    # gezählt werden verlassene Wertzonen ↑ ab 4 Wochen seit dem Beginn, jede neue Stufe erst 20 % über
+    # der zuletzt gezählten (IBD/O'Neil); die laufende Wertzone zählt mit
     a_ = mp_von(df)
     if a_ is None:
         return None
@@ -260,7 +260,7 @@ def _phase_von(df):
     return _PHASEN[schluessel]
 
 
-# ── Market-Profile-Zonen (4.11.2026): exakte Zonen aus 30-Minuten-TPO (kern/marketprofile.py), beide Richtungen ──
+# ── Wertzonen (4.11.2026): exakte Wertzonen aus 30-Minuten-TPO (kern/marketprofile.py), beide Richtungen ──
 _MP, _ROH = {}, {}
 SHORT_PHASEN = (3, 4)        # Weinstein: geshortet wird beim Bruch aus Phase 3 und in Phase 4; sonst Seite long
 
@@ -319,7 +319,7 @@ def _erkenne_mp(df, woche=False, index=None):
     leer = {"muster": [], "kaufsetup": False, "hinweise": [], "werte": {}}
     a = mp_von(df)
     if a is None:
-        return {**leer, "mp": None, "hinweise": ["keine 30-Minuten-Kerzen – Market-Profile-Zonen fehlen"]}
+        return {**leer, "mp": None, "hinweise": ["keine 30-Minuten-Kerzen – Wertzonen fehlen"]}
     uebernahme = uebernahme_verdacht(h, l)
     if uebernahme:
         return {**leer, "mp": a, "hinweise": [uebernahme]}
@@ -330,19 +330,19 @@ def _erkenne_mp(df, woche=False, index=None):
     # Phase, Trendvorlage und Markt bleiben Regeln mit Ampel – ein Signal gegen die Phase wird gezeigt, nicht verschluckt
     seite = ("long" if ak["dir"] == "↑" else "short") if ak else ("short" if phase in SHORT_PHASEN else "long")
     d = "↑" if seite == "long" else "↓"
-    st = a["stand"][-1]                          # Zone der abgeschlossenen Wochen, wie sie heute gilt
+    st = a["stand"][-1]                          # Wertzone der abgeschlossenen Wochen, wie sie heute gilt
     start = _tag_index(df, a["wochen"][st["von"]]["tag"])
     art = "Base" if st["wochen"] >= 3 else ("Flagge" if st["herkunft"] == d else None)
     if art is None and ak and ak.get("art") == "U" and ak["dir"] == d and ak["zone"]["nr"] == st["nr"]:
-        art = "Umkehr"                           # junge Zone nach gescheitertem Bruch, verlassen in Gegenrichtung
+        art = "Umkehr"                           # junge Wertzone nach gescheitertem Bruch, verlassen in Gegenrichtung
     t_zone = a["wochen"][st["von"]]["tag"]
     if art == "Flagge" and any(x["art"] == "S" and x["dir"] == d and x["tag"] >= t_zone for x in a["signale"]):
-        art = None                               # der Lauf, aus dem die junge Zone entstand, ist gescheitert
+        art = None                               # der Lauf, aus dem die junge Wertzone entstand, ist gescheitert
     basis = {**leer, "mp": a, "seite": seite, "zonen": a["zonen"]}
     if art is None:
-        basis["hinweise"].append(f"Zone erst {st['wochen']} Woche{'n' if st['wochen'] > 1 else ''} alt"
+        basis["hinweise"].append(f"Wertzone erst {st['wochen']} Woche{'n' if st['wochen'] > 1 else ''} alt"
                                  + (f", entstanden aus einem Ausbruch {st['herkunft']}" if st["herkunft"] else "")
-                                 + f" – keine reife Zone für {seite}")
+                                 + f" – keine reife Wertzone für {seite}")
         return basis
     dauer = n - start
     hoch, tief = float(st["hoch"]), float(st["tief"])
@@ -358,7 +358,7 @@ def _erkenne_mp(df, woche=False, index=None):
              "kontraktionen": kontraktionen(bh, bl),
              "kontraktionen_lage": [(start + x, start + y, t) for x, y, t in kontraktionen_lage(bh, bl)]}
     if seite == "short":
-        # Short nur noch als Parabolic Short (System Kullamägi, 05.11.2026); die Zone nach unten bleibt als Lagebild
+        # Short nur noch als Parabolic Short (System Kullamägi, 05.11.2026); die Wertzone nach unten bleibt als Lagebild
         werte["pivot"] = tief                    # Unterkante des Rahmens
         basis["werte"] = werte
         if art == "Umkehr":
@@ -383,7 +383,7 @@ def _erkenne_mp(df, woche=False, index=None):
 
 
 def _historie_mp(df, index, tage):
-    """Frühere Zonen (Market Profile), die mindestens 3 Wochen standen und verlassen wurden – in beide Richtungen.
+    """Frühere Wertzonen (Market Profile), die mindestens 3 Wochen standen und verlassen wurden – in beide Richtungen.
     Ausbruch = erster Auslöser A/F/B in Richtung des Verlassens; Ausgang nach O'Neil, short gespiegelt:
     gelungen = 20 % jenseits des Auslösers, bevor ein Schluss 8 % dagegen liegt."""
     a = mp_von(df)
@@ -420,7 +420,7 @@ def _historie_mp(df, index, tage):
         damals = bool(r.get("kaufsetup")) if d == "↑" else bool((r.get("short") or {}).get("setup"))
         weite = (h[aus_i:].max() / pivot - 1) * 100 if d == "↑" else (1 - l[aus_i:].min() / pivot) * 100
         aus.append({"beginn": beginn, "ende": ende, "ausbruch": aus_i, "pivot": pivot, "innen": {},
-                    "muster": ["Base" if d == "↑" else "Zone ↓"], "richtung": d, "wochen": z["wochen"],
+                    "muster": ["Base" if d == "↑" else "Wertzone ↓"], "richtung": d, "wochen": z["wochen"],
                     "val": z["val"], "vah": z["vah"], "poc": z["poc"],
                     "basenzahl": (r.get("werte") or {}).get("basenzahl") if d == "↑" else None,
                     "kaufsetup": damals, "tiefe_pct": round((1 - z["tief"] / z["hoch"]) * 100, 1),
@@ -429,9 +429,9 @@ def _historie_mp(df, index, tage):
 
 
 def erkenne(df, woche=False, index=None, _vor_hoch=False):
-    """Erkennung über die Balance-Zone: die Zone, die heute gilt (laufend oder höchstens 4 Wochen nach ihrem Kippen),
+    """Erkennung über die Balance-Zone: die Wertzone, die heute gilt (laufend oder höchstens 4 Wochen nach ihrem Kippen),
     eingeordnet nach den Regeln der Meister als Base oder Flagge (Powerplay). Pivot = Hoch der letzten Enge (innere
-    Zone, Minervini); Flagge: Hoch der Flagge. Formnamen gibt es nicht mehr."""
+    Wertzone, Minervini); Flagge: Hoch der Flagge. Formnamen gibt es nicht mehr."""
     return _erkenne_mp(df, woche, index)
 
 def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dauer, tiefe, tief_idx, hoch, bl, db,

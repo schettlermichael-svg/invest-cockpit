@@ -2,7 +2,7 @@
 geordnet, als Lagekarten. Die Reihen ordnen, sie filtern nicht – jeder Titel bleibt über die Titelseite erreichbar.
 
 System Minervini (M):
-  ★ Spitze M          Setup grün (alle Regeln) und die Zone steht an der Schwelle oder bricht nach oben aus
+  ★ Spitze M          Setup grün (alle Regeln) und die Wertzone steht an der Schwelle oder bricht nach oben aus
   Weitere M           Setup grün in Balance oder genau eine Regel fehlt
 System Kullamägi (K):
   Episodic Pivot      Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, Kurs hält das Tief
@@ -11,11 +11,11 @@ System Kullamägi (K):
                       ganzen US-Markt (parabolic.py)
 Beide:
   Meine Watchlists    jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
-  Ausbruchsfelder     frischer Ausbruch (A/U) bzw. Flagge (F) der Zone nach oben, mit Volumen, für Titel ohne Reihe
-  Frühaufklärung      Radar: Zone an der Schwelle oder frischer Angriff nach oben
+  Ausbruchsfelder     frischer Ausbruch (A/U) bzw. Flagge (F) der Wertzone nach oben, mit Volumen, für Titel ohne Reihe
+  Frühaufklärung      Radar: Wertzone an der Schwelle oder frischer Angriff nach oben
 Ein Titel steht in genau einer Reihe (Vorrang in der Reihenfolge oben); die Lagekarte zeigt das Setup beider Systeme.
 
-Rechnung in zwei Stufen: 1. alle Titel Erkennung, Zone und beide Systeme (mehrere Prozesse) → Reihe; 2. für die Titel
+Rechnung in zwei Stufen: 1. alle Titel Erkennung, Wertzone und beide Systeme (mehrere Prozesse) → Reihe; 2. für die Titel
 in einer Reihe die volle Titelseite (dieselben Kacheln, dieselbe Lagekarte). Ergebnis: daten/kartentisch/<Datum>.json;
 die Übersicht liest nur diese Datei.
 """
@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
-REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), die Zone steht an der Schwelle oder bricht "
+REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), die Wertzone steht an der Schwelle oder bricht "
                                                "nach oben aus"),
           ("m_weitere", "Weitere · Minervini", "Setup grün in Balance – oder genau eine Regel fehlt"),
           ("k_ep", "Episodic Pivot · Kullamägi", "Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, "
@@ -42,11 +42,11 @@ REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), di
           ("k_parabolic", "Parabolic Short · Kullamägi", "Serie steigender Tage im Revier: ab 300 % (kleine Werte) bzw. "
                                                          "50 % (große Werte, Schwelle aus seinem Blog); grün an Tag 3–5"),
           ("konsolidierung", "Ausbruch aus der Konsolidierung",
-           "frischer Ausbruch nach oben (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Zone "
+           "frischer Ausbruch nach oben (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Wertzone "
            "von mindestens 3 Wochen, der noch hält – für Titel, die in keinem System stehen"),
           ("flagge", "Flagge", "frische Fortsetzung nach oben (F, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) "
-                               "aus einer jungen Zone unter 3 Wochen – für Titel, die in keinem System stehen"),
-          ("frueh", "Frühaufklärung", "Radar: Zone an der Schwelle oder frischer Angriff nach oben (A, F, U in 5 Tagen)")]
+                               "aus einer jungen Wertzone unter 3 Wochen – für Titel, die in keinem System stehen"),
+          ("frueh", "Frühaufklärung", "Radar: Wertzone an der Schwelle oder frischer Angriff nach oben (A, F, U in 5 Tagen)")]
 WATCHLISTS_NACH = "m_spitze"
 
 
@@ -65,7 +65,7 @@ def _fund_gespeichert(tk):
 
 
 def _stufe1(tk):
-    """Erkennung, Zone und beide Systeme eines Titels aus dem Speicher; Reihe oder None."""
+    """Erkennung, Wertzone und beide Systeme eines Titels aus dem Speicher; Reihe oder None."""
     import absorption
     import daten
     import erkennung
@@ -128,7 +128,7 @@ def _stufe1(tk):
                         luecken=[f"K: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
-        # Radar (Frühaufklärung): Zone an der Schwelle oder ein frischer Angriff nach oben (A, F, U in 5 Tagen)
+        # Radar (Frühaufklärung): Wertzone an der Schwelle oder ein frischer Angriff nach oben (A, F, U in 5 Tagen)
         n_ = len(a["tage"]) - 1
         frisch = [x for x in a["signale"] if x["art"] in ("A", "F", "U") and x["dir"] == "↑" and x["i"] >= n_ - 4]
         if "reihe" not in info:
@@ -145,8 +145,8 @@ FRISCH_TAGE = 10              # Ausbruchsfelder: Auslöser höchstens 10 Handels
 
 
 def _ausbruchsfeld(info, a, df):
-    """Ausbruch aus der Konsolidierung (A, U; B aus reifer Zone) bzw. Flagge (F; B aus junger Zone): die laufende
-    Bewegung des Market Profile hält noch (kein S, keine neue reife Zone) und begann vor höchstens FRISCH_TAGE
+    """Ausbruch aus der Konsolidierung (A, U; B aus reifer Wertzone) bzw. Flagge (F; B aus junger Wertzone): die laufende
+    Bewegung des Market Profile hält noch (kein S, keine neue reife Wertzone) und begann vor höchstens FRISCH_TAGE
     Handelstagen, mit Volumen am Ausbruchstag über dem 50-Tage-Schnitt. Geht vor jeder anderen Reihe (keine Doppelung). Vorlauf = Korrektur vom Hoch (long) bzw. Anstieg
     vom Tief (short) bis zum Ausbruch – nur ein Zeichen, kein Filter."""
     from marketprofile import ZONE_REIF
@@ -205,7 +205,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     w = watchlists.laden()
     beobachtet = set(watchlists.alle())
     gerechnet = {x["tk"] for x in stufe1}
-    stufe1 += [{"tk": tk, "zustand": "keine Zone (Daten fehlen noch)", "hoch52": False, "tief52": False,
+    stufe1 += [{"tk": tk, "zustand": "keine Wertzone (Daten fehlen noch)", "hoch52": False, "tief52": False,
                 "phase": None} for tk in watchlists.alle() if tk not in gerechnet]
     for x in stufe1:
         if x["tk"] in beobachtet:
@@ -340,11 +340,11 @@ def zeile(tk, x):
     """Eine Tabellenzeile für die übrigen Titel (Reihenfolge wie die Karten)."""
     from gestaltung import GELB, zahl
     if x is None:
-        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Zone": "",
+        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Wertzone": "",
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
-            "Zone": " · ".join(z for z in (x.get("zustand", ""), ausbruch_text(x)) if z),
+            "Wertzone": " · ".join(z for z in (x.get("zustand", ""), ausbruch_text(x)) if z),
             "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
@@ -550,13 +550,13 @@ def lagebild(tisch):
         if g:
             text += " ⚑"
         zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
-                  f"Zone: {t(x.get('zustand', '–'))}"]
+                  f"Wertzone: {t(x.get('zustand', '–'))}"]
         if x.get("reihe") == "frueh" and x.get("angriff"):
             art = x["angriff"][0]
-            zeilen.append(f"Auslöser {t(x['angriff'])}: " + {"A": "Ausbruch aus reifer Zone", "F": "Fortsetzung (Flagge)",
+            zeilen.append(f"Auslöser {t(x['angriff'])}: " + {"A": "Ausbruch aus reifer Wertzone", "F": "Fortsetzung (Flagge)",
                                                              "U": "Umkehr nach gescheitertem Ausbruch"}.get(art, ""))
         if stern:
-            zeilen.append("★ Setup grün, Zone bewegt sich in Richtung des Setups")
+            zeilen.append("★ Setup grün, Wertzone bewegt sich in Richtung des Setups")
         if ausbruch_text(x):
             zeilen.append("Ausbruch " + t(ausbruch_text(x)))
         if lagekarte.grund(x):
@@ -606,7 +606,7 @@ def lagebild(tisch):
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []))}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Zeilen: Sektoren nach Feld der Frontkarte '
              f'(Führend → Erstarkend → Ermüdend → Abgehängt), darin nach Stärke. Jeder Titel genau einmal, in der Spalte '
-             f'seiner Reihe. Spalten M = System Minervini, K = System Kullamägi · Rahmen grün = long, rot = Parabolic Short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Setup grün und Zone im Ausbruch (bzw. Parabolic Short an Tag 3–5) · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
+             f'seiner Reihe. Spalten M = System Minervini, K = System Kullamägi · Rahmen grün = long, rot = Parabolic Short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Setup grün und Wertzone im Ausbruch (bzw. Parabolic Short an Tag 3–5) · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
              f'Auslöser (z. B. U↑) · ◆ = in deiner Watchlist · ⚑ = Themen-Gruppe Führend oder Erstarkend (Maus zeigt sie). '
              f'Sammeln sich Angriffe in einer Zeile, rückt dort ein Rudel vor.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

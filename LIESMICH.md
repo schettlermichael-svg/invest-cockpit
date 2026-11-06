@@ -412,6 +412,25 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   2 : 1. Das CRV ist ein Maß, ob sich der Einsatz lohnt – kein Ausstieg: Gewinne laufen lassen, Stopp nachziehen.
   Chart: „1. Hürde … $“ gelb gepunktet, CRV an den Stopp-Etiketten; Etikettenspalte 200 px.
 
+## VCP-Scanner: Zone und Enge (06.11.2026)
+
+Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart, alles aus Tageskerzen.
+- **Baustein 1 · Zone:** ruhige Phase vor dem rechten Rand. Oberkante = grobes Hoch (ZigZag 2 × ATR) ohne Schluss
+  darüber, Unterkante = tiefstes Tief seitdem, 3–65 Wochen. Vorgeschichte (Schub ↑ / Absturz ↓) gehört nicht zur Zone
+  und gibt den Namen: Base, Flagge (Kullamägi: Stange ≥ 30 % in ≤ 13 Wochen, Zone 1–8 Wochen, ≤ 25 % tief),
+  Konsolidierung (nach Absturz); Flagge in der Zone (Minervini sieht die Base, Kullamägi die Flagge). Zone offen,
+  solange der Kurs nach dem Hoch nicht zurück in die obere Hälfte kam. Abgeschlossene Zonen (Schluss über der Oberkante)
+  werden mit derselben Regel rückwärts gerechnet.
+- **Baustein 2 · Enge:** Kontraktionen Schicht für Schicht in der Zone (ab 1 × ATR), grob halbiert (jede ≤ 70 % der
+  vorigen), Enge = letzte Kontraktion ≤ 10 %, Pivot = ihr Hoch, Volumen der Enge leiser als in der ersten Kontraktion.
+  Ampel grün/gelb/rot, nichts wird gefiltert.
+- **Chart (schlank):** Kerzen, GD50/150/200, GD10 · GD20 zuschaltbar, Zonen „Aktuell · Historie“, Vorgeschichte gelb,
+  Fahnenstange grün, ZigZag grau, Kontraktionen mit Tiefe, Rahmen der Enge in der Ampelfarbe, Pivot; darunter Volumen
+  mit 50er-Schnitt und Volumenband (Ruhe türkis bis 50/75 %, viel Volumen grün/rot nach Richtung, kräftig ab 1,5-fach),
+  ganz unten die RS-Linien. Der frühere Chart liegt in `_to_delete/chart_vor_vcp_2026-11-06.py`.
+- **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
+- Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
+
 ## Knopf „Kartentisch neu rechnen“ (06.11.2026)
 
 Oben in der Übersicht. Rechnet Ränge (RS, Führer, Parabolic Short), den Kartentisch mit beiden Systemen und die Lage

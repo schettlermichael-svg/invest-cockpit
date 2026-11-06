@@ -6,7 +6,7 @@ Breakout (Momentum Burst nach Pradeep Bonde): rein technisch. Ein Führer im Auf
   Seitwärtsphase über, vorzugsweise bei reduziertem Volumen, und bricht aus. Führer = die obersten 1–2 % nach der
   Kursentwicklung über 1, 3 oder 6 Monate (fuehrer_rang). Konsolidierung meist 1–3 Wochen. Haltedauer 3–5 Tage für den
   Hauptteil. Erfolgsquote deutlich unter 50 %.
-  grün: Führer (oberste 2 %) + Zone 1–3 Wochen nach einem Lauf nach oben (oder Kurs über GD50)
+  grün: Führer (oberste 2 %) + Wertzone 1–3 Wochen nach einem Lauf nach oben (oder Kurs über GD50)
 Episodic Pivot: eine Nachricht, die den Markt zur völligen Neubewertung zwingt, eine große Kurslücke nach oben und eine
   Volumenexplosion – alle drei Pflicht. Ideal ein vernachlässigter Titel, der lange seitwärts lief (kein Titel, der kurz
   vorher schon stark stieg); ein Ausbruch aus einer Konsolidierung ist ihm lieber, aber keine Pflicht. Sein Scan: Titel,
@@ -57,16 +57,16 @@ def breakout(df, erk, fr):
     f_ampel = fuehrer_rang.ampel(fr)
     regeln = [("Führer (oberste 1–2 % nach 1/3/6 Monaten)", f_ampel == "grün", fuehrer_rang.text(fr))]
     if st is None:
-        regeln.append(("Konsolidierung 1–3 Wochen", False, "keine Zone"))
+        regeln.append(("Konsolidierung 1–3 Wochen", False, "keine Wertzone"))
         return {"art": "Breakout", "ampel": "rot" if f_ampel != "grün" else "gelb", "regeln": regeln, "pivot": None}
     wochen = int(st["wochen"])
     trend = st.get("herkunft") == "↑" or (len(c) >= 50 and c[-1] > c[-50:].mean())
     kons = KONS_GRUEN[0] <= wochen <= KONS_GRUEN[1] and trend
     regeln.append(("Konsolidierung 1–3 Wochen nach einem Schub", kons,
-                   f"Zone {wochen} Woche{'n' if wochen != 1 else ''}"
+                   f"Wertzone {wochen} Woche{'n' if wochen != 1 else ''}"
                    + ("" if trend else ", kein Schub davor und Kurs unter GD50")))
     v = df["Volume"].to_numpy(float)
-    zd = max(5, wochen * 5)                      # Handelstage der Zone
+    zd = max(5, wochen * 5)                      # Handelstage der Wertzone
     ruhig = v[-zd:].mean() / v[-zd - 50:-zd].mean() if len(v) > zd + 50 and v[-zd - 50:-zd].mean() else None
     if ruhig is not None:
         regeln.append(("Volumen in der Konsolidierung reduziert (vorzugsweise)", ruhig < 1.0,

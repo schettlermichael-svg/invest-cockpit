@@ -7,11 +7,11 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      dem 52-Wochen-Hoch). Sie entspricht Weinsteins Stufe 2.
   2. RS ab 70 – der achte Punkt der Trendvorlage.
   3. Zahlen wachsen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot (Fundament-Ampeln).
-  4. Reife Zone (Base oder Flagge nach einem Lauf nach oben) mit Pivot, höchstens 50 % tief.
+  4. Reife Wertzone (Base oder Flagge nach einem Lauf nach oben) mit Pivot, höchstens 50 % tief.
   5. Enge (VCP): am rechten Rand halten oder steigen die Tiefs, die Spanne zieht sich zusammen, das Volumen trocknet aus
      (Ampel „Angebot aufgenommen“). Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot. Eine Flagge unter drei
      Wochen ist zu kurz zum Messen und sperrt nicht (Hinweis: im Chart prüfen).
-Pivot = Oberkante der Zone; Kaufzone bis +5 %. Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem
+Pivot = Oberkante der Wertzone; Kaufzone bis +5 %. Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem
 Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
 verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
 Der Markt (markt_systeme.minervini) ist eine eigene Ampel und gehört nicht zu „grün“ – kein Filter.
@@ -64,13 +64,13 @@ def pruefen(df, erk, rs_rang, fund):
               ("RS ab 70 (8. Punkt)", rs_rang is not None and rs_rang >= RS_MIN,
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
-              ("Reife Zone mit Pivot", reif,
+              ("Reife Wertzone mit Pivot", reif,
                f"{art} {w.get('wochen')} Wochen, {w.get('tiefe_pct', 0):.0f} % tief".replace(".", ",") if reif
                else "keine Base/Flagge nach oben" if art not in ("Base", "Flagge") else "zu tief oder ohne Pivot"),
               ("Enge (VCP)", eng in ("grün", "gelb", "leer"),
                {"grün": "Tiefs halten, Spanne eng, Volumen trocken", "gelb": "teilweise eng (Tiefs/Spanne oder Volumen)",
-                "rot": "nicht eng – Tiefs fallen oder Spanne und Volumen weit", "grau": "ohne Zone nicht prüfbar",
-                "leer": "Zone zu kurz zum Messen – Enge im Chart prüfen"}[eng])]
+                "rot": "nicht eng – Tiefs fallen oder Spanne und Volumen weit", "grau": "ohne Wertzone nicht prüfbar",
+                "leer": "Wertzone zu kurz zum Messen – Enge im Chart prüfen"}[eng])]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"
     pivot = float(w["pivot"]) if reif else None

@@ -7,7 +7,7 @@ Gespeichert werden nur abgeschlossene Handelstage (13 Kerzen; verkürzte Tage vo
 
 kerzen(ticker, tages=None) -> 30-Minuten-Kerzen (Index: Uhrzeit New York, ohne Zeitzone), auf die Tageskurse der App
     ausgerichtet: jeder Tag wird mit Tagesschluss (Yahoo, dividendenbereinigt) / Schluss der letzten 30-Minuten-Kerze
-    skaliert, damit Zonen, Wertbereiche und POC genau auf dem Tageschart liegen.
+    skaliert, damit Wertzonen, Wertbereiche und POC genau auf dem Tageschart liegen.
 lesen(ticker)        -> gespeicherte Kerzen oder None (ohne Abruf)
 schritt(ticker)      -> eine Anfrage bei Massive: die jüngste Lücke der letzten 2 Jahre (neueste zuerst)
 luecke(ticker)       -> jüngste fehlende Handelstage oder None

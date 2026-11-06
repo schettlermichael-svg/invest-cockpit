@@ -7,7 +7,7 @@ Aufruf im Ordner InvestCockpit:
     python3 werkzeuge/tpo_laden.py kartentisch  nur Tageskurse und Kartentisch für die Übersicht
 
 Massive liefert je Anfrage höchstens 50.000 Minuten – bei großen Titeln rund 2 Monate. Ein Durchgang macht eine Anfrage je
-Titel und füllt jeweils die jüngste Lücke; nach dem ersten Durchgang hat jeder Titel die letzten Wochen (genug für Zone,
+Titel und füllt jeweils die jüngste Lücke; nach dem ersten Durchgang hat jeder Titel die letzten Wochen (genug für Wertzone,
 Zustand und Setup), jeder weitere Durchgang reicht weiter zurück. Der kostenlose Plan erlaubt 5 Anfragen je Minute: ein
 Durchgang über rund 1.900 Titel dauert etwa 6,5 Stunden; Titel, die schon vollständig sind, fallen heraus.
 """
