@@ -129,24 +129,6 @@ def themen_tafel():
             f'{feld("Erstarkend")}{feld("Führend")}{feld("Abgehängt")}{feld("Ermüdend")}</div></div>')
 
 
-def kompass():
-    """Lesehilfe für die Pfeile: 3 × 3 Felder in derselben Geometrie wie die Tafel."""
-    zellen = "".join(
-        f'<div style="background:#1C2430;border-radius:8px;padding:8px 6px;display:flex;flex-direction:column;'
-        f'align-items:center;gap:2px;text-align:center"><span style="font-size:22px;line-height:1;'
-        f'color:{PFEILFARBE.get(p, TEXT_2)}">{p}</span><span style="font-size:12px;color:{TEXT_2};line-height:1.3">'
-        f'{t(PFEILE[p])}</span></div>' for p in ("↖", "↑", "↗", "←", "·", "→", "↙", "↓", "↘"))
-    achse = f'font-size:11px;color:{TEXT_3};text-align:center'
-    return (f'<div style="flex:0 1 380px;display:flex;flex-direction:column;gap:6px">'
-            f'<div style="font-size:14px;font-weight:600">Pfeile lesen</div>'
-            f'<div style="{achse}">mehr Schwung ↑</div>'
-            f'<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center">'
-            f'<div style="{achse};writing-mode:vertical-rl;transform:rotate(180deg)">← schwächer</div>'
-            f'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">{zellen}</div>'
-            f'<div style="{achse};writing-mode:vertical-rl">stärker →</div></div>'
-            f'<div style="{achse}">weniger Schwung ↓</div></div>')
-
-
 def frontkarte(quad):
     rot = sektoren.rotation()
     if not rot:
@@ -159,15 +141,7 @@ def frontkarte(quad):
              f'<h2 style="margin:0;font-size:20px;font-weight:600">Frontkarte · wohin das Geld fließt</h2>'
              f'<span style="font-size:13px;color:{TEXT_3}">Sektoren gegen den S&amp;P 500, Woche bis {stand:%d.%m.%Y}</span></div>'
              f'{tafel(rot, ab["erwartet"], quad["quad"])}'
-             f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;padding-top:6px">'
-             f'<div style="flex:1 1 260px;font-size:13px;color:{TEXT_2};line-height:1.7">'
-             f'<b style="color:#E6EAF0">Feld</b> = wo der Sektor steht.<br>'
-             f'<b style="color:#E6EAF0">Pfeil</b> = wohin er sich in den letzten 5 Wochen bewegt hat '
-             f'(Maus auf den Pfeil zeigt die Bedeutung).<br>'
-             f'<b style="color:#E6EAF0">Zahl</b> = relative Stärke; 100 = so stark wie der Markt im Schnitt des '
-             f'letzten halben Jahres.<br>'
-             f'<b style="color:#E6EAF0">Typischer Lauf</b> im Uhrzeigersinn: Erstarkend → Führend → Ermüdend → '
-             f'Abgehängt → Erstarkend.</div>{kompass()}</div>{themen_tafel()}</div>')
+             f'{themen_tafel()}</div>')
 
     zeilen = ampelzeile(f'{len(ab["vorne"])} von {len(ab["erwartet"])} typischen Quad-Sektoren vorne', ab["ampel"],
                         f'Nach dem Quad-Modell führen in Quad {quad["quad"]} ({quad["name"]}) typischerweise diese Sektoren. '
