@@ -311,11 +311,12 @@ def _tabelle(teil, nr):
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
     zaehler = f"tab_n_{nr}"
     n = st.session_state.setdefault(zaehler, 0)
-    with st.expander(f"alle weiteren {len(zeilen)} zeigen · Zeile anklicken öffnet die Lagekarte"):
-        ereignis = st.dataframe(stil, hide_index=True, use_container_width=True, on_select="rerun",
-                                selection_mode="single-row", key=f"tab_{nr}_{n}",
-                                height=min(420, 35 * (len(zeilen) + 1) + 3),
-                                column_config={" ": st.column_config.TextColumn(" ", width="small")})
+    # steht schon im Ausklappmenü des Abschnitts – Streamlit erlaubt kein Ausklappmenü im Ausklappmenü
+    st.caption(f"alle weiteren {len(zeilen)} · Zeile anklicken öffnet die Lagekarte")
+    ereignis = st.dataframe(stil, hide_index=True, use_container_width=True, on_select="rerun",
+                            selection_mode="single-row", key=f"tab_{nr}_{n}",
+                            height=min(420, 35 * (len(zeilen) + 1) + 3),
+                            column_config={" ": st.column_config.TextColumn(" ", width="small")})
     reihen = ereignis.selection.rows if ereignis is not None else []
     schluessel = f"tab_{nr}_{n}"
     if st.session_state.get("tab_offen") == schluessel:
@@ -345,16 +346,19 @@ def _kartentisch_zeigen():
             if teil["art"] == "html":
                 html(teil["html"])
                 continue
-            html(teil["kopf"] + ("" if teil["karten"] or teil["zeilen"]
-                                 else f'<div style="color:{TEXT_2};font-size:15px">zurzeit keine</div>'))
-            name = f"{nr}_{teil['liste'] or 'reihe'}"
-            karten = teil["karten"]
-            for i in range(0, len(karten), 3):
-                for spalte, (tk, x, h) in zip(st.columns(3), karten[i:i + 3]):
-                    with spalte:
-                        st.markdown(h, unsafe_allow_html=True)
-                        _knopfleiste(tk, teil["liste"], f"k{name}_")
-            _tabelle(teil, name)
+            # Ausklappmenü je Setup (06.11.2026): zu Name, Zahl und Regel, aufgeklappt die Karten; Watchlist offen
+            kopf = f"**{teil['name']} · {teil['zahl']}** — {teil['text']}"
+            with st.expander(kopf, expanded=bool(teil["liste"])):
+                if not (teil["karten"] or teil["zeilen"]):
+                    st.caption("zurzeit keine")
+                name = f"{nr}_{teil['liste'] or 'reihe'}"
+                karten = teil["karten"]
+                for i in range(0, len(karten), 3):
+                    for spalte, (tk, x, h) in zip(st.columns(3), karten[i:i + 3]):
+                        with spalte:
+                            st.markdown(h, unsafe_allow_html=True)
+                            _knopfleiste(tk, teil["liste"], f"k{name}_")
+                _tabelle(teil, name)
 
 
 def zeigen(name, *args):

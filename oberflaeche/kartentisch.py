@@ -248,7 +248,8 @@ RANG = {"m_spitze": 5, "k_ep": 5, "k_ermuedung": 4, "k_breakout": 4, "m_weitere"
 
 ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
                "konsolidierung": "Ausbruch aus der Konsolidierung (alt)", "frueh": "Frühaufklärung (alt)",
-               "k_parabolic": "Parabolic Short (alt)"}
+               "k_parabolic": "Parabolic Short (alt)",
+               "flagge_alt": "Flagge (alt)"}
 
 
 def _neu(vorher, jetzt):
@@ -346,11 +347,14 @@ def _kopf(name, zahl_, text, h=2):
             + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + f'</div>')
 
 
-def _abschnitt(kopf, liste, liste_name=None, fehlen=()):
-    """Ein Abschnitt für app.py: Karten (die ersten SICHTBAR mit Lagekarte) und Tabelle der übrigen."""
+def _abschnitt(name, text, liste, liste_name=None, fehlen=(), zahl_=None):
+    """Ein Abschnitt für app.py: Karten (die ersten SICHTBAR mit Lagekarte) und Tabelle der übrigen. app.py zeigt ihn
+    als Ausklappmenü (06.11.2026): zu sieht man Name, Zahl und Regel, aufgeklappt die Karten."""
+    zahl_ = len(liste) + len(fehlen) if zahl_ is None else zahl_
+    kopf = _kopf(name, zahl_, text)
     sichtbar = [(tk, x) for tk, x in liste[:SICHTBAR] if x.get("karte")]
     rest = liste[SICHTBAR:] + [(tk, x) for tk, x in liste[:SICHTBAR] if not x.get("karte")]
-    return {"art": "abschnitt", "kopf": kopf, "liste": liste_name,
+    return {"art": "abschnitt", "kopf": kopf, "name": name, "zahl": zahl_, "text": text, "liste": liste_name,
             "karten": [(tk, x, karte_html(x, _marken(x) if liste_name else "")) for tk, x in sichtbar],
             "zeilen": [zeile(tk, x) for tk, x in rest] + [zeile(tk, None) for tk in fehlen],
             "titel": {tk: x for tk, x in rest}}
@@ -367,7 +371,11 @@ def plan(tisch=None):
         return [{"art": "html", "html": karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird '
                                               f'im Abendlauf gerechnet. Noch liegt kein Ergebnis vor.</p>', "Kartentisch")}]
     w = watchlists.laden()
-    tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l])
+    tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l],
+                                        # Tisch von vor dem VCP-Scanner: die alte Wertzonen-Flagge trägt keinen
+                                        # Scanner-Text und gehört nicht in die Reihe „Flagge · Scanner“
+                                        **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge"
+                                           and not x.get("scanner") else {}))
                                for tk, x in tisch["titel"].items()})
     b = tisch["barometer"]
     if "m_gruen" in b:
@@ -405,14 +413,14 @@ def plan(tisch=None):
         liste = w[watchlists.STANDARD]
         da = sorted(((tk, tisch["titel"][tk]) for tk in liste if tk in tisch["titel"]),
                     key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
-        teile.append(_abschnitt(_kopf("◆ Watchlist", len(liste), "jeder Titel immer, egal welche Ampel – die Marke zeigt "
-                                      "seine Reihe; unter jeder Karte der Knopf zum Herunternehmen"),
-                                da, watchlists.STANDARD, [tk for tk in liste if tk not in tisch["titel"]]))
+        teile.append(_abschnitt("◆ Watchlist", "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
+                                "unter jeder Karte der Knopf zum Herunternehmen",
+                                da, watchlists.STANDARD, [tk for tk in liste if tk not in tisch["titel"]], len(liste)))
 
     for key, name, text in REIHEN:
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
-        teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
+        teile.append(_abschnitt(name, text, liste))
         if key == WATCHLISTS_NACH:             # Watchlist direkt nach ★ Spitze (05.11.2026)
             watchlist_abschnitte()
     teile.append({"art": "html", "html": station("termine")
