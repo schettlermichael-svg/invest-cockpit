@@ -19,6 +19,18 @@ WERT = ("Weekly Economic Index", "GDPNow", "Breakeven-Inflation 5 Jahre")   # St
 PFEIL = {"wachstum": {"steigt": "→", "fällt": "←", "unklar": "·"},
          "inflation": {"steigt": "↑", "fällt": "↓", "unklar": "·"}}
 STIMMFARBE = {"steigt": "#E6EAF0", "fällt": "#E6EAF0", "unklar": "#5A6475"}
+# Typische Branchen je Quad (Lehre: Dalio, Hedgeye-Playbook) – Yahoo-Branchen wie im Revier (rudel.branche_kurse)
+QUAD_BRANCHEN = {
+    1: ["Semiconductors", "Semiconductor Equipment & Materials", "Software - Application", "Software - Infrastructure",
+        "Internet Content & Information", "Internet Retail", "Computer Hardware"],
+    2: ["Oil & Gas E&P", "Oil & Gas Equipment & Services", "Steel", "Copper", "Other Industrial Metals & Mining",
+        "Banks - Regional", "Capital Markets", "Farm & Heavy Construction Machinery", "Engineering & Construction",
+        "Railroads"],
+    3: ["Oil & Gas Integrated", "Oil & Gas Midstream", "Gold", "Agricultural Inputs", "Aerospace & Defense",
+        "Utilities - Regulated Electric", "Utilities - Independent Power Producers"],
+    4: ["Utilities - Regulated Electric", "Utilities - Regulated Gas", "Packaged Foods", "Household & Personal Products",
+        "Beverages - Non-Alcoholic", "Drug Manufacturers - General", "Healthcare Plans", "Discount Stores"],
+}
 
 
 def _lage(q):
@@ -106,6 +118,82 @@ def _folgerung(q):
     return (f'<div style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.5;'
             f'border-top:1px solid {RAND};padding-top:10px"><span style="width:14px;height:14px;border-radius:50%;'
             f'background:{farbe};flex-shrink:0;margin-top:4px"></span><span>{satz}</span></div>')
+
+
+def _branchen_lage():
+    """Feld und Pfeil je Branche heute (Branchen-Index des Reviers gegen den S&P 500, wie die Sektoren der Frontkarte)."""
+    import marktdaten
+    import rudel
+    import sektoren
+    markt = marktdaten.yahoo(sektoren.MARKT)
+    aus = {}
+    for b in {b for l in QUAD_BRANCHEN.values() for b in l}:
+        try:
+            k = rudel.branche_kurse(b)
+            if k is None:
+                continue
+            r = sektoren.reihen(k["Close"], markt)
+            if len(r) < 8:
+                continue
+            h = r.iloc[-1]
+            aus[b] = {"staerke": float(h["staerke"]), "schwung": float(h["schwung"]),
+                      "feld": sektoren.feld(h["staerke"], h["schwung"]),
+                      "schweif": list(zip(r["staerke"].iloc[-11:].round(2), r["schwung"].iloc[-11:].round(2)))}
+        except Exception:  # noqa: BLE001 – Branche ohne Kurse bleibt grau
+            pass
+    return aus
+
+
+def _felder(q):
+    """Unter dem Bild in derselben Anordnung (Quad 3 | Quad 2 / Quad 4 | Quad 1): je Quad die typischen Sektoren und
+    Branchen als Marken, eingefärbt nach ihrer Stärke heute (Feld der Frontkarte), mit Pfeil der letzten 5 Wochen."""
+    import namen_de
+    import sektoren
+    from frontkarte import FARBE, PFEILE, _pfeil
+    from lage import QUADS
+    try:
+        rot = sektoren.rotation()
+    except Exception:  # noqa: BLE001
+        rot = {}
+    try:
+        br = _branchen_lage()
+    except Exception:  # noqa: BLE001
+        br = {}
+
+    def marke(name, r):
+        if not r:
+            return (f'<span title="keine Kurse" style="border:1px solid {RAND};border-radius:6px;padding:2px 8px;'
+                    f'font-size:13px;color:{TEXT_3}">{t(name)}</span>')
+        pf = _pfeil(r)
+        f = FARBE[r["feld"]]
+        return (f'<span title="{t(name)}: {r["feld"]}, Stärke {zahl(r["staerke"], 0)} · {pf} {t(PFEILE[pf])}" '
+                f'style="border:1.5px solid {f};border-radius:6px;padding:2px 8px;font-size:13px;color:{TEXT};'
+                f'background:{f}22">{t(name)} <span style="color:{f}">{pf}</span></span>')
+
+    def karte_(nr):
+        aktiv = nr == q["quad"]
+        farbe = AMPEL[QUAD_AMPEL[nr]]
+        sek = "".join(marke(sektoren.SEKTOREN[e], rot.get(e)) for e in sektoren.QUAD_ETFS[nr])
+        bra = "".join(marke(namen_de.BRANCHE.get(b, b), br.get(b)) for b in QUAD_BRANCHEN[nr])
+        stark = sum(1 for e in sektoren.QUAD_ETFS[nr] if rot.get(e, {}).get("feld") in ("Führend", "Erstarkend")) \
+            + sum(1 for b in QUAD_BRANCHEN[nr] if br.get(b, {}).get("feld") in ("Führend", "Erstarkend"))
+        alle = len(sektoren.QUAD_ETFS[nr]) + len(QUAD_BRANCHEN[nr])
+        return (f'<div style="border:{2 if aktiv else 1}px solid {farbe}{"" if aktiv else "55"};border-radius:10px;'
+                f'padding:12px;background:{farbe}{"18" if aktiv else "08"};display:flex;flex-direction:column;gap:8px">'
+                f'<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">'
+                f'<b style="font-size:15px">Quad {nr} · {QUADS[nr]}{" · heute" if aktiv else ""}</b>'
+                f'<span style="font-size:13px;color:{TEXT_2}">heute vorne: {stark} von {alle}</span></div>'
+                f'<div style="font-size:12px;color:{TEXT_3}">Sektoren</div>'
+                f'<div style="display:flex;flex-wrap:wrap;gap:5px">{sek}</div>'
+                f'<div style="font-size:12px;color:{TEXT_3}">Branchen</div>'
+                f'<div style="display:flex;flex-wrap:wrap;gap:5px">{bra}</div></div>')
+
+    return (f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">'
+            f'{karte_(3)}{karte_(2)}{karte_(4)}{karte_(1)}</div>'
+            f'<div style="font-size:13px;color:{TEXT_3}">Je Quad die Sektoren und Branchen, die in diesem Umfeld '
+            f'typischerweise stark sind (Lehre), gefärbt nach ihrer Stärke heute: grün Führend, blau Erstarkend, gelb '
+            f'Ermüdend, rot Abgehängt; Pfeil = Bewegung der letzten 5 Wochen; Branchen gleichgewichtet aus den '
+            f'Revier-Titeln (ab 5 Titeln). Maus auf eine Marke zeigt Feld und Stärke.</div>')
 
 
 def bild(q, spur):
@@ -198,4 +286,4 @@ def bild(q, spur):
             f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">'
             f'<div style="flex:1 1 520px;min-width:0">{"".join(s)}</div>'
             f'<div style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column">{_stimmen(q)}</div></div>'
-            + _folgerung(q) + '</div>')
+            + _folgerung(q) + _felder(q) + '</div>')
