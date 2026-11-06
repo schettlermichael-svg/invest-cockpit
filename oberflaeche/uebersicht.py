@@ -1,7 +1,7 @@
 """Übersicht „Lage am Abend“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
 Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
-  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; Stimmungskurve
-                   (O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
+  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter
+                   (Stimmungskurve seit 06.11.2026 nicht mehr auf der Übersicht; O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
                    Kachel – Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit)
   ② Front          Frontkarte, Übergänge, Lagebild nach Sektoren
   ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Watchlist, Weitere, Frühaufklärung, Short (kartentisch.plan)
@@ -19,7 +19,6 @@ sys.path.insert(0, HIER)
 
 import lage                                                  # noqa: E402
 import marktdaten                                            # noqa: E402
-from stimmung import kurve  # noqa: E402
 from frontkarte import frontkarte  # noqa: E402
 import uebergaenge                                           # noqa: E402
 import depotleiste                                           # noqa: E402
@@ -187,16 +186,10 @@ def seite_uebersicht():
     makro += ampelzeile("Amtlich (Bestätigung)", "blau",
                         f'BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise {zahl(q["cpi_rate"], 1)} %')
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
-    farbe = {"grün": "#56D364", "gelb": "#E3B341", "rot": "#FF7B72"}[p["ampel"]]
-    stimmung = klapp("Stimmungskurve", f'Gesamtmarkt: {p["zone"]} (vor 4 Wochen: {p["vor_4_wochen"]})',
-                     f'<div style="font-size:14px;color:{TEXT_2}">Wo der Gesamtmarkt im Zyklus steht – '
-                     f'eingeordnet aus Kreditrisiko, Angstindex, Marktbreite und Überdehnung. Eine Einordnung, '
-                     f'keine Vorhersage: Märkte überspringen Zonen oder durchlaufen sie mehrfach.</div>'
-                     + kurve([{"zone": p["zone"], "vorher": p["vor_4_wochen"], "name": "Gesamtmarkt", "farbe": farbe}]))
     erkl = klapp("Instrumente", "was hinter Wirtschaftswetter und Moral der Truppe steht",
                  f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
                  f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
     # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.
-    return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste + stimmung
+    return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste
                           + station("front") + frontkarte(q) + uebergaenge.tafel(q), unten=12),
             "unten": seite(station("truppe") + depotleiste.leiste() + station("anhang") + erkl, oben=12)}
