@@ -838,8 +838,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
         zonen = None
     m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund,
                                   (zonen["jetzt"], zonen["enge"]) if zonen else None)
-    if zonen and m_["zone"].get("in_zone"):        # Minervini nimmt die Flagge in der Zone: der Chart zeigt ihre Enge
-        zonen["enge"] = vcp_zone.enge_datiert(df, m_["zone"])
+    if zonen and m_.get("ausbruch"):               # frischer Ausbruch: der Chart zeigt die Zone vom Vortag weiter
+        zonen["jetzt"] = vcp_zone.datiert(df, m_["ausbruch"]["zone"])
+    if zonen and (m_["zone"].get("in_zone") or m_.get("ausbruch")):   # der Chart zeigt Minervinis Enge
+        bis = len(df) - 1 - m_["ausbruch"]["tage_her"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag
+        zonen["enge"] = vcp_zone.enge_datiert(df.iloc[:bis], m_["zone"])
     k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}

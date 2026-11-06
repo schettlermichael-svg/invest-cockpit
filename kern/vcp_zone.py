@@ -35,6 +35,11 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
   Ampel       = grün: mindestens 2 Kontraktionen, schrumpfend, Enge ≤ 10 %, Volumen leiser · rot: die letzte
                 Kontraktion ist tiefer als die vorige · gelb: sonst · grau: keine fertige Zone
 
+Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
+  schaut ausbruch() AUSBRUCH_TAGE Handelstage zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin).
+  Zone, Enge und Pivot von damals gelten weiter, solange der Kurs höchstens KAUFZONE % über dem Pivot steht.
+  Zeichen (kein Muss, Micky): Volumen am Ausbruchstag über dem 50-Tage-Schnitt = mit Volumen.
+
 Short – Ermüdung nach Überdehnung (Kullamägi-Stopp, 06.11.2026): die Flagge, im Ausgang gespiegelt. Die Truppe ist weit
 vorgestoßen, gräbt sich ein, dann bricht die Stellung nach hinten weg.
   Fahnenstange ≥ 30 % in höchstens 13 Wochen, Zone 1–8 Wochen, höchstens 25 % tief (dieselbe Flagge wie oben, auch als
@@ -273,6 +278,55 @@ def verlauf(df, tage=600):
     return fertig
 
 
+AUSBRUCH_TAGE = 5              # Ausbruch höchstens 5 Handelstage her
+KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
+
+
+def ausbruch(df, tage=AUSBRUCH_TAGE):
+    """Frischer Ausbruch über den Pivot oder None: {tag, tage_her, pivot, zone, enge, volumen, mit_volumen, abstand,
+    kaufzone}. Zone und Enge so, wie sie am Vortag standen (Indizes passen zu df)."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    n = len(df)
+    if n < 80:
+        return None
+    c = df["Close"].to_numpy(float)
+    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
+    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    for t in range(n - tage, n):
+        if c[t] <= c[t - 5:t].max():                       # Vorprüfung wie in verlauf(): ohne neues Schlusshoch kein Ausbruch
+            continue
+        vor = df.iloc[:t]
+        z = zone(vor)
+        if not z.get("zone"):
+            continue
+        for b in [z] + ([z["innen"]] if z.get("innen") else []):
+            if b.get("laenge") != "ok":
+                continue
+            e = enge(vor, b)
+            pivot = float(e.get("pivot") or b["oben"])
+            if c[t] <= pivot:
+                continue
+            vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
+            ab = (c[-1] / pivot - 1) * 100
+            return {"tag": df.index[t], "tage_her": n - 1 - t, "pivot": pivot, "zone": b, "enge": e,
+                    "volumen": vol, "mit_volumen": bool(vol and vol > 1), "abstand": ab,
+                    "kaufzone": 0 <= ab <= KAUFZONE, "innen": b is not z, "eltern": z["name"]}
+    return None
+
+
+def ausbruch_text(a):
+    """Zeichen für Karte und Plan, z. B. „🟢 Ausbruch am 04.11. mit Volumen 1,8-fach · +2,1 % zum Pivot, in der Kaufzone“."""
+    if not a:
+        return ""
+    k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
+    v = lambda x: f"{x:.2f}".replace(".", ",")       # noqa: E731 – zwei Stellen, damit 1,03 nicht als 1,0 erscheint
+    vol = (f"mit Volumen {v(a['volumen'])}-fach" if a["mit_volumen"] else
+           f"ohne Volumen ({v(a['volumen'])}-fach)" if a["volumen"] else "Volumen unbekannt")
+    lage = ("in der Kaufzone" if a["kaufzone"] else "ausgedehnt" if a["abstand"] > KAUFZONE else "zurück unter dem Pivot")
+    return (f"{'🟢' if a['mit_volumen'] else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · "
+            f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))} % zum Pivot, {lage}")
+
+
 ERM_TAGE = 5                   # Bruch höchstens 5 Handelstage her
 
 
@@ -324,24 +378,30 @@ def enge_datiert(df, z):
     return e
 
 
+def datiert(df, b):
+    """Zone mit Datum zu jedem Index (für den Chart)."""
+    ix = df.dropna(subset=["High", "Low", "Close"]).index
+    b = dict(b)
+    for k_ in ("start_i", "tief_i", "ende_i"):
+        if k_ in b:
+            b[k_.replace("_i", "_t")] = ix[b[k_]]
+    for k_ in ("vorgeschichte", "stange"):
+        if k_ in b:
+            b[k_] = dict(b[k_], von_t=ix[b[k_]["von_i"]], **({"bis_t": ix[b[k_]["bis_i"]]} if "bis_i" in b[k_] else {}))
+    if b.get("innen"):
+        b["innen"] = datiert(df, b["innen"])
+    return b
+
+
 def alles(df):
     """Für den Chart: Zone jetzt, abgeschlossene Zonen, grobes ZigZag – Lage als Datum (passt zu Tag und Woche)."""
     df = df.dropna(subset=["High", "Low", "Close"])
     ix = df.index
 
-    def datiert(b):
-        b = dict(b)
-        for k_ in ("start_i", "tief_i", "ende_i"):
-            if k_ in b:
-                b[k_.replace("_i", "_t")] = ix[b[k_]]
-        for k_ in ("vorgeschichte", "stange"):
-            if k_ in b:
-                b[k_] = dict(b[k_], von_t=ix[b[k_]["von_i"]], **({"bis_t": ix[b[k_]["bis_i"]]} if "bis_i" in b[k_] else {}))
-        if b.get("innen"):
-            b["innen"] = datiert(b["innen"])
-        return b
+    def datiert_(b):
+        return datiert(df, b)
 
     jetzt = zone(df)
     e = enge_datiert(df, jetzt)
-    return {"jetzt": datiert(jetzt), "enge": e, "verlauf": [datiert(b) for b in verlauf(df)],
+    return {"jetzt": datiert_(jetzt), "enge": e, "verlauf": [datiert_(b) for b in verlauf(df)],
             "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}

@@ -98,7 +98,8 @@ def _stufe1(tk):
         import vcp_zone
         zs = vcp_zone.zone(df)
         scan = (zs, vcp_zone.enge(df, zs))      # VCP-Scanner einmal: für Minervini und die Scanner-Reihen
-        m = system_minervini.pruefen(df, erk, rang, fund, scan)
+        br = vcp_zone.ausbruch(df)              # frischer Ausbruch (5 Tage): Zone vom Vortag gilt weiter
+        m = system_minervini.pruefen(df, erk, rang, fund, scan, br)
         gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
         k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
         z = a["zustand"]
@@ -135,7 +136,9 @@ def _stufe1(tk):
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
-            _scannerfeld(info, scan)
+            _scannerfeld(info, scan, br)
+        if br and br["abstand"] >= 0:            # Zeichen auf jeder Karte: Ausbruch mit oder ohne Volumen
+            info["ausbruch"] = vcp_zone.ausbruch_text(br)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
@@ -145,9 +148,23 @@ PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über 
 KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
 
 
-def _scannerfeld(info, scan):
-    """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base)."""
+def _scannerfeld(info, scan, br=None):
+    """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base).
+    Nach einem frischen Ausbruch (br, höchstens 5 Tage, Kurs über dem Pivot) gilt die Zone vom Vortag."""
     from gestaltung import zahl
+    if br and br["abstand"] >= 0:
+        bz, be = br["zone"], br["enge"]
+        if be.get("ampel") == "grün" and br["abstand"] <= PIVOT_NAH:
+            info.update(reihe="vcp", gruen=True, stern=False, abstand=br["abstand"],
+                        scanner=f'{bz["name"]} {zahl(bz["wochen"], 1)} Wochen · Enge {be["folge"]} % · Pivot '
+                                f'{zahl(br["pivot"])} $')
+            return
+        if bz.get("name") == "Flagge":
+            info.update(reihe="flagge", gruen=br["abstand"] <= PIVOT_NAH, stern=False, abstand=br["abstand"],
+                        scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
+                                f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
+                                + (" · in einer Base" if br["innen"] else ""))
+            return
     z, e = scan
     if not z.get("zone"):
         return
@@ -240,7 +257,7 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json.load(open(pfad, encoding="utf-8"))
-        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner")
+        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
@@ -296,8 +313,10 @@ def _farbe(x):
 
 
 def scanner_text(x):
-    """Befund des VCP-Scanners für die Reihen „VCP · Enge grün“ und „Flagge · Scanner“, sonst leer."""
-    return (x or {}).get("scanner") or ""
+    """Befund des VCP-Scanners (Reihen „VCP · Enge grün“ und „Flagge · Scanner“) und das Zeichen eines frischen
+    Ausbruchs mit oder ohne Volumen (jede Reihe), sonst leer."""
+    x = x or {}
+    return " · ".join(z for z in (x.get("scanner"), x.get("ausbruch")) if z)
 
 
 def _grundzeile(x):

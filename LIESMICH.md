@@ -442,6 +442,14 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
 
+## Ausbruch mit Volumen (06.11.2026)
+Am Ausbruchstag ist eine Zone fertig und verschwände – mitsamt Setup und Kaufzone. `vcp_zone.ausbruch()` schaut 5
+Handelstage zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin). Solange der Kurs über dem Pivot
+steht, gelten Zone, Enge, Pivot und Stopp von damals weiter (Minervini, Reihen VCP und Flagge, Chart). Zeichen, kein Muss:
+🟢 Volumen am Ausbruchstag über dem 50-Tage-Schnitt, 🟡 darunter – mit Faktor, Abstand zum Pivot und Lage (Kaufzone bis
++5 %, darüber ausgedehnt). Steht auf jeder Karte, in der Tabelle und im Plan. Probelauf 06.11.: 594 Ausbrüche unter
+1.913 Titeln (363 in der Kaufzone, 437 mit Volumen).
+
 ## Short: Ermüdung nach Überdehnung (06.11.2026, statt Parabolic Short)
 Die Flagge des VCP-Scanners, im Ausgang gespiegelt: Die Truppe ist weit vorgestoßen, gräbt sich ein, dann bricht die
 Stellung nach hinten weg (`vcp_zone.ermuedung`, im System Kullamägi als `ermuedung`).

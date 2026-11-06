@@ -14,6 +14,9 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot.
 Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner (vorher Wertzone und Absorption) – Chart, Scanner und
 Minervini zeigen dieselbe Linie.
+Ausbruch (06.11.2026): Schloss der Kurs in den letzten 5 Handelstagen über dem Pivot, gelten Zone, Enge und Pivot vom
+Vortag des Ausbruchs weiter (vcp_zone.ausbruch), solange der Kurs über dem Pivot steht – sonst verschwände das Setup am
+Kauftag. Volumen am Ausbruchstag über dem 50-Tage-Schnitt ist ein Zeichen, keine Regel.
 Pivot = Hoch der letzten Kontraktion (ohne Kontraktion: Oberkante der Zone); Kaufzone bis +5 %. Stopp unter dem Tief der
 letzten Kontraktion, höchstens 8 % unter dem Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
 verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
@@ -52,15 +55,22 @@ def _zahlen(fund):
     return ok, f"Gewinn {letzt(g)}, Umsatz {letzt(u)} zum Vorjahr"
 
 
-def pruefen(df, erk, rs_rang, fund, scan=None):
-    """Ergebnis: ampel, setup (Wort), regeln [(Name, ok, Text)], pivot, stopp, lage, ausstieg, zone, enge.
-    scan = (Zone, Enge) aus vcp_zone, wenn schon gerechnet."""
+def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
+    """Ergebnis: ampel, setup (Wort), regeln [(Name, ok, Text)], pivot, stopp, lage, ausstieg, zone, enge, ausbruch.
+    scan = (Zone, Enge) aus vcp_zone, ausbruch = vcp_zone.ausbruch(df), wenn schon gerechnet (False = selbst rechnen)."""
     tv = trendvorlage(df)
     c = df["Close"].to_numpy(float)
-    if scan is None:
-        z = vcp_zone.zone(df)
-        scan = (z, vcp_zone.enge(df, z))
-    z, e = scan
+    br = vcp_zone.ausbruch(df) if ausbruch is False else ausbruch
+    if br and br["abstand"] >= 0:                   # frischer Ausbruch: die Zone vom Vortag trägt das Setup weiter
+        z, e = br["zone"], br["enge"]
+        if br["innen"]:
+            z = dict(z, in_zone=br["eltern"])
+    else:
+        br = None
+        if scan is None:
+            z_ = vcp_zone.zone(df)
+            scan = (z_, vcp_zone.enge(df, z_))
+        z, e = scan
 
     def _reif(b):
         return b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok" and b.get("tiefe", 99) <= 50
@@ -105,9 +115,11 @@ def pruefen(df, erk, rs_rang, fund, scan=None):
         ab = (c[-1] / pivot - 1) * 100
         lage = ("in der Kaufzone" if 0 <= ab <= KAUFZONE else f"{ab:.1f} % über dem Pivot, ausgedehnt" if ab > KAUFZONE
                 else f"{-ab:.1f} % unter dem Pivot").replace(".", ",")
+        if br:                                     # das Zeichen sagt die Lage schon (Kaufzone/ausgedehnt)
+            lage = vcp_zone.ausbruch_text(br)
     setup = f"{art} {z['wochen']:.0f} W." if reif else "keines"
     return {"system": "M", "ampel": ampel, "setup": setup, "regeln": regeln, "fehlt": fehlt,
-            "pivot": pivot, "stopp": stopp, "lage": lage, "trendvorlage": tv, "zone": z, "enge": e,
+            "pivot": pivot, "stopp": stopp, "lage": lage, "trendvorlage": tv, "zone": z, "enge": e, "ausbruch": br,
             "abstand": (c[-1] / pivot - 1) * 100 if pivot else None,
             "ausstieg": ("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. Stopp auf Einstand, "
                          "sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise verkaufen, den "
