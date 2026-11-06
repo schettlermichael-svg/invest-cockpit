@@ -30,12 +30,16 @@ QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 
 
 def _kachel(label, ampel, wert, pfeil, zeile):
+    # lange Wörter (z. B. „Abwärtsbeschleunigung“) kleiner setzen und notfalls trennen, damit nichts aus der Kachel ragt
+    wort = max((len(w) for w in str(wert).split()), default=0)
+    groesse = 26 if wort <= 14 else 22 if wort <= 17 else 19
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:20px;'
             f'display:flex;flex-direction:column;gap:10px">'
             f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(label)}</div>'
             f'<div style="display:flex;align-items:center;gap:12px">'
             f'<span style="width:22px;height:22px;border-radius:50%;background:{AMPEL[ampel]};flex-shrink:0"></span>'
-            f'<span style="font-size:26px;font-weight:600">{t(wert)}</span>'
+            f'<span lang="de" style="font-size:{groesse}px;font-weight:600;min-width:0;overflow-wrap:anywhere;'
+            f'hyphens:auto">{t(wert)}</span>'
             f'<span style="font-size:24px;color:{TEXT_2}">{t(pfeil)}</span></div>'
             f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div></div>')
 
