@@ -314,6 +314,7 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
                 pfeil(st_["von_t"], st_["von"], jetzt["start_t"], jetzt["oben"], GRUEN, "G", 2.2)
             elif v_.get("von_t") is not None:
                 pfeil(v_["von_t"], v_["von"], v_["bis_t"], v_["bis"], GELB, "Y", 2)
+        _enge(ka.get("enge") or {}, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster)
         innen = jetzt.get("innen")
         if innen and innen["start_t"] >= erster:
             rahmen(innen, ENDE, 1.8, 0.0)
@@ -322,8 +323,43 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
                 pfeil(st_["von_t"], st_["von"], innen["start_t"], innen["oben"], GRUEN, "G", 2)
             t_ = f'Flagge in der Zone · {zahl(innen["wochen"], 1)} Wochen · Tiefe {zahl(innen["tiefe"], 1)} %'
             xi = X(pos(innen["start_t"]))
-            spaete.append(f'<text x="{xi:.1f}" y="{platz(xi, Y(innen["oben"]) - 8, t_, 12, "start"):.1f}" fill="{GELB}" '
-                          f'font-size="12" font-weight="600">{t_}</text>')
+            xi, anker = (ENDE, "end") if xi + len(t_) * 6.6 > ENDE else (xi, "start")
+            spaete.append(f'<text x="{xi:.1f}" y="{platz(xi, Y(innen["oben"]) - 8, t_, 12, anker):.1f}" fill="{GELB}" '
+                          f'font-size="12" font-weight="600" text-anchor="{anker}">{t_}</text>')
+
+
+AMPEL_FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": TEXT_3}
+
+
+def _enge(e, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster):
+    """Baustein 2 im Chart: jede Kontraktion als feine Linie Hoch → Tief mit ihrer Tiefe, die Enge (letzte
+    Kontraktion) als eigener Rahmen bis heute, Pivot als gestrichelte Linie mit Preis, Ampel der Enge am Rahmen."""
+    kontr = e.get("kontraktionen") or []
+    if not kontr or x0 is None:
+        return
+    for k in kontr:
+        if k["hoch_t"] < erster:
+            continue
+        xa, xb = X(pos(k["hoch_t"])), X(pos(k["tief_t"]))
+        A(f'<line x1="{xa:.1f}" y1="{Y(k["hoch"]):.1f}" x2="{xb:.1f}" y2="{Y(k["tief"]):.1f}" stroke="{TEXT_2}" '
+          f'stroke-width="1.3" stroke-dasharray="4 3"/>')
+        t_ = f'−{zahl(k["tiefe"], 0)} %'
+        spaete.append(f'<text x="{xb:.1f}" y="{platz(xb, Y(k["tief"]) + 16, t_, 12, nach_oben=False):.1f}" fill="{TEXT}" '
+                      f'font-size="12" font-weight="600" text-anchor="middle">{t_}</text>')
+    letzte = kontr[-1]
+    farbe = AMPEL_FARBE.get(e.get("ampel"), TEXT_3)
+    if letzte["hoch_t"] >= erster:
+        xe = X(pos(letzte["hoch_t"])) - 3
+        A(f'<rect x="{xe:.1f}" y="{Y(letzte["hoch"]):.1f}" width="{ENDE - xe:.1f}" '
+          f'height="{Y(letzte["tief"]) - Y(letzte["hoch"]):.1f}" fill="{farbe}" fill-opacity="0.10" stroke="{farbe}" '
+          f'stroke-width="1.6"><title>Enge: {zahl(letzte["tiefe"], 1)} % · Pivot {zahl(e["pivot"])} $</title></rect>')
+        A(f'<line x1="{xe:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(e["pivot"]):.1f}" y2="{Y(e["pivot"]):.1f}" stroke="{TEXT}" '
+          f'stroke-width="1.4" stroke-dasharray="6 4"/>')
+        spaete.append(f'<text x="{ENDE + 8:.1f}" y="{Y(e["pivot"]) + 4:.1f}" fill="{TEXT}" font-size="12" '
+                      f'font-weight="600">Pivot {zahl(e["pivot"])} $</text>')
+    t_ = f'● Enge {e.get("ampel", "")} · {e.get("text", "")}'
+    spaete.append(f'<text x="{ENDE:.1f}" y="{platz(ENDE, 20, t_, 12, "end", False):.1f}" fill="{farbe}" font-size="12" '
+                  f'font-weight="600" text-anchor="end">{t_}</text>')
 
 
 def legende(ebene="Tag", gd_kurz=False):
@@ -335,6 +371,7 @@ def legende(ebene="Tag", gd_kurz=False):
     eintraege += [(BLAU, "Base"), (GELB, "Flagge"), (LILA, "Konsolidierung (nach Absturz)"),
                   (GELB, "Pfeil gelb = Vorgeschichte"), (GRUEN, "Pfeil grün = Fahnenstange · ↑ = Ausbruch"),
                   (TEXT_3, "ZigZag (2 × ATR)"),
+                  (TEXT_2, "Kontraktionen mit Tiefe (gestrichelt) · Rahmen der Enge in der Ampelfarbe · Pivot gestrichelt"),
                   (TUERKIS, "Band unter dem Volumen: Ruhe – kräftig bis 50 % vom Schnitt, blass bis 75 %"),
                   (GRUEN, "Band: viel Volumen am Aufwärtstag (blass über dem Schnitt, kräftig ab 1,5-fach), rot am Abwärtstag")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'

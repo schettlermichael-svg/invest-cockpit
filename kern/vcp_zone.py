@@ -1,4 +1,4 @@
-"""VCP-Scanner, Baustein 1: die Zone (06.11.2026).
+"""VCP-Scanner, Baustein 1: die Zone, Baustein 2: die Enge am rechten Rand (06.11.2026).
 
 Die Zone ist die ruhige Phase vor dem rechten Rand – die Base im Sinne Minervinis, ohne den Lauf oder Absturz davor.
 Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14).
@@ -19,10 +19,20 @@ Name:
   Flagge         = Fahnenstange ≥ 30 % in höchstens 13 Wochen (1–3 Monate, Kullamägi), Zone 1–8 Wochen und
                    höchstens 25 % tief; Stange = Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne
                    höheres Hoch dazwischen (sonst war es ein Absturz, keine Stange)
-Flagge in der Zone (Kullamägi): liegt in einer Base ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange,
-  kommt sie als 'innen' dazu – Minervini sieht die Base, Kullamägi die Flagge
   Base           = nach einem Schub, sonst
   Konsolidierung = nach einem Absturz
+Flagge in der Zone (Kullamägi): liegt in einer Base ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange,
+  kommt sie als 'innen' dazu – Minervini sieht die Base, Kullamägi die Flagge
+
+Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
+  Kontraktion = erste vom Hoch der Zone zum tiefsten Tief danach, jede weitere vom höchsten Hoch nach dem letzten
+                Tief zum tiefsten Tief danach (Schicht für Schicht zum rechten Rand); zählt ab 1 × ATR; Tiefe in %
+  schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
+  Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
+  Volumen     = Ø Volumen vom Pivot bis heute (ohne Tage über dem Pivot) höchstens 75 % vom 50-Tage-Schnitt
+  Tiefs       = steigend als Zeichen, keine Pflicht (Shakeout erlaubt)
+  Ampel       = grün: mindestens 2 Kontraktionen, schrumpfend, Enge ≤ 10 %, Volumen ruhig · rot: die letzte
+                Kontraktion ist tiefer als die vorige · gelb: sonst · grau: keine fertige Zone
 """
 import numpy as np
 import pandas as pd
@@ -32,7 +42,7 @@ GROB = 2.0
 FEIN = 1.0
 WOCHE = 5
 MIN_WOCHEN, MAX_WOCHEN = 3, 65
-ERHOLUNG = 0.5                 # Anteil die Zonehöhe, den der Kurs nach dem Tief zurückgewinnen muss
+ERHOLUNG = 0.5                 # Anteil der Zonenhöhe, den der Kurs nach dem Tief zurückgewinnen muss
 FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
 
@@ -169,6 +179,72 @@ def _rahmen(df, i, top):
             "tiefe": hoehe / top * 100, "abstand": (c[-1] / top - 1) * 100, "vorgeschichte": v, "stange": stange}
 
 
+SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie die vorige
+ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
+RUHIG = 0.75                   # Ø Volumen der Enge höchstens 75 % vom 50-Tage-Schnitt
+
+
+def enge(df, z):
+    """Baustein 2: Kontraktionen in der Zone z (aus zone()), Enge, Pivot, Volumen, Ampel.
+
+    Kontraktionen von links nach rechts: die erste vom Hoch der Zone bis zum tiefsten Tief danach; jede weitere vom
+    höchsten Hoch nach dem letzten Tief bis zum tiefsten Tief danach. So schält sich die Base Schicht für Schicht zum
+    rechten Rand hin ab. Ein Rücksetzer zählt erst ab 1 × ATR (darunter ist es Rauschen, der Kurs steht am Pivot)."""
+    if not z.get("zone"):
+        return {"ampel": "grau", "text": "keine fertige Zone – keine Enge"}
+    h, l, c = df["High"].to_numpy(), df["Low"].to_numpy(), df["Close"].to_numpy()
+    v = df["Volume"].to_numpy(float)
+    v50 = pd.Series(v).rolling(50, min_periods=20).mean().to_numpy()
+    a = atr(df).to_numpy()
+    n = len(df)
+
+    def vol(i0, i1):
+        s50 = np.nanmean(v50[i0:i1 + 1])
+        return v[i0:i1 + 1].mean() / s50 * 100 if s50 else np.nan
+
+    kontr = []
+    hi = z["start_i"]
+    while hi < n - 1:
+        ti = hi + 1 + int(np.argmin(l[hi + 1:]))
+        tiefe = (1 - l[ti] / h[hi]) * 100
+        if h[hi] - l[ti] < FEIN * a[hi]:          # Rauschen: kein Rücksetzer mehr, der Kurs steht oben
+            break
+        kontr.append({"hoch_i": hi, "hoch": h[hi], "tief_i": ti, "tief": l[ti], "tiefe": tiefe, "volumen": vol(hi, ti)})
+        if ti >= n - 1:
+            break
+        hi = ti + 1 + int(np.argmax(h[ti + 1:]))
+    if not kontr:
+        return {"ampel": "gelb", "zahl": 0, "text": "kein Rücksetzer von 1 × ATR seit der Oberkante", "fehlt": ["keine Kontraktion"]}
+    tiefen = [k["tiefe"] for k in kontr]
+    schrumpft = all(b <= SCHRUMPF * a_ for a_, b in zip(tiefen, tiefen[1:]))
+    groesser = len(tiefen) >= 2 and tiefen[-1] > tiefen[-2]
+    letzte = kontr[-1]
+    pivot_i, pivot = letzte["hoch_i"], letzte["hoch"]
+    tage = [i for i in range(pivot_i, n) if c[i] <= pivot]          # Ausbruchstage über dem Pivot zählen nicht mit
+    s50 = np.nanmean(v50[tage]) if tage else np.nan
+    vol_enge = v[tage].mean() / s50 * 100 if tage and s50 else np.nan
+    ruhig = vol_enge == vol_enge and vol_enge <= RUHIG * 100
+    eng = letzte["tiefe"] <= ENGE_MAX
+    tiefs = [k["tief"] for k in kontr]
+    steigend = len(tiefs) >= 2 and all(b > a_ for a_, b in zip(tiefs, tiefs[1:]))
+    if len(kontr) >= 2 and schrumpft and eng and ruhig:
+        ampel = "grün"
+    elif groesser:
+        ampel = "rot"
+    else:
+        ampel = "gelb"
+    fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
+        + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
+        + ([] if ruhig else ["Volumen nicht ruhig"])
+    folge = " → ".join(f"{t:.0f}" for t in tiefen)
+    return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
+            "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
+            "volumen": vol_enge, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
+            "abstand": (c[-1] / pivot - 1) * 100,
+            "text": f"{len(kontr)} Kontraktion{'en' if len(kontr) != 1 else ''} {folge} %"
+                    + (f" · fehlt: {', '.join(fehlt)}" if fehlt else "")}
+
+
 def verlauf(df, tage=600):
     """Abgeschlossene Zonen der letzten `tage` Handelstage – dieselbe Regel wie live: eine Zone ist fertig, wenn
     der Kurs über seiner Oberkante schließt (Flagge in der Zone ebenso). Gerechnet wird nur an Tagen mit Schluss über
@@ -206,5 +282,10 @@ def alles(df):
             b["innen"] = datiert(b["innen"])
         return b
 
-    return {"jetzt": datiert(zone(df)), "verlauf": [datiert(b) for b in verlauf(df)],
+    jetzt = zone(df)
+    e = enge(df, jetzt)
+    if e.get("kontraktionen"):
+        e["kontraktionen"] = [dict(k, hoch_t=ix[k["hoch_i"]], tief_t=ix[k["tief_i"]]) for k in e["kontraktionen"]]
+        e["pivot_t"] = ix[e["pivot_i"]]
+    return {"jetzt": datiert(jetzt), "enge": e, "verlauf": [datiert(b) for b in verlauf(df)],
             "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}
