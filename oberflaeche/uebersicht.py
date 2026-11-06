@@ -8,7 +8,6 @@ Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
   ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Watchlist, Weitere, Frühaufklärung, Short (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
-  Anhang           Instrumente von Quad und Pendel
 app.py setzt den Kartentisch (Lagebild bis ④) zwischen „oben“ und „unten“."""
 import os
 import sys
@@ -24,13 +23,13 @@ from frontkarte import frontkarte  # noqa: E402
 import uebergaenge                                           # noqa: E402
 import quadbild                                              # noqa: E402
 import depotleiste                                           # noqa: E402
-from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, karte, klapp, punkt, seite, sprungleiste,
+from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, punkt, seite, sprungleiste,
                         station, t, zahl)  # noqa: E402
 
 QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 
 
-def _kachel(label, ampel, wert, pfeil, zeile):
+def _kachel(label, ampel, wert, pfeil, zeile, mehr=""):
     # lange Wörter (z. B. „Abwärtsbeschleunigung“) kleiner setzen und notfalls trennen, damit nichts aus der Kachel ragt
     wort = max((len(w) for w in str(wert).split()), default=0)
     groesse = 26 if wort <= 14 else 22 if wort <= 17 else 19
@@ -42,7 +41,9 @@ def _kachel(label, ampel, wert, pfeil, zeile):
             f'<span lang="de" style="font-size:{groesse}px;font-weight:600;min-width:0;overflow-wrap:anywhere;'
             f'hyphens:auto">{t(wert)}</span>'
             f'<span style="font-size:24px;color:{TEXT_2}">{t(pfeil)}</span></div>'
-            f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div></div>')
+            f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div>'
+            + (f'<details><summary style="cursor:pointer;font-size:13px;color:{TEXT_3}">Instrumente</summary>'
+               f'<div style="margin-top:8px">{mehr}</div></details>' if mehr else "") + '</div>')
 
 
 # Instrumente, die als Stand in Prozent vorliegen (alle übrigen: Veränderung zum Vorjahr)
@@ -149,11 +150,12 @@ def seite_uebersicht():
         km = markt_systeme.kullamaegi()
     except Exception:  # noqa: BLE001
         mm = km = None
+    pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
         _kachel("Markt · Minervini", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",
         _kachel("Markt · Kullamägi", km["ampel"], km["wort"], "",
                 km["text"] + " – Breakout und Episodic Pivot nur im Aufwärtstrend") if km else "",
-        _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile),
+        _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
     ]
@@ -187,15 +189,11 @@ def seite_uebersicht():
                                 zeile("Inflation", n, r, alt, neu)) for n, (r, d, alt, neu) in i["instrumente"].items())
     makro += ampelzeile("Amtlich (Bestätigung)", "blau",
                         f'BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise {zahl(q["cpi_rate"], 1)} %')
-    pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     try:
-        quad_bild = quadbild.bild(q, quadbild.verlauf(lage))
+        quad_bild = quadbild.bild(q, quadbild.verlauf(lage), makro)
     except Exception:  # noqa: BLE001 – ohne Bild bleibt die Kachel
         quad_bild = ""
-    erkl = klapp("Instrumente", "was hinter Wirtschaftswetter und Moral der Truppe steht",
-                 f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
-                 f'{karte(makro, "Wirtschaftswetter: die Instrumente")}{karte(pendel, "Moral der Truppe: die Instrumente")}</div>')
     # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.
     return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste + quad_bild
                           + station("front") + frontkarte(q) + uebergaenge.tafel(q), unten=12),
-            "unten": seite(station("truppe") + depotleiste.leiste() + station("anhang") + erkl, oben=12)}
+            "unten": seite(station("truppe") + depotleiste.leiste(), oben=12)}

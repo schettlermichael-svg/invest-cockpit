@@ -31,8 +31,9 @@ def verlauf(lage_modul, wochen=13):
     return aus
 
 
-def bild(q, spur):
-    """SVG-Karte: Vierfeld, Spur (graue Punkte, älteste blass), heute großer Punkt, amtliches Feld gestrichelt."""
+def bild(q, spur, instrumente=""):
+    """SVG-Karte: Vierfeld, Spur (graue Punkte, älteste blass), heute großer Punkt, amtliches Feld gestrichelt; rechts
+    daneben die Instrumente je Achse (Ampelzeilen), aus denen der Punkt entsteht."""
     from lage import FUEHRER, QUADS
 
     def xy(x, y):
@@ -100,4 +101,8 @@ def bild(q, spur):
             f'<span style="font-size:13px;color:{TEXT_3}">Lage = Mehrheit der schnellen Instrumente je Achse '
             f'(Wachstum {q["wachstum"]["steigt"]} ↑ / {q["wachstum"]["fällt"]} ↓ von {q["wachstum"]["von"]}, '
             f'Inflation {q["inflation"]["steigt"]} ↑ / {q["inflation"]["fällt"]} ↓ von {q["inflation"]["von"]})</span></div>'
-            + "".join(s) + '</div>')
+            f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">'
+            f'<div style="flex:1 1 520px;min-width:0">{"".join(s)}</div>'
+            + (f'<div style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:4px">'
+               f'<div style="font-size:14px;font-weight:600">Die Instrumente</div>{instrumente}</div>' if instrumente else "")
+            + '</div></div>')

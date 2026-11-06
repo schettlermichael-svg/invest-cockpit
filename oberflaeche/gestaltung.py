@@ -78,8 +78,7 @@ STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),
              ("front", "②", "Front", "Wo ist Rückenwind?"),
              ("auswahl", "③", "Auswahl", "Wer führt, wer steht am Auslöser?"),
              ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"),
-             ("truppe", "⑤", "Eigene Truppe", "Wie stehen meine Positionen?"),
-             ("anhang", "", "Anhang", "Wie lese ich die Instrumente?"))
+             ("truppe", "⑤", "Eigene Truppe", "Wie stehen meine Positionen?"))
 
 
 def station(anker):
