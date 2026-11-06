@@ -349,9 +349,9 @@ def _kartentisch_zeigen():
             if teil["art"] == "html":
                 html(teil["html"])
                 continue
-            # Ausklappmenü je Setup (06.11.2026): zu Name, Zahl und Regel, aufgeklappt die Karten; Watchlist offen
+            # Ausklappmenü je Setup (06.11.2026): zu Name, Zahl und Regel, aufgeklappt die Karten; alle zu, auch die Watchlist
             kopf = f"**{teil['name']} · {teil['zahl']}** — {teil['text']}"
-            with st.expander(kopf, expanded=bool(teil["liste"])):
+            with st.expander(kopf, expanded=False):
                 if not (teil["karten"] or teil["zeilen"]):
                     st.caption("zurzeit keine")
                 name = f"{nr}_{teil['liste'] or 'reihe'}"
