@@ -7,15 +7,20 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      dem 52-Wochen-Hoch). Sie entspricht Weinsteins Stufe 2.
   2. RS ab 70 – der achte Punkt der Trendvorlage.
   3. Zahlen wachsen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot (Fundament-Ampeln).
-  4. Reife Wertzone (Base oder Flagge nach einem Lauf nach oben) mit Pivot, höchstens 50 % tief.
-  5. Enge (VCP): am rechten Rand halten oder steigen die Tiefs, die Spanne zieht sich zusammen, das Volumen trocknet aus
-     (Ampel „Angebot aufgenommen“). Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot. Eine Flagge unter drei
-     Wochen ist zu kurz zum Messen und sperrt nicht (Hinweis: im Chart prüfen).
-Pivot = Oberkante der Wertzone; Kaufzone bis +5 %. Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem
-Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
+  4. Reife Base: Zone des VCP-Scanners (vcp_zone.zone) ist Base oder Flagge, fertig (nicht offen), Länge in Ordnung,
+     höchstens 50 % tief. Fällt die große Zone durch (zu tief, Konsolidierung nach einem Absturz), steht darin aber eine
+     Flagge mit eigener Fahnenstange, gilt die Flagge als Base (Micky, 06.11.2026) – Enge, Pivot und Stopp dann aus ihr.
+  5. Enge (VCP): Baustein 2 des Scanners (vcp_zone.enge) – schrumpfende Kontraktionen, letzte höchstens 10 %, Volumen
+     leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot.
+Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner (vorher Wertzone und Absorption) – Chart, Scanner und
+Minervini zeigen dieselbe Linie.
+Pivot = Hoch der letzten Kontraktion (ohne Kontraktion: Oberkante der Zone); Kaufzone bis +5 %. Stopp unter dem Tief der
+letzten Kontraktion, höchstens 8 % unter dem Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
 verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
 Der Markt (markt_systeme.minervini) ist eine eigene Ampel und gehört nicht zu „grün“ – kein Filter.
 """
+import vcp_zone
+
 RS_MIN = 70
 MAX_STOPP = 0.08
 KAUFZONE = 5.0
@@ -47,16 +52,37 @@ def _zahlen(fund):
     return ok, f"Gewinn {letzt(g)}, Umsatz {letzt(u)} zum Vorjahr"
 
 
-def pruefen(df, erk, rs_rang, fund):
-    """Ergebnis: ampel, setup (Wort), regeln [(Name, ok, Text)], pivot, stopp, lage, ausstieg."""
+def pruefen(df, erk, rs_rang, fund, scan=None):
+    """Ergebnis: ampel, setup (Wort), regeln [(Name, ok, Text)], pivot, stopp, lage, ausstieg, zone, enge.
+    scan = (Zone, Enge) aus vcp_zone, wenn schon gerechnet."""
     tv = trendvorlage(df)
-    c, l = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
-    w = erk.get("werte") or {}
-    art = (erk.get("muster") or [None])[0]
-    reif = art in ("Base", "Flagge") and erk.get("seite") == "long" and "pivot" in w and w.get("tiefe_pct", 99) <= 50
-    a = erk.get("absorption") or {}
-    eng = (a.get("ampel", "grau") if a else "leer") if reif else "grau"
+    c = df["Close"].to_numpy(float)
+    if scan is None:
+        z = vcp_zone.zone(df)
+        scan = (z, vcp_zone.enge(df, z))
+    z, e = scan
+
+    def _reif(b):
+        return b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok" and b.get("tiefe", 99) <= 50
+
+    innen = z.get("innen") if z.get("zone") else None
+    if not _reif(z) and innen and _reif(innen):     # die Flagge am rechten Rand trägt das Setup
+        z, e = dict(innen, in_zone=z["name"]), vcp_zone.enge(df, innen)
+    art = z.get("name") if z.get("zone") else None
+    reif = bool(_reif(z))
+    eng = e.get("ampel", "grau") if reif else "grau"
     z_ok, z_txt = _zahlen(fund)
+    if reif:
+        zone_txt = (f"{art} {z['wochen']:.1f} Wochen, {z['tiefe']:.0f} % tief".replace(".", ",")
+                    + (f" (in einer {z['in_zone']})" if z.get("in_zone") else ""))
+    elif z.get("offen"):
+        zone_txt = "Rücksetzer läuft – Zone noch offen"
+    elif not z.get("zone"):
+        zone_txt = z.get("grund", "keine Zone")
+    elif art == "Konsolidierung":
+        zone_txt = "Konsolidierung nach einem Absturz, keine Base"
+    else:
+        zone_txt = f"{art} zu kurz/zu lang" if z.get("laenge") != "ok" else f"{art} über 50 % tief"
     regeln = [("Trendvorlage (7 Punkte)", bool(tv) and all(tv.values()),
                f"{sum(tv.values())} von 7" + ("" if not tv or all(tv.values()) else
                                                " – fehlt: " + ", ".join(n for n, ok in tv.items() if not ok))
@@ -64,27 +90,25 @@ def pruefen(df, erk, rs_rang, fund):
               ("RS ab 70 (8. Punkt)", rs_rang is not None and rs_rang >= RS_MIN,
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
-              ("Reife Wertzone mit Pivot", reif,
-               f"{art} {w.get('wochen')} Wochen, {w.get('tiefe_pct', 0):.0f} % tief".replace(".", ",") if reif
-               else "keine Base/Flagge nach oben" if art not in ("Base", "Flagge") else "zu tief oder ohne Pivot"),
-              ("Enge (VCP)", eng in ("grün", "gelb", "leer"),
-               {"grün": "Tiefs halten, Spanne eng, Volumen trocken", "gelb": "teilweise eng (Tiefs/Spanne oder Volumen)",
-                "rot": "nicht eng – Tiefs fallen oder Spanne und Volumen weit", "grau": "ohne Wertzone nicht prüfbar",
-                "leer": "Wertzone zu kurz zum Messen – Enge im Chart prüfen"}[eng])]
+              ("Reife Base (Scanner)", reif, zone_txt),
+              ("Enge (VCP)", eng in ("grün", "gelb"),
+               (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", ""))
+               if reif else "ohne reife Base nicht prüfbar")]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"
-    pivot = float(w["pivot"]) if reif else None
+    pivot = float(e.get("pivot") or z["oben"]) if reif else None
     stopp, lage = None, ""
     if pivot:
-        tiefs = [l[lo] for _, lo, _ in (w.get("kontraktionen_lage") or []) if lo < len(l)]
-        unten = min(tiefs[-1], pivot) if tiefs else pivot * (1 - MAX_STOPP)
+        kontr = e.get("kontraktionen") or []
+        unten = min(float(kontr[-1]["tief"]), pivot) if kontr else pivot * (1 - MAX_STOPP)
         stopp = max(unten, pivot * (1 - MAX_STOPP))
         ab = (c[-1] / pivot - 1) * 100
         lage = ("in der Kaufzone" if 0 <= ab <= KAUFZONE else f"{ab:.1f} % über dem Pivot, ausgedehnt" if ab > KAUFZONE
                 else f"{-ab:.1f} % unter dem Pivot").replace(".", ",")
-    setup = f"{art} {w.get('wochen')} W." if reif else "keines"
+    setup = f"{art} {z['wochen']:.0f} W." if reif else "keines"
     return {"system": "M", "ampel": ampel, "setup": setup, "regeln": regeln, "fehlt": fehlt,
-            "pivot": pivot, "stopp": stopp, "lage": lage, "trendvorlage": tv,
+            "pivot": pivot, "stopp": stopp, "lage": lage, "trendvorlage": tv, "zone": z, "enge": e,
+            "abstand": (c[-1] / pivot - 1) * 100 if pivot else None,
             "ausstieg": ("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. Stopp auf Einstand, "
                          "sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise verkaufen, den "
                          "Rest mit nachgezogenem Stopp laufen lassen (Minervini).")}

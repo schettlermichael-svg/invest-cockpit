@@ -378,21 +378,23 @@ def _k2_setup(m, k, erk, df):
 
 
 def _k2_enge(m, k, erk, df):
-    a = erk.get("absorption")
+    e = m.get("enge") or {}
     eng = next(r for r in m["regeln"] if r[0] == "Enge (VCP)")
     wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
-    mm = (a["ampel"], wort[a["ampel"]]) if a else ("grau", "nicht messbar")
+    reif = next(r for r in m["regeln"] if r[0].startswith("Reife Base"))[1]
+    mm = (e["ampel"], wort[e["ampel"]]) if reif and e.get("ampel") in wort else ("grau", "nicht messbar")
     b = k.get("breakout") or {}
     kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
     kk = (("grün" if kons[1] else "gelb" if b.get("wochen") and b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
           f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Wertzone")
     zeile = eng[2]
-    if a:
-        tiefs = "steigen" if a["steigend"] else "halten" if a["halten"] else "fallen"
-        zeile = f"Tiefs {tiefs}" + (f" · Volumen {zahl(a['trocken'], 1)}-fach" if a.get("trocken") is not None else "")
+    if reif and e.get("folge"):
+        zeile = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
+                                                     if e.get("volumen") == e.get("volumen") and e.get("volumen") else "")
     return kachel2("Enge", mm, kk, zeile,
-                   "M – Minervinis VCP: am rechten Rand halten oder steigen die Tiefs, die Spanne schrumpft auf ein "
-                   "Drittel der Base (oder unter 5 %), das Volumen trocknet aus (bis 0,8-fach des 50-Tage-Schnitts).\n\n"
+                   "M – Minervinis VCP (Baustein 2 des Scanners, wie im Chart): jede Kontraktion höchstens 70 % so tief "
+                   "wie die vorige, die letzte höchstens 10 %, das Volumen leiser als in der ersten. Grün = mindestens "
+                   "zwei schrumpfende Kontraktionen; rot = die letzte ist tiefer als die vorige.\n\n"
                    "K – Kullamägi: kurze Konsolidierung, meist 1–3 Wochen, nach einem Schub nach oben, vorzugsweise bei "
                    "reduziertem Volumen. Gelb bis 8 Wochen.")
 
@@ -829,7 +831,15 @@ def seite_titel(ticker, laufend=False, _stand=None):
                            f'Tagesvolumen.</div>')
     erk["fruehwarnung"] = fruehwarnung.zeichen(df, erk, ph)
     gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
-    m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund)
+    try:                                         # VCP-Scanner: Zone und Enge jetzt, abgeschlossene Zonen (Chart, Minervini)
+        import vcp_zone
+        zonen = vcp_zone.alles(df)
+    except Exception:  # noqa: BLE001 – Chart ohne Zonen, Minervini rechnet selbst
+        zonen = None
+    m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund,
+                                  (zonen["jetzt"], zonen["enge"]) if zonen else None)
+    if zonen and m_["zone"].get("in_zone"):        # Minervini nimmt die Flagge in der Zone: der Chart zeigt ihre Enge
+        zonen["enge"] = vcp_zone.enge_datiert(df, m_["zone"])
     k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
@@ -843,11 +853,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
-    try:                                         # VCP-Scanner Baustein 1: Zone jetzt und abgeschlossene Zonen
-        import vcp_zone
-        zwischen["zonen"] = vcp_zone.alles(df)
-    except Exception:  # noqa: BLE001 – Chart ohne Zonen
-        zwischen["zonen"] = None
+    zwischen["zonen"] = zonen
     teile = []
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'

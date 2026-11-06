@@ -313,6 +313,17 @@ def ermuedung(df, tage=ERM_TAGE):
     return None
 
 
+def enge_datiert(df, z):
+    """enge() mit Datum zu jedem Index (für den Chart)."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    ix = df.index
+    e = enge(df, z)
+    if e.get("kontraktionen"):
+        e["kontraktionen"] = [dict(k, hoch_t=ix[k["hoch_i"]], tief_t=ix[k["tief_i"]]) for k in e["kontraktionen"]]
+        e["pivot_t"] = ix[e["pivot_i"]]
+    return e
+
+
 def alles(df):
     """Für den Chart: Zone jetzt, abgeschlossene Zonen, grobes ZigZag – Lage als Datum (passt zu Tag und Woche)."""
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -331,9 +342,6 @@ def alles(df):
         return b
 
     jetzt = zone(df)
-    e = enge(df, jetzt)
-    if e.get("kontraktionen"):
-        e["kontraktionen"] = [dict(k, hoch_t=ix[k["hoch_i"]], tief_t=ix[k["tief_i"]]) for k in e["kontraktionen"]]
-        e["pivot_t"] = ix[e["pivot_i"]]
+    e = enge_datiert(df, jetzt)
     return {"jetzt": datiert(jetzt), "enge": e, "verlauf": [datiert(b) for b in verlauf(df)],
             "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}

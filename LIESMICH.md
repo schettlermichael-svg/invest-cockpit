@@ -485,8 +485,10 @@ Minervinis Trendvorlage weiter. Short nur noch als Ermüdung nach Überdehnung (
 Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und Base erkennt.
 
 - `kern/system_minervini.py` – grün = Trendvorlage 7 Punkte + RS ab 70 (8. Punkt) + Zahlen wachsen (Gewinn und Umsatz
-  nicht rot) + reife Zone mit Pivot (höchstens 50 % tief) + Enge/VCP (grün oder teilweise; Flagge zu kurz = im Chart
-  prüfen). Gelb = eine Regel fehlt. Stopp unter der letzten Kontraktion, höchstens 8 %.
+  nicht rot) + reife Base des VCP-Scanners (Base oder Flagge, fertig, höchstens 50 % tief) + Enge aus Baustein 2 (grün
+  oder teilweise). Gelb = eine Regel fehlt. Pivot = Hoch der letzten Kontraktion, Stopp unter ihrem Tief, höchstens 8 %.
+  Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner statt aus Wertzone und Absorption; ★ Spitze M =
+  grün und Kurs −5 % bis +5 % um den Pivot.
 - `kern/system_kullamaegi.py` – Breakout (Führer = oberste 2 % nach 1/3/6 Monaten, `kern/fuehrer_rang.py`, plus
   Konsolidierung 1–3 Wochen nach einem Schub), Episodic Pivot (Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch,
   Volumen ab 3-fach – Micky; 10-fach = ideal; grün mit Nachricht/Zahlen; in den letzten 10 Tagen, Kurs hält das Tief),

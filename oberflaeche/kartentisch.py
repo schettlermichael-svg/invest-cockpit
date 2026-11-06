@@ -2,8 +2,8 @@
 geordnet, als Lagekarten. Die Reihen ordnen, sie filtern nicht – jeder Titel bleibt über die Titelseite erreichbar.
 
 System Minervini (M):
-  ★ Spitze M          Setup grün (alle Regeln) und die Wertzone steht an der Schwelle oder bricht nach oben aus
-  Weitere M           Setup grün in Balance oder genau eine Regel fehlt
+  ★ Spitze M          Setup grün (alle Regeln), Kurs am Pivot des Scanners (−5 % bis +5 %, seit 06.11.2026)
+  Weitere M           Setup grün weiter weg vom Pivot oder genau eine Regel fehlt
 System Kullamägi (K):
   Episodic Pivot      Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, Kurs hält das Tief
   Breakout            Führer (oberste 1–2 %) mit Konsolidierung 1–3 Wochen (gelb: knapp)
@@ -33,9 +33,9 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
-REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), die Wertzone steht an der Schwelle oder bricht "
-                                               "nach oben aus"),
-          ("m_weitere", "Weitere · Minervini", "Setup grün in Balance – oder genau eine Regel fehlt"),
+REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), Kurs am Pivot: höchstens 5 % darunter bis "
+                                               "5 % darüber (Kaufzone)"),
+          ("m_weitere", "Weitere · Minervini", "Setup grün, Kurs weiter weg vom Pivot – oder genau eine Regel fehlt"),
           ("k_ep", "Episodic Pivot · Kullamägi", "Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, "
                                                  "Kurs hält das Tief des Sprungtags; grün mit Nachricht (Zahlen)"),
           ("k_breakout", "Breakout · Kullamägi", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit Konsolidierung von 1–3 "
@@ -95,7 +95,10 @@ def _stufe1(tk):
             rang = rs_rang.rang(tk)[0]
         except Exception:  # noqa: BLE001
             rang = None
-        m = system_minervini.pruefen(df, erk, rang, fund)
+        import vcp_zone
+        zs = vcp_zone.zone(df)
+        scan = (zs, vcp_zone.enge(df, zs))      # VCP-Scanner einmal: für Minervini und die Scanner-Reihen
+        m = system_minervini.pruefen(df, erk, rang, fund, scan)
         gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
         k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
         z = a["zustand"]
@@ -123,7 +126,7 @@ def _stufe1(tk):
             info.update(reihe="k_ermuedung", stern=em["ampel"] == "grün", gruen=em["ampel"] == "grün",
                         abstand=abs((c[-1] / em["unten"] - 1) * 100),
                         luecken=[] if em["ampel"] == "grün" else ["Short: zurück in der Flagge"])
-        elif m["ampel"] == "grün" and bewegt:
+        elif m["ampel"] == "grün" and m["abstand"] is not None and -PIVOT_NAH <= m["abstand"] <= KAUFZONE_M:
             info.update(reihe="m_spitze", stern=True)
         elif k.get("breakout") and k["breakout"]["ampel"] != "rot":
             b = k["breakout"]
@@ -132,23 +135,22 @@ def _stufe1(tk):
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
-            _scannerfeld(info, df)
+            _scannerfeld(info, scan)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
 
 
 PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
+KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
 
 
-def _scannerfeld(info, df):
+def _scannerfeld(info, scan):
     """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base)."""
-    import vcp_zone
     from gestaltung import zahl
-    z = vcp_zone.zone(df)
+    z, e = scan
     if not z.get("zone"):
         return
-    e = vcp_zone.enge(df, z)
     if e.get("ampel") == "grün" and -PIVOT_NAH <= e["abstand"] <= PIVOT_NAH:
         info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]),
                     scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · Pivot {zahl(e["pivot"])} $ '
@@ -505,7 +507,7 @@ def lagebild(tisch):
         zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
                   f"Wertzone: {t(x.get('zustand', '–'))}"]
         if stern:
-            zeilen.append("★ Setup grün, Wertzone bewegt sich in Richtung des Setups")
+            zeilen.append("★ Setup grün, Kurs am Pivot")
         if scanner_text(x):
             zeilen.append("Scanner: " + t(scanner_text(x)))
         if lagekarte.grund(x):
