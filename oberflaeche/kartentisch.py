@@ -11,8 +11,9 @@ System Kullamägi (K):
                       ganzen US-Markt (parabolic.py)
 Beide:
   Watchlist           jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
-  Ausbruchsfelder     frischer Ausbruch (A/U) bzw. Flagge (F) der Wertzone nach oben, mit Volumen, für Titel ohne Reihe
-  Frühaufklärung      Radar: Wertzone an der Schwelle oder frischer Angriff nach oben
+VCP-Scanner (für Titel ohne Reihe in den Systemen, seit 06.11.2026 statt der Wertzonen-Felder Ausbruch, Flagge, Radar):
+  VCP · Enge grün     Zone mit grüner Enge, Kurs höchstens 5 % vom Pivot
+  Flagge · Scanner    Flagge des Scanners (Kullamägi), auch als Flagge in einer Base
 Ein Titel steht in genau einer Reihe (Vorrang in der Reihenfolge oben); die Lagekarte zeigt das Setup beider Systeme.
 
 Rechnung in zwei Stufen: 1. alle Titel Erkennung, Wertzone und beide Systeme (mehrere Prozesse) → Reihe; 2. für die Titel
@@ -41,12 +42,12 @@ REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), di
                                                  "Wochen; gelb = Führer knapp oder Konsolidierung bis 8 Wochen"),
           ("k_parabolic", "Parabolic Short · Kullamägi", "Serie steigender Tage im Revier: ab 300 % (kleine Werte) bzw. "
                                                          "50 % (große Werte, Schwelle aus seinem Blog); grün an Tag 3–5"),
-          ("konsolidierung", "Ausbruch aus der Konsolidierung",
-           "frischer Ausbruch nach oben (A oder U, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) aus einer Wertzone "
-           "von mindestens 3 Wochen, der noch hält – für Titel, die in keinem System stehen"),
-          ("flagge", "Flagge", "frische Fortsetzung nach oben (F, letzte 10 Handelstage, Volumen über dem 50-Tage-Schnitt) "
-                               "aus einer jungen Wertzone unter 3 Wochen – für Titel, die in keinem System stehen"),
-          ("frueh", "Frühaufklärung", "Radar: Wertzone an der Schwelle oder frischer Angriff nach oben (A, F, U in 5 Tagen)")]
+          ("vcp", "VCP · Enge grün", "Zone des VCP-Scanners mit grüner Enge (mindestens 2 schrumpfende Kontraktionen, "
+                                     "Enge höchstens 10 %, Volumen leiser als in der ersten), Kurs höchstens 5 % vom Pivot – "
+                                     "für Titel, die in keinem System stehen"),
+          ("flagge", "Flagge · Scanner", "Flagge des VCP-Scanners: Fahnenstange ab 30 % in höchstens 13 Wochen, Zone 1–8 "
+                                         "Wochen, höchstens 25 % tief (Kullamägi), auch als Flagge in einer Base – für "
+                                         "Titel, die in keinem System stehen")]
 WATCHLISTS_NACH = "m_spitze"
 
 
@@ -128,57 +129,37 @@ def _stufe1(tk):
                         luecken=[f"K: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
-        # Radar (Frühaufklärung): Wertzone an der Schwelle oder ein frischer Angriff nach oben (A, F, U in 5 Tagen)
-        n_ = len(a["tage"]) - 1
-        frisch = [x for x in a["signale"] if x["art"] in ("A", "F", "U") and x["dir"] == "↑" and x["i"] >= n_ - 4]
-        if "reihe" not in info:
-            _ausbruchsfeld(info, a, df)
-        if "reihe" not in info and (frisch or (z["wort"].startswith("an der Schwelle") and z["dir"] == "↑")):
-            info.update(reihe="frueh", ausloeser=bool(frisch), abstand=info.get("abstand", 0.0),
-                        angriff=(f"{frisch[-1]['art']}{frisch[-1]['dir']} {frisch[-1]['tag']:%d.%m.}" if frisch else None))
+        if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
+            _scannerfeld(info, df)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
 
 
-FRISCH_TAGE = 10              # Ausbruchsfelder: Auslöser höchstens 10 Handelstage alt (und er hält noch)
+PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
 
 
-def _ausbruchsfeld(info, a, df):
-    """Ausbruch aus der Konsolidierung (A, U; B aus reifer Wertzone) bzw. Flagge (F; B aus junger Wertzone): die laufende
-    Bewegung des Market Profile hält noch (kein S, keine neue reife Wertzone) und begann vor höchstens FRISCH_TAGE
-    Handelstagen, mit Volumen am Ausbruchstag über dem 50-Tage-Schnitt. Geht vor jeder anderen Reihe (keine Doppelung). Vorlauf = Korrektur vom Hoch (long) bzw. Anstieg
-    vom Tief (short) bis zum Ausbruch – nur ein Zeichen, kein Filter."""
-    from marketprofile import ZONE_REIF
-    akt = a.get("aktiv")
-    if not akt or akt.get("art") not in ("A", "U", "F", "B"):
+def _scannerfeld(info, df):
+    """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base)."""
+    import vcp_zone
+    from gestaltung import zahl
+    z = vcp_zone.zone(df)
+    if not z.get("zone"):
         return
-    n_ = len(a["tage"]) - 1
-    if n_ - akt["seit"] > FRISCH_TAGE - 1:
+    e = vcp_zone.enge(df, z)
+    if e.get("ampel") == "grün" and -PIVOT_NAH <= e["abstand"] <= PIVOT_NAH:
+        info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]),
+                    scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · Pivot {zahl(e["pivot"])} $ '
+                            f'({"+" if e["abstand"] >= 0 else "−"}{zahl(abs(e["abstand"]), 1)} %)')
         return
-    reif = akt["art"] in ("A", "U") or (akt["art"] == "B" and (akt["zone"].get("wochen") or 0) >= ZONE_REIF)
-    d = akt["dir"]
-    if d != "↑":                                 # Short nur noch als Parabolic Short (Kullamägi, 05.11.2026)
-        return
-    tag = a["tage"][akt["seit"]]["tag"]
-    h = df.loc[:tag].iloc[-250:]
-    vol = h["Volume"]
-    faktor = float(vol.iloc[-1] / vol.iloc[-51:-1].mean()) if len(vol) > 20 else None
-    if not faktor or faktor <= 1:                # Ausbruch ohne erhöhtes Volumen (nicht über dem 50-Tage-Schnitt)
-        return
-    import fussabdruck
-    spanne = fussabdruck.atr_spanne(h, len(h) - 1)
-    if d == "↑":
-        hoch_i = h["High"].idxmax()
-        vorlauf = (h.loc[hoch_i:, "Low"].min() / h["High"].max() - 1) * 100
-    else:
-        tief_i = h["Low"].idxmin()
-        vorlauf = (h.loc[tief_i:, "High"].max() / h["Low"].min() - 1) * 100
-    info.update(reihe="konsolidierung" if reif else "flagge", bdir=d, ausloeser=True,
-                stern=False, vorlauf=round(float(vorlauf), 1),
-                ausbruch=f"{akt['art']}{d} {tag:%d.%m.}", tage_seit=n_ - akt["seit"], vol_faktor=round(faktor, 1),
-                atr_spanne=round(spanne, 1) if spanne else None,
-                abstand=info.get("abstand", 0.0))
+    f = z if z["name"] == "Flagge" else z.get("innen")
+    if f and f["laenge"] == "ok":
+        nah = f["abstand"] >= -PIVOT_NAH
+        info.update(reihe="flagge", gruen=nah, stern=False, abstand=abs(f["abstand"]),
+                    scanner=f'Flagge {zahl(f["wochen"], 1)} Wochen, {zahl(f["tiefe"], 0)} % tief · Stange '
+                            f'+{zahl(f["stange"]["prozent"], 0)} % in {zahl(f["stange"]["wochen"], 1)} Wochen · '
+                            f'Kurs {zahl(f["abstand"], 1)} % zur Oberkante'
+                            + (" · in einer Base" if f is not z else ""))
 
 
 def _stufe2(tk):
@@ -255,16 +236,16 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json.load(open(pfad, encoding="utf-8"))
-        felder = ("reihe", "stern", "gruen", "angriff", "zdir", "luecken", "bdir", "ausbruch", "vorlauf")
+        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"m_spitze": 5, "k_ep": 5, "k_parabolic": 4, "k_breakout": 4, "m_weitere": 3, "konsolidierung": 2, "flagge": 2,
-        "frueh": 1, None: 0}
+RANG = {"m_spitze": 5, "k_ep": 5, "k_parabolic": 4, "k_breakout": 4, "m_weitere": 3, "vcp": 2, "flagge": 2, None: 0}
 
 
-ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)"}
+ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
+               "konsolidierung": "Ausbruch aus der Konsolidierung (alt)", "frueh": "Frühaufklärung (alt)"}
 
 
 def _neu(vorher, jetzt):
@@ -308,23 +289,15 @@ def _farbe(x):
     return lagekarte.rahmen(x)[0]
 
 
-def ausbruch_text(x):
-    """„U↑ 02.11. · Korrektur −41 % davor“ für die Ausbruchsfelder, sonst leer."""
-    import fussabdruck
-    from gestaltung import zahl
-    if (x or {}).get("reihe") not in ("konsolidierung", "flagge") or not x.get("ausbruch"):
-        return ""
-    v = x.get("vorlauf")
-    art = "Korrektur" if x.get("bdir") == "↑" else "Anstieg"
-    return (x["ausbruch"] + (f" · Volumen {zahl(x['vol_faktor'], 1)}-fach" if x.get("vol_faktor") else "")
-            + (" · " + fussabdruck.spanne_text(x["atr_spanne"]) if x.get("atr_spanne") else "")
-            + (f" · {art} {zahl(v, 0)} % davor" if v is not None else ""))
+def scanner_text(x):
+    """Befund des VCP-Scanners für die Reihen „VCP · Enge grün“ und „Flagge · Scanner“, sonst leer."""
+    return (x or {}).get("scanner") or ""
 
 
 def _grundzeile(x):
     """Ausbruch und Grund als kleine Zeile über der Karte (leer, wenn nichts zu sagen ist)."""
     from gestaltung import TEXT_2, t
-    g = " · ".join(z for z in (ausbruch_text(x), lagekarte.grund(x)) if z)
+    g = " · ".join(z for z in (scanner_text(x), lagekarte.grund(x)) if z)
     return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
@@ -344,7 +317,7 @@ def zeile(tk, x):
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
-            "Wertzone": " · ".join(z for z in (x.get("zustand", ""), ausbruch_text(x)) if z),
+            "Wertzone": " · ".join(z for z in (x.get("zustand", ""), scanner_text(x)) if z),
             "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
@@ -359,7 +332,7 @@ def _klapp(titel, zeile_, inhalt):
 
 
 def _ordnung(x):
-    return (not x.get("stern"), not x.get("ausloeser"), not x.get("gruen"), x.get("abstand", 99))
+    return (not x.get("stern"), not x.get("gruen"), x.get("abstand", 99))
 
 
 def _kopf(name, zahl_, text, h=2):
@@ -477,10 +450,8 @@ def _marken(x):
     Abschnittsüberschrift)."""
     from gestaltung import TEXT_2, t
     r = {k: n for k, n, _ in REIHEN}.get(x.get("reihe"))
-    if x.get("reihe") == "frueh" and x.get("angriff"):
-        r += f" · {x['angriff']}"
-    if ausbruch_text(x):
-        r += f" · {ausbruch_text(x)}"
+    if scanner_text(x):
+        r += f" · {scanner_text(x)}"
     f, d = lagekarte.rahmen(x)
     g = lagekarte.grund(x)
     return (f'<span style="display:flex;flex-direction:column;gap:2px"><span style="border:{d}px solid {f};'
@@ -492,7 +463,7 @@ def _marken(x):
 # ── Lagekarte nach Sektoren (4.11.2026, neu geordnet 6.11.2026) ──
 # Eine Frage: an welchem Frontabschnitt sammeln sich die Angriffe, und wer führt dort? Zeilen = Sektoren, sortiert nach
 # der Zahl der Angriffe (dann der Bereitstellung); drei Spalten statt neun: Angriff jetzt (Setup grün in einem der
-# Systeme, ★ oder frischer Ausbruch), Bereitstellung (übrige Reihen: Setup noch nicht grün, Flagge, Radar) und ◆ Watchlist
+# Systeme oder des VCP-Scanners, ★), Bereitstellung (übrige Reihen: Setup noch nicht grün, Flagge weiter weg) und ◆ Watchlist
 # ohne Reihe. Je Zelle ein Balken mit der Zahl und die drei stärksten Titel; der Rest aufklappbar – nichts wird gefiltert.
 SPALTEN = [("jetzt", "Angriff jetzt"), ("bereit", "Bereitstellung"), ("watch", "◆ Watchlist ohne Reihe")]
 TOP = 3                       # Marken je Zelle sichtbar, der Rest aufklappbar
@@ -501,7 +472,7 @@ TOP = 3                       # Marken je Zelle sichtbar, der Rest aufklappbar
 def _spalte(x):
     if not x.get("reihe"):
         return "watch"
-    return "jetzt" if (x.get("stern") or x.get("gruen") or x.get("reihe") == "konsolidierung") else "bereit"
+    return "jetzt" if (x.get("stern") or x.get("gruen")) else "bereit"
 
 
 def _sektor_etf(tk, rv):
@@ -537,10 +508,8 @@ def lagebild(tisch):
         stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # ★: jeder Spitzenkandidat (auch ältere Tische)
         rand, dicke = lagekarte.rahmen(x)                  # long grün, short rot, blass = Setup nicht grün, gelb = offen
         text = ("★ " if stern else "") + tk
-        if x.get("reihe") == "frueh" and x.get("angriff"):
-            text += " " + x["angriff"].split()[0]
-        if x.get("ausbruch"):
-            text += " " + x["ausbruch"].split()[0]
+        if x.get("reihe") in ("vcp", "flagge"):
+            text += " VCP" if x["reihe"] == "vcp" else " F"
         if x.get("listen"):
             text += " ◆"
         g = gruppen.get(tk)
@@ -548,14 +517,10 @@ def lagebild(tisch):
             text += " ⚑"
         zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
                   f"Wertzone: {t(x.get('zustand', '–'))}"]
-        if x.get("reihe") == "frueh" and x.get("angriff"):
-            art = x["angriff"][0]
-            zeilen.append(f"Auslöser {t(x['angriff'])}: " + {"A": "Ausbruch aus reifer Wertzone", "F": "Fortsetzung (Flagge)",
-                                                             "U": "Umkehr nach gescheitertem Ausbruch"}.get(art, ""))
         if stern:
             zeilen.append("★ Setup grün, Wertzone bewegt sich in Richtung des Setups")
-        if ausbruch_text(x):
-            zeilen.append("Ausbruch " + t(ausbruch_text(x)))
+        if scanner_text(x):
+            zeilen.append("Scanner: " + t(scanner_text(x)))
         if lagekarte.grund(x):
             zeilen.append(t(lagekarte.grund(x)))
         if x.get("listen"):
@@ -611,7 +576,7 @@ def lagebild(tisch):
                       f'border-top:1px solid {RAND};align-items:start"><div style="font-size:14px;line-height:1.5">{links}'
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []), k)}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Oben der Abschnitt mit den meisten Angriffen. '
-             f'Angriff jetzt = Setup grün (Minervini oder Kullamägi) oder frischer Ausbruch · Bereitstellung = in einer '
+             f'Angriff jetzt = Setup grün (Minervini, Kullamägi oder VCP-Scanner) · Bereitstellung = in einer '
              f'Reihe, Setup noch nicht grün · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
              f'die drei stärksten, „+n“ klappt den Rest auf · ★ Spitze · ◆ Watchlist · ⚑ Themen-Gruppe Führend/Erstarkend · '
              f'Maus auf einen Titel zeigt Reihe, Wertzone und was fehlt.</div>')

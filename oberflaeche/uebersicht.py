@@ -5,7 +5,7 @@ Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
                    (Stimmungskurve seit 06.11.2026 nicht mehr auf der Übersicht; O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
                    Kachel – Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit)
   ② Front          Frontkarte, Lagebild nach Sektoren (Übergänge seit 06.11.2026 nicht mehr)
-  ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Watchlist, Weitere, Frühaufklärung, Short (kartentisch.plan)
+  ③ Auswahl        ★ Spitze, Watchlist, Weitere, Kullamägi, VCP-Scanner (VCP · Enge grün, Flagge) (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
 app.py setzt den Kartentisch (Lagebild bis ④) zwischen „oben“ und „unten“."""

@@ -21,16 +21,13 @@ _SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px 
 
 
 def richtung(x):
-    """long (Reihen der Systeme, Ausbruchsfelder, Radar), short (Parabolic Short) oder None (Richtung offen)."""
+    """long (Reihen der Systeme und des VCP-Scanners), short (Parabolic Short) oder None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
     if reihe == "k_parabolic":
         return "short"
-    if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "konsolidierung", "flagge"):
+    if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "vcp", "flagge"):
         return "long"
-    if reihe == "frueh":
-        pfeil = (x.get("angriff") or "")[1:2] or x.get("zdir") or ""
-        return "long" if pfeil == "↑" else None
     return None
 
 
