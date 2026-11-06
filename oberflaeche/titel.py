@@ -357,10 +357,10 @@ def _k2_fundament(m, k, fund, ph, df, gewinne):
 
 def _k2_setup(m, k, erk, df):
     mm = (m["ampel"], m["setup"] if m["setup"] != "keines" else "keines")
-    ps = k.get("parabolic")
+    em = k.get("ermuedung")
     h = k.get("haupt")
-    if ps and (not h or h["ampel"] == "rot"):
-        kk = (ps["ampel"], f"Parabolic Short Tag {ps['tag']}")
+    if em and (not h or h["ampel"] == "rot"):
+        kk = (em["ampel"], "Ermüdung (short)" + (f" vor {em['tage_her']} T." if em["tage_her"] else ""))
     else:
         kk = ((h["ampel"], h["art"] + (f" vor {h['tage_her']} T." if h["art"] == "Episodic Pivot" and h["tage_her"] else ""))
               if h and h["ampel"] != "rot" else ("rot", "keines"))
@@ -371,7 +371,7 @@ def _k2_setup(m, k, erk, df):
     hilfe = ("M – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
              + "\n\nK – " + "\n".join(
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
-                 for x in (k.get("ep"), k.get("breakout"), ps) if x))
+                 for x in (k.get("ep"), k.get("breakout"), em) if x))
     if erk.get("mp") and df is not None:
         hilfe += "\n\nDruck in der Wertzone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(erk["mp"], df))
     return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe + "\n\n" + AUSLOESER_HILFE)
@@ -458,14 +458,16 @@ def _plan(m, k, mm, km, df):
                 else f'beim Ausbruch über die Oberkante {zahl(hk["pivot"])} $' if hk.get("pivot") else "beim Ausbruch")
         teile.append(f'<p style="margin:0;font-size:15px;line-height:1.6">Einstieg {ziel}: über dem Hoch der ersten '
                      f'5-, 30- oder 60-Minuten-Kerze (je länger, desto weniger Fehlausbrüche). {t(k["ausstieg"])}</p>')
-    ps = k.get("parabolic")
-    if ps:
-        teile.append(f'<p style="margin:12px 0 0;font-size:16px">{"🔴" if ps["ampel"] == "grün" else "🟡"} '
-                     f'<b>Parabolic Short (Kullamägi)</b> – Tag {ps["tag"]}, +{zahl(ps["gewinn"], 0)} %</p>'
-                     + "".join(ampelzeile(n, "grün" if ok else "gelb", y) for n, ok, y in ps["regeln"])
-                     + f'<p style="margin:0;font-size:15px">{t(ps["ausloeser"])}. Stopp am Tageshoch '
-                       f'({zahl(ps["stopp"])} $ heute). Ziel 10er/20er. Unabhängig vom Markt.</p>')
-    rand = GRUEN if "grün" in (m["ampel"], (hk or {}).get("ampel")) else ROT if ps and ps["ampel"] == "grün" else BLAU
+    em = k.get("ermuedung")
+    if em:
+        teile.append(f'<p style="margin:12px 0 0;font-size:16px">{"🔴" if em["ampel"] == "grün" else "🟡"} '
+                     f'<b>Ermüdung nach Überdehnung (Short)</b> – Bruch der Flagge am {em["tag"]:%d.%m.}, '
+                     f'Fahnenstange +{zahl(em["stange"], 0)} %</p>'
+                     + "".join(ampelzeile(n, "grün" if ok else "gelb", y) for n, ok, y in em["regeln"])
+                     + f'<p style="margin:0;font-size:15px">Die Truppe ist weit vorgestoßen, hat sich eingegraben – '
+                       f'jetzt bricht die Stellung nach hinten weg. Unterkante {zahl(em["unten"])} $, Stopp über dem '
+                       f'Hoch des Auslösetags {zahl(em["stopp"])} $ (Kullamägi: Stopp am Tageshoch).</p>')
+    rand = GRUEN if "grün" in (m["ampel"], (hk or {}).get("ampel")) else ROT if em and em["ampel"] == "grün" else BLAU
     return "".join(teile), rand
 
 
@@ -734,20 +736,6 @@ def maerkte():
     return _SPEICHER["markt"][1], _SPEICHER["markt"][2]
 
 
-def boersenwert(tk):
-    """Börsenwert in Mrd. $ aus dem Revier (für die Schwelle des Parabolic Short) oder None."""
-    if "revier" not in _SPEICHER:
-        try:
-            rv = pd.read_csv(os.path.join(HIER, "..", "einstellungen", "revier.csv"), keep_default_na=False)
-            _SPEICHER["revier"] = {r["ticker"]: r["boersenwert_mrd"] for r in rv.to_dict("records")}
-        except Exception:  # noqa: BLE001
-            _SPEICHER["revier"] = {}
-    try:
-        return float(_SPEICHER["revier"].get(tk.upper()))
-    except (TypeError, ValueError):
-        return None
-
-
 def seite_titel(ticker, laufend=False, _stand=None):
     """Gibt drei Teile zurück: oben (Kopf bis Kacheln), chart (Zwischenstand für chartkarte), unten (ab Frühere Basen).
     Zwischen oben und Chart setzt app.py die Chart-Knöpfe. laufend=True: mit der unvollständigen Kerze des laufenden Börsentags (Knopf „Kurse aktualisieren“);
@@ -830,7 +818,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     erk["fruehwarnung"] = fruehwarnung.zeichen(df, erk, ph)
     gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
     m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund)
-    k_ = system_kullamaegi.pruefen(df, erk, gtage, boersenwert(tk), tk)
+    k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit

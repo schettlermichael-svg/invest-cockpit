@@ -358,7 +358,7 @@ def _erkenne_mp(df, woche=False, index=None):
              "kontraktionen": kontraktionen(bh, bl),
              "kontraktionen_lage": [(start + x, start + y, t) for x, y, t in kontraktionen_lage(bh, bl)]}
     if seite == "short":
-        # Short nur noch als Parabolic Short (System Kullamägi, 05.11.2026); die Wertzone nach unten bleibt als Lagebild
+        # Short nur als Ermüdung nach Überdehnung (vcp_zone.ermuedung, 06.11.2026); die Wertzone nach unten bleibt als Lagebild
         werte["pivot"] = tief                    # Unterkante des Rahmens
         basis["werte"] = werte
         if art == "Umkehr":

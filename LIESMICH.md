@@ -442,9 +442,20 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
 
+## Short: Ermüdung nach Überdehnung (06.11.2026, statt Parabolic Short)
+Die Flagge des VCP-Scanners, im Ausgang gespiegelt: Die Truppe ist weit vorgestoßen, gräbt sich ein, dann bricht die
+Stellung nach hinten weg (`vcp_zone.ermuedung`, im System Kullamägi als `ermuedung`).
+- Fahnenstange ab 30 % in höchstens 13 Wochen · Flagge 1–8 Wochen, höchstens 25 % tief (auch als Flagge in einer Base)
+- Auslöser: Schluss unter der Unterkante, in den letzten 5 Handelstagen (Zone so, wie sie am Vortag stand)
+- Stopp über dem Hoch des Auslösetags (Kullamägi: Stopp am Tageshoch); ist er erreicht, fällt das Setup weg
+- Zeichen (kein Muss): Volumen am Bruch über dem 50-Tage-Schnitt
+- Ampel: grün = Kurs schließt noch unter der Unterkante, gelb = zurück in der Flagge
+- Kartentisch-Reihe „Ermüdung nach Überdehnung · Short“, Lagekarte rot, Barometer zählt die grünen.
+- Parabolic Short samt Suche im ganzen US-Markt liegt in `_to_delete/`. Probelauf 06.11.: 40 Treffer unter 1.913 Titeln.
+
 ## Knopf „Kartentisch neu rechnen“ (06.11.2026)
 
-Oben in der Übersicht. Rechnet Ränge (RS, Führer, Parabolic Short), den Kartentisch mit beiden Systemen und die Lage
+Oben in der Übersicht. Rechnet Ränge (RS, Führer), den Kartentisch mit beiden Systemen und die Lage
 neu – mit den Kursen des letzten Nachtlaufs, ohne Download (`werkzeuge/nachtlauf.py --tisch`). Läuft als eigener
 Prozess auf dem Server, eigenes Protokoll `daten/nachtlauf/tisch_lauf.json` (Log `tisch_lauf.log`), die Datenampel
 bleibt beim Nachtlauf. Gesperrt, solange der Nachtlauf oder ein Tischlauf läuft. Ist er fertig, lädt die Seite neu.
@@ -461,7 +472,7 @@ aufklappbar) · ② Front (Frontkarte, Übergänge, Lagebild nach Sektoren) · �
 ## Zwei Systeme: Minervini und Kullamägi (05.11.2026)
 Micky modelliert zwei getrennte Systeme. Jedes hat eigene Regeln für „grün“, Markt, Stopp und Ausstieg. O'Neil und
 Weinstein bleiben nur als Zeichen (Verteilungstage, Basennummer, CAN SLIM S/I, Phase); Weinsteins Stufe 2 lebt in
-Minervinis Trendvorlage weiter. Short nur noch als Parabolic Short (Kullamägi); die bisherigen Short-Einstiege
+Minervinis Trendvorlage weiter. Short nur noch als Ermüdung nach Überdehnung (seit 06.11.2026, vorher Parabolic Short); die bisherigen Short-Einstiege
 (Phase 3/4, gescheiterte Erholung, Nackenlinie, O'Neils frühere Führer) liegen in `_to_delete/zwei_systeme`.
 Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und Base erkennt.
 
@@ -471,18 +482,16 @@ Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und
 - `kern/system_kullamaegi.py` – Breakout (Führer = oberste 2 % nach 1/3/6 Monaten, `kern/fuehrer_rang.py`, plus
   Konsolidierung 1–3 Wochen nach einem Schub), Episodic Pivot (Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch,
   Volumen ab 3-fach – Micky; 10-fach = ideal; grün mit Nachricht/Zahlen; in den letzten 10 Tagen, Kurs hält das Tief),
-  Parabolic Short (Serie steigender Schlüsse, ab 300 % unter 2 Mrd. $ Börsenwert, sonst 50 % – Blog; grün an Tag 3–5).
+  Short: Ermüdung nach Überdehnung (siehe unten).
   Stopp am Tagestief, kein Trade weiter als eine Tagesspanne (ADTR 20 Tage). Ausstieg: Teilgewinn Tag 3–5, Einstand,
   Rest bis Schluss unter 10er/20er. Quelle: Interview mit Jack Schwager (Market Wizards).
-- `kern/parabolic.py` – Nachtlauf sucht im ganzen US-Markt (Massive, rund 12.000 Titel) nach 300 % in Folge,
-  Umsatz ab 5 Mio. $ → `daten/parabolic.json`, auf der Übersicht unter „Parabolic Short · Kullamägi“.
 - `kern/markt_systeme.py` – Markt je System: Kullamägi 10er über 20er, beide steigend (S&P 500 und Nasdaq);
   Minervini (Umsetzung der App, keine Buchformel): Indizes über GD50/GD200 und mehr neue Hochs als Tiefs. Kein Filter.
 - Titelseite: acht Kacheln – Markt, Trend, Stärke, Fundament, Setup, Enge mit je einer M- und einer K-Ampel
   (`gestaltung.kachel2`), Branche und Base als Zeichen. Karte „Plan“ je System mit Regeln, Marken, Stopp, Ausstieg.
 - Lagekarte: Setup je System oben rechts, acht geteilte Punkte (links M, rechts K, `gestaltung.punkt2`).
-- Kartentisch-Reihen: ★ Spitze M, Weitere M, Episodic Pivot K, Breakout K, Parabolic Short K, Ausbruchsfelder (nur nach
+- Kartentisch-Reihen: ★ Spitze M, Weitere M, Episodic Pivot K, Breakout K, Ermüdung (short), Ausbruchsfelder (nur nach
   oben), Frühaufklärung (nur nach oben). Watchlists nach ★ Spitze M.
 - Depot: Feld „System“ je Position (M/K) bestimmt die Zeichen nach dem Kauf; kein festes Gewinnziel mehr.
-- Nachtlauf: Schritt „RS-Rang, Führer-Rang, Parabolic Short“ vor dem Kartentisch; „Lage“ läuft nach dem Kartentisch.
+- Nachtlauf: Schritt „RS-Rang, Führer-Rang“ vor dem Kartentisch; „Lage“ läuft nach dem Kartentisch.
 - Gemessen am 05.11.2026 (700 Revier-Titel, Kurse bis 04.11.): Minervini 26 grün / 57 gelb, Kullamägi 21 grün / 41 gelb.

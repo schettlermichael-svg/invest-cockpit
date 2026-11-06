@@ -3,7 +3,7 @@ jedes mit seiner eigenen Marktregel. O'Neils Marktrichtung (marktrichtung.py) bl
 
 Kullamägi (Interview mit Jack Schwager, „Market Wizards“-Reihe): Steigen der 10- und der 20-Tage-Durchschnitt des Index,
 ist der Markt im Aufwärtstrend; kreuzt der 10er den 20er nach unten, ist das ein Warnsignal. Breakout und Episodic Pivot
-nur im Aufwärtstrend, der Parabolic Short ist unabhängig vom Markt. Er schätzt: hält ihn in rund 80 % der Fälle aus
+nur im Aufwärtstrend; der Short (Ermüdung nach Überdehnung) ist unabhängig vom Markt. Er schätzt: hält ihn in rund 80 % der Fälle aus
 schlechten Märkten heraus und in gute hinein.
   grün  10er über 20er, beide steigend (über dem Wert von vor STEIGEND_TAGE Handelstagen)
   gelb  10er über 20er, aber nicht beide steigend
@@ -52,7 +52,7 @@ def kullamaegi():
     return {"ampel": ampel, "wort": wort, "je": je,
             "text": " · ".join(f"{n}: {_wort(x)}" for n, x in je.items()),
             "regel": "Kullamägi: 10- und 20-Tage-Durchschnitt des Index steigen = Aufwärtstrend; 10er kreuzt den 20er "
-                     "nach unten = Warnsignal. Breakout und Episodic Pivot nur im Aufwärtstrend; der Parabolic Short ist "
+                     "nach unten = Warnsignal. Breakout und Episodic Pivot nur im Aufwärtstrend; der Short (Ermüdung nach Überdehnung) ist "
                      "unabhängig vom Markt."}
 
 

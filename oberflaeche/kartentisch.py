@@ -7,8 +7,8 @@ System Minervini (M):
 System Kullamägi (K):
   Episodic Pivot      Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, Kurs hält das Tief
   Breakout            Führer (oberste 1–2 %) mit Konsolidierung 1–3 Wochen (gelb: knapp)
-  Parabolic Short     Serie steigender Tage im Revier (300 % kleine, 50 % große Werte) – dazu die Liste aus dem
-                      ganzen US-Markt (parabolic.py)
+  Ermüdung (Short)    Flagge nach Fahnenstange ab 30 %, Schluss unter der Unterkante in den letzten 5 Tagen
+                      (seit 06.11.2026 statt des Parabolic Short)
 Beide:
   Watchlist           jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
 VCP-Scanner (für Titel ohne Reihe in den Systemen, seit 06.11.2026 statt der Wertzonen-Felder Ausbruch, Flagge, Radar):
@@ -40,8 +40,10 @@ REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), di
                                                  "Kurs hält das Tief des Sprungtags; grün mit Nachricht (Zahlen)"),
           ("k_breakout", "Breakout · Kullamägi", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit Konsolidierung von 1–3 "
                                                  "Wochen; gelb = Führer knapp oder Konsolidierung bis 8 Wochen"),
-          ("k_parabolic", "Parabolic Short · Kullamägi", "Serie steigender Tage im Revier: ab 300 % (kleine Werte) bzw. "
-                                                         "50 % (große Werte, Schwelle aus seinem Blog); grün an Tag 3–5"),
+          ("k_ermuedung", "Ermüdung nach Überdehnung · Short", "Flagge nach einer Fahnenstange ab 30 % in höchstens 13 "
+                                                               "Wochen, dann Schluss unter der Unterkante (letzte 5 Tage); "
+                                                               "Stopp über dem Hoch des Auslösetags; gelb = zurück in der "
+                                                               "Flagge"),
           ("vcp", "VCP · Enge grün", "Zone des VCP-Scanners mit grüner Enge (mindestens 2 schrumpfende Kontraktionen, "
                                      "Enge höchstens 10 %, Volumen leiser als in der ersten), Kurs höchstens 5 % vom Pivot – "
                                      "für Titel, die in keinem System stehen"),
@@ -73,7 +75,6 @@ def _stufe1(tk):
     import rs_rang
     import system_kullamaegi
     import system_minervini
-    import titel
     from chart import reaktionen
     try:
         df = daten.kurse_gespeichert(tk)
@@ -96,7 +97,7 @@ def _stufe1(tk):
             rang = None
         m = system_minervini.pruefen(df, erk, rang, fund)
         gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
-        k = system_kullamaegi.pruefen(df, erk, gtage, titel.boersenwert(tk), tk)
+        k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
         z = a["zustand"]
         c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
         ph = erkennung._phase_von(df)
@@ -106,7 +107,7 @@ def _stufe1(tk):
                 "tief52": bool(len(l) >= 252 and l[-1] <= l[-252:].min()),
                 "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
-                      "parabolic": (k["parabolic"] or {}).get("ampel")}}
+                      "ermuedung": (k["ermuedung"] or {}).get("ampel")}}
         bewegt = z["wort"].startswith(("an der Schwelle", "Ausbruch")) and z["dir"] == "↑"
         hk = k.get("haupt") or {}
         if m["pivot"]:
@@ -117,10 +118,11 @@ def _stufe1(tk):
         info["luecken"] = ([f"M: {x}" for x in info["m"]["fehlt"]] if m["ampel"] != "grün" else [])
         if k.get("ep") and k["ep"]["ampel"] != "rot":
             info.update(reihe="k_ep", stern=k["ep"]["ampel"] == "grün", gruen=k["ep"]["ampel"] == "grün")
-        elif k.get("parabolic"):
-            ps = k["parabolic"]
-            info.update(reihe="k_parabolic", stern=ps["ampel"] == "grün", gruen=ps["ampel"] == "grün",
-                        abstand=0.0, luecken=[] if ps["ampel"] == "grün" else [f"K: Tag {ps['tag']} (erst Tag 3–5)"])
+        elif k.get("ermuedung"):
+            em = k["ermuedung"]
+            info.update(reihe="k_ermuedung", stern=em["ampel"] == "grün", gruen=em["ampel"] == "grün",
+                        abstand=abs((c[-1] / em["unten"] - 1) * 100),
+                        luecken=[] if em["ampel"] == "grün" else ["Short: zurück in der Flagge"])
         elif m["ampel"] == "grün" and bewegt:
             info.update(reihe="m_spitze", stern=True)
         elif k.get("breakout") and k["breakout"]["ampel"] != "rot":
@@ -202,7 +204,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     ergebnis = {"stand": stand, "erzeugt": time.strftime("%d.%m.%Y %H:%M"),
                 "barometer": {"m_gruen": sum(1 for x in stufe1 if (x.get("m") or {}).get("ampel") == "grün"),
                               "k_gruen": sum(1 for x in stufe1 if (x.get("k") or {}).get("ampel") == "grün"),
-                              "k_parabolic": sum(1 for x in stufe1 if (x.get("k") or {}).get("parabolic") == "grün"),
+                              "k_ermuedung": sum(1 for x in stufe1 if (x.get("k") or {}).get("ermuedung") == "grün"),
                               "hochs": sum(x["hoch52"] for x in stufe1), "tiefs": sum(x["tief52"] for x in stufe1),
                               "titel": len(stufe1)},
                 "titel": {x["tk"]: {k: v for k, v in x.items() if k != "tk"} for x in in_reihe},
@@ -241,11 +243,12 @@ def eintrag_von(tk):
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"m_spitze": 5, "k_ep": 5, "k_parabolic": 4, "k_breakout": 4, "m_weitere": 3, "vcp": 2, "flagge": 2, None: 0}
+RANG = {"m_spitze": 5, "k_ep": 5, "k_ermuedung": 4, "k_breakout": 4, "m_weitere": 3, "vcp": 2, "flagge": 2, None: 0}
 
 
 ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
-               "konsolidierung": "Ausbruch aus der Konsolidierung (alt)", "frueh": "Frühaufklärung (alt)"}
+               "konsolidierung": "Ausbruch aus der Konsolidierung (alt)", "frueh": "Frühaufklärung (alt)",
+               "k_parabolic": "Parabolic Short (alt)"}
 
 
 def _neu(vorher, jetzt):
@@ -368,7 +371,7 @@ def plan(tisch=None):
                                for tk, x in tisch["titel"].items()})
     b = tisch["barometer"]
     if "m_gruen" in b:
-        zahlen_ = f'{b["m_gruen"]} Minervini · {b["k_gruen"]} Kullamägi · {b["k_parabolic"]} Parabolic Short'
+        zahlen_ = f'{b["m_gruen"]} Minervini · {b["k_gruen"]} Kullamägi · {b.get("k_ermuedung", 0)} Ermüdung (short)'
     else:                                         # Tisch von vor den zwei Systemen
         zahlen_ = f'{b.get("long_gruen", 0)} long · {b.get("short_gruen", 0)} short'
     barometer = (
@@ -412,8 +415,6 @@ def plan(tisch=None):
         teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
         if key == WATCHLISTS_NACH:             # Watchlist direkt nach ★ Spitze (05.11.2026)
             watchlist_abschnitte()
-        if key == "k_parabolic":               # dazu der ganze US-Markt (Small Caps außerhalb des Reviers)
-            teile.append({"art": "html", "html": parabolic_markt()})
     teile.append({"art": "html", "html": station("termine")
                   + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
                   + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlist"
@@ -421,28 +422,6 @@ def plan(tisch=None):
                   + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
                     f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
     return teile
-
-
-def parabolic_markt():
-    """Parabolic-Short-Kandidaten aus dem ganzen US-Markt (Nachtlauf, parabolic.py) als Marken mit TradingView-Link."""
-    import parabolic
-    from gestaltung import AMPEL, KARTE, TEXT_2, t, zahl
-    d = parabolic.laden()
-    if not d:
-        inhalt = f'<span style="color:{TEXT_2}">kommt mit dem nächsten Nachtlauf</span>'
-        zeile_ = "noch keine Suche"
-    else:
-        tr = d["treffer"]
-        zeile_ = (f'{len(tr)} Kandidaten · Stand {d["stand"]} · ab 300 % in Folge, Umsatz ab 5 Mio. $; '
-                  f'grün = Tag 3–5 (Kullamägi: nie am ersten Tag, selten am zweiten)')
-        inhalt = "".join(
-            f'<a href="https://www.tradingview.com/chart/?symbol={t(x["ticker"])}" target="_blank" rel="noopener" '
-            f'style="border:1px solid {AMPEL[x["ampel"]]};border-radius:8px;padding:4px 10px;font-size:14px;'
-            f'color:inherit;text-decoration:none;background:{KARTE}"><b>{t(x["ticker"])}</b> '
-            f'<span style="color:{TEXT_2}">Tag {x["tag"]} · +{zahl(x["gewinn"], 0)} % · {zahl(x["kurs"])} $ · '
-            f'{zahl(x["umsatz_mio"], 0)} Mio. $</span></a>' for x in tr) or \
-            f'<span style="color:{TEXT_2}">zurzeit keine Serie ab 300 %</span>'
-    return _klapp("Parabolic Short im ganzen US-Markt", zeile_, inhalt)
 
 
 def _marken(x):

@@ -1,5 +1,6 @@
-"""System Kullamägi (05.11.2026): Momentum mit kurzem Atem, drei Setups und nicht mehr – Breakout, Episodic Pivot,
-Parabolic Short. Grundlage: sein Interview mit Jack Schwager („Market Wizards“-Reihe). Eines der zwei getrennten Systeme
+"""System Kullamägi (05.11.2026): Momentum mit kurzem Atem, drei Setups – Breakout, Episodic Pivot
+und als Short die Ermüdung nach Überdehnung (seit 06.11.2026 statt des Parabolic Short). Grundlage: sein Interview mit
+Jack Schwager („Market Wizards“-Reihe). Eines der zwei getrennten Systeme
 der App (das andere: system_minervini.py).
 
 Breakout (Momentum Burst nach Pradeep Bonde): rein technisch. Ein Führer im Aufwärtstrend geht nach einem Schub in eine
@@ -14,11 +15,9 @@ Episodic Pivot: eine Nachricht, die den Markt zur völligen Neubewertung zwingt,
   grün (in den letzten EP_TAGE Handelstagen, der Kurs hält das Tief des Sprungtags): Tagesgewinn ≥ 10 %, Eröffnung über
   dem Vortageshoch (echte Lücke), Volumen ≥ 3-fach des 50-Tage-Schnitts (Micky, 05.11.2026; 10-fach = ideal, Zeichen).
   Nachricht: Zahlen am Sprungtag werden erkannt, sonst „Nachricht prüfen“ (gelb).
-Parabolic Short: A+ = drei oder vier Tage in Folge gestiegen, zusammen mindestens 300 % (Small Caps). Nie am ersten Tag
-  short, selten am zweiten, meist am dritten oder vierten (Schwager: Tag 3, 4 oder 5). Auslöser = Schwäche: Bruch des
-  Tiefs der Eröffnungsspanne oder einer 5-Minuten-Kerze nach unten. Stopp am Tageshoch. Unabhängig vom Markt.
-  Schwelle: 300 % für Werte unter 2 Mrd $ Börsenwert; für größere Werte 50 % (aus Kullamägis Blog, nicht aus dem
-  Interview – als solche gekennzeichnet). Zusätzlich sucht der Nachtlauf im ganzen US-Markt (parabolic.py).
+Ermüdung nach Überdehnung (Short, 06.11.2026, vcp_zone.ermuedung): die Flagge des Scanners, im Ausgang gespiegelt –
+  Fahnenstange ≥ 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, dann Schluss unter der Unterkante.
+  Stopp über dem Hoch des Auslösetags. Zeichen: Volumen am Bruch über dem Schnitt.
 Stopp (alle): Tagestief beim Long, Tageshoch beim Short. Liegt er weiter weg als die durchschnittliche tägliche True Range
   (ADTR), kein Trade. Risiko 0,5 % des Kontos, höchstens 1 %.
 Ausstieg: Teilgewinn in den ersten 3–5 Tagen, Stopp für den Rest auf Einstand, dann Schluss unter dem 10- oder
@@ -28,6 +27,7 @@ Markt (markt_systeme.kullamaegi): Breakout und EP nur im Aufwärtstrend – eige
 import numpy as np
 
 import fuehrer_rang
+import vcp_zone
 
 EP_TAGE = 10
 EP_SPRUNG = 10.0
@@ -36,9 +36,6 @@ EP_VOLUMEN_IDEAL = 10.0
 EP_VORLAUF_MAX = 20.0        # vernachlässigt: in den 3 Monaten vor dem Sprung höchstens +20 % (Zeichen, keine Pflicht)
 KONS_GRUEN = (1, 3)          # Wochen
 KONS_GELB = 8
-PARA_KLEIN = 300.0
-PARA_GROSS = 50.0
-KLEIN_MRD = 2.0
 ADTR_TAGE = 20
 
 
@@ -120,40 +117,18 @@ def episodic_pivot(df, gewinn_tage=()):
     return None
 
 
-def parabolic(df, boersenwert_mrd=None):
-    """Laufende Serie steigender Schlüsse bis heute; Short-Kandidat ab Tag 2. None ohne Serie."""
-    c, h = df["Close"].to_numpy(float), df["High"].to_numpy(float)
-    n = 0
-    while n + 1 < len(c) and c[-1 - n] > c[-2 - n]:
-        n += 1
-    if n < 2:
-        return None
-    gewinn = (c[-1] / c[-1 - n] - 1) * 100
-    klein = boersenwert_mrd is not None and boersenwert_mrd < KLEIN_MRD
-    schwelle = PARA_KLEIN if klein or boersenwert_mrd is None else PARA_GROSS
-    if gewinn < schwelle:
-        return None
-    tag_ok = 3 <= n <= 5
-    regeln = [(f"Anstieg ab {schwelle:.0f} % in Folge" + ("" if schwelle == PARA_KLEIN else " (große Werte, Blog)"), True,
-               f"+{gewinn:.0f} % in {n} Tagen"),
-              ("Tag 3, 4 oder 5 (nie am ersten Tag, selten am zweiten)", tag_ok, f"Tag {n}")]
-    return {"art": "Parabolic Short", "ampel": "grün" if tag_ok else "gelb", "regeln": regeln, "tag": n,
-            "gewinn": gewinn, "stopp": float(h[-1]),
-            "ausloeser": "Schwäche abwarten: Bruch des Tiefs der Eröffnungsspanne oder einer 5-Minuten-Kerze nach unten"}
-
-
-def pruefen(df, erk, gewinn_tage=(), boersenwert_mrd=None, ticker=""):
+def pruefen(df, erk, gewinn_tage=(), ticker=""):
     fr = fuehrer_rang.von(ticker) if ticker else None
     b = breakout(df, erk, fr)
     ep = episodic_pivot(df, gewinn_tage)
-    ps = parabolic(df, boersenwert_mrd)
+    em = vcp_zone.ermuedung(df)
     setups = [x for x in (ep, b) if x]
     rang = {"grün": 0, "gelb": 1, "rot": 2}
     haupt = min(setups, key=lambda x: (rang[x["ampel"]], x["art"] != "Episodic Pivot")) if setups else None
     a = adtr(df)
     k = float(df["Close"].iloc[-1])
     return {"system": "K", "ampel": haupt["ampel"] if haupt else "rot", "haupt": haupt, "breakout": b, "ep": ep,
-            "parabolic": ps, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
+            "ermuedung": em, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
             "adtr_pct": a / k * 100 if a else None,
             "setup": haupt["art"] if haupt and haupt["ampel"] != "rot" else "keines",
             "ausstieg": ("Stopp am Tagestief des Einstiegstags (kein Trade, wenn weiter weg als eine Tagesspanne"

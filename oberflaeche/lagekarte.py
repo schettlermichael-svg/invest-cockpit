@@ -21,10 +21,10 @@ _SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px 
 
 
 def richtung(x):
-    """long (Reihen der Systeme und des VCP-Scanners), short (Parabolic Short) oder None (Richtung offen)."""
+    """long (Reihen der Systeme und des VCP-Scanners), short (Ermüdung nach Überdehnung) oder None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
-    if reihe == "k_parabolic":
+    if reihe == "k_ermuedung":
         return "short"
     if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "vcp", "flagge"):
         return "long"
@@ -146,15 +146,16 @@ def _pivot(erk):
 
 def _abstand(erk, kurs):
     """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe)."""
-    ps = ((erk.get("systeme") or {}).get("k") or {}).get("parabolic")
+    em = ((erk.get("systeme") or {}).get("k") or {}).get("ermuedung")
     p = _pivot(erk)
     if p:
         ab = (kurs / p - 1) * 100
         anteil = min(1.0, max(0.0, 1 + ab / 10)) if ab <= 0 else 1.0
         return "Abstand zum Pivot (long)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, \
             (GRUEN if 0 <= ab <= 5 else BLAU)
-    if ps:
-        return f"Parabolic Short, Tag {ps['tag']}", f"+{zahl(ps['gewinn'], 0)} %", 1.0, ROT
+    if em:
+        ab = (kurs / em["unten"] - 1) * 100
+        return "Abstand zur Unterkante (short)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", 1.0, ROT
     return "Abstand zum Pivot", "kein Setup", 0.0, GRAU
 
 
@@ -209,8 +210,8 @@ def _setup_kasten(kacheln, erk):
     am = s_[0][0] if isinstance(s_[0], tuple) else s_[0]
     ak = s_[0][1] if isinstance(s_[0], tuple) else None
     kw = (k.get("haupt") or {}).get("art") if (k.get("haupt") or {}).get("ampel") not in (None, "rot") else None
-    if not kw and k.get("parabolic"):
-        kw = f"Parabolic Short Tag {k['parabolic']['tag']}"
+    if not kw and k.get("ermuedung"):
+        kw = "Ermüdung (short)"
     zeilen = (f'<div><span style="color:{TEXT_3};font-size:12px">M</span> '
               f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
               f'{AMPEL.get(am or "grau", GRAU)};margin:0 4px"></span>{t(m.get("setup", "–"))}</div>'

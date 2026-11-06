@@ -105,18 +105,15 @@ def main(nur_tisch=False):
         import kartentisch
         t_ = kartentisch.rechnen(alle, melden=lambda x: print(x, flush=True))
         p["neu"] = len(t_["neu"])
-        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "k_breakout", "k_ep", "vcp", "flagge")}
+        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "k_breakout", "k_ep", "k_ermuedung", "vcp", "flagge")}
         return f"{len(t_['titel'])} Titel auf dem Tisch, {len(t_['neu'])} Neuigkeiten"
 
     def raenge():
         import fuehrer_rang
-        import parabolic
         import rs_rang
         r_, stand_ = rs_rang.raenge()
         f_, _ = fuehrer_rang.raenge()               # vor dem Kartentisch: die Prozesse lesen dann nur die Datei
-        ps = parabolic.suchen()
-        return (f"RS-Rang {len(r_)}, Führer-Rang {len(f_)} Titel (Stand {stand_}), Parabolic Short im ganzen Markt: "
-                f"{len(ps['treffer'])} Kandidaten")
+        return f"RS-Rang {len(r_)}, Führer-Rang {len(f_)} Titel (Stand {stand_})"
 
     def revier():
         import revier_pflege
@@ -127,7 +124,7 @@ def main(nur_tisch=False):
         return tv_kennzahlen.aktualisieren(alle)
 
     if nur_tisch:
-        schritt("RS-Rang, Führer-Rang (Kullamägi), Parabolic Short im ganzen Markt", raenge)
+        schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
         schritt("Kartentisch", tisch)
         schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
         p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -141,7 +138,7 @@ def main(nur_tisch=False):
     if datetime.now().weekday() == 4:            # freitags: Revier-Pflege (Zugänge, Abgänge gemeldet)
         schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
-    schritt("RS-Rang, Führer-Rang (Kullamägi), Parabolic Short im ganzen Markt", raenge)
+    schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")

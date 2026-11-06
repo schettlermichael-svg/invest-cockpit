@@ -34,6 +34,13 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
   Tiefs       = steigend als Zeichen, keine Pflicht (Shakeout erlaubt)
   Ampel       = grün: mindestens 2 Kontraktionen, schrumpfend, Enge ≤ 10 %, Volumen leiser · rot: die letzte
                 Kontraktion ist tiefer als die vorige · gelb: sonst · grau: keine fertige Zone
+
+Short – Ermüdung nach Überdehnung (Kullamägi-Stopp, 06.11.2026): die Flagge, im Ausgang gespiegelt. Die Truppe ist weit
+vorgestoßen, gräbt sich ein, dann bricht die Stellung nach hinten weg.
+  Fahnenstange ≥ 30 % in höchstens 13 Wochen, Zone 1–8 Wochen, höchstens 25 % tief (dieselbe Flagge wie oben, auch als
+  Flagge in einer Base) · Auslöser: Schluss unter der Unterkante (in den letzten ERM_TAGE Handelstagen) · Stopp über dem
+  Hoch des Auslösetags · Zeichen (kein Muss): Volumen am Bruch über dem 50-Tage-Schnitt
+  grün: Kurs schließt noch unter der Unterkante · gelb: zurück in der Flagge, Stopp nicht erreicht · weg: Stopp erreicht
 """
 import numpy as np
 import pandas as pd
@@ -264,6 +271,46 @@ def verlauf(df, tage=600):
             if b["laenge"] == "ok" and c[t] > b["oben"]:
                 fertig.append(dict(b, ende_i=t, ende=df.index[t]))
     return fertig
+
+
+ERM_TAGE = 5                   # Bruch höchstens 5 Handelstage her
+
+
+def ermuedung(df, tage=ERM_TAGE):
+    """Short-Setup Ermüdung nach Überdehnung oder None. Zone und Flagge so, wie sie am Vortag des Bruchs standen."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    n = len(df)
+    if n < 80:
+        return None
+    c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
+    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
+    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    for t in range(n - tage, n):
+        if c[t] >= l[t - FLAGGE_MIN_W * WOCHE:t].min():     # Vorprüfung: ohne Schluss unter den Tiefs der Woche kein Bruch
+            continue
+        z = zone(df.iloc[:t])
+        f = z if z.get("name") == "Flagge" else z.get("innen")
+        if not f or f["laenge"] != "ok" or c[t] >= f["unten"]:
+            continue
+        stopp = h[t]
+        if t < n - 1 and h[t + 1:].max() > stopp:                # Stopp erreicht: Setup vorbei
+            continue
+        unter = c[-1] < f["unten"]
+        vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
+        st = f["stange"]
+        datum = df.index[t]
+        regeln = [("Fahnenstange ab 30 % in höchstens 13 Wochen", True,
+                   f"+{st['prozent']:.0f} % in {st['wochen']:.0f} Wochen"),
+                  ("Flagge 1–8 Wochen, höchstens 25 % tief", True, f"{f['wochen']:.1f} Wochen, {f['tiefe']:.0f} %"),
+                  ("Schluss unter der Unterkante", True, f"{datum:%d.%m.} · {c[t]:.2f} unter {f['unten']:.2f}"),
+                  ("Kurs noch unter der Unterkante", unter, f"heute {c[-1]:.2f}"),
+                  ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
+                   f"{vol:.1f}-fach" if vol else "kein Volumen")]
+        return {"art": "Ermüdung nach Überdehnung", "ampel": "grün" if unter else "gelb",
+                "regeln": [(a, ok, x.replace(".", ",")) for a, ok, x in regeln],
+                "tag": datum, "tage_her": n - 1 - t, "oben": f["oben"], "unten": f["unten"], "stopp": float(stopp),
+                "stange": st["prozent"], "volumen": vol, "start": f["start"]}
+    return None
 
 
 def alles(df):

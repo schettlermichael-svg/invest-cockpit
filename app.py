@@ -189,7 +189,7 @@ def _tisch_knopf():
         st.rerun()
     st.session_state.tisch_lief = laeuft
     st.button("↻ Kartentisch neu rechnen", use_container_width=True, disabled=laeuft, on_click=_tisch_starten,
-              help="Rechnet RS-Rang, Führer-Rang, Parabolic Short, den Kartentisch mit beiden Systemen und die Lage neu – "
+              help="Rechnet RS-Rang, Führer-Rang, den Kartentisch mit beiden Systemen und die Lage neu – "
                    "mit den Kursen des letzten Nachtlaufs, ohne neuen Download. Läuft auf dem Server weiter, auch wenn "
                    "du die Seite schließt.")
     if text:

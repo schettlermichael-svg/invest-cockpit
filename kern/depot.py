@@ -199,8 +199,8 @@ def _deutsch(text):
 def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
     Zwei Systeme (05.11.2026): zuerst Minervini (Pivot, Tief der letzten Kontraktion, höchstens 8 %), dann Kullamägi
-    (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Parabolic Short: Stopp
-    am Tageshoch), sonst die Wertzone."""
+    (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Ermüdung nach Überdehnung (short):
+    Stopp über dem Hoch des Auslösetags), sonst die Wertzone."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     if m.get("pivot") and m.get("ampel") != "rot":
@@ -209,9 +209,9 @@ def plan(erk):
     if h.get("pivot") and h.get("ampel") != "rot" and k.get("adtr"):
         stopp = h.get("stopp") or float(h["pivot"]) - float(k["adtr"])
         return "long", float(h["pivot"]), float(stopp), "Tagestief, höchstens eine Tagesspanne (Kullamägi)"
-    ps = k.get("parabolic")
-    if ps:
-        return "short", float(erk.get("kurs") or ps["stopp"]), float(ps["stopp"]), "Tageshoch (Kullamägi)"
+    em = k.get("ermuedung")
+    if em:
+        return "short", float(erk.get("kurs") or em["unten"]), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)"
     w = erk.get("werte") or {}
     if "pivot" not in w:
         return None
