@@ -656,11 +656,11 @@ def tv_link(tk):
     return f"https://www.tradingview.com/chart/?symbol={_tv_symbol(tk)}"
 
 
-def chartkarte(z, ebene="Tag", ausschnitt=None):
+def chartkarte(z, ebene="Tag", ausschnitt=None, kasten_ansicht="Aktuell", gd_kurz=False):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
-    gezeichnet (Zeitebene, Ausschnitt, GD10/GD20), ohne die Seite neu zu rechnen."""
-    return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(z["erk"], ebene)}</div>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["erk"], z["ph_reihe"], z["index"], z["gewinne"], ausschnitt, z.get("sek"), z.get("etf", ""))}'
+    gezeichnet (Zeitebene, Ausschnitt, Kästen, GD10/GD20), ohne die Seite neu zu rechnen."""
+    return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(ebene, gd_kurz)}</div>'
+                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("kaesten"), kasten_ansicht, gd_kurz)}'
                        f'{z.get("rs_lesart", "")}</div>'), oben=0, unten=0)
 
 
@@ -843,6 +843,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
     oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
+    try:                                         # VCP-Scanner Baustein 1: Kasten jetzt und abgeschlossene Kästen
+        import vcp_kasten
+        zwischen["kaesten"] = vcp_kasten.alles(df)
+    except Exception:  # noqa: BLE001 – Chart ohne Kästen
+        zwischen["kaesten"] = None
     teile = []
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
