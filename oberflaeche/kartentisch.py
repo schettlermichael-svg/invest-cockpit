@@ -489,15 +489,19 @@ def _marken(x):
             + (f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g and r else "") + '</span>')
 
 
-# ── Lagekarte nach Sektoren (4.11.2026) ──
-# Ein Bild unter den Reihen: Zeilen = Sektoren (Feld der Frontkarte, stärkste zuerst), Spalten = Reihen. Jeder Titel
-# genau einmal, in der Spalte seiner Reihe; Watchlist-Titel mit ◆, ohne Reihe in der letzten Spalte. Die Themen-Gruppe
-# steht als ⚑ am Ticker, wenn sie im Feld Führend oder Erstarkend ist (O'Neil: Führer kommen im Rudel).
-SPALTEN = [("m_spitze", "★ M"), ("m_weitere", "Weitere M"), ("k_ep", "EP K"), ("k_breakout", "Breakout K"),
-           ("k_parabolic", "Parabolic K"), ("konsolidierung", "Ausbruch"), ("flagge", "Flagge"), ("frueh", "Radar"),
-           (None, "◆ ohne Reihe")]
-FELD_ORDNUNG = {"Führend": 0, "Erstarkend": 1, "Ermüdend": 2, "Abgehängt": 3}
-ZELLE = 8                     # Marken je Zelle sichtbar, der Rest aufklappbar – nichts wird gefiltert
+# ── Lagekarte nach Sektoren (4.11.2026, neu geordnet 6.11.2026) ──
+# Eine Frage: an welchem Frontabschnitt sammeln sich die Angriffe, und wer führt dort? Zeilen = Sektoren, sortiert nach
+# der Zahl der Angriffe (dann der Bereitstellung); drei Spalten statt neun: Angriff jetzt (Setup grün in einem der
+# Systeme, ★ oder frischer Ausbruch), Bereitstellung (übrige Reihen: Setup noch nicht grün, Flagge, Radar) und ◆ Watchlist
+# ohne Reihe. Je Zelle ein Balken mit der Zahl und die drei stärksten Titel; der Rest aufklappbar – nichts wird gefiltert.
+SPALTEN = [("jetzt", "Angriff jetzt"), ("bereit", "Bereitstellung"), ("watch", "◆ Watchlist ohne Reihe")]
+TOP = 3                       # Marken je Zelle sichtbar, der Rest aufklappbar
+
+
+def _spalte(x):
+    if not x.get("reihe"):
+        return "watch"
+    return "jetzt" if (x.get("stern") or x.get("gruen") or x.get("reihe") == "konsolidierung") else "bereit"
 
 
 def _sektor_etf(tk, rv):
@@ -513,7 +517,7 @@ def lagebild(tisch):
     import rudel
     import sektoren
     from frontkarte import FARBE, PFEILE, _pfeil
-    from gestaltung import BLAU, GRUEN, RAND, ROT, TEXT_2, TEXT_3, karte, t, zahl
+    from gestaltung import BLAU, GRUEN, RAND, TEXT_2, TEXT_3, karte, t, zahl
     try:
         rot = sektoren.rotation()
     except Exception:  # noqa: BLE001 – ohne Kurse der Sektor-ETFs nur die Zuordnung
@@ -527,7 +531,7 @@ def lagebild(tisch):
     for tk, x in tisch["titel"].items():
         if not x.get("reihe") and not x.get("listen"):
             continue
-        zellen.setdefault((_sektor_etf(tk, rv), x.get("reihe")), []).append((tk, x))
+        zellen.setdefault((_sektor_etf(tk, rv), _spalte(x)), []).append((tk, x))
 
     def marke(tk, x):
         stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # ★: jeder Spitzenkandidat (auch ältere Tische)
@@ -567,21 +571,30 @@ def lagebild(tisch):
                 f'<span class="hinweis-tip" style="left:0;right:auto;width:320px;font-family:IBM Plex Sans,system-ui">'
                 f'{tip}</span></span>')
 
-    def zelle(liste):
-        liste = sorted(liste, key=lambda p: _ordnung(p[1]))
+    hoechst = {k: max([len(v) for (e, s_), v in zellen.items() if s_ == k] or [1]) for k, _ in SPALTEN}
+    farbe_sp = {"jetzt": GRUEN, "bereit": BLAU, "watch": TEXT_3}
+
+    def zelle(liste, spalte):
+        liste = sorted(liste, key=lambda p: (-RANG.get(p[1].get("reihe"), 0) if spalte == "watch" else 0, _ordnung(p[1])))
         if not liste:
             return f'<span style="color:{TEXT_3}">–</span>'
-        sicht = "".join(marke(tk, x) for tk, x in liste[:ZELLE])
-        rest = liste[ZELLE:]
+        breite = max(6, 100 * len(liste) / hoechst[spalte])
+        balken = (f'<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:{RAND};'
+                  f'border-radius:4px"><div style="width:{breite:.0f}%;height:8px;border-radius:4px;'
+                  f'background:{farbe_sp[spalte]}"></div></div><b style="font-size:15px;min-width:22px;text-align:right">'
+                  f'{len(liste)}</b></div>')
+        sicht = "".join(marke(tk, x) for tk, x in liste[:TOP])
+        rest = liste[TOP:]
         if rest:
             sicht += (f'<details style="display:inline"><summary style="display:inline;cursor:pointer;color:{BLAU};'
                       f'font-size:13px">+{len(rest)}</summary> ' + " ".join(marke(tk, x) for tk, x in rest) + '</details>')
-        return f'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center">{sicht}</div>'
+        return balken + f'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px">{sicht}</div>'
 
-    etfs = sorted({e for e, _ in zellen}, key=lambda e: (FELD_ORDNUNG.get(rot.get(e, {}).get("feld"), 9),
+    zahl_von = lambda e, k: len(zellen.get((e, k), []))   # noqa: E731
+    etfs = sorted({e for e, _ in zellen}, key=lambda e: (-zahl_von(e, "jetzt"), -zahl_von(e, "bereit"),
                                                          -rot.get(e, {}).get("staerke", 0), e))
-    raster = f"190px repeat({len(SPALTEN)}, minmax(0, 1fr))"
-    kopf = (f'<div style="display:grid;grid-template-columns:{raster};gap:10px;padding:6px 0;font-size:13px;color:{TEXT_3};'
+    raster = "200px repeat(3, minmax(0, 1fr))"
+    kopf = (f'<div style="display:grid;grid-template-columns:{raster};gap:16px;padding:6px 0;font-size:13px;color:{TEXT_3};'
             f'letter-spacing:.05em;text-transform:uppercase"><span>Sektor · Feld · Stärke</span>'
             + "".join(f'<span>{t(n)} ({sum(len(v) for (e, r), v in zellen.items() if r == k)})</span>'
                       for k, n in SPALTEN) + '</div>')
@@ -594,12 +607,12 @@ def lagebild(tisch):
                      f'<span title="{t(PFEILE[pf])}">{pf}</span> <span style="color:{TEXT_2}">{zahl(r["staerke"], 0)}</span>')
         else:
             links = f'<b>{t(sektoren.SEKTOREN.get(e, "ohne Sektor"))}</b>'
-        zeilen.append(f'<div style="display:grid;grid-template-columns:{raster};gap:10px;padding:10px 0;'
+        zeilen.append(f'<div style="display:grid;grid-template-columns:{raster};gap:16px;padding:12px 0;'
                       f'border-top:1px solid {RAND};align-items:start"><div style="font-size:14px;line-height:1.5">{links}'
-                      f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []))}</div>' for k, _ in SPALTEN) + '</div>')
-    hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Zeilen: Sektoren nach Feld der Frontkarte '
-             f'(Führend → Erstarkend → Ermüdend → Abgehängt), darin nach Stärke. Jeder Titel genau einmal, in der Spalte '
-             f'seiner Reihe. Spalten M = System Minervini, K = System Kullamägi · Rahmen grün = long, rot = Parabolic Short, gelb = noch keine Reihe/Richtung offen (überall in der App) · kräftig mit ★ = Setup grün und Wertzone im Ausbruch (bzw. Parabolic Short an Tag 3–5) · voll = Setup grün · blass = Setup noch nicht grün (Maus zeigt, was fehlt) · Radar mit '
-             f'Auslöser (z. B. U↑) · ◆ = in deiner Watchlist · ⚑ = Themen-Gruppe Führend oder Erstarkend (Maus zeigt sie). '
-             f'Sammeln sich Angriffe in einer Zeile, rückt dort ein Rudel vor.</div>')
+                      f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []), k)}</div>' for k, _ in SPALTEN) + '</div>')
+    hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Oben der Abschnitt mit den meisten Angriffen. '
+             f'Angriff jetzt = Setup grün (Minervini oder Kullamägi) oder frischer Ausbruch · Bereitstellung = in einer '
+             f'Reihe, Setup noch nicht grün · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
+             f'die drei stärksten, „+n“ klappt den Rest auf · ★ Spitze · ◆ Watchlist · ⚑ Themen-Gruppe Führend/Erstarkend · '
+             f'Maus auf einen Titel zeigt Reihe, Wertzone und was fehlt.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")
