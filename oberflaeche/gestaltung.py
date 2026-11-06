@@ -174,8 +174,8 @@ def basename(muster):
     Die O'Neil/Minervini-Form ist nur noch ein Hinweis (form_hinweis), Pivot einheitlich (siehe erkennung.py)."""
     if not muster:
         return "–"
-    if muster[0].startswith("Zone"):
-        return muster[0]
+    if muster[0].startswith(("Wertzone", "Zone")):    # „Zone“: Kartentisch von vor dem 06.11.2026
+        return muster[0].replace("Zone", "Wertzone", 1) if muster[0].startswith("Zone") else muster[0]
     return muster[0] if muster[0] in SETUPS else "Base"
 
 

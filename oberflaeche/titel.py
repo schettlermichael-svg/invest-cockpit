@@ -135,38 +135,38 @@ def _seit(ph_reihe):
 
 
 AUSLOESER_HILFE = (
-    "A Ausbruch: Ein Tag schließt jenseits des Zonenrahmens, und sein eigener Wertbereich liegt ganz außerhalb. "
-    "Die Zone muss mindestens 3 Wochen alt sein. Die Front bricht.\n"
-    "F Fortsetzung: Dasselbe aus einer jüngeren Zone (unter 3 Wochen), die selbst aus einem Lauf in dieselbe "
+    "A Ausbruch: Ein Tag schließt jenseits des Wertzonenrahmens, und sein eigener Wertbereich liegt ganz außerhalb. "
+    "Die Wertzone muss mindestens 3 Wochen alt sein. Die Front bricht.\n"
+    "F Fortsetzung: Dasselbe aus einer jüngeren Wertzone (unter 3 Wochen), die selbst aus einem Lauf in dieselbe "
     "Richtung entstand, also eine Flagge. Kurze Rast, dann stößt die Truppe weiter vor.\n"
-    "B bestätigt: Der Wertbereich der ganzen Woche liegt außerhalb der Zone. Die POC-Treppe macht eine neue Stufe. "
+    "B bestätigt: Der Wertbereich der ganzen Woche liegt außerhalb der Wertzone. Die POC-Treppe macht eine neue Stufe. "
     "Neue Stellung bezogen.\n"
-    "R Rücktest hält: Der Kurs kommt zurück an die Kante der verlassenen Zone (long: an ihr VAH), schließt aber "
+    "R Rücktest hält: Der Kurs kommt zurück an die Kante der verlassenen Wertzone (long: an ihr VAH), schließt aber "
     "jenseits davon. Der Gegner greift die alte Linie an und wird abgewiesen.\n"
-    "S gescheitert: Ein Schluss liegt wieder im Wertbereich der verlassenen Zone. Das ist der Stopp. Der Durchbruch "
+    "S gescheitert: Ein Schluss liegt wieder im Wertbereich der verlassenen Wertzone. Das ist der Stopp. Der Durchbruch "
     "ist zurückgeschlagen.\n"
-    "U Umkehr: Nach einem gescheiterten Bruch (S) verlässt der Kurs die junge Zone in die Gegenrichtung – Schluss "
+    "U Umkehr: Nach einem gescheiterten Bruch (S) verlässt der Kurs die junge Wertzone in die Gegenrichtung – Schluss "
     "jenseits des Rahmens, Tageswert ganz außerhalb (Dalton: gescheiterte Auktion). Die Verkäufer fanden unten keine "
     "Abnehmer – die Front dreht.\n"
     "Alle Buchstaben gelten in beide Richtungen, mit ↑ oder ↓ dahinter (zum Beispiel A↓ = Bruch nach unten).")
 
 def _k_zone(erk):
-    """Zonen-Kachel (Market Profile): eines von vier Wörtern – Balance, an der Schwelle, Ausbruch (Tag n), bestätigt –
+    """Wertzonen-Kachel (Market Profile): eines von vier Wörtern – Balance, an der Schwelle, Ausbruch (Tag n), bestätigt –
     mit Richtung; darunter die Belege."""
     a = erk.get("mp")
     if not a:
-        return kachel("Zone", "grau", "–", "keine 30-Minuten-Kerzen geladen",
-                      "Die Zonen werden aus 30-Minuten-Kerzen gerechnet (Market Profile). Für diesen Titel fehlen sie; "
+        return kachel("Wertzone", "grau", "–", "keine 30-Minuten-Kerzen geladen",
+                      "Die Wertzonen werden aus 30-Minuten-Kerzen gerechnet (Market Profile). Für diesen Titel fehlen sie; "
                       "werkzeuge/tpo_laden.py lädt sie.")
     z = a["zustand"]
-    return kachel("Zone", z["ampel"], z["wort"], " · ".join(z["belege"][:3]),
-                  "Market Profile (Steidlmayer, Dalton) aus 30-Minuten-Kerzen. Die Zone besteht aus Wochen, deren "
+    return kachel("Wertzone", z["ampel"], z["wort"], " · ".join(z["belege"][:3]),
+                  "Market Profile (Steidlmayer, Dalton) aus 30-Minuten-Kerzen. Die Wertzone besteht aus Wochen, deren "
                   "Wertbereich (70 % der Zeit) sich überlappt. Balance: Tageswerte wechseln, POC pendelt. An der Schwelle: "
                   "mindestens 3 der letzten 5 Tageswerte höher (tiefer), keiner ganz dagegen, Tages-POC steigt (fällt), "
                   "Kurs im oberen (unteren) Drittel des Wertbereichs. Ausbruch (A): Schluss jenseits des Rahmens und "
-                  "Tageswert ganz außerhalb, Zone mindestens 3 Wochen alt (F bei jüngerer Zone nach einem Lauf in dieselbe "
+                  "Tageswert ganz außerhalb, Wertzone mindestens 3 Wochen alt (F bei jüngerer Wertzone nach einem Lauf in dieselbe "
                   "Richtung). Bestätigt (B): Wochenwert ganz außerhalb, die POC-Treppe macht eine Stufe. Gescheitert (S): "
-                  "Schluss zurück im Wertbereich der verlassenen Zone.\n\n" + AUSLOESER_HILFE)
+                  "Schluss zurück im Wertbereich der verlassenen Wertzone.\n\n" + AUSLOESER_HILFE)
 
 
 def _k_base(erk):
@@ -182,14 +182,14 @@ def _k_base(erk):
                 f"Bruch {s_['dir']} gescheitert am {s_['tag']:%d.%m.}" if s_ else "",
                 f"Umkehr {u_['dir']} am {u_['tag']:%d.%m.}" if u_ else "") if t)
         return kachel("Base", "grau", "keine – Umkehr", zeile,
-                      "Keine Base: Die Zone ist jünger als drei Wochen. Sie entstand aus einem Bruch, der gescheitert ist; "
+                      "Keine Base: Die Wertzone ist jünger als drei Wochen. Sie entstand aus einem Bruch, der gescheitert ist; "
                       "der Kurs hat sie in die Gegenrichtung verlassen (Umkehr nach einer gescheiterten Auktion, Dalton). "
                       "Eine Basennummer gibt es dafür nicht.")
     hist_ = erk.get("historie") or []
     zaehl = {a: sum(1 for b in hist_ if b["ausgang"] == a) for a in ("gelungen", "gescheitert", "offen")}
-    bilanz = (f" Bilanz der verlassenen Zonen der letzten drei Jahre: {zaehl['gelungen']} gelungen, "
+    bilanz = (f" Bilanz der verlassenen Wertzonen der letzten drei Jahre: {zaehl['gelungen']} gelungen, "
               f"{zaehl['gescheitert']} gescheitert, {zaehl['offen']} offen (gelungen = 20 % jenseits des Pivots, "
-              f"bevor ein Schluss 8 % dagegen lag). Einzelheiten: Maus auf einen Zonenrahmen im Chart." if hist_ else "")
+              f"bevor ein Schluss 8 % dagegen lag)." if hist_ else "")
     bz = w.get("basenzahl") if erk["muster"] else None
     if not bz:
         hist = erk.get("historie") or []
@@ -373,7 +373,7 @@ def _k2_setup(m, k, erk, df):
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), ps) if x))
     if erk.get("mp") and df is not None:
-        hilfe += "\n\nDruck in der Zone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(erk["mp"], df))
+        hilfe += "\n\nDruck in der Wertzone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(erk["mp"], df))
     return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe + "\n\n" + AUSLOESER_HILFE)
 
 
@@ -385,7 +385,7 @@ def _k2_enge(m, k, erk, df):
     b = k.get("breakout") or {}
     kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
     kk = (("grün" if kons[1] else "gelb" if b.get("wochen") and b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
-          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Zone")
+          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Wertzone")
     zeile = eng[2]
     if a:
         tiefs = "steigen" if a["steigend"] else "halten" if a["halten"] else "fallen"
@@ -530,7 +530,7 @@ RS_BILDER = [("beide steigen", "Führer im Markt und in seinem Sektor"),
 
 def _rs_lesart(df, index, sek, etf):
     """Hinweiskasten beim Überfahren des RS-Feldes im Chart: das heutige Bild (Richtung der letzten
-    3 Monate; unter ±2 % gilt eine Linie als seitwärts) und die vier Bilder. Die Zone liegt genau über
+    3 Monate; unter ±2 % gilt eine Linie als seitwärts) und die vier Bilder. Die Wertzone liegt genau über
     dem RS-Feld des Charts (SVG-Koordinaten y 604–724 von 760, x von 64 bis zur Etikettenspalte)."""
     if index is None:
         return ""
@@ -761,7 +761,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     sb = daten.steckbrief(tk)
     df.attrs["jung"] = len(df) < 300
     df.attrs["ticker"] = tk                      # für die Gegenprobe der Kurse (Massive)
-    try:                                         # 30-Minuten-Kerzen holen bzw. fortsetzen (Market-Profile-Zonen)
+    try:                                         # 30-Minuten-Kerzen holen bzw. fortsetzen (Wertzonen)
         tpo_daten.merken(tk)                     # geöffnet: gehört ab jetzt zum Abendlauf
         tpo_daten.kerzen(tk, df.iloc[:-1] if df.attrs.get("laufend") else df, abruf=True)
     except Exception:  # noqa: BLE001 – ohne Netz bleibt der Speicher

@@ -5,7 +5,7 @@ Start automatisch über launchd (werkzeuge/nachtlauf_einrichten.sh, Mo–Fr 22:4
 Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weiter und das Protokoll meldet ihn):
   1. Massive: Tageskurse aller US-Aktien des letzten Handelstags und Splits (Rudel, Kursverwandte, Themen-Gruppen, RS-Rang)
   2. Rudel, Kursverwandte und Themen-Gruppen neu rechnen
-  3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Market-Profile-Zonen), Ausland inklusive
+  3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlists, Positionen, geöffnete Titel, Gesamtmarkt) und Wechselkurse
   5. Lage: Wirtschaftswetter, Pendel, Marktbreite, Frontkarte, Marktrichtung (Übersicht einmal bauen = alle Quellen frisch)
   6. freitags Revier-Pflege (kern/revier_pflege.py: Zugänge nach den Revier-Regeln, Abgänge nur gemeldet)

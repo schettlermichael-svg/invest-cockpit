@@ -200,7 +200,7 @@ def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
     Zwei Systeme (05.11.2026): zuerst Minervini (Pivot, Tief der letzten Kontraktion, höchstens 8 %), dann Kullamägi
     (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Parabolic Short: Stopp
-    am Tageshoch), sonst die Zone."""
+    am Tageshoch), sonst die Wertzone."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     if m.get("pivot") and m.get("ampel") != "rot":
@@ -274,7 +274,7 @@ def _nach_dem_kauf(p, df, erk=None):
         neue_kante = w.get("val") if lang else w.get("vah")
         if z_beginn > pd.Timestamp(p.get("datum") or df.index[0]) and neue_kante and \
                 ((neue_kante > s) if lang else (neue_kante < s)):
-            aus.append(("gelb", f"Stopp nachziehen: neue Zone seit {z_beginn:%d.%m.} – Schluss {'unter VAL' if lang else 'über VAH'} "
+            aus.append(("gelb", f"Stopp nachziehen: neue Wertzone seit {z_beginn:%d.%m.} – Schluss {'unter VAL' if lang else 'über VAH'} "
                                 f"{neue_kante:.2f} als neuer Stopp (Market Profile)"))
     if len(seit) >= 1 and len(seit) <= 4 and lang:
         t = seit.iloc[0]

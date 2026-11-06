@@ -5,20 +5,20 @@ Tagesprofil: jede 30-Minuten-Kerze der regulären Sitzung ist ein Zeitabschnitt 
 POC: Zeile mit den meisten Marken; bei Gleichstand die zur Mitte der Spanne nächste.
 Wertbereich (70 %): vom POC aus werden je zwei Zeilen darüber und darunter verglichen und das Paar mit mehr Marken
     hinzugenommen (Steidlmayer), bis 70 % aller Marken erfasst sind.
-Zone (Dalton, überlappender Wert, Wochenprofile): eine abgeschlossene Woche gehört zur Zone, solange ihr Wertbereich den
-    gemeinsamen Wertbereich der Zone überlappt. Liegt er ganz darüber oder darunter, ist der Wert gewandert (B), mit
-    dieser Woche beginnt die nächste Zone.
+Wertzone (Dalton, überlappender Wert, Wochenprofile): eine abgeschlossene Woche gehört zur Wertzone, solange ihr Wertbereich den
+    gemeinsamen Wertbereich der Wertzone überlappt. Liegt er ganz darüber oder darunter, ist der Wert gewandert (B), mit
+    dieser Woche beginnt die nächste Wertzone.
 Tageswert zum Vortag: ▲ ganz höher · △ überlappend höher · ▬ unverändert (innen/außen) · ▽ überlappend tiefer · ▼ ganz tiefer.
 
-Auslöser je Tag, gemessen an der Zone der abgeschlossenen Wochen davor (kein Blick in die Zukunft):
-    A  Schluss jenseits des Rahmens und Tageswert ganz außerhalb des Zonenwerts, Zone mindestens 3 Wochen alt
-    F  dasselbe in einer jüngeren Zone, die selbst aus einem Ausbruch in dieselbe Richtung entstand (Fortsetzung)
-    U  dasselbe in einer jüngeren Zone, deren Bruch in die Gegenrichtung gescheitert ist (S) – Umkehr nach einer
+Auslöser je Tag, gemessen an der Wertzone der abgeschlossenen Wochen davor (kein Blick in die Zukunft):
+    A  Schluss jenseits des Rahmens und Tageswert ganz außerhalb des Wertzonenwerts, Wertzone mindestens 3 Wochen alt
+    F  dasselbe in einer jüngeren Wertzone, die selbst aus einem Ausbruch in dieselbe Richtung entstand (Fortsetzung)
+    U  dasselbe in einer jüngeren Wertzone, deren Bruch in die Gegenrichtung gescheitert ist (S) – Umkehr nach einer
        gescheiterten Auktion (Dalton: „look below and fail“ / „look above and fail“)
     B  Wochenwert ganz außerhalb (am letzten Tag der Woche)
-    R  Rücktest der verlassenen Zone, der hält – ↑: Tief ≤ altes VAH, Schluss > altes VAH, Tages-VAL ≥ alter POC
+    R  Rücktest der verlassenen Wertzone, der hält – ↑: Tief ≤ altes VAH, Schluss > altes VAH, Tages-VAL ≥ alter POC
        (↓ gespiegelt: Hoch ≥ altes VAL, Schluss < altes VAL, Tages-VAH ≤ alter POC)
-    S  gescheitert: Schluss zurück im Wertbereich der verlassenen Zone (↑: unter ihrem VAH, ↓: über ihrem VAL)
+    S  gescheitert: Schluss zurück im Wertbereich der verlassenen Wertzone (↑: unter ihrem VAH, ↓: über ihrem VAL)
 Zustand am letzten Tag: Balance · an der Schwelle · Ausbruch (Tag n) · bestätigt – jeweils mit Richtung.
 """
 import numpy as np
@@ -27,7 +27,7 @@ import pandas as pd
 STUFE = 0.002            # Preiszeile 0,2 %
 WERT = 0.70              # Wertbereich 70 %
 LOG_STUFE = np.log1p(STUFE)
-ZONE_REIF = 3            # A erst ab einer Zone von 3 Wochen; jüngere Zonen: F (Fortsetzung) – Flaggenregel
+ZONE_REIF = 3            # A erst ab einer Wertzone von 3 Wochen; jüngere Wertzonen: F (Fortsetzung) – Flaggenregel
 SCHWELLE_TAGE = 5        # an der Schwelle: Tageswerte der letzten 5 Tage
 SCHWELLE_MIN = 3         # … davon mindestens 3 in eine Richtung (▲/△ bzw. ▼/▽) und keiner ganz dagegen
 ZEICHEN = {"hoch": "▲", "ueber": "△", "gleich": "▬", "unter": "▽", "tief": "▼"}
@@ -110,7 +110,7 @@ def beziehung(p, v):
 
 
 def _zonen_verlauf(wochen):
-    """Zonen aus abgeschlossenen Wochen. Gibt (zonen, stand) zurück: stand[k] = Zone nach Woche k (so, wie sie an dem
+    """Wertzonen aus abgeschlossenen Wochen. Gibt (zonen, stand) zurück: stand[k] = Wertzone nach Woche k (so, wie sie an dem
     Tag bekannt war: Wertbereich, Rahmen, Alter in Wochen, Herkunft = Richtung des Ausbruchs, mit dem sie begann)."""
     zonen, stand, cur = [], [], None
     for k, w in enumerate(wochen):
@@ -173,7 +173,7 @@ def analyse(df30, tages=None):
             continue
         ref = stand[vorher]
         c = p["schluss"]
-        # Ablauf: eine aktive Bewegung endet, wenn die neue Zone selbst reif ist (neue Balance auf neuer Höhe)
+        # Ablauf: eine aktive Bewegung endet, wenn die neue Wertzone selbst reif ist (neue Balance auf neuer Höhe)
         if aktiv and ref["nr"] != aktiv["zone"]["nr"] and ref["wochen"] >= ZONE_REIF and aktiv.get("bestaetigt"):
             aktiv = None
         # S – gescheitert
@@ -205,7 +205,7 @@ def analyse(df30, tages=None):
                 aktiv["rueck"] = True                # je Lauf der erste Rücktest, der hält
                 signale.append({"i": i, "tag": p["tag"], "art": "R", "dir": aktiv["dir"], "preis": c,
                                 "zone": aktiv["zone"]["nr"]})
-        # B – am letzten Tag einer Woche, deren Wert die Zone verlassen hat
+        # B – am letzten Tag einer Woche, deren Wert die Wertzone verlassen hat
         kw = ende_woche.get(p["tag"])
         if kw is not None and stand[kw]["neu"]:
             d = stand[kw]["neu"]
@@ -213,7 +213,7 @@ def analyse(df30, tages=None):
             signale.append({"i": i, "tag": p["tag"], "art": "B", "dir": d, "preis": c, "zone": alt["nr"]})
             if not aktiv or aktiv["dir"] != d:
                 aktiv = {"dir": d, "zone": alt, "seit": i, "art": "B"}
-            aktiv["zone"] = alt                     # jede neue Stufe: Stop an der zuletzt verlassenen Zone (Treppe)
+            aktiv["zone"] = alt                     # jede neue Stufe: Stop an der zuletzt verlassenen Wertzone (Treppe)
             aktiv["bestaetigt"] = True
             gemeldet.add((alt["nr"], d))
 
@@ -238,7 +238,7 @@ def _zustand(tage, stand, aktiv, gescheitert, signale):
         d = aktiv["dir"]
         z = aktiv["zone"]
         kante = z["vah"] if d == "↑" else z["val"]
-        belege.append(f"verlassene Zone: {'VAH' if d == '↑' else 'VAL'} {_zahl(kante)} $ (Stop bei Schluss "
+        belege.append(f"verlassene Wertzone: {'VAH' if d == '↑' else 'VAL'} {_zahl(kante)} $ (Stop bei Schluss "
                       f"{'darunter' if d == '↑' else 'darüber'})")
         if aktiv.get("bestaetigt"):
             return {"wort": f"bestätigt {d}", "dir": d, "ampel": "grün", "belege": belege}
@@ -249,7 +249,7 @@ def _zustand(tage, stand, aktiv, gescheitert, signale):
     lage_text = ("über dem Wertbereich" if lage > 1 else "im oberen Drittel des Wertbereichs" if lage >= 2 / 3 else
                  "in der Mitte des Wertbereichs" if lage > 1 / 3 else "im unteren Drittel des Wertbereichs" if lage >= 0
                  else "unter dem Wertbereich")
-    belege.append(f"Kurs {lage_text} der Zone ({_zahl(ref['val'])}–{_zahl(ref['vah'])} $)")
+    belege.append(f"Kurs {lage_text} der Wertzone ({_zahl(ref['val'])}–{_zahl(ref['vah'])} $)")
     hoch = sum(b in ("hoch", "ueber") for b in folge)
     tief = sum(b in ("tief", "unter") for b in folge)
     if hoch >= SCHWELLE_MIN and "tief" not in folge and p["poc"] > poc_vor and lage >= 2 / 3:

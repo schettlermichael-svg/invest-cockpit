@@ -7,13 +7,13 @@ der ihn zeigt.
 Zustände (Ampel):
     Bestätigter Aufwärtstrend   grün   nach einem Follow-Through-Day, höchstens 3 Distributionstage
     Aufwärtstrend unter Druck   gelb   4 Distributionstage in einem Index
-    Korrektur                   rot    5 Distributionstage in einem Index UND die Zone (Market Profile) von S&P 500
+    Korrektur                   rot    5 Distributionstage in einem Index UND die Wertzone (Market Profile) von S&P 500
                                        oder Nasdaq ist nach unten gebrochen (A↓, F↓ oder B↓, nicht zurückgeholt);
                                        oder ein Index schließt unter dem Tief, von dem der letzte Follow-Through-Day
                                        ausging
     Ergänzung 4.11.2026 (nicht aus dem Buch): IBD selbst bleibt bei vielen Verteilungstagen „unter Druck“, solange
-    die Indizes nahe am Hoch stehen. Ohne Bruch der Zone bleibt die Ampel deshalb gelb. Zonen aus SPY und QQQ
-    (30-Minuten-Kerzen); fehlen sie für einen Tag, gilt die Zone als gebrochen (Regel wie vorher).
+    die Indizes nahe am Hoch stehen. Ohne Bruch der Wertzone bleibt die Ampel deshalb gelb. Wertzonen aus SPY und QQQ
+    (30-Minuten-Kerzen); fehlen sie für einen Tag, gilt die Wertzone als gebrochen (Regel wie vorher).
 
 Ende der Korrektur: Follow-Through-Day ab Tag 4 (Tag 3 nur, wenn die Tage 1–3 im Schnitt mindestens +2 %
 brachten – O'Neils seltene Ausnahme), oder – Ergänzung, nicht aus dem Buch – ein Index schließt über dem
@@ -28,7 +28,7 @@ import pandas as pd
 import marktdaten as md
 
 INDIZES = {"S&P 500": "^GSPC", "Nasdaq": "^IXIC"}
-ZONEN_TITEL = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # Market-Profile-Zonen der Indizes über die ETFs
+ZONEN_TITEL = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # Wertzonen der Indizes über die ETFs
 DT_SCHWELLE = -0.2      # Distributionstag: Schluss mindestens 0,2 % tiefer bei höherem Volumen als am Vortag
 DT_FENSTER = 25         # er zählt 25 Handelstage (5 Wochen) …
 DT_VERFALL = 0.10       # … oder bis der Index seither um mehr als 10 % gestiegen ist
@@ -48,7 +48,7 @@ def _angleichen(daten):
 
 
 def zonen_bruch():
-    """Für S&P 500 und Nasdaq: (Analyse, Liste der Zonen-Ereignisse) – Ereignis = (Tag, 'ab' oder 'auf')."""
+    """Für S&P 500 und Nasdaq: (Analyse, Liste der Wertzonen-Ereignisse) – Ereignis = (Tag, 'ab' oder 'auf')."""
     import marketprofile
     import tpo_daten
     aus = {}
@@ -68,7 +68,7 @@ def zonen_bruch():
 
 
 def _gebrochen(bruch, tag):
-    """True, wenn an diesem Tag die Zone eines Index nach unten gebrochen ist; ohne Zonendaten True (alte Regel)."""
+    """True, wenn an diesem Tag die Wertzone eines Index nach unten gebrochen ist; ohne Wertzonendaten True (alte Regel)."""
     if not bruch:
         return True
     ohne = True
@@ -84,7 +84,7 @@ def _gebrochen(bruch, tag):
 
 def verlauf(daten, bruch=None):
     """Läuft Tag für Tag durch; liefert eine Liste (Datum, Zustand, Zähler je Index, FTD, Erholungsversuch).
-    bruch: zonen_bruch() – Korrektur durch Verteilungstage nur bei gebrochener Zone."""
+    bruch: zonen_bruch() – Korrektur durch Verteilungstage nur bei gebrochener Wertzone."""
     tage, daten = _angleichen(daten)
     namen = list(daten)
     C = {n: daten[n]["Close"].to_numpy(float) for n in namen}
@@ -157,7 +157,7 @@ def richtung(bis=None):
         daten[name] = df.iloc[-VORLAUF:]
     try:
         bruch = zonen_bruch()
-    except Exception:  # noqa: BLE001 – ohne Zonen gilt die Regel wie vorher
+    except Exception:  # noqa: BLE001 – ohne Wertzonen gilt die Regel wie vorher
         bruch = {}
     tage = verlauf(daten, bruch)
     heute = tage[-1]
@@ -167,7 +167,7 @@ def richtung(bis=None):
             break
         seit = x["tag"]
     teile = ["Distributionstage " + " · ".join(f"{n} {len(d)}" for n, d in heute["dt"].items()) + " in 5 Wochen"]
-    for n_, (a_, _, _) in bruch.items():          # Zone je Index (Market Profile), z. B. „S&P 500: Balance“
+    for n_, (a_, _, _) in bruch.items():          # Wertzone je Index (Market Profile), z. B. „S&P 500: Balance“
         teile.append(f"{n_}: {a_['zustand']['wort']}")
     if heute["zustand"] == "Korrektur":
         if heute["versuch"]:
