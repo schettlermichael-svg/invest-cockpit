@@ -1,4 +1,4 @@
-"""Übersicht „Lage am Abend“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
+"""Übersicht „Lageeinschätzung“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
 Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
   ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; darunter der
                    Dalio-Quad als Bild mit Spur der letzten 13 Wochen (quadbild.py)
@@ -157,7 +157,7 @@ def seite_uebersicht():
             f'gap:16px;border-bottom:1px solid {RAND};padding-bottom:16px">'
             f'<div style="display:flex;flex-direction:column;gap:4px">'
             f'<div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:{TEXT_3}">SEPA · Invest Cockpit</div>'
-            f'<h1 style="margin:0;font-size:32px;font-weight:600">Lage am Abend</h1></div>'
+            f'<h1 style="margin:0;font-size:32px;font-weight:600">Lageeinschätzung</h1></div>'
             f'<div style="display:flex;gap:16px;font-size:14px;color:{TEXT_2}">'
             f'<span>Stand {stand:%d.%m.%Y}</span>'
             f'<span title="Datenampel aus dem Protokoll des Nachtlaufs (daten/nachtlauf/protokoll.json)" '
