@@ -311,8 +311,11 @@ def _tabelle(teil, nr):
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
     zaehler = f"tab_n_{nr}"
     n = st.session_state.setdefault(zaehler, 0)
-    # steht schon im Ausklappmenü des Abschnitts – Streamlit erlaubt kein Ausklappmenü im Ausklappmenü
-    st.caption(f"alle weiteren {len(zeilen)} · Zeile anklicken öffnet die Lagekarte")
+    # Zweite Stufe im Ausklappmenü des Abschnitts: Streamlit erlaubt kein Ausklappmenü im Ausklappmenü, daher ein
+    # Schalter, der genauso auf- und zuklappt (06.11.2026)
+    schalter = getattr(st, "toggle", st.checkbox)
+    if not schalter(f"▸ alle weiteren {len(zeilen)} als Liste · Zeile anklicken öffnet die Lagekarte", key=f"weitere_{nr}"):
+        return
     ereignis = st.dataframe(stil, hide_index=True, use_container_width=True, on_select="rerun",
                             selection_mode="single-row", key=f"tab_{nr}_{n}",
                             height=min(420, 35 * (len(zeilen) + 1) + 3),
