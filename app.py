@@ -181,6 +181,35 @@ def watchlists_verwalten():
                 st.rerun()
 
 
+sys.path.insert(0, os.path.join(HIER, "werkzeuge"))
+import nachtlauf  # noqa: E402
+
+
+def _tisch_starten():
+    if nachtlauf.tisch_lauf_starten():
+        st.session_state.tisch_lief = True
+        st.toast("Kartentisch wird neu gerechnet – dauert eine Weile, die Seite füllt sich danach von selbst")
+
+
+def _tisch_knopf():
+    """Übersicht: Kartentisch (Ränge, Erkennung beider Systeme, Lage) mit den vorhandenen Kursen neu rechnen."""
+    laeuft, text = nachtlauf.tisch_lauf_stand()
+    if st.session_state.get("tisch_lief") and not laeuft:   # gerade fertig geworden: ganze Seite neu zeigen
+        st.session_state.tisch_lief = False
+        st.rerun()
+    st.session_state.tisch_lief = laeuft
+    st.button("↻ Kartentisch neu rechnen", use_container_width=True, disabled=laeuft, on_click=_tisch_starten,
+              help="Rechnet RS-Rang, Führer-Rang, Parabolic Short, den Kartentisch mit beiden Systemen und die Lage neu – "
+                   "mit den Kursen des letzten Nachtlaufs, ohne neuen Download. Läuft auf dem Server weiter, auch wenn "
+                   "du die Seite schließt.")
+    if text:
+        st.caption(text)
+
+
+_FRAGMENT = getattr(st, "fragment", None)
+tisch_knopf = _FRAGMENT(run_every=30)(_tisch_knopf) if _FRAGMENT else _tisch_knopf
+
+
 def konto_knopf():
     """Übersicht: Konto und Risiko je Trade (Voreinstellung 1 %, auf Wunsch einstellbar)."""
     d = depot.laden()
@@ -390,7 +419,9 @@ def zeigen(name, *args):
 
 
 if ansicht == "Übersicht":
-    _, w_, k_ = st.columns([8, 2, 2])
+    _, n_, w_, k_ = st.columns([6, 2, 2, 2])
+    with n_:
+        tisch_knopf()
     with w_:
         watchlists_verwalten()
     with k_:

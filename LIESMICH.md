@@ -412,6 +412,14 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   2 : 1. Das CRV ist ein Maß, ob sich der Einsatz lohnt – kein Ausstieg: Gewinne laufen lassen, Stopp nachziehen.
   Chart: „1. Hürde … $“ gelb gepunktet, CRV an den Stopp-Etiketten; Etikettenspalte 200 px.
 
+## Knopf „Kartentisch neu rechnen“ (06.11.2026)
+
+Oben in der Übersicht. Rechnet Ränge (RS, Führer, Parabolic Short), den Kartentisch mit beiden Systemen und die Lage
+neu – mit den Kursen des letzten Nachtlaufs, ohne Download (`werkzeuge/nachtlauf.py --tisch`). Läuft als eigener
+Prozess auf dem Server, eigenes Protokoll `daten/nachtlauf/tisch_lauf.json` (Log `tisch_lauf.log`), die Datenampel
+bleibt beim Nachtlauf. Gesperrt, solange der Nachtlauf oder ein Tischlauf läuft. Ist er fertig, lädt die Seite neu.
+Achtung: Neuer Code aus GitHub startet die App neu und bricht einen laufenden Tischlauf ab.
+
 ## Übersicht als Trichter (05.11.2026)
 Die Übersicht ist der breite Rand des Trichters, die Titelseite der schmale Hals. Inhalt unverändert, nur geordnet nach
 Stationen mit ihrer Frage und einer Sprungleiste unter dem Kopf (`gestaltung.STATIONEN`, `station()`, `sprungleiste()`):

@@ -28,12 +28,14 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, os.path.join(HIER, "..", "oberflaeche"))
 sys.path.insert(0, HIER)
 PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "protokoll.json")
+TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.json")   # Knopf in der Übersicht
+TISCH_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.log")
 SCHLUSS = (7, 0)              # Massive-Durchgänge enden morgens, damit der Mac tagsüber frei ist
 
 
-def _schreiben(p):
-    os.makedirs(os.path.dirname(PROTOKOLL), exist_ok=True)
-    json.dump(p, open(PROTOKOLL, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+def _schreiben(p, datei=PROTOKOLL):
+    os.makedirs(os.path.dirname(datei), exist_ok=True)
+    json.dump(p, open(datei, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
 def _mitteilung(text):
@@ -43,12 +45,15 @@ def _mitteilung(text):
         pass
 
 
-def main():
+def main(nur_tisch=False):
+    """nur_tisch (Knopf „Kartentisch neu rechnen“ in der Übersicht): nur Ränge, Kartentisch und Lage mit den
+    vorhandenen Kursen – eigenes Protokoll, die Datenampel des Nachtlaufs bleibt unberührt."""
     import tpo_daten
     import tpo_laden
     tpo_daten._mehr_dateien()
-    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "schritte": []}
-    _schreiben(p)
+    datei = TISCH_PROTOKOLL if nur_tisch else PROTOKOLL
+    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "schritte": [], "pid": os.getpid()}
+    _schreiben(p, datei)
 
     def schritt(name, f):
         t0 = time.time()
@@ -60,7 +65,7 @@ def main():
             text, ok = f"{type(e).__name__}: {e}", False
             traceback.print_exc()
         p["schritte"].append({"name": name, "ok": ok, "text": str(text)[:300], "sekunden": round(time.time() - t0)})
-        _schreiben(p)
+        _schreiben(p, datei)
         print(f"    {'✓' if ok else '✗'} {text}", flush=True)
         return ok
 
@@ -121,6 +126,14 @@ def main():
         import tv_kennzahlen
         return tv_kennzahlen.aktualisieren(alle)
 
+    if nur_tisch:
+        schritt("RS-Rang, Führer-Rang (Kullamägi), Parabolic Short im ganzen Markt", raenge)
+        schritt("Kartentisch", tisch)
+        schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
+        p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
+        _schreiben(p, datei)
+        return
+
     schritt("Massive: Tageskurse und Splits", massive_tage)
     schritt("Rudel, Kursverwandte, Themen-Gruppen", rudel_neu)
     schritt("30-Minuten-Kerzen (Yahoo)", kerzen_neu)
@@ -135,7 +148,7 @@ def main():
     _schreiben(p)
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
-                + f"{(p.get('reihen') or {}).get('spitze', 0)} Spitzenkandidaten · {p.get('neu', 0)} Neuigkeiten")
+                + f"{(p.get('reihen') or {}).get('m_spitze', 0)} Spitzenkandidaten · {p.get('neu', 0)} Neuigkeiten")
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis morgens
     durchgang = 0
@@ -185,5 +198,56 @@ def stand():
     return "grün", text
 
 
+def _laeuft(datei, stunden):
+    """Protokoll ohne Ende, jünger als `stunden` und der Prozess lebt noch → (True, Protokoll)."""
+    try:
+        p = json.load(open(datei, encoding="utf-8"))
+    except (OSError, ValueError):
+        return False, None
+    if p.get("ende"):
+        return False, p
+    alter = (datetime.now() - datetime.strptime(p["start"], "%d.%m.%Y %H:%M")).total_seconds() / 3600
+    if alter > stunden:
+        return False, p
+    pid = p.get("pid")
+    if pid:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False, p
+        except PermissionError:
+            pass
+    return True, p
+
+
+def tisch_lauf_stand():
+    """Für den Knopf: (laeuft, Text). Läuft gerade der Nachtlauf, wird nicht doppelt gerechnet."""
+    nacht, _ = _laeuft(PROTOKOLL, 12)
+    if nacht:
+        return True, "Der Nachtlauf rechnet gerade – der Kartentisch kommt mit ihm."
+    laeuft, p = _laeuft(TISCH_PROTOKOLL, 3)
+    if p is None:
+        return False, ""
+    namen = ["Ränge", "Kartentisch", "Lage"]
+    fehler = [s["name"] for s in p.get("schritte", []) if not s["ok"]]
+    if laeuft:
+        i = min(len(p.get("schritte", [])), 2)
+        return True, f"Läuft seit {p['start'][-5:]} Uhr · Schritt {i + 1} von 3: {namen[i]}"
+    if not p.get("ende"):
+        return False, f"Lauf vom {p['start']} brach ab"
+    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {', '.join(fehler)}" if fehler else "✓"))
+
+
+def tisch_lauf_starten():
+    """Startet `nachtlauf.py --tisch` als eigenen Prozess (die App wartet nicht darauf)."""
+    if tisch_lauf_stand()[0]:
+        return False
+    os.makedirs(os.path.dirname(TISCH_LOG), exist_ok=True)
+    log = open(TISCH_LOG, "w", encoding="utf-8")
+    subprocess.Popen([sys.executable, "-u", os.path.abspath(__file__), "--tisch"], cwd=os.path.join(HIER, ".."),
+                     stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+    return True
+
+
 if __name__ == "__main__":
-    main()
+    main(nur_tisch="--tisch" in sys.argv)
