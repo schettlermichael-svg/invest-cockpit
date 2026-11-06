@@ -38,7 +38,7 @@ import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
 import gestaltung                                     # noqa: E402
 from chart import chart, legende, reaktionen           # noqa: E402
-from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, basename, kachel, kachel2, karte,  # noqa: E402
+from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, kachel2, karte,  # noqa: E402
                         seite, t, zahl)
 
 PHASENTEXT = {1: "Bodenbildung", 2: "Aufwärtstrend", 3: "Gipfelphase", 4: "Abwärtstrend"}
@@ -170,46 +170,36 @@ def _k_zone(erk):
 
 
 def _k_base(erk):
-    w = erk["werte"]
-    if erk["muster"] and erk["muster"][0] == "Umkehr":
-        sig = (erk.get("mp") or {}).get("signale") or []
-        s_ = next((x for x in reversed(sig) if x["art"] == "S"), None)
-        u_ = next((x for x in reversed(sig) if x["art"] == "U"), None)
-        if s_ and u_ and s_["tag"] == u_["tag"]:
-            zeile = f"am {u_['tag']:%d.%m.}: Bruch {s_['dir']} gescheitert, Umkehr {u_['dir']}"
-        else:
-            zeile = " · ".join(t for t in (
-                f"Bruch {s_['dir']} gescheitert am {s_['tag']:%d.%m.}" if s_ else "",
-                f"Umkehr {u_['dir']} am {u_['tag']:%d.%m.}" if u_ else "") if t)
-        return kachel("Base", "grau", "keine – Umkehr", zeile,
-                      "Keine Base: Die Wertzone ist jünger als drei Wochen. Sie entstand aus einem Bruch, der gescheitert ist; "
-                      "der Kurs hat sie in die Gegenrichtung verlassen (Umkehr nach einer gescheiterten Auktion, Dalton). "
-                      "Eine Basennummer gibt es dafür nicht.")
-    hist_ = erk.get("historie") or []
-    zaehl = {a: sum(1 for b in hist_ if b["ausgang"] == a) for a in ("gelungen", "gescheitert", "offen")}
-    bilanz = (f" Bilanz der verlassenen Wertzonen der letzten drei Jahre: {zaehl['gelungen']} gelungen, "
-              f"{zaehl['gescheitert']} gescheitert, {zaehl['offen']} offen (gelungen = 20 % jenseits des Pivots, "
-              f"bevor ein Schluss 8 % dagegen lag)." if hist_ else "")
-    bz = w.get("basenzahl") if erk["muster"] else None
+    """Kachel „Base“: die wievielte Base nach IBD/O'Neil, gezählt auf den Scanner-Zonen (basen.py, 06.11.2026)."""
+    bs = erk.get("basen") or {}
+    liste = bs.get("liste") or []
+    z_ = bs.get("bilanz") or {}
+    bilanz = (f" Bilanz der abgeschlossenen Zonen der letzten gut zwei Jahre: {z_.get('gelungen', 0)} gelungen, "
+              f"{z_.get('gescheitert', 0)} gescheitert, {z_.get('offen', 0)} offen (gelungen = 20 % über dem Pivot, "
+              f"bevor ein Schluss 8 % darunter lag)." if liste else "")
+    regel = (" Gezählt wird ab dem Beginn der Phase 2 oder dem letzten Markttief nach einer Korrektur ab 15 % – was "
+             "später liegt; eine Zone zählt erst als neue Base, wenn ihre Oberkante 20 % über der zuletzt gezählten liegt "
+             "(sonst Base auf Base, gleiche Nummer). Basen und Flaggen zählen.")
+    bz = bs.get("zahl")
     if not bz:
-        hist = erk.get("historie") or []
-        if not hist:
-            return kachel("Base", "grau", "keine", "auch keine frühere in drei Jahren", "")
-        b = hist[-1]
+        if not liste:
+            return kachel("Base", "grau", "keine", "auch keine abgeschlossene Zone in gut zwei Jahren", regel)
+        b = liste[-1]
         return kachel("Base", {"gelungen": "grün", "gescheitert": "rot"}.get(b["ausgang"], "gelb"),
                       f"vorige {b['ausgang']}",
-                      f"{basename(b['muster'])} · Pivot {zahl(b['pivot'])} $ · Ausbruch {erk['df_index'][b['ausbruch']]:%d.%m.%Y}",
-                      "Zurzeit keine Base. Gezeigt wird die letzte Base der drei Jahre und ihr Ausgang nach O'Neil "
-                      "(gelungen = 20 % über dem Pivot, bevor ein Schluss 8 % darunter liegt). Eine gescheiterte Base "
-                      "ist oft das Ende des Aufwärtstrends." + bilanz)
+                      f"{b['name']}{' Nr. ' + str(b['nummer']) if b.get('nummer') else ''} · Pivot {zahl(b['oben'])} $ · "
+                      f"Ausbruch {b['ende_t']:%d.%m.%Y}",
+                      "Zurzeit keine reife Base. Gezeigt wird die zuletzt abgeschlossene Zone des Scanners und ihr Ausgang "
+                      "nach O'Neil. Eine gescheiterte Base ist oft das Ende des Aufwärtstrends." + regel + bilanz)
+    z = ((erk.get("systeme") or {}).get("m") or {}).get("zone") or {}
     ampel = "grün" if bz <= 2 else "gelb" if bz == 3 else "rot"
-    zeile = f"Tiefe {zahl(w['tiefe_pct'], 0)} %"
-    if "index_rueckgang_pct" in w:
-        zeile += f" · S&P 500 zugleich −{zahl(w['index_rueckgang_pct'], 0)} %"
+    zeile = f"{z.get('name', 'Base')} · Tiefe {zahl(z.get('tiefe', 0), 0)} %"
+    if bs.get("markt") is not None:
+        zeile += f" · S&P 500 zugleich −{zahl(bs['markt'], 0)} %"
     return kachel("Base", ampel, f"Nr. {bz} · {'früh' if bz <= 2 else 'handelbar' if bz == 3 else 'spät'}", zeile,
-                  "Die wievielte Base seit Beginn des Aufwärtstrends. O'Neil: Basen 1 und 2 sind früh und am "
-                  "ergiebigsten, die dritte ist noch handelbar, ab der vierten scheitern die meisten. Tiefe der Base gegen den Rückgang des S&P 500 im selben Zeitraum: "
-                  "O'Neil erlaubt höchstens das 2- bis 3-Fache." + bilanz)
+                  "Die wievielte Base seit Beginn des Aufwärtstrends (IBD/O'Neil). Basen 1 und 2 sind früh und am "
+                  "ergiebigsten, die dritte ist noch handelbar, ab der vierten scheitern die meisten. Tiefe der Base gegen "
+                  "den Rückgang des S&P 500 im selben Zeitraum: O'Neil erlaubt höchstens das 2- bis 3-Fache." + regel + bilanz)
 
 
 def _k_branche(df, rd):
@@ -776,19 +766,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
             pass
     erk = erkennung.erkenne(df, index=index)
     erk["kurs"] = float(df["Close"].iloc[-1])
-    historie = erkennung.basen_historie(df, index, 780)
-    if erk["muster"] and historie and historie[-1]["ende"] >= erk["werte"].get("start_index", len(df)):
-        historie = historie[:-1]                 # die gerade ausgebrochene Base ist die aktuelle, nicht doppelt zeigen
-    erk["historie"] = historie
-    erk["selbstpruefung"] = erkennung.selbstpruefung(df, erk, historie)
+    erk["selbstpruefung"] = erkennung.selbstpruefung(df, erk)
     erk["df_index"] = df.index
     w_ = erk["werte"]
     if erk["muster"] and "start_index" in w_:
         erk["fuss"] = fussabdruck.fussabdruck(df, w_["start_index"], w_.get("ende_index"), w_["pivot"])
-    for b in historie:
-        # Volumen am Ausbruchstag der Tabelle (erster Schluss über dem Pivot), damit Datum und Volumen zusammenpassen
-        s50 = fussabdruck._schnitt50(df["Volume"].to_numpy(float), b["ausbruch"])
-        b["vol_ausbruch"] = float(df["Volume"].iloc[b["ausbruch"]]) / s50 if s50 else None
     try:                                          # Volumenprofil der letzten 52 Wochen für die Spalte rechts im Chart
         import volumenprofil
         i_vp = max(0, len(df) - volumenprofil.JAHR)
@@ -844,6 +826,14 @@ def seite_titel(ticker, laufend=False, _stand=None):
         bis = m_["ausbruch"]["vortag_i"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag des Ausbruchs
         zonen["enge"] = vcp_zone.enge_datiert(df.iloc[:bis], m_["zone"])
     k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
+    try:                                         # IBD-Basenzählung auf den Scanner-Zonen (Kachel Base, Nummern im Chart)
+        import basen
+        reif = next(ok for n, ok, _ in m_["regeln"] if n.startswith("Reife Base"))
+        erk["basen"] = basen.zaehlen(df, index, (zonen or {}).get("verlauf"), m_["zone"] if reif else None)
+        if reif:
+            erk["basen"]["markt"] = basen.markt_rueckgang(index, df.index[m_["zone"]["start_i"]])
+    except Exception:  # noqa: BLE001 – Kachel ohne Zählung
+        erk["basen"] = None
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit

@@ -74,7 +74,7 @@ Direkt über dem Chart (app.py `chart_knoepfe`): Tag/Woche, Ausschnitt (`chart.A
 `chart.py`: fertige Base = Rahmen durchgezogen, Pivot und Kaufzone ab dem Tag, der den Pivot setzt (`_pivot_tag`, mit Punkt); Base im Aufbau (`erk["aufbau"]`, nicht Phase 4 und höchstens 35 % tief) = gestrichelter Rahmen, möglicher Pivot gepunktet ab zwei Kontraktionen (`erkennung.kontraktionen_lage`), keine Kaufzone; frühere Basen = blasser Rahmen, Pivot bis zum Ausbruch, danach gepunktet bis zum ersten Schluss darunter; sonst Hinweis „keine Base (– Abwärtstrend)“. `freie_bahn.alte_pivots`: Pivots früherer Basen ohne Schluss darunter seit dem Ausbruch zählen als Unterstützung („alter Pivot“).
 
 ## Eine Base-Regel für live, Historie und Zählung (03.11.2026)
-`erkennung._base_zaehlt`: eine Pause bis zum neuen Hoch zählt als Base ab `BASE_MIN_RUECK` = 5 % Rücksetzer, `BASE_MIN_TAGE` = 20 Tage vom linken Rand (Hochs bis 2,5 % darunter) und `BASE_MIN_SEIT_HOCH` = 15 Tage ab dem Hoch – gilt für `basenzahl`, `basen_historie` und damit Chart und Tabelle „Frühere Basen“. `vorige_base` (Base auf Base) nutzt `streng=True` (alte Abgrenzung 4 Wochen ab Hoch, 10 %). Prüfgalerie danach unverändert (🟢427 🟡53 🔴24 ⚪84). Im Chart steht ✓/✗ über der Kerze, wenn der Ausbruch auf einen Zahlentag fällt.
+`erkennung._base_zaehlt`: eine Pause bis zum neuen Hoch zählt als Base ab `BASE_MIN_RUECK` = 5 % Rücksetzer, `BASE_MIN_TAGE` = 20 Tage vom linken Rand (Hochs bis 2,5 % darunter) und `BASE_MIN_SEIT_HOCH` = 15 Tage ab dem Hoch – gilt für `basen_historie` (nur noch `werkzeuge/massenlauf.py`; die Basenzählung läuft seit 06.11.2026 über `kern/basen.py`). `vorige_base` (Base auf Base) nutzt `streng=True` (alte Abgrenzung 4 Wochen ab Hoch, 10 %). Prüfgalerie danach unverändert (🟢427 🟡53 🔴24 ⚪84). Im Chart steht ✓/✗ über der Kerze, wenn der Ausbruch auf einen Zahlentag fällt.
 
 ## Strömung in der Zone und Balance-Zone (03.11.2026)
 `kern/stroemung.py`: Karte „Strömung in der Zone“ unter dem Chart (Base, sonst Base im Aufbau, sonst 60 Tage): Wertwanderung (POC letzte 2 Wochen gegen POC der Zone), steigende Tiefs, Schlusslage (↑/↓/→, Richtung gemessen), Enge und Volumen (◆, Druck ohne Richtung, gemessen), Fußabdruck und RS-Linie (Richtung nicht gemessen). `kern/balance.py` + `werkzeuge/messung_balance.py`: Balance-Zone als Messwerkzeug (Darvas-Beginn, Oberkante steigt mit Spießen, Akzeptanz 2 Schlüsse, innere Zone, Auflösung ab 50 % oder Phase 4), von der App noch nicht benutzt; Ergebnisse in `daten/massenlauf/messung_balance_03112026.json`.
@@ -441,6 +441,14 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
   ganz unten die RS-Linien. Der frühere Chart liegt in `_to_delete/chart_vor_vcp_2026-11-06.py`.
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
+
+## IBD-Basenzählung auf Scanner-Zonen (06.11.2026)
+`kern/basen.py` zählt die Basen auf den abgeschlossenen Zonen des VCP-Scanners (statt der Wertzonen; `basenzahl` und
+die Historie der Wertzonen auf der Titelseite sind weg – die Titelseite rechnet rund 2,7 s weniger). Regeln wie bisher:
+Beginn = später von Phase-2-Beginn und letztem Markttief nach Korrektur ab 15 %; Basen ab 3 Wochen und Flaggen ab 1 Woche
+zählen; neue Nummer erst 20 % über der Oberkante der zuletzt gezählten (sonst Base auf Base); die laufende Base
+(Minervinis Zone) zählt mit. Kachel „Base“: 🟢 Nr. 1–2, 🟡 Nr. 3, 🔴 ab Nr. 4, dazu Tiefe gegen den S&P 500 und die
+Bilanz (gelungen = +20 % vor −8 %). Im Chart unter „Historie“ steht die Nummer am Ausbruchspfeil.
 
 ## Ausbruch mit Volumen und Fehlausbruch (06.11.2026)
 Am Ausbruchstag ist eine Zone fertig und verschwände – mitsamt Setup und Kaufzone. `vcp_zone.ausbruch()` schaut bis 4

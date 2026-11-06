@@ -248,7 +248,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
 def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
     """VCP-Scanner Baustein 1 im Chart: Zone (Base blau, Flagge gelb, Konsolidierung lila), Vorgeschichte als gelber
     Pfeil, Fahnenstange als grüner Pfeil, grobes ZigZag grau. Aktuell = nur das Setup jetzt (ZigZag ab der Vorgeschichte),
-    Historie = dazu alle abgeschlossenen Zonen im Ausschnitt mit ↑ am Ausbruch."""
+    Historie = dazu alle abgeschlossenen Zonen im Ausschnitt mit ↑ am Ausbruch, davor die Basennummer (IBD, basen.py)."""
     erster = d.index[0]
     jetzt = ka.get("jetzt") or {}
 
@@ -287,7 +287,7 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
             if x0 is None:
                 continue
             spaete.append(f'<text x="{X(pos(b["ende_t"])):.1f}" y="{Y(b["oben"]) - 4:.1f}" fill="{GRUEN}" font-size="15" '
-                          f'font-weight="700" text-anchor="middle">↑</text>')
+                          f'font-weight="700" text-anchor="middle">{str(b["nummer"]) + ". " if b.get("nummer") else ""}↑</text>')
             st_ = b.get("stange") or {}
             if b["name"] == "Flagge" and st_ and not any(st_["von_t"] < e for e in stangen_ende):
                 pfeil(st_["von_t"], st_["von"], b["start_t"], b["oben"], GRUEN, "G", 1.6)

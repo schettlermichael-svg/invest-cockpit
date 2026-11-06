@@ -184,33 +184,6 @@ def letztes_markttief(index, bis):
     return tage[tief_i] if in_korr else letzte
 
 
-def basenzahl(df, index=None):
-    """Zählt die Bases seit Beginn der aktuellen Phase 2 bzw. seit dem letzten Markttief nach
-    einer Korrektur ab 15 % – was später liegt (Buch: Basis 1 und 2 entstehen meist aus einer
-    Marktkorrektur). Eine Base = verlassene Wertzone ↑ ab 4 Wochen. Die laufende Base zählt mit."""
-    if len(df) < 300:
-        return None
-    ph = phasen(df)
-    vorher = ph[ph.isin([1, 4])]
-    beginn_t = vorher.index[-1] if len(vorher) else ph.index[0]
-    markt = letztes_markttief(index, df.index[-1])
-    if markt is not None and markt > beginn_t:
-        beginn_t = markt
-    beginn = min(int(np.searchsorted(df.index, beginn_t)), len(df) - 1)
-    # gezählt werden verlassene Wertzonen ↑ ab 4 Wochen seit dem Beginn, jede neue Stufe erst 20 % über
-    # der zuletzt gezählten (IBD/O'Neil); die laufende Wertzone zählt mit
-    a_ = mp_von(df)
-    if a_ is None:
-        return None
-    t_beginn, letzter, zahl = df.index[beginn], None, 0
-    for z in a_["zonen"]:
-        if z["richtung"] != "↑" or z["wochen"] < ZAEHL_DAUER // 5 or z["beginn"] < t_beginn:
-            continue
-        if letzter is None or z["hoch"] >= letzter * (1 + ZAEHL_ANSTIEG):
-            zahl, letzter = zahl + 1, z["hoch"]
-    return zahl + 1
-
-
 def uebernahme_verdacht(h, l):
     """Kurs klebt: 8 Tage Gesamtspanne ≤ 3 % und Tagesspanne im Mittel ≤ 0,8 %, nachdem sie in den 60 Tagen davor
     mindestens dreimal so groß war (Mittel des Jahres davor). So handelt eine Aktie nach einem Übernahmeangebot (Kurs am Angebotspreis) –
@@ -239,9 +212,6 @@ def korrektur_markt(df, index, start):
     return rueckgang
 
 
-ZAEHL_DAUER = 20             # gezählt wird eine Base ab 4 Wochen (O'Neil zählt auf dem Wochenchart)
-ZAEHL_ANSTIEG = 0.20         # eine neue Base zählt erst, wenn die Oberkante 20 % über dem Pivot der zuletzt gezählten
-                            # liegt (IBD/O'Neil: ohne 20 % Anstieg dazwischen ist es Base auf Base, keine neue Stufe)
 
 
 _PHASEN = {}
@@ -422,7 +392,6 @@ def _historie_mp(df, index, tage):
         aus.append({"beginn": beginn, "ende": ende, "ausbruch": aus_i, "pivot": pivot, "innen": {},
                     "muster": ["Base" if d == "↑" else "Wertzone ↓"], "richtung": d, "wochen": z["wochen"],
                     "val": z["val"], "vah": z["vah"], "poc": z["poc"],
-                    "basenzahl": (r.get("werte") or {}).get("basenzahl") if d == "↑" else None,
                     "kaufsetup": damals, "tiefe_pct": round((1 - z["tief"] / z["hoch"]) * 100, 1),
                     "ausgang": ausgang, "ergebnis_index": ergebnis, "max_gewinn_pct": round(weite, 1)})
     return aus
@@ -466,13 +435,6 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
         if muster:
             hinweise.append(f"Korrektur {faktor:.1f}-fach zum Markt ({ampel})")
         zu_tief_zum_markt = faktor > 3
-    bz = basenzahl(df, index)
-    if bz is not None and muster:
-        werte["basenzahl"] = bz
-        if bz >= 4:
-            hinweise.append(f"späte Base (Nr. {bz})")
-        elif bz == 3:
-            hinweise.append("Base Nr. 3 (gelb)")
     if muster in ("Flat Base", "Base", "Cup+Handle", "Doppelboden", "Tasse ohne Henkel"):
         hinweise.append("Tiefe " + ("grün" if tiefe <= 35 else "gelb" if tiefe <= 50 else "rot"))
     if dauer - tief_idx <= 5 and tiefe >= 15 and c[-1] >= hoch * 0.85:

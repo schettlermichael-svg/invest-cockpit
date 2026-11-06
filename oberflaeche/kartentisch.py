@@ -136,9 +136,9 @@ def _stufe1(tk):
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
-            _scannerfeld(info, scan, br)
-        if br:                                   # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch
-            info["ausbruch"] = vcp_zone.ausbruch_text(br)
+            _scannerfeld(info, scan, m["ausbruch"])
+        if m["ausbruch"]:                        # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch –
+            info["ausbruch"] = vcp_zone.ausbruch_text(m["ausbruch"])   # derselbe, mit dem Minervini rechnet
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None

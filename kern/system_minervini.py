@@ -61,23 +61,27 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     tv = trendvorlage(df)
     c = df["Close"].to_numpy(float)
     br = vcp_zone.ausbruch(df) if ausbruch is False else ausbruch
-    if br:                                          # Ausbruch (bis 4 Wochen, auch Fehlausbruch): die Zone vom Vortag gilt
-        z, e = br["zone"], br["enge"]
-        if br["innen"]:
-            z = dict(z, in_zone=br["eltern"])
-    else:
-        br = None
-        if scan is None:
-            z_ = vcp_zone.zone(df)
-            scan = (z_, vcp_zone.enge(df, z_))
-        z, e = scan
 
     def _reif(b):
         return b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok" and b.get("tiefe", 99) <= 50
 
-    innen = z.get("innen") if z.get("zone") else None
-    if not _reif(z) and innen and _reif(innen):     # die Flagge am rechten Rand trägt das Setup
-        z, e = dict(innen, in_zone=z["name"]), vcp_zone.enge(df, innen)
+    def _waehle(z, e):
+        """Die große Zone – oder die Flagge darin, wenn die große durchfällt (Micky, 06.11.2026)."""
+        innen = z.get("innen") if z.get("zone") else None
+        if not _reif(z) and innen and _reif(innen):
+            return dict(innen, in_zone=z["name"]), vcp_zone.enge(df, innen)
+        return z, e
+
+    if scan is None:
+        z_ = vcp_zone.zone(df)
+        scan = (z_, vcp_zone.enge(df, z_))
+    z, e = _waehle(*scan)
+    if br:                                          # Ausbruch (bis 4 Wochen, auch Fehlausbruch): die Zone vom Vortag gilt –
+        bz, be = (dict(br["zone"], in_zone=br["eltern"]), br["enge"]) if br["innen"] else _waehle(br["zone"], br["enge"])
+        if _reif(bz) or not _reif(z):               # außer sie ist keine Base, die Zone von heute aber schon
+            z, e = bz, be
+        else:
+            br = None
     art = z.get("name") if z.get("zone") else None
     reif = bool(_reif(z))
     eng = e.get("ampel", "grau") if reif else "grau"

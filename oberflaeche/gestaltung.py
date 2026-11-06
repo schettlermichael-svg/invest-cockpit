@@ -168,16 +168,6 @@ def ampelzeile(name, ampel, text="", hilfe=""):
 SETUPS = ("Flagge", "Powerplay", "Umkehr")      # eigenes Setup (Trendfortsetzung), behält seinen Namen
 
 
-def basename(muster):
-    """Anzeige-Name einer erkannten Base: „Base“ – nur Flagge und Powerplay heißen weiter so (eigenes Setup).
-    Die O'Neil/Minervini-Form ist nur noch ein Hinweis (form_hinweis), Pivot einheitlich (siehe erkennung.py)."""
-    if not muster:
-        return "–"
-    if muster[0].startswith(("Wertzone", "Zone")):    # „Zone“: Kartentisch von vor dem 06.11.2026
-        return muster[0].replace("Zone", "Wertzone", 1) if muster[0].startswith("Zone") else muster[0]
-    return muster[0] if muster[0] in SETUPS else "Base"
-
-
 def form_hinweis(muster):
     """Lesart der Form als Hinweistext, z. B. „Form-Hinweis: Cup+Handle (auch: Base auf Base)“."""
     if not muster or muster == ["Base"] or muster[0] in SETUPS and len(muster) == 1:
