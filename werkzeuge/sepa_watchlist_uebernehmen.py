@@ -1,5 +1,5 @@
-"""Einmalig: die gespeicherte Watchlist des alten SEPA-Scanners (~/.sepa_scanner_watchlist.txt) als Liste
-„SEPA-Scanner“ in die Watchlists des Cockpits übernehmen (Doppelte einmal).
+"""Einmalig: die gespeicherte Watchlist des alten SEPA-Scanners (~/.sepa_scanner_watchlist.txt) auf die
+Watchlist des Cockpits übernehmen (Doppelte einmal).
 Aufruf im Ordner InvestCockpit:  python3 werkzeuge/sepa_watchlist_uebernehmen.py
 """
 import os
@@ -12,5 +12,5 @@ pfad = os.path.expanduser("~/.sepa_scanner_watchlist.txt")
 if not os.path.exists(pfad):
     print("Keine gespeicherte Watchlist des SEPA-Scanners gefunden.")
 else:
-    n = watchlists.einfuegen(open(pfad, encoding="utf-8").read(), "SEPA-Scanner")
-    print(f"✓ {n} Titel in die Liste „SEPA-Scanner“ übernommen ({len(watchlists.laden().get('SEPA-Scanner', []))} insgesamt)")
+    n = watchlists.einfuegen(open(pfad, encoding="utf-8").read())
+    print(f"✓ {n} Titel auf die Watchlist übernommen ({len(watchlists.alle())} insgesamt)")

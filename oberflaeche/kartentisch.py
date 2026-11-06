@@ -10,7 +10,7 @@ System Kullamägi (K):
   Parabolic Short     Serie steigender Tage im Revier (300 % kleine, 50 % große Werte) – dazu die Liste aus dem
                       ganzen US-Markt (parabolic.py)
 Beide:
-  Meine Watchlists    jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
+  Watchlist           jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach ★ Spitze M
   Ausbruchsfelder     frischer Ausbruch (A/U) bzw. Flagge (F) der Wertzone nach oben, mit Volumen, für Titel ohne Reihe
   Frühaufklärung      Radar: Wertzone an der Schwelle oder frischer Angriff nach oben
 Ein Titel steht in genau einer Reihe (Vorrang in der Reihenfolge oben); die Lagekarte zeigt das Setup beider Systeme.
@@ -425,32 +425,25 @@ def plan(tisch=None):
              {"art": "html", "html": station("auswahl") + barometer}]
 
     def watchlist_abschnitte():
-        """Meine Watchlists: je Liste ein Abschnitt; jeder Titel einmal (im ersten Abschnitt, in dem er steht)."""
-        teile.append({"art": "html", "html": _kopf("Meine Watchlists", len(watchlists.alle()),
-                                                    "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
-                                                    "unter jeder Karte verschieben oder herausnehmen")})
-        gezeigt = set()
-        for name, liste in w.items():
-            eigene = [tk for tk in liste if tk not in gezeigt]
-            gezeigt.update(eigene)
-            if not eigene:
-                continue
-            da = sorted(((tk, tisch["titel"][tk]) for tk in eigene if tk in tisch["titel"]),
-                        key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
-            teile.append(_abschnitt(_kopf(name, len(eigene), "", h=3), da, name,
-                                    [tk for tk in eigene if tk not in tisch["titel"]]))
+        """Watchlist: jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe."""
+        liste = w[watchlists.STANDARD]
+        da = sorted(((tk, tisch["titel"][tk]) for tk in liste if tk in tisch["titel"]),
+                    key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
+        teile.append(_abschnitt(_kopf("◆ Watchlist", len(liste), "jeder Titel immer, egal welche Ampel – die Marke zeigt "
+                                      "seine Reihe; unter jeder Karte der Knopf zum Herunternehmen"),
+                                da, watchlists.STANDARD, [tk for tk in liste if tk not in tisch["titel"]]))
 
     for key, name, text in REIHEN:
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
         teile.append(_abschnitt(_kopf(name, len(liste), text), liste))
-        if key == WATCHLISTS_NACH:             # Watchlists direkt nach ★ Spitze (05.11.2026)
+        if key == WATCHLISTS_NACH:             # Watchlist direkt nach ★ Spitze (05.11.2026)
             watchlist_abschnitte()
         if key == "k_parabolic":               # dazu der ganze US-Markt (Small Caps außerhalb des Reviers)
             teile.append({"art": "html", "html": parabolic_markt()})
     teile.append({"art": "html", "html": station("termine")
                   + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
-                  + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlists"
+                  + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlist"
                            + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)
                   + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
                     f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
@@ -562,7 +555,7 @@ def lagebild(tisch):
         if lagekarte.grund(x):
             zeilen.append(t(lagekarte.grund(x)))
         if x.get("listen"):
-            zeilen.append("◆ Watchlist: " + t(", ".join(x["listen"])))
+            zeilen.append("◆ auf der Watchlist")
         if g:
             zeilen.append(f"⚑ Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))
                           + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))

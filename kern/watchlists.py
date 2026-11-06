@@ -1,9 +1,7 @@
-"""Watchlists (Schritt 6, 4.11.2026): eigene Listen der App in einstellungen/watchlists.json ({Name: [Ticker, …]}).
-
-Ticker in Yahoo-Schreibweise (HWM, BRK-B, RHM.DE). Ein Titel steht in einer Liste höchstens einmal; in mehreren Listen
-darf er stehen – Abendlauf, Daten und Kartentisch führen ihn trotzdem nur einmal. Wird ein Titel aus seiner letzten
-Liste genommen, gilt er als gelöscht (tpo_daten.vergessen): ohne Revier fällt er aus dem Abendlauf.
-Start: einmaliger Import der TradingView-Watchlists (nur lesen; in TradingView wird nichts geändert).
+"""Die Watchlist (Schritt 6, 4.11.2026; seit 6.11.2026 nur noch eine Liste): einstellungen/watchlists.json
+({"Watchlist": [Ticker, …]}). Ticker in Yahoo-Schreibweise (HWM, BRK-B, RHM.DE), jeder einmal. Ein Titel steht auf der
+Watchlist oder nicht. Heruntergenommen gilt er als gelöscht (tpo_daten.vergessen): ohne Revier fällt er aus dem Abendlauf.
+Der Server legt die Datei alle 10 Minuten ab, ein stündlicher Abgleich trägt Änderungen in TradingView ein (App → TV).
 """
 import json
 import os
@@ -44,63 +42,59 @@ def zu_tv(ticker):
 
 
 def laden():
+    """Die eine Watchlist als {"Watchlist": [Ticker, …]}. Seit 06.11.2026 gibt es nur noch diese Liste: stehen in der
+    Datei noch andere Listen (z. B. „Active Watchlist“ aus dem TradingView-Import), werden ihre Titel einmalig in die
+    Watchlist übernommen und die Listen entfernt (der Abgleich leert sie dann auch in TradingView)."""
     try:
         w = json.load(open(DATEI, encoding="utf-8"))
-        return {n: list(dict.fromkeys(t.upper() for t in l)) for n, l in w.items()}
     except (OSError, ValueError):
-        return {}
+        return {STANDARD: []}
+    titel = list(dict.fromkeys(t.upper() for t in w.get(STANDARD, [])))
+    titel += [t for t in dict.fromkeys(t.upper() for n, l in w.items() if n != STANDARD for t in l) if t not in titel]
+    if set(w) != {STANDARD}:
+        speichern({STANDARD: titel})
+    return {STANDARD: titel}
 
 
 def speichern(w):
     os.makedirs(os.path.dirname(DATEI), exist_ok=True)
-    w = {n: list(dict.fromkeys(t.upper() for t in l)) for n, l in w.items()}
+    w = {STANDARD: list(dict.fromkeys(t.upper() for t in w.get(STANDARD, [])))}
     json.dump(w, open(DATEI, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 
 def alle():
-    """Alle Titel aller Listen, jeder einmal, in Listenreihenfolge."""
-    return list(dict.fromkeys(t for l in laden().values() for t in l))
+    """Alle Titel der Watchlist in ihrer Reihenfolge."""
+    return laden()[STANDARD]
+
+
+def drin(ticker):
+    return ticker.upper() in alle()
 
 
 def listen_von(ticker):
-    return [n for n, l in laden().items() if ticker.upper() in l]
+    """[„Watchlist“], wenn der Titel darauf steht, sonst [] (Form für den Kartentisch)."""
+    return [STANDARD] if drin(ticker) else []
 
 
-def setzen(ticker, name, drin):
-    """Titel in Liste `name` aufnehmen (drin=True) oder herausnehmen. Neue Liste entsteht beim ersten Titel.
-    Aus der letzten Liste genommen: gilt als gelöscht."""
-    tk, w = ticker.upper(), laden()
-    if drin:
-        w.setdefault(name, [])
-        if tk not in w[name]:
-            w[name].append(tk)
-        speichern(w)
-        return
-    if name in w and tk in w[name]:
-        w[name].remove(tk)
-        speichern(w)
-    if not listen_von(tk):
+def setzen(ticker, auf):
+    """Titel auf die Watchlist (auf=True) oder herunter. Heruntergenommen gilt er als gelöscht: ohne Revier fällt er aus
+    dem Abendlauf (tpo_daten.vergessen)."""
+    tk, liste = ticker.upper(), alle()
+    if auf and tk not in liste:
+        speichern({STANDARD: liste + [tk]})
+    elif not auf and tk in liste:
+        liste.remove(tk)
+        speichern({STANDARD: liste})
         import tpo_daten
         tpo_daten.vergessen(tk)
 
 
-def importieren(tv_listen):
-    """TradingView-Listen [{name, symbols}] zusammenführen; bestehende Listen bleiben, Doppelte fallen weg.
-    Gibt (übernommen, übersprungen) zurück."""
-    w, ueber, weg = laden(), 0, []
-    for l in tv_listen:
-        tks = [von_tv(s) for s in l.get("symbols", [])]
-        weg += [s for s, t in zip(l.get("symbols", []), tks) if t is None and not s.startswith("###")]
-        tks = [t for t in tks if t]
-        if not tks:
-            continue
-        ziel = w.setdefault(l["name"], [])
-        for t in tks:
-            if t not in ziel:
-                ziel.append(t)
-                ueber += 1
-    speichern(w)
-    return ueber, weg
+def einfuegen(text):
+    """Eingefügte Ticker (Finviz, SEPA-Scanner, TradingView) auf die Watchlist; gibt die Zahl der neuen zurück."""
+    liste = alle()
+    neu = [t for t in aus_text(text) if t not in liste]
+    speichern({STANDARD: liste + neu})
+    return len(neu)
 
 
 def aus_text(text):
@@ -116,26 +110,3 @@ def aus_text(text):
         if t and t not in aus:
             aus.append(t)
     return aus
-
-
-def einfuegen(text, name=STANDARD):
-    """Eingefügte Ticker in die Liste `name`; gibt die Zahl der neuen zurück."""
-    w = laden()
-    ziel = w.setdefault(name, [])
-    neu = [t for t in aus_text(text) if t not in ziel]
-    ziel.extend(neu)
-    speichern(w)
-    return len(neu)
-
-
-def liste_loeschen(name):
-    """Ganze Liste entfernen. Titel, die in keiner anderen Liste stehen, gelten als gelöscht (tpo_daten.vergessen:
-    ohne Revier fallen sie aus dem Abendlauf). Gibt die Zahl der so gelöschten Titel zurück."""
-    w = laden()
-    titel = w.pop(name, [])
-    speichern(w)
-    import tpo_daten
-    weg = [t for t in titel if not listen_von(t)]
-    for t in weg:
-        tpo_daten.vergessen(t)
-    return len(weg)

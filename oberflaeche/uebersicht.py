@@ -1,9 +1,10 @@
 """Übersicht „Lage am Abend“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
 Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
-  ① Lage           Markt je System (Minervini, Kullamägi), O'Neils Marktrichtung als Zeichen, Marktbreite, neue Hochs
-                   gegen Tiefs, Moral der Truppe, Wirtschaftswetter; Stimmungskurve
+  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; Stimmungskurve
+                   (O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
+                   Kachel – Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit)
   ② Front          Frontkarte, Übergänge, Lagebild nach Sektoren
-  ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Meine Watchlists, Weitere, Frühaufklärung, Short (kartentisch.plan)
+  ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Watchlist, Weitere, Frühaufklärung, Short (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
   Anhang           Instrumente von Quad und Pendel
@@ -18,7 +19,6 @@ sys.path.insert(0, HIER)
 
 import lage                                                  # noqa: E402
 import marktdaten                                            # noqa: E402
-import marktrichtung                                         # noqa: E402
 from stimmung import kurve  # noqa: E402
 from frontkarte import frontkarte  # noqa: E402
 import uebergaenge                                           # noqa: E402
@@ -110,11 +110,9 @@ def abgelegt():
 
 def seite_uebersicht():
     start = time.time()
-    q, p, a = lage.quadrant(), lage.pendel(), lage.marktampel()
-    mr = marktrichtung.richtung()
+    q, p = lage.quadrant(), lage.pendel()
     br = marktdaten.breite()
     breite_zeichen = marktdaten.breite_pruefung()       # Plausibilitätswächter (Abdeckung, Sprünge, Quelle)
-    warnung = " ".join(f"⚠ {text}." for _, text in breite_zeichen)
     schlimmste = "rot" if any(a == "rot" for a, _ in breite_zeichen) else "gelb" if breite_zeichen else None
     m = p["messwerte"]
     stand = br.index[-1]
@@ -140,7 +138,6 @@ def seite_uebersicht():
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
     import kartentisch
     b = ((kartentisch.laden() or {}).get("barometer")) or {}
-    hl = ("grau" if not b else "grün" if b["hochs"] > 2 * b["tiefs"] else "rot" if b["tiefs"] > 2 * b["hochs"] else "gelb")
     import markt_systeme
     try:
         mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
@@ -151,17 +148,6 @@ def seite_uebersicht():
         _kachel("Markt · Minervini", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",
         _kachel("Markt · Kullamägi", km["ampel"], km["wort"], "",
                 km["text"] + " – Breakout und Episodic Pivot nur im Aufwärtstrend") if km else "",
-        _kachel("Marktrichtung O'Neil (Zeichen)", mr["ampel"], mr["zustand"], "",
-                f'seit {mr["seit"]:%d.%m.%Y} · {mr["text"]} · {a["text"]} · '
-                f'{zahl(abs(a["abstand_hoch_pct"]), 1)} % unter dem 52-Wochen-Hoch'
-                + "".join(f" ⚠ {text}." for _, text in mr["zeichen"])),
-        _kachel("Marktbreite", schlimmste or ("grün" if m["breite"] >= 60 else "gelb" if m["breite"] >= 40 else "rot"),
-                f'{zahl(m["breite"], 0)} %', "↗" if m["breite_4w"] > 3 else "↘" if m["breite_4w"] < -3 else "→",
-                f'der 515 großen US-Werte über ihrem GD200 · {"+" if m["breite_4w"] >= 0 else "−"}'
-                f'{zahl(abs(m["breite_4w"]), 0)} Punkte in 4 Wochen' + (f" {warnung}" if warnung else "")),
-        _kachel("Neue Hochs gegen Tiefs", hl, f'{b["hochs"]} : {b["tiefs"]}' if b else "–", "",
-                "neue 52-Wochen-Hochs : -Tiefs heute im Revier – grün = mehr als doppelt so viele Hochs, rot = mehr als "
-                "doppelt so viele Tiefs (O'Neil, Weinstein)" if b else "kommt mit dem Abendlauf"),
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),

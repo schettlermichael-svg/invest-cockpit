@@ -150,41 +150,25 @@ def position_knopf(tk):
 
 
 def watchlists_verwalten():
-    """Übersicht: alle Watchlists pflegen – Liste wählen, Ticker einfügen, Titel herausnehmen, neue Liste anlegen.
-    (Einzelne Titel auch über „☆ Watchlist“ auf der Titelseite.) Herausgenommen aus der letzten Liste = gelöscht."""
-    w = watchlists.laden()
-    with _fenster(f"◆ Watchlists ({len(watchlists.alle())})"):
-        namen = list(w) or [watchlists.STANDARD]
-        name = st.selectbox("Liste", namen, key="wl_verw_liste")
-        drin = w.get(name, [])
+    """Übersicht: die Watchlist pflegen – Ticker einfügen (auch ganze Listen), Titel herausnehmen. Einzelne Titel auch
+    über „☆ Watchlist“ auf der Titelseite. Herausgenommen = gelöscht (ohne Revier fällt der Titel aus dem Abendlauf)."""
+    drin = watchlists.alle()
+    with _fenster(f"◆ Watchlist ({len(drin)})"):
         st.caption(f"{len(drin)} Titel: " + ", ".join(drin[:60]) + (" …" if len(drin) > 60 else ""))
         with st.form("wl_verw_neu", clear_on_submit=True):
             text = st.text_area("Ticker hinzufügen", height=70, placeholder="z. B. NVDA, ANET, XETR:RHM – auch ganze Listen "
                                 "aus Finviz oder TradingView einfügen")
             if st.form_submit_button("Hinzufügen", use_container_width=True):
-                st.toast(f"{watchlists.einfuegen(text, name)} Titel neu in „{name}“")
+                st.toast(f"{watchlists.einfuegen(text)} Titel neu auf der Watchlist")
                 st.rerun()
         if drin:
             with st.form("wl_verw_weg"):
                 weg = st.multiselect("Titel herausnehmen", drin)
                 if st.form_submit_button("Herausnehmen", use_container_width=True) and weg:
                     for tk in weg:
-                        watchlists.setzen(tk, name, False)
-                    st.toast(f"{len(weg)} Titel aus „{name}“ genommen")
+                        watchlists.setzen(tk, False)
+                    st.toast(f"{len(weg)} Titel von der Watchlist genommen")
                     st.rerun()
-        with st.form("wl_verw_liste_weg", clear_on_submit=True):
-            sicher = st.checkbox(f"Liste „{name}“ wirklich löschen")
-            if st.form_submit_button("Liste löschen", use_container_width=True) and sicher:
-                n = watchlists.liste_loeschen(name)
-                st.toast(f"„{name}“ gelöscht · {n} Titel standen in keiner anderen Liste und fallen aus dem Abendlauf "
-                         "(außer sie gehören zum Revier)")
-                st.rerun()
-        with st.form("wl_verw_liste_neu", clear_on_submit=True):
-            neu = st.text_input("Neue Liste anlegen", placeholder="Name")
-            erster = st.text_input("erster Titel", placeholder="Ticker")
-            if st.form_submit_button("Anlegen", use_container_width=True) and neu.strip() and erster.strip():
-                watchlists.einfuegen(erster, neu.strip())
-                st.rerun()
 
 
 sys.path.insert(0, os.path.join(HIER, "werkzeuge"))
@@ -230,34 +214,19 @@ def konto_knopf():
                 st.rerun()
 
 
-def _watch_setzen(tk, name, schluessel):
-    watchlists.setzen(tk, name, st.session_state[schluessel])
+def _watch_umschalten(tk):
+    auf = not watchlists.drin(tk)
+    watchlists.setzen(tk, auf)
+    st.toast(f"{tk} {'auf die Watchlist gesetzt' if auf else 'von der Watchlist genommen'}")
 
 
-def _watch_neu(tk, schluessel):
-    name = st.session_state[schluessel].strip()
-    if name:
-        watchlists.setzen(tk, name, True)
-        st.session_state[schluessel] = ""
-
-
-def watchlist_knopf(tk):
-    """„☆ Watchlist“ / „★ in n Listen“: je Liste ein Haken, darunter eine neue Liste. Herausnehmen aus der letzten
-    Liste löscht den Titel aus dem Abendlauf (außer er gehört zum Revier)."""
-    drin = watchlists.listen_von(tk)
-    with _fenster(f"★ Watchlist ({len(drin)})" if drin else "☆ Watchlist"):
-        for name in list(watchlists.laden()) or [watchlists.STANDARD]:
-            sl = f"wl_{tk}_{name}"
-            st.session_state[sl] = name in drin
-            st.checkbox(name, key=sl, on_change=_watch_setzen, args=(tk, name, sl))
-        st.text_input("neue Liste", key=f"wl_neu_{tk}", placeholder="Name, Enter", on_change=_watch_neu,
-                      args=(tk, f"wl_neu_{tk}"))
-        with st.form(f"wl_text_{tk}", clear_on_submit=True):
-            text = st.text_area("Ticker einfügen (Finviz, SEPA-Scanner, TradingView)", height=80,
-                                placeholder="z. B. NVDA, ANET, XETR:RHM")
-            ziel = st.selectbox("in Liste", list(watchlists.laden()) or [watchlists.STANDARD])
-            if st.form_submit_button("Hinzufügen", use_container_width=True):
-                st.toast(f"{watchlists.einfuegen(text, ziel)} Titel neu in „{ziel}“")
+def watchlist_knopf(tk, schluessel=""):
+    """Ein Knopf: „☆ Auf die Watchlist“ oder „★ Auf der Watchlist“ (Klick nimmt ihn herunter – ohne Revier fällt der
+    Titel dann aus dem Abendlauf)."""
+    drin = watchlists.drin(tk)
+    st.button("★ Auf der Watchlist" if drin else "☆ Auf die Watchlist", key=f"{schluessel}wl_{tk}",
+              use_container_width=True, type="primary" if drin else "secondary", on_click=_watch_umschalten, args=(tk,),
+              help="Klick nimmt den Titel von der Watchlist" if drin else "Klick setzt den Titel auf die Watchlist")
 
 
 def _codestand(mit_watchlists=False):
@@ -289,41 +258,10 @@ def _rgba(farbe):
     return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{a:.2f})"
 
 
-def _verschieben(tk, von, nach):
-    watchlists.setzen(tk, nach, True)
-    watchlists.setzen(tk, von, False)
-    st.toast(f"{tk}: „{von}“ → „{nach}“")
-
-
-def _herausnehmen(tk, liste):
-    watchlists.setzen(tk, liste, False)
-    st.toast(f"{tk} aus „{liste}“ genommen")
-
-
-def _watch_aktionen(tk, liste, schluessel):
-    """Im Watchlist-Abschnitt: in eine andere Liste verschieben oder herausnehmen. Sonst: je Liste ein Haken."""
-    namen = list(watchlists.laden()) or [watchlists.STANDARD]
-    if liste:
-        with _fenster(f"◆ {liste}"):
-            for n in namen:
-                if n != liste:
-                    st.button(f"→ nach „{n}“ verschieben", key=f"{schluessel}mv_{tk}_{n}", use_container_width=True,
-                              on_click=_verschieben, args=(tk, liste, n))
-            st.button(f"✕ aus „{liste}“ herausnehmen", key=f"{schluessel}rm_{tk}", use_container_width=True,
-                      on_click=_herausnehmen, args=(tk, liste))
-        return
-    drin = watchlists.listen_von(tk)
-    with _fenster(f"★ Watchlist ({len(drin)})" if drin else "☆ Watchlist"):
-        for n in namen:
-            sl = f"{schluessel}wl_{tk}_{n}"
-            st.session_state[sl] = n in drin
-            st.checkbox(n, key=sl, on_change=_watch_setzen, args=(tk, n, sl))
-
-
 def _knopfleiste(tk, liste, schluessel):
     a, b = st.columns(2)
     with a:
-        _watch_aktionen(tk, liste, schluessel)
+        watchlist_knopf(tk, schluessel)
     with b:
         st.link_button("Deep Dive →", f"?seite=Titelseite&t={tk}", use_container_width=True)
 

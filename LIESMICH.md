@@ -412,6 +412,17 @@ angreifen?), ② Auswahl (wer führt?), ③ Einstieg (wann?), ④ Führung (wie 
   2 : 1. Das CRV ist ein Maß, ob sich der Einsatz lohnt – kein Ausstieg: Gewinne laufen lassen, Stopp nachziehen.
   Chart: „1. Hürde … $“ gelb gepunktet, CRV an den Stopp-Etiketten; Etikettenspalte 200 px.
 
+## Nur noch eine Watchlist, Übersicht schlanker (06.11.2026)
+
+- Es gibt nur noch die **Watchlist** (`kern/watchlists.py`). Andere Listen in `einstellungen/watchlists.json` (die
+  „Active Watchlist“ aus dem TradingView-Import) werden beim ersten Laden in die Watchlist übernommen und entfernt; alle 8
+  Titel standen schon darin. Der stündliche Abgleich App → TradingView nimmt die Titel deshalb auch aus der
+  TradingView-Liste „Active Watchlist“ (die Liste selbst bleibt) – so gewünscht.
+- Knöpfe: ein Knopf je Titel, „☆ Auf die Watchlist“ oder „★ Auf der Watchlist“ (Klick nimmt ihn herunter); oben in der
+  Übersicht „◆ Watchlist“ zum Einfügen ganzer Listen und Herausnehmen. Keine Listenwahl, kein Verschieben mehr.
+- Übersicht ① Lage: die Kacheln „Marktrichtung O'Neil (Zeichen)“, „Marktbreite“ und „Neue Hochs gegen Tiefs“ sind raus.
+  Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit.
+
 ## VCP-Scanner: Zone und Enge (06.11.2026)
 
 Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart, alles aus Tageskerzen.
