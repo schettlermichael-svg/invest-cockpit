@@ -841,7 +841,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     if zonen and m_.get("ausbruch"):               # frischer Ausbruch: der Chart zeigt die Zone vom Vortag weiter
         zonen["jetzt"] = vcp_zone.datiert(df, m_["ausbruch"]["zone"])
     if zonen and (m_["zone"].get("in_zone") or m_.get("ausbruch")):   # der Chart zeigt Minervinis Enge
-        bis = len(df) - 1 - m_["ausbruch"]["tage_her"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag
+        bis = m_["ausbruch"]["vortag_i"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag des Ausbruchs
         zonen["enge"] = vcp_zone.enge_datiert(df.iloc[:bis], m_["zone"])
     k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
     mm_, km_ = maerkte()

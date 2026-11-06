@@ -98,7 +98,7 @@ def _stufe1(tk):
         import vcp_zone
         zs = vcp_zone.zone(df)
         scan = (zs, vcp_zone.enge(df, zs))      # VCP-Scanner einmal: für Minervini und die Scanner-Reihen
-        br = vcp_zone.ausbruch(df)              # frischer Ausbruch (5 Tage): Zone vom Vortag gilt weiter
+        br = vcp_zone.ausbruch(df, jetzt=zs)    # Ausbruch (bis 4 Wochen, auch Fehlausbruch): Zone vom Vortag gilt weiter
         m = system_minervini.pruefen(df, erk, rang, fund, scan, br)
         gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
         k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
@@ -137,7 +137,7 @@ def _stufe1(tk):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
             _scannerfeld(info, scan, br)
-        if br and br["abstand"] >= 0:            # Zeichen auf jeder Karte: Ausbruch mit oder ohne Volumen
+        if br:                                   # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch
             info["ausbruch"] = vcp_zone.ausbruch_text(br)
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
@@ -150,17 +150,17 @@ KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis
 
 def _scannerfeld(info, scan, br=None):
     """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base).
-    Nach einem frischen Ausbruch (br, höchstens 5 Tage, Kurs über dem Pivot) gilt die Zone vom Vortag."""
+    Nach einem Ausbruch (br, bis 4 Wochen, auch Fehlausbruch) gilt die Zone vom Vortag."""
     from gestaltung import zahl
-    if br and br["abstand"] >= 0:
+    if br:
         bz, be = br["zone"], br["enge"]
-        if be.get("ampel") == "grün" and br["abstand"] <= PIVOT_NAH:
-            info.update(reihe="vcp", gruen=True, stern=False, abstand=br["abstand"],
+        if be.get("ampel") == "grün" and abs(br["abstand"]) <= PIVOT_NAH:
+            info.update(reihe="vcp", gruen=not br["fehl"], stern=False, abstand=abs(br["abstand"]),
                         scanner=f'{bz["name"]} {zahl(bz["wochen"], 1)} Wochen · Enge {be["folge"]} % · Pivot '
                                 f'{zahl(br["pivot"])} $')
             return
         if bz.get("name") == "Flagge":
-            info.update(reihe="flagge", gruen=br["abstand"] <= PIVOT_NAH, stern=False, abstand=br["abstand"],
+            info.update(reihe="flagge", gruen=br["kaufzone"], stern=False, abstand=abs(br["abstand"]),
                         scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
                                 f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
                                 + (" · in einer Base" if br["innen"] else ""))

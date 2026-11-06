@@ -36,8 +36,10 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
                 Kontraktion ist tiefer als die vorige · gelb: sonst · grau: keine fertige Zone
 
 Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
-  schaut ausbruch() AUSBRUCH_TAGE Handelstage zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin).
-  Zone, Enge und Pivot von damals gelten weiter, solange der Kurs höchstens KAUFZONE % über dem Pivot steht.
+  schaut ausbruch() bis 4 Wochen zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin). Zone, Enge
+  und Pivot von damals gelten weiter – bis 4 Wochen, oder bis sich darüber eine neue fertige Zone gebildet hat. Bis +5 %
+  über dem Pivot = Kaufzone (auch beim Rücksetzer auf den Pivot), darüber ausgedehnt. Schluss wieder unter dem Pivot =
+  🔴 Fehlausbruch (Zone und Pivot bleiben; neuer Schluss darüber = neuer Ausbruch).
   Zeichen (kein Muss, Micky): Volumen am Ausbruchstag über dem 50-Tage-Schnitt = mit Volumen.
 
 Short – Ermüdung nach Überdehnung (Kullamägi-Stopp, 06.11.2026): die Flagge, im Ausgang gespiegelt. Die Truppe ist weit
@@ -278,13 +280,17 @@ def verlauf(df, tage=600):
     return fertig
 
 
-AUSBRUCH_TAGE = 5              # Ausbruch höchstens 5 Handelstage her
+AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter dem Pivot (Micky, 06.11.2026)
 KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
 
 
-def ausbruch(df, tage=AUSBRUCH_TAGE):
-    """Frischer Ausbruch über den Pivot oder None: {tag, tage_her, pivot, zone, enge, volumen, mit_volumen, abstand,
-    kaufzone}. Zone und Enge so, wie sie am Vortag standen (Indizes passen zu df)."""
+def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None):
+    """Ausbruch über den Pivot in den letzten `tage` Handelstagen oder None:
+    {tag, tage_her, erster_tag, pivot, zone, enge, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, innen, eltern}.
+    Zone und Enge so, wie sie am Vortag des ersten Ausbruchs standen (Indizes passen zu df). Schließt der Kurs danach
+    wieder unter dem Pivot, ist es ein Fehlausbruch (fehl) – Zone und Pivot bleiben; ein neuer Schluss darüber ist ein
+    neuer Ausbruch (tag, volumen von diesem Tag). Hat sich über dem Ausbruch schon eine neue fertige Zone gebildet
+    (jetzt = zone(df), sonst gerechnet), übernimmt sie: None."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
     if n < 80:
@@ -306,25 +312,41 @@ def ausbruch(df, tage=AUSBRUCH_TAGE):
             pivot = float(e.get("pivot") or b["oben"])
             if c[t] <= pivot:
                 continue
-            vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
+            jz = jetzt if jetzt is not None else zone(df)
+            if jz.get("zone") and jz.get("laenge") == "ok" and jz["start_i"] > t:
+                return None                                # neue fertige Zone über dem Ausbruch
+            letzter, fehl_tag = t, None                    # Verlauf seit dem Ausbruch: zurück unter den Pivot, wieder drüber
+            for u in range(t + 1, n):
+                if fehl_tag is None and c[u] < pivot:
+                    fehl_tag = u
+                elif fehl_tag is not None and c[u] > pivot:
+                    letzter, fehl_tag = u, None
+            vol = v[letzter] / v50[letzter] if v50[letzter] == v50[letzter] and v50[letzter] else None
             ab = (c[-1] / pivot - 1) * 100
-            return {"tag": df.index[t], "tage_her": n - 1 - t, "pivot": pivot, "zone": b, "enge": e,
-                    "volumen": vol, "mit_volumen": bool(vol and vol > 1), "abstand": ab,
-                    "kaufzone": 0 <= ab <= KAUFZONE, "innen": b is not z, "eltern": z["name"]}
+            fehl = fehl_tag is not None
+            return {"tag": df.index[letzter], "tage_her": n - 1 - letzter, "erster_tag": df.index[t],
+                    "vortag_i": t, "pivot": pivot, "zone": b, "enge": e, "volumen": vol,
+                    "mit_volumen": bool(vol and vol > 1), "abstand": ab, "kaufzone": not fehl and 0 <= ab <= KAUFZONE,
+                    "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None, "innen": b is not z,
+                    "eltern": z["name"]}
     return None
 
 
 def ausbruch_text(a):
-    """Zeichen für Karte und Plan, z. B. „🟢 Ausbruch am 04.11. mit Volumen 1,8-fach · +2,1 % zum Pivot, in der Kaufzone“."""
+    """Zeichen für Karte und Plan, z. B. „🟢 Ausbruch am 04.11. mit Volumen 1,35-fach · +2,1 % zum Pivot, in der
+    Kaufzone“ oder „🔴 Fehlausbruch: …“."""
     if not a:
         return ""
     k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
     v = lambda x: f"{x:.2f}".replace(".", ",")       # noqa: E731 – zwei Stellen, damit 1,03 nicht als 1,0 erscheint
+    ab = f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))} % zum Pivot"
+    if a["fehl"]:
+        return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} zurück in der Zone · {ab} – "
+                f"kein Kauf, bis der Kurs wieder über dem Pivot schließt")
     vol = (f"mit Volumen {v(a['volumen'])}-fach" if a["mit_volumen"] else
            f"ohne Volumen ({v(a['volumen'])}-fach)" if a["volumen"] else "Volumen unbekannt")
-    lage = ("in der Kaufzone" if a["kaufzone"] else "ausgedehnt" if a["abstand"] > KAUFZONE else "zurück unter dem Pivot")
-    return (f"{'🟢' if a['mit_volumen'] else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · "
-            f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))} % zum Pivot, {lage}")
+    lage = "in der Kaufzone" if a["kaufzone"] else "ausgedehnt"
+    return f"{'🟢' if a['mit_volumen'] else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · {ab}, {lage}"
 
 
 ERM_TAGE = 5                   # Bruch höchstens 5 Handelstage her

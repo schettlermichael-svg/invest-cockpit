@@ -442,13 +442,14 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
 
-## Ausbruch mit Volumen (06.11.2026)
-Am Ausbruchstag ist eine Zone fertig und verschwände – mitsamt Setup und Kaufzone. `vcp_zone.ausbruch()` schaut 5
-Handelstage zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin). Solange der Kurs über dem Pivot
-steht, gelten Zone, Enge, Pivot und Stopp von damals weiter (Minervini, Reihen VCP und Flagge, Chart). Zeichen, kein Muss:
-🟢 Volumen am Ausbruchstag über dem 50-Tage-Schnitt, 🟡 darunter – mit Faktor, Abstand zum Pivot und Lage (Kaufzone bis
-+5 %, darüber ausgedehnt). Steht auf jeder Karte, in der Tabelle und im Plan. Probelauf 06.11.: 594 Ausbrüche unter
-1.913 Titeln (363 in der Kaufzone, 437 mit Volumen).
+## Ausbruch mit Volumen und Fehlausbruch (06.11.2026)
+Am Ausbruchstag ist eine Zone fertig und verschwände – mitsamt Setup und Kaufzone. `vcp_zone.ausbruch()` schaut bis 4
+Wochen zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin). Zone, Enge, Pivot und Stopp von damals
+gelten weiter (Minervini, Reihen VCP und Flagge, Chart) – bis 4 Wochen oder bis sich darüber eine neue fertige Zone
+gebildet hat. Bis +5 % über dem Pivot = Kaufzone, auch beim Rücksetzer auf den Pivot; darüber ausgedehnt.
+Zeichen, kein Muss: 🟢 Volumen am Ausbruchstag über dem 50-Tage-Schnitt, 🟡 darunter (mit Faktor). Schließt der Kurs
+wieder unter dem Pivot: 🔴 Fehlausbruch – Zone und Pivot bleiben, kein Kauf, bis er wieder darüber schließt (dann neuer
+Ausbruch mit eigenem Volumen). Steht auf jeder Karte, in der Liste und im Plan.
 
 ## Short: Ermüdung nach Überdehnung (06.11.2026, statt Parabolic Short)
 Die Flagge des VCP-Scanners, im Ausgang gespiegelt: Die Truppe ist weit vorgestoßen, gräbt sich ein, dann bricht die

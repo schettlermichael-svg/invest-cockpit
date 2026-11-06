@@ -14,9 +14,9 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot.
 Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner (vorher Wertzone und Absorption) – Chart, Scanner und
 Minervini zeigen dieselbe Linie.
-Ausbruch (06.11.2026): Schloss der Kurs in den letzten 5 Handelstagen über dem Pivot, gelten Zone, Enge und Pivot vom
-Vortag des Ausbruchs weiter (vcp_zone.ausbruch), solange der Kurs über dem Pivot steht – sonst verschwände das Setup am
-Kauftag. Volumen am Ausbruchstag über dem 50-Tage-Schnitt ist ein Zeichen, keine Regel.
+Ausbruch (06.11.2026): Schloss der Kurs in den letzten 4 Wochen über dem Pivot, gelten Zone, Enge und Pivot vom
+Vortag des Ausbruchs weiter (vcp_zone.ausbruch) – sonst verschwände das Setup am Kauftag. Schluss wieder unter dem
+Pivot = Fehlausbruch (Zeichen, Zone bleibt). Volumen am Ausbruchstag über dem 50-Tage-Schnitt ist ein Zeichen, keine Regel.
 Pivot = Hoch der letzten Kontraktion (ohne Kontraktion: Oberkante der Zone); Kaufzone bis +5 %. Stopp unter dem Tief der
 letzten Kontraktion, höchstens 8 % unter dem Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
 verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
@@ -61,7 +61,7 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     tv = trendvorlage(df)
     c = df["Close"].to_numpy(float)
     br = vcp_zone.ausbruch(df) if ausbruch is False else ausbruch
-    if br and br["abstand"] >= 0:                   # frischer Ausbruch: die Zone vom Vortag trägt das Setup weiter
+    if br:                                          # Ausbruch (bis 4 Wochen, auch Fehlausbruch): die Zone vom Vortag gilt
         z, e = br["zone"], br["enge"]
         if br["innen"]:
             z = dict(z, in_zone=br["eltern"])
