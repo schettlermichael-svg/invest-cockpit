@@ -442,6 +442,19 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
 
+## Gesamtprüfung 06.11.2026: ein Zonenbegriff, Wertzone nur noch Zeichen „Auktion“
+- Kullamägi-Breakout auf der Zone des VCP-Scanners (Konsolidierung 1–3 Wochen nach Schub, gelb bis 8, auch die
+  Flagge in einer größeren Zone; Pivot = Oberkante; Ausbruch bis 4 Wochen wie bei Minervini); ★ K = grün und Kurs am Pivot.
+- Market Profile entscheidet nirgends mehr mit: Chip „Auktion: …“ auf der Lagekarte, Spalte „Befund“ (Scanner · Auktion)
+  in der Liste, Zeile im Lagebild, Nachzieh-Hinweis VAL/VAH nach dem Kauf. Kleinchart zeigt Zone und Pivot des Scanners,
+  die Zeile unter den Chips den Befund des Scanners. Kein Plan ohne Setup der Systeme (vorher Wertzonen-Plan).
+- Warnzeichen auf der Scanner-Base: Korrektur zum Markt (mehr als 2-fach S&P 500) mit Gruppenvergleich, Frühwarnung
+  (Schluss unter dem Tief der Zone bis gestern); „Reset beobachten“ am Pivot der Systeme. Selbstprüfung der alten
+  Wertzonen-Base, Absorption und Strömung sind raus (`_to_delete`).
+- Kartentisch rechnet auch Titel ohne 30-Minuten-Kerzen (vorher fielen sie heraus).
+- Massive: Nachtlauf holt nach US-Schluss (New York ab 16:30) auch den heutigen Tag – RS-Rang, Führer-Rang, Marktbreite
+  und Rudel hingen vorher einen Tag hinterher.
+
 ## IBD-Basenzählung auf Scanner-Zonen (06.11.2026)
 `kern/basen.py` zählt die Basen auf den abgeschlossenen Zonen des VCP-Scanners (statt der Wertzonen; `basenzahl` und
 die Historie der Wertzonen auf der Titelseite sind weg – die Titelseite rechnet rund 2,7 s weniger). Regeln wie bisher:

@@ -16,7 +16,7 @@ VCP-Scanner (für Titel ohne Reihe in den Systemen, seit 06.11.2026 statt der We
   Flagge · Scanner    Flagge des Scanners (Kullamägi), auch als Flagge in einer Base
 Ein Titel steht in genau einer Reihe (Vorrang in der Reihenfolge oben); die Lagekarte zeigt das Setup beider Systeme.
 
-Rechnung in zwei Stufen: 1. alle Titel Erkennung, Wertzone und beide Systeme (mehrere Prozesse) → Reihe; 2. für die Titel
+Rechnung in zwei Stufen: 1. alle Titel VCP-Scanner, beide Systeme und Auktion als Zeichen (mehrere Prozesse) → Reihe; 2. für die Titel
 in einer Reihe die volle Titelseite (dieselben Kacheln, dieselbe Lagekarte). Ergebnis: daten/kartentisch/<Datum>.json;
 die Übersicht liest nur diese Datei.
 """
@@ -68,8 +68,9 @@ def _fund_gespeichert(tk):
 
 
 def _stufe1(tk):
-    """Erkennung, Wertzone und beide Systeme eines Titels aus dem Speicher; Reihe oder None."""
-    import absorption
+    """VCP-Scanner, beide Systeme und die Auktion (Market Profile, nur Zeichen) eines Titels aus dem Speicher; Reihe
+    oder None. Seit 06.11.2026 entscheidet die Wertzone nirgends mehr mit; ein Titel ohne 30-Minuten-Kerzen wird trotzdem
+    gerechnet."""
     import daten
     import erkennung
     import rs_rang
@@ -84,12 +85,7 @@ def _stufe1(tk):
         df.attrs.update(ticker=tk, jung=len(df) < 300)
         erk = erkennung.erkenne(df, index=index)
         a = erk.get("mp")
-        if not a:
-            return None
         erk["kurs"] = float(df["Close"].iloc[-1])
-        w = erk.get("werte") or {}
-        erk["absorption"] = (absorption.absorption(df, w["start_index"], w["pivot"], w.get("ende_index"))
-                             if erk["muster"] and "start_index" in w else None)
         fund, gewinne = _fund_gespeichert(tk)
         try:
             rang = rs_rang.rang(tk)[0]
@@ -101,8 +97,8 @@ def _stufe1(tk):
         br = vcp_zone.ausbruch(df, jetzt=zs)    # Ausbruch (bis 4 Wochen, auch Fehlausbruch): Zone vom Vortag gilt weiter
         m = system_minervini.pruefen(df, erk, rang, fund, scan, br)
         gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
-        k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
-        z = a["zustand"]
+        k = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk, scan=scan, br=br)
+        z = a["zustand"] if a else {"wort": "keine 30-Minuten-Kerzen", "dir": ""}
         c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
         ph = erkennung._phase_von(df)
         info = {"tk": tk, "zustand": z["wort"], "zdir": z["dir"], "seite": erk.get("seite"),
@@ -112,7 +108,6 @@ def _stufe1(tk):
                 "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
                       "ermuedung": (k["ermuedung"] or {}).get("ampel")}}
-        bewegt = z["wort"].startswith(("an der Schwelle", "Ausbruch")) and z["dir"] == "↑"
         hk = k.get("haupt") or {}
         if m["pivot"]:
             info["abstand"] = abs((c[-1] / m["pivot"] - 1) * 100)
@@ -131,14 +126,18 @@ def _stufe1(tk):
             info.update(reihe="m_spitze", stern=True)
         elif k.get("breakout") and k["breakout"]["ampel"] != "rot":
             b = k["breakout"]
-            info.update(reihe="k_breakout", stern=b["ampel"] == "grün" and bewegt, gruen=b["ampel"] == "grün",
+            am_pivot = b.get("abstand") is not None and -PIVOT_NAH <= b["abstand"] <= KAUFZONE_M and \
+                not (b.get("ausbruch") or {}).get("fehl")
+            info.update(reihe="k_breakout", stern=b["ampel"] == "grün" and am_pivot, gruen=b["ampel"] == "grün",
                         luecken=[f"K: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
             _scannerfeld(info, scan, m["ausbruch"])
-        if m["ausbruch"]:                        # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch –
-            info["ausbruch"] = vcp_zone.ausbruch_text(m["ausbruch"])   # derselbe, mit dem Minervini rechnet
+        zeichen_br = m["ausbruch"] or (k.get("breakout") or {}).get("ausbruch") if info.get("reihe") != "k_breakout" \
+            else (k["breakout"].get("ausbruch") or m["ausbruch"])
+        if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch –
+            info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)   # derselbe, mit dem das System der Reihe rechnet
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
@@ -207,7 +206,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     w = watchlists.laden()
     beobachtet = set(watchlists.alle())
     gerechnet = {x["tk"] for x in stufe1}
-    stufe1 += [{"tk": tk, "zustand": "keine Wertzone (Daten fehlen noch)", "hoch52": False, "tief52": False,
+    stufe1 += [{"tk": tk, "zustand": "Kurse fehlen noch", "hoch52": False, "tief52": False,
                 "phase": None} for tk in watchlists.alle() if tk not in gerechnet]
     for x in stufe1:
         if x["tk"] in beobachtet:
@@ -338,11 +337,11 @@ def zeile(tk, x):
     """Eine Tabellenzeile für die übrigen Titel (Reihenfolge wie die Karten)."""
     from gestaltung import GELB, zahl
     if x is None:
-        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Wertzone": "",
+        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Befund": "",
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
-            "Wertzone": " · ".join(z for z in (x.get("zustand", ""), scanner_text(x)) if z),
+            "Befund": " · ".join(z for z in (scanner_text(x), "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
@@ -524,7 +523,7 @@ def lagebild(tisch):
         if g:
             text += " ⚑"
         zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
-                  f"Wertzone: {t(x.get('zustand', '–'))}"]
+                  f"Auktion: {t(x.get('zustand', '–'))}"]
         if stern:
             zeilen.append("★ Setup grün, Kurs am Pivot")
         if scanner_text(x):
@@ -587,5 +586,5 @@ def lagebild(tisch):
              f'Angriff jetzt = Setup grün (Minervini, Kullamägi oder VCP-Scanner) · Bereitstellung = in einer '
              f'Reihe, Setup noch nicht grün · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
              f'die drei stärksten, „+n“ klappt den Rest auf · ★ Spitze · ◆ Watchlist · ⚑ Themen-Gruppe Führend/Erstarkend · '
-             f'Maus auf einen Titel zeigt Reihe, Wertzone und was fehlt.</div>')
+             f'Maus auf einen Titel zeigt Reihe, Befund des Scanners, Auktion und was fehlt.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

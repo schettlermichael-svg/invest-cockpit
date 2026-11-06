@@ -1,7 +1,7 @@
 """Lagekarte (4.11.2026, Zwei Systeme seit 05.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite,
 Übersicht (Kartentisch) und in den Watchlists. Aufbau: Kopf mit dem Setup je System (M = Minervini, K = Kullamägi),
-Chips (Wertzone, Stärke, Trend, Base), Belegzeile der Wertzone, Kleinchart 6 Monate mit Wertzonenrahmen, Wertbereich und
-POC-Treppe, acht Ampelpunkte wie die Kacheln (geteilter Punkt: links M, rechts K; Maus darauf zeigt die Zeile),
+Chips (Auktion, Stärke, Trend, Base), Befund des VCP-Scanners, Kleinchart 6 Monate mit der Zone des Scanners und dem
+Pivot (seit 06.11.2026; die Wertzone ist nur noch das Zeichen „Auktion“), acht Ampelpunkte wie die Kacheln (geteilter Punkt: links M, rechts K; Maus darauf zeigt die Zeile),
 Abstand zum Pivot, Fußzeile mit Stopp und nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den
 Kacheln bzw. der Erkennung."""
 import re
@@ -10,7 +10,6 @@ import numpy as np
 
 from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, punkt2, t, zahl
 
-TREPPE = "#FFA657"
 PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Branche", "Base")
 
 
@@ -81,13 +80,22 @@ def _chip(text, ampel=None):
             f'white-space:nowrap">{t(text)}</span>')
 
 
+def _zone(erk):
+    """Die Zone des Systems, das das Setup liefert: Minervini, sonst die Konsolidierung des Kullamägi-Breakouts."""
+    sy = erk.get("systeme") or {}
+    z = (sy.get("m") or {}).get("zone") or {}
+    if z.get("zone"):
+        return z
+    return ((sy.get("k") or {}).get("breakout") or {}).get("zone")
+
+
 def _kleinchart(df, erk, tage=126):
+    """Kleinchart 6 Monate: Kurs, Zone des VCP-Scanners (Rahmen von der Oberkante bis heute) und Pivot."""
     d = df.iloc[-tage:]
     c = d["Close"].to_numpy(float)
     W, H, P = 420, 120, 6
     werte = list(d["High"]) + list(d["Low"])
-    mp = erk.get("mp")
-    zonen = [z for z in (mp or {}).get("zonen", []) if z["ende"] >= d.index[0]]
+    z = _zone(erk)
     pivot = _pivot(erk)
     lo, hi = min(werte), max(werte)
     if pivot:
@@ -100,28 +108,15 @@ def _kleinchart(df, erk, tage=126):
     def Y(p):
         return P + (H - 2 * P) * (1 - (np.log(p) - np.log(lo)) / (np.log(hi) - np.log(lo)))
 
-    def pos(tag):
-        return min(int(d.index.searchsorted(tag)), len(c) - 1)
     s = [f'<svg viewBox="0 0 {W} {H}" width="100%" style="display:block;margin:10px 0 6px" role="img" '
-         f'aria-label="Kleinchart 6 Monate mit Wertzonen">']
-    treppe, vor = [], None
-    for k, z in enumerate(zonen):
-        letzte = k == len(zonen) - 1
-        x0 = X(pos(z["beginn"])) if z["beginn"] >= d.index[0] else P
-        x1 = W - P if letzte else X(pos(z["ende"]))
-        s.append(f'<rect x="{x0:.1f}" y="{Y(z["vah"]):.1f}" width="{max(1, x1 - x0):.1f}" '
-                 f'height="{max(1, Y(z["val"]) - Y(z["vah"])):.1f}" fill="{BLAU}" fill-opacity="0.13"/>'
-                 f'<rect x="{x0:.1f}" y="{Y(z["hoch"]):.1f}" width="{max(1, x1 - x0):.1f}" '
-                 f'height="{max(1, Y(z["tief"]) - Y(z["hoch"])):.1f}" fill="none" stroke="{BLAU}" '
-                 f'stroke-opacity="{0.9 if letzte else 0.35}" stroke-width="1"'
-                 + (' stroke-dasharray="4 3"' if letzte else "") + '/>')
-        if vor is not None and treppe:
-            treppe.append((x0, Y(vor["poc"])))
-        treppe += [(x0, Y(z["poc"])), (x1, Y(z["poc"]))]
-        vor = z
-    if len(treppe) >= 2:
-        s.append(f'<polyline points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in treppe)}" fill="none" '
-                 f'stroke="{TREPPE}" stroke-width="2"/>')
+         f'aria-label="Kleinchart 6 Monate mit der Zone des Scanners">']
+    if z and z.get("start_i") is not None and z["start_i"] < len(df):
+        start = df.index[z["start_i"]]
+        x0 = X(int(d.index.searchsorted(start))) if start >= d.index[0] else P
+        oben, unten = float(z["oben"]), max(float(z["unten"]), lo)
+        s.append(f'<rect x="{x0:.1f}" y="{Y(oben):.1f}" width="{max(1, W - P - x0):.1f}" '
+                 f'height="{max(1, Y(unten) - Y(oben)):.1f}" fill="{BLAU}" fill-opacity="0.10" stroke="{BLAU}" '
+                 f'stroke-opacity="0.8" stroke-width="1"/>')
     if pivot:
         s.append(f'<line x1="{P}" x2="{W - P}" y1="{Y(pivot):.1f}" y2="{Y(pivot):.1f}" stroke="{TEXT_2}" '
                  f'stroke-width="1" stroke-dasharray="5 4"/>')
@@ -133,7 +128,7 @@ def _kleinchart(df, erk, tage=126):
 
 def _pivot(erk):
     """Pivot des Systems, das das Setup liefert: Minervini zuerst, dann Kullamägi (EP: Hoch des Sprungtags, Breakout:
-    Oberkante der Wertzone); ohne Systeme die Wertzone."""
+    Oberkante der Zone des Scanners); sonst keiner."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     if m.get("pivot"):
@@ -141,7 +136,7 @@ def _pivot(erk):
     h = k.get("haupt") or {}
     if h.get("pivot") and h.get("ampel") != "rot":
         return h["pivot"]
-    return (erk.get("werte") or {}).get("pivot") if erk.get("muster") else None
+    return None
 
 
 def _abstand(erk, kurs):
@@ -222,6 +217,20 @@ def _setup_kasten(kacheln, erk):
             f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">{zeilen}</div>')
 
 
+def _befund(erk):
+    """Befund des Scanners unter den Chips: Base des Systems und Ausbruch."""
+    sy = erk.get("systeme") or {}
+    m = sy.get("m") or {}
+    b = (sy.get("k") or {}).get("breakout") or {}
+    teile = [next((x for n, _, x in m.get("regeln", []) if n.startswith("Reife Base")), "")]
+    if not (m.get("zone") or {}).get("zone") and b.get("zone"):
+        teile = [next((x for n, _, x in b.get("regeln", []) if n.startswith("Konsolidierung")), "")]
+    if m.get("ausbruch") or b.get("ausbruch"):
+        import vcp_zone
+        teile.append(vcp_zone.ausbruch_text(m.get("ausbruch") or b.get("ausbruch")))
+    return " · ".join(x for x in teile if x)
+
+
 def karte(tk, branche, erk, kacheln, df, liste=None):
     """kacheln: {Beschriftung: (Ampel oder (Ampel M, Ampel K), Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
     def kz(name, default=("grau", "–", "")):
@@ -253,10 +262,10 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<div style="font-size:14px;color:{TEXT_2}">{t(branche)}</div>'
         + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
         f'</div>{_setup_kasten(kacheln, erk)}</div>'
-        f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Wertzone: " + zone[1], zone[0])}'
+        f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Auktion: " + zone[1], zone[0])}'
         f'{_chip(wort_m(staerke), ampel_m(staerke))}{_chip(wort_m(trend), ampel_m(trend))}'
         f'{_chip("Base " + base[1], base[0])}</div>'
-        f'<div style="font-size:13px;color:{TEXT_2}">{t(zone[2])}</div>'
+        f'<div style="font-size:13px;color:{TEXT_2}">{t(_befund(erk))}</div>'
         f'{_kleinchart(df, erk)}'
         f'<div title="Geteilter Punkt: links Minervini (M), rechts Kullamägi (K); grau = gilt für das System nicht" '
         f'style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">{punkte}</div>'

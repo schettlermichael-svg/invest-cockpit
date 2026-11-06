@@ -305,7 +305,7 @@ def _tabelle(teil, nr):
     zeilen = teil["zeilen"]
     if not zeilen:
         return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Wertzone": z["Wertzone"],
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Befund": z["Befund"],
                         "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
     farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])

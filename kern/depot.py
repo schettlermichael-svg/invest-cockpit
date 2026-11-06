@@ -200,7 +200,7 @@ def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
     Zwei Systeme (05.11.2026): zuerst Minervini (Pivot, Tief der letzten Kontraktion, höchstens 8 %), dann Kullamägi
     (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Ermüdung nach Überdehnung (short):
-    Stopp über dem Hoch des Auslösetags), sonst die Wertzone."""
+    Stopp über dem Hoch des Auslösetags), sonst keiner."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     if m.get("pivot") and m.get("ampel") != "rot":
@@ -212,16 +212,7 @@ def plan(erk):
     em = k.get("ermuedung")
     if em:
         return "short", float(erk.get("kurs") or em["unten"]), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)"
-    w = erk.get("werte") or {}
-    if "pivot" not in w:
-        return None
-    p = float(w["pivot"])
-    if erk.get("muster") and erk.get("seite") == "long":
-        vah = w.get("vah")
-        if vah and p * 0.92 <= vah < p:
-            return "long", p, float(vah), "Schluss unter dem VAH"
-        return "long", p, p * 0.92, "−8 % (O'Neil)"
-    return None
+    return None                                  # ohne Setup der Systeme kein Plan (06.11.2026: kein Wertzonen-Plan mehr)
 
 
 def nach_dem_kauf(p, df, erk=None):
@@ -274,8 +265,8 @@ def _nach_dem_kauf(p, df, erk=None):
         neue_kante = w.get("val") if lang else w.get("vah")
         if z_beginn > pd.Timestamp(p.get("datum") or df.index[0]) and neue_kante and \
                 ((neue_kante > s) if lang else (neue_kante < s)):
-            aus.append(("gelb", f"Stopp nachziehen: neue Wertzone seit {z_beginn:%d.%m.} – Schluss {'unter VAL' if lang else 'über VAH'} "
-                                f"{neue_kante:.2f} als neuer Stopp (Market Profile)"))
+            aus.append(("gelb", f"Zeichen Auktion: neue Wertzone seit {z_beginn:%d.%m.} – Schluss {'unter VAL' if lang else 'über VAH'} "
+                                f"{neue_kante:.2f} wäre ein enger Nachzieh-Stopp (Market Profile)"))
     if len(seit) >= 1 and len(seit) <= 4 and lang:
         t = seit.iloc[0]
         spanne = float(t["High"] - t["Low"]) or 1
@@ -288,7 +279,8 @@ def _nach_dem_kauf(p, df, erk=None):
         i = int(lo.argmin())
         if i < len(lo) - 1 and lo[i] < e * 0.97 and k > hi[:i + 1].max() and len(lo) - 1 - i <= 5:
             aus.append(("grün", "Tennisball: nach dem Rücksetzer schnell auf neues Hoch – Zeichen von Stärke (Minervini)"))
-    piv = w.get("pivot")
+    sy = (erk or {}).get("systeme") or {}
+    piv = (sy.get("m") or {}).get("pivot") or ((sy.get("k") or {}).get("haupt") or {}).get("pivot")
     if lang and piv and e >= piv * 0.98 and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))

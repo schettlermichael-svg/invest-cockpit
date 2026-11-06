@@ -18,8 +18,6 @@ import tpo_daten                                      # noqa: E402
 import fundament                                      # noqa: E402
 import fruehwarnung                                   # noqa: E402
 import depotleiste                                    # noqa: E402
-import fussabdruck                                    # noqa: E402
-import absorption                                     # noqa: E402
 import rs_rang                                        # noqa: E402
 import phase as phasen_modul                          # noqa: E402
 import namen_de                                       # noqa: E402
@@ -30,7 +28,6 @@ import rudelkarte                                     # noqa: E402
 import quellen                                        # noqa: E402
 import sektoren                                       # noqa: E402
 import sic13                                          # noqa: E402
-import stroemung as stroemung_modul                   # noqa: E402
 import lagekarte                                      # noqa: E402
 import markt_systeme                                  # noqa: E402
 import system_minervini                               # noqa: E402
@@ -104,22 +101,25 @@ def _widerspruch(ph):
     return ""
 
 
-def _gruppe_korrektur(df, erk, rd):
-    """Zeichen neben der Buchregel „Korrektur zum Markt“: Wie tief fiel die eigene Gruppe im selben Zeitraum?
-    Fiel der Titel kaum stärker als seine Gruppe (höchstens das 1,5-Fache), war es eine Sektor-Korrektur und keine
-    Schwäche des Titels. Die Ampel der Buchregel bleibt unverändert (eigene Ableitung, nicht aus dem Buch)."""
-    w = erk["werte"]
-    if not rd or "korrektur_x_markt" not in w:
+def _gruppe_korrektur(df, z, markt, rd):
+    """Zeichen neben der Buchregel „Korrektur zum Markt“ (O'Neil: höchstens das 2- bis 3-Fache des Marktes), gemessen
+    an der Base des Scanners (06.11.2026, vorher Wertzone): Fiel der Titel mehr als doppelt so tief wie der S&P 500,
+    wie tief fiel seine Gruppe im selben Zeitraum? Höchstens das 1,5-Fache der Gruppe = Sektor-Korrektur, keine
+    Schwäche des Titels."""
+    if not rd or not z or markt is None:
+        return None
+    x_markt = z["tiefe"] / max(markt, 5.0)
+    if x_markt <= 2:
         return None
     try:
         g = rudel.gruppenkurs(rd["rudel"]["mitglieder"])
-        ab = df.index[w["start_index"]]
-        teil = g[g.index >= ab]
+        teil = g[g.index >= df.index[z["start_i"]]]
         if len(teil) < 5:
             return None
         rueck = float((1 - teil / teil.cummax()).max() * 100)
-        faktor = w["tiefe_pct"] / max(rueck, 5.0)
-        return {"name": rd["rudel"]["name"], "rueckgang": rueck, "faktor": faktor, "sektor": faktor <= 1.5}
+        faktor = z["tiefe"] / max(rueck, 5.0)
+        return {"name": rd["rudel"]["name"], "rueckgang": rueck, "faktor": faktor, "sektor": faktor <= 1.5,
+                "x_markt": x_markt}
     except Exception:
         return None
 
@@ -354,17 +354,14 @@ def _k2_setup(m, k, erk, df):
     else:
         kk = ((h["ampel"], h["art"] + (f" vor {h['tage_her']} T." if h["art"] == "Episodic Pivot" and h["tage_her"] else ""))
               if h and h["ampel"] != "rot" else ("rot", "keines"))
-    z = (erk.get("mp") or {}).get("zustand") or {}
-    teile = [z.get("wort", "")]
+    teile = [next(x for n, _, x in m["regeln"] if n.startswith("Reife Base"))]
     if m.get("pivot"):
         teile.append(f"Pivot {zahl(m['pivot'])} $ · {m['lage']}")
     hilfe = ("M – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
              + "\n\nK – " + "\n".join(
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), em) if x))
-    if erk.get("mp") and df is not None:
-        hilfe += "\n\nDruck in der Wertzone:\n" + "\n".join(f"{pf} {n}: {x}" for n, pf, x in stroemung_modul.druck(erk["mp"], df))
-    return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe + "\n\n" + AUSLOESER_HILFE)
+    return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe)
 
 
 def _k2_enge(m, k, erk, df):
@@ -376,7 +373,7 @@ def _k2_enge(m, k, erk, df):
     b = k.get("breakout") or {}
     kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
     kk = (("grün" if kons[1] else "gelb" if b.get("wochen") and b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
-          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Wertzone")
+          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Zone")
     zeile = eng[2]
     if reif and e.get("folge"):
         zeile = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
@@ -479,14 +476,12 @@ def _warnzeichen(erk):
     zeilen += "".join(ampelzeile(h, "rot" if h.startswith(("Daten gestört", "Klimax", "Übernahme")) or "(rot)" in h
                                 else "gelb", "") for h in erk["hinweise"] if _ist_warnung(h))
     gk = erk.get("gruppe_korrektur")
-    if gk and (erk["werte"].get("korrektur_x_markt") or 0) > 2:
-        zeilen += ampelzeile(("Sektor-Korrektur: " if gk["sektor"] else "Schwächer als die Gruppe: ")
+    if gk:
+        zeilen += ampelzeile(f'Base {zahl(gk["x_markt"], 1)}-fach so tief wie der S&P 500 · '
+                             + ("Sektor-Korrektur: " if gk["sektor"] else "Schwächer als die Gruppe: ")
                              + f'Gruppe {namen_de.branche(gk["name"])} −{zahl(gk["rueckgang"], 0)} %, Titel {zahl(gk["faktor"], 1)}-fach der Gruppe '
                              "(Zeichen neben der Buchregel, ändert die Ampel nicht)", "gelb", "")
     zeilen += "".join(ampelzeile(f"Datenampel: {text}", a, "") for a, _, text in erk.get("daten", {}).get("zeichen", []))
-    for b in erk.get("selbstpruefung") or []:
-        zeilen += ampelzeile(f"Base-Erkennung unsicher: {b}", "gelb",
-                             "Die Selbstprüfung fand einen inneren Widerspruch – Base im Chart prüfen")
     return karte(zeilen or f'<div style="color:{TEXT_2};font-size:15px">Keine Warnzeichen.</div>', "Warnzeichen")
 
 
@@ -766,11 +761,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
             pass
     erk = erkennung.erkenne(df, index=index)
     erk["kurs"] = float(df["Close"].iloc[-1])
-    erk["selbstpruefung"] = erkennung.selbstpruefung(df, erk)
     erk["df_index"] = df.index
-    w_ = erk["werte"]
-    if erk["muster"] and "start_index" in w_:
-        erk["fuss"] = fussabdruck.fussabdruck(df, w_["start_index"], w_.get("ende_index"), w_["pivot"])
     try:                                          # Volumenprofil der letzten 52 Wochen für die Spalte rechts im Chart
         import volumenprofil
         i_vp = max(0, len(df) - volumenprofil.JAHR)
@@ -782,8 +773,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
         erk["rs_rang"] = rs_rang.rang(tk)
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
         erk["rs_rang"] = None
-    erk["absorption"] = (absorption.absorption(df, w_["start_index"], w_["pivot"], w_.get("ende_index"))
-                         if erk["muster"] and "start_index" in w_ else None)
     ph_reihe = phasen_modul.phasen(df) if len(df) >= 300 else None
     ph = int(ph_reihe.iloc[-1]) if ph_reihe is not None else None
     krit = phasen_modul.phase_heute(df) if len(df) >= 300 else None
@@ -803,37 +792,38 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:  # noqa: BLE001
         sek = None
     rd = rudelkarte.daten(tk, df, etf)
-    erk["gruppe_korrektur"] = _gruppe_korrektur(df, erk, rd)
     hinweis_laufend = ""
     if df.attrs.get("laufend"):
         hinweis_laufend = (f'<div style="border:1px solid #5A4A1A;background:#2A2410;color:#E3B341;border-radius:10px;'
                            f'padding:10px 14px;font-size:14px">Laufender Börsentag, Stand {df.attrs["stand"]} Uhr: Die letzte '
-                           f'Kerze ist unvollständig (im Chart hohl). Ausbruch, Volumenfaktoren, Fußabdruck und Absorption '
+                           f'Kerze ist unvollständig (im Chart hohl). Ausbruch, Volumenfaktoren und Enge '
                            f'sind vorläufig bis Börsenschluss – O\'Neil und Minervini urteilen über Schlusskurs und '
                            f'Tagesvolumen.</div>')
-    erk["fruehwarnung"] = fruehwarnung.zeichen(df, erk, ph)
     gtage = [d for d, _ in reaktionen(df, gewinne)] if gewinne is not None else []
     try:                                         # VCP-Scanner: Zone und Enge jetzt, abgeschlossene Zonen (Chart, Minervini)
         import vcp_zone
         zonen = vcp_zone.alles(df)
     except Exception:  # noqa: BLE001 – Chart ohne Zonen, Minervini rechnet selbst
         zonen = None
-    m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund,
-                                  (zonen["jetzt"], zonen["enge"]) if zonen else None)
+    scan = (zonen["jetzt"], zonen["enge"]) if zonen else None          # die Zone von heute (für beide Systeme)
+    m_ = system_minervini.pruefen(df, erk, (erk.get("rs_rang") or (None,))[0], fund, scan)
     if zonen and m_.get("ausbruch"):               # frischer Ausbruch: der Chart zeigt die Zone vom Vortag weiter
         zonen["jetzt"] = vcp_zone.datiert(df, m_["ausbruch"]["zone"])
     if zonen and (m_["zone"].get("in_zone") or m_.get("ausbruch")):   # der Chart zeigt Minervinis Enge
         bis = m_["ausbruch"]["vortag_i"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag des Ausbruchs
         zonen["enge"] = vcp_zone.enge_datiert(df.iloc[:bis], m_["zone"])
-    k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk)
+    k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk, scan=scan)
+    reif = next(ok for n, ok, _ in m_["regeln"] if n.startswith("Reife Base"))
+    erk["scanner_zone"] = m_["zone"] if m_["zone"].get("zone") else None   # Frühwarnung: Unterkante der Zone
+    erk["fruehwarnung"] = fruehwarnung.zeichen(df, erk, ph)
     try:                                         # IBD-Basenzählung auf den Scanner-Zonen (Kachel Base, Nummern im Chart)
         import basen
-        reif = next(ok for n, ok, _ in m_["regeln"] if n.startswith("Reife Base"))
         erk["basen"] = basen.zaehlen(df, index, (zonen or {}).get("verlauf"), m_["zone"] if reif else None)
         if reif:
             erk["basen"]["markt"] = basen.markt_rueckgang(index, df.index[m_["zone"]["start_i"]])
     except Exception:  # noqa: BLE001 – Kachel ohne Zählung
         erk["basen"] = None
+    erk["gruppe_korrektur"] = _gruppe_korrektur(df, m_["zone"] if reif else None, (erk.get("basen") or {}).get("markt"), rd)
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit

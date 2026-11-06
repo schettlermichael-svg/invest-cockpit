@@ -2,8 +2,8 @@
 Phasengrenzen:
   · Bruch unter den 10-Wochen-Durchschnitt (GD50) mit hohem Volumen (mindestens 1,4-faches 50-Tage-Mittel) in den
     letzten 10 Tagen
-  · Unterstützung der Gipfelzone gebrochen: Schluss unter der Unterkante der Wertzone, nachdem der Titel in
-    Phase 2 oder 3 lief
+  · Unterstützung der Gipfelzone gebrochen: Schluss unter dem tiefsten Tief der Zone des VCP-Scanners bis gestern
+    (seit 06.11.2026, vorher Wertzone), nachdem der Titel in Phase 2 oder 3 lief
 """
 import re
 
@@ -36,11 +36,12 @@ def _zeichen(df, erk, phase):
                         f"{v[i] / vs[j - 1]:.1f}-fachem Volumen"
                         + ("" if c[-1] < g[-1] else " – inzwischen zurückerobert")))
             break
-    w = erk.get("werte") or {}
-    u = w.get("zone_unterkante")
-    if u and c[-1] < u:
-        aus.append(("rot", f"Frühwarnung (Weinstein): Unterstützung der Gipfelzone gebrochen – Schluss {c[-1]:.2f} unter "
-                           f"der Unterkante der Wertzone {u:.2f} in Phase {phase}"))
+    z = erk.get("scanner_zone")
+    if z and z.get("start_i") is not None and z["start_i"] < n - 2:
+        u = float(df["Low"].to_numpy(float)[z["start_i"]:n - 1].min())
+        if c[-1] < u:
+            aus.append(("rot", f"Frühwarnung (Weinstein): Unterstützung der Gipfelzone gebrochen – Schluss {c[-1]:.2f} unter "
+                               f"der Unterkante der Zone {u:.2f} in Phase {phase}"))
     return aus
 
 

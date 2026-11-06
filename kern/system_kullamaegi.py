@@ -7,7 +7,9 @@ Breakout (Momentum Burst nach Pradeep Bonde): rein technisch. Ein Führer im Auf
   Seitwärtsphase über, vorzugsweise bei reduziertem Volumen, und bricht aus. Führer = die obersten 1–2 % nach der
   Kursentwicklung über 1, 3 oder 6 Monate (fuehrer_rang). Konsolidierung meist 1–3 Wochen. Haltedauer 3–5 Tage für den
   Hauptteil. Erfolgsquote deutlich unter 50 %.
-  grün: Führer (oberste 2 %) + Wertzone 1–3 Wochen nach einem Lauf nach oben (oder Kurs über GD50)
+  grün: Führer (oberste 2 %) + Zone des VCP-Scanners 1–3 Wochen nach einem Schub (oder Kurs über GD50), auch die Flagge
+  in einer größeren Zone; Pivot = Oberkante; nach dem Ausbruch gilt die Zone bis 4 Wochen weiter (06.11.2026, vorher
+  Wertzone)
 Episodic Pivot: eine Nachricht, die den Markt zur völligen Neubewertung zwingt, eine große Kurslücke nach oben und eine
   Volumenexplosion – alle drei Pflicht. Ideal ein vernachlässigter Titel, der lange seitwärts lief (kein Titel, der kurz
   vorher schon stark stieg); ein Ausbruch aus einer Konsolidierung ist ihm lieber, aber keine Pflicht. Sein Scan: Titel,
@@ -47,37 +49,64 @@ def adtr(df, n=ADTR_TAGE):
     return float(tr[-n:].mean())
 
 
-def breakout(df, erk, fr):
-    a = erk.get("mp")
-    st = a["stand"][-1] if a and a.get("stand") else None
+def _konsolidierung(z):
+    """Die Zone, die Kullamägi als Konsolidierung sieht: die große Zone oder die Flagge darin – zuerst eine von 1–3
+    Wochen, sonst eine bis 8 Wochen, sonst die große."""
+    if not z or not z.get("zone"):
+        return None
+    kand = [z] + ([z["innen"]] if z.get("innen") else [])
+    for lo, hi in (KONS_GRUEN, (KONS_GRUEN[0], KONS_GELB)):
+        for b in kand:
+            if lo <= b["wochen"] <= hi + 0.5:
+                return b
+    return z
+
+
+def breakout(df, fr, scan=None, br=None):
+    """Breakout auf der Zone des VCP-Scanners (06.11.2026, vorher Wertzone): Führer + Konsolidierung 1–3 Wochen nach
+    einem Schub (Vorgeschichte Schub, Flagge oder Kurs über GD50), vorzugsweise bei reduziertem Volumen. Pivot =
+    Oberkante der Zone. Nach einem Ausbruch (br, bis 4 Wochen) gilt die Zone vom Vortag weiter, wie bei Minervini."""
     c = df["Close"].to_numpy(float)
     f_ampel = fuehrer_rang.ampel(fr)
     regeln = [("Führer (oberste 1–2 % nach 1/3/6 Monaten)", f_ampel == "grün", fuehrer_rang.text(fr))]
-    if st is None:
-        regeln.append(("Konsolidierung 1–3 Wochen", False, "keine Wertzone"))
+    z = _konsolidierung(br["zone"]) if br else None
+    if z is None:
+        br = None
+        if scan is None:
+            z_ = vcp_zone.zone(df)
+            scan = (z_, None)
+        z = _konsolidierung(scan[0])
+    if z is None:
+        grund = (scan[0] or {}).get("grund", "keine Zone") if scan else "keine Zone"
+        regeln.append(("Konsolidierung 1–3 Wochen", False, grund))
         return {"art": "Breakout", "ampel": "rot" if f_ampel != "grün" else "gelb", "regeln": regeln, "pivot": None}
-    wochen = int(st["wochen"])
-    trend = st.get("herkunft") == "↑" or (len(c) >= 50 and c[-1] > c[-50:].mean())
-    kons = KONS_GRUEN[0] <= wochen <= KONS_GRUEN[1] and trend
+    wochen = float(z["wochen"])
+    schub = z.get("name") == "Flagge" or (z.get("vorgeschichte") or {}).get("art") == "Schub"
+    trend = schub or (len(c) >= 50 and c[-1] > c[-50:].mean())
+    kons = KONS_GRUEN[0] <= wochen <= KONS_GRUEN[1] + 0.5 and trend
+    w_txt = f"{wochen:.1f}".replace(".", ",")
     regeln.append(("Konsolidierung 1–3 Wochen nach einem Schub", kons,
-                   f"Wertzone {wochen} Woche{'n' if wochen != 1 else ''}"
-                   + ("" if trend else ", kein Schub davor und Kurs unter GD50")))
+                   f"{z.get('name', 'Zone')} {w_txt} Wochen" + ("" if trend else ", kein Schub davor und Kurs unter GD50")))
     v = df["Volume"].to_numpy(float)
-    zd = max(5, wochen * 5)                      # Handelstage der Wertzone
-    ruhig = v[-zd:].mean() / v[-zd - 50:-zd].mean() if len(v) > zd + 50 and v[-zd - 50:-zd].mean() else None
+    i0 = int(z["start_i"])
+    ende = br["vortag_i"] if br else len(v)
+    ruhig = (v[i0:ende].mean() / v[max(0, i0 - 50):i0].mean()
+             if ende > i0 and i0 >= 20 and v[max(0, i0 - 50):i0].mean() else None)
     if ruhig is not None:
-        regeln.append(("Volumen in der Konsolidierung reduziert (vorzugsweise)", ruhig < 1.0,
-                       f"{ruhig:.1f}-fach".replace(".", ",")))
+        regeln.append(("Volumen in der Konsolidierung reduziert (vorzugsweise)", bool(ruhig < 1.0),
+                       f"{ruhig:.2f}-fach".replace(".", ",")))
     if f_ampel == "grün" and kons:
         ampel = "grün"
-    elif (f_ampel == "gelb" and kons) or (f_ampel == "grün" and wochen <= KONS_GELB):
+    elif (f_ampel == "gelb" and kons) or (f_ampel == "grün" and wochen <= KONS_GELB + 0.5):
         ampel = "gelb"                           # Führer knapp (oberste 5 %) oder Konsolidierung bis 8 Wochen
     else:
         ampel = "rot"
-    pivot = float(st["hoch"])
+    pivot = float(br["pivot"]) if br else float(z["oben"])
     ab = (c[-1] / pivot - 1) * 100
-    return {"art": "Breakout", "ampel": ampel, "regeln": regeln, "pivot": pivot, "wochen": wochen,
-            "lage": (f"{ab:.1f} % über der Oberkante" if ab >= 0 else f"{-ab:.1f} % unter der Oberkante").replace(".", ",")}
+    lage = (vcp_zone.ausbruch_text(br) if br else
+            (f"{ab:.1f} % über der Oberkante" if ab >= 0 else f"{-ab:.1f} % unter der Oberkante").replace(".", ","))
+    return {"art": "Breakout", "ampel": ampel, "regeln": regeln, "pivot": pivot, "wochen": round(wochen),
+            "zone": z, "ausbruch": br, "abstand": ab, "lage": lage}
 
 
 def episodic_pivot(df, gewinn_tage=()):
@@ -117,9 +146,11 @@ def episodic_pivot(df, gewinn_tage=()):
     return None
 
 
-def pruefen(df, erk, gewinn_tage=(), ticker=""):
+def pruefen(df, erk, gewinn_tage=(), ticker="", scan=None, br=False):
+    """scan = (Zone, Enge) und br = vcp_zone.ausbruch(df), wenn schon gerechnet (False = selbst rechnen)."""
     fr = fuehrer_rang.von(ticker) if ticker else None
-    b = breakout(df, erk, fr)
+    br = vcp_zone.ausbruch(df) if br is False else br
+    b = breakout(df, fr, scan, br)
     ep = episodic_pivot(df, gewinn_tage)
     em = vcp_zone.ermuedung(df)
     setups = [x for x in (ep, b) if x]

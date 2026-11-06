@@ -10,12 +10,11 @@ Kostenloser Plan: 5 Anfragen pro Minute, Tagesschlüsse, 2 Jahre Historie. Das M
 selbst ein (mindestens 12,5 s zwischen zwei Anfragen) und wartet bei einer Sperre (429) eine Minute.
 Schlüssel: einstellungen/massive_schluessel.txt
 """
-import io
 import json
 import os
 import subprocess
 import time
-from datetime import date, timedelta
+from datetime import date
 
 import pandas as pd
 
@@ -70,9 +69,21 @@ def tag(datum):
     return df
 
 
+def _letzter_schluss():
+    """Jüngster Tag mit Schlusskursen: heute, wenn in New York schon 16:30 Uhr vorbei ist (der Nachtlauf um 22:45 Uhr
+    Berlin läuft nach Börsenschluss), sonst gestern. Liefert Massive den Tag noch nicht, überspringt letzte_tage() ihn
+    (leerer Tag) und nimmt den Vortag – so wie bisher (06.11.2026: vorher immer erst ab gestern, ein Tag Verzug)."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    ny = datetime.now(ZoneInfo("America/New_York"))
+    if ny.weekday() < 5 and (ny.hour, ny.minute) >= (16, 30):
+        return pd.Timestamp(ny.date())
+    return pd.Timestamp(ny.date()) - pd.Timedelta(days=1)
+
+
 def letzte_tage(n, bis=None, melden=None):
-    """Die letzten n Handelstage bis einschließlich bis (Standard: gestern), älteste zuerst."""
-    tag_ = pd.Timestamp(bis) if bis else pd.Timestamp(date.today() - timedelta(days=1))
+    """Die letzten n Handelstage bis einschließlich bis (Standard: der jüngste Tag mit Schlusskursen), älteste zuerst."""
+    tag_ = pd.Timestamp(bis) if bis else _letzter_schluss()
     aus = []
     while len(aus) < n:
         if tag_.weekday() < 5:

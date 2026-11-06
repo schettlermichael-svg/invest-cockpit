@@ -1,7 +1,7 @@
 """Stopps und CRV vor dem Kauf (grüne Null, 05.11.2026) – Gewinne laufen lassen, Stopp nachziehen; das CRV ist ein Maß,
 ob sich der Einsatz lohnt, kein Ausstieg.
 
-Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot bzw. Auslöser; VAH/VAL der Wertzone oder ∓8 %).
+Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot und Stopp der Systeme).
 Stopp B: außerhalb des Tagesrauschens, mindestens 1,5 × ATR vom Einstieg (nur gezeigt, wenn A näher liegt).
 Nächster Widerstand über dem Einstieg (Weinstein): das nächste alte Hoch der letzten 52 Wochen, das seither nicht
 überstiegen wurde (ältere Hochs sind ausgewaschen), oder ein fallender GD150/GD200 (Short gespiegelt: altes Tief bzw.
