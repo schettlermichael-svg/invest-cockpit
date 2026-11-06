@@ -194,10 +194,23 @@ def _tisch_knopf():
                    "du die Seite schließt.")
     if text:
         st.caption(text)
+    schrank = nachtlauf.seiten_lauf_stand()
+    if schrank:
+        st.caption(schrank)
+
+
+@st.cache_resource(show_spinner=False)
+def _schrank_fuellen(grenze):
+    """Einmal je Programm- bzw. Depotstand: veraltete Titelseiten im Hintergrund neu ablegen (06.11.2026)."""
+    try:
+        return nachtlauf.seiten_lauf_starten()
+    except Exception:  # noqa: BLE001
+        return False
 
 
 _FRAGMENT = getattr(st, "fragment", None)
 tisch_knopf = _FRAGMENT(run_every=30)(_tisch_knopf) if _FRAGMENT else _tisch_knopf
+_schrank_fuellen(titel.ablage_grenze())
 
 
 def konto_knopf():

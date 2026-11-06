@@ -453,6 +453,14 @@ Stellung nach hinten weg (`vcp_zone.ermuedung`, im System Kullamägi als `ermued
 - Kartentisch-Reihe „Ermüdung nach Überdehnung · Short“, Lagekarte rot, Barometer zählt die grünen.
 - Parabolic Short samt Suche im ganzen US-Markt liegt in `_to_delete/`. Probelauf 06.11.: 40 Treffer unter 1.913 Titeln.
 
+## Schrank: Titelseiten nach Änderungen neu ablegen (06.11.2026)
+Nacht- und Tischlauf legen jede Titelseite des Kartentischs fertig ab (`daten/titelseiten`); ein Klick holt sie in
+Hundertstelsekunden. Ist das Programm oder das Depot jünger, gilt die Ablage nicht mehr (nie eine Seite mit alten Regeln).
+Dann startet die App einmal je Stand `werkzeuge/nachtlauf.py --seiten`: baut die veralteten Seiten im Hintergrund neu
+(Watchlist zuerst) und schreibt Lagekarte und Kacheln in den Tisch zurück – mit den vorhandenen Kursen, ohne neue
+Reihen. Fortschritt unter dem Knopf „Kartentisch neu rechnen“; startet ein Nacht- oder Tischlauf, hört er auf.
+Protokoll `daten/nachtlauf/seiten_lauf.json`.
+
 ## Knopf „Kartentisch neu rechnen“ (06.11.2026)
 
 Oben in der Übersicht. Rechnet Ränge (RS, Führer), den Kartentisch mit beiden Systemen und die Lage

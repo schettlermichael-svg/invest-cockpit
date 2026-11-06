@@ -30,6 +30,8 @@ sys.path.insert(0, HIER)
 PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "protokoll.json")
 TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.json")   # Knopf in der Übersicht
 TISCH_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.log")
+SEITEN_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.json")   # Schrank nach Änderungen
+SEITEN_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.log")
 SCHLUSS = (7, 0)              # Massive-Durchgänge enden morgens, damit der Mac tagsüber frei ist
 
 
@@ -246,5 +248,78 @@ def tisch_lauf_starten():
     return True
 
 
+def _gross_laeuft():
+    return _laeuft(PROTOKOLL, 12)[0] or _laeuft(TISCH_PROTOKOLL, 3)[0]
+
+
+def seiten(prozesse=None):
+    """Schrank neu füllen (06.11.2026): Nach einer Programm- oder Depotänderung gelten die abgelegten Titelseiten
+    nicht mehr. Dieser Lauf baut sie für alle Titel des Kartentischs neu (Watchlist zuerst) und schreibt Lagekarte und
+    Kacheln in den Tisch zurück – mit den vorhandenen Kursen, ohne neue Reihen. Startet ein Nacht- oder Tischlauf,
+    hört er auf (die füllen den Schrank ohnehin)."""
+    from concurrent.futures import ProcessPoolExecutor
+    import kartentisch
+    import titel
+    import watchlists
+    tisch = kartentisch.laden()
+    if not tisch:
+        return
+    grenze = titel.ablage_grenze()
+    wl = set(watchlists.alle())
+    liste = sorted((tk for tk in tisch["titel"] if not titel.frisch(tk, grenze)), key=lambda tk: (tk not in wl, tk))
+    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid(), "zahl": len(liste),
+         "fertig": 0}
+    _schreiben(p, SEITEN_PROTOKOLL)
+    neu = {}
+    ex = ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1))
+    try:
+        for tk, karte, kacheln in ex.map(kartentisch._stufe2, liste):
+            neu[tk] = (karte, kacheln)
+            p["fertig"] += 1
+            if p["fertig"] % 10 == 0:
+                _schreiben(p, SEITEN_PROTOKOLL)
+                if _gross_laeuft():
+                    p["abbruch"] = "Nacht- oder Tischlauf gestartet"
+                    break
+    finally:
+        ex.shutdown(cancel_futures=True)
+    jetzt = kartentisch.laden()
+    if jetzt and jetzt.get("erzeugt") == tisch.get("erzeugt") and not _gross_laeuft():
+        for tk, (karte, kacheln) in neu.items():
+            if karte is not None and tk in jetzt["titel"]:
+                jetzt["titel"][tk].update(karte=karte, kacheln=kacheln)
+        pfad = os.path.join(kartentisch.SPEICHER, f'{jetzt["stand"]}.json')
+        json.dump(jetzt, open(pfad + ".neu", "w", encoding="utf-8"), ensure_ascii=False)
+        os.replace(pfad + ".neu", pfad)
+    p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
+    _schreiben(p, SEITEN_PROTOKOLL)
+
+
+def seiten_lauf_stand():
+    """Text für die Übersicht, solange der Schrank gefüllt wird, sonst ''."""
+    laeuft, p = _laeuft(SEITEN_PROTOKOLL, 6)
+    return f"Titelseiten nach der Änderung neu abgelegt: {p['fertig']} von {p['zahl']}" if laeuft else ""
+
+
+def seiten_lauf_starten():
+    """Startet `nachtlauf.py --seiten`, wenn Titelseiten veraltet sind und kein anderer Lauf rechnet."""
+    import kartentisch
+    import titel
+    if _gross_laeuft() or _laeuft(SEITEN_PROTOKOLL, 6)[0]:
+        return False
+    tisch = kartentisch.laden()
+    grenze = titel.ablage_grenze()
+    if not tisch or all(titel.frisch(tk, grenze) for tk in tisch["titel"]):
+        return False
+    os.makedirs(os.path.dirname(SEITEN_LOG), exist_ok=True)
+    log = open(SEITEN_LOG, "w", encoding="utf-8")
+    subprocess.Popen([sys.executable, "-u", os.path.abspath(__file__), "--seiten"], cwd=os.path.join(HIER, ".."),
+                     stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+    return True
+
+
 if __name__ == "__main__":
-    main(nur_tisch="--tisch" in sys.argv)
+    if "--seiten" in sys.argv:
+        seiten()
+    else:
+        main(nur_tisch="--tisch" in sys.argv)

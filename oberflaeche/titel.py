@@ -698,16 +698,28 @@ def ablegen(tk, teile):
     os.replace(pfad + ".neu", pfad)
 
 
+def ablage_grenze():
+    """Abgelegte Titelseiten älter als das Programm oder das Depot gelten nicht mehr."""
+    import depot
+    return max([codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else []))
+
+
+def frisch(tk, grenze=None):
+    """Liegt eine gültige Titelseite im Schrank?"""
+    try:
+        return os.path.getmtime(os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")) >= (grenze or ablage_grenze())
+    except OSError:
+        return False
+
+
 def abgelegt(tk):
-    """Gespeicherte Titelseite oder None (fehlt, oder Programm bzw. Depot sind jünger)."""
+    """Gespeicherte Titelseite oder None (fehlt, oder Programm bzw. Depot sind jünger). Nach einer Änderung füllt
+    nachtlauf.py --seiten den Schrank im Hintergrund neu (06.11.2026)."""
     import gzip
     import pickle
-    import depot
     pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
     try:
-        zeit = os.path.getmtime(pfad)
-        juenger = [codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else [])
-        if zeit < max(juenger):
+        if not frisch(tk):
             return None
         with gzip.open(pfad, "rb") as f:
             return pickle.load(f)
