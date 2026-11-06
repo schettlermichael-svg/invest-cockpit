@@ -4,7 +4,7 @@ Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
                    Dalio-Quad als Bild mit Spur der letzten 13 Wochen (quadbild.py)
                    (Stimmungskurve seit 06.11.2026 nicht mehr auf der Übersicht; O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
                    Kachel – Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit)
-  ② Front          Frontkarte, Übergänge, Lagebild nach Sektoren
+  ② Front          Frontkarte, Lagebild nach Sektoren (Übergänge seit 06.11.2026 nicht mehr)
   ③ Auswahl        Setups, Ausbruchsfelder, ★ Spitze, Watchlist, Weitere, Frühaufklärung, Short (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
@@ -20,7 +20,6 @@ sys.path.insert(0, HIER)
 import lage                                                  # noqa: E402
 import marktdaten                                            # noqa: E402
 from frontkarte import frontkarte  # noqa: E402
-import uebergaenge                                           # noqa: E402
 import quadbild                                              # noqa: E402
 import depotleiste                                           # noqa: E402
 from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, punkt, seite, sprungleiste,
@@ -174,5 +173,5 @@ def seite_uebersicht():
         quad_bild = ""
     # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.
     return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste + quad_bild
-                          + station("front") + frontkarte(q) + uebergaenge.tafel(q), unten=12),
+                          + station("front") + frontkarte(q), unten=12),
             "unten": seite(station("truppe") + depotleiste.leiste(), oben=12)}
