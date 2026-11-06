@@ -1,11 +1,11 @@
 """Der Chart der Titelseite als SVG – VCP-Scanner (06.11.2026): nur, was wir gerade erarbeiten.
 
 Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), auf Wunsch GD10 und GD20 (Kullamägi, nur Tageschart), die
-Kästen des VCP-Scanners (Baustein 1: Base, Flagge, Konsolidierung mit Vorgeschichte, Fahnenstange und grobem ZigZag) –
-„Aktuell“ nur das Setup jetzt, „Historie“ dazu alle abgeschlossenen Kästen mit ↑ am Ausbruch.
+Zonen des VCP-Scanners (Baustein 1: Base, Flagge, Konsolidierung mit Vorgeschichte, Fahnenstange und grobem ZigZag) –
+„Aktuell“ nur das Setup jetzt, „Historie“ dazu alle abgeschlossenen Zonen mit ↑ am Ausbruch.
 Darunter Volumen mit 50er-Schnitt, ganz unten die relative Stärke gegen den S&P 500 und gestrichelt gegen den eigenen
 Sektor-ETF (beide links bei 100).
-Der frühere Chart (Zonen, POC-Treppe, Pivot, Stopps, Volumenprofil, Phasenband, Zahlentermine) liegt in
+Der frühere Chart (Market-Profile-Zonen, POC-Treppe, Pivot, Stopps, Volumenprofil, Phasenband, Zahlentermine) liegt in
 _to_delete/chart_vor_vcp_2026-11-06.py.
 """
 import numpy as np
@@ -19,8 +19,8 @@ B, LINKS, RECHTS = 1344, 64, 104
 ETIKETT = 120               # Spalte rechts neben den Kerzen für die Pfeile der RS-Linien
 SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trends, kräftig
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
-KASTEN_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
-KASTEN_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup jetzt oder alle Kästen
+ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
+ZONE_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup jetzt oder alle Zonen
 
 # Ausschnitte je Zeitebene: Knopf → Zahl der Balken (feste Knöpfe statt Regler)
 AUSSCHNITT = {"Tag": {"3 M": 63, "6 M": 126, "1 J": 252, "2 J": 504},
@@ -72,9 +72,9 @@ def reaktionen(df, gewinne):
 
 
 
-def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", kaesten=None,
-          kasten_ansicht="Aktuell", gd_kurz=False):
-    """Kerzen mit GD, Kästen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT."""
+def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", zonen=None,
+          zonen_ansicht="Aktuell", gd_kurz=False):
+    """Kerzen mit GD, Zonen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT."""
     voll = df if ebene == "Tag" else _woche(_verlaengert(df))
     n_zeigen = AUSSCHNITT[ebene].get(ausschnitt or AUSSCHNITT_START[ebene], AUSSCHNITT[ebene][AUSSCHNITT_START[ebene]])
     gd = (50, 150, 200) if ebene == "Tag" else (10, 30, 40)
@@ -124,8 +124,8 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         A(f'<text x="{LINKS - 8}" y="{Y(yv) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">{yv:.0f}</text>')
 
     spaete = []                                  # Beschriftungen, die über den Kerzen liegen müssen
-    if kaesten:
-        _kaesten(kaesten, kasten_ansicht, d, pos, X, Y, A, spaete, platz, ENDE, breite / N / 2)
+    if zonen:
+        _zonen(zonen, zonen_ansicht, d, pos, X, Y, A, spaete, platz, ENDE, breite / N / 2)
 
     # Kerzen
     bw = breite / N * 0.6
@@ -223,21 +223,21 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     return "".join(s)
 
 
-def _kaesten(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
-    """VCP-Scanner Baustein 1 im Chart: Kasten (Base blau, Flagge gelb, Konsolidierung lila), Vorgeschichte als gelber
+def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
+    """VCP-Scanner Baustein 1 im Chart: Zone (Base blau, Flagge gelb, Konsolidierung lila), Vorgeschichte als gelber
     Pfeil, Fahnenstange als grüner Pfeil, grobes ZigZag grau. Aktuell = nur das Setup jetzt (ZigZag ab der Vorgeschichte),
-    Historie = dazu alle abgeschlossenen Kästen im Ausschnitt mit ↑ am Ausbruch."""
+    Historie = dazu alle abgeschlossenen Zonen im Ausschnitt mit ↑ am Ausbruch."""
     erster = d.index[0]
     jetzt = ka.get("jetzt") or {}
 
     def rahmen(b, x1, dick, deck, strich=""):
         if b.get("ende_t") is not None and b["ende_t"] < erster:
             return None
-        fa = KASTEN_FARBE.get(b.get("name"), TEXT_3)
+        fa = ZONE_FARBE.get(b.get("name"), TEXT_3)
         x0 = X(pos(b["start_t"])) - halb if b["start_t"] >= erster else X(0) - halb   # links angeschnitten
         A(f'<rect x="{x0:.1f}" y="{Y(b["oben"]):.1f}" width="{max(2, x1 - x0):.1f}" height="{Y(b["unten"]) - Y(b["oben"]):.1f}" '
           f'fill="{fa}" fill-opacity="{deck}" stroke="{fa}" stroke-width="{dick}"' + (f' stroke-dasharray="{strich}"' if strich else "")
-          + f'><title>{b.get("name", "Kasten offen")} {b["start_t"]:%d.%m.%Y}' + (f'–{b["ende_t"]:%d.%m.%Y}' if b.get("ende_t") else "–heute")
+          + f'><title>{b.get("name", "Zone offen")} {b["start_t"]:%d.%m.%Y}' + (f'–{b["ende_t"]:%d.%m.%Y}' if b.get("ende_t") else "–heute")
           + f' · {zahl(b["wochen"], 1)} Wochen · Tiefe {zahl(b["tiefe"], 1)} % · Oberkante {zahl(b["oben"])} $ · Unterkante {zahl(b["unten"])} $'
           + '</title></rect>')
         return x0
@@ -272,17 +272,17 @@ def _kaesten(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
             if b["name"] == "Flagge":
                 stangen_ende.append(b["ende_t"])
 
-    if jetzt.get("kasten") or jetzt.get("offen"):
-        offen = not jetzt.get("kasten")
+    if jetzt.get("zone") or jetzt.get("offen"):
+        offen = not jetzt.get("zone")
         x0 = rahmen(jetzt, ENDE, 2 if not offen else 1.4, 0.09 if not offen else 0, "6 4" if offen else "")
         if x0 is not None:
             if offen:
-                text_ = f'Kasten offen · Rücksetzer {zahl(jetzt["tiefe"], 1)} % · noch keine Erholung'
+                text_ = f'Zone offen · Rücksetzer {zahl(jetzt["tiefe"], 1)} % · noch keine Erholung'
             else:
                 text_ = (f'{jetzt["name"]} · {zahl(jetzt["wochen"], 1)} Wochen · Tiefe {zahl(jetzt["tiefe"], 1)} %'
                          + (" · zu kurz" if jetzt["laenge"] == "zu kurz" else ""))
-            fa = KASTEN_FARBE.get(jetzt.get("name"), TEXT_2)
-            rechts = x0 + len(text_) * 6.6 > ENDE            # schmaler Kasten am rechten Rand: Text endet am Rand
+            fa = ZONE_FARBE.get(jetzt.get("name"), TEXT_2)
+            rechts = x0 + len(text_) * 6.6 > ENDE            # schmale Zone am rechten Rand: Text endet am Rand
             xt, anker = (ENDE, "end") if rechts else (x0 + 4, "start")
             spaete.append(f'<text x="{xt:.1f}" y="{platz(xt, Y(jetzt["oben"]) - 8, text_, 12, anker):.1f}" '
                           f'fill="{fa}" font-size="12" font-weight="600" text-anchor="{anker}">{text_}</text>')
@@ -298,7 +298,7 @@ def _kaesten(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
             st_ = innen.get("stange") or {}
             if st_:
                 pfeil(st_["von_t"], st_["von"], innen["start_t"], innen["oben"], GRUEN, "G", 2)
-            t_ = f'Flagge im Kasten · {zahl(innen["wochen"], 1)} Wochen · Tiefe {zahl(innen["tiefe"], 1)} %'
+            t_ = f'Flagge in der Zone · {zahl(innen["wochen"], 1)} Wochen · Tiefe {zahl(innen["tiefe"], 1)} %'
             xi = X(pos(innen["start_t"]))
             spaete.append(f'<text x="{xi:.1f}" y="{platz(xi, Y(innen["oben"]) - 8, t_, 12, "start"):.1f}" fill="{GELB}" '
                           f'font-size="12" font-weight="600">{t_}</text>')

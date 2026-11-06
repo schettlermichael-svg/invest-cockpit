@@ -1,25 +1,25 @@
-"""VCP-Scanner, Baustein 1: der Kasten (06.11.2026).
+"""VCP-Scanner, Baustein 1: die Zone (06.11.2026).
 
-Der Kasten ist die ruhige Phase vor dem rechten Rand – die Base im Sinne Minervinis, ohne den Lauf oder Absturz davor.
+Die Zone ist die ruhige Phase vor dem rechten Rand – die Base im Sinne Minervinis, ohne den Lauf oder Absturz davor.
 Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14).
 
   Oberkante  = grobes Swing-Hoch, über dem seitdem kein Schlusskurs lag
-               (von mehreren solchen das älteste, dessen Kasten die Erholungsregel erfüllt)
-  Erholung   = nach dem tiefsten Tief kam der Kurs wieder in die obere Hälfte des Kastens
+               (von mehreren solchen das älteste, dessen Zone die Erholungsregel erfüllt)
+  Erholung   = nach dem tiefsten Tief kam der Kurs wieder in die obere Hälfte der Zone
                (sonst ist das Hoch der Rand eines Absturzes, nicht einer Base → nächstjüngeres Hoch;
-               erfüllt keines die Regel, läuft der Rücksetzer noch: Rahmen ab dem ältesten Hoch, Kasten offen)
+               erfüllt keines die Regel, läuft der Rücksetzer noch: Rahmen ab dem ältesten Hoch, Zone offen)
   Unterkante = tiefstes Tief seit der Oberkante
   Länge      = Oberkante bis heute, 3–65 Wochen (kürzer/länger wird gezeigt, nicht verworfen)
   Tiefe      = Oberkante bis Unterkante in % der Oberkante
 
-Vorgeschichte (gehört nicht zum Kasten, entscheidet den Namen):
+Vorgeschichte (gehört nicht zur Zone, entscheidet den Namen):
   Absturz ↓  = vor der Oberkante stand der Kurs höher (höchstes Hoch der 26 Wochen vor dem Anlauf-Tief über der Oberkante)
   Schub ↑    = sonst: Anstieg vom Anlauf-Tief (tiefstes Tief seit dem letzten Hoch über der Oberkante, höchstens 52 Wochen)
 Name:
-  Flagge         = Fahnenstange ≥ 30 % in höchstens 13 Wochen (1–3 Monate, Kullamägi), Kasten 1–8 Wochen und
+  Flagge         = Fahnenstange ≥ 30 % in höchstens 13 Wochen (1–3 Monate, Kullamägi), Zone 1–8 Wochen und
                    höchstens 25 % tief; Stange = Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne
                    höheres Hoch dazwischen (sonst war es ein Absturz, keine Stange)
-Flagge im Kasten (Kullamägi): liegt in einer Base ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange,
+Flagge in der Zone (Kullamägi): liegt in einer Base ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange,
   kommt sie als 'innen' dazu – Minervini sieht die Base, Kullamägi die Flagge
   Base           = nach einem Schub, sonst
   Konsolidierung = nach einem Absturz
@@ -32,8 +32,8 @@ GROB = 2.0
 FEIN = 1.0
 WOCHE = 5
 MIN_WOCHEN, MAX_WOCHEN = 3, 65
-ERHOLUNG = 0.5                 # Anteil der Kastenhöhe, den der Kurs nach dem Tief zurückgewinnen muss
-FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_KASTEN_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
+ERHOLUNG = 0.5                 # Anteil die Zonehöhe, den der Kurs nach dem Tief zurückgewinnen muss
+FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
 
 
@@ -99,11 +99,11 @@ def _vorgeschichte(df, top_i, top):
             "von_i": tief_i, "bis_i": top_i, "von": tief, "bis": top}
 
 
-def kasten(df):
-    """Kasten am rechten Rand oder None (dann mit Grund in 'grund')."""
+def zone(df):
+    """Zone am rechten Rand oder None (dann mit Grund in 'grund')."""
     df = df.dropna(subset=["High", "Low", "Close"])
     if len(df) < 60:
-        return {"kasten": False, "grund": "zu wenig Kurse"}
+        return {"zone": False, "grund": "zu wenig Kurse"}
     c = df["Close"].to_numpy()
     h, l = df["High"].to_numpy(), df["Low"].to_numpy()
     n = len(df)
@@ -111,7 +111,7 @@ def kasten(df):
     # ungebrochen: seit dem Hoch kein Schluss darüber
     ungebrochen = [p for p in hochs if p[0] < n - 1 and c[p[0] + 1:].max() <= p[1]]
     if not ungebrochen:
-        return {"kasten": False, "grund": "kein grobes Hoch ohne Schluss darüber in 65 Wochen – Kurs läuft am Hoch"}
+        return {"zone": False, "grund": "kein grobes Hoch ohne Schluss darüber in 65 Wochen – Kurs läuft am Hoch"}
     for i, top, _ in sorted(ungebrochen):       # älteste zuerst
         tief_i = i + int(np.argmin(l[i:]))
         boden = l[tief_i]
@@ -119,14 +119,14 @@ def kasten(df):
         erholt = h[tief_i:].max() if tief_i < n else boden
         if hoehe <= 0 or erholt >= top - ERHOLUNG * hoehe:
             break
-    else:                                       # Rücksetzer läuft: Kasten noch nicht fertig, Rahmen trotzdem zeigen
+    else:                                       # Rücksetzer läuft: Zone noch nicht fertig, Rahmen trotzdem zeigen
         i, top, _ = sorted(ungebrochen)[0]
         tief_i = i + int(np.argmin(l[i:]))
-        return {"kasten": False, "grund": "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Kasten noch offen",
+        return {"zone": False, "grund": "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Zone noch offen",
                 "offen": True, "start_i": i, "oben": top, "unten": l[tief_i], "tief_i": tief_i,
                 "wochen": (n - 1 - i) / WOCHE, "tiefe": (top - l[tief_i]) / top * 100, "abstand": (c[-1] / top - 1) * 100}
     k = _rahmen(df, i, top)
-    # Flagge im Kasten (Kullamägi): ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange davor
+    # Flagge in der Zone (Kullamägi): ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange davor
     for j, top_j, _ in sorted(ungebrochen):
         if j > i:
             f = _rahmen(df, j, top_j)
@@ -146,7 +146,7 @@ def _stange(df, i, top):
 
 
 def _rahmen(df, i, top):
-    """Kasten ab der Oberkante (Index i) bis heute mit Vorgeschichte, Stange und Namen."""
+    """Zone ab der Oberkante (Index i) bis heute mit Vorgeschichte, Stange und Namen."""
     c, l = df["Close"].to_numpy(), df["Low"].to_numpy()
     n = len(df)
     tief_i = i + int(np.argmin(l[i:]))
@@ -155,7 +155,7 @@ def _rahmen(df, i, top):
     wochen = (n - 1 - i) / WOCHE
     v = _vorgeschichte(df, i, top)
     stange = _stange(df, i, top)
-    if (stange["sauber"] and stange["prozent"] >= FLAGGE_SCHUB * 100 and wochen <= FLAGGE_KASTEN_W
+    if (stange["sauber"] and stange["prozent"] >= FLAGGE_SCHUB * 100 and wochen <= FLAGGE_ZONE_W
             and hoehe / top <= FLAGGE_TIEFE):
         name = "Flagge"
     elif v["art"] == "Absturz":
@@ -164,15 +164,15 @@ def _rahmen(df, i, top):
         name = "Base"
     mindest = FLAGGE_MIN_W if name == "Flagge" else MIN_WOCHEN
     laenge = "zu kurz" if wochen < mindest else "zu lang" if wochen > MAX_WOCHEN else "ok"
-    return {"kasten": True, "name": name, "start_i": i, "start": df.index[i], "oben": top, "unten": boden,
+    return {"zone": True, "name": name, "start_i": i, "start": df.index[i], "oben": top, "unten": boden,
             "tief_i": tief_i, "tief_datum": df.index[tief_i], "wochen": wochen, "laenge": laenge,
             "tiefe": hoehe / top * 100, "abstand": (c[-1] / top - 1) * 100, "vorgeschichte": v, "stange": stange}
 
 
 def verlauf(df, tage=600):
-    """Abgeschlossene Kästen der letzten `tage` Handelstage – dieselbe Regel wie live: ein Kasten ist fertig, wenn
-    der Kurs über seiner Oberkante schließt (Flagge im Kasten ebenso). Gerechnet wird nur an Tagen mit Schluss über
-    den fünf Schlüssen davor – nur dort kann ein Kasten (ab 1 Woche) enden."""
+    """Abgeschlossene Zonen der letzten `tage` Handelstage – dieselbe Regel wie live: eine Zone ist fertig, wenn
+    der Kurs über seiner Oberkante schließt (Flagge in der Zone ebenso). Gerechnet wird nur an Tagen mit Schluss über
+    den fünf Schlüssen davor – nur dort kann eine Zone (ab 1 Woche) enden."""
     df = df.dropna(subset=["High", "Low", "Close"])
     c = df["Close"].to_numpy()
     n = len(df)
@@ -180,8 +180,8 @@ def verlauf(df, tage=600):
     for t in range(max(120, n - tage), n):
         if c[t] <= c[t - 5:t].max():
             continue
-        k = kasten(df.iloc[:t])
-        if not k.get("kasten"):
+        k = zone(df.iloc[:t])
+        if not k.get("zone"):
             continue
         for b in [k] + ([k["innen"]] if k.get("innen") else []):
             if b["laenge"] == "ok" and c[t] > b["oben"]:
@@ -190,7 +190,7 @@ def verlauf(df, tage=600):
 
 
 def alles(df):
-    """Für den Chart: Kasten jetzt, abgeschlossene Kästen, grobes ZigZag – Lage als Datum (passt zu Tag und Woche)."""
+    """Für den Chart: Zone jetzt, abgeschlossene Zonen, grobes ZigZag – Lage als Datum (passt zu Tag und Woche)."""
     df = df.dropna(subset=["High", "Low", "Close"])
     ix = df.index
 
@@ -206,5 +206,5 @@ def alles(df):
             b["innen"] = datiert(b["innen"])
         return b
 
-    return {"jetzt": datiert(kasten(df)), "verlauf": [datiert(b) for b in verlauf(df)],
+    return {"jetzt": datiert(zone(df)), "verlauf": [datiert(b) for b in verlauf(df)],
             "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}

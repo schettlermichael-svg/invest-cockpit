@@ -94,8 +94,8 @@ def chart_knoepfe(tk):
         aus = st.radio("Ausschnitt", wahl, horizontal=True, key=f"ausschnitt_{ebene}",
                        index=wahl.index(chart.AUSSCHNITT_START[ebene]))
     with k2:
-        kasten = st.radio("Kästen", chart.KASTEN_ANSICHT, horizontal=True, key="kasten_ansicht",
-                          help="Aktuell: nur das Setup jetzt (Kasten, Vorgeschichte, Fahnenstange). Historie: dazu alle "
+        zonen_ansicht = st.radio("Zonen", chart.ZONE_ANSICHT, horizontal=True, key="zonen_ansicht",
+                          help="Aktuell: nur das Setup jetzt (Zone, Vorgeschichte, Fahnenstange). Historie: dazu alle "
                                "abgeschlossenen Basen und Flaggen mit ↑ am Ausbruch.")
     with k7:
         gd_kurz = st.checkbox("GD10 · GD20", key="gd_kurz", help="Kullamägis Linien (nur im Tageschart)")
@@ -107,7 +107,7 @@ def chart_knoepfe(tk):
         watchlist_knopf(tk)
     with k6:
         position_knopf(tk)
-    return ebene, aus, kasten, gd_kurz
+    return ebene, aus, zonen_ansicht, gd_kurz
 
 
 def _fenster(titel_):
@@ -442,8 +442,8 @@ elif ticker:
             with st.spinner("Lade und rechne …"):
                 teile = _gebaut("titel", _codestand(), *args)
         st.markdown(teile["oben"], unsafe_allow_html=True)
-        ebene, aus, kasten, gd_kurz = chart_knoepfe(ticker)
-        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, kasten, gd_kurz), unsafe_allow_html=True)
+        ebene, aus, zonen_ansicht, gd_kurz = chart_knoepfe(ticker)
+        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz), unsafe_allow_html=True)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
