@@ -29,9 +29,10 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
                 Tief zum tiefsten Tief danach (Schicht für Schicht zum rechten Rand); zählt ab 1 × ATR; Tiefe in %
   schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
   Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
-  Volumen     = Ø Volumen vom Pivot bis heute (ohne Tage über dem Pivot) höchstens 75 % vom 50-Tage-Schnitt
+  Volumen     = Ø Volumen vom Pivot bis heute (ohne Tage über dem Pivot, am 50-Tage-Schnitt gemessen) leiser als
+                in der ersten Kontraktion – das Volumen schrumpft mit den Kontraktionen
   Tiefs       = steigend als Zeichen, keine Pflicht (Shakeout erlaubt)
-  Ampel       = grün: mindestens 2 Kontraktionen, schrumpfend, Enge ≤ 10 %, Volumen ruhig · rot: die letzte
+  Ampel       = grün: mindestens 2 Kontraktionen, schrumpfend, Enge ≤ 10 %, Volumen leiser · rot: die letzte
                 Kontraktion ist tiefer als die vorige · gelb: sonst · grau: keine fertige Zone
 """
 import numpy as np
@@ -181,7 +182,6 @@ def _rahmen(df, i, top):
 
 SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie die vorige
 ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
-RUHIG = 0.75                   # Ø Volumen der Enge höchstens 75 % vom 50-Tage-Schnitt
 
 
 def enge(df, z):
@@ -223,7 +223,8 @@ def enge(df, z):
     tage = [i for i in range(pivot_i, n) if c[i] <= pivot]          # Ausbruchstage über dem Pivot zählen nicht mit
     s50 = np.nanmean(v50[tage]) if tage else np.nan
     vol_enge = v[tage].mean() / s50 * 100 if tage and s50 else np.nan
-    ruhig = vol_enge == vol_enge and vol_enge <= RUHIG * 100
+    vol_erste = kontr[0]["volumen"]               # Minervini: das Volumen schrumpft mit den Kontraktionen
+    ruhig = len(kontr) >= 2 and vol_enge == vol_enge and vol_erste == vol_erste and vol_enge < vol_erste
     eng = letzte["tiefe"] <= ENGE_MAX
     tiefs = [k["tief"] for k in kontr]
     steigend = len(tiefs) >= 2 and all(b > a_ for a_, b in zip(tiefs, tiefs[1:]))
@@ -235,11 +236,11 @@ def enge(df, z):
         ampel = "gelb"
     fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
-        + ([] if ruhig else ["Volumen nicht ruhig"])
+        + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"])
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
     return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
-            "volumen": vol_enge, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
+            "volumen": vol_enge, "volumen_erste": vol_erste, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
             "abstand": (c[-1] / pivot - 1) * 100,
             "text": f"{len(kontr)} Kontraktion{'en' if len(kontr) != 1 else ''} {folge} %"
                     + (f" · fehlt: {', '.join(fehlt)}" if fehlt else "")}
