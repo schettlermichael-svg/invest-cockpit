@@ -46,10 +46,6 @@ def _kachel(label, ampel, wert, pfeil, zeile, mehr=""):
                f'<div style="margin-top:8px">{mehr}</div></details>' if mehr else "") + '</div>')
 
 
-# Instrumente, die als Stand in Prozent vorliegen (alle übrigen: Veränderung zum Vorjahr)
-STAND = ("Weekly Economic Index", "GDPNow", "Breakeven-Inflation 5 Jahre")
-
-
 def _pendel_instrumente(m):
     """Die vier Instrumente des Pendels als Ampeln: Name → (Ampel, Text)."""
     stress = lambda rang: "grün" if rang >= 60 else "gelb" if rang >= 30 else "rot"   # noqa: E731
@@ -78,10 +74,6 @@ def _bewegung(vorher, jetzt):
     if vorher in ("Frühe Erholung", "Gesunder Aufwärtstrend"):
         return f"Vor 4 Wochen {vorher}: Die Erholung hat einen Rückschlag erlitten."
     return f"Vor 4 Wochen {vorher}: Das Pendel schwingt zurück."
-
-
-def _richtungsampel(r, gut="steigt"):
-    return "grau" if r == "unklar" else ("grün" if r == gut else "rot")
 
 
 ABLAGE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "daten", "uebersicht.pkl.gz")
@@ -176,21 +168,8 @@ def seite_uebersicht():
     leiste = (f'<section aria-label="Lageleiste" style="display:grid;grid-template-columns:repeat(auto-fit,'
               f'minmax(240px,1fr));gap:16px">{"".join(kacheln)}</section>')
 
-    def zeile(achse_name, n, r, alt, neu):
-        if alt != alt:
-            return "keine Daten"
-        art = "Wert" if n in STAND else "Veränderung zum Vorjahr"
-        umgekehrt = " – mehr Anträge heißt weniger Wachstum" if "Erstanträge" in n else ""
-        return (f"{achse_name} {r}: {art} vor 13 Wochen {zahl(alt, 1)} %, heute {zahl(neu, 1)} %{umgekehrt}")
-
-    makro = "".join(ampelzeile(f"Wachstum · {n}", _richtungsampel(r), zeile("Wachstum", n, r, alt, neu))
-                    for n, (r, d, alt, neu) in w["instrumente"].items())
-    makro += "".join(ampelzeile(f"Inflation · {n}", "grau" if r == "unklar" else "gelb" if r == "steigt" else "blau",
-                                zeile("Inflation", n, r, alt, neu)) for n, (r, d, alt, neu) in i["instrumente"].items())
-    makro += ampelzeile("Amtlich (Bestätigung)", "blau",
-                        f'BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise {zahl(q["cpi_rate"], 1)} %')
     try:
-        quad_bild = quadbild.bild(q, quadbild.verlauf(lage), makro)
+        quad_bild = quadbild.bild(q, quadbild.verlauf(lage))
     except Exception:  # noqa: BLE001 – ohne Bild bleibt die Kachel
         quad_bild = ""
     # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.

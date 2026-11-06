@@ -1,16 +1,24 @@
-"""Dalio-Quad als Bild (06.11.2026): Wachstum × Inflation als Vierfeld, der Punkt von heute mit seiner Spur der letzten
-13 Wochen. Lage des Punkts = Mehrheit der schnellen Instrumente je Achse: rechts, wenn mehr Wachstums-Instrumente steigen
-als fallen, oben, wenn mehr Inflations-Instrumente steigen (−1 … +1, Mitte = unentschieden). Gestrichelter Rahmen = das
-Feld, das die amtlichen Zahlen (BIP, Verbraucherpreise) noch zeigen.
+"""Dalio-Quad als Bild (06.11.2026), Bild und Instrumente in einer Sprache:
+
+Jedes Instrument ist eine Stimme. Wachstumsstimmen schieben den Punkt nach rechts (→, Wachstum steigt) oder links (←),
+Inflationsstimmen nach oben (↑) oder unten (↓); · = unentschieden (Änderung unter der Schwelle). Die Mehrheit je Achse
+bestimmt das Feld. An den Achsen steht die Stimmleiste, neben dem Bild die Stimmen einzeln mit beiden Werten (vorher →
+heute), im Feld der Abstand zum Kippen (wie viele Stimmen noch fehlen, bis eine Achse dreht – dieselbe Regel wie in den
+Übergängen), unter dem Bild die Folgerung: Rückenwind für welche Sektoren, und stehen sie an der Front vorne?
+Gestrichelter Rahmen = das Feld, das die amtlichen Zahlen (BIP, Verbraucherpreise) noch zeigen.
 """
 import pandas as pd
 
-from gestaltung import AMPEL, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t
+from gestaltung import AMPEL, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
 
 QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 B, H = 720, 450
 MX, MY, RX, RY = B / 2, 214, 300, 165         # Mitte und halbe Breite/Höhe des Vierfelds
 FELD = {2: (1, -1), 1: (1, 1), 3: (-1, -1), 4: (-1, 1)}   # (rechts?, unten?) je Quad
+WERT = ("Weekly Economic Index", "GDPNow", "Breakeven-Inflation 5 Jahre")   # Stand in %, sonst Veränderung zum Vorjahr
+PFEIL = {"wachstum": {"steigt": "→", "fällt": "←", "unklar": "·"},
+         "inflation": {"steigt": "↑", "fällt": "↓", "unklar": "·"}}
+STIMMFARBE = {"steigt": "#E6EAF0", "fällt": "#E6EAF0", "unklar": "#5A6475"}
 
 
 def _lage(q):
@@ -19,11 +27,11 @@ def _lage(q):
 
 
 def verlauf(lage_modul, wochen=13):
-    """Quad für heute und die Freitage der letzten `wochen` Wochen (älteste zuerst)."""
+    """Quad für die Freitage der letzten `wochen` Wochen (älteste zuerst)."""
     heute = pd.Timestamp.today().normalize()
-    tage = [heute - pd.Timedelta(weeks=k) for k in range(wochen, 0, -1)]
     aus = []
-    for d in tage:
+    for k in range(wochen, 0, -1):
+        d = heute - pd.Timedelta(weeks=k)
         try:
             aus.append((d, lage_modul.quadrant(bis=d)))
         except Exception:  # noqa: BLE001 – eine fehlende Woche lässt nur eine Lücke in der Spur
@@ -31,10 +39,79 @@ def verlauf(lage_modul, wochen=13):
     return aus
 
 
-def bild(q, spur, instrumente=""):
-    """SVG-Karte: Vierfeld, Spur (graue Punkte, älteste blass), heute großer Punkt, amtliches Feld gestrichelt; rechts
-    daneben die Instrumente je Achse (Ampelzeilen), aus denen der Punkt entsteht."""
-    from lage import FUEHRER, QUADS
+def _leiste(q, achse):
+    """Stimmleiste einer Achse, z. B. „→→→←·“ (erst die Mehrheit, dann die Gegenstimmen, dann unentschieden)."""
+    r = [x[0] for x in q[achse]["instrumente"].values()]
+    return "".join(PFEIL[achse][k] * r.count(k) for k in ("steigt", "fällt", "unklar"))
+
+
+def _kippen(q, achse):
+    """(Ziel-Quad, Stimmen, die noch kippen müssen) – Mehrheit der Gegenrichtung wie in den Übergängen."""
+    from lage import _quad
+    a = q[achse]
+    w, i = q["wachstum"]["richtung"], q["inflation"]["richtung"]
+    if "unklar" in (w, i) or a["richtung"] == "unklar":
+        return None
+    gegen = "fällt" if a["richtung"] == "steigt" else "steigt"
+    ziel = _quad(gegen if achse == "wachstum" else w, gegen if achse == "inflation" else i)
+    schon = sum(1 for r, *_ in a["instrumente"].values() if r == gegen)
+    return ziel, max(1, a["von"] // 2 + 1 - schon)
+
+
+def _stimmen(q):
+    """Liste neben dem Bild: je Achse die Stimmen mit Pfeil und beiden Werten."""
+    def block(achse, name, wohin):
+        a = q[achse]
+        mehr = a["richtung"]
+        kopf = (f'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px">'
+                f'<b style="font-size:15px">{name} {PFEIL[achse].get(mehr, "·")} {wohin.get(mehr, "unentschieden")}</b>'
+                f'<span style="font-size:13px;color:{TEXT_3}">{a["steigt"]} {PFEIL[achse]["steigt"]} · {a["fällt"]} '
+                f'{PFEIL[achse]["fällt"]} · {a["von"] - a["steigt"] - a["fällt"]} · von {a["von"]}</span></div>')
+        zeilen = ""
+        for n, (r, _d, alt, neu) in a["instrumente"].items():
+            art = "Stand" if n in WERT else "zum Vorjahr"
+            werte = (f'{zahl(alt, 1)} % → {zahl(neu, 1)} % ({art})' if alt == alt else "keine Daten")
+            extra = " · weniger Anträge = mehr Wachstum" if "Erstanträge" in n else ""
+            zeilen += (f'<div style="display:grid;grid-template-columns:26px 1fr;gap:6px;align-items:baseline;'
+                       f'padding:5px 0;border-top:1px solid {RAND}">'
+                       f'<span style="font-size:20px;font-weight:700;color:{STIMMFARBE[r]};text-align:center">'
+                       f'{PFEIL[achse][r]}</span><span style="font-size:14px">{t(n)}<br><span style="font-size:13px;'
+                       f'color:{TEXT_2}">{werte}{extra}</span></span></div>')
+        return kopf + zeilen
+
+    return (block("wachstum", "Wachstum", {"steigt": "rechts", "fällt": "links"})
+            + block("inflation", "Inflation", {"steigt": "oben", "fällt": "unten"})
+            + f'<div style="font-size:13px;color:{TEXT_3};margin-top:8px;border-top:1px solid {RAND};padding-top:6px">'
+              f'Amtlich zur Bestätigung: BIP {zahl(q["bip_rate"], 1)} % zum Vorjahr, Verbraucherpreise '
+              f'{zahl(q["cpi_rate"], 1)} % → Quad {q["amtlich"]} (gestrichelt im Bild)</div>')
+
+
+def _folgerung(q):
+    """Ein Satz: Rückenwind für welche Sektoren – und stehen sie an der Front (Frontkarte) vorne?"""
+    from lage import FUEHRER
+    satz = f'<b>Quad {q["quad"]} · {q["name"]}:</b> Rückenwind für {t(FUEHRER[q["quad"]])}.'
+    try:
+        import sektoren
+        ab = sektoren.abgleich(sektoren.rotation(), q["quad"])
+        n, v = len(ab["erwartet"]), len(ab["vorne"])
+        urteil = ("Geldfluss und Wetter passen zusammen" if ab["ampel"] == "grün" else
+                  "der Geldfluss folgt dem Wetter erst teilweise" if ab["ampel"] == "gelb" else
+                  "der Geldfluss traut dem Wetter nicht")
+        satz += (f' An der Front stehen davon {v} von {n} vorne (Führend oder Erstarkend) – {urteil}.')
+        farbe = AMPEL[ab["ampel"]]
+    except Exception:  # noqa: BLE001 – ohne Sektordaten nur der erste Satz
+        farbe = AMPEL[QUAD_AMPEL[q["quad"]]]
+    if q["wechsel_moeglich"]:
+        satz += f' Die amtlichen Zahlen zeigen noch Quad {q["amtlich"]} – Wechsel möglich, noch nicht bestätigt.'
+    return (f'<div style="display:flex;gap:10px;align-items:flex-start;font-size:15px;line-height:1.5;'
+            f'border-top:1px solid {RAND};padding-top:10px"><span style="width:14px;height:14px;border-radius:50%;'
+            f'background:{farbe};flex-shrink:0;margin-top:4px"></span><span>{satz}</span></div>')
+
+
+def bild(q, spur):
+    """Karte: Vierfeld mit Stimmleisten an den Achsen, Spur, heute, Abstand zum Kippen; daneben die Stimmen; darunter
+    die Folgerung."""
+    from lage import QUADS
 
     def xy(x, y):
         return MX + x * RX * 0.62, MY - y * RY * 0.55
@@ -59,17 +136,19 @@ def bild(q, spur, instrumente=""):
         ty = y0 + 28 if unten < 0 else y0 + RY - 40
         A(f'<text x="{tx}" y="{ty}" fill="{TEXT if aktiv else TEXT_2}" font-size="17" font-weight="600" '
           f'text-anchor="{anker}">Quad {nr} · {QUADS[nr]}</text>')
-        A(f'<text x="{tx}" y="{ty + 20}" fill="{TEXT_3}" font-size="12" text-anchor="{anker}">{t(FUEHRER[nr])}</text>')
         if nr == q["amtlich"] and nr != q["quad"]:
-            A(f'<text x="{tx}" y="{ty + 38 if unten < 0 else ty - 24}" fill="{TEXT_2}" font-size="12" '
+            A(f'<text x="{tx}" y="{ty + 20 if unten < 0 else ty - 24}" fill="{TEXT_2}" font-size="12" '
               f'text-anchor="{anker}">amtliche Zahlen noch hier</text>')
-    # Achsen
+    # Achsen mit Stimmleisten
+    lw, li = _leiste(q, "wachstum"), _leiste(q, "inflation")
     A(f'<line x1="{MX - RX}" x2="{MX + RX}" y1="{MY}" y2="{MY}" stroke="{TEXT_3}" stroke-width="1.2"/>'
       f'<line x1="{MX}" x2="{MX}" y1="{MY - RY}" y2="{MY + RY}" stroke="{TEXT_3}" stroke-width="1.2"/>'
-      f'<text x="{MX + RX}" y="{MY + RY + 22}" fill="{TEXT_2}" font-size="13" text-anchor="end">Wachstum steigt →</text>'
-      f'<text x="{MX - RX}" y="{MY + RY + 22}" fill="{TEXT_2}" font-size="13">← Wachstum fällt</text>'
-      f'<text x="{MX + 8}" y="{MY - RY - 10}" fill="{TEXT_2}" font-size="13">↑ Inflation steigt</text>'
-      f'<text x="{MX + 8}" y="{MY + RY + 22}" fill="{TEXT_2}" font-size="13">↓ Inflation fällt</text>')
+      f'<text x="{MX + RX}" y="{MY + RY + 24}" fill="{TEXT}" font-size="14" text-anchor="end">Wachstum steigt → · '
+      f'Stimmen <tspan font-size="17" font-weight="700" letter-spacing="2">{lw}</tspan></text>'
+      f'<text x="{MX - RX}" y="{MY + RY + 24}" fill="{TEXT_2}" font-size="14">← Wachstum fällt</text>'
+      f'<text x="{MX + 8}" y="{MY - RY - 10}" fill="{TEXT}" font-size="14">↑ Inflation steigt · Stimmen '
+      f'<tspan font-size="17" font-weight="700" letter-spacing="2">{li}</tspan></text>'
+      f'<text x="{MX + 8}" y="{MY + RY + 44}" fill="{TEXT_2}" font-size="14">↓ Inflation fällt</text>')
     # Spur: gleiche Lagen leicht versetzt, damit jede Woche sichtbar bleibt
     punkte = [(d, *_lage(x)) for d, x in spur] + [(None, *_lage(q))]
     gesehen, pos = {}, []
@@ -90,19 +169,33 @@ def bild(q, spur, instrumente=""):
     A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="11" fill="{farbe}" stroke="{TEXT}" stroke-width="2.5">'
       f'<title>heute: Quad {q["quad"]} · {q["name"]}</title></circle>'
       f'<text x="{px + 16:.1f}" y="{py + 5:.1f}" fill="{TEXT}" font-size="14" font-weight="700">heute</text>')
+    # Abstand zum Kippen: je Achse ein Hinweis im aktiven Feld, zur Grenze hin
+    rechts, unten = FELD[q["quad"]]
+    x0 = MX if rechts > 0 else MX - RX
+    y0 = MY if unten > 0 else MY - RY
+    for achse, name, zeile in (("wachstum", "Wachstums", 0), ("inflation", "Inflations", 1)):
+        k_ = _kippen(q, achse)
+        if not k_:
+            continue
+        ziel, fehlt = k_
+        pf = ("←" if rechts > 0 else "→") if achse == "wachstum" else ("↓" if unten < 0 else "↑")
+        text_ = f'{pf} Quad {ziel}, wenn noch {fehlt} {name}stimme{"n" if fehlt != 1 else ""} kippen'
+        tx = x0 + RX / 2
+        ty = (y0 + RY - 30 if unten < 0 else y0 + 30) + zeile * 18
+        A(f'<text x="{tx:.1f}" y="{ty:.1f}" fill="{TEXT_2}" font-size="12" text-anchor="middle"><title>Quad {ziel} · '
+          f'{QUADS[ziel]}: die Achse dreht, wenn die Mehrheit ihrer Stimmen die Richtung wechselt</title>{text_}</text>')
     if spur:
         alt = spur[0][1]
-        A(f'<text x="{MX - RX}" y="{H - 8}" fill="{TEXT_3}" font-size="12">Spur: wöchentlich seit {spur[0][0]:%d.%m.%Y} '
+        A(f'<text x="{MX - RX}" y="{H - 2}" fill="{TEXT_3}" font-size="12">Spur: wöchentlich seit {spur[0][0]:%d.%m.%Y} '
           f'(Quad {alt["quad"]} · {alt["name"]}), je dunkler, desto jünger · Maus auf einen Punkt zeigt die Woche</text>')
     A("</svg>")
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:20px;display:flex;'
-            f'flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;'
-            f'flex-wrap:wrap;gap:8px"><h2 style="margin:0;font-size:20px;font-weight:600">Wirtschaftswetter · Dalio-Quad</h2>'
-            f'<span style="font-size:13px;color:{TEXT_3}">Lage = Mehrheit der schnellen Instrumente je Achse '
-            f'(Wachstum {q["wachstum"]["steigt"]} ↑ / {q["wachstum"]["fällt"]} ↓ von {q["wachstum"]["von"]}, '
-            f'Inflation {q["inflation"]["steigt"]} ↑ / {q["inflation"]["fällt"]} ↓ von {q["inflation"]["von"]})</span></div>'
+            f'flex-direction:column;gap:10px"><h2 style="margin:0;font-size:20px;font-weight:600">'
+            f'Wirtschaftswetter · Dalio-Quad</h2>'
+            f'<div style="font-size:14px;color:{TEXT_2}">Jedes Instrument ist eine Stimme: → / ← schiebt den Punkt nach '
+            f'rechts oder links (Wachstum), ↑ / ↓ nach oben oder unten (Inflation), · = unentschieden. Die Mehrheit je '
+            f'Achse bestimmt das Feld.</div>'
             f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">'
             f'<div style="flex:1 1 520px;min-width:0">{"".join(s)}</div>'
-            + (f'<div style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column;gap:4px">'
-               f'<div style="font-size:14px;font-weight:600">Die Instrumente</div>{instrumente}</div>' if instrumente else "")
-            + '</div></div>')
+            f'<div style="flex:1 1 340px;min-width:0;display:flex;flex-direction:column">{_stimmen(q)}</div></div>'
+            + _folgerung(q) + '</div>')
