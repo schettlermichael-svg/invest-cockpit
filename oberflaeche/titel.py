@@ -631,7 +631,9 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz
     if nadeln:                                    # Konferenzraum: Hinweise der Strategen als Nadeln
         m = dict(m or {}, nadeln=nadeln)
     st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
-    return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(ebene, gd_kurz)}</div>'
+    return seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
+                       f'<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:10px">{legende(ebene, gd_kurz)}</div>'
+                       '</details>'
                        + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m)}'
                        f'{z.get("rs_lesart", "")}</div>' + st_), oben=0, unten=0)
 

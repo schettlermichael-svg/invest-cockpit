@@ -33,7 +33,7 @@ ZONE_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup 
 # Ausschnitte je Zeitebene: Knopf → Zahl der Balken (feste Knöpfe statt Regler)
 AUSSCHNITT = {"Tag": {"3 M": 63, "6 M": 126, "1 J": 252, "2 J": 504},
               "Woche": {"1 J": 52, "3 J": 156, "5 J": 260}}
-AUSSCHNITT_START = {"Tag": "1 J", "Woche": "3 J"}
+AUSSCHNITT_START = {"Tag": "6 M", "Woche": "3 J"}   # 6 Monate: das Setup groß genug (09.11.2026)
 
 
 def _verlaengert(df):
@@ -173,8 +173,9 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
             linie(av, AVWAP_FARBE, 1.8)
             letzt = av.dropna()
             if len(letzt):
-                spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, Y(letzt.iloc[-1]) + 4, "AVWAP 000,00 $", 12, "start"):.1f}" '
-                              f'fill="{AVWAP_FARBE}" font-size="12" font-weight="600">AVWAP {zahl(letzt.iloc[-1])} $</text>')
+                y_, strich = _rechts(platz, ENDE, Y(letzt.iloc[-1]), "AVWAP 000,00 $")
+                spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{AVWAP_FARBE}" font-size="12" '
+                              f'font-weight="600">AVWAP {zahl(letzt.iloc[-1])} $</text>')
     _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
     if tag_ebene:
         _zeichen(marken, d, pos, X, Y, A, spaete, platz, ENDE, h, l)
@@ -352,12 +353,16 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
                 text_ = f'Zone offen · Rücksetzer {zahl(jetzt["tiefe"], 1)} % · noch keine Erholung'
             else:
                 text_ = (f'{str(jetzt["nummer"]) + ". " if jetzt.get("nummer") else ""}'
-                         f'{jetzt["name"]} · {zahl(jetzt["wochen"], 1)} Wochen · Tiefe {zahl(jetzt["tiefe"], 1)} %'
+                         f'{jetzt["name"]} · {zahl(jetzt["wochen"], 1)} W · {zahl(jetzt["tiefe"], 0)} %'
                          + (" · zu kurz" if jetzt["laenge"] == "zu kurz" else ""))
+                inn_ = jetzt.get("innen")
+                if inn_ and inn_["start_t"] >= erster:      # Flagge in der Zone: ein Etikett statt zwei übereinander
+                    text_ += f' · darin Flagge {zahl(inn_["wochen"], 1)} W · {zahl(inn_["tiefe"], 0)} %'
             fa = ZONE_FARBE.get(jetzt.get("name"), TEXT_2)
             rechts = x0 + len(text_) * 6.6 > ENDE            # schmale Zone am rechten Rand: Text endet am Rand
             xt, anker = (ENDE, "end") if rechts else (x0 + 4, "start")
-            spaete.append(f'<text x="{xt:.1f}" y="{platz(xt, Y(jetzt["oben"]) - 8, text_, 12, anker):.1f}" '
+            oben_ = max([jetzt["oben"]] + list(d["High"][d.index >= jetzt["start_t"]]))   # über allen Kerzen der Zone
+            spaete.append(f'<text x="{xt:.1f}" y="{platz(xt, Y(oben_) - 8, text_, 12, anker):.1f}" '
                           f'fill="{fa}" font-size="12" font-weight="600" text-anchor="{anker}">{text_}</text>')
             v_ = jetzt.get("vorgeschichte") or {}
             st_ = jetzt.get("stange") or {}
@@ -372,11 +377,6 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
             st_ = innen.get("stange") or {}
             if st_:
                 pfeil(st_["von_t"], st_["von"], innen["start_t"], innen["oben"], GRUEN, "G", 2)
-            t_ = f'Flagge in der Zone · {zahl(innen["wochen"], 1)} Wochen · Tiefe {zahl(innen["tiefe"], 1)} %'
-            xi = X(pos(innen["start_t"]))
-            xi, anker = (ENDE, "end") if xi + len(t_) * 6.6 > ENDE else (xi, "start")
-            spaete.append(f'<text x="{xi:.1f}" y="{platz(xi, Y(innen["oben"]) - 8, t_, 12, anker):.1f}" fill="{GELB}" '
-                          f'font-size="12" font-weight="600" text-anchor="{anker}">{t_}</text>')
 
 
 AMPEL_FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": TEXT_3}
@@ -406,11 +406,21 @@ def _enge(e, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster):
           f'stroke-width="1.6"><title>Enge: {zahl(letzte["tiefe"], 1)} % · Pivot {zahl(e["pivot"])} $</title></rect>')
         A(f'<line x1="{xe:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(e["pivot"]):.1f}" y2="{Y(e["pivot"]):.1f}" stroke="{TEXT}" '
           f'stroke-width="1.4" stroke-dasharray="6 4"/>')
-        spaete.append(f'<text x="{ENDE + 8:.1f}" y="{Y(e["pivot"]) + 4:.1f}" fill="{TEXT}" font-size="12" '
-                      f'font-weight="600">Pivot {zahl(e["pivot"])} $</text>')
+        t_ = f'Pivot {zahl(e["pivot"])} $'
+        y_, strich = _rechts(platz, ENDE, Y(e["pivot"]), t_)
+        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{TEXT}" font-size="12" font-weight="600">{t_}</text>')
     t_ = f'● Enge {e.get("ampel", "")} · {e.get("text", "")}'
     spaete.append(f'<text x="{ENDE:.1f}" y="{platz(ENDE, 20, t_, 12, "end", False):.1f}" fill="{farbe}" font-size="12" '
                   f'font-weight="600" text-anchor="end">{t_}</text>')
+
+def _rechts(platz, ENDE, y_linie, text, nach_oben=True):
+    """Etikett in der Spalte rechts neben dem Chart: y der Schrift und – wenn es wegen eines anderen Etiketts verschoben
+    werden musste – ein feiner Strich zurück zur Höhe seiner Linie, damit klar bleibt, wozu es gehört."""
+    y = platz(ENDE + 8, y_linie + 4, text, 12, "start", nach_oben)
+    strich = (f'<line x1="{ENDE + 1:.1f}" y1="{y_linie:.1f}" x2="{ENDE + 7:.1f}" y2="{y - 4:.1f}" stroke="{TEXT_3}" '
+              f'stroke-width="0.8"/>' if abs(y - 4 - y_linie) > 3 else "")
+    return y, strich
+
 
 def _x0(m, d, pos, X):
     """Linker Rand der Linien am Einstieg: erster Ausbruchstag oder Beginn der Zone, sonst die letzten 30 Balken."""
@@ -431,14 +441,15 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
               f'fill="{KAUFZONE_FARBE}" fill-opacity="0.14"><title>Kaufzone: Pivot {zahl(e)} $ bis +5 % = '
               f'{zahl(m["kz_oben"])} $ ({m.get("quelle", "")})</title></rect>')
             t_ = f'Kaufzone bis {zahl(m["kz_oben"])} $'
-            spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, Y(m["kz_oben"]) + 4, t_, 12, "start"):.1f}" '
-                          f'fill="{KAUFZONE_FARBE}" font-size="12" font-weight="600">{t_}</text>')
+            y_, strich = _rechts(platz, ENDE, Y(m["kz_oben"]), t_)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{KAUFZONE_FARBE}" font-size="12" '
+                          f'font-weight="600">{t_}</text>')
         if st:
             A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(st):.1f}" y2="{Y(st):.1f}" stroke="{ROT}" stroke-width="1.8">'
               f'<title>Stopp 1,5 ATR unter dem Einstieg {zahl(e)} $ (ATR {zahl(m.get("atr"))} $)</title></line>')
             t_ = f'Stopp {zahl(st)} $ · −{zahl((1 - st / e) * 100, 1)} %'
-            spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, Y(st) + 4, t_, 12, "start", False):.1f}" '
-                          f'fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
+            y_, strich = _rechts(platz, ENDE, Y(st), t_, False)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
     sh = m.get("short") or {}
     if sh.get("stopp") and pd.Timestamp(sh["tag"]) >= d.index[0]:
         x0 = X(pos(sh["tag"]))
@@ -446,12 +457,12 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
           f'stroke-width="1.8" stroke-dasharray="7 4"><title>Short-Stopp 1,5 ATR über der Unterkante {zahl(sh["einstieg"])} $'
           f'</title></line>')
         t_ = f'Stopp Short {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
-        spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, Y(sh["stopp"]) + 4, t_, 12, "start"):.1f}" '
-                      f'fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
+        y_, strich = _rechts(platz, ENDE, Y(sh["stopp"]), t_)
+        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
 
 
 def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
-    """Frühere Zahlen als senkrechte Linie mit der Kursreaktion, der nächste Termin rechts oben mit den Tagen bis dahin."""
+    """Frühere Zahlen als senkrechte Linie mit der Kursreaktion, der nächste Termin rechts in derselben Zeile unter dem Kurs."""
     for tag, pr in m.get("earnings") or []:
         tag = pd.Timestamp(tag)
         if tag < d.index[0]:
@@ -460,7 +471,7 @@ def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
         A(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="34" y2="430" stroke="{GELB}" stroke-width="1" stroke-opacity="0.55" '
           f'stroke-dasharray="3 4"/>')
         t_ = f'E {"+" if pr >= 0 else "−"}{zahl(abs(pr), 1)} %'
-        spaete.append(f'<text x="{x:.1f}" y="{platz(x, 44, t_, 12, nach_oben=False):.1f}" fill="{GRUEN if pr >= 0 else ROT}" font-size="12" font-weight="600" '
+        spaete.append(f'<text x="{x:.1f}" y="{platz(x, 448, t_, 12, nach_oben=False):.1f}" fill="{GRUEN if pr >= 0 else ROT}" font-size="12" font-weight="600" '
                       f'text-anchor="middle"><title>Zahlen {tag:%d.%m.%Y}: Kurs am Reaktionstag {"+" if pr >= 0 else "−"}'
                       f'{zahl(abs(pr), 1)} %</title>E {"+" if pr >= 0 else "−"}{zahl(abs(pr), 1)} %</text>')
     termin = m.get("termin")
@@ -470,7 +481,7 @@ def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
         if tage >= 0:
             nah = tage <= 14
             t_ = f'{"⚠ " if nah else ""}E in {tage} T · {termin:%d.%m.}'
-            spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, 44, t_, 12, "start", False):.1f}" '
+            spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, 448, t_, 12, "start", False):.1f}" '
                           f'fill="{GELB if nah else TEXT_3}" font-size="12" font-weight="600">{t_}</text>')
 
 
@@ -481,7 +492,7 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
         i = pos(br["tag"])
         v_ = br.get("volumen")
         t_ = "↑ Ausbruch" + (f' {zahl(v_, 1)}×' if v_ else "")
-        spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(l[i]) + 18, t_, 12, nach_oben=False):.1f}" '
+        spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(min([l[i:].min()] + ([m["stopp"]] if m.get("stopp") else []))) + 18, t_, 12, nach_oben=False):.1f}" '
                       f'fill="{GRUEN if v_ and v_ > 1 else GELB}" font-size="12" font-weight="700" text-anchor="middle">'
                       f'<title>Ausbruch {pd.Timestamp(br["tag"]):%d.%m.%Y} über den Pivot · Volumen '
                       f'{zahl(v_, 1) + "-fach vom Schnitt" if v_ else "unbekannt"}</title>{t_}</text>')
@@ -603,7 +614,7 @@ def legende(ebene="Tag", gd_kurz=False):
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
                       (AVWAP_FARBE, "AVWAP ab Zonenbeginn"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs")]
-    eintraege += [(GELB, "E = Zahlen mit Kursreaktion · rechts oben der nächste Termin")]
+    eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'
                    f'<span style="width:18px;height:4px;border-radius:2px;background:{f}"></span>{t(n)}</span>'
                    for f, n in eintraege)
