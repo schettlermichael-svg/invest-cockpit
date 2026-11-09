@@ -135,11 +135,29 @@ def main(nur_tisch=False):
         return (f"Stand {e['stand']}: Entsteht {n.get('Entsteht', 0)}, Läuft {n.get('Läuft', 0)}, "
                 f"Ermüdet {n.get('Ermüdet', 0)}, Abfluss {n.get('Abfluss', 0)}")
 
+    def schrank():
+        """Titelseiten der Rückenwind-Titel mit Stufe und der Watchlist vorbauen (09.11.2026), damit jeder Klick aus
+        Rückenwind sofort öffnet. Die Titel des Kartentischs baut der Schritt Kartentisch schon."""
+        from concurrent.futures import ProcessPoolExecutor
+        import kartentisch
+        import rueckenwind
+        import titel
+        import watchlists
+        e = rueckenwind.laden() or {}
+        liste = sorted({tk for tk, x in (e.get("titel") or {}).items() if x.get("stufe")} | set(watchlists.alle()))
+        grenze = titel.ablage_grenze()
+        liste = [tk for tk in liste if not titel.frisch(tk, grenze)]
+        n = 0
+        with ProcessPoolExecutor(max(1, (os.cpu_count() or 2) - 1)) as ex:
+            for _, karte, _ in ex.map(kartentisch._stufe2, liste, chunksize=4):
+                n += karte is not None
+        return f"{n} von {len(liste)} Titelseiten abgelegt"
+
     if nur_tisch:
         schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
+        schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
         schritt("Kartentisch", tisch)
         schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
-        schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)
         p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
         _schreiben(p, datei)
         return
@@ -152,9 +170,10 @@ def main(nur_tisch=False):
         schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
+    schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
-    schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)
+    schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
@@ -273,6 +292,12 @@ def seiten(prozesse=None):
     import kartentisch
     import titel
     import watchlists
+    import uebersicht
+    if uebersicht.veraltet():                    # Übersicht nach einer Programmänderung sofort neu ablegen
+        try:
+            uebersicht.ablegen(uebersicht.seite_uebersicht())
+        except Exception:  # noqa: BLE001
+            traceback.print_exc()
     tisch = kartentisch.laden()
     if not tisch:
         return
@@ -319,9 +344,10 @@ def seiten_lauf_starten():
     import titel
     if _gross_laeuft() or _laeuft(SEITEN_PROTOKOLL, 6)[0]:
         return False
+    import uebersicht
     tisch = kartentisch.laden()
     grenze = titel.ablage_grenze()
-    if not tisch or all(titel.frisch(tk, grenze) for tk in tisch["titel"]):
+    if not uebersicht.veraltet() and (not tisch or all(titel.frisch(tk, grenze) for tk in tisch["titel"])):
         return False
     os.makedirs(os.path.dirname(SEITEN_LOG), exist_ok=True)
     log = open(SEITEN_LOG, "w", encoding="utf-8")

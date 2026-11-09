@@ -12,6 +12,9 @@ import time
 
 import streamlit as st
 
+_T0 = time.time()                                # Stoppuhr (09.11.2026): wie lange die Seite gebraucht hat
+_QUELLE = {"text": ""}
+
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "oberflaeche"))
 sys.path.insert(0, os.path.join(HIER, "kern"))
@@ -366,14 +369,31 @@ def _kartentisch_zeigen():
                 _tabelle(teil, name)
 
 
+def _schrank_text(alt):
+    if not alt:
+        return "aus dem Schrank"
+    _hinweis_alt()
+    return "aus dem Schrank (vor der letzten Programmänderung gebaut, neue Fassung im Hintergrund)"
+
+
+def _hinweis_alt():
+    st.caption("Diese Seite wurde vor der letzten Programmänderung abgelegt und deshalb sofort gezeigt – die Daten sind "
+               "aktuell, neue Ansichten erscheinen, sobald der Schrank im Hintergrund neu gefüllt ist.")
+
+
 def zeigen(name, *args):
     """Seite als HTML ausgeben. st.markdown statt st.html: st.html entfernt die Inhalte
     eingebetteter SVG-Grafiken (den Chart)."""
     try:
-        html = uebersicht.abgelegt() if name == "uebersicht" else None   # vom Abendlauf gebaut: sofort da
-        if html is None:
+        ab = uebersicht.abgelegt() if name == "uebersicht" else None   # vom Abendlauf gebaut: sofort da
+        if ab is not None:
+            html, alt = ab
+            _QUELLE["text"] = _schrank_text(alt)
+        else:
+            t0 = time.time()
             with st.spinner("Lade und rechne …"):
                 html = _gebaut(name, _codestand(), *args)
+            _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
         if isinstance(html, dict):                   # Übersicht: oben, Kartentisch mit Knöpfen, unten
             st.markdown(html["oben"], unsafe_allow_html=True)
             _kartentisch_zeigen()
@@ -406,6 +426,20 @@ def rueckenwind_zeigen():
         st.markdown(gestaltung.seite("<h2 style='margin:0'>② Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h2>",
                                      oben=16, unten=0), unsafe_allow_html=True)
         st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>Schnellsuche · die Besten auf einen Blick</h2>", oben=16,
+                                     unten=0), unsafe_allow_html=True)
+        knopf = getattr(st, "segmented_control", None)
+        wahl = (knopf("Schnellsuche", ["Anführer", "Verfolger"], key="rw_schnell", label_visibility="collapsed")
+                if knopf else st.radio("Schnellsuche", ["–", "Anführer", "Verfolger"], horizontal=True, key="rw_schnell"))
+        if wahl in rw.SCHNELL_TEXT:
+            df, tks = rw.schnell(erg, wahl)
+            st.caption(rw.SCHNELL_TEXT[wahl] + " · Zeile anklicken → Titelseite")
+            ereignis = st.dataframe(df, hide_index=True, use_container_width=True, on_select="rerun",
+                                    selection_mode="single-row", key=f"rw_schnell_tab_{wahl}",
+                                    height=min(560, 35 * (len(df) + 1) + 3))
+            reihen = ereignis.selection.rows if ereignis is not None else []
+            if reihen:
+                st.link_button(f"{tks[reihen[0]]}: Titelseite →", f"?seite=Titelseite&t={tks[reihen[0]]}")
         st.markdown(gestaltung.seite("<h2 style='margin:0'>③ Titel nach Stufe</h2>", oben=16, unten=4),
                     unsafe_allow_html=True)
         st.caption("◆ = auf der Watchlist")
@@ -433,6 +467,7 @@ def rueckenwind_zeigen():
 
 if ansicht == "Rückenwind":
     try:
+        _QUELLE["text"] = "Stand des Nachtlaufs"
         rueckenwind_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
@@ -449,13 +484,27 @@ elif ticker:
     lauf = st.session_state.get("laufend")
     args = (ticker, True, lauf[1]) if lauf and lauf[0] == ticker else (ticker,)
     try:
-        teile = titel.abgelegt(ticker) if len(args) == 1 else None   # vom Abendlauf fertig gebaut: sofort da
-        if teile is None:
+        ab = titel.abgelegt(ticker) if len(args) == 1 else None   # vom Abendlauf fertig gebaut: sofort da
+        if ab is not None:
+            teile, alt = ab
+            _QUELLE["text"] = _schrank_text(alt)
+        else:
+            t0 = time.time()
             with st.spinner("Lade und rechne …"):
                 teile = _gebaut("titel", _codestand(), *args)
+            frisch_ = time.time() - t0 > 0.5
+            _QUELLE["text"] = "frisch gerechnet" if frisch_ else "aus dem Zwischenspeicher"
+            if frisch_ and len(args) == 1:
+                try:                             # beim nächsten Mal sofort da
+                    titel.ablegen(ticker, teile)
+                except Exception:  # noqa: BLE001
+                    pass
         st.markdown(teile["oben"], unsafe_allow_html=True)
         ebene, aus, zonen_ansicht, gd_kurz = chart_knoepfe(ticker)
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz), unsafe_allow_html=True)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
+
+
+st.caption(f"⏱ Seite in {time.time() - _T0:.1f} s" + (f" · {_QUELLE['text']}" if _QUELLE["text"] else ""))

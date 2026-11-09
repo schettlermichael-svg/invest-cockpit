@@ -252,27 +252,30 @@ def dreifach(erg):
                  + "".join(karten) + '</div>', oben=4, unten=4)
 
 
+def _zeile(tk, x, stand):
+    """Eine Tabellenzeile eines Titels (Stufen, Anführer, Verfolger)."""
+    z = x.get("zahlen") or {}
+    termin, warn = _termin(x, stand)
+    return {"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
+            "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
+            "Zahlen": PUNKT[z.get("ampel") or "grau"],
+            "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
+            "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
+            "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
+            "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
+            "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"}{", stabil" if x.get("branche_stabil") else ""})',
+            "Thema": (x["thema"] or "").split(" · ")[0][:40],
+            "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
+            "Zahlen im Einzelnen": _punkte_text(x)}
+
+
 def stufe(erg, name):
     """Tabelle einer Stufe: Geld zuerst, dann Zahlen, dann Tempo."""
     rang = {"grün": 0, "gelb": 1, "rot": 2, "grau": 3, None: 3}
     liste = sorted(((tk, x) for tk, x in erg["titel"].items() if x["stufe"] == name),
                    key=lambda p: (rang[p[1]["geld_ampel"]], rang[(p[1].get("zahlen") or {}).get("ampel")],
                                   -p[1]["tempo"]))
-    reihen = []
-    for tk, x in liste:
-        z = x.get("zahlen") or {}
-        termin, warn = _termin(x, erg["stand"])
-        reihen.append({"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
-                       "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
-                       "Zahlen": PUNKT[z.get("ampel") or "grau"],
-                       "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
-                       "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
-                       "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
-                       "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
-                       "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"}{", stabil" if x.get("branche_stabil") else ""})',
-                       "Thema": (x["thema"] or "").split(" · ")[0][:40],
-                       "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
-                       "Zahlen im Einzelnen": _punkte_text(x)})
+    reihen = [_zeile(tk, x, erg["stand"]) for tk, x in liste]
     tks = [tk for tk, _ in liste]
     if name is None:                            # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         for o in erg.get("ohne_daten") or []:
@@ -280,6 +283,28 @@ def stufe(erg, name):
                            "Geld": PUNKT["grau"], "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
             tks.append(o["tk"])
     return pd.DataFrame(reihen), tks
+
+
+SPITZE = 25
+SCHNELL_TEXT = {
+    "Anführer": "Die 25 Titel mit dem höchsten RS-Rang, deren Tempo hält (Stufe Läuft) – bei gleichem Rang der "
+                "stärkere Volumen-Zufluss zuerst. Die Vorhut, die schon an der Front steht.",
+    "Verfolger": "Die 25 Titel, die in 4 Wochen am meisten Rang gewonnen haben und dabei schneller werden "
+                 "(Beschleunigung positiv), noch unter Rang 85. Die Einheiten, die gerade am schnellsten nachrücken.",
+}
+
+
+def schnell(erg, art):
+    """Schnellsuche (09.11.2026): Anführer = Top 25 nach RS-Rang in Stufe Läuft; Verfolger = Top 25 nach Tempo mit
+    positiver Beschleunigung unter Rang 85. Nur eine Sicht – die Listen nach Stufe bleiben vollständig."""
+    t = erg["titel"].items()
+    if art == "Anführer":
+        liste = sorted(((tk, x) for tk, x in t if x["stufe"] == "Läuft"),
+                       key=lambda p: (-p[1]["rang"], -(p[1].get("zufluss") or 0)))[:SPITZE]
+    else:
+        liste = sorted(((tk, x) for tk, x in t if x["rang"] < 85 and x["beschleunigung"] > 0),
+                       key=lambda p: (-p[1]["tempo"], -p[1]["beschleunigung"]))[:SPITZE]
+    return pd.DataFrame([_zeile(tk, x, erg["stand"]) for tk, x in liste]), [tk for tk, _ in liste]
 
 
 def logbuch(erg, tage=28):

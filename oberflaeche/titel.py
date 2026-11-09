@@ -5,6 +5,7 @@ Phase, Basenzählung und Fundament-Ampeln und liefert die fertige Seite als HTML
 """
 import os
 import sys
+import time
 
 import pandas as pd
 
@@ -762,39 +763,47 @@ def ablegen(tk, teile):
     import pickle
     os.makedirs(ABLAGE, exist_ok=True)
     pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
-    with gzip.open(pfad + ".neu", "wb", compresslevel=3) as f:
+    tmp = f"{pfad}.{os.getpid()}.neu"           # App und Hintergrundlauf können gleichzeitig ablegen
+    with gzip.open(tmp, "wb", compresslevel=3) as f:
         pickle.dump(teile, f, protocol=pickle.HIGHEST_PROTOCOL)
-    os.replace(pfad + ".neu", pfad)
+    os.replace(tmp, pfad)
+
+
+ALTER_MAX = 30 * 3600            # abgelegte Seiten gelten höchstens 30 Stunden (der Nachtlauf baut sie täglich neu)
 
 
 def ablage_grenze():
-    """Abgelegte Titelseiten älter als das Programm oder das Depot gelten nicht mehr."""
+    """Abgelegte Titelseiten älter als das Programm oder das Depot gelten als veraltet."""
     import depot
     return max([codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else []))
 
 
 def frisch(tk, grenze=None):
-    """Liegt eine gültige Titelseite im Schrank?"""
+    """Liegt eine gültige Titelseite im Schrank (jünger als Programm, Depot und 30 Stunden)?"""
     try:
-        return os.path.getmtime(os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")) >= (grenze or ablage_grenze())
+        zeit = os.path.getmtime(os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz"))
     except OSError:
         return False
+    return zeit >= (grenze or ablage_grenze()) and time.time() - zeit < ALTER_MAX
 
 
 def abgelegt(tk):
-    """Gespeicherte Titelseite oder None (fehlt, oder Programm bzw. Depot sind jünger). Nach einer Änderung füllt
-    nachtlauf.py --seiten den Schrank im Hintergrund neu (06.11.2026)."""
+    """Gespeicherte Titelseite als (Teile, veraltet) oder None. Veraltet = vor der letzten Programmänderung gebaut:
+    wird trotzdem sofort gezeigt (die Daten sind dieselben), die neue Fassung baut nachtlauf.py --seiten im
+    Hintergrund (09.11.2026 – vorher wurde nach jeder Änderung live gerechnet). Nicht gezeigt wird eine Seite, die
+    älter als 30 Stunden oder älter als das Depot ist (Positionen und Stückzahl müssen stimmen)."""
+    import depot
     import gzip
     import pickle
     pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
     try:
-        if not frisch(tk):
+        zeit = os.path.getmtime(pfad)
+        if time.time() - zeit >= ALTER_MAX or (os.path.exists(depot.DATEI) and zeit < os.path.getmtime(depot.DATEI)):
             return None
         with gzip.open(pfad, "rb") as f:
-            return pickle.load(f)
+            return pickle.load(f), zeit < codezeit()
     except Exception:  # noqa: BLE001 – dann wird gerechnet
         return None
-
 
 _SPEICHER = {}
 

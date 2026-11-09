@@ -83,26 +83,37 @@ def ablegen(teile):
     import gzip
     import pickle
     os.makedirs(os.path.dirname(ABLAGE), exist_ok=True)
-    with gzip.open(ABLAGE + ".neu", "wb", compresslevel=3) as f:
+    tmp = f"{ABLAGE}.{os.getpid()}.neu"
+    with gzip.open(tmp, "wb", compresslevel=3) as f:
         pickle.dump(teile, f)
-    os.replace(ABLAGE + ".neu", ABLAGE)
+    os.replace(tmp, ABLAGE)
 
 
 def abgelegt():
-    """Gespeicherte Übersicht oder None (fehlt, älter als heute früh, oder Programm bzw. Depot sind jünger)."""
+    """Gespeicherte Übersicht als (Teile, veraltet) oder None (fehlt, älter als 30 Stunden oder älter als das Depot).
+    Veraltet = vor der letzten Programmänderung gebaut: wird sofort gezeigt, nachtlauf.py --seiten baut sie im
+    Hintergrund neu (09.11.2026)."""
     import gzip
     import pickle
     import depot
     import titel
     try:
         zeit = os.path.getmtime(ABLAGE)
-        juenger = [titel.codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else [])
-        if zeit < max(juenger) or time.time() - zeit > 30 * 3600:
+        if time.time() - zeit > 30 * 3600 or (os.path.exists(depot.DATEI) and zeit < os.path.getmtime(depot.DATEI)):
             return None
         with gzip.open(ABLAGE, "rb") as f:
-            return pickle.load(f)
+            return pickle.load(f), zeit < titel.codezeit()
     except Exception:  # noqa: BLE001
         return None
+
+
+def veraltet():
+    """Fehlt die abgelegte Übersicht oder ist sie älter als das Programm?"""
+    import titel
+    try:
+        return os.path.getmtime(ABLAGE) < titel.ablage_grenze()
+    except OSError:
+        return True
 
 
 def seite_uebersicht():
