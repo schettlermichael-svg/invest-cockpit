@@ -33,7 +33,9 @@ STARK = 85                     # Läuft: Rang ab 85
 MITTEL = (50, 85)              # Entsteht: Rang 50 bis unter 85 …
 TEMPO_HOCH = 15                # … mit mindestens +15 Rangpunkten in 4 Wochen und positiver Beschleunigung
 TEMPO_HAELT = -5               # Läuft: Tempo nicht schlechter als −5
-ERMUEDET = (80, -10)           # Ermüdet: Rang ab 80, Tempo −10 oder schlechter
+ERMUEDET = (80, -10, -15, 5)   # Ermüdet: Rang ab 80, Tempo −10 oder schlechter – oder das Tempo bricht ein
+                               # (Beschleunigung −15 oder schlechter) und der Titel rückt kaum noch vor (Tempo höchstens
+                               # +5); Micky 09.11.2026, früheste Warnung
 ABFLUSS = (70, -20)            # Abfluss: vor 4 Wochen ab 70, seitdem 20 Rangpunkte oder mehr verloren
 VORNE = ("Führend", "Erstarkend")
 STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
@@ -52,7 +54,7 @@ def _rang(C):
 def _stufe(r, t, b, r4):
     if r4 is not None and r4 >= ABFLUSS[0] and t <= ABFLUSS[1]:
         return "Abfluss"
-    if r >= ERMUEDET[0] and t <= ERMUEDET[1]:
+    if r >= ERMUEDET[0] and (t <= ERMUEDET[1] or (b <= ERMUEDET[2] and t <= ERMUEDET[3])):
         return "Ermüdet"
     if r >= STARK and t >= TEMPO_HAELT:
         return "Läuft"

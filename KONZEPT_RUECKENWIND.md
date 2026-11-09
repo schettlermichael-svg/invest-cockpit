@@ -56,6 +56,10 @@ Kriegsbild: ein starkes Regiment, das an einem Frontabschnitt angreift, an dem d
 - 🟡 **Ermüdet**: Stärke noch hoch, Tempo lässt nach oder dreht – früheste Warnung, Beginn des Abflusses
 - 🔴 **Abfluss**: Tempo negativ, Rang fällt, Gruppe schwächelt/fällt zurück (Warnung für Halter, Short-Gebiet)
 
+Umgesetzt (Micky, 09.11.2026): Ermüdet = Rang ab 80 und Tempo −10 oder schlechter **oder Beschleunigung −15 oder
+schlechter bei einem Tempo von höchstens +5** (das Tempo bricht ein und der Titel rückt kaum noch vor, bevor der Rang
+fällt; wer noch kräftig steigt, nur langsamer, bleibt „Läuft“/„Entsteht“). Probelauf 04.11.: 21 statt 5 Titel.
+
 ## Aufbau der Seite
 1. **Strömungskarte**: Sektoren, Branchen und Themen als Punkte in vier Feldern (Stärke × Tempo), Pfeil = Weg der letzten
    4 Wochen; Zufluss und Abfluss auf einen Blick
