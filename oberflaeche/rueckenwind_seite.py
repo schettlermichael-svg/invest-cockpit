@@ -27,7 +27,8 @@ STUFE_TEXT = {
     "Abfluss": "Vor 4 Wochen ab 70, seitdem 20 Punkte oder mehr verloren – das Geld geht. Warnung für Halter, "
                "Gebiet für Shorts.",
     None: "Gerechnet, aber zurzeit in keiner Stufe – zur Vollständigkeit, nichts weggelassen. Unten grau die Titel, "
-          "die sich nicht rechnen lassen (mit Grund).",
+          "die sich nicht rechnen lassen (mit Grund). „jung n M“ = weniger als 14 Monate an der Börse: RS-Rang aus den "
+          "vorhandenen Quartalen, RS-Hoch seit dem Börsengang.",
 }
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
 TERMIN_WARNUNG = 14
@@ -261,7 +262,8 @@ def stufe(erg, name):
     for tk, x in liste:
         z = x.get("zahlen") or {}
         termin, warn = _termin(x, erg["stand"])
-        reihen.append({"Titel": tk + (" ◆" if x.get("watchlist") else ""), "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
+        reihen.append({"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
+                       "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
                        "Zahlen": PUNKT[z.get("ampel") or "grau"],
                        "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
                        "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",

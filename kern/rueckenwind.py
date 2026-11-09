@@ -22,7 +22,6 @@ import numpy as np
 import pandas as pd
 
 import massive
-import rs_rang
 import sektoren
 from dateien import json_lesen, json_schreiben  # noqa: E402
 
@@ -52,8 +51,26 @@ def _pfad(name):
     return os.path.join(SPEICHER, name)
 
 
+QUARTAL = 63
+JUNG_MIN = QUARTAL + 2 * 20      # junge Titel ab einem Quartal plus 8 Wochen Rückblick (Micky, 09.11.2026)
+
+
+def _wert(C):
+    """RS-Wert nach IBD (letztes Quartal 40 %, die drei davor je 20 %) – bei jungen Titeln nur aus den Quartalen, die
+    sie haben, Gewichte darauf verteilt. Bei voller Historie genau rs_rang.wert."""
+    letzt = C.iloc[-1]
+    summe, gewicht = 0 * letzt.fillna(0), 0 * letzt.fillna(0)
+    for k, w in ((1, 0.4), (2, 0.2), (3, 0.2), (4, 0.2)):
+        if len(C) <= QUARTAL * k:
+            break
+        q = letzt / C.iloc[-1 - QUARTAL * k] - 1
+        da = q.notna()
+        summe, gewicht = summe + (w * q).where(da, 0), gewicht + w * da
+    return (summe / gewicht.where(gewicht > 0)).where(letzt.notna())
+
+
 def _rang(C):
-    w = rs_rang.wert(C).dropna()
+    w = _wert(C).dropna()
     return (w.rank(pct=True) * 98 + 1).round()
 
 
@@ -284,11 +301,11 @@ def rechnen(netz=False):
     titel_, ohne_daten = [], []
     for t in alle:
         n_ = int(C[t].notna().sum()) if t in C.columns else 0
-        if n_ >= 252 + 2 * WOCHEN4:
+        if n_ >= JUNG_MIN + 1:
             titel_.append(t)
         else:                                   # nicht still weglassen: auf der Seite in „Ohne Stufe“ mit Grund
             ohne_daten.append({"tk": t, "watchlist": t in wl,
-                               "grund": (f"zu wenig Historie ({n_} Handelstage, nötig {252 + 2 * WOCHEN4})" if n_
+                               "grund": (f"zu jung ({n_} Handelstage, nötig {JUNG_MIN + 1})" if n_
                                          else "keine Kurse bei Massive (Börse außerhalb der USA oder Fonds)")})
     X = C[titel_]
     r0, r4, r8 = _rang(X), _rang(X.iloc[:-WOCHEN4]), _rang(X.iloc[:-2 * WOCHEN4])
@@ -325,13 +342,13 @@ def rechnen(netz=False):
         besch = tempo - vortempo
         c = C[tk].dropna()
         rs = (c / spy.reindex(c.index)).dropna()
-        rs_hoch = bool(len(rs) >= 252 and rs.iloc[-1] >= 0.99 * rs.iloc[-252:].max())
+        rs_hoch = bool(len(rs) >= JUNG_MIN and rs.iloc[-1] >= 0.99 * rs.iloc[-252:].max())   # jung: seit Börsengang
         # Tempo der RS-Linie selbst: Steigung in 4 Wochen und in den 4 Wochen davor (%)
         rs_tempo = float((rs.iloc[-1] / rs.iloc[-1 - WOCHEN4] - 1) * 100) if len(rs) > 2 * WOCHEN4 else None
         rs_vortempo = (float((rs.iloc[-1 - WOCHEN4] / rs.iloc[-1 - 2 * WOCHEN4] - 1) * 100)
                        if len(rs) > 2 * WOCHEN4 else None)
         zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
-        kurs_hoch = bool(len(c) >= 252 and c.iloc[-1] >= 0.97 * c.iloc[-252:].max())
+        kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= 0.97 * c.iloc[-252:].max())
         stufe = _stufe(r, tempo, besch, a4)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
             stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
@@ -347,7 +364,7 @@ def rechnen(netz=False):
              "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else (zusatz[tk]["branche"] if tk in zusatz else rv.loc[tk, "branche"]),
              "branche_feld": bra["feld"] if bra else None,
-             "watchlist": tk in wl, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
+             "watchlist": tk in wl, "jung": round(len(c) / 21) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
         if stufe:
