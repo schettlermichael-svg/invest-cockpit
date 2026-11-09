@@ -4,7 +4,7 @@ Je Titel des Reviers drei Rückenwinde als Ampeln, dazu Earnings:
   Kurs   RS-Dynamik: Stärke (RS-Rang 1–99 wie IBD, rs_rang.wert), Tempo (Veränderung des Rangs in 4 Wochen),
          Beschleunigung (Tempo gegen das Tempo der 4 Wochen davor); Zeichen: RS-Linie am 52-Wochen-Hoch, der Kurs noch
          nicht (O'Neil/Minervini).
-  Geld   Sektor, Branche und Thema der Gruppe: Feld (Stärke × Tempo gegen den S&P 500 wie sektoren.reihen, gleich-
+  Geld   Sektor, Branche und Thema der Gruppe (drei Stimmen: grün = zwei vorne, keine im Abfluss): Feld (Stärke × Tempo gegen den S&P 500 wie sektoren.reihen, gleich-
          gewichtete Indizes der Revier-Titel), Weg der letzten 4 Wochen, Volumen-Zufluss (Volumen an steigenden gegen
          fallende Tage, 50 Tage).
   Zahlen Fundament-Ampeln (fundament.ampeln, Minervini/O'Neil) aus dem Zwischenspeicher; Termin der nächsten Zahlen,
@@ -90,9 +90,14 @@ def _gruppe(art, name, mitglieder, C, V):
             "zufluss": round(ud, 2) if ud else None}
 
 
-def _geld_ampel(sek, bra):
-    vorne = [x for x in (sek, bra) if x and x["feld"] in VORNE]
-    return "grün" if len(vorne) == 2 else "gelb" if vorne else "rot"
+def _geld_ampel(sek, bra, th=None):
+    """Drei Stimmen: Sektor, Branche, Thema (Micky, 09.11.2026). Grün = mindestens zwei vorne (führend oder
+    erstarkend) und keine im Abfluss (schwächelnd); gelb = eine vorne; rot = keine. Ohne Thema zählen Sektor und
+    Branche – dann müssen beide vorne sein."""
+    stimmen = [x for x in (sek, bra, th) if x]
+    vorne = sum(1 for x in stimmen if x["feld"] in VORNE)
+    abfluss = any(x["feld"] == "Ermüdend" for x in stimmen)
+    return "grün" if vorne >= 2 and not abfluss else "gelb" if vorne else "rot"
 
 
 def _zahlen(tk):
@@ -205,7 +210,7 @@ def rechnen(netz=False):
              "sektor": sek["name"] if sek else rv.loc[tk, "sektor"], "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else rv.loc[tk, "branche"], "branche_feld": bra["feld"] if bra else None,
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
-             "geld_ampel": _geld_ampel(sek, bra), "kurs": round(float(c.iloc[-1]), 2)}
+             "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
         if stufe:
             if netz:
                 try:

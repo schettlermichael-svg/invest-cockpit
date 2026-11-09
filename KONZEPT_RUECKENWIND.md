@@ -24,7 +24,8 @@ Kriegsbild: ein starkes Regiment, das an einem Frontabschnitt angreift, an dem d
    - Stärke und Tempo der Gruppe gegen den S&P 500 (Strömungskarte: führend / erstarkend / schwächelnd / zurückfallend)
    - **Volumen**: steigen die Titel der Gruppe an lauten Tagen und fallen an leisen (Akkumulation) – Preis sagt wohin,
      Volumen sagt wer
-   - Sektor UND Branche vorne = doppelter Rückenwind
+   - Geld-Ampel aus drei Stimmen (Micky, 09.11.2026): Sektor, Branche, Thema – grün = mindestens zwei vorne (führend
+     oder erstarkend) und keine im Abfluss; gelb = eine vorne; rot = keine. Ohne Thema müssen Sektor und Branche vorne sein
    - **Themen-Gruppen** (aus dem Gleichlauf der Kurse, quer über Branchen, z. B. KI-Infrastruktur): automatisch nach
      Mitgliedern und Branchen benannt, Geldfluss wie bei Branchen, Zeichen auf der Karte
 3. **Zahlen – fundamentaler Rückenwind** (Minervini, O'Neil CAN SLIM)

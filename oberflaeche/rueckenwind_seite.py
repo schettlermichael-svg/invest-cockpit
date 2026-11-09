@@ -47,7 +47,7 @@ def kopf(erg):
         f'<div style="color:{TEXT_2};font-size:14px">Stand {pd.Timestamp(erg["stand"]):%d.%m.%Y} · '
         f'{len(erg["titel"])} Titel</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 14px">Kurs, Geld und Zahlen: RS-Dynamik des Titels, '
-        f'Geldfluss in Sektor, Branche und Thema, Fundament. Nur dieses Setup – getrennt von Minervini und Kullamägi. '
+        f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne = grün), Fundament. Nur dieses Setup – getrennt von Minervini und Kullamägi. '
         f'Ampeln, nichts gefiltert.</p>'
         f'<div style="display:flex;flex-wrap:wrap;gap:12px">'
         + "".join(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
