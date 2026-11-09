@@ -27,6 +27,8 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, os.path.join(HIER, "..", "oberflaeche"))
 sys.path.insert(0, HIER)
+from dateien import json_schreiben  # noqa: E402
+
 PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "protokoll.json")
 TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.json")   # Knopf in der Übersicht
 TISCH_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.log")
@@ -37,7 +39,7 @@ SCHLUSS = (7, 0)              # Massive-Durchgänge enden morgens, damit der Mac
 
 def _schreiben(p, datei=PROTOKOLL):
     os.makedirs(os.path.dirname(datei), exist_ok=True)
-    json.dump(p, open(datei, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json_schreiben(datei, p, ensure_ascii=False, indent=1)
 
 
 def _mitteilung(text):

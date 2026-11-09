@@ -32,6 +32,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
+from dateien import json_lesen, json_schreiben  # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
 REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), Kurs am Pivot: höchstens 5 % darunter bis "
                                                "5 % darüber (Kaufzone)"),
@@ -229,7 +230,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
                 "phasen": {x["tk"]: x["phase"] for x in stufe1}}
     ergebnis["neu"] = _neu(vorher, ergebnis)
     os.makedirs(SPEICHER, exist_ok=True)
-    json.dump(ergebnis, open(os.path.join(SPEICHER, f"{stand}.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    json_schreiben(os.path.join(SPEICHER, f"{stand}.json"), ergebnis, ensure_ascii=False)
     return ergebnis
 
 
@@ -237,8 +238,11 @@ def laden():
     """Jüngster gespeicherter Kartentisch oder None."""
     if not os.path.isdir(SPEICHER):
         return None
-    dateien = sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))
-    return json.load(open(os.path.join(SPEICHER, dateien[-1]), encoding="utf-8")) if dateien else None
+    for f in sorted((f for f in os.listdir(SPEICHER) if f.endswith(".json")), reverse=True):
+        tisch = json_lesen(os.path.join(SPEICHER, f))           # kaputter Tisch: der davor
+        if tisch is not None:
+            return tisch
+    return None
 
 
 _REIHEN_CACHE = {}
@@ -255,7 +259,7 @@ def eintrag_von(tk):
     schluessel = (pfad, os.path.getmtime(pfad))
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
-        tisch = json.load(open(pfad, encoding="utf-8"))
+        tisch = json_lesen(pfad, {"titel": {}})
         felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)

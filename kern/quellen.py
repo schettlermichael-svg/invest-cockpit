@@ -16,6 +16,8 @@ import urllib.request
 
 import pandas as pd
 
+from dateien import json_lesen, json_schreiben
+
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "fundament")
 KONTAKT = os.path.join(HIER, "..", "einstellungen", "sec_kontakt.txt")
@@ -130,11 +132,13 @@ def laden(ticker, neu=False):
     os.makedirs(SPEICHER, exist_ok=True)
     pfad = os.path.join(SPEICHER, f"{ticker.upper()}.json")
     if not neu and os.path.exists(pfad) and time.time() - os.path.getmtime(pfad) < GUELTIG_STUNDEN * 3600:
-        return _aus_json(json.load(open(pfad, encoding="utf-8")))
+        roh = json_lesen(pfad)
+        if roh is not None:
+            return _aus_json(roh)
     daten = yahoo(ticker)
     try:
         daten["sec"] = sec_quartale(ticker)
     except Exception:
         daten["sec"] = pd.DataFrame()
-    json.dump(_als_json(daten), open(pfad, "w", encoding="utf-8"))
+    json_schreiben(pfad, _als_json(daten))
     return daten

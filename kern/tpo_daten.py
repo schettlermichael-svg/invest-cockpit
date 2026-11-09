@@ -19,6 +19,7 @@ from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+from dateien import json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "tpo")
@@ -123,7 +124,7 @@ def _leer_merken(ticker, zeitraeume):
     alle = _leer_laden()
     alle.setdefault(ticker.upper(), []).extend([[f"{a:%Y-%m-%d}", f"{b:%Y-%m-%d}"] for a, b in zeitraeume])
     os.makedirs(SPEICHER, exist_ok=True)
-    json.dump(alle, open(LEER, "w", encoding="utf-8"))
+    json_schreiben(LEER, alle)
 
 
 def luecke(ticker, kalender=None):
@@ -302,7 +303,7 @@ def merken(ticker):
     if ticker.upper() not in g:
         g.add(ticker.upper())
         os.makedirs(SPEICHER, exist_ok=True)
-        json.dump(sorted(g), open(GEOEFFNET, "w", encoding="utf-8"))
+        json_schreiben(GEOEFFNET, sorted(g))
 
 
 def _watchlists():
@@ -334,7 +335,7 @@ def vergessen(ticker):
     g = _geoeffnet()
     if ticker.upper() in g:
         g.discard(ticker.upper())
-        json.dump(sorted(g), open(GEOEFFNET, "w", encoding="utf-8"))
+        json_schreiben(GEOEFFNET, sorted(g))
     if ticker.upper() not in lauf_liste():
         _archivieren(ticker)
 

@@ -12,6 +12,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+from dateien import json_lesen, json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "kurse")
@@ -103,14 +104,14 @@ def kurse_gespeichert(ticker):
 def steckbrief_gespeichert(ticker):
     """Steckbrief nur aus dem Speicher (ohne Abruf), sonst None."""
     pfad = os.path.join(SPEICHER, f"{ticker.upper()}_steckbrief.json")
-    return json.load(open(pfad, encoding="utf-8")) if os.path.exists(pfad) else None
+    return json_lesen(pfad)
 
 
 def steckbrief(ticker):
     os.makedirs(SPEICHER, exist_ok=True)
     pfad = os.path.join(SPEICHER, f"{ticker.upper()}_steckbrief.json")
-    if _frisch(pfad, 24 * 100):                    # Sektor ändert sich selten; rollierend nachgeprüft
-        return json.load(open(pfad, encoding="utf-8"))
+    if _frisch(pfad, 24 * 100) and json_lesen(pfad) is not None:   # Sektor ändert sich selten; rollierend nachgeprüft
+        return json_lesen(pfad)
     import yfinance as yf
     info = yf.Ticker(ticker).info
     if not info or len(info) < 5:                       # leere Antwort (z. B. gedrosselt): nicht speichern
@@ -118,5 +119,5 @@ def steckbrief(ticker):
     s = {"name": info.get("longName") or info.get("shortName") or ticker.upper(),
          "sektor": info.get("sector") or "", "branche": info.get("industry") or "",
          "beschreibung": (info.get("longBusinessSummary") or "")[:400]}
-    json.dump(s, open(pfad, "w", encoding="utf-8"), ensure_ascii=False)
+    json_schreiben(pfad, s, ensure_ascii=False)
     return s

@@ -26,6 +26,7 @@ import pandas as pd
 
 import massive
 import sektoren
+from dateien import json_lesen, json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "rudel")
@@ -143,8 +144,8 @@ def _rechnen():
             vol[branche] = VL[g].iloc[1:].sum(axis=1, min_count=1)
     pd.DataFrame(kurs).to_csv(_pfad("branchen_kurs.csv"))
     pd.DataFrame(vol).to_csv(_pfad("branchen_volumen.csv"))
-    json.dump({"stand": f"{stand:%Y-%m-%d}", "ticker": tk, "themen": gruppen},
-              open(_pfad("themen.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    json_schreiben(_pfad("themen.json"), {"stand": f"{stand:%Y-%m-%d}", "ticker": tk, "themen": gruppen},
+                   ensure_ascii=False)
     return stand
 
 
@@ -155,11 +156,11 @@ def _laden():
     """Gespeicherte Ergebnisse; neu gerechnet, sobald Massive einen neueren Handelstag hat."""
     letzter = max(d[:10] for d in os.listdir(massive.SPEICHER) if d[:4].isdigit() and d.endswith(".csv"))
     pfad = _pfad("themen.json")
-    if not os.path.exists(pfad) or json.load(open(pfad, encoding="utf-8"))["stand"] < letzter:
+    if (json_lesen(pfad) or {}).get("stand", "") < letzter:
         _rechnen()
         _cache.clear()
     if not _cache:
-        meta = json.load(open(pfad, encoding="utf-8"))
+        meta = json_lesen(pfad)
         _cache.update(meta=meta, A=np.load(_pfad("gleichlauf.npy")),
                       idx={t: i for i, t in enumerate(meta["ticker"])},
                       lage=pd.read_csv(_pfad("lage.csv"), index_col=0), rv=revier())

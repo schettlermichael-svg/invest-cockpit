@@ -5,6 +5,7 @@ Der Server legt die Datei alle 10 Minuten ab, ein stündlicher Abgleich trägt �
 """
 import json
 import os
+from dateien import json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "einstellungen", "watchlists.json")
@@ -59,7 +60,7 @@ def laden():
 def speichern(w):
     os.makedirs(os.path.dirname(DATEI), exist_ok=True)
     w = {STANDARD: list(dict.fromkeys(t.upper() for t in w.get(STANDARD, [])))}
-    json.dump(w, open(DATEI, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json_schreiben(DATEI, w, ensure_ascii=False, indent=1)
 
 
 def alle():

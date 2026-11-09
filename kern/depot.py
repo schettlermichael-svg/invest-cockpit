@@ -17,6 +17,7 @@ import json
 import math
 import os
 import time
+from dateien import json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "einstellungen", "depot.json")
@@ -38,7 +39,7 @@ def laden():
 def speichern(d):
     d["stand"] = time.strftime("%d.%m.%Y %H:%M")
     os.makedirs(os.path.dirname(DATEI), exist_ok=True)
-    json.dump(d, open(DATEI, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json_schreiben(DATEI, d, ensure_ascii=False, indent=1)
 
 
 def einstellen(konto=None, risiko_pct=None):

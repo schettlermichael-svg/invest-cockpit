@@ -18,6 +18,8 @@ from datetime import date
 
 import pandas as pd
 
+from dateien import json_lesen, json_schreiben
+
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "massive")
 SCHLUESSEL = os.path.join(HIER, "..", "einstellungen", "massive_schluessel.txt")
@@ -101,11 +103,12 @@ def splits(datum):
     datum = pd.Timestamp(datum).strftime("%Y-%m-%d")
     os.makedirs(SPEICHER, exist_ok=True)
     pfad = os.path.join(SPEICHER, f"splits_{datum}.json")
-    if not os.path.exists(pfad):
+    liste = json_lesen(pfad)
+    if liste is None:
         daten = _abruf(f"/v3/reference/splits?execution_date={datum}&limit=1000")
-        json.dump(daten.get("results") or [], open(pfad, "w", encoding="utf-8"))
-    return {s["ticker"].replace(".", "-"): s["split_from"] / s["split_to"]
-            for s in json.load(open(pfad, encoding="utf-8")) if s.get("split_to")}
+        liste = daten.get("results") or []
+        json_schreiben(pfad, liste)
+    return {s["ticker"].replace(".", "-"): s["split_from"] / s["split_to"] for s in liste if s.get("split_to")}
 
 
 def splits_zeitraum(von, bis):
@@ -114,7 +117,8 @@ def splits_zeitraum(von, bis):
     von, bis = (pd.Timestamp(x).strftime("%Y-%m-%d") for x in (von, bis))
     os.makedirs(SPEICHER, exist_ok=True)
     pfad = os.path.join(SPEICHER, f"splits_{von}_{bis}.json")
-    if not os.path.exists(pfad):
+    alle = json_lesen(pfad)
+    if alle is None:
         alle, weg = [], (f"/v3/reference/splits?execution_date.gte={von}&execution_date.lte={bis}"
                          f"&limit=1000&order=asc&sort=execution_date")
         while weg:
@@ -124,9 +128,9 @@ def splits_zeitraum(von, bis):
             weg = naechste.replace("https://api.massive.com", "").replace("https://api.polygon.io", "") or None
             if weg and "?" not in weg:
                 weg += "?"
-        json.dump(alle, open(pfad, "w", encoding="utf-8"))
+        json_schreiben(pfad, alle)
     return [(pd.Timestamp(s["execution_date"]), s["ticker"].replace(".", "-"), s["split_from"] / s["split_to"])
-            for s in json.load(open(pfad, encoding="utf-8")) if s.get("split_to")]
+            for s in alle if s.get("split_to")]
 
 
 def kursmatrix(ticker, n=260, spalte="Close"):

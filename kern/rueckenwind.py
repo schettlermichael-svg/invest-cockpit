@@ -24,6 +24,7 @@ import pandas as pd
 import massive
 import rs_rang
 import sektoren
+from dateien import json_lesen, json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "rueckenwind")
@@ -327,14 +328,14 @@ def rechnen(netz=False):
            "schwellen": {"stark": STARK, "mittel": MITTEL, "tempo_hoch": TEMPO_HOCH, "ermuedet": ERMUEDET,
                          "abfluss": ABFLUSS}}
     _logbuch(erg)
-    json.dump(erg, open(_pfad("stand.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    json_schreiben(_pfad("stand.json"), erg, ensure_ascii=False)
     return erg
 
 
 def _logbuch(erg):
     """Eintritt in eine Stufe mit Datum und Kurs; Austritt mit Datum. Nur Beobachtung."""
     pfad = _pfad("logbuch.json")
-    lb = json.load(open(pfad, encoding="utf-8")) if os.path.exists(pfad) else {}
+    lb = json_lesen(pfad, {})
     for tk, x in erg["titel"].items():
         e = lb.get(tk, [])
         jetzt = x["stufe"]
@@ -348,15 +349,14 @@ def _logbuch(erg):
             e.append({"stufe": jetzt, "seit": erg["stand"], "kurs_seit": x["kurs"]})
         if e:
             lb[tk] = e[-12:]
-    json.dump(lb, open(pfad, "w", encoding="utf-8"), ensure_ascii=False)
+    json_schreiben(pfad, lb, ensure_ascii=False)
 
 
 def laden():
     """Gespeicherter Stand (ohne Rechnen) und Logbuch, oder None."""
     pfad = _pfad("stand.json")
-    if not os.path.exists(pfad):
+    erg = json_lesen(pfad)
+    if erg is None:
         return None
-    erg = json.load(open(pfad, encoding="utf-8"))
-    lb = _pfad("logbuch.json")
-    erg["logbuch"] = json.load(open(lb, encoding="utf-8")) if os.path.exists(lb) else {}
+    erg["logbuch"] = json_lesen(_pfad("logbuch.json"), {})
     return erg
