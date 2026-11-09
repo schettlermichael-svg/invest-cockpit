@@ -455,6 +455,8 @@ Rückenwind 23; Tempo-Quantile 10/25/50/75/90 % = −29/−9/+2,5/+13/+25 Rangpu
 Zahlen-Ampel aus neun Punkten (fundament.ampeln ohne „Jahresgewinn“, dafür Jahresgewinne 3 Jahre je ab +25 %, ROE ab
 17 % aus TradingView, Institutionen), Reaktion auf die letzten Zahlen gedeutet (Episodic Pivot, Lücke mit Volumen,
 Abverkauf trotz Überraschung) – Einzelheiten in KONZEPT_RUECKENWIND.md.
+Dazu (09.11.): Zeichen „Rückenwind“ auf jeder Kartentisch-Karte und in „Befund“, Volumen-Zufluss je Titel, Steigung der
+RS-Linie (4 Wochen und davor), Zufluss-Ring und stabile Gruppen (◇: führt seit 8 Wochen, Rückschlag ≤ 8 %) in der Karte.
 Seite (`oberflaeche/rueckenwind_seite.py`): Strömungskarte (Sektor/Branche/Thema), Gruppen nach Geldfluss,
 Karten „Dreifacher Rückenwind“, Tabellen je Stufe (Klick → Titelseite), Logbuch.
 

@@ -60,6 +60,16 @@ Umgesetzt (Micky, 09.11.2026): Ermüdet = Rang ab 80 und Tempo −10 oder schlec
 schlechter bei einem Tempo von höchstens +5** (das Tempo bricht ein und der Titel rückt kaum noch vor, bevor der Rang
 fällt; wer noch kräftig steigt, nur langsamer, bleibt „Läuft“/„Entsteht“). Probelauf 04.11.: 21 statt 5 Titel.
 
+### Nachgezogen (09.11.2026, nach Mickys Hinweis auf vergessene Punkte)
+1. **Zeichen „Rückenwind“ im Kartentisch**: auf jeder Lagekarte und in der Spalte „Befund“ der Listen:
+   „Rückenwind Kurs 🟢 Geld 🟢 Zahlen 🟡 · Entsteht“ – ein VCP oder Breakout mit Rückenwind ist sofort erkennbar.
+2. **Volumen-Zufluss des Titels selbst**: Volumen an steigenden ÷ fallenden Tagen (50 Tage), ab 1,1 Zufluss, unter 0,9
+   Abfluss – als Zeichen auf Karte und in der Tabelle.
+3. **Tempo der RS-Linie**: Steigung der RS-Linie in 4 Wochen und in den 4 Wochen davor (%) – als Zeichen neben dem Rang.
+4. **Zufluss in der Strömungskarte**: grüner Ring = Volumen-Zufluss der Gruppe, roter Ring = Abfluss.
+5. **Stabile Gruppen** (Micky: „beides“): führt seit mindestens 8 Wochen UND größter Rückschlag des Gruppenindex in 8 Wochen
+   höchstens 8 % – Raute ◇ in der Karte, Spalte „stabil“ in der Gruppenliste, Zusatz „stabil“ bei Sektor/Branche des Titels.
+
 ## Aufbau der Seite
 1. **Strömungskarte**: Sektoren, Branchen und Themen als Punkte in vier Feldern (Stärke × Tempo), Pfeil = Weg der letzten
    4 Wochen; Zufluss und Abfluss auf einen Blick

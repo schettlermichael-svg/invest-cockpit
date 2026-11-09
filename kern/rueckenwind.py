@@ -4,7 +4,10 @@ Je Titel des Reviers drei Rückenwinde als Ampeln, dazu Earnings:
   Kurs   RS-Dynamik: Stärke (RS-Rang 1–99 wie IBD, rs_rang.wert), Tempo (Veränderung des Rangs in 4 Wochen),
          Beschleunigung (Tempo gegen das Tempo der 4 Wochen davor); Zeichen: RS-Linie am 52-Wochen-Hoch, der Kurs noch
          nicht (O'Neil/Minervini).
-  Geld   Sektor, Branche und Thema der Gruppe (drei Stimmen: grün = zwei vorne, keine im Abfluss): Feld (Stärke × Tempo gegen den S&P 500 wie sektoren.reihen, gleich-
+  Zeichen dazu: Steigung der RS-Linie in 4 Wochen (und davor), Volumen-Zufluss des Titels selbst (Volumen an
+         steigenden ÷ fallenden Tagen, 50 Tage: ab 1,1 Zufluss, unter 0,9 Abfluss).
+  Geld   Sektor, Branche und Thema der Gruppe (drei Stimmen: grün = zwei vorne, keine im Abfluss); „stabil“ = führt
+         seit mindestens 8 Wochen und größter Rückschlag des Gruppenindex in 8 Wochen höchstens 8 %: Feld (Stärke × Tempo gegen den S&P 500 wie sektoren.reihen, gleich-
          gewichtete Indizes der Revier-Titel), Weg der letzten 4 Wochen, Volumen-Zufluss (Volumen an steigenden gegen
          fallende Tage, 50 Tage).
   Zahlen Fundament-Ampeln (fundament.ampeln, Minervini/O'Neil) aus dem Zwischenspeicher; Termin der nächsten Zahlen,
@@ -38,6 +41,8 @@ ERMUEDET = (80, -10, -15, 5)   # Ermüdet: Rang ab 80, Tempo −10 oder schlecht
                                # +5); Micky 09.11.2026, früheste Warnung
 ABFLUSS = (70, -20)            # Abfluss: vor 4 Wochen ab 70, seitdem 20 Rangpunkte oder mehr verloren
 VORNE = ("Führend", "Erstarkend")
+STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und größter Rückschlag (8 Wochen) ≤ 8 %
+ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
 STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
 
 
@@ -87,7 +92,11 @@ def _gruppe(art, name, mitglieder, C, V):
     while seit < len(s) and sektoren.feld(s.iloc[-1 - seit], w.iloc[-1 - seit]) == feld:
         seit += 1
     ud = _ud(kurs, vol)
+    k8 = kurs.iloc[-2 * WOCHEN4:]
+    rueck = float((1 - k8 / k8.cummax()).max() * 100)
     return {"art": art, "name": name, "anzahl": len(g), "feld": feld, "feld_vor4": vorher, "seit_wochen": seit,
+            "rueckschlag": round(rueck, 1),
+            "stabil": feld == "Führend" and seit >= STABIL_WOCHEN and rueck <= STABIL_RUECKSCHLAG,
             "staerke": round(float(s.iloc[-1]), 1), "schwung": round(float(w.iloc[-1]), 1),
             "weg": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(s.iloc[-5:], w.iloc[-5:])],
             "zufluss": round(ud, 2) if ud else None}
@@ -280,6 +289,11 @@ def rechnen(netz=False):
         c = C[tk].dropna()
         rs = (c / spy.reindex(c.index)).dropna()
         rs_hoch = bool(len(rs) >= 252 and rs.iloc[-1] >= 0.99 * rs.iloc[-252:].max())
+        # Tempo der RS-Linie selbst: Steigung in 4 Wochen und in den 4 Wochen davor (%)
+        rs_tempo = float((rs.iloc[-1] / rs.iloc[-1 - WOCHEN4] - 1) * 100) if len(rs) > 2 * WOCHEN4 else None
+        rs_vortempo = (float((rs.iloc[-1 - WOCHEN4] / rs.iloc[-1 - 2 * WOCHEN4] - 1) * 100)
+                       if len(rs) > 2 * WOCHEN4 else None)
+        zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
         kurs_hoch = bool(len(c) >= 252 and c.iloc[-1] >= 0.97 * c.iloc[-252:].max())
         stufe = _stufe(r, tempo, besch, a4)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
@@ -287,6 +301,10 @@ def rechnen(netz=False):
         sek, bra, th = sek_von.get(tk), bra_von.get(tk), thema_von.get(tk)
         x = {"rang": int(r), "rang_vor4": int(a4), "tempo": int(tempo), "beschleunigung": int(besch),
              "rs_hoch_vor_kurs": rs_hoch and not kurs_hoch, "stufe": stufe,
+             "rs_tempo": round(rs_tempo, 1) if rs_tempo is not None else None,
+             "rs_vortempo": round(rs_vortempo, 1) if rs_vortempo is not None else None,
+             "zufluss": round(zufluss, 2) if zufluss else None,
+             "sektor_stabil": bool(sek and sek["stabil"]), "branche_stabil": bool(bra and bra["stabil"]),
              "kurs_ampel": {"Entsteht": "grün", "Läuft": "grün", "Ermüdet": "gelb", "Abfluss": "rot"}.get(stufe, "grau"),
              "sektor": sek["name"] if sek else rv.loc[tk, "sektor"], "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else rv.loc[tk, "branche"], "branche_feld": bra["feld"] if bra else None,

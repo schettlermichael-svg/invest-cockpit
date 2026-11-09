@@ -325,11 +325,24 @@ def _grundzeile(x):
     return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
+def rueckenwind_zeichen(x):
+    """Zeichen „Rückenwind“ (Seite Rückenwind, 09.11.2026): Kurs · Geld · Zahlen als Ampeln und die Stufe."""
+    rw = (x or {}).get("rueckenwind")
+    if not rw:
+        return ""
+    p = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
+    return (f'Rückenwind Kurs {p.get(rw["kurs"], "⚪")} Geld {p.get(rw["geld"], "⚪")} Zahlen {p.get(rw["zahlen"], "⚪")}'
+            + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
+
+
 def karte_html(x, kopf=""):
     """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
-    Grund, was fehlt)."""
+    Grund, was fehlt) und das Zeichen „Rückenwind“."""
+    from gestaltung import TEXT_2, t
     kopf = kopf or _grundzeile(x)
-    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}'
+    rw = rueckenwind_zeichen(x)
+    rw = f'<span style="font-size:13px;color:{TEXT_2}">{t(rw)}</span>' if rw else ""
+    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}'
             f'{lagekarte.faerben(x["karte"], x)}</div>')
 
 
@@ -341,7 +354,8 @@ def zeile(tk, x):
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
-            "Befund": " · ".join(z for z in (scanner_text(x), "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
+            "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
+                                             "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
 
 
@@ -391,7 +405,18 @@ def plan(tisch=None):
         return [{"art": "html", "html": karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird '
                                               f'im Abendlauf gerechnet. Noch liegt kein Ergebnis vor.</p>', "Kartentisch")}]
     w = watchlists.laden()
-    tisch = dict(tisch, titel={tk: dict(x, listen=[n for n, l in w.items() if tk in l],
+    try:                                          # Zeichen „Rückenwind“ aus dem Stand der Seite Rückenwind
+        import rueckenwind
+        rw = (rueckenwind.laden() or {}).get("titel") or {}
+    except Exception:  # noqa: BLE001
+        rw = {}
+
+    def _rw(tk):
+        r = rw.get(tk)
+        return {"rueckenwind": {"kurs": r["kurs_ampel"], "geld": r["geld_ampel"],
+                                "zahlen": (r.get("zahlen") or {}).get("ampel"), "stufe": r["stufe"]}} if r else {}
+
+    tisch = dict(tisch, titel={tk: dict(x, **_rw(tk), listen=[n for n, l in w.items() if tk in l],
                                         # Tisch von vor dem VCP-Scanner: die alte Wertzonen-Flagge trägt keinen
                                         # Scanner-Text und gehört nicht in die Reihe „Flagge · Scanner“
                                         **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge"

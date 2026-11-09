@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 
+ZUFLUSS = (1.1, 0.9)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 FELD_TEXT = {"Führend": "Führend · Geld ist drin", "Erstarkend": "Erstarkend · Geld fließt zu",
              "Ermüdend": "Schwächelnd · Geld fließt ab", "Abgehängt": "Zurückfallend · Geld ist weg"}
@@ -104,14 +105,30 @@ def stroemungskarte(erg, art):
         s.append(f'<polyline points="{pts}" fill="none" stroke="{f}" stroke-opacity="0.55" stroke-width="1.4" '
                  f'marker-end="url(#pf)"/>')
         a, b = g["weg"][-1]
-        s.append(f'<circle cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{6 if art == "Sektor" else 4}" fill="{f}">'
-                 f'<title>{t(g["name"])} · {g["feld"]} seit {g["seit_wochen"]} Wo. · Zufluss '
-                 f'{zahl(g["zufluss"], 2) if g["zufluss"] else "–"}</title></circle>')
+        r_ = 6 if art == "Sektor" else 4
+        z = g.get("zufluss")
+        ring = GRUEN if z and z >= ZUFLUSS[0] else ROT if z and z < ZUFLUSS[1] else None
+        if ring:                                 # Ring = Volumen-Zufluss (grün) oder -Abfluss (rot) der Gruppe
+            s.append(f'<circle cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r_ + 4}" fill="none" stroke="{ring}" '
+                     f'stroke-width="2"/>')
+        if g.get("stabil"):                      # Raute = stabil: führt seit 8 Wochen, Rückschlag höchstens 8 %
+            s.append(f'<rect x="{X(a) - r_ - 7:.1f}" y="{Y(b) - r_ - 7:.1f}" width="{2 * r_ + 14}" '
+                     f'height="{2 * r_ + 14}" fill="none" stroke="{TEXT}" stroke-width="1" '
+                     f'transform="rotate(45 {X(a):.1f} {Y(b):.1f})"/>')
+        s.append(f'<circle cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r_}" fill="{f}">'
+                 f'<title>{t(g["name"])} · {g["feld"]} seit {g["seit_wochen"]} Wo. · Volumen-Zufluss '
+                 f'{zahl(z, 2) + "-fach" if z else "–"} · größter Rückschlag 8 Wochen {zahl(g.get("rueckschlag", 0), 1)} %'
+                 f'{" · stabil" if g.get("stabil") else ""}</title></circle>')
         if id(g) in marke:
             name = g["name"] if art != "Thema" else g["name"].split(" · ")[0]
             s.append(f'<text x="{X(a) + 8:.1f}" y="{Y(b) - 6:.1f}" fill="{TEXT}" font-size="12">{t(name[:34])}</text>')
     s.append("</svg>")
-    return seite("".join(s), oben=4, unten=4)
+    legende = (f'<div style="color:{TEXT_3};font-size:13px;margin-top:6px">Punkt = heute, Linie mit Pfeil = Weg der '
+               f'letzten 4 Wochen · <span style="color:{GRUEN}">○ grüner Ring</span> = Volumen-Zufluss (ab 1,1-fach an '
+               f'steigenden gegen fallende Tage) · <span style="color:{ROT}">○ roter Ring</span> = Abfluss (unter '
+               f'0,9) · ◇ Raute = stabil (führt seit 8 Wochen, größter Rückschlag höchstens 8 %) · Maus auf einen Punkt '
+               f'zeigt die Werte</div>')
+    return seite("".join(s) + legende, oben=4, unten=4)
 
 
 def gruppen(erg, art):
@@ -124,10 +141,28 @@ def gruppen(erg, art):
         reihen.append({"Feld": PUNKT[{"Führend": "grün", "Erstarkend": "grün", "Ermüdend": "gelb",
                                       "Abgehängt": "rot"}[g["feld"]]] + " " + FELD_TEXT[g["feld"]].split(" · ")[0],
                        art: g["name"], "seit Wochen": g["seit_wochen"],
+                       "stabil": "◇ stabil" if g.get("stabil") else "",
+                       "Rückschlag 8 Wo. %": g.get("rueckschlag"),
                        "vor 4 Wochen": FELD_TEXT[g["feld_vor4"]].split(" · ")[0],
-                       "Volumen-Zufluss": (("🟢 " if z >= 1.1 else "🔴 " if z < 0.9 else "🟡 ") + zahl(z, 2) + "-fach")
+                       "Volumen-Zufluss": (("🟢 " if z >= ZUFLUSS[0] else "🔴 " if z < ZUFLUSS[1] else "🟡 ")
+                                           + zahl(z, 2) + "-fach")
                        if z else "–", "Titel": g["anzahl"]})
     return pd.DataFrame(reihen)
+
+
+def _rs_linie(x):
+    """Steigung der RS-Linie in 4 Wochen und davor, z. B. „+6,2 % (davor +1,1 %)“."""
+    a, b = x.get("rs_tempo"), x.get("rs_vortempo")
+    if a is None:
+        return ""
+    f = lambda v: f'{"+" if v >= 0 else "−"}{zahl(abs(v), 1)} %'   # noqa: E731
+    return f(a) + (f" (davor {f(b)})" if b is not None else "")
+
+
+def _zufluss(z):
+    if not z:
+        return ""
+    return ("🟢 " if z >= ZUFLUSS[0] else "🔴 " if z < ZUFLUSS[1] else "🟡 ") + zahl(z, 2) + "-fach"
 
 
 def dreifach_liste(erg):
@@ -200,7 +235,9 @@ def dreifach(erg):
             f'<div style="color:{TEXT_2};font-size:13px;margin:4px 0">RS {x["rang_vor4"]} → <b style="color:{TEXT}">'
             f'{x["rang"]}</b> ({"+" if x["tempo"] >= 0 else ""}{x["tempo"]} in 4 Wo.)'
             + (" · RS-Hoch vor Kurs" if x["rs_hoch_vor_kurs"] else "") + '</div>'
-            f'<div style="color:{TEXT_2};font-size:13px">{t(x["sektor"])} · {t(x["branche"])}</div>'
+            f'<div style="color:{TEXT_2};font-size:13px">RS-Linie {_rs_linie(x)} · Volumen {_zufluss(x.get("zufluss"))}</div>'
+            f'<div style="color:{TEXT_2};font-size:13px">{t(x["sektor"])}{" ◇" if x.get("sektor_stabil") else ""} · '
+            f'{t(x["branche"])}{" ◇" if x.get("branche_stabil") else ""}</div>'
             + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")
             + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn else TEXT_2}">'
             + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
@@ -224,8 +261,9 @@ def stufe(erg, name):
                        "Zahlen": PUNKT[z.get("ampel") or "grau"],
                        "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
                        "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
-                       "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"})',
-                       "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"})',
+                       "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
+                       "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
+                       "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"}{", stabil" if x.get("branche_stabil") else ""})',
                        "Thema": (x["thema"] or "").split(" · ")[0][:40],
                        "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
                        "Zahlen im Einzelnen": _punkte_text(x)})
