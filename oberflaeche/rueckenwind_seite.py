@@ -26,6 +26,8 @@ STUFE_TEXT = {
                "Vorrücken: höchstens +5) oder 10 Punkte verloren in 4 Wochen – früheste Warnung, das Geld beginnt abzufließen.",
     "Abfluss": "Vor 4 Wochen ab 70, seitdem 20 Punkte oder mehr verloren – das Geld geht. Warnung für Halter, "
                "Gebiet für Shorts.",
+    None: "Gerechnet, aber zurzeit in keiner Stufe – zur Vollständigkeit, nichts weggelassen. Unten grau die Titel, "
+          "die sich nicht rechnen lassen (mit Grund).",
 }
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
 TERMIN_WARNUNG = 14
@@ -46,7 +48,9 @@ def kopf(erg):
         f'<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
         f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Rückenwind</h1>'
         f'<div style="color:{TEXT_2};font-size:14px">Stand {pd.Timestamp(erg["stand"]):%d.%m.%Y} · '
-        f'{len(erg["titel"])} Titel</div></div>'
+        f'{len(erg["titel"])} Titel gerechnet'
+        + (f' · {len(erg.get("ohne_daten") or [])} ohne Daten' if erg.get("ohne_daten") else "")
+        + '</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 14px">Kurs, Geld und Zahlen: RS-Dynamik des Titels, '
         f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne = grün), Fundament. Nur dieses Setup – getrennt von Minervini und Kullamägi. '
         f'Ampeln, nichts gefiltert.</p>'
@@ -257,7 +261,7 @@ def stufe(erg, name):
     for tk, x in liste:
         z = x.get("zahlen") or {}
         termin, warn = _termin(x, erg["stand"])
-        reihen.append({"Titel": tk, "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
+        reihen.append({"Titel": tk + (" ◆" if x.get("watchlist") else ""), "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
                        "Zahlen": PUNKT[z.get("ampel") or "grau"],
                        "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
                        "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
@@ -267,7 +271,13 @@ def stufe(erg, name):
                        "Thema": (x["thema"] or "").split(" · ")[0][:40],
                        "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
                        "Zahlen im Einzelnen": _punkte_text(x)})
-    return pd.DataFrame(reihen), [tk for tk, _ in liste]
+    tks = [tk for tk, _ in liste]
+    if name is None:                            # nicht rechenbar: grau mit Grund, damit nichts still fehlt
+        for o in erg.get("ohne_daten") or []:
+            reihen.append({"Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Kurs": PUNKT["grau"],
+                           "Geld": PUNKT["grau"], "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
+            tks.append(o["tk"])
+    return pd.DataFrame(reihen), tks
 
 
 def logbuch(erg, tage=28):

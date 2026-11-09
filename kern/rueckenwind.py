@@ -57,6 +57,30 @@ def _rang(C):
     return (w.rank(pct=True) * 98 + 1).round()
 
 
+def _zusatz(rv):
+    """Titel außerhalb des Reviers, die trotzdem mitgerechnet werden: Watchlist und jeder auf der Titelseite geöffnete
+    Titel (ohne SPY/QQQ/IWM). Sektor und Branche aus dem Steckbrief; sie zählen nicht in die Gruppen (wie im Rudel),
+    bekommen aber deren Geldfluss. Ergebnis: ({Ticker: {sektor, branche, etf, herkunft}}, Menge der Watchlist-Titel)."""
+    import daten
+    import tpo_daten
+    import watchlists
+    try:
+        wl = set(watchlists.alle())
+    except Exception:  # noqa: BLE001
+        wl = set()
+    try:
+        offen = tpo_daten._geoeffnet()
+    except Exception:  # noqa: BLE001
+        offen = set()
+    aus = {}
+    for t in sorted((wl | offen) - set(rv.index) - set(tpo_daten.FEST)):
+        sb = daten.steckbrief_gespeichert(t) or {}
+        aus[t] = {"sektor": sb.get("sektor", ""), "branche": sb.get("branche", ""),
+                  "etf": sektoren.sektor_von(sb.get("sektor", "")) or "",
+                  "herkunft": "Watchlist" if t in wl else "geöffnet"}
+    return aus, wl
+
+
 def _stufe(r, t, b, r4):
     if r4 is not None and r4 >= ABFLUSS[0] and t <= ABFLUSS[1]:
         return "Abfluss"
@@ -250,12 +274,22 @@ def rechnen(netz=False):
     holen, wenn älter als 12 Stunden (quellen.laden)."""
     import rudel
     rv = rudel.revier()
-    C = massive.kursmatrix(list(rv.index) + [MARKT], TAGE)
-    V = massive.kursmatrix(list(rv.index) + [MARKT], TAGE, "Volume")
-    O = massive.kursmatrix(list(rv.index), 100, "Open")     # letzte Zahlen höchstens ein Quartal her
-    H = massive.kursmatrix(list(rv.index), 100, "High")
+    zusatz, wl = _zusatz(rv)                    # Watchlist und geöffnete Titel außerhalb des Reviers (09.11.2026)
+    alle = list(rv.index) + list(zusatz)
+    C = massive.kursmatrix(alle + [MARKT], TAGE)
+    V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
+    O = massive.kursmatrix(alle, 100, "Open")     # letzte Zahlen höchstens ein Quartal her
+    H = massive.kursmatrix(alle, 100, "High")
     tv = _tv()
-    titel_ = [t for t in rv.index if t in C.columns and C[t].notna().sum() >= 252 + 2 * WOCHEN4]
+    titel_, ohne_daten = [], []
+    for t in alle:
+        n_ = int(C[t].notna().sum()) if t in C.columns else 0
+        if n_ >= 252 + 2 * WOCHEN4:
+            titel_.append(t)
+        else:                                   # nicht still weglassen: auf der Seite in „Ohne Stufe“ mit Grund
+            ohne_daten.append({"tk": t, "watchlist": t in wl,
+                               "grund": (f"zu wenig Historie ({n_} Handelstage, nötig {252 + 2 * WOCHEN4})" if n_
+                                         else "keine Kurse bei Massive (Börse außerhalb der USA oder Fonds)")})
     X = C[titel_]
     r0, r4, r8 = _rang(X), _rang(X.iloc[:-WOCHEN4]), _rang(X.iloc[:-2 * WOCHEN4])
     # Gruppen: Sektoren (über die Revier-Titel je Sektor-ETF), Branchen, Themen
@@ -266,12 +300,14 @@ def rechnen(netz=False):
             if g:
                 gruppen.append(g)
                 sek_von.update({t: g for t in mit})
+                sek_von.update({t: g for t, z in zusatz.items() if z["etf"] == etf})
     for br, mit in rv.groupby("branche").groups.items():
         if br:
             g = _gruppe("Branche", br, list(mit), C, V)
             if g:
                 gruppen.append(g)
                 bra_von.update({t: g for t in mit})
+                bra_von.update({t: g for t, z in zusatz.items() if z["branche"] == br})
     for th in rudel.themen():
         g = _gruppe("Thema", _themenname(th, r0), th["mitglieder"], C, V)
         if g:
@@ -307,8 +343,11 @@ def rechnen(netz=False):
              "zufluss": round(zufluss, 2) if zufluss else None,
              "sektor_stabil": bool(sek and sek["stabil"]), "branche_stabil": bool(bra and bra["stabil"]),
              "kurs_ampel": {"Entsteht": "grün", "Läuft": "grün", "Ermüdet": "gelb", "Abfluss": "rot"}.get(stufe, "grau"),
-             "sektor": sek["name"] if sek else rv.loc[tk, "sektor"], "sektor_feld": sek["feld"] if sek else None,
-             "branche": bra["name"] if bra else rv.loc[tk, "branche"], "branche_feld": bra["feld"] if bra else None,
+             "sektor": sek["name"] if sek else (zusatz[tk]["sektor"] if tk in zusatz else rv.loc[tk, "sektor"]),
+             "sektor_feld": sek["feld"] if sek else None,
+             "branche": bra["name"] if bra else (zusatz[tk]["branche"] if tk in zusatz else rv.loc[tk, "branche"]),
+             "branche_feld": bra["feld"] if bra else None,
+             "watchlist": tk in wl, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
         if stufe:
@@ -324,7 +363,7 @@ def rechnen(netz=False):
             x["zahlen"] = z
         titel[tk] = x
     stand = f"{C.index[-1]:%Y-%m-%d}"
-    erg = {"stand": stand, "gruppen": gruppen, "titel": titel,
+    erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten,
            "schwellen": {"stark": STARK, "mittel": MITTEL, "tempo_hoch": TEMPO_HOCH, "ermuedet": ERMUEDET,
                          "abfluss": ABFLUSS}}
     _logbuch(erg)

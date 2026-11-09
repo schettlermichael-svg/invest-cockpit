@@ -408,9 +408,10 @@ def rueckenwind_zeigen():
         st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
         st.markdown(gestaltung.seite("<h2 style='margin:0'>③ Titel nach Stufe</h2>", oben=16, unten=4),
                     unsafe_allow_html=True)
-        for nr, name in enumerate(rw_kern.STUFEN):
+        st.caption("◆ = auf der Watchlist")
+        for nr, name in enumerate(list(rw_kern.STUFEN) + [None]):     # zuletzt: ohne Stufe (nichts weggelassen)
             df, tks = rw.stufe(erg, name)
-            with st.expander(f"**{name} · {len(df)}** — {rw.STUFE_TEXT[name]}", expanded=False):
+            with st.expander(f"**{name or 'Ohne Stufe'} · {len(df)}** — {rw.STUFE_TEXT[name]}", expanded=False):
                 if not len(df):
                     st.caption("zurzeit keine")
                     continue
