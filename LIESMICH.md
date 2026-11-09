@@ -442,6 +442,19 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
 - **Namen:** „Zone“ = Zone des Scanners, „Wertzone“ = Market-Profile-Zone (Kacheln, Systeme, Kartentisch).
 - Probelauf über alle Titel: `python3 werkzeuge/zonen_lauf.py`.
 
+## Seite „Rückenwind“ (09.11.2026, Konzept: KONZEPT_RUECKENWIND.md)
+Dritte Seite neben Übersicht und Titelseite, getrennt von den Systemen. `kern/rueckenwind.py` (Nachtlauf-Schritt
+„Rückenwind“, auch im Tischlauf) rechnet je Revier-Titel RS-Rang heute, vor 4 und vor 8 Wochen (wie rs_rang, aus
+Massive), Tempo und Beschleunigung, RS-Linie am Hoch vor dem Kurs; Gruppen (Sektor, Branche, Thema) als gleich-
+gewichtete Indizes mit Feld (Stärke × Tempo wie sektoren.reihen), Weg der letzten 4 Wochen und Volumen-Zufluss;
+Zahlen-Ampel aus fundament.ampeln (lädt im Nachtlauf die Fundamentdaten der Titel in einer Stufe), nächster Termin und
+Reaktion auf die letzten Zahlen; Logbuch der Stufen. Stufen: Entsteht (Rang 50–84, +15 in 4 Wochen, schneller als davor,
+oder RS-Hoch vor Kurs), Läuft (ab 85, Tempo ≥ −5), Ermüdet (ab 80, Tempo ≤ −10), Abfluss (vor 4 Wochen ab 70, −20).
+Probelauf 09.11. (Mac, Stand 04.11., 1.802 Titel, 15 s): Entsteht 229, Läuft 257, Ermüdet 5, Abfluss 155; dreifacher
+Rückenwind 23; Tempo-Quantile 10/25/50/75/90 % = −29/−9/+2,5/+13/+25 Rangpunkte.
+Seite (`oberflaeche/rueckenwind_seite.py`): Strömungskarte (Sektor/Branche/Thema), Gruppen nach Geldfluss,
+Karten „Dreifacher Rückenwind“, Tabellen je Stufe (Klick → Titelseite), Logbuch.
+
 ## Gesamtprüfung 06.11.2026: ein Zonenbegriff, Wertzone nur noch Zeichen „Auktion“
 - Kullamägi-Breakout auf der Zone des VCP-Scanners (Konsolidierung 1–3 Wochen nach Schub, gelb bis 8, auch die
   Flagge in einer größeren Zone; Pivot = Oberkante; Ausbruch bis 4 Wochen wie bei Minervini); ★ K = grün und Kurs am Pivot.

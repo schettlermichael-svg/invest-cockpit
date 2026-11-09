@@ -125,10 +125,19 @@ def main(nur_tisch=False):
         import tv_kennzahlen
         return tv_kennzahlen.aktualisieren(alle)
 
+    def rueckenwind_():
+        import rueckenwind
+        e = rueckenwind.rechnen(netz=True)
+        from collections import Counter
+        n = Counter(x["stufe"] for x in e["titel"].values())
+        return (f"Stand {e['stand']}: Entsteht {n.get('Entsteht', 0)}, Läuft {n.get('Läuft', 0)}, "
+                f"Ermüdet {n.get('Ermüdet', 0)}, Abfluss {n.get('Abfluss', 0)}")
+
     if nur_tisch:
         schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
         schritt("Kartentisch", tisch)
         schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
+        schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)
         p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
         _schreiben(p, datei)
         return
@@ -143,6 +152,7 @@ def main(nur_tisch=False):
     schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
+    schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]

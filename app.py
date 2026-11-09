@@ -39,6 +39,8 @@ div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padd
 .st-key-kartentisch div[data-testid="stHorizontalBlock"] {{align-items:flex-start}}
 .st-key-kartentisch div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{align-items:center}}
 .st-key-kartentisch [data-testid="stExpander"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
+.st-key-rueckenwind [data-testid="stExpander"], .st-key-rueckenwind [data-testid="stHorizontalBlock"],
+.st-key-rueckenwind [data-testid="stRadio"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
 .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{background:{KARTE}; color:{TEXT};
   border:1px solid {RAND}; border-radius:10px; min-height:44px; font-size:16px}}
 .stTextInput label, .stRadio label p {{color:{TEXT_2} !important; font-size:14px}}
@@ -47,7 +49,7 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Übersicht", "Titelseite"]
+ansicht_liste = ["Übersicht", "Titelseite", "Rückenwind"]
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
 # ein Wechsel zwei Klicks.)
@@ -55,7 +57,7 @@ if "ansicht" not in st.session_state:
     seite = st.query_params.get("seite", "Übersicht")
     st.session_state.ansicht = seite if seite in ansicht_liste else "Übersicht"
     st.session_state.ticker = st.query_params.get("t", "HWM")
-spalte0, spalte1, _ = st.columns([3, 2, 7])
+spalte0, spalte1, _ = st.columns([4, 2, 6])
 with spalte0:
     ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")
 with spalte1:
@@ -382,7 +384,58 @@ def zeigen(name, *args):
         _fehler(e)
 
 
-if ansicht == "Übersicht":
+def rueckenwind_zeigen():
+    """Seite „Rückenwind“ (KONZEPT_RUECKENWIND.md): Strömungskarte, Gruppen nach Geldfluss, dreifacher Rückenwind,
+    Titel je Stufe, Logbuch. Rechnet nicht – liest den Stand des Nachtlaufs."""
+    import rueckenwind as rw_kern
+    import rueckenwind_seite as rw
+    erg = rw_kern.laden()
+    if not erg:
+        st.markdown(gestaltung.seite("<p>Noch kein Stand – der Rückenwind wird im Nachtlauf (oder mit „Kartentisch neu "
+                                     "rechnen“) gerechnet.</p>"), unsafe_allow_html=True)
+        return
+    with st.container(key="rueckenwind"):
+        st.markdown(rw.kopf(erg), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>① Strömungskarte · wohin das Geld fließt</h2>", oben=8,
+                                     unten=0), unsafe_allow_html=True)
+        art = st.radio("Ebene", ["Sektor", "Branche", "Thema"], horizontal=True, key="rw_ebene", index=1)
+        st.markdown(rw.stroemungskarte(erg, art), unsafe_allow_html=True)
+        with st.expander(f"Alle {'Sektoren' if art == 'Sektor' else 'Branchen' if art == 'Branche' else 'Themen'} "
+                         f"nach Geldfluss"):
+            st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>② Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h2>",
+                                     oben=16, unten=0), unsafe_allow_html=True)
+        st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>③ Titel nach Stufe</h2>", oben=16, unten=4),
+                    unsafe_allow_html=True)
+        for nr, name in enumerate(rw_kern.STUFEN):
+            df, tks = rw.stufe(erg, name)
+            with st.expander(f"**{name} · {len(df)}** — {rw.STUFE_TEXT[name]}", expanded=False):
+                if not len(df):
+                    st.caption("zurzeit keine")
+                    continue
+                st.caption("Sortiert: Geld, dann Zahlen, dann Tempo · Zeile anklicken → Titelseite")
+                ereignis = st.dataframe(df, hide_index=True, use_container_width=True, on_select="rerun",
+                                        selection_mode="single-row", key=f"rw_tab_{nr}",
+                                        height=min(560, 35 * (len(df) + 1) + 3))
+                reihen = ereignis.selection.rows if ereignis is not None else []
+                if reihen:
+                    tk = tks[reihen[0]]
+                    st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
+        with st.expander("Logbuch · wann ein Titel in eine Stufe kam und wo er heute steht (Beobachtung, kein Urteil)"):
+            lb = rw.logbuch(erg)
+            if len(lb):
+                st.dataframe(lb, hide_index=True, use_container_width=True)
+            else:
+                st.caption("Das Logbuch beginnt mit dem ersten Nachtlauf.")
+
+
+if ansicht == "Rückenwind":
+    try:
+        rueckenwind_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
+elif ansicht == "Übersicht":
     _, n_, w_, k_ = st.columns([6, 2, 2, 2])
     with n_:
         tisch_knopf()
