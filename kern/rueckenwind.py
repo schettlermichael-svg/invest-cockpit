@@ -15,6 +15,7 @@ Kurs (Beobachtung, kein Urteil). Alles aus den Massive-Tagesdateien des Nachtlau
 import json
 import os
 
+import numpy as np
 import pandas as pd
 
 import massive
@@ -100,19 +101,69 @@ def _geld_ampel(sek, bra, th=None):
     return "grün" if vorne >= 2 and not abfluss else "gelb" if vorne else "rot"
 
 
-def _zahlen(tk):
-    """Fundament-Ampeln, Termin und Gewinne aus dem Zwischenspeicher (ohne Abruf)."""
+ROE_MIN = 17.0                 # Eigenkapitalrendite ab 17 % (O'Neil)
+JAHR_MIN = 25.0                # Jahresgewinne: drei Jahre je ab +25 %
+EP_SPRUNG, EP_VOLUMEN = 10.0, 3.0   # Episodic Pivot wie im System Kullamägi
+LUECKE_VOLUMEN = 1.5           # Lücke nach oben mit Volumen
+ABVERKAUF = -3.0               # Abverkauf nach den Zahlen ab −3 %
+
+
+def _jahre(gewinne):
+    """Jahresgewinne der letzten drei Jahre (je vier Quartale bereinigter Gewinn) – grün: jedes Jahr ab +25 %;
+    rot: ein Jahr fällt; sonst gelb."""
+    from fundament import _p
+    eps = gewinne["eps"].dropna()
+    if len(eps) < 16:
+        return ["grau", "zu wenige Quartale für drei Jahre"]
+    summe = eps.rolling(4).sum().dropna()
+    j = [summe.iloc[-13], summe.iloc[-9], summe.iloc[-5], summe.iloc[-1]]
+    w = [((b / a - 1) * 100) if a > 0 else None for a, b in zip(j, j[1:])]
+    text = " / ".join("–" if x is None else f"{_p(x)} %" for x in w) + " (drei Jahre, je vier Quartale)"
+    if any(b < a for a, b in zip(j, j[1:])):
+        return ["rot", text]
+    if all(x is not None and x >= JAHR_MIN for x in w):
+        return ["grün", text]
+    return ["gelb", text]
+
+
+def _roe(tv):
+    """Eigenkapitalrendite des letzten Geschäftsjahres (TradingView, return_on_equity_fy)."""
+    try:
+        x = float(tv.get("return_on_equity_fy"))
+    except (TypeError, ValueError, AttributeError):
+        return ["grau", "keine Daten"]
+    if x != x:
+        return ["grau", "keine Daten"]
+    t_ = f"{x:.0f} %".replace(".", ",")
+    return ["grün", t_] if x >= ROE_MIN else ["rot", t_] if x < 0 else ["gelb", t_ + " (unter 17 %)"]
+
+
+def _tv():
+    """TradingView-Kennzahlen des Nachtlaufs je Ticker (für ROE)."""
+    import tv_kennzahlen
+    if not os.path.exists(tv_kennzahlen.DATEI):
+        return {}
+    return pd.read_csv(tv_kennzahlen.DATEI).drop_duplicates("ticker").set_index("ticker").to_dict("index")
+
+
+def _zahlen(tk, tv):
+    """Fundament-Punkte (Minervini/O'Neil), Termin und letzte Zahlen aus dem Zwischenspeicher (ohne Abruf).
+    Punkte: Quartalsgewinn, Beschleunigung, Umsatz (ab 15 %, beschleunigend), Marge, Überraschung, Schätzungen,
+    Jahresgewinne (drei Jahre je ab 25 %), Eigenkapitalrendite (ab 17 %), Institutionen."""
     import fundament
     import quellen
     pfad = os.path.join(quellen.SPEICHER, f"{tk.upper()}.json")
-    if not os.path.exists(pfad):
-        return None
     try:
         fd = quellen._aus_json(json.load(open(pfad, encoding="utf-8")))
         f = fundament.ampeln(fd)
-    except Exception:  # noqa: BLE001
-        return None
-    pk = f["punkte"]
+    except Exception:  # noqa: BLE001 – ohne Yahoo/SEC: ROE und Termin von TradingView, Ampel grau
+        d = pd.to_datetime((tv.get(tk) or {}).get("earnings_release_next_date"), errors="coerce")
+        return {"ampel": "grau", "punkte": {"Eigenkapitalrendite": _roe(tv.get(tk))}, "zeichen": [],
+                "termin": f"{d:%Y-%m-%d}" if pd.notna(d) else None, "letzte": None}
+    pk = {k: list(v) for k, v in f["punkte"].items() if k != "Jahresgewinn"}
+    pk["Jahresgewinne 3 Jahre"] = _jahre(fd["gewinne"])
+    pk["Eigenkapitalrendite"] = _roe(tv.get(tk))
+    pk["Institutionen"] = list(fundament.institutionen(fd.get("institutionen")))
     rot = sum(1 for a, _ in pk.values() if a == "rot")
     q, bes, ums = (pk.get(k, ("grau", ""))[0] for k in ("Quartalsgewinn zum Vorjahr", "Beschleunigung Gewinn", "Umsatz"))
     if q == "grau" and ums == "grau":
@@ -128,16 +179,24 @@ def _zahlen(tk):
     if t is not None and len(t):
         d = pd.to_datetime(t["datum"].iloc[0], errors="coerce")
         termin = f"{d:%Y-%m-%d}" if pd.notna(d) else None
+    if termin is None:                           # sonst der nächste Termin laut TradingView
+        d = pd.to_datetime((tv.get(tk) or {}).get("earnings_release_next_date"), errors="coerce")
+        termin = f"{d:%Y-%m-%d}" if pd.notna(d) else None
     gew = fd.get("gewinne")
     letzte = None
     if gew is not None and len(gew):
-        letzte = {"tag": str(gew.index[-1])[:10], "nach_schluss": int(gew["nach_schluss"].iloc[-1])}
-    return {"ampel": ampel, "punkte": {k: list(v) for k, v in pk.items()}, "zeichen": f["zeichen"],
-            "termin": termin, "letzte": letzte}
+        u = gew["ueberraschung_pct"].iloc[-1]
+        letzte = {"tag": str(gew.index[-1])[:10], "nach_schluss": int(gew["nach_schluss"].iloc[-1]),
+                  "ueberraschung": float(u) if u == u else None}
+    return {"ampel": ampel, "punkte": pk, "zeichen": f["zeichen"], "termin": termin, "letzte": letzte}
 
 
-def _reaktion(tk, letzte, C, V):
-    """Kurs und Volumen am Tag nach den letzten Zahlen (bzw. am Meldetag, wenn vor Börsenbeginn gemeldet)."""
+def _reaktion(tk, letzte, M):
+    """Reaktion auf die letzten Zahlen (Tag danach bzw. Meldetag vor Börsenbeginn), gedeutet:
+    🟢 Episodic Pivot (≥ +10 %, Lücke über das Vortageshoch, Volumen ≥ 3-fach) · 🟢 Lücke nach oben mit Volumen
+    (Eröffnung ≥ 2 % über dem Vortagesschluss, Schluss im Plus, Volumen ≥ 1,5-fach) · 🔴 Abverkauf trotz Überraschung
+    (Überraschung positiv, Kurs ≤ −3 %) · 🔴 Abverkauf (≤ −3 %) · sonst 🟡 kaum Reaktion."""
+    C, O, H, V = M
     if not letzte or tk not in C.columns:
         return None
     c = C[tk].dropna()
@@ -146,10 +205,27 @@ def _reaktion(tk, letzte, C, V):
     if not len(nach) or c.index.get_loc(nach[0]) == 0:
         return None
     i = c.index.get_loc(nach[0])
+    d, d0 = c.index[i], c.index[i - 1]
     v = V[tk].reindex(c.index)
     s50 = v.iloc[max(0, i - 50):i].mean()
-    return {"tag": f"{nach[0]:%Y-%m-%d}", "kurs": round(float((c.iloc[i] / c.iloc[i - 1] - 1) * 100), 1),
-            "volumen": round(float(v.iloc[i] / s50), 2) if s50 == s50 and s50 else None}
+    vol = float(v.iloc[i] / s50) if s50 == s50 and s50 else None
+    kurs = float((c.iloc[i] / c.iloc[i - 1] - 1) * 100)
+    eroeff = O[tk].get(d)
+    luecke = (float(eroeff / c.iloc[i - 1] - 1) * 100) if eroeff == eroeff and eroeff else None
+    ueber = letzte.get("ueberraschung")
+    if kurs >= EP_SPRUNG and (vol or 0) >= EP_VOLUMEN and eroeff and eroeff > H[tk].get(d0, np.inf):
+        art = ("grün", "Episodic Pivot")
+    elif luecke is not None and luecke >= 2 and kurs > 0 and (vol or 0) >= LUECKE_VOLUMEN:
+        art = ("grün", "Lücke nach oben mit Volumen")
+    elif kurs <= ABVERKAUF and ueber is not None and ueber > 0:
+        art = ("rot", "Abverkauf trotz Überraschung")
+    elif kurs <= ABVERKAUF:
+        art = ("rot", "Abverkauf nach den Zahlen")
+    else:
+        art = ("gelb", "kaum Reaktion")
+    return {"tag": f"{d:%Y-%m-%d}", "kurs": round(kurs, 1), "volumen": round(vol, 2) if vol else None,
+            "luecke": round(luecke, 1) if luecke is not None else None, "ueberraschung": ueber,
+            "ampel": art[0], "deutung": art[1]}
 
 
 def _themenname(g, rang):
@@ -164,6 +240,9 @@ def rechnen(netz=False):
     rv = rudel.revier()
     C = massive.kursmatrix(list(rv.index) + [MARKT], TAGE)
     V = massive.kursmatrix(list(rv.index) + [MARKT], TAGE, "Volume")
+    O = massive.kursmatrix(list(rv.index), 100, "Open")     # letzte Zahlen höchstens ein Quartal her
+    H = massive.kursmatrix(list(rv.index), 100, "High")
+    tv = _tv()
     titel_ = [t for t in rv.index if t in C.columns and C[t].notna().sum() >= 252 + 2 * WOCHEN4]
     X = C[titel_]
     r0, r4, r8 = _rang(X), _rang(X.iloc[:-WOCHEN4]), _rang(X.iloc[:-2 * WOCHEN4])
@@ -218,9 +297,9 @@ def rechnen(netz=False):
                     quellen.laden(tk)
                 except Exception:  # noqa: BLE001 – dann ohne Zahlen
                     pass
-            z = _zahlen(tk)
+            z = _zahlen(tk, tv)
             if z:
-                z["reaktion"] = _reaktion(tk, z.pop("letzte"), C, V)
+                z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
             x["zahlen"] = z
         titel[tk] = x
     stand = f"{C.index[-1]:%Y-%m-%d}"

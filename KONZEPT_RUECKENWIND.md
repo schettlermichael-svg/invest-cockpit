@@ -39,6 +39,16 @@ Kriegsbild: ein starkes Regiment, das an einem Frontabschnitt angreift, an dem d
    - Nächster Termin sichtbar; Warnung bei Termin in den nächsten 2 Wochen (Lücke springt über den Stopp)
    - Reaktion auf die letzten Zahlen: Lücke nach oben mit Volumen = Rückenwind, Abverkauf trotz guter Zahlen = Warnung
 
+### Umgesetzt (09.11.2026, Micky: „alle vier“)
+- Zahlen-Ampel aus neun Punkten: Quartalsgewinn (ab +25 %), Beschleunigung, Umsatz (ab **+15 %** und beschleunigend –
+  Micky: wie bisher), Marge, Überraschung, Schätzungen (30 Tage), Jahresgewinne **drei Jahre je ab +25 %**,
+  **Eigenkapitalrendite ab 17 %** (TradingView), **Institutionen** (Yahoo 13F). Grün: Quartalsgewinn grün und
+  Beschleunigung oder Umsatz grün, höchstens ein Punkt rot.
+- Jeder Punkt sichtbar als kleine Ampel auf der Karte (Wert beim Überfahren) und als Spalte in der Tabelle.
+- Reaktion auf die letzten Zahlen gedeutet: 🟢 Episodic Pivot (≥ +10 %, Lücke über das Vortageshoch, Volumen ≥ 3-fach),
+  🟢 Lücke nach oben mit Volumen (Eröffnung ≥ +2 %, Schluss im Plus, Volumen ≥ 1,5-fach), 🔴 Abverkauf trotz Überraschung
+  (Überraschung positiv, Kurs ≤ −3 %), 🔴 Abverkauf nach den Zahlen, sonst 🟡 kaum Reaktion.
+
 ## Stufen (Dynamik als Ampel, keine Punktzahl)
 - 🟢 **Entsteht**: Stärke mittel (≈ 50–80), Tempo hoch, Beschleunigung positiv; Gruppe dreht nach „erstarkend“ – der
   Trend am Anfang, der Vorsprung vor der Masse

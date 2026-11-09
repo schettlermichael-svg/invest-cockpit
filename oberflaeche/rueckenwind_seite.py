@@ -148,13 +148,39 @@ def _termin(x, stand):
 
 
 def _reaktion(x):
+    """Reaktion auf die letzten Zahlen mit Deutung (Episodic Pivot, Lücke mit Volumen, Abverkauf trotz Überraschung)."""
     r = (x.get("zahlen") or {}).get("reaktion")
     if not r:
         return ""
-    gut = r["kurs"] > 0 and (r["volumen"] or 0) > 1
-    return (f'{"🟢" if gut else "🔴" if r["kurs"] < 0 else "🟡"} {pd.Timestamp(r["tag"]):%d.%m.}: '
-            f'{"+" if r["kurs"] >= 0 else "−"}{zahl(abs(r["kurs"]), 1)} %'
-            + (f', Volumen {zahl(r["volumen"], 1)}-fach' if r["volumen"] else ""))
+    teile = [f'{"+" if r["kurs"] >= 0 else "−"}{zahl(abs(r["kurs"]), 1)} %']
+    if r.get("volumen"):
+        teile.append(f'Volumen {zahl(r["volumen"], 1)}-fach')
+    if r.get("ueberraschung") is not None:
+        teile.append(f'Überraschung {"+" if r["ueberraschung"] >= 0 else "−"}{zahl(abs(r["ueberraschung"]), 1)} %')
+    return f'{PUNKT[r.get("ampel", "grau")]} {r.get("deutung", "")} {pd.Timestamp(r["tag"]):%d.%m.}: ' + ", ".join(teile)
+
+
+KURZ = {"Quartalsgewinn zum Vorjahr": "Gewinn", "Beschleunigung Gewinn": "Beschl.", "Umsatz": "Umsatz",
+        "Marge": "Marge", "Überraschung": "Überr.", "Schätzungen (30 Tage)": "Schätz.",
+        "Jahresgewinne 3 Jahre": "3 Jahre", "Eigenkapitalrendite": "ROE", "Institutionen": "Inst."}
+
+
+def _punkte_html(x):
+    """Die neun Zahlen-Punkte als kleine Ampeln, der Wert beim Überfahren mit der Maus."""
+    pk = (x.get("zahlen") or {}).get("punkte") or {}
+    if not pk:
+        return ""
+    return ('<div style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px">'
+            + "".join(f'<span title="{t(n)}: {t(w)}" style="font-size:12px;color:{TEXT_2};white-space:nowrap">'
+                      f'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;'
+                      f'background:{ {"grün": GRUEN, "gelb": GELB, "rot": ROT}.get(a, TEXT_3)}"></span>'
+                      f'{KURZ.get(n, n)}</span>' for n, (a, w) in pk.items())
+            + "</div>")
+
+
+def _punkte_text(x):
+    pk = (x.get("zahlen") or {}).get("punkte") or {}
+    return " ".join(f'{PUNKT.get(a, "⚪")}{KURZ.get(n, n)}' for n, (a, _) in pk.items())
 
 
 def dreifach(erg):
@@ -179,7 +205,7 @@ def dreifach(erg):
             + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn else TEXT_2}">'
             + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
             + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
-            + '</div></a>')
+            + _punkte_html(x) + '</div></a>')
     return seite('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">'
                  + "".join(karten) + '</div>', oben=4, unten=4)
 
@@ -201,7 +227,8 @@ def stufe(erg, name):
                        "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"})',
                        "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"})',
                        "Thema": (x["thema"] or "").split(" · ")[0][:40],
-                       "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x)})
+                       "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
+                       "Zahlen im Einzelnen": _punkte_text(x)})
     return pd.DataFrame(reihen), [tk for tk, _ in liste]
 
 

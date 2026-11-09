@@ -452,6 +452,9 @@ Reaktion auf die letzten Zahlen; Logbuch der Stufen. Stufen: Entsteht (Rang 50�
 oder RS-Hoch vor Kurs), Läuft (ab 85, Tempo ≥ −5), Ermüdet (ab 80, Tempo ≤ −10), Abfluss (vor 4 Wochen ab 70, −20).
 Probelauf 09.11. (Mac, Stand 04.11., 1.802 Titel, 15 s): Entsteht 229, Läuft 257, Ermüdet 5, Abfluss 155; dreifacher
 Rückenwind 23; Tempo-Quantile 10/25/50/75/90 % = −29/−9/+2,5/+13/+25 Rangpunkte.
+Zahlen-Ampel aus neun Punkten (fundament.ampeln ohne „Jahresgewinn“, dafür Jahresgewinne 3 Jahre je ab +25 %, ROE ab
+17 % aus TradingView, Institutionen), Reaktion auf die letzten Zahlen gedeutet (Episodic Pivot, Lücke mit Volumen,
+Abverkauf trotz Überraschung) – Einzelheiten in KONZEPT_RUECKENWIND.md.
 Seite (`oberflaeche/rueckenwind_seite.py`): Strömungskarte (Sektor/Branche/Thema), Gruppen nach Geldfluss,
 Karten „Dreifacher Rückenwind“, Tabellen je Stufe (Klick → Titelseite), Logbuch.
 

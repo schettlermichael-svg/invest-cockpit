@@ -12,10 +12,11 @@ import pandas as pd
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "daten", "tv", "revier.csv")
 SPALTEN = ["name", "exchange", "description", "market_cap_basic", "gross_margin_ttm", "gross_margin_fy",
-           "operating_margin_ttm", "net_margin_ttm", "net_margin_fy", "return_on_invested_capital_ttm",
-           "return_on_equity_ttm", "debt_to_equity_fq", "net_debt_fq", "current_ratio_fq", "ebitda_ttm",
+           "operating_margin_ttm", "net_margin_ttm", "net_margin_fy", "return_on_invested_capital_fy",
+           "return_on_equity_fy", "debt_to_equity_fq", "net_debt_fq", "current_ratio_fq", "ebitda_ttm",
            "total_shares_outstanding", "float_shares_outstanding", "share_buyback_ratio_fq",
            "earnings_release_next_date", "beta_1_year"]
+# ROE und ROIC als Geschäftsjahr (fy): die ttm-Spalten liefert TradingView leer (geprüft 09.11.2026)
 MINDEST = 0.95
 
 
