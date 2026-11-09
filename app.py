@@ -52,7 +52,7 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Übersicht", "Titelseite", "Rückenwind"]
+ansicht_liste = ["Übersicht", "Titelseite", "Rückenwind", "Konferenzraum"]
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
 # ein Wechsel zwei Klicks.)
@@ -465,7 +465,81 @@ def rueckenwind_zeigen():
                 st.caption("Das Logbuch beginnt mit dem ersten Nachtlauf.")
 
 
-if ansicht == "Rückenwind":
+def konferenz_zeigen():
+    """Seite „Konferenzraum“ (09.11.2026): Tagesbefehl, Lagemeldungen, Akten mit Nadeln, Stab fragen, Kostenbuch."""
+    import stab
+    import konferenz_seite as ks
+    k = stab.letzte()
+    st.markdown(ks.kopf(k), unsafe_allow_html=True)
+    if not stab.schluessel():
+        with st.container(border=True):
+            st.markdown(ks.ANLEITUNG)
+            wert = st.text_input("API-Schlüssel", type="password", placeholder="sk-ant-…", key="stab_schluessel")
+            if st.button("Schlüssel speichern", key="stab_speichern"):
+                if wert.strip().startswith("sk-ant-"):
+                    stab.schluessel_speichern(wert)
+                    st.success("Gespeichert. Die erste Konferenz kannst du unten einberufen oder sie läuft nach dem Nachtlauf.")
+                    st.rerun()
+                else:
+                    st.error("Das sieht nicht wie ein Anthropic-Schlüssel aus (er beginnt mit sk-ant-).")
+        return
+    laeuft = nachtlauf.konferenz_laeuft()
+    _, knopf_ = st.columns([8, 3])
+    with knopf_:
+        if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
+                     help="Die fünf Strategen lesen den Stand des letzten Nachtlaufs (rund 2–5 Minuten, wenige Cent). "
+                          "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
+            nachtlauf.konferenz_starten()
+            st.rerun()
+        if laeuft:
+            st.caption("Der Stab tagt gerade …")
+    if not k:
+        st.info("Noch keine Konferenz – sie läuft jede Nacht nach dem Nachtlauf, oder jetzt über den Knopf.")
+    else:
+        st.markdown(ks.befehl(k), unsafe_allow_html=True)
+        sp = st.columns(2)
+        for i, nr in enumerate((2, 3, 4, 5)):
+            m = (k.get("meldungen") or {}).get(str(nr))
+            if m:
+                with sp[i % 2]:
+                    st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>Akten · Hinweise je Titel, als Nadeln im Chart</h2>", oben=16,
+                                     unten=0), unsafe_allow_html=True)
+        akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
+        st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko")
+        for tk, eintraege in akten:
+            with st.expander(f"**{tk}** · {len(eintraege)} Hinweis{'e' if len(eintraege) > 1 else ''}"):
+                st.markdown(ks.akte_text(eintraege), unsafe_allow_html=True)
+                ab = titel.abgelegt(tk)
+                if ab:
+                    st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege)),
+                                unsafe_allow_html=True)
+                st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
+    st.markdown(gestaltung.seite("<h2 style='margin:0'>Stab fragen</h2>", oben=16, unten=0), unsafe_allow_html=True)
+    with st.form("stab_frage", clear_on_submit=True):
+        text = st.text_area("Frage an den Stab", placeholder="z. B. Welche Branche kippt gerade, und welche Titel "
+                                                            "hängen daran?", key="stab_text")
+        tk_ = st.text_input("Titel (optional)", max_chars=12, key="stab_tk")
+        los = st.form_submit_button("Fragen")
+    if los and text.strip():
+        with st.spinner("Der Stab berät …"):
+            try:
+                stab.frage(text.strip(), tk_.strip() or None)
+            except Exception as e:  # noqa: BLE001
+                st.error(str(e))
+    for f in stab.fragen()[:10]:
+        with st.container(border=True):
+            st.markdown(f"**{f['zeit']}{' · ' + f['titel'] if f.get('titel') else ''} — {f['frage']}**")
+            st.markdown(f["antwort"])
+
+
+if ansicht == "Konferenzraum":
+    try:
+        _QUELLE["text"] = "Konferenz des Nachtlaufs"
+        konferenz_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
+elif ansicht == "Rückenwind":
     try:
         _QUELLE["text"] = "Stand des Nachtlaufs"
         rueckenwind_zeigen()

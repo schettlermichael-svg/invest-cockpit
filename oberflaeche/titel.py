@@ -624,10 +624,12 @@ def tv_link(tk):
     return f"https://www.tradingview.com/chart/?symbol={_tv_symbol(tk)}"
 
 
-def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False):
+def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, nadeln=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
     gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
     m = z.get("marken")
+    if nadeln:                                    # Konferenzraum: Hinweise der Strategen als Nadeln
+        m = dict(m or {}, nadeln=nadeln)
     st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
     return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(ebene, gd_kurz)}</div>'
                        + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m)}'

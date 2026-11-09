@@ -153,6 +153,15 @@ def main(nur_tisch=False):
                 n += karte is not None
         return f"{n} von {len(liste)} Titelseiten abgelegt"
 
+    def konferenz_():
+        import stab
+        if not stab.schluessel():
+            return "übersprungen – kein API-Schlüssel"
+        k = stab.konferenz()
+        ko = stab.kosten()
+        return (f"{sum(len(m.get('hinweise') or []) for m in k['meldungen'].values())} Hinweise · Monat "
+                f"{ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $")
+
     if nur_tisch:
         schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
         schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
@@ -173,6 +182,7 @@ def main(nur_tisch=False):
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
+    schritt("Konferenz des Stabs (MARAGA Investment)", konferenz_)
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
@@ -356,8 +366,41 @@ def seiten_lauf_starten():
     return True
 
 
+KONFERENZ_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "konferenz_lauf.json")
+
+
+def konferenz_laeuft():
+    return _laeuft(KONFERENZ_PROTOKOLL, 1)[0]
+
+
+def konferenz_starten():
+    """Knopf „Konferenz jetzt einberufen“: nachtlauf.py --konferenz im Hintergrund."""
+    if konferenz_laeuft():
+        return False
+    os.makedirs(os.path.dirname(KONFERENZ_PROTOKOLL), exist_ok=True)
+    log = open(os.path.join(os.path.dirname(KONFERENZ_PROTOKOLL), "konferenz_lauf.log"), "w", encoding="utf-8")
+    subprocess.Popen([sys.executable, "-u", os.path.abspath(__file__), "--konferenz"], cwd=os.path.join(HIER, ".."),
+                     stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+    return True
+
+
+def _konferenz_lauf():
+    import stab
+    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid()}
+    _schreiben(p, KONFERENZ_PROTOKOLL)
+    try:
+        stab.konferenz()
+    except Exception as e:  # noqa: BLE001
+        p["fehler"] = f"{type(e).__name__}: {e}"
+        traceback.print_exc()
+    p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
+    _schreiben(p, KONFERENZ_PROTOKOLL)
+
+
 if __name__ == "__main__":
-    if "--seiten" in sys.argv:
+    if "--konferenz" in sys.argv:
+        _konferenz_lauf()
+    elif "--seiten" in sys.argv:
         seiten()
     else:
         main(nur_tisch="--tisch" in sys.argv)

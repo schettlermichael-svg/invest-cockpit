@@ -178,6 +178,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
     if tag_ebene:
         _zeichen(marken, d, pos, X, Y, A, spaete, platz, ENDE, h, l)
+        _nadeln(marken.get("nadeln"), d, pos, X, Y, spaete, platz, h)
     for t_ in spaete:
         A(t_)
 
@@ -496,6 +497,31 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
         t_ = "↓ Ermüdung" + (f' {zahl(v_, 1)}×' if v_ else "")
         spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(h[i]) - 10, t_, 12):.1f}" fill="{ROT}" font-size="12" '
                       f'font-weight="700" text-anchor="middle">{t_}</text>')
+
+
+NADEL_FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT}
+
+
+def _nadeln(nadeln, d, pos, X, Y, spaete, platz, h):
+    """Hinweise der Strategen (Konferenzraum) als nummerierte Nadeln am Tag, auf den sie sich beziehen – ohne Tag am
+    rechten Rand. Nummer = Stratege (1 Stratege, 2 Strömung, 3 Fundament, 4 Chart, 5 Risiko); Text in der Maus und
+    unter dem Chart."""
+    for n in nadeln or []:
+        try:
+            tag = pd.Timestamp(n["datum"]) if n.get("datum") else d.index[-1]
+        except (ValueError, TypeError):
+            tag = d.index[-1]
+        if tag < d.index[0]:
+            continue
+        i = pos(tag)
+        x = X(i)
+        y = platz(x, Y(h[i]) - 26, "00", 13)
+        f = NADEL_FARBE.get(n.get("ampel"), TEXT_2)
+        text = str(n.get("text", "")).replace("&", "&amp;").replace("<", "&lt;").replace('"', "&quot;")
+        spaete.append(f'<g><title>{text}</title><line x1="{x:.1f}" x2="{x:.1f}" y1="{y + 9:.1f}" y2="{Y(h[i]) - 3:.1f}" '
+                      f'stroke="{f}" stroke-width="1.5"/><circle cx="{x:.1f}" cy="{y:.1f}" r="10" fill="#161C24" '
+                      f'stroke="{f}" stroke-width="2"/><text x="{x:.1f}" y="{y + 4.5:.1f}" fill="{f}" font-size="13" '
+                      f'font-weight="700" text-anchor="middle">{n.get("nr", "")}</text></g>')
 
 
 def stunden(dh, m=None, hohl=False):
