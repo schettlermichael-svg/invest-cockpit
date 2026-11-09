@@ -10,7 +10,7 @@ import numpy as np
 
 from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, punkt2, t, zahl
 
-PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Branche", "Base")
+PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Geld", "Base")
 
 
 RICHTUNG = {"long": GRUEN, "short": ROT}      # Rahmenfarbe eines Titels überall: long grün, short rot, offen gelb

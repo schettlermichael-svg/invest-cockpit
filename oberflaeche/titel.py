@@ -202,23 +202,21 @@ def _k_base(erk):
                   "den Rückgang des S&P 500 im selben Zeitraum: O'Neil erlaubt höchstens das 2- bis 3-Fache." + regel + bilanz)
 
 
-def _k_branche(df, rd):
-    r = (rd or {}).get("rudel")
-    mg = (rd or {}).get("m_gruppe")
-    if not r or r["art"] != "Branche" or not mg:
-        return kachel("Branche", "grau", "–", "Branche zu klein", "")
-    wert = {"grün": "Rückenwind", "gelb": "neutral", "rot": "Gegenwind"}[mg["ampel"]]
-    g, t = rd["kurs_gruppe"].dropna(), df["Close"].dropna()
-    vorher = mg["wert"] - mg["richtung"]
-    zeile = (f"Mansfield {'+' if vorher >= 0 else '−'}{zahl(abs(vorher), 1)} → "
-             f"{'+' if mg['wert'] >= 0 else '−'}{zahl(abs(mg['wert']), 1)} in 4 Wochen")
-    if len(g) > 64 and len(t) > 64:
-        d = ((t.iloc[-1] / t.iloc[-64]) / (g.iloc[-1] / g.iloc[-64]) - 1) * 100
-        zeile += f" · Titel {'+' if d >= 0 else '−'}{zahl(abs(d), 0)} % zur Branche"
-    return kachel("Branche", mg["ampel"], wert, zeile,
-                  f"{namen_de.branche(r['name'])}. Stärke zum Markt = Mansfield-RS (Weinstein): die Linie Branche ÷ S&P 500 gegen ihr "
-                  "52-Wochen-Mittel. Rückenwind = über dem Mittel (Wert über 0) und steigend, Gegenwind = darunter und fallend. Angezeigt: Wert vor 4 Wochen → heute. "
-                  "Weinstein: Gekauft wird nur in einer starken Gruppe. Titel zur Branche: letzte 3 Monate.")
+def _k_geld(x):
+    """Kachel Geld (09.11.2026, ersetzt „Branche“ nach Weinstein): die Geld-Ampel aus Rückenwind – drei Stimmen
+    Sektor, Branche, Thema; grün = zwei vorne und keine im Abfluss."""
+    hilfe = ("Geld aus der Seite Rückenwind: Wohin fließt das Geld? Drei Stimmen – Sektor, Branche und Thema, je mit ihrem "
+             "Feld in der Strömungskarte (Führend, Erstarkend, Schwächelnd, Zurückfallend). Grün = mindestens zwei vorne "
+             "(führend oder erstarkend) und keine schwächelnd; gelb = eine vorne; rot = keine. Stand des Nachtlaufs.")
+    if not x:
+        return kachel("Geld", "grau", "–", "erst nach dem nächsten Nachtlauf", hilfe)
+    wort = {"Führend": "führend", "Erstarkend": "erstarkend", "Ermüdend": "schwächelnd", "Abgehängt": "zurückfallend"}
+    zeile = " · ".join(f"{art} {wort.get(x.get(f'{k}_feld'), '–')}"
+                       for art, k in (("Sektor", "sektor"), ("Branche", "branche"), ("Thema", "thema")))
+    hilfe += (f"\n\nSektor: {x.get('sektor') or '–'} · Branche: {namen_de.branche(x.get('branche') or '') or '–'}"
+              + (f" · Thema: {x['thema'].split(' · ')[0]}" if x.get("thema") else ""))
+    return kachel("Geld", x["geld_ampel"], {"grün": "Rückenwind", "gelb": "halb", "rot": "Gegenwind"}[x["geld_ampel"]],
+                  zeile, hilfe)
 
 
 def _ereignis(df, gewinne, fund):
@@ -307,13 +305,14 @@ def _k2_trend(m, ph, ph_reihe):
                    + "\n\nPhase nach Weinstein nur noch als Zeichen.")
 
 
-def _k2_staerke(m, k, rang):
+def _k2_staerke(m, k, rang, rw=None):
     mm = (("grün" if rang >= 70 else "gelb" if rang >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
         else ("grau", "kein RS-Rang")
     fr = k["fuehrer"]
     best = max((v for v in (fr or {}).values() if v == v), default=None)
     kk = (k["fuehrer_ampel"], f"besser als {zahl(best, 1 if best >= 90 else 0)} %") if best is not None else ("grau", "–")
-    return kachel2("Stärke", mm, kk, fuehrer_rang.text(fr),
+    tempo = (f'Tempo {rw["tempo"]:+d} in 4 Wo. · {rw["stufe"] or "keine Stufe"} · ' if rw else "")
+    return kachel2("Stärke", mm, kk, tempo + fuehrer_rang.text(fr),
                    "M – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
                    "unserem Revier. Minervini verlangt mindestens 70 – der achte Punkt der Trendvorlage. Die Zahl ist "
                    "kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\n\nK – Kullamägi sucht die ein bis "
@@ -386,14 +385,14 @@ def _k2_enge(m, k, erk, df):
                    "reduziertem Volumen. Gelb bis 8 Wochen.")
 
 
-def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km):
+def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km, rw=None):
     """Die acht Kacheln der Titelseite (Zwei Systeme, 05.11.2026): sechs mit je einer Ampel für Minervini (M) und
     Kullamägi (K), Branche und Base als Zeichen. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
     _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte, hier nicht gezeigt
     rang = (erk.get("rs_rang") or (None, ""))[0]
-    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe), _k2_staerke(m, k, rang),
+    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe), _k2_staerke(m, k, rang, rw),
           _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), _k2_enge(m, k, erk, df),
-          _k_branche(df, rd), _k_base(erk)]
+          _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
             f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(kl)}</section>')
 
@@ -468,7 +467,7 @@ def _ist_warnung(h):
     return True
 
 
-def _warnzeichen(erk):
+def _warnzeichen(erk, krit=None):
     """Nur Warnungen: Frühwarnzeichen Phase 3/4 (Weinstein), Klimax, Übernahme-Verdacht, gestörte Daten, unsichere
     Mustererkennung und Hinweise, die in keiner Kachel stehen."""
     zeilen = "".join(ampelzeile(text, a, "Weinstein: Frühwarnzeichen für Long-Halter, bevor die Phase wechselt – die "
@@ -481,31 +480,10 @@ def _warnzeichen(erk):
                              + ("Sektor-Korrektur: " if gk["sektor"] else "Schwächer als die Gruppe: ")
                              + f'Gruppe {namen_de.branche(gk["name"])} −{zahl(gk["rueckgang"], 0)} %, Titel {zahl(gk["faktor"], 1)}-fach der Gruppe '
                              "(Zeichen neben der Buchregel, ändert die Ampel nicht)", "gelb", "")
+    zeilen += "".join(ampelzeile(f"Phase: {w}", "rot", "Warnzeichen der Phase nach Weinstein") for w in (krit or {}).get("warnungen", []))
     zeilen += "".join(ampelzeile(f"Datenampel: {text}", a, "") for a, _, text in erk.get("daten", {}).get("zeichen", []))
     return karte(zeilen or f'<div style="color:{TEXT_2};font-size:15px">Keine Warnzeichen.</div>', "Warnzeichen")
 
-
-def _phase_zyklus(ph, krit):
-    """Phase (Weinstein): die sechs Merkmale eines Aufwärtstrends mit ✓/✗ und die Warnzeichen der Phase."""
-    if not krit or not krit.get("kriterien"):
-        return karte(f'<div style="color:{TEXT_2}">Zu kurze Historie für Phase und Zyklus.</div>', "Phase und Zyklus")
-    satz = {
-        2: "Der Titel steht in Phase 2. Die sechs Merkmale zeigen, ob der Aufwärtstrend trägt.",
-        3: "Phase 3 ist die Gipfelphase: Der Aufwärtstrend verliert Merkmal für Merkmal.",
-        4: "Nach Phase 4 folgt in der Regel zuerst Phase 1, der Boden. Als Phase 2 zählt der Titel erst wieder, wenn "
-           "das Bild eines Aufwärtstrends vier Wochen steht, der Kurs mindestens 25 % über dem 52-Wochen-Tief liegt "
-           "und ein Wochenschluss das Hoch der letzten 26 Wochen übertrifft.",
-        1: "Phase 1 ist der Boden. Phase 2 beginnt, wenn das Bild eines Aufwärtstrends vier Wochen steht, der Kurs "
-           "mindestens 25 % über dem 52-Wochen-Tief liegt und ein Wochenschluss das Hoch der letzten 26 Wochen "
-           "übertrifft.",
-    }.get(ph, "")
-    k = krit["kriterien"]
-    merkmale = (f'<div style="font-size:15px;font-weight:600;padding-top:6px">{sum(k.values())} von 6 Merkmalen eines '
-                f'Aufwärtstrends erfüllt</div>' + "".join(ampelzeile(n, "grün" if ok else "rot", "") for n, ok in k.items())
-                + "".join(ampelzeile(w, "rot", "") for w in krit.get("warnungen", [])))
-    kopf = (f'<p style="margin:0;font-size:14px;color:{TEXT_2};line-height:1.6">'
-            f'{t((f"Phase {ph}: {PHASENTEXT[ph]}. " if ph else "") + satz)}</p>')
-    return karte(kopf + merkmale, "Phase und Trend")
 
 
 WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
@@ -658,7 +636,47 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz
 ATR_STOPP = 1.5                                  # Stopp 1,5 ATR vom Einstieg, eine Linie für alle Systeme (Micky, 09.11.2026)
 
 
-def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd):
+def _rueckenwind(tk):
+    """Eintrag des Titels im Rückenwind-Stand des Nachtlaufs (Stufe, Tempo, Geld) oder None; je Stand einmal gelesen."""
+    import rueckenwind
+    try:
+        pfad = rueckenwind._pfad("stand.json")
+        schluessel = (pfad, os.path.getmtime(pfad))
+    except OSError:
+        return None
+    if _RW_CACHE.get("k") != schluessel:
+        _RW_CACHE.update(k=schluessel, titel=((rueckenwind.laden() or {}).get("titel") or {}))
+    return _RW_CACHE["titel"].get(tk.upper())
+
+
+_RW_CACHE = {}
+
+
+def _zahlenkarte(tk, fund, fd):
+    """Karte „Zahlen“ (09.11.2026): die neun Punkte wie in Rückenwind (eine Zahlen-Ampel für die ganze App), darunter
+    die Zeichen der Gewinnqualität und S · Angebot (CAN SLIM S, nicht in den neun)."""
+    import rueckenwind
+    try:
+        z = rueckenwind._zahlen(tk, rueckenwind._tv())
+    except Exception:  # noqa: BLE001
+        z = None
+    if z and z.get("punkte"):
+        a_ = z.get("ampel", "grau")
+        kopf = (f'<div style="font-size:15px;font-weight:600;padding-bottom:4px">'
+                f'{ {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}.get(a_, "⚪") } Zahlen-Ampel {a_} · neun Punkte wie in Rückenwind</div>')
+        links = kopf + "".join(ampelzeile(n, a, x) for n, (a, x) in z["punkte"].items())
+    else:
+        links = f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
+    if fund and fund["zeichen"]:
+        links += "".join(ampelzeile(x, "gelb" if "prüfen" in x else "blau", "") for x in fund["zeichen"])
+    s_ = fundament.angebot(sic13._tv(tk))
+    links += ampelzeile("S · Angebot (frei handelbare Aktien, Rückkäufe)", s_[0], s_[1],
+                        "CAN SLIM S: Weniger Aktien im Umlauf und Rückkäufe verknappen das Angebot; Verwässerung über 2 % "
+                        "ist ein Warnzeichen. Quelle TradingView. Zählt nicht zu den neun Punkten.")
+    return karte(links, "Zahlen")
+
+
+def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
     """Was der Chart über die Zonen hinaus einzeichnet: Einstieg (Pivot) mit Kaufzone bis +5 % und Stopp 1,5 ATR,
     Ausbruchstag, Anker des AVWAP (Beginn der Zone), Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus
     Rückenwind, Short (Ermüdung) mit Stopp 1,5 ATR über der Unterkante. Einstieg: Minervinis Pivot aus der Enge, sonst
@@ -689,11 +707,7 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd):
             m["termin"] = pd.Timestamp(termin["datum"].iloc[0])
     except Exception:  # noqa: BLE001
         pass
-    try:
-        import rueckenwind
-        m["rs"] = ((rueckenwind.laden() or {}).get("titel") or {}).get(tk)
-    except Exception:  # noqa: BLE001
-        pass
+    m["rs"] = rw
     em = k_.get("ermuedung")
     if em and a:
         m["short"] = {"tag": em["tag"], "einstieg": float(em["unten"]), "stopp": float(em["unten"]) + ATR_STOPP * a,
@@ -896,7 +910,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
     erk["systeme"] = {"m": m_, "k": k_}
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
     try:
-        leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, mr, gewinne, m_, k_, mm_, km_)
+        rw = _rueckenwind(tk)
+        leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, mr, gewinne, m_, k_, mm_, km_, rw)
         k_info = dict(gestaltung.MITSCHRIFT)
     finally:
         gestaltung.MITSCHRIFT = None
@@ -907,25 +922,12 @@ def seite_titel(ticker, laufend=False, _stand=None):
     if zonen and (erk.get("basen") or {}).get("zahl") and zonen.get("jetzt"):
         zonen["jetzt"] = dict(zonen["jetzt"], nummer=erk["basen"]["zahl"])     # Basennummer an der Zone von heute
     zwischen["zonen"] = zonen
-    zwischen["marken"] = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None)
+    zwischen["marken"] = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw)
     zwischen["stunde"] = _stundenkerzen(tk, df)
     teile = []
-    links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
-        f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
-    if fund and fund["zeichen"]:
-        links += "".join(ampelzeile(z, "gelb" if "prüfen" in z else "blau", "") for z in fund["zeichen"])
-    s_ = fundament.angebot(sic13._tv(tk))
-    i_ = fundament.institutionen((fd or {}).get("institutionen") if fund else None)
-    links += (ampelzeile("S · Angebot (frei handelbare Aktien, Rückkäufe)", s_[0], s_[1],
-                         "CAN SLIM S: Weniger Aktien im Umlauf und Rückkäufe verknappen das Angebot; Verwässerung über 2 % "
-                         "ist ein Warnzeichen. Quelle TradingView. Zählt nicht zu den sieben Prüfpunkten.")
-              + ampelzeile("I · Institutionen (Fonds)", i_[0], i_[1],
-                           "CAN SLIM I: Führer brauchen Fonds als Käufer – ein Anteil zwischen 20 und 90 %, der zunimmt. "
-                           "Über 90 % ist überbesetzt (wer verkauft, drückt). Quelle Yahoo (13F-Meldungen der zehn größten "
-                           "Halter). Zählt nicht zu den sieben Prüfpunkten."))
     raster = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:24px">'
-    teile.append(f'{raster}{_earnings_feld(fd if fund else None)}{karte(links, "Fundament-Ampeln")}</div>')
-    teile.append(f'{raster}{_phase_zyklus(ph, krit)}{_warnzeichen(erk)}</div>')
+    teile.append(f'{raster}{_earnings_feld(fd if fund else None)}{_zahlenkarte(tk, fund, fd if fund else None)}</div>')
+    teile.append(_warnzeichen(erk, krit))
     plan, rand = _plan(m_, k_, mm_, km_, df)
     teile.append(karte(plan, "Plan", rand=rand))
     teile.append(depotleiste.titelkarte(tk, df, erk))
