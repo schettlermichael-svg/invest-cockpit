@@ -34,7 +34,7 @@ import system_minervini                               # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
 import gestaltung                                     # noqa: E402
-from chart import chart, legende, reaktionen           # noqa: E402
+from chart import chart, legende, reaktionen, stunden  # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, kachel2, karte,  # noqa: E402
                         seite, t, zahl)
 
@@ -647,10 +647,78 @@ def tv_link(tk):
 
 def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
-    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20), ohne die Seite neu zu rechnen."""
+    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
+    m = z.get("marken")
+    st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
     return seite(karte(f'<div style="display:flex;flex-wrap:wrap;gap:20px">{legende(ebene, gd_kurz)}</div>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz)}'
-                       f'{z.get("rs_lesart", "")}</div>'), oben=0, unten=0)
+                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m)}'
+                       f'{z.get("rs_lesart", "")}</div>' + st_), oben=0, unten=0)
+
+
+ATR_STOPP = 1.5                                  # Stopp 1,5 ATR vom Einstieg, eine Linie für alle Systeme (Micky, 09.11.2026)
+
+
+def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd):
+    """Was der Chart über die Zonen hinaus einzeichnet: Einstieg (Pivot) mit Kaufzone bis +5 % und Stopp 1,5 ATR,
+    Ausbruchstag, Anker des AVWAP (Beginn der Zone), Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus
+    Rückenwind, Short (Ermüdung) mit Stopp 1,5 ATR über der Unterkante. Einstieg: Minervinis Pivot aus der Enge, sonst
+    der Pivot des Ausbruchs, sonst Kullamägis Breakout bzw. Episodic Pivot."""
+    import atr as atr_modul
+    a = atr_modul.wert(df)
+    jetzt = (zonen or {}).get("jetzt") or {}
+    br = m_.get("ausbruch") or None
+    kb, ep = k_.get("breakout") or {}, k_.get("ep") or {}
+    kontr = ((zonen or {}).get("enge") or {}).get("kontraktionen") or []
+    enge_ab = kontr[-1]["hoch_t"] if kontr else None           # Kaufzone und Stopp ab der Enge, nicht über die ganze Base
+    for e, quelle in ((m_.get("pivot"), "Minervini"), ((br or {}).get("pivot"), "Ausbruch"),
+                      (kb.get("pivot"), "Kullamägi Breakout"), (ep.get("pivot"), "Episodic Pivot")):
+        if e:
+            break
+    else:
+        e, quelle = None, ""
+    m = {"einstieg": float(e) if e else None, "quelle": quelle, "atr": a,
+         "kz_oben": float(e) * 1.05 if e else None,
+         "stopp": float(e) - ATR_STOPP * a if e and a else None,
+         "ab": (br or {}).get("erster_tag") or (ep.get("tag") if quelle == "Episodic Pivot" else None) or enge_ab,
+         "avwap_ab": jetzt.get("start_t") if jetzt.get("zone") or jetzt.get("offen") else None,
+         "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag")} if br else None,
+         "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None}
+    try:
+        termin = (fd or {}).get("termin")
+        if termin is not None and len(termin) and termin["datum"].iloc[0]:
+            m["termin"] = pd.Timestamp(termin["datum"].iloc[0])
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import rueckenwind
+        m["rs"] = ((rueckenwind.laden() or {}).get("titel") or {}).get(tk)
+    except Exception:  # noqa: BLE001
+        pass
+    em = k_.get("ermuedung")
+    if em and a:
+        m["short"] = {"tag": em["tag"], "einstieg": float(em["unten"]), "stopp": float(em["unten"]) + ATR_STOPP * a,
+                      "volumen": em.get("volumen")}
+    return m
+
+
+def _stundenkerzen(tk, df):
+    """Stundenkerzen der letzten 10 Handelstage aus den 30-Minuten-Kerzen (tpo_daten, auf die Tageskurse ausgerichtet),
+    beim laufenden Börsentag mit den heutigen Kerzen von Yahoo. None ohne Daten."""
+    try:
+        d30 = tpo_daten.kerzen(tk, df.iloc[:-1] if df.attrs.get("laufend") else df, abruf=False)
+        if df.attrs.get("laufend"):
+            heute = tpo_daten.heute(tk)
+            if heute is not None:
+                d30 = pd.concat([d30, heute]) if d30 is not None else heute
+        if d30 is None or d30.empty:
+            return None
+        d30 = d30[~d30.index.duplicated(keep="last")].sort_index()
+        h1 = d30.resample("60min", offset="30min").agg({"Open": "first", "High": "max", "Low": "min",
+                                                       "Close": "last", "Volume": "sum"}).dropna()
+        tage = sorted(set(h1.index.date))[-10:]
+        return h1[pd.Index(h1.index.date).isin(tage)]
+    except Exception:  # noqa: BLE001 – ohne Stundenkerzen kein Stundenchart
+        return None
 
 
 def _eintrag(tk):
@@ -836,7 +904,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
     oben = [_kopf(tk, sb, df, fd) + hinweis_laufend, leiste]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
+    if zonen and (erk.get("basen") or {}).get("zahl") and zonen.get("jetzt"):
+        zonen["jetzt"] = dict(zonen["jetzt"], nummer=erk["basen"]["zahl"])     # Basennummer an der Zone von heute
     zwischen["zonen"] = zonen
+    zwischen["marken"] = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None)
+    zwischen["stunde"] = _stundenkerzen(tk, df)
     teile = []
     links = "".join(ampelzeile(n, a, x) for n, (a, x) in fund["punkte"].items()) if fund else \
         f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
