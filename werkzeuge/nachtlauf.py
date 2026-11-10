@@ -257,7 +257,7 @@ def stand():
     if not p.get("ende"):
         return ("gelb" if alter < 12 else "rot"), f"Nachtlauf vom {p['start']} läuft noch oder brach ab"
     if fehler:
-        return "rot", f"Nachtlauf {p['start']}: gescheitert – {', '.join(fehler)}"
+        return "rot", f"Nachtlauf {p['start']}: gescheitert – {_gruende(p)}"
     if alter > (72 if wochenende else 26):
         return "rot", f"letzter Nachtlauf {p['start']} – Daten veraltet"
     text = f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig"
@@ -299,6 +299,11 @@ def _laeuft(datei, stunden):
     return True, p
 
 
+def _gruende(p):
+    """Gescheiterte Schritte mit Grund, kurz: „Kartentisch (TypeError: …)“ – damit man nicht im Dunkeln steht."""
+    return "; ".join(f"{s['name'].split(' (')[0]} ({s['text'][:110]})" for s in p.get("schritte", []) if not s["ok"])
+
+
 def tisch_lauf_stand():
     """Für den Knopf: (laeuft, Text). Läuft gerade der Nachtlauf, wird nicht doppelt gerechnet."""
     nacht, _ = _laeuft(PROTOKOLL, 12)
@@ -307,14 +312,14 @@ def tisch_lauf_stand():
     laeuft, p = _laeuft(TISCH_PROTOKOLL, 3)
     if p is None:
         return False, ""
-    namen = ["Ränge", "Kartentisch", "Lage"]
-    fehler = [s["name"] for s in p.get("schritte", []) if not s["ok"]]
+    namen = ["Ränge", "Rückenwind", "Kartentisch", "Lage"]
+    fehler = _gruende(p)
     if laeuft:
-        i = min(len(p.get("schritte", [])), 2)
-        return True, f"Läuft seit {p['start'][-5:]} Uhr · Schritt {i + 1} von 3: {namen[i]}"
+        i = min(len(p.get("schritte", [])), 3)
+        return True, f"Läuft seit {p['start'][-5:]} Uhr · Schritt {i + 1} von 4: {namen[i]}"
     if not p.get("ende"):
         return False, f"Lauf vom {p['start']} brach ab"
-    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {', '.join(fehler)}" if fehler else "✓"))
+    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {fehler}" if fehler else "✓"))
 
 
 def tisch_lauf_starten():

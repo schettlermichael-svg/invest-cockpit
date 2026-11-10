@@ -10,7 +10,27 @@ import json
 import os
 
 
+def _wandeln(x):
+    """Werte, die JSON nicht kennt (numpy-Ja/Nein, -Zahlen, Zeitstempel), in normale umwandeln (10.11.2026).
+    Anlass: der Kartentisch scheiterte seit dem 05.11. beim Speichern an einem numpy-Ja/Nein-Wert."""
+    for art, f in (("bool_", bool), ("integer", int), ("floating", float)):
+        try:
+            import numpy as np
+            if isinstance(x, getattr(np, art)):
+                return f(x)
+        except ImportError:
+            break
+    if hasattr(x, "isoformat"):
+        return x.isoformat()
+    if hasattr(x, "tolist"):
+        return x.tolist()
+    if isinstance(x, (set, tuple)):
+        return list(x)
+    raise TypeError(f"Object of type {type(x).__name__} is not JSON serializable")
+
+
 def json_schreiben(pfad, daten, **kw):
+    kw.setdefault("default", _wandeln)
     tmp = f"{pfad}.{os.getpid()}.neu"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(daten, f, **kw)

@@ -57,7 +57,12 @@ def tag(datum):
             return pd.read_csv(pfad)
         except pd.errors.EmptyDataError:                  # gespeicherter Feiertag (leere Datei)
             return pd.DataFrame(columns=SPALTEN)
-    daten = _abruf(f"/v2/aggs/grouped/locale/us/market/stocks/{datum}?adjusted=true")
+    try:
+        daten = _abruf(f"/v2/aggs/grouped/locale/us/market/stocks/{datum}?adjusted=true")
+    except OSError as e:                                  # Tarif gibt den Tag erst nach Tagesende frei (10.11.2026):
+        if "before end of day" in str(e):                 # wie ein noch leerer Tag behandeln → der Vortag zählt
+            return pd.DataFrame(columns=SPALTEN)
+        raise
     zeilen = daten.get("results") or []
     df = pd.DataFrame(zeilen)
     if df.empty:
