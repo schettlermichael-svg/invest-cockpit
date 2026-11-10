@@ -9,7 +9,7 @@ Gestrichelter Rahmen = das Feld, das die amtlichen Zahlen (BIP, Verbraucherpreis
 """
 import pandas as pd
 
-from gestaltung import AMPEL, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
+from gestaltung import AMPEL, KARTE, RAND, TEXT, TEXT_2, TEXT_3, feld_name, t, zahl
 
 QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 B, H = 720, 450
@@ -166,7 +166,7 @@ def _felder(q):
                     f'font-size:13px;color:{TEXT_3}">{t(name)}</span>')
         pf = _pfeil(r)
         f = FARBE[r["feld"]]
-        return (f'<span title="{t(name)}: {r["feld"]}, Stärke {zahl(r["staerke"], 0)} · {pf} {t(PFEILE[pf])}" '
+        return (f'<span title="{t(name)}: {feld_name(r["feld"])}, Stärke {zahl(r["staerke"], 0)} · {pf} {t(PFEILE[pf])}" '
                 f'style="border:1.5px solid {f};border-radius:6px;padding:2px 8px;font-size:13px;color:{TEXT};'
                 f'background:{f}22">{t(name)} <span style="color:{f}">{pf}</span></span>')
 
@@ -192,7 +192,7 @@ def _felder(q):
             f'{karte_(3)}{karte_(2)}{karte_(4)}{karte_(1)}</div>'
             f'<div style="font-size:13px;color:{TEXT_3}">Je Quad die Sektoren und Branchen, die in diesem Umfeld '
             f'typischerweise stark sind (Lehre), gefärbt nach ihrer Stärke heute: grün Führend, blau Erstarkend, gelb '
-            f'Ermüdend, rot Abgehängt; Pfeil = Bewegung der letzten 5 Wochen; Branchen gleichgewichtet aus den '
+            f'Schwächelnd, rot Zurückfallend; Pfeil = Bewegung der letzten 5 Wochen; Branchen gleichgewichtet aus den '
             f'Revier-Titeln (ab 5 Titeln). Maus auf eine Marke zeigt Feld und Stärke.</div>')
 
 

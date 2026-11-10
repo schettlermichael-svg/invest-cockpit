@@ -16,6 +16,10 @@ from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3
 
 ZUFLUSS = (1.1, 0.9)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
+def _fn(f):
+    return FELD_TEXT[f].split(" · ")[0] if f in FELD_TEXT else f
+
+
 FELD_TEXT = {"Führend": "Führend · Geld ist drin", "Erstarkend": "Erstarkend · Geld fließt zu",
              "Ermüdend": "Schwächelnd · Geld fließt ab", "Abgehängt": "Zurückfallend · Geld ist weg"}
 STUFE_TEXT = {
@@ -66,7 +70,7 @@ def kopf(erg, titel=True):
                                   ("Läuft", n.get("Läuft", 0), GRUEN), ("Ermüdet", n.get("Ermüdet", 0), GELB),
                                   ("Abfluss", n.get("Abfluss", 0), ROT)))
         + f'</div><p style="color:{TEXT_3};font-size:13px;margin:10px 0 0">Branchen: '
-        + " · ".join(f"{k} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=12, unten=8)
+        + " · ".join(f"{FELD_TEXT[k].split(' · ')[0]} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=12, unten=8)
 
 
 def _name(g):
@@ -320,8 +324,8 @@ def _zeile(tk, x, stand):
             "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
             "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
-            "Sektor": f'{x["sektor"]} ({x["sektor_feld"] or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
-            "Branche": f'{x["branche"]} ({x["branche_feld"] or "–"}{", stabil" if x.get("branche_stabil") else ""})',
+            "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
+            "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
             "Thema": (x["thema"] or "").split(" · ")[0][:40],
             "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
             "Zahlen im Einzelnen": _punkte_text(x)}

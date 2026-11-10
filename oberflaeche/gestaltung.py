@@ -74,6 +74,16 @@ def karte(inhalt, titel=None, rand=RAND):
             f'padding:20px;display:flex;flex-direction:column;gap:14px">{kopf}{inhalt}</section>')
 
 
+# Namen der vier Felder auf dem Bildschirm (10.11.2026, Micky): intern bleiben die Schlüssel „Ermüdend“ und „Abgehängt“,
+# gezeigt wird überall „Schwächelnd“ und „Zurückfallend“ – „Ermüd…“ gehört allein der Stufe „Ermüdet“ und dem
+# Short-Setup „Ermüdung nach Überdehnung“.
+FELD_NAME = {"Führend": "Führend", "Erstarkend": "Erstarkend", "Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}
+
+
+def feld_name(f):
+    return FELD_NAME.get(f, f) if f else f
+
+
 STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind seit 10.11.2026 (mit Übersicht)
              ("wind", "②", "Rückenwind", "Wohin fließt das Geld?"),
              ("stellung", "③", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),

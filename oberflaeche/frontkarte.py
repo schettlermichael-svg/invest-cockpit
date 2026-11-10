@@ -14,7 +14,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 import sektoren                                                     # noqa: E402
-from gestaltung import KARTE, RAND, ampelzeile  # noqa: E402
+from gestaltung import KARTE, RAND, ampelzeile, feld_name  # noqa: E402
 
 FARBE = {"Führend": "#56D364", "Ermüdend": "#E3B341", "Abgehängt": "#FF7B72", "Erstarkend": "#7DB4FF"}
 AMPEL = {"Führend": "grün", "Erstarkend": "blau", "Ermüdend": "gelb", "Abgehängt": "rot"}
@@ -54,7 +54,7 @@ def quad_abgleich(quad):
         if e in rot:
             r = rot[e]
             zeilen += ampelzeile(f'{r["name"]} ({e})', AMPEL[r["feld"]],
-                                 f'{r["feld"]} {_pfeil(r)} · {"passt zum Quad" if e in ab["vorne"] else "passt nicht zum Quad"}')
+                                 f'{feld_name(r["feld"])} {_pfeil(r)} · {"passt zum Quad" if e in ab["vorne"] else "passt nicht zum Quad"}')
     andere = [r["name"] for e, r in rot.items() if r["feld"] == "Führend" and e not in ab["erwartet"]]
     if andere:
         zeilen += ampelzeile("Führend, obwohl nicht typisch für den Quad", "gelb", ", ".join(andere))

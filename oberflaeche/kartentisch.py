@@ -525,7 +525,7 @@ def lagebild(tisch):
     import rudel
     import sektoren
     from frontkarte import FARBE, PFEILE, _pfeil
-    from gestaltung import BLAU, GRUEN, RAND, TEXT_2, TEXT_3, karte, t, zahl
+    from gestaltung import BLAU, GRUEN, RAND, TEXT_2, TEXT_3, feld_name, karte, t, zahl
     try:
         rot = sektoren.rotation()
     except Exception:  # noqa: BLE001 – ohne Kurse der Sektor-ETFs nur die Zuordnung
@@ -605,7 +605,7 @@ def lagebild(tisch):
         r = rot.get(e)
         if r:
             pf = _pfeil(r)
-            links = (f'<b>{t(r["name"])}</b><br><span style="color:{FARBE[r["feld"]]}">{t(r["feld"])}</span> '
+            links = (f'<b>{t(r["name"])}</b><br><span style="color:{FARBE[r["feld"]]}">{t(feld_name(r["feld"]))}</span> '
                      f'<span title="{t(PFEILE[pf])}">{pf}</span> <span style="color:{TEXT_2}">{zahl(r["staerke"], 0)}</span>')
         else:
             links = f'<b>{t(sektoren.SEKTOREN.get(e, "ohne Sektor"))}</b>'

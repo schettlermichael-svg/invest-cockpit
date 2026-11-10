@@ -66,7 +66,7 @@ BEGRIFFE DER APP
 - Reihen des Kartentischs (ein Titel steht in genau einer): {reihen}
 - M = Minervini, K = Kullamägi. Jede Kachel trägt eine Ampel je System.
 - Stufen des Rückenwinds: {stufen}
-- Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Ermüdend (noch stärker, Stärke lässt nach) · Abgehängt (schwächer, fällt zurück). Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
+- Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
 - Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen.
 - Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
 - Volltreffer: dreifacher Rückenwind UND der Titel steht in einer Reihe des Kartentischs (Setup).
@@ -372,15 +372,19 @@ def lagebild():
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
                 if kurs and stopp else None,
                 "ausbruch": x.get("ausbruch"), "kacheln": kacheln,
-                "rueckenwind": {k_: r.get(k_) for k_ in ("stufe", "rang", "rang_vor4", "tempo", "beschleunigung",
+                "rueckenwind": {k_: ({"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}.get(r.get(k_), r.get(k_))
+                                     if k_.endswith("_feld") else r.get(k_))
+                                for k_ in ("stufe", "rang", "rang_vor4", "tempo", "beschleunigung",
                                                          "rs_hoch_vor_kurs", "geld_ampel", "sektor", "sektor_feld",
                                                          "branche", "branche_feld", "thema", "thema_feld", "zufluss",
                                                          "jung")} if r else None,
                 "zahlen": {"ampel": z.get("ampel"), "punkte": z.get("punkte"), "termin": _termin_ok(z.get("termin")),
                            "reaktion": z.get("reaktion")} if z else None}
 
-    gruppen = [{k: g.get(k) for k in ("art", "name", "anzahl", "feld", "feld_vor4", "seit_wochen", "weg", "zufluss",
-                                      "rueckschlag", "stabil")} for g in rw.get("gruppen", [])]
+    fn = {"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}       # Namen wie auf dem Bildschirm
+    gruppen = [{k: (fn.get(g.get(k), g.get(k)) if k in ("feld", "feld_vor4") else g.get(k))
+                for k in ("art", "name", "anzahl", "feld", "feld_vor4", "seit_wochen", "weg", "zufluss",
+                          "rueckschlag", "stabil")} for g in rw.get("gruppen", [])]
     wechsel = [{"titel": tk, **e[-1]} for tk, e in (rw.get("logbuch") or {}).items()
                if e and e[-1].get("seit") and e[-1]["seit"] >= (rw.get("stand") or "")[:10]][:60]
     schnell = {a: list(rueckenwind_seite.schnell(rw, a)[1])[:15] for a in ("Anführer", "Verfolger")} if rw else {}
