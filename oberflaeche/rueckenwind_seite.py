@@ -1,6 +1,6 @@
 """Seite „Rückenwind“ (Modul rueckenwind_seite, Rechnung in kern/rueckenwind.py) (Konzept: KONZEPT_RUECKENWIND.md, 09.11.2026) – nur dieses Setup, getrennt von den Systemen.
 
-Bausteine für app.py: kopf (Lage in Zahlen), stroemungskarte (Feld Stärke × Tempo mit dem Weg der letzten 4 Wochen),
+Bausteine für app.py: kopf (Lage in Zahlen), wetterkarte (Feld je Gruppe in den letzten 5 Wochen, seit 10.11.2026),
 gruppen (Tabelle nach Geldfluss), dreifach (Karten: Kurs, Geld und Zahlen grün), stufe (Tabelle je Stufe), logbuch.
 Daten: kern/rueckenwind.py (Nachtlauf).
 """
@@ -66,74 +66,74 @@ def kopf(erg):
         + " · ".join(f"{k} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=12, unten=8)
 
 
-def stroemungskarte(erg, art):
-    """Feld Stärke × Tempo der Gruppen einer Art; Pfeil vom Stand vor 4 Wochen bis heute."""
+def _name(g):
+    """Deutscher Name der Gruppe; Themen tragen die Namen ihrer Mitglieder – dort der erste Teil."""
+    if g["art"] == "Branche":
+        try:
+            import namen_de
+            return namen_de.branche(g["name"]) or g["name"]
+        except Exception:  # noqa: BLE001
+            return g["name"]
+    return g["name"].split(" · ")[0] if g["art"] == "Thema" else g["name"]
+
+
+def _wochenfeld(punkt):
+    import sektoren
+    return sektoren.feld(punkt[0], punkt[1])
+
+
+def wetterkarte(erg, art):
+    """Wetterkarte der Strömung (10.11.2026, ersetzt die Punktwolke): je Gruppe eine Zeile mit dem Feld der letzten
+    fünf Wochen als Kästchen, der Lage heute in Worten und dem Geldfluss. Alle Gruppen, geordnet nach Feld heute –
+    Erstarkend zuerst (dort entsteht die Strömung), dann Führend offen, Schwächelnd und Zurückfallend zugeklappt."""
+    ordnung = ("Erstarkend", "Führend", "Ermüdend", "Abgehängt")
     gr = [g for g in erg["gruppen"] if g["art"] == art]
-    if not gr:
-        return seite(f'<p style="color:{TEXT_2}">Keine Gruppen.</p>')
-    W, H, P = 1000, 560, 46
-    xs = [p[0] for g in gr for p in g["weg"]] + [100]
-    ys = [p[1] for g in gr for p in g["weg"]] + [100]
-    dx = max(abs(min(xs) - 100), abs(max(xs) - 100), 2) * 1.08
-    dy = max(abs(min(ys) - 100), abs(max(ys) - 100), 2) * 1.08
-
-    def X(v):
-        return P + (W - 2 * P) * (v - (100 - dx)) / (2 * dx)
-
-    def Y(v):
-        return P + (H - 2 * P) * (1 - (v - (100 - dy)) / (2 * dy))
-
-    s = [f'<svg viewBox="0 0 {W} {H}" width="100%" style="display:block;background:{KARTE};border:1px solid {RAND};'
-         f'border-radius:12px" role="img" aria-label="Strömungskarte {art}">',
-         '<defs><marker id="pf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" '
-         'orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.6"/>'
-         '</marker></defs>']
-    for x0, y0, x1, y1, feld in ((P, P, X(100), Y(100), "Erstarkend"), (X(100), P, W - P, Y(100), "Führend"),
-                                  (P, Y(100), X(100), H - P, "Abgehängt"), (X(100), Y(100), W - P, H - P, "Ermüdend")):
-        f = FELD_FARBE[feld]
-        s.append(f'<rect x="{x0}" y="{y0}" width="{x1 - x0}" height="{y1 - y0}" fill="{f}" fill-opacity="0.06"/>')
-        tx = x0 + 10 if feld in ("Erstarkend", "Abgehängt") else x1 - 10
-        anker = "start" if feld in ("Erstarkend", "Abgehängt") else "end"
-        ty = y0 + 22 if feld in ("Erstarkend", "Führend") else y1 - 12
-        s.append(f'<text x="{tx}" y="{ty}" fill="{f}" font-size="15" text-anchor="{anker}" font-weight="600">'
-                 f'{FELD_TEXT[feld]}</text>')
-    s.append(f'<line x1="{X(100)}" x2="{X(100)}" y1="{P}" y2="{H - P}" stroke="{RAND}"/>'
-             f'<line x1="{P}" x2="{W - P}" y1="{Y(100)}" y2="{Y(100)}" stroke="{RAND}"/>')
-    s.append(f'<text x="{W - P}" y="{H - 14}" fill="{TEXT_3}" font-size="12" text-anchor="end">Stärke gegen S&amp;P 500 →'
-             f'</text><text x="{P}" y="{P - 14}" fill="{TEXT_3}" font-size="12">↑ Tempo (Stärke nimmt zu)</text>')
-    beschriften = art == "Sektor" or len(gr) <= 14
-    wichtig = sorted(gr, key=lambda g: -(abs(g["weg"][-1][1] - g["weg"][0][1]) + abs(g["weg"][-1][0] - g["weg"][0][0])))
-    marke = {id(g) for g in wichtig[:12]} if not beschriften else {id(g) for g in gr}
-    for g in gr:
-        f = FELD_FARBE[g["feld"]]
-        pts = " ".join(f"{X(a):.1f},{Y(b):.1f}" for a, b in g["weg"])
-        s.append(f'<polyline points="{pts}" fill="none" stroke="{f}" stroke-opacity="0.55" stroke-width="1.4" '
-                 f'marker-end="url(#pf)"/>')
-        a, b = g["weg"][-1]
-        r_ = 6 if art == "Sektor" else 4
-        z = g.get("zufluss")
-        ring = GRUEN if z and z >= ZUFLUSS[0] else ROT if z and z < ZUFLUSS[1] else None
-        if ring:                                 # Ring = Volumen-Zufluss (grün) oder -Abfluss (rot) der Gruppe
-            s.append(f'<circle cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r_ + 4}" fill="none" stroke="{ring}" '
-                     f'stroke-width="2"/>')
-        if g.get("stabil"):                      # Raute = stabil: führt seit 8 Wochen, Rückschlag höchstens 8 %
-            s.append(f'<rect x="{X(a) - r_ - 7:.1f}" y="{Y(b) - r_ - 7:.1f}" width="{2 * r_ + 14}" '
-                     f'height="{2 * r_ + 14}" fill="none" stroke="{TEXT}" stroke-width="1" '
-                     f'transform="rotate(45 {X(a):.1f} {Y(b):.1f})"/>')
-        s.append(f'<circle cx="{X(a):.1f}" cy="{Y(b):.1f}" r="{r_}" fill="{f}">'
-                 f'<title>{t(g["name"])} · {g["feld"]} seit {g["seit_wochen"]} Wo. · Volumen-Zufluss '
-                 f'{zahl(z, 2) + "-fach" if z else "–"} · größter Rückschlag 8 Wochen {zahl(g.get("rueckschlag", 0), 1)} %'
-                 f'{" · stabil" if g.get("stabil") else ""}</title></circle>')
-        if id(g) in marke:
-            name = g["name"] if art != "Thema" else g["name"].split(" · ")[0]
-            s.append(f'<text x="{X(a) + 8:.1f}" y="{Y(b) - 6:.1f}" fill="{TEXT}" font-size="12">{t(name[:34])}</text>')
-    s.append("</svg>")
-    legende = (f'<div style="color:{TEXT_3};font-size:13px;margin-top:6px">Punkt = heute, Linie mit Pfeil = Weg der '
-               f'letzten 4 Wochen · <span style="color:{GRUEN}">○ grüner Ring</span> = Volumen-Zufluss (ab 1,1-fach an '
-               f'steigenden gegen fallende Tage) · <span style="color:{ROT}">○ roter Ring</span> = Abfluss (unter '
-               f'0,9) · ◇ Raute = stabil (führt seit 8 Wochen, größter Rückschlag höchstens 8 %) · Maus auf einen Punkt '
-               f'zeigt die Werte</div>')
-    return seite("".join(s) + legende, oben=4, unten=4)
+    kopf = (f'<div style="display:grid;grid-template-columns:minmax(140px,260px) repeat(5,30px) 1fr 120px;gap:6px;'
+            f'font-size:11px;color:{TEXT_3};padding:0 0 4px">'
+            f'<span>{art}</span><span>−4</span><span>−3</span><span>−2</span><span>−1</span><span>heute</span>'
+            f'<span>Lage</span><span>Geld</span></div>')
+    teile = []
+    for feld in ordnung:
+        liste = sorted((g for g in gr if g["feld"] == feld),
+                       key=lambda g: (g["seit_wochen"], -g["schwung"]) if feld == "Erstarkend" else (-g["staerke"],))
+        zeilen = []
+        for g in liste:
+            kaestchen = "".join(f'<span title="{FELD_TEXT[_wochenfeld(p)].split(" · ")[0]}" style="height:20px;'
+                                f'border-radius:4px;background:{FELD_FARBE[_wochenfeld(p)]}"></span>' for p in g["weg"])
+            seit = g["seit_wochen"]
+            wort = FELD_TEXT[feld].split(" · ")[0].lower()
+            lage = ("neu " + wort if seit == 1 else f"seit {seit} Wochen {wort}")
+            if g.get("stabil"):
+                lage += " · ◇ stabil"
+            z = g.get("zufluss")
+            if z:
+                fz, wz = ((GRUEN, "rein") if z >= ZUFLUSS[0] else (ROT, "raus") if z < ZUFLUSS[1] else (TEXT_2, "gleich"))
+                geld = (f'<span style="border:1px solid {fz};color:{fz};border-radius:6px;padding:1px 8px;'
+                        f'font-size:13px;text-align:center">{wz} {zahl(z, 2)}×</span>')
+            else:
+                geld = f'<span style="color:{TEXT_3}">–</span>'
+            info = (f'{_name(g)} · {g["anzahl"]} Titel · Stärke {zahl(g["staerke"], 1)} · Tempo {zahl(g["schwung"], 1)} · '
+                    f'Rückschlag 8 Wochen {zahl(g.get("rueckschlag"), 1)} %'
+                    + (f' · Mitglieder: {g["name"]}' if art == "Thema" else ""))
+            zeilen.append(f'<div title="{t(info)}" style="display:grid;grid-template-columns:minmax(140px,260px) '
+                          f'repeat(5,30px) 1fr 120px;gap:6px;align-items:center;padding:5px 0;'
+                          f'border-bottom:1px solid {RAND};font-size:15px">'
+                          f'<span style="color:{TEXT};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+                          f'{t(_name(g))} <span style="color:{TEXT_3};font-size:12px">{g["anzahl"]}</span></span>'
+                          f'{kaestchen}<span style="color:{TEXT_2};font-size:14px">{lage}</span>{geld}</div>')
+        if not zeilen:
+            continue
+        titel_ = (f'<span style="color:{FELD_FARBE[feld]};font-weight:600;font-size:16px">{FELD_TEXT[feld]}</span>'
+                  f'<span style="color:{TEXT_3};font-size:13px"> · {len(zeilen)}</span>')
+        offen = " open" if feld in ("Erstarkend", "Führend") else ""
+        teile.append(f'<details{offen} style="margin:10px 0"><summary style="cursor:pointer;padding:4px 0">{titel_}'
+                     f'</summary><div style="margin-top:6px">{kopf}{"".join(zeilen)}</div></details>')
+    legende_ = " · ".join(f'<span style="color:{FELD_FARBE[f]}">■</span> {FELD_TEXT[f].split(" · ")[0]}' for f in ordnung)
+    return seite(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 18px">'
+                 + "".join(teile)
+                 + f'<div style="color:{TEXT_3};font-size:13px;margin-top:8px">{legende_} · je Kästchen eine Woche · '
+                   f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen · Zahlen beim Darüberfahren</div>'
+                 + "</div>", oben=8, unten=8)
 
 
 def gruppen(erg, art):

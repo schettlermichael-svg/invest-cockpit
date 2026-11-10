@@ -416,10 +416,10 @@ def rueckenwind_zeigen():
         return
     with st.container(key="rueckenwind"):
         st.markdown(rw.kopf(erg), unsafe_allow_html=True)
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>① Strömungskarte · wohin das Geld fließt</h2>", oben=8,
+        st.markdown(gestaltung.seite("<h2 style='margin:0'>① Wetterkarte der Strömung · wohin das Geld fließt</h2>", oben=8,
                                      unten=0), unsafe_allow_html=True)
         art = st.radio("Ebene", ["Sektor", "Branche", "Thema"], horizontal=True, key="rw_ebene", index=1)
-        st.markdown(rw.stroemungskarte(erg, art), unsafe_allow_html=True)
+        st.markdown(rw.wetterkarte(erg, art), unsafe_allow_html=True)
         with st.expander(f"Alle {'Sektoren' if art == 'Sektor' else 'Branchen' if art == 'Branche' else 'Themen'} "
                          f"nach Geldfluss"):
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
