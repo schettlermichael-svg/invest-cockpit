@@ -776,9 +776,9 @@ def waehrung_setzen(html, tk):
     return re.sub(r"(\d)([ \u00a0])\$", lambda m_: m_.group(1) + m_.group(2) + w, html)
 
 
-def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, nadeln=None):
+def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, nadeln=None, avwap_wahl=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
-    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
+    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20, AVWAP-Anker), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
     m = z.get("marken")
     if nadeln:                                    # Konferenzraum: Hinweise der Strategen als Nadeln
         m = dict(m or {}, nadeln=nadeln)
@@ -786,7 +786,7 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz
     return waehrung_setzen(seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
                        f'<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:10px">{legende(ebene, gd_kurz)}</div>'
                        '</details>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m)}'
+                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m, avwap_wahl)}'
                        f'{z.get("rs_lesart", "")}</div>' + st_), oben=0, unten=0), z["df"].attrs.get("ticker", ""))
 
 

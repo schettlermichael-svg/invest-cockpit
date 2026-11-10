@@ -25,6 +25,10 @@ SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trend
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
 AVWAP_FARBE = "#F2F2F2"      # Anchored VWAP ab Zonenbeginn: weiß
+# Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
+AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA", "zone": AVWAP_FARBE}
+AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag", "zone": "Zone"}
+AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Micky: Zonenanker allein zu kurzfristig)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 KAUFZONE_FARBE = GRUEN
 ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
@@ -81,7 +85,7 @@ def reaktionen(df, gewinne):
 
 
 def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", zonen=None,
-          zonen_ansicht="Aktuell", gd_kurz=False, marken=None):
+          zonen_ansicht="Aktuell", gd_kurz=False, marken=None, avwap_wahl=None):
     """Kerzen mit GD, Zonen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT.
     marken (titel._chartmarken, 09.11.2026): Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short."""
     marken = marken or {}
@@ -164,18 +168,36 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         linie(linien[k], farbe, dicke)
     for k, reihe in kurz.items():
         linie(reihe, GD_KURZ[k], 1.4)
-    if tag_ebene and marken.get("avwap_ab") is not None:          # Anchored VWAP ab Beginn der Zone
-        anker = pd.Timestamp(marken["avwap_ab"])
-        t_ = voll[voll.index >= anker]
-        if len(t_) >= 2:
-            tp = (t_["High"] + t_["Low"] + t_["Close"]) / 3
-            av = (tp * t_["Volume"]).cumsum() / t_["Volume"].cumsum().replace(0, np.nan)
-            linie(av, AVWAP_FARBE, 1.8)
-            letzt = av.dropna()
-            if len(letzt):
-                y_, strich = _rechts(platz, ENDE, Y(letzt.iloc[-1]), "AVWAP 000,00 $")
-                spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{AVWAP_FARBE}" font-size="12" '
-                              f'font-weight="600">AVWAP {zahl(letzt.iloc[-1])} $</text>')
+    if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
+        import avwap
+        anker = avwap.anker(voll)
+        if marken.get("avwap_ab") is not None:
+            anker["zone"] = pd.Timestamp(marken["avwap_ab"])
+        reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
+                  if k in anker}
+        if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
+            o_, u_ = reihen["hoch"].reindex(d.index), reihen["tief"].reindex(d.index)   # Zange schattiert
+            pkt = [(X(i), Y(a_), Y(b_)) for i, (a_, b_) in enumerate(zip(o_.to_numpy(float), u_.to_numpy(float)))
+                   if not (np.isnan(a_) or np.isnan(b_)) and pmin <= min(a_, b_) and max(a_, b_) <= pmax]
+            if len(pkt) >= 2:
+                A('<polygon points="' + " ".join(f"{x:.1f},{a_:.1f}" for x, a_, _ in pkt) + " "
+                  + " ".join(f"{x:.1f},{b_:.1f}" for x, _, b_ in reversed(pkt))
+                  + f'" fill="{AVWAP_FARBEN["tief"]}" fill-opacity="0.07" stroke="none"/>')
+        for k, av in reihen.items():
+            if not len(av):
+                continue
+            farbe = AVWAP_FARBEN[k]
+            linie(av, farbe, 1.8)
+            if anker[k] >= d.index[0]:                             # Ankerpunkt im Ausschnitt: kleiner Ring
+                i_ = pos(anker[k])
+                A(f'<circle cx="{X(i_):.1f}" cy="{Y(float(av.iloc[0])):.1f}" r="4" fill="none" stroke="{farbe}" '
+                  f'stroke-width="2"/>')
+            w = float(av.iloc[-1])
+            if pmin <= w <= pmax:
+                text = f"AVWAP {AVWAP_KURZ[k]} {zahl(w)} $"
+                y_, strich = _rechts(platz, ENDE, Y(w), text, nach_oben=Y(w) > 230)   # oben: nach unten ausweichen
+                spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe}" font-size="12" '
+                              f'font-weight="600">{text}</text>')
     _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
     if tag_ebene:
         _zeichen(marken, d, pos, X, Y, A, spaete, platz, ENDE, h, l)
@@ -613,7 +635,8 @@ def legende(ebene="Tag", gd_kurz=False):
                   (GRUEN, "Band: viel Volumen am Aufwärtstag (blass über dem Schnitt, kräftig ab 1,5-fach), rot am Abwärtstag")]
     if ebene == "Tag":
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
-                      (AVWAP_FARBE, "AVWAP ab Zonenbeginn"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
+                      (AVWAP_FARBEN["hoch"], "AVWAP ab Hoch 52 Wochen"), (AVWAP_FARBEN["tief"], "AVWAP ab Tief 6 Monate (mit Hoch: Zange)"),
+                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (AVWAP_FARBE, "AVWAP ab Beginn der Zone"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'

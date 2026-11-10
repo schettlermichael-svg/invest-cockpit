@@ -444,44 +444,30 @@ def _runden(x, n=2):
 
 
 def avwaps(df):
-    """Anchored VWAP nach Brian Shannon für die Akte des Stabs (10.11.2026): ab bedeutsamen Punkten, die sich aus den
-    Kursen eindeutig ergeben – Hoch der letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag (Lücke ab
-    4 % mit mindestens doppeltem 50-Tage-Volumen, meist Zahlen oder Nachricht). Je Anker: Datum, Wert, Abstand des
-    Kurses in %, Richtung (über 5 Tage: steigt, fällt, flach). Liegen Hoch- und Tief-AVWAP weniger als 3 % auseinander,
-    ist das Shannons „Pinch“. Der Chart der Titelseite zeigt zusätzlich den AVWAP ab Beginn der Zone."""
-    import numpy as np
-    if df is None or len(df) < 30 or not {"High", "Low", "Close", "Volume"} <= set(df.columns):
+    """Anchored VWAP nach Brian Shannon für die Akte des Stabs (10.11.2026), dieselben Anker wie der Wahlschalter im
+    Chart (kern/avwap.py): Hoch der letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag. Je Anker:
+    Datum, Wert, Abstand des Kurses in %, Richtung (über 5 Tage: steigt, fällt, flach); „pinch“, wenn Hoch- und
+    Tief-AVWAP weniger als 3 % auseinander liegen."""
+    import avwap
+    a = avwap.anker(df)
+    if not a:
         return None
-    d = df.iloc[-252:]
-    tp = (d["High"] + d["Low"] + d["Close"]) / 3
-    kurs = float(d["Close"].iloc[-1])
-    anker = {"hoch_52_wochen": d["High"].idxmax(), "tief_6_monate": d["Low"].iloc[-126:].idxmin()}
-    if "Open" in d.columns:
-        vol50 = df["Volume"].rolling(50).mean().shift(1).reindex(d.index)
-        luecke = (d["Open"] / d["Close"].shift(1) - 1).abs()
-        ereignis = d.index[(luecke >= 0.04) & (d["Volume"] >= 2 * vol50)]
-        ereignis = [t for t in ereignis if t >= d.index[-126]]
-        if ereignis:
-            anker["ereignistag"] = ereignis[-1]
+    kurs = float(df["Close"].iloc[-1])
+    namen = {"hoch": "hoch_52_wochen", "tief": "tief_6_monate", "ereignis": "ereignistag"}
     aus = {}
-    for name, tag in anker.items():
-        t_ = d.index >= tag
-        if t_.sum() < 6:                                 # Anker erst wenige Tage alt: noch keine Aussage
-            aus[name] = {"ab": f"{tag:%Y-%m-%d}", "hinweis": "Anker erst wenige Tage alt – Kurs steht am "
-                         + ("Hoch" if name == "hoch_52_wochen" else "Tief" if name == "tief_6_monate" else "Ereignis")}
+    for k, tag in a.items():
+        av = avwap.reihe(df, tag)
+        if len(av) < 6:                                  # Anker erst wenige Tage alt: noch keine Aussage
+            aus[namen[k]] = {"ab": f"{tag:%Y-%m-%d}", "hinweis": "Anker erst wenige Tage alt – Kurs steht am "
+                             + {"hoch": "Hoch", "tief": "Tief", "ereignis": "Ereignis"}[k]}
             continue
-        av = (tp[t_] * d["Volume"][t_]).cumsum() / d["Volume"][t_].cumsum().replace(0, np.nan)
-        av = av.dropna()
-        if not len(av):
-            continue
-        w = float(av.iloc[-1])
-        vor = float(av.iloc[-6]) if len(av) >= 6 else float(av.iloc[0])
+        w, vor = float(av.iloc[-1]), float(av.iloc[-6])
         r = (w / vor - 1) * 100 if vor else 0
-        aus[name] = {"ab": f"{tag:%Y-%m-%d}", "wert": _zahl(w), "kurs_abstand_pct": _zahl((kurs / w - 1) * 100, 1),
-                     "richtung": "steigt" if r > 0.3 else "fällt" if r < -0.3 else "flach"}
+        aus[namen[k]] = {"ab": f"{tag:%Y-%m-%d}", "wert": _zahl(w), "kurs_abstand_pct": _zahl((kurs / w - 1) * 100, 1),
+                         "richtung": "steigt" if r > 0.3 else "fällt" if r < -0.3 else "flach"}
     h, t = aus.get("hoch_52_wochen"), aus.get("tief_6_monate")
     if h and t and h.get("wert") and t.get("wert"):
-        aus["pinch"] = abs(h["wert"] / t["wert"] - 1) * 100 < 3
+        aus["pinch"] = abs(h["wert"] / t["wert"] - 1) * 100 < avwap.PINCH_PCT
     return aus or None
 
 

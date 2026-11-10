@@ -113,7 +113,14 @@ def chart_knoepfe(tk):
         watchlist_knopf(tk)
     with k6:
         position_knopf(tk)
-    return ebene, aus, zonen_ansicht, gd_kurz
+    avwap_wahl = None
+    if ebene == "Tag":                           # AVWAP nach Shannon (10.11.2026): mehrere Anker, Zange = Hoch + Tief
+        avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
+                              default=chart.AVWAP_START, format_func=chart.AVWAP_KURZ.get, key="avwap_wahl",
+                              help="Hoch 52 W und Tief 6 M zusammen sind Shannons Zange: laufen beide Linien eng "
+                                   "zusammen, steht eine Entscheidung an. Ereignistag: jüngste Lücke ab 4 % mit "
+                                   "doppeltem Volumen. Zone: Beginn der aktuellen Zone.")
+    return ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl
 
 
 def _fenster(titel_):
@@ -604,8 +611,9 @@ elif ticker:
                 except Exception:  # noqa: BLE001
                     pass
         st.markdown(teile["oben"], unsafe_allow_html=True)
-        ebene, aus, zonen_ansicht, gd_kurz = chart_knoepfe(ticker)
-        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz), unsafe_allow_html=True)
+        ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl = chart_knoepfe(ticker)
+        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
+                    unsafe_allow_html=True)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
