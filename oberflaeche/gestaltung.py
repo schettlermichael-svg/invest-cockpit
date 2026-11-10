@@ -74,9 +74,9 @@ def karte(inhalt, titel=None, rand=RAND):
             f'padding:20px;display:flex;flex-direction:column;gap:14px">{kopf}{inhalt}</section>')
 
 
-STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),
-             ("front", "②", "Front", "Wo ist Rückenwind?"),
-             ("auswahl", "③", "Auswahl", "Wer führt, wer steht am Auslöser?"),
+STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind seit 10.11.2026 (mit Übersicht)
+             ("wind", "②", "Rückenwind", "Wohin fließt das Geld?"),
+             ("stellung", "③", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),
              ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"),
              ("truppe", "⑤", "Eigene Truppe", "Wie stehen meine Positionen?"))
 

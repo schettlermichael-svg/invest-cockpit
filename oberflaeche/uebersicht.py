@@ -1,14 +1,12 @@
-"""Übersicht „Lageeinschätzung“ – der breite Rand des Trichters (die Titelseite ist der schmale Hals). Geordnet nach
-Stationen, jede mit ihrer Frage, oben eine Sprungleiste (05.11.2026):
-  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; darunter der
-                   Dalio-Quad als Bild mit Spur der letzten 13 Wochen (quadbild.py)
-                   (Stimmungskurve seit 06.11.2026 nicht mehr auf der Übersicht; O'Neils Marktrichtung, Marktbreite und neue Hochs gegen Tiefs seit 06.11.2026 nicht mehr als
-                   Kachel – Breite und Hochs/Tiefs rechnen weiter in Minervinis Markt und der Moral der Truppe mit)
-  ② Front          Frontkarte, Lagebild nach Sektoren (Übergänge seit 06.11.2026 nicht mehr)
-  ③ Auswahl        ★ Spitze, Watchlist, Weitere, Kullamägi, VCP-Scanner (VCP · Enge grün, Flagge) (kartentisch.plan)
-  ④ Termine        Neu seit gestern, Earnings 14 Tage
+"""Teile der Seite Rückenwind, die früher die Übersicht „Lageeinschätzung“ waren (zusammengelegt am 10.11.2026):
+  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; aufklappbar das
+                   Wirtschaftswetter im Einzelnen (Dalio-Quad mit Spur, Instrumente, Abgleich mit den Sektoren)
+  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, dreifacher Rückenwind, Schnellsuche, Stufen, Logbuch)
+  ③ Stellung       Barometer, Lagekarte nach Sektoren, Reihen long und short, Watchlist (kartentisch.plan)
+  ④ Termine        Neu seit gestern, Earnings 14 Tage (kartentisch.plan)
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
-app.py setzt den Kartentisch (Lagebild bis ④) zwischen „oben“ und „unten“."""
+Die Vier-Felder-Tafel der Sektoren und die Themen-Gruppen der früheren Frontkarte zeigt die Wetterkarte (Ebene Sektor,
+Thema); app.py setzt ② bis ④ zwischen „lage“ und „unten“."""
 import os
 import sys
 import time
@@ -19,7 +17,7 @@ sys.path.insert(0, HIER)
 
 import lage                                                  # noqa: E402
 import marktdaten                                            # noqa: E402
-from frontkarte import frontkarte  # noqa: E402
+from frontkarte import quad_abgleich  # noqa: E402
 import quadbild                                              # noqa: E402
 import depotleiste                                           # noqa: E402
 from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, punkt, seite, sprungleiste,
@@ -168,7 +166,7 @@ def seite_uebersicht():
             f'gap:16px;border-bottom:1px solid {RAND};padding-bottom:16px">'
             f'<div style="display:flex;flex-direction:column;gap:4px">'
             f'<div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:{TEXT_3}">SEPA · Invest Cockpit</div>'
-            f'<h1 style="margin:0;font-size:32px;font-weight:600">Lageeinschätzung</h1></div>'
+            f'<h1 style="margin:0;font-size:32px;font-weight:600">Rückenwind</h1></div>'
             f'<div style="display:flex;gap:16px;font-size:14px;color:{TEXT_2}">'
             f'<span>Stand {stand:%d.%m.%Y}</span>'
             f'<span title="Datenampel aus dem Protokoll des Nachtlaufs (daten/nachtlauf/protokoll.json)" '
@@ -182,7 +180,15 @@ def seite_uebersicht():
         quad_bild = quadbild.bild(q, quadbild.verlauf(lage))
     except Exception:  # noqa: BLE001 – ohne Bild bleibt die Kachel
         quad_bild = ""
-    # Der Kartentisch (Lagebild als Ende von ②, dann ③ und ④) steht dazwischen; app.py setzt ihn mit Knöpfen.
-    return {"oben": seite(kopf + sprungleiste() + station("lage") + leiste + quad_bild
-                          + station("front") + frontkarte(q), unten=12),
+    try:
+        abgleich = quad_abgleich(q)
+    except Exception:  # noqa: BLE001
+        abgleich = ""
+    from gestaltung import klapp
+    einzeln = klapp("Wirtschaftswetter im Einzelnen", f"Dalio-Quad mit Spur, Instrumenten und Abgleich mit den Sektoren · "
+                    f"heute Quad {q['quad']} · {q['name']}", quad_bild + abgleich)
+    # Seite Rückenwind (10.11.2026): ① Lage hier, ② Rückenwind aus rueckenwind_seite, ③ Stellung und ④ Termine aus dem
+    # Kartentisch (app.py, mit Knöpfen), ⑤ Eigene Truppe hier.
+    return {"lage": seite(kopf + sprungleiste() + station("lage") + leiste + '<div style="height:12px"></div>' + einzeln,
+                          unten=12),
             "unten": seite(station("truppe") + depotleiste.leiste(), oben=12)}

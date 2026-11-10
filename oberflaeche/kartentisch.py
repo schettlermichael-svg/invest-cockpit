@@ -453,9 +453,9 @@ def plan(tisch=None):
     earn = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=f"{t(d)} · {t(r)}")
                     for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
-    # ② Front (Ende): Lagebild nach Sektoren · ③ Auswahl · ④ Termine – siehe uebersicht.py
-    teile = [{"art": "html", "html": lagebild(tisch)},
-             {"art": "html", "html": station("auswahl") + barometer}]
+    # ③ Stellung: Barometer, Lagekarte nach Sektoren, Reihen · ④ Termine (Seite Rückenwind seit 10.11.2026)
+    teile = [{"art": "html", "html": station("stellung") + barometer},
+             {"art": "html", "html": lagebild(tisch)}]
 
     def watchlist_abschnitte():
         """Watchlist: jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe."""

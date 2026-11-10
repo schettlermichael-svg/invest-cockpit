@@ -52,13 +52,14 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Übersicht", "Titelseite", "Rückenwind", "Konferenzraum"]
+ansicht_liste = ["Rückenwind", "Titelseite", "Konferenzraum"]   # Übersicht ist seit 10.11.2026 Teil von Rückenwind
+ALTE_SEITEN = {"Übersicht": "Rückenwind"}                       # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
 # ein Wechsel zwei Klicks.)
 if "ansicht" not in st.session_state:
-    seite = st.query_params.get("seite", "Übersicht")
-    st.session_state.ansicht = seite if seite in ansicht_liste else "Übersicht"
+    seite = ALTE_SEITEN.get(st.query_params.get("seite", "Rückenwind"), st.query_params.get("seite", "Rückenwind"))
+    st.session_state.ansicht = seite if seite in ansicht_liste else "Rückenwind"
     st.session_state.ticker = st.query_params.get("t", "HWM")
 spalte0, spalte1, _ = st.columns([4, 2, 6])
 with spalte0:
@@ -386,6 +387,8 @@ def zeigen(name, *args):
     eingebetteter SVG-Grafiken (den Chart)."""
     try:
         ab = uebersicht.abgelegt() if name == "uebersicht" else None   # vom Abendlauf gebaut: sofort da
+        if ab is not None and "lage" not in ab[0]:   # abgelegt vor dem Zusammenlegen (10.11.2026): neu bauen
+            ab = None
         if ab is not None:
             html, alt = ab
             _QUELLE["text"] = _schrank_text(alt)
@@ -394,8 +397,13 @@ def zeigen(name, *args):
             with st.spinner("Lade und rechne …"):
                 html = _gebaut(name, _codestand(), *args)
             _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
-        if isinstance(html, dict):                   # Übersicht: oben, Kartentisch mit Knöpfen, unten
-            st.markdown(html["oben"], unsafe_allow_html=True)
+        if isinstance(html, dict):                   # Seite Rückenwind: ① Lage, ② Rückenwind, ③ Stellung, ④, ⑤
+            st.markdown(html["lage"], unsafe_allow_html=True)
+            st.markdown(gestaltung.seite(gestaltung.station("wind"), oben=16, unten=0), unsafe_allow_html=True)
+            try:                                     # ein Fehler im Rückenwind lässt Stellung und Truppe stehen
+                rueckenwind_zeigen()
+            except Exception as e:  # noqa: BLE001
+                _fehler(e)
             _kartentisch_zeigen()
             st.markdown(html["unten"], unsafe_allow_html=True)
         else:
@@ -415,18 +423,18 @@ def rueckenwind_zeigen():
                                      "rechnen“) gerechnet.</p>"), unsafe_allow_html=True)
         return
     with st.container(key="rueckenwind"):
-        st.markdown(rw.kopf(erg), unsafe_allow_html=True)
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>① Wetterkarte der Strömung · wohin das Geld fließt</h2>", oben=8,
+        st.markdown(rw.kopf(erg, titel=False), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<h3 style='margin:0'>Wetterkarte der Strömung · wohin das Geld fließt</h3>", oben=8,
                                      unten=0), unsafe_allow_html=True)
         art = st.radio("Ebene", ["Sektor", "Branche", "Thema"], horizontal=True, key="rw_ebene", index=1)
         st.markdown(rw.wetterkarte(erg, art), unsafe_allow_html=True)
         with st.expander(f"Alle {'Sektoren' if art == 'Sektor' else 'Branchen' if art == 'Branche' else 'Themen'} "
                          f"nach Geldfluss"):
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>② Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h2>",
+        st.markdown(gestaltung.seite("<h3 style='margin:0'>Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h3>",
                                      oben=16, unten=0), unsafe_allow_html=True)
         st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>Schnellsuche · die Besten auf einen Blick</h2>", oben=16,
+        st.markdown(gestaltung.seite("<h3 style='margin:0'>Schnellsuche · die Besten auf einen Blick</h3>", oben=16,
                                      unten=0), unsafe_allow_html=True)
         knopf = getattr(st, "segmented_control", None)
         wahl = (knopf("Schnellsuche", ["Anführer", "Verfolger"], key="rw_schnell", label_visibility="collapsed")
@@ -440,7 +448,7 @@ def rueckenwind_zeigen():
             reihen = ereignis.selection.rows if ereignis is not None else []
             if reihen:
                 st.link_button(f"{tks[reihen[0]]}: Titelseite →", f"?seite=Titelseite&t={tks[reihen[0]]}")
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>③ Titel nach Stufe</h2>", oben=16, unten=4),
+        st.markdown(gestaltung.seite("<h3 style='margin:0'>Titel nach Stufe</h3>", oben=16, unten=4),
                     unsafe_allow_html=True)
         st.caption("◆ = auf der Watchlist")
         for nr, name in enumerate(list(rw_kern.STUFEN) + [None]):     # zuletzt: ohne Stufe (nichts weggelassen)
@@ -569,13 +577,7 @@ if ansicht == "Konferenzraum":
         konferenz_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
-elif ansicht == "Rückenwind":
-    try:
-        _QUELLE["text"] = "Stand des Nachtlaufs"
-        rueckenwind_zeigen()
-    except Exception as e:  # noqa: BLE001
-        _fehler(e)
-elif ansicht == "Übersicht":
+elif ansicht == "Rückenwind":                  # seit 10.11.2026 mit der Übersicht: Lage, Rückenwind, Stellung, …
     _, n_, w_, k_ = st.columns([6, 2, 2, 2])
     with n_:
         tisch_knopf()
