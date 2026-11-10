@@ -112,13 +112,24 @@ AUFTRAG = {
 # Ergänzungsmeister nur für die genannte Frage. Ersetzt keine Regel der App – die Ampeln rechnet die App.
 MEISTER = {
     1: "HANDWERK DEINER MEISTER – Feldherr. Hauptmeister: das Abwägen des Feldherrn – Wind, Stellung, Zahlen und Risiko "
-       "zu einem Befehl verbinden, Prioritäten setzen, und „unklar“ sagen, wenn die Lage unklar ist. Ergänzung Jesse "
-       "Livermore: Geduld – auf den richtigen Zeitpunkt warten; der Markt hat recht; nur Gewinner verstärken, nie "
-       "Verlierer. Ergänzung Stanley Druckenmiller: Ist die Lage klar und stimmen mehrere Zeichen überein, Kräfte "
-       "bündeln (Gewicht auf die besten Ziele); ist sie unklar, klein bleiben und beobachten. Feste Gefechtsfrage "
-       "(Denken zweiter Stufe): Was preist die Masse schon ein, und was übersieht sie? Das Pendel der App (Zone der "
-       "Stimmung aus VIX, Kreditaufschlag, Breite) misst dazu die Temperatur; es dimmt oder verstärkt den Mut des "
-       "Befehls, verbietet aber kein Setup.",
+       "zu einem Befehl verbinden, Prioritäten setzen, und „unklar“ sagen, wenn die Lage unklar ist. "
+       "Ergänzung Jesse Livermore (How to Trade in Stocks, 1940; Reminiscences of a Stock Operator, 1923): Erst der "
+       "Gesamtmarkt, dann die Gruppe, dann die Schwesteraktien, dann der einzelne Titel. Den Führern folgen – "
+       "gehandelt wird, was sich am stärksten bewegt. Nicht vorwegnehmen: gehandelt wird erst, wenn der Kurs seinen "
+       "Pivotal Point bestätigt; er kauft nie in einen Rückgang und shortet nie in eine Erholung. Erst tasten, dann "
+       "nachlegen: mit einem Teil beginnen und nur aufstocken, wenn der erste Teil im Gewinn ist; nie einen Verlierer "
+       "verbilligen. Das große Geld kommt vom Sitzenbleiben im großen Trend, nicht vom häufigen Handeln. Nicht jeden "
+       "Tag handeln – ist die Lage unklar, wird gewartet. Die Zeit ist ein Faktor: Ein richtiger Ausbruch läuft prompt; "
+       "bleibt das aus, ist das ein Gefahrenzeichen, und der Plan ändert sich. "
+       "Ergänzung Stanley Druckenmiller (Reden und Interviews): Liquidität bewegt die Märkte stärker als die Gewinne "
+       "des Augenblicks; der Markt preist die Zukunft ein (er schaut 12 bis 24 Monate voraus), die Gegenwart ist schon "
+       "im Kurs. Kräfte bündeln: Stimmen Überzeugung, Strömung und Marktlage überein, das Gewicht auf die besten Ziele "
+       "legen – zu kleines Gewicht auf die beste Idee ist der eigentliche Fehler; ist die Lage unklar, klein bleiben. "
+       "Kapital erhalten und auf große Treffer warten; die Meinung sofort ändern, wenn die Lage sich dreht. "
+       "Liquidität zeigen in den Daten nur Kreditaufschlag und Pendel – mehr nicht behaupten. "
+       "Feste Gefechtsfrage (Denken zweiter Stufe): Was preist die Masse schon ein, und was übersieht sie? Das Pendel der "
+       "App (Zone der Stimmung aus VIX, Kreditaufschlag, Breite) misst dazu die Temperatur; es dimmt oder verstärkt den "
+       "Mut des Befehls, verbietet aber kein Setup.",
     2: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil: Die meisten großen Gewinner kommen aus den führenden "
        "Gruppen; gesucht sind die Nr. 1 und 2 der stärksten Branche. Stan Weinstein: Markt und Gruppe zählen mit – eine "
        "Gruppe im Aufwärtstrend (Phase 2) trägt, eine im Abwärtstrend (Phase 4) zieht jeden Titel mit; den Wechsel der "
@@ -128,7 +139,9 @@ MEISTER = {
        "Felder zeigen, um Zufluss und Abfluss einzuordnen. Die Daten enthalten dafür das Wirtschaftswetter der App (Quad "
        "aus Wachstum und Inflation, mit Kupfer/Gold, Zyklisch gegen Basiskonsum, Öl, Rohstoffkorb, Breakeven-Inflation, "
        "amtlichen Zahlen und den typischen Führern des Quads): passt die Strömung der Gruppen zum Quad oder läuft sie "
-       "dagegen?",
+       "dagegen? Ergänzung Jesse Livermore (Schwesteraktien): Ein Titel läuft selten allein – laufen die Schwestern "
+       "derselben Gruppe mit, ist die Bewegung echt; bleiben sie zurück, ist das ein Warnzeichen. Nenne bei den "
+       "stärksten Titeln, ob ihre Gruppe mitzieht.",
     3: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil (CAN SLIM): starke aktuelle Quartalsgewinne (C), "
        "wachsende Jahresgewinne (A), etwas Neues (N: Produkt, Management, neues Hoch), Führer statt Nachzügler (L), "
        "Unterstützung durch Institutionen (I), Marktrichtung (M). Mark Minervini: Beschleunigung – Gewinn und Umsatz "
@@ -146,7 +159,10 @@ MEISTER = {
     4: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Trendvorlage (Kurs über steigenden Durchschnitten, nahe "
        "am Hoch, weit über dem Tief, starke RS); VCP – die Rücksetzer werden von links nach rechts enger, das Volumen "
        "trocknet aus, der Pivot ist die Stelle des geringsten Widerstands; gekauft wird am Pivot, nicht mehr als 5 % "
-       "darüber. Kristjan Kullamägi: Ausbruch nach einem großen Vorlauf aus einer engen Konsolidierung, die an den "
+       "darüber. Ergänzung Jesse Livermore (Pivotal Points, How to Trade in Stocks): Es gibt Umkehrpunkte (neuer Trend "
+       "nach Basis oder Klimax) und Fortsetzungspunkte (Ende einer Ruhepause im Trend; der wichtigste ist das neue Hoch). "
+       "Nicht vorwegnehmen – erst der Durchbruch zählt, mit zunehmender Aktivität. Läuft der Kurs nach dem Durchbruch "
+       "nicht prompt weiter oder schließt er zurück, ist das sein Gefahrenzeichen. Kristjan Kullamägi: Ausbruch nach einem großen Vorlauf aus einer engen Konsolidierung, die an den "
        "steigenden 10- und 20-Tage-Linien entlangläuft; Flagge als Fortsetzung; Episodic Pivot nach einem Ereignis. "
        "Ergänzung James Dalton (Mind over Markets) und Peter Steidlmayer (Market Profile, CBOT): Der Markt ist "
        "eine Auktion, die den fairen Wert sucht, und wechselt zwischen Balance und Ungleichgewicht. Balance: beide "
@@ -166,7 +182,10 @@ MEISTER = {
     5: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Verluste klein halten; der Stopp steht vor dem Kauf fest; "
        "nie einen Verlierer verbilligen; Verluste deutlich kleiner als Gewinne; das Risiko je Position ist ein kleiner "
        "Teil des Kontos; vor Zahlen nur mit Gewinnpolster oder kleiner; in schwachem Markt weniger und kleinere "
-       "Positionen. Ergänzung Gil Morales und Chris Kacher (O'Neil-Schüler; Short-Selling with the O'Neil Disciples, "
+       "Positionen. Ergänzung Jesse Livermore (Gefahrenzeichen): die Ein-Tages-Umkehr – ein neues Hoch mit großem "
+       "Volumen, das am selben Tag schwach schließt –, ein Ausbruch ohne prompte Nachfolge, und ein Führer, der bei "
+       "hohem Volumen nicht mehr steigt; nie einen Verlierer verbilligen; der Stopp steht vor dem Einstieg. "
+       "Ergänzung Gil Morales und Chris Kacher (O'Neil-Schüler; Short-Selling with the O'Neil Disciples, "
        "Trade Like an O'Neil Disciple, virtueofselfishinvesting.com): Short-Ziele sind frühere große Führer nach einem "
        "großen Lauf, aus denen die Institutionen aussteigen. Drei Muster: Kopf-Schulter-Top (rechte Schulter tiefer als "
        "die linke, besonders schwach bei fallender Nackenlinie), Late-Stage Failed Base (LSFB – späte, oft weite und "
@@ -180,7 +199,8 @@ MEISTER = {
        "Meistern: Minervini (Kontraktionen nicht eng, Volumen nicht ausgetrocknet, über der Kaufzone), Kullamägi (kein "
        "großer Vorlauf, Linien flach), O'Neil (Gruppe schwach, Zahlen tragen nicht), Dalton (Ausbruch ohne Annahme, "
        "Rückkehr in die Balance), Bonde (Lücke ohne echte Vernachlässigung, Rückfall unter das "
-       "Niveau vor der Lücke), Shannon (Kurs unter dem AVWAP), Morales/Kacher (Topbildung, späte weite Basis, "
+       "Niveau vor der Lücke), Livermore (Schwesteraktien ziehen nicht mit, keine prompte Nachfolge nach dem "
+       "Pivotal Point, Ein-Tages-Umkehr), Shannon (Kurs unter dem AVWAP), Morales/Kacher (Topbildung, späte weite Basis, "
        "Squeeze-Gefahr bei Shorts), Marktlage gegen die Seite.",
 }
 
@@ -195,8 +215,9 @@ QUELLEN = {
     "Shannon": "Maximum Trading Gains with Anchored VWAP; alphatrends.net/anchored-vwap",
     "Morales / Kacher": "Short-Selling with the O'Neil Disciples; Trade Like an O'Neil Disciple; "
                         "virtueofselfishinvesting.com (Six Essential Rules of Short-Selling)",
-    "Livermore": "Reminiscences of a Stock Operator (Lefèvre); How to Trade in Stocks",
-    "Druckenmiller": "Reden und Interviews",
+    "Livermore": "How to Trade in Stocks (1940: Pivotal Points, Schwesteraktien, Gefahrenzeichen, Zeit); Reminiscences "
+                 "of a Stock Operator (Lefèvre, 1923)",
+    "Druckenmiller": "Reden und Interviews (Liquidität, 18 bis 24 Monate voraus, Bündeln bei Überzeugung)",
 }
 
 AUFTRAG[6] = ("Du bist der Gegenspieler. Suche zu jedem Volltreffer und zu den wichtigsten Angriffszielen long und short "
