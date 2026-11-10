@@ -178,7 +178,9 @@ MEISTER = {
        "steigendem AVWAP: Käufer haben die Kontrolle; unter fallendem: Verkäufer; flacher AVWAP: Kampf. Ein Bruch "
        "dreht Unterstützung in Widerstand und umgekehrt. Der AVWAP ist eine Zone zum Beobachten, kein mechanisches "
        "Signal; schneidet der Kurs hindurch, nicht hoffen. Laufen AVWAPs von Hoch und Tief zusammen (Shannons "
-       "„Pinch“), steht eine Entscheidung bevor. Nur nennen, wenn die Daten einen AVWAP enthalten.",
+       "„Pinch“), steht eine Entscheidung bevor. Die Akte enthält je Titel unter „avwap“ drei Anker (Hoch der "
+       "letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag mit Lücke und Volumen) mit Wert, Abstand und "
+       "Richtung sowie „pinch“. Fehlt der Eintrag, sage nichts zum AVWAP.",
     5: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Verluste klein halten; der Stopp steht vor dem Kauf fest; "
        "nie einen Verlierer verbilligen; Verluste deutlich kleiner als Gewinne; das Risiko je Position ist ein kleiner "
        "Teil des Kontos; vor Zahlen nur mit Gewinnpolster oder kleiner; in schwachem Markt weniger und kleinere "
@@ -441,6 +443,48 @@ def _runden(x, n=2):
     return x
 
 
+def avwaps(df):
+    """Anchored VWAP nach Brian Shannon für die Akte des Stabs (10.11.2026): ab bedeutsamen Punkten, die sich aus den
+    Kursen eindeutig ergeben – Hoch der letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag (Lücke ab
+    4 % mit mindestens doppeltem 50-Tage-Volumen, meist Zahlen oder Nachricht). Je Anker: Datum, Wert, Abstand des
+    Kurses in %, Richtung (über 5 Tage: steigt, fällt, flach). Liegen Hoch- und Tief-AVWAP weniger als 3 % auseinander,
+    ist das Shannons „Pinch“. Der Chart der Titelseite zeigt zusätzlich den AVWAP ab Beginn der Zone."""
+    import numpy as np
+    if df is None or len(df) < 30 or not {"High", "Low", "Close", "Volume"} <= set(df.columns):
+        return None
+    d = df.iloc[-252:]
+    tp = (d["High"] + d["Low"] + d["Close"]) / 3
+    kurs = float(d["Close"].iloc[-1])
+    anker = {"hoch_52_wochen": d["High"].idxmax(), "tief_6_monate": d["Low"].iloc[-126:].idxmin()}
+    if "Open" in d.columns:
+        vol50 = df["Volume"].rolling(50).mean().shift(1).reindex(d.index)
+        luecke = (d["Open"] / d["Close"].shift(1) - 1).abs()
+        ereignis = d.index[(luecke >= 0.04) & (d["Volume"] >= 2 * vol50)]
+        ereignis = [t for t in ereignis if t >= d.index[-126]]
+        if ereignis:
+            anker["ereignistag"] = ereignis[-1]
+    aus = {}
+    for name, tag in anker.items():
+        t_ = d.index >= tag
+        if t_.sum() < 6:                                 # Anker erst wenige Tage alt: noch keine Aussage
+            aus[name] = {"ab": f"{tag:%Y-%m-%d}", "hinweis": "Anker erst wenige Tage alt – Kurs steht am "
+                         + ("Hoch" if name == "hoch_52_wochen" else "Tief" if name == "tief_6_monate" else "Ereignis")}
+            continue
+        av = (tp[t_] * d["Volume"][t_]).cumsum() / d["Volume"][t_].cumsum().replace(0, np.nan)
+        av = av.dropna()
+        if not len(av):
+            continue
+        w = float(av.iloc[-1])
+        vor = float(av.iloc[-6]) if len(av) >= 6 else float(av.iloc[0])
+        r = (w / vor - 1) * 100 if vor else 0
+        aus[name] = {"ab": f"{tag:%Y-%m-%d}", "wert": _zahl(w), "kurs_abstand_pct": _zahl((kurs / w - 1) * 100, 1),
+                     "richtung": "steigt" if r > 0.3 else "fällt" if r < -0.3 else "flach"}
+    h, t = aus.get("hoch_52_wochen"), aus.get("tief_6_monate")
+    if h and t and h.get("wert") and t.get("wert"):
+        aus["pinch"] = abs(h["wert"] / t["wert"] - 1) * 100 < 3
+    return aus or None
+
+
 class Aufklaerung(Exception):
     """Kartentisch fehlt oder ist veraltet – der Stab tagt nicht (keine Kosten für leere Antworten)."""
 
@@ -481,12 +525,13 @@ def lagebild():
     def akte(tk):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
         z = r.get("zahlen") or {}
-        kurs = pivot = a = None
+        kurs = pivot = a = av = None
         try:
             df = daten.kurse_gespeichert(tk)
             if df is not None and len(df):
                 kurs = float(df["Close"].iloc[-1])
                 a = atr_modul.wert(df)
+                av = avwaps(df)
         except Exception:  # noqa: BLE001
             pass
         abst = x.get("abstand_vz")                      # mit Vorzeichen; „abstand“ ist nur der Betrag (10.11.2026)
@@ -510,7 +555,7 @@ def lagebild():
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
                 if kurs and stopp else None,
-                "ausbruch": x.get("ausbruch"), "kacheln": kacheln,
+                "ausbruch": x.get("ausbruch"), "avwap": av, "kacheln": kacheln,
                 "rueckenwind": {k_: ({"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}.get(r.get(k_), r.get(k_))
                                      if k_.endswith("_feld") else r.get(k_))
                                 for k_ in ("stufe", "rang", "rang_vor4", "tempo", "beschleunigung",
@@ -574,9 +619,9 @@ def _ausschnitt(lb, nr):
             for c in k]}
     if nr == 4:
         return {"heute": lb["heute"], "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
-            {a: c[a] for a in ("titel", "reihe", "seite", "volltreffer", "setup_minervini", "setup_kullamaegi",
+            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_minervini", "setup_kullamaegi",
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
-                               "stopp_1_5_atr", "ausbruch", "kacheln")}
+                               "stopp_1_5_atr", "ausbruch", "avwap", "kacheln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
     return {"heute": lb["heute"], "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
             "wirtschaftswetter": lb.get("wirtschaftswetter"), "depot": lb["depot"],
