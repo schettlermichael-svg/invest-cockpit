@@ -197,23 +197,39 @@ def _deutsch(text):
     return re.sub(r"(?<!\.\d)(?<!\.\d\d)(\d)\.(\d+)(?![\d.])", r"\1,\2", text)
 
 
+ATR_STOPP = 1.5                                  # ein Stopp für alle Systeme: 1,5 ATR vom Einstieg (Micky, 09.11.2026)
+
+
 def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
-    Zwei Systeme (05.11.2026): zuerst Minervini (Pivot, Tief der letzten Kontraktion, höchstens 8 %), dann Kullamägi
-    (Long: Einstieg am Pivot, Stopp am Tagestief – geplant mit höchstens einer Tagesspanne ADTR; Ermüdung nach Überdehnung (short):
-    Stopp über dem Hoch des Auslösetags), sonst keiner."""
+    Einstieg nach System: zuerst Minervini (Pivot), dann Kullamägi (Pivot), Ermüdung nach Überdehnung (short: Unterkante).
+    Stopp (10.11.2026): eine Linie für alle, 1,5 ATR vom Einstieg (wie im Chart) – vorher je System ein eigener Stopp
+    (Tief der letzten Kontraktion, Tagestief, Hoch des Auslösetags), der neben der ATR-Linie stand. Ohne ATR in erk
+    bleibt der Stopp des Systems."""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
+    a = erk.get("atr")
+    regel = f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
     if m.get("pivot") and m.get("ampel") != "rot":
-        return "long", float(m["pivot"]), float(m["stopp"]), "unter der letzten Kontraktion, höchstens 8 % (Minervini)"
+        e = float(m["pivot"])
+        return ("long", e, e - ATR_STOPP * a, regel) if a else \
+            ("long", e, float(m["stopp"]), "unter der letzten Kontraktion, höchstens 8 % (Minervini)")
     h = k.get("haupt") or {}
-    if h.get("pivot") and h.get("ampel") != "rot" and k.get("adtr"):
-        stopp = h.get("stopp") or float(h["pivot"]) - float(k["adtr"])
-        return "long", float(h["pivot"]), float(stopp), "Tagestief, höchstens eine Tagesspanne (Kullamägi)"
+    if h.get("pivot") and h.get("ampel") != "rot" and (a or k.get("adtr")):
+        e = float(h["pivot"])
+        if a:
+            return "long", e, e - ATR_STOPP * a, regel
+        return "long", e, float(h.get("stopp") or e - float(k["adtr"])), "Tagestief, höchstens eine Tagesspanne (Kullamägi)"
     em = k.get("ermuedung")
     if em:
-        return "short", float(erk.get("kurs") or em["unten"]), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)"
+        e = float(em["unten"])
+        return ("short", e, e + ATR_STOPP * a, regel) if a else \
+            ("short", float(erk.get("kurs") or e), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)")
     return None                                  # ohne Setup der Systeme kein Plan (06.11.2026: kein Wertzonen-Plan mehr)
+
+
+def zahl_kurz(x):
+    return f"{x:g}".replace(".", ",")
 
 
 def nach_dem_kauf(p, df, erk=None):

@@ -525,9 +525,10 @@ def _plan(m, k, mm, km, df, marken=None, fund=None):
                      f'<b>Ermüdung nach Überdehnung (Short)</b> – Bruch der Flagge am {em["tag"]:%d.%m.}, '
                      f'Fahnenstange +{zahl(em["stange"], 0)} %</p>'
                      + "".join(ampelzeile(n, "grün" if ok else "gelb", y) for n, ok, y in em["regeln"])
-                     + ampelzeile(f"Unterkante {zahl(em['unten'])} $ · Stopp {zahl(em['stopp'])} $", "rot",
+                     + ampelzeile(f"Unterkante {zahl(em['unten'])} $ · Stopp "
+                                  f"{zahl(((marken.get('short') or {}).get('stopp')) or em['stopp'])} $ (1,5 ATR)", "rot",
                                   "Die Truppe ist weit vorgestoßen, hat sich eingegraben – jetzt bricht die Stellung "
-                                  "nach hinten weg. Stopp über dem Hoch des Auslösetags (Kullamägi)."))
+                                  "nach hinten weg. Dieselbe Stopp-Linie wie im Chart."))
     rand = GRUEN if "grün" in (m["ampel"], (hk or {}).get("ampel")) else ROT if em and em["ampel"] == "grün" else BLAU
     return "".join(teile), rand
 
@@ -991,6 +992,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
             pass
     erk = erkennung.erkenne(df, index=index)
     erk["kurs"] = float(df["Close"].iloc[-1])
+    try:                                          # ein Stopp für Plan, Lagekarte und Stückzahl: 1,5 ATR (depot.plan)
+        import atr as atr_modul
+        erk["atr"] = atr_modul.wert(df)
+    except Exception:  # noqa: BLE001
+        erk["atr"] = None
     erk["df_index"] = df.index
     try:                                          # Volumenprofil der letzten 52 Wochen für die Spalte rechts im Chart
         import volumenprofil

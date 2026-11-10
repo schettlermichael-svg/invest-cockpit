@@ -40,8 +40,8 @@ def _zeichen(df, erk, phase):
     if z and z.get("start_i") is not None and z["start_i"] < n - 2:
         u = float(df["Low"].to_numpy(float)[z["start_i"]:n - 1].min())
         if c[-1] < u:
-            aus.append(("rot", f"Frühwarnung (Weinstein): Unterstützung der Gipfelzone gebrochen – Schluss {c[-1]:.2f} unter "
-                               f"der Unterkante der Zone {u:.2f} in Phase {phase}"))
+            aus.append(("rot", f"Frühwarnung (Weinstein): Unterkante der Zone gebrochen – Schluss {c[-1]:.2f} unter "
+                               f"{u:.2f} in Phase {phase}"))
     return aus
 
 

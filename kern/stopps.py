@@ -1,8 +1,8 @@
 """Stopps und CRV vor dem Kauf (grüne Null, 05.11.2026) – Gewinne laufen lassen, Stopp nachziehen; das CRV ist ein Maß,
 ob sich der Einsatz lohnt, kein Ausstieg.
 
-Einstieg und Setup-Stopp (A) wie auf der Lagekarte (depot.plan: Pivot und Stopp der Systeme).
-Stopp B: außerhalb des Tagesrauschens, mindestens 1,5 × ATR vom Einstieg (nur gezeigt, wenn A näher liegt).
+Einstieg und Stopp wie auf der Lagekarte (depot.plan): ein Stopp, 1,5 ATR vom Einstieg wie im Chart (10.11.2026;
+vorher Stopp A des Systems und Stopp B 1,5 × ATR nebeneinander). Stopp B bleibt nur, wenn erk keine ATR trägt.
 Nächster Widerstand über dem Einstieg (Weinstein): das nächste alte Hoch der letzten 52 Wochen, das seither nicht
 überstiegen wurde (ältere Hochs sind ausgewaschen), oder ein fallender GD150/GD200 (Short gespiegelt: altes Tief bzw.
 steigender Durchschnitt) oder der nächste Volumenknoten des 52-Wochen-Profils (Auction Market Theory: der Preis wandert
@@ -93,9 +93,10 @@ def zeichen(erk, df, atr_wert):
         return []
     lang = li["seite"] == "long"
     e = li["einstieg"]
-    aus = [("grau", f"Stopp A {_geld(li['stopp_a'])} $ ({_z(li['risiko_a'] / e * 100)} % vom Einstieg)"
-                    + (f" · Stopp B {_geld(li['stopp_b'])} $ ({_z(li['risiko_b'] / e * 100)} %, 1,5 × ATR)"
-                       if li["stopp_b"] else "") + " – danach nachziehen")]
+    aus = [("grau", f"Stopp {_geld(li['stopp_a'])} $ ({_z(li['risiko_a'] / e * 100)} % vom Einstieg"
+                    + (", 1,5 × ATR" if not li["stopp_b"] else "")
+                    + (f") · Stopp B {_geld(li['stopp_b'])} $ ({_z(li['risiko_b'] / e * 100)} %, 1,5 × ATR"
+                       if li["stopp_b"] else "") + ") – danach nachziehen")]
     w = li["widerstand"]
     if w:
         aus.append((_ampel(li["crv_a"]),

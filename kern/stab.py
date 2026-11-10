@@ -293,6 +293,15 @@ def _termin_ok(text_oder_datum):
     return s_
 
 
+def _seite(x):
+    """Long oder short aus der Reihe des Setups (10.11.2026) – nicht aus der Weinstein-Phase, die nur Zeichen ist."""
+    try:
+        import lagekarte
+        return lagekarte.richtung(x) or "offen"
+    except Exception:  # noqa: BLE001
+        return "offen"
+
+
 class Aufklaerung(Exception):
     """Kartentisch fehlt oder ist veraltet – der Stab tagt nicht (keine Kosten für leere Antworten)."""
 
@@ -355,7 +364,7 @@ def lagebild():
         return {"titel": tk, "depot": tk in pos, "watchlist": tk in wl,
                 "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
-                "seite": x.get("seite"), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
+                "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
                 "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(x.get("abstand"), 1),
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
