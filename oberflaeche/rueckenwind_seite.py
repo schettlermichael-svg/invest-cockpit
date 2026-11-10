@@ -82,12 +82,64 @@ def _wochenfeld(punkt):
     return sektoren.feld(punkt[0], punkt[1])
 
 
+_SETUPS = {}
+
+
+def setups():
+    """Reihe jedes Titels im jüngsten Kartentisch als Klartext ({Ticker: „VCP · Enge grün“}); einmal je Tisch gelesen."""
+    import kartentisch
+    try:
+        neu = max((f for f in os.listdir(kartentisch.SPEICHER) if f.endswith(".json")), default=None)
+        stempel = (neu, os.path.getmtime(os.path.join(kartentisch.SPEICHER, neu))) if neu else None
+    except OSError:
+        return {}
+    if _SETUPS.get("stempel") != stempel:
+        namen = {k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN
+        tisch = kartentisch.laden() or {}
+        _SETUPS.update(stempel=stempel, werte={tk: namen.get(x.get("reihe"), x.get("reihe"))
+                                               for tk, x in (tisch.get("titel") or {}).items() if x.get("reihe")})
+    return _SETUPS["werte"]
+
+
+def _mitglieder(erg, art, g, setup, drei):
+    """Die Titel einer Gruppe als aufklappbare Liste (10.11.2026): nach RS-Rang, mit Stufe, Tempo, Setup und Link.
+    Knapp gehalten (Stil einmal in MITGLIEDER_STIL), damit die Wetterkarte mit allen Titeln schnell lädt."""
+    feld = {"Sektor": "sektor", "Branche": "branche", "Thema": "thema"}[art]
+    liste = sorted(((tk, x) for tk, x in erg["titel"].items() if x.get(feld) == g["name"]), key=lambda p: -p[1]["rang"])
+    if not liste:
+        return '<div class="mg"><i>keine Titel mit Daten</i></div>'
+    zeilen = []
+    for tk, x in liste:
+        stufe = x.get("stufe")
+        s_ = setup.get(tk)
+        zeilen.append(f'<div><b>{"◆ " if x.get("watchlist") else ""}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
+                      f'<span class="s{STUFEN_KURZ.get(stufe, "")}">{stufe or "–"}</span><span>{x["rang"]}</span>'
+                      f'<span>{"+" if x["tempo"] >= 0 else ""}{x["tempo"]}</span>'
+                      f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Setup"}</span>'
+                      f'<a href="?seite=Titelseite&t={tk}" target="_blank">Titelseite →</a></div>')
+    return ('<div class="mg"><div class="k"><span>Titel</span><span>Stufe</span><span>RS-Rang</span><span>Tempo</span>'
+            '<span>Setup (Kartentisch)</span><span></span></div>' + "".join(zeilen)
+            + '<p>nach RS-Rang · Tempo = RS-Rang heute gegen vor 4 Wochen · ◆ Watchlist · ▲▲▲ dreifacher Rückenwind</p></div>')
+
+
+STUFEN_KURZ = {"Entsteht": "e", "Läuft": "l", "Ermüdet": "m", "Abfluss": "a"}
+MITGLIEDER_STIL = (
+    f"<style>.mg{{margin:4px 0 12px 12px;padding:8px 12px;border-left:2px solid {RAND};font-size:13px}}"
+    f".mg>div{{display:grid;grid-template-columns:110px 90px 70px 80px 1fr 90px;gap:8px;align-items:center;"
+    f"padding:3px 0;border-bottom:1px dotted {RAND};color:{TEXT_2}}}"
+    f".mg>div.k{{font-size:11px;color:{TEXT_3};border:0}}.mg b{{color:{TEXT}}}.mg a{{color:{BLAU};text-decoration:none}}"
+    f".mg .se{{color:{BLAU}}}.mg .sl{{color:{GRUEN}}}.mg .sm{{color:{GELB}}}.mg .sa{{color:{ROT}}}.mg .o,.mg i{{color:{TEXT_3}}}"
+    f".mg p{{color:{TEXT_3};font-size:12px;margin:6px 0 0}}.wk summary{{list-style:none}}"
+    f".wk summary::-webkit-details-marker{{display:none}}</style>")
+
+
 def wetterkarte(erg, art):
     """Wetterkarte der Strömung (10.11.2026, ersetzt die Punktwolke): je Gruppe eine Zeile mit dem Feld der letzten
     fünf Wochen als Kästchen, der Lage heute in Worten und dem Geldfluss. Alle Gruppen, geordnet nach Feld heute –
     Erstarkend zuerst (dort entsteht die Strömung), dann Führend offen, Schwächelnd und Zurückfallend zugeklappt."""
     ordnung = ("Erstarkend", "Führend", "Ermüdend", "Abgehängt")
     gr = [g for g in erg["gruppen"] if g["art"] == art]
+    setup, drei = setups(), {tk for tk, _ in dreifach_liste(erg)}
     kopf = (f'<div style="display:grid;grid-template-columns:minmax(140px,260px) repeat(5,30px) 1fr 120px;gap:6px;'
             f'font-size:11px;color:{TEXT_3};padding:0 0 4px">'
             f'<span>{art}</span><span>−4</span><span>−3</span><span>−2</span><span>−1</span><span>heute</span>'
@@ -115,12 +167,14 @@ def wetterkarte(erg, art):
             info = (f'{_name(g)} · {g["anzahl"]} Titel · Stärke {zahl(g["staerke"], 1)} · Tempo {zahl(g["schwung"], 1)} · '
                     f'Rückschlag 8 Wochen {zahl(g.get("rueckschlag"), 1)} %'
                     + (f' · Mitglieder: {g["name"]}' if art == "Thema" else ""))
-            zeilen.append(f'<div title="{t(info)}" style="display:grid;grid-template-columns:minmax(140px,260px) '
-                          f'repeat(5,30px) 1fr 120px;gap:6px;align-items:center;padding:5px 0;'
-                          f'border-bottom:1px solid {RAND};font-size:15px">'
+            zeilen.append(f'<details><summary title="{t(info)}" style="display:grid;cursor:pointer;'
+                          f'grid-template-columns:minmax(140px,260px) repeat(5,30px) 1fr 120px;gap:6px;'
+                          f'align-items:center;padding:5px 0;border-bottom:1px solid {RAND};font-size:15px">'
                           f'<span style="color:{TEXT};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-                          f'{t(_name(g))} <span style="color:{TEXT_3};font-size:12px">{g["anzahl"]}</span></span>'
-                          f'{kaestchen}<span style="color:{TEXT_2};font-size:14px">{lage}</span>{geld}</div>')
+                          f'{t(_name(g))} <span style="color:{BLAU};font-size:12px;border:1px solid {RAND};'
+                          f'border-radius:6px;padding:0 5px">{g["anzahl"]} ▾</span></span>'
+                          f'{kaestchen}<span style="color:{TEXT_2};font-size:14px">{lage}</span>{geld}</summary>'
+                          f'{_mitglieder(erg, art, g, setup, drei)}</details>')
         if not zeilen:
             continue
         titel_ = (f'<span style="color:{FELD_FARBE[feld]};font-weight:600;font-size:16px">{FELD_TEXT[feld]}</span>'
@@ -129,10 +183,11 @@ def wetterkarte(erg, art):
         teile.append(f'<details{offen} style="margin:10px 0"><summary style="cursor:pointer;padding:4px 0">{titel_}'
                      f'</summary><div style="margin-top:6px">{kopf}{"".join(zeilen)}</div></details>')
     legende_ = " · ".join(f'<span style="color:{FELD_FARBE[f]}">■</span> {FELD_TEXT[f].split(" · ")[0]}' for f in ordnung)
-    return seite(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 18px">'
+    return seite(MITGLIEDER_STIL + f'<div class="wk" style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 18px">'
                  + "".join(teile)
                  + f'<div style="color:{TEXT_3};font-size:13px;margin-top:8px">{legende_} · je Kästchen eine Woche · '
-                   f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen · Zahlen beim Darüberfahren</div>'
+                   f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen · Zahl hinter dem Namen = Titel im Revier, '
+                   f'Klick auf die Zeile zeigt sie · Zahlen beim Darüberfahren</div>'
                  + "</div>", oben=8, unten=8)
 
 
