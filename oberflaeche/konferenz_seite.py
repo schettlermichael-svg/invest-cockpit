@@ -1,4 +1,4 @@
-"""Seite Konferenzraum (09.11.2026): Tagesbefehl des Strategen, die vier Lagemeldungen, Akten je Titel mit Nadeln im
+"""Seite Konferenzraum (09.11.2026): Tagesbefehl des Strategen, die Lagemeldungen (vier Fachleute und der Gegenspieler), Einwände mit Abwägung, Faktenwache, Akten je Titel mit Nadeln im
 Chart, „Stab fragen“ und Kostenbuch. Rechnet nicht – liest die Konferenz des Nachtlaufs (kern/stab.py)."""
 import os
 import sys
@@ -26,9 +26,9 @@ def kopf(k):
         f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Konferenzraum · MARAGA Investment</h1>'
         f'<div style="color:{TEXT_2};font-size:14px">{stand} · Kosten {ko["usd"]:.2f} $ von {stab.DECKEL_USD:.0f} $ im Monat'
         f' · {ko["aufrufe"]} Aufrufe · {ko["suchen"]} Web-Suchen</div></div>'
-        f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Fünf Strategen lesen nach dem Nachtlauf die Daten der App '
-        f'und erklären die Lage. Sie zeigen auf, sie filtern nichts und entscheiden nichts – jede Zahl stammt aus der App '
-        f'oder einer genannten Quelle.</p>', oben=12, unten=8)
+        f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Sechs Strategen lesen nach dem Nachtlauf die Daten der App '
+        f'und erklären die Lage, jeder nach dem Handwerk seiner Meister; ein Gegenspieler sucht die Schwächen. Sie zeigen auf, sie filtern nichts und entscheiden nichts – jede Zahl stammt aus der App '
+        f'oder einer genannten Quelle, die Faktenwache markiert, was sie nicht findet.</p>', oben=12, unten=8)
 
 
 def _hinweis(nr, h, mit_titel=True):
@@ -41,7 +41,26 @@ def _hinweis(nr, h, mit_titel=True):
              f'font-size:12px;font-weight:700;align-items:center;justify-content:center;margin-right:8px;flex:none">'
              f'{nr}</span>' if nr else f'<span style="margin-right:8px">{PUNKT.get(h.get("ampel"), "⚪")}</span>')
     return (f'<div style="display:flex;align-items:flex-start;font-size:15px;line-height:1.5;margin:6px 0">{nadel}'
-            f'<div>{titel_}{tag}{_h(h.get("text"))}</div></div>')
+            f'<div>{titel_}{tag}{_h(h.get("text"))}{_wache(h)}</div></div>')
+
+
+def _wache(h):
+    """Vermerk der Faktenwache (10.11.2026): was sie in den Daten nicht gefunden hat – nachsehen, nicht unbedingt falsch."""
+    w = h.get("wache") or {}
+    teile = ([f'Ticker unbekannt: {", ".join(w["ticker"])}'] if w.get("ticker") else []) \
+        + ([f'Zahl nicht in den Daten: {"; ".join(w["zahlen"])}'] if w.get("zahlen") else [])
+    return (f'<div style="font-size:13px;color:{GELB};margin-top:2px">⚠ Faktenwache · {_h(" · ".join(teile))}</div>'
+            if teile else "")
+
+
+def _einwand(e):
+    f = FARBE.get(e.get("ampel"), TEXT_2)
+    tks = stab._ticker(e.get("titel"), None)
+    titel_ = " · ".join(f'<a href="?seite=Titelseite&t={tk}" target="_self" style="color:{BLAU};font-weight:600;'
+                        f'text-decoration:none">{tk}</a>' for tk in tks)
+    return (f'<div style="border-left:3px solid {f};padding:2px 0 2px 10px;margin:8px 0;font-size:15px;line-height:1.5">'
+            f'{titel_ + " · " if titel_ else ""}<span style="color:{TEXT_2}">Einwand:</span> {_h(e.get("einwand"))}<br>'
+            f'<span style="color:{TEXT_2}">Abwägung:</span> {_h(e.get("antwort"))}{_wache(e)}</div>')
 
 
 def befehl(k):
@@ -56,6 +75,11 @@ def befehl(k):
                       f'<span style="color:{TEXT_3};font-weight:400"> · {len(liste)}</span></div>'
                       + ("".join(_hinweis(None, h) for h in liste)
                          or f'<div style="font-size:14px;color:{TEXT_3}">keine</div>'))
+    if "einwaende" in b:
+        liste = b.get("einwaende") or []
+        teile += (f'<div style="font-size:14px;font-weight:600;color:{TEXT_2};margin:14px 0 2px">Einwände des '
+                  f'Gegenspielers · Abwägung<span style="color:{TEXT_3};font-weight:400"> · {len(liste)}</span></div>'
+                  + ("".join(_einwand(e) for e in liste) or f'<div style="font-size:14px;color:{TEXT_3}">keine</div>'))
     return seite(
         f'<div style="background:{KARTE};border:2px solid {BLAU};border-radius:14px;padding:18px 20px">'
         f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">1 · Stratege · '

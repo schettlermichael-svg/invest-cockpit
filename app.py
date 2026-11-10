@@ -513,7 +513,7 @@ def konferenz_zeigen():
                     st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
     with knopf_:
         if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
-                     help="Die fünf Strategen lesen den Stand des letzten Nachtlaufs (rund 2–5 Minuten, wenige Cent). "
+                     help="Die sechs Strategen lesen den Stand des letzten Nachtlaufs (rund 4–10 Minuten, etwa 1 $). "
                           "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
             nachtlauf.konferenz_starten()
             st.rerun()
@@ -532,7 +532,7 @@ def konferenz_zeigen():
     else:
         st.markdown(ks.befehl(k), unsafe_allow_html=True)
         sp = st.columns(2)
-        for i, nr in enumerate((2, 3, 4, 5)):
+        for i, nr in enumerate((2, 3, 4, 5, 6)):
             m = (k.get("meldungen") or {}).get(str(nr))
             if m:
                 with sp[i % 2]:
@@ -540,7 +540,7 @@ def konferenz_zeigen():
         st.markdown(gestaltung.seite("<h2 style='margin:0'>Akten · Hinweise je Titel, als Nadeln im Chart</h2>", oben=16,
                                      unten=0), unsafe_allow_html=True)
         akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
-        st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko")
+        st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
         for tk, eintraege in akten:
             with st.expander(f"**{tk}** · {len(eintraege)} Hinweis{'e' if len(eintraege) > 1 else ''}"):
                 st.markdown(ks.akte_text(eintraege), unsafe_allow_html=True)
