@@ -5,7 +5,6 @@ steckbrief(ticker) -> Name, Sektor, Branche (einmal geladen, dann aus dem Speich
 Die Kurse werden einmal je Tag neu geholt; ein unvollständiger heutiger Balken vor 22:30 Uhr
 deutscher Zeit wird verworfen, damit die Rechnung nur mit abgeschlossenen Tagen arbeitet.
 """
-import json
 import os
 import time
 from datetime import datetime

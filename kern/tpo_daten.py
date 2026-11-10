@@ -15,7 +15,7 @@ fortsetzen(ticker_liste) -> Yahoo, letzte 60 Tage, an die gespeicherten Reihen a
 """
 import json
 import os
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import pandas as pd

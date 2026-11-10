@@ -350,8 +350,9 @@ def lagebild():
                 a = atr_modul.wert(df)
         except Exception:  # noqa: BLE001
             pass
-        if kurs and x.get("abstand") is not None:
-            pivot = kurs / (1 + float(x["abstand"]) / 100)
+        abst = x.get("abstand_vz")                      # mit Vorzeichen; „abstand“ ist nur der Betrag (10.11.2026)
+        if kurs and abst is not None:
+            pivot = kurs / (1 + float(abst) / 100)
         stopp = pivot - 1.5 * a if pivot and a else None
         kacheln = {}
         for k_, v in (x.get("kacheln") or {}).items():
@@ -366,7 +367,7 @@ def lagebild():
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
                 "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
-                "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(x.get("abstand"), 1),
+                "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(abst, 1),
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
                 if kurs and stopp else None,

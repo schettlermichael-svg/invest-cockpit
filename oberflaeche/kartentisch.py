@@ -110,10 +110,11 @@ def _stufe1(tk):
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
                       "ermuedung": (k["ermuedung"] or {}).get("ampel")}}
         hk = k.get("haupt") or {}
-        if m["pivot"]:
-            info["abstand"] = abs((c[-1] / m["pivot"] - 1) * 100)
-        elif hk.get("pivot"):
-            info["abstand"] = abs((c[-1] / hk["pivot"] - 1) * 100)
+        import depot
+        piv, _ = depot.einstieg_long(m, k)              # derselbe Einstieg wie Chart, Plan und Stab (10.11.2026)
+        if piv:
+            info["abstand_vz"] = (c[-1] / piv - 1) * 100   # mit Vorzeichen, für den Stab
+            info["abstand"] = abs(info["abstand_vz"])
         info["gruen"] = m["ampel"] == "grün" or (hk.get("ampel") == "grün")
         info["luecken"] = ([f"M: {x}" for x in info["m"]["fehlt"]] if m["ampel"] != "grün" else [])
         if k.get("ep") and k["ep"]["ampel"] != "rot":
@@ -121,7 +122,7 @@ def _stufe1(tk):
         elif k.get("ermuedung"):
             em = k["ermuedung"]
             info.update(reihe="k_ermuedung", stern=em["ampel"] == "grün", gruen=em["ampel"] == "grün",
-                        abstand=abs((c[-1] / em["unten"] - 1) * 100),
+                        abstand=abs((c[-1] / em["unten"] - 1) * 100), abstand_vz=(c[-1] / em["unten"] - 1) * 100,
                         luecken=[] if em["ampel"] == "grün" else ["Short: zurück in der Flagge"])
         elif m["ampel"] == "grün" and m["abstand"] is not None and -PIVOT_NAH <= m["abstand"] <= KAUFZONE_M:
             info.update(reihe="m_spitze", stern=True)
@@ -155,12 +156,12 @@ def _scannerfeld(info, scan, br=None):
     if br:
         bz, be = br["zone"], br["enge"]
         if be.get("ampel") == "grün" and abs(br["abstand"]) <= PIVOT_NAH:
-            info.update(reihe="vcp", gruen=not br["fehl"], stern=False, abstand=abs(br["abstand"]),
+            info.update(reihe="vcp", gruen=not br["fehl"], stern=False, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
                         scanner=f'{bz["name"]} {zahl(bz["wochen"], 1)} Wochen · Enge {be["folge"]} % · Pivot '
                                 f'{zahl(br["pivot"])} $')
             return
         if bz.get("name") == "Flagge":
-            info.update(reihe="flagge", gruen=br["kaufzone"], stern=False, abstand=abs(br["abstand"]),
+            info.update(reihe="flagge", gruen=br["kaufzone"], stern=False, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
                         scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
                                 f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
                                 + (" · in einer Base" if br["innen"] else ""))
@@ -169,14 +170,14 @@ def _scannerfeld(info, scan, br=None):
     if not z.get("zone"):
         return
     if e.get("ampel") == "grün" and -PIVOT_NAH <= e["abstand"] <= PIVOT_NAH:
-        info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]),
+        info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]), abstand_vz=e["abstand"],
                     scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · Pivot {zahl(e["pivot"])} $ '
                             f'({"+" if e["abstand"] >= 0 else "−"}{zahl(abs(e["abstand"]), 1)} %)')
         return
     f = z if z["name"] == "Flagge" else z.get("innen")
     if f and f["laenge"] == "ok":
         nah = f["abstand"] >= -PIVOT_NAH
-        info.update(reihe="flagge", gruen=nah, stern=False, abstand=abs(f["abstand"]),
+        info.update(reihe="flagge", gruen=nah, stern=False, abstand=abs(f["abstand"]), abstand_vz=f["abstand"],
                     scanner=f'Flagge {zahl(f["wochen"], 1)} Wochen, {zahl(f["tiefe"], 0)} % tief · Stange '
                             f'+{zahl(f["stange"]["prozent"], 0)} % in {zahl(f["stange"]["wochen"], 1)} Wochen · '
                             f'Kurs {zahl(f["abstand"], 1)} % zur Oberkante'
@@ -382,7 +383,7 @@ def _kopf(name, zahl_, text, h=2):
     groesse = 26 if h == 2 else 19
     return (f'<div style="display:flex;align-items:baseline;gap:14px;margin:12px 0 4px"><h{h} style="margin:0;'
             f'font-size:{groesse}px">{t(name)} <span style="color:{TEXT_3};font-weight:500">{zahl_}</span></h{h}>'
-            + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + f'</div>')
+            + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + '</div>')
 
 
 def _abschnitt(name, text, liste, liste_name=None, fehlen=(), zahl_=None):

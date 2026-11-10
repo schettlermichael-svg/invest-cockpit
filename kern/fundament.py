@@ -26,6 +26,8 @@ def _wachstum(reihe):
 def _p(x, stellen=0, vorzeichen=True):
     """Deutsche Zahl mit echtem Minuszeichen, optional mit Plus."""
     t = f"{abs(x):,.{stellen}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    if round(abs(x), stellen) == 0:              # nicht „−0,0“ (10.11.2026)
+        return ("±" if vorzeichen else "") + t
     return ("−" if x < 0 else "+" if vorzeichen else "") + t
 
 

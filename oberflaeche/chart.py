@@ -470,14 +470,15 @@ def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
         x = X(pos(tag))
         A(f'<line x1="{x:.1f}" x2="{x:.1f}" y1="34" y2="430" stroke="{GELB}" stroke-width="1" stroke-opacity="0.55" '
           f'stroke-dasharray="3 4"/>')
-        t_ = f'E {"+" if pr >= 0 else "−"}{zahl(abs(pr), 1)} %'
+        vz = "±" if round(abs(pr), 1) == 0 else "+" if pr >= 0 else "−"
+        t_ = f'E {vz}{zahl(abs(pr), 1)} %'
         spaete.append(f'<text x="{x:.1f}" y="{platz(x, 448, t_, 12, nach_oben=False):.1f}" fill="{GRUEN if pr >= 0 else ROT}" font-size="12" font-weight="600" '
-                      f'text-anchor="middle"><title>Zahlen {tag:%d.%m.%Y}: Kurs am Reaktionstag {"+" if pr >= 0 else "−"}'
-                      f'{zahl(abs(pr), 1)} %</title>E {"+" if pr >= 0 else "−"}{zahl(abs(pr), 1)} %</text>')
+                      f'text-anchor="middle"><title>Zahlen {tag:%d.%m.%Y}: Kurs am Reaktionstag {vz}'
+                      f'{zahl(abs(pr), 1)} %</title>{t_}</text>')
     termin = m.get("termin")
     if termin is not None:
         termin = pd.Timestamp(termin)
-        tage = (termin.normalize() - pd.Timestamp.now().normalize()).days
+        tage = -1 if pd.isna(termin) else (termin.normalize() - pd.Timestamp.now().normalize()).days
         if tage >= 0:
             nah = tage <= 14
             t_ = f'{"⚠ " if nah else ""}E in {tage} T · {termin:%d.%m.}'

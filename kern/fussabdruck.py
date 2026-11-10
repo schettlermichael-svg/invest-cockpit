@@ -37,13 +37,6 @@ def atr_spanne(df, i):
     return float(tr[i - 1] / atr) if atr > 0 else None
 
 
-def spanne_text(x):
-    """„Spanne 1,6 × ATR ↑ Vorstoß mit Kraft“ bzw. „Spanne 0,7 × ATR → verhaltener Vorstoß“ (Zeichen, kein Filter)."""
-    if not x:
-        return ""
-    z = f"{x:.1f}".replace(".", ",")
-    return f"Spanne {z} × ATR " + ("↑ Vorstoß mit Kraft" if x > 1 else "→ verhaltener Vorstoß")
-
 
 def _schnitt50(v, i):
     """Schnitt der 50 Tage vor Tag i (ohne Tag i)."""

@@ -200,6 +200,20 @@ def _deutsch(text):
 ATR_STOPP = 1.5                                  # ein Stopp für alle Systeme: 1,5 ATR vom Einstieg (Micky, 09.11.2026)
 
 
+def einstieg_long(m, k):
+    """Der eine Einstieg (Pivot) eines Long-Setups für Chart, Kartentisch, Plan und Stab (10.11.2026 – vorher drei
+    verschiedene Reihenfolgen): Episodic Pivot (nicht rot), Minervinis Pivot, Pivot des letzten Ausbruchs,
+    Kullamägi-Breakout. → (Pivot, Quelle) oder (None, "")."""
+    m, k = m or {}, k or {}
+    ep, kb, br = k.get("ep") or {}, k.get("breakout") or {}, m.get("ausbruch") or {}
+    for e, quelle in (((ep.get("pivot") if ep.get("ampel") != "rot" else None), "Episodic Pivot"),
+                      (m.get("pivot"), "Minervini"), (br.get("pivot"), "Ausbruch"),
+                      (kb.get("pivot"), "Kullamägi Breakout")):
+        if e:
+            return float(e), quelle
+    return None, ""
+
+
 def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
     Einstieg nach System: zuerst Minervini (Pivot), dann Kullamägi (Pivot), Ermüdung nach Überdehnung (short: Unterkante).
@@ -210,8 +224,18 @@ def plan(erk):
     m, k = sy.get("m") or {}, sy.get("k") or {}
     a = erk.get("atr")
     regel = f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
+    # Reihenfolge wie die Reihen des Kartentischs (10.11.2026: MU stand in „Ermüdung (Short)“, der Plan rechnete long):
+    # Episodic Pivot, Ermüdung (short), Minervini, Kullamägi-Breakout
+    ep, em = k.get("ep"), k.get("ermuedung")
+    if ep and ep.get("ampel") != "rot" and ep.get("pivot") and a:
+        e = float(ep["pivot"])
+        return "long", e, e - ATR_STOPP * a, regel
+    if em and not (ep and ep.get("ampel") != "rot"):
+        e = float(em["unten"])
+        return ("short", e, e + ATR_STOPP * a, regel) if a else \
+            ("short", float(erk.get("kurs") or e), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)")
     if m.get("pivot") and m.get("ampel") != "rot":
-        e = float(m["pivot"])
+        e = einstieg_long(m, k)[0] or float(m["pivot"])
         return ("long", e, e - ATR_STOPP * a, regel) if a else \
             ("long", e, float(m["stopp"]), "unter der letzten Kontraktion, höchstens 8 % (Minervini)")
     h = k.get("haupt") or {}

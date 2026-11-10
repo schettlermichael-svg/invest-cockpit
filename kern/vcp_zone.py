@@ -339,7 +339,8 @@ def ausbruch_text(a):
         return ""
     k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
     v = lambda x: f"{x:.2f}".replace(".", ",")       # noqa: E731 – zwei Stellen, damit 1,03 nicht als 1,0 erscheint
-    ab = f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))} % zum Pivot"
+    ab = ("±0,0" if round(abs(a["abstand"]), 1) == 0 else f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))}") \
+        + " % zum Pivot"
     if a["fehl"]:
         return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} zurück in der Zone · {ab} – "
                 f"kein Kauf, bis der Kurs wieder über dem Pivot schließt")

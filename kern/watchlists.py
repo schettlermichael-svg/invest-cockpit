@@ -72,10 +72,6 @@ def drin(ticker):
     return ticker.upper() in alle()
 
 
-def listen_von(ticker):
-    """[„Watchlist“], wenn der Titel darauf steht, sonst [] (Form für den Kartentisch)."""
-    return [STANDARD] if drin(ticker) else []
-
 
 def setzen(ticker, auf):
     """Titel auf die Watchlist (auf=True) oder herunter. Heruntergenommen gilt er als gelöscht: ohne Revier fällt er aus

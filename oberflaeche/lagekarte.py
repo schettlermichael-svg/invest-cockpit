@@ -146,7 +146,8 @@ def _abstand(erk, kurs):
     if p:
         ab = (kurs / p - 1) * 100
         anteil = min(1.0, max(0.0, 1 + ab / 10)) if ab <= 0 else 1.0
-        return "Abstand zum Pivot (long)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", anteil, \
+        wert = "±0,0" if round(abs(ab), 1) == 0 else f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)}"
+        return "Abstand zum Pivot (long)", f"{wert} %", anteil, \
             (GRUEN if 0 <= ab <= 5 else BLAU)
     if em:
         ab = (kurs / em["unten"] - 1) * 100

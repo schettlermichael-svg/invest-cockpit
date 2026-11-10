@@ -167,10 +167,3 @@ def ampelzeile(name, ampel, text="", hilfe=""):
 SETUPS = ("Flagge", "Powerplay", "Umkehr")      # eigenes Setup (Trendfortsetzung), behält seinen Namen
 
 
-def form_hinweis(muster):
-    """Lesart der Form als Hinweistext, z. B. „Form-Hinweis: Cup+Handle (auch: Base auf Base)“."""
-    if not muster or muster == ["Base"] or muster[0] in SETUPS and len(muster) == 1:
-        return ""
-    rest = [m for m in muster if m not in SETUPS and m != "Base"]
-    return ("Form-Hinweis: " + " + ".join(rest)) if rest else ""
-

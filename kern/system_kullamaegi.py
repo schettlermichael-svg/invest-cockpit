@@ -168,6 +168,3 @@ def pruefen(df, erk, gewinn_tage=(), ticker="", scan=None, br=False):
                            "10- oder 20-Tage-Durchschnitt halten (Kullamägi).")}
 
 
-def gd10_20(df):
-    c = df["Close"].to_numpy(float)
-    return (float(c[-10:].mean()), float(c[-20:].mean())) if len(c) >= 20 else (None, None)

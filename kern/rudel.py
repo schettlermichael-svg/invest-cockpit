@@ -18,7 +18,6 @@ Themen-Gruppen stehen zusätzlich als gleichgewichteter Kursindex im Rotationsbi
 Branchen-Index über knapp zwei Jahre (495 Tage, Grenze des kostenlosen Massive-Plans) für Phase und Stimmungskurve.
 Alles wird einmal je neuem Handelstag gerechnet und in daten/rudel/ gespeichert (rund 10 Sekunden).
 """
-import json
 import os
 
 import numpy as np

@@ -1,7 +1,6 @@
 """Deutsche Namen für Yahoos Sektoren und Branchen und die deutschen Unternehmensbeschreibungen
 (daten/steckbrief_de/beschreibungen.json, von Claude aus Yahoos englischem Text übertragen; neue Titel ergänzt der
 Nachtlauf)."""
-import json
 import os
 
 PFAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "daten", "steckbrief_de", "beschreibungen.json")
@@ -82,18 +81,6 @@ BRANCHE = {
 _beschreibungen = None
 _stand = None
 
-
-def beschreibung(tk):
-    """Deutsche Beschreibung des Titels oder None, wenn noch keine vorliegt."""
-    global _beschreibungen, _stand
-    m = os.path.getmtime(PFAD) if os.path.exists(PFAD) else 0
-    if _beschreibungen is None or m != _stand:
-        _stand = m
-        try:
-            _beschreibungen = json.load(open(PFAD, encoding="utf-8"))
-        except Exception:
-            _beschreibungen = {}
-    return _beschreibungen.get(tk.upper())
 
 
 def branche(name):

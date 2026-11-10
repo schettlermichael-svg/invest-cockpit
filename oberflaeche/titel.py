@@ -652,6 +652,9 @@ def _rs_lesart(df, index, sek, etf):
 
 
 def _vorzeichen(x, stellen=1):
+    """+1,2 / −1,2 / ±0,0 (10.11.2026: nicht „−0,0“ bei einem Wert, der auf null rundet)."""
+    if round(abs(x), stellen) == 0:
+        return "±" + zahl(0, stellen)
     return f'{"+" if x >= 0 else "−"}{zahl(abs(x), stellen)}'
 
 
@@ -695,10 +698,16 @@ def _earnings_feld(fd):
                                      f'{WOCHENTAGE[tag.weekday()]} {tag:%d.%m.%Y} · in {bis} Tagen'
                                      + (" – innerhalb von 10 Tagen: Ausbruch vor Zahlen ist ein Würfelwurf"
                                         if ampel == "gelb" else "")))
-    letzte = g.dropna(subset=["eps"]).iloc[-1]
-    zeilen.append(ampelzeile("Letzte Zahlen", "grün" if letzte["ueberraschung_pct"] >= 0 else "rot",
-                             f'{g.dropna(subset=["eps"]).index[-1]:%d.%m.%Y}: {zahl(letzte["eps"])} $ je Aktie, '
-                             f'erwartet {zahl(letzte["schaetzung"])} $ ({_vorzeichen(letzte["ueberraschung_pct"])} %)'))
+    gemeldet = g.dropna(subset=["eps"])
+    if len(gemeldet):                            # junge Börsengänge: noch keine gemeldeten Zahlen (TKMS.DE, 10.11.2026)
+        letzte = gemeldet.iloc[-1]
+        ue, sch = letzte["ueberraschung_pct"], letzte["schaetzung"]
+        zeilen.append(ampelzeile("Letzte Zahlen", "grau" if ue != ue else "grün" if ue >= 0 else "rot",
+                                 f'{gemeldet.index[-1]:%d.%m.%Y}: {zahl(letzte["eps"])} $ je Aktie'
+                                 + (f', erwartet {zahl(sch)} $ ({_vorzeichen(ue)} %)' if sch == sch and ue == ue
+                                    else ", keine Schätzung")))
+    else:
+        zeilen.append(ampelzeile("Letzte Zahlen", "grau", "noch keine gemeldeten Zahlen"))
     eps = fundament._wachstum(g["eps"]).dropna().iloc[-3:]
     # Gemeldet wird etwa einen Monat nach Quartalsende: das berichtete Quartal liegt davor
     eps_w = [(_quartal(i - pd.Timedelta(days=45)), float(v)) for i, v in eps.items()]
@@ -753,6 +762,20 @@ def tv_link(tk):
     return f"https://www.tradingview.com/chart/?symbol={_tv_symbol(tk)}"
 
 
+ZEICHEN = {"USD": "$", "EUR": "€", "GBp": "p", "CHF": "CHF", "SEK": "kr", "DKK": "kr", "NOK": "kr"}
+
+
+def waehrung_setzen(html, tk):
+    """Titel außerhalb der USA (10.11.2026): Preise trugen fest „$“ – RHM.DE zeigte „1.004,80 $“ statt Euro. Ersetzt
+    das Dollarzeichen hinter Zahlen durch das Zeichen der Handelswährung (depot.WAEHRUNG)."""
+    import re
+    import depot
+    w = ZEICHEN.get(depot.waehrung(tk), "$")
+    if w == "$":
+        return html
+    return re.sub(r"(\d)([ \u00a0])\$", lambda m_: m_.group(1) + m_.group(2) + w, html)
+
+
 def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, nadeln=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
     gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
@@ -760,11 +783,11 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz
     if nadeln:                                    # Konferenzraum: Hinweise der Strategen als Nadeln
         m = dict(m or {}, nadeln=nadeln)
     st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
-    return seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
+    return waehrung_setzen(seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
                        f'<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:10px">{legende(ebene, gd_kurz)}</div>'
                        '</details>'
                        + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m)}'
-                       f'{z.get("rs_lesart", "")}</div>' + st_), oben=0, unten=0)
+                       f'{z.get("rs_lesart", "")}</div>' + st_), oben=0, unten=0), z["df"].attrs.get("ticker", ""))
 
 
 ATR_STOPP = 1.5                                  # Stopp 1,5 ATR vom Einstieg, eine Linie für alle Systeme (Micky, 09.11.2026)
@@ -826,15 +849,11 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
     a = atr_modul.wert(df)
     jetzt = (zonen or {}).get("jetzt") or {}
     br = m_.get("ausbruch") or None
-    kb, ep = k_.get("breakout") or {}, k_.get("ep") or {}
+    ep = k_.get("ep") or {}
     kontr = ((zonen or {}).get("enge") or {}).get("kontraktionen") or []
     enge_ab = kontr[-1]["hoch_t"] if kontr else None           # Kaufzone und Stopp ab der Enge, nicht über die ganze Base
-    for e, quelle in ((m_.get("pivot"), "Minervini"), ((br or {}).get("pivot"), "Ausbruch"),
-                      (kb.get("pivot"), "Kullamägi Breakout"), (ep.get("pivot"), "Episodic Pivot")):
-        if e:
-            break
-    else:
-        e, quelle = None, ""
+    import depot
+    e, quelle = depot.einstieg_long(m_, k_)          # derselbe Einstieg wie Kartentisch, Plan und Stab
     m = {"einstieg": float(e) if e else None, "quelle": quelle, "atr": a,
          "kz_oben": float(e) * 1.05 if e else None,
          "stopp": float(e) - ATR_STOPP * a if e and a else None,
@@ -845,7 +864,8 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
     try:
         termin = (fd or {}).get("termin")
         if termin is not None and len(termin) and termin["datum"].iloc[0]:
-            m["termin"] = pd.Timestamp(termin["datum"].iloc[0])
+            t_ = pd.Timestamp(termin["datum"].iloc[0])
+            m["termin"] = None if pd.isna(t_) else t_     # 10.11.2026: unbekannter Termin (NaT) ließ den Chart abstürzen
     except Exception:  # noqa: BLE001
         pass
     m["rs"] = rw
@@ -1085,5 +1105,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
     plan, rand = _plan(m_, k_, mm_, km_, df, marken, fund)
     teile.append(karte(plan, "Plan", rand=rand))
     teile.append(depotleiste.titelkarte(tk, df, erk))
-    return {"oben": seite("".join(oben), unten=8), "chart": zwischen, "unten": seite("".join(teile), oben=8),
-            "lagekarte": lk, "kacheln": k_info}
+    return {"oben": waehrung_setzen(seite("".join(oben), unten=8), tk), "chart": zwischen,
+            "unten": waehrung_setzen(seite("".join(teile), oben=8), tk),
+            "lagekarte": waehrung_setzen(lk, tk), "kacheln": k_info}
