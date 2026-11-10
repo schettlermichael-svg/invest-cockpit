@@ -147,11 +147,10 @@ def kachel2(beschriftung, m, k, zeile="", hilfe=""):
                 f'<span style="font-size:18px;font-weight:600;color:{farbe};white-space:nowrap;overflow:hidden;'
                 f'text-overflow:ellipsis">{t(x[1])}</span></div>')
     return (f'<div{titel} style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
-            f'display:flex;flex-direction:column;gap:4px;height:136px;box-sizing:border-box;overflow:hidden">'
+            f'display:flex;flex-direction:column;gap:4px;min-height:136px;box-sizing:border-box">'
             f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(beschriftung)}{zeichen}</div>'
             + reihe("M", m_, bool(m)) + reihe("K", k_, bool(k)) +
-            f'<div style="font-size:13px;color:{TEXT_2};line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;'
-            f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>')
+            f'<div style="font-size:13px;color:{TEXT_2};line-height:1.35">{t(zeile)}</div></div>')   # nie abgeschnitten (10.11.2026)
 
 
 def ampelzeile(name, ampel, text="", hilfe=""):

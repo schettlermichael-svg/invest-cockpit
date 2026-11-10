@@ -105,7 +105,7 @@ def titelkarte(tk, df, erk):
                      "Position und Risiko · nach dem Kauf")
     pl = depot.plan(erk)
     if not d.get("konto"):
-        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Übersicht, „⚙ Konto und '
+        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Rückenwind oben, „⚙ Konto und '
                      f'Risiko“) – dann steht hier die Stückzahl für das Setup.</div>', "Position und Risiko")
     if not pl:
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Setup mit Einstieg und Stopp – keine Stückzahl. '

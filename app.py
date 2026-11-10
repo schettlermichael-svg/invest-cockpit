@@ -371,15 +371,11 @@ def _kartentisch_zeigen():
 
 
 def _schrank_text(alt):
+    """Hinweis am Seitenende (10.11.2026: vorher zusätzlich ein langer Hinweis ganz oben nach jedem Update)."""
     if not alt:
         return "aus dem Schrank"
-    _hinweis_alt()
-    return "aus dem Schrank (vor der letzten Programmänderung gebaut, neue Fassung im Hintergrund)"
-
-
-def _hinweis_alt():
-    st.caption("Diese Seite wurde vor der letzten Programmänderung abgelegt und deshalb sofort gezeigt – die Daten sind "
-               "aktuell, neue Ansichten erscheinen, sobald der Schrank im Hintergrund neu gefüllt ist.")
+    return ("aus dem Schrank – vor der letzten Programmänderung gebaut; die Daten sind aktuell, die neue Ansicht "
+            "kommt im Hintergrund")
 
 
 def zeigen(name, *args):

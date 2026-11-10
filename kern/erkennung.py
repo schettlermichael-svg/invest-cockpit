@@ -433,7 +433,7 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
         werte.update({"index_rueckgang_pct": round(markt, 1), "korrektur_x_markt": round(faktor, 1)})
         ampel = "grün" if faktor <= 2 else "gelb" if faktor <= 3 else "rot"
         if muster:
-            hinweise.append(f"Korrektur {faktor:.1f}-fach zum Markt ({ampel})")
+            hinweise.append(f"Korrektur {faktor:.1f}-fach so tief wie der Markt".replace(".", ",") + f" ({ampel})")
         zu_tief_zum_markt = faktor > 3
     if muster in ("Flat Base", "Base", "Cup+Handle", "Doppelboden", "Tasse ohne Henkel"):
         hinweise.append("Tiefe " + ("grün" if tiefe <= 35 else "gelb" if tiefe <= 50 else "rot"))
