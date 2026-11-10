@@ -291,19 +291,41 @@ def _k2_markt(mm, km, mr):
                    + ("\n\nZeichen O'Neil (keine Regel mehr): " + mr["text"] if mr else ""))
 
 
-def _k2_trend(m, ph, ph_reihe):
+def _weinstein_ausbruch(m, ph, df):
+    """Zusatz, wenn ein Titel aus Phase 3 nach oben ausbricht (10.11.2026, Micky): die Phasengrenzen bleiben, aber
+    Weinstein sieht darin eine mögliche Rückkehr in Phase 2 – bestätigt nur mit Volumen über dem Schnitt und wieder
+    steigender 30-Wochen-Linie."""
+    br = m.get("ausbruch") or {}
+    if ph != 3 or br.get("tag") is None or br.get("fehl") or df is None or len(df) < 170:
+        return ""
+    v = br.get("volumen")
+    gd = df["Close"].rolling(150).mean()
+    steigt = bool(gd.iloc[-1] > gd.iloc[-21])
+    ok = bool(v and v == v and v >= 1.0) and steigt
+    gruende = []
+    if v and v == v:
+        gruende.append(f"Volumen {zahl(v, 1)}-fach")
+    gruende.append("30-Wochen-Linie steigt" if steigt else "30-Wochen-Linie noch flach")
+    return (f" · Ausbruch nach oben am {pd.Timestamp(br['tag']):%d.%m.} – Rückkehr in Phase 2 "
+            + ("bestätigt" if ok else "möglich, noch nicht bestätigt") + f" ({', '.join(gruende)})")
+
+
+def _k2_trend(m, ph, ph_reihe, df=None):
     tv = m["trendvorlage"]
     n = sum(tv.values()) if tv else 0
     mm = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
     seit = _seit(ph_reihe) if ph else None
     zeile = (f"Zeichen Weinstein: Phase {ph} {PHASENTEXT[ph]}"
-             + (f" seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")) if ph else ""
+             + (f" seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
+             + _weinstein_ausbruch(m, ph, df)) if ph else ""
     return kachel2("Trend", mm, None, zeile,
                    "M – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
                    "der Kachel „Stärke“). Sie entspricht Weinsteins Stufe 2: "
                    + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in tv.items())
                    + "\n\nK – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
-                   + "\n\nPhase nach Weinstein nur noch als Zeichen.")
+                   + "\n\nPhase nach Weinstein nur noch als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
+                     "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
+                     "steigender 30-Wochen-Linie.")
 
 
 def _k2_staerke(m, k, rang, rw=None):
@@ -395,7 +417,7 @@ def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km, rw=
     Kullamägi (K), Branche und Base als Zeichen. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
     _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte, hier nicht gezeigt
     rang = (erk.get("rs_rang") or (None, ""))[0]
-    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe), _k2_staerke(m, k, rang, rw),
+    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe, df), _k2_staerke(m, k, rang, rw),
           _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), _k2_enge(m, k, erk, df),
           _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
