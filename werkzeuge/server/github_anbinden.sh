@@ -16,17 +16,7 @@ git config --global --add safe.directory $ZIEL
 cd $ZIEL
 [ -d .git ] || git init -q -b main
 git remote get-url origin >/dev/null 2>&1 || git remote add origin git@github.com:schettlermichael-svg/invest-cockpit.git
-cat > /usr/local/bin/invest-aktualisieren <<'EOF'
-#!/bin/bash
-cd /opt/invest-cockpit || exit 0
-git fetch -q origin main 2>/dev/null || exit 0
-if [ "$(git rev-parse HEAD 2>/dev/null)" != "$(git rev-parse origin/main)" ]; then
-  git reset -q --hard origin/main
-  chown -R cockpit:cockpit /opt/invest-cockpit
-  systemctl restart invest-cockpit
-  echo "$(date '+%d.%m.%Y %H:%M') Code aktualisiert auf $(git rev-parse --short HEAD)" >> /var/log/invest-cockpit-update.log
-fi
-EOF
+printf '#!/bin/bash\nexec bash /opt/invest-cockpit/werkzeuge/server/aktualisieren.sh\n' > /usr/local/bin/invest-aktualisieren
 chmod +x /usr/local/bin/invest-aktualisieren
 cat > /etc/systemd/system/invest-update.service <<EOF
 [Unit]

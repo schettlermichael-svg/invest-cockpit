@@ -168,6 +168,15 @@ def _senden(k, daten):
     raise RuntimeError("Anthropic nicht erreichbar")
 
 
+def probe():
+    """Kurzer Test nach dem Eintragen des Schlüssels: (True, Text) oder (False, Grund). Kostet weniger als 1 Cent."""
+    try:
+        antwort = _anfrage("Antworte nur mit OK.", "Verbindungstest", 5)
+        return True, f"Verbindung steht – {MODELL} antwortet ({antwort[:20] or 'OK'})"
+    except Exception as e:  # noqa: BLE001
+        return False, str(e)
+
+
 def _json(text):
     """JSON aus der Antwort (auch wenn sie in ``` eingefasst ist)."""
     t = text.strip()

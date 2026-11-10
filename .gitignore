@@ -13,3 +13,4 @@ __pycache__/
 .venv/
 .DS_Store
 *.neu
+einstellungen/ntfy_kanal.txt

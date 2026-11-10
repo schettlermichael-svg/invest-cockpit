@@ -42,11 +42,18 @@ def _schreiben(p, datei=PROTOKOLL):
     json_schreiben(datei, p, ensure_ascii=False, indent=1)
 
 
-def _mitteilung(text):
+def _mitteilung(text, wichtig=False):
+    """Meldung aufs Handy (ntfy, kern/meldung.py) und – auf dem Mac – als Mitteilung am Bildschirm."""
     try:
-        subprocess.run(["osascript", "-e", f'display notification "{text}" with title "Invest Cockpit"'], timeout=10)
-    except Exception:  # noqa: BLE001 – ohne Mitteilung läuft alles weiter
+        import meldung
+        meldung.senden(text, "Invest Cockpit", wichtig)
+    except Exception:  # noqa: BLE001
         pass
+    if sys.platform == "darwin":
+        try:
+            subprocess.run(["osascript", "-e", f'display notification "{text}" with title "Invest Cockpit"'], timeout=10)
+        except Exception:  # noqa: BLE001 – ohne Mitteilung läuft alles weiter
+            pass
 
 
 def main(nur_tisch=False):
@@ -158,6 +165,8 @@ def main(nur_tisch=False):
         if not stab.schluessel():
             return "übersprungen – kein API-Schlüssel"
         k = stab.konferenz()
+        if all(m.get("fehler") for m in k["meldungen"].values()):
+            raise RuntimeError(next(iter(k["meldungen"].values()))["meldung"])
         ko = stab.kosten()
         return (f"{sum(len(m.get('hinweise') or []) for m in k['meldungen'].values())} Hinweise · Monat "
                 f"{ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $")
@@ -209,6 +218,30 @@ def main(nur_tisch=False):
                 print(f"  {t}: {e}", flush=True)
     p["massive_durchgaenge"] = durchgang
     _schreiben(p)
+
+    # Zweiter Anlauf der Konferenz (10.11.2026): ist sie in der Nacht gescheitert, um 6 Uhr noch einmal
+    if any(s_["name"].startswith("Konferenz") and not s_["ok"] for s_ in p["schritte"]):
+        jetzt = datetime.now()
+        if jetzt.hour >= 18 or jetzt.hour < 6:
+            ziel = jetzt.replace(hour=6, minute=0, second=0, microsecond=0)
+            if jetzt.hour >= 18:
+                from datetime import timedelta
+                ziel += timedelta(days=1)
+            time.sleep(max(0, (ziel - jetzt).total_seconds()))
+        try:
+            import stab
+            k = stab.konferenz(melden=print)
+            ok_ = not all(m.get("fehler") for m in k["meldungen"].values())
+        except Exception as e:  # noqa: BLE001
+            ok_, k = False, {"befehl": {"lage": str(e)}}
+        p["konferenz_zweiter_anlauf"] = "geklappt" if ok_ else "gescheitert"
+        if ok_:                                  # Ampel der Übersicht: Schritt gilt dann als erledigt
+            for s_ in p["schritte"]:
+                if s_["name"].startswith("Konferenz"):
+                    s_["ok"], s_["text"] = True, "im zweiten Anlauf (6 Uhr) geklappt"
+        _schreiben(p)
+        _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
+                    f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
 
 
 def stand():
@@ -409,16 +442,27 @@ def _konferenz_lauf():
     _schreiben(p, KONFERENZ_PROTOKOLL)
     try:
         import stab
-        stab.konferenz(melden=print)
+        k = stab.konferenz(melden=print)
+        if all(m.get("fehler") for m in k["meldungen"].values()):
+            p["fehler"] = next(iter(k["meldungen"].values()))["meldung"]
     except Exception as e:  # noqa: BLE001
         p["fehler"] = f"{type(e).__name__}: {e}"
         traceback.print_exc()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p, KONFERENZ_PROTOKOLL)
+    _mitteilung(f"⚠ Konferenz gescheitert: {p['fehler'][:150]}" if p.get("fehler") else
+                "Konferenz fertig – der Tagesbefehl liegt im Konferenzraum.", bool(p.get("fehler")))
+
+
+def laeuft_etwas():
+    """Läuft ein Knopf-Lauf (Kartentisch oder Konferenz)? Für das Update-Skript des Servers: dann kein Neustart."""
+    return _laeuft(TISCH_PROTOKOLL, 6)[0] or konferenz_laeuft()
 
 
 if __name__ == "__main__":
-    if "--konferenz" in sys.argv:
+    if "--laeuft" in sys.argv:                   # Update-Skript: Exit 0 = es läuft etwas, bitte nicht neu starten
+        sys.exit(0 if laeuft_etwas() else 1)
+    elif "--konferenz" in sys.argv:
         _konferenz_lauf()
     elif "--seiten" in sys.argv:
         seiten()

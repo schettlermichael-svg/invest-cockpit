@@ -478,13 +478,35 @@ def konferenz_zeigen():
             if st.button("Schlüssel speichern", key="stab_speichern"):
                 if wert.strip().startswith("sk-ant-"):
                     stab.schluessel_speichern(wert)
-                    st.success("Gespeichert. Die erste Konferenz kannst du unten einberufen oder sie läuft nach dem Nachtlauf.")
+                    st.session_state["stab_probe"] = stab.probe()   # sofort prüfen, ob der Schlüssel wirklich geht
                     st.rerun()
                 else:
                     st.error("Das sieht nicht wie ein Anthropic-Schlüssel aus (er beginnt mit sk-ant-).")
         return
+    probe_ = st.session_state.pop("stab_probe", None)
+    if probe_:
+        (st.success if probe_[0] else st.error)(("✓ " if probe_[0] else "⚠ Der Schlüssel geht nicht: ") + probe_[1])
     laeuft = nachtlauf.konferenz_laeuft()
-    _, knopf_ = st.columns([8, 3])
+    pruef_, handy_, knopf_ = st.columns([3, 5, 3])
+    with pruef_:
+        if st.button("Verbindung prüfen", key="stab_pruefen", help="Kurzer Test, ob Schlüssel und Guthaben gehen (kostet unter 1 Cent)."):
+            st.session_state["stab_probe"] = stab.probe()
+            st.rerun()
+    with handy_:
+        import meldung
+        with st.popover("📱 Meldung aufs Handy"):
+            st.markdown(
+                "Nach jedem Nachtlauf und jeder Konferenz kommt eine kurze Meldung aufs Handy – auch wenn etwas schiefging.\n\n"
+                "1. Im App Store die kostenlose App **ntfy** laden.\n"
+                "2. In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
+            st.code(meldung.kanal(), language=None)
+            st.markdown("3. Hier auf „Testnachricht senden“ drücken – sie sollte sofort ankommen.\n\n"
+                        "Der Kanalname ist zufällig – wer ihn nicht kennt, sieht nichts.")
+            if st.button("Testnachricht senden", key="ntfy_test"):
+                if meldung.senden("Test aus dem Konferenzraum – die Leitung steht.", "Invest Cockpit"):
+                    st.success("Gesendet.")
+                else:
+                    st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
     with knopf_:
         if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
                      help="Die fünf Strategen lesen den Stand des letzten Nachtlaufs (rund 2–5 Minuten, wenige Cent). "
