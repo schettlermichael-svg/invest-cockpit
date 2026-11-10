@@ -116,44 +116,87 @@ MEISTER = {
        "Livermore: Geduld – auf den richtigen Zeitpunkt warten; der Markt hat recht; nur Gewinner verstärken, nie "
        "Verlierer. Ergänzung Stanley Druckenmiller: Ist die Lage klar und stimmen mehrere Zeichen überein, Kräfte "
        "bündeln (Gewicht auf die besten Ziele); ist sie unklar, klein bleiben und beobachten. Feste Gefechtsfrage "
-       "(Denken zweiter Stufe): Was preist die Masse schon ein, und was übersieht sie?",
+       "(Denken zweiter Stufe): Was preist die Masse schon ein, und was übersieht sie? Das Pendel der App (Zone der "
+       "Stimmung aus VIX, Kreditaufschlag, Breite) misst dazu die Temperatur; es dimmt oder verstärkt den Mut des "
+       "Befehls, verbietet aber kein Setup.",
     2: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil: Die meisten großen Gewinner kommen aus den führenden "
        "Gruppen; gesucht sind die Nr. 1 und 2 der stärksten Branche. Stan Weinstein: Markt und Gruppe zählen mit – eine "
        "Gruppe im Aufwärtstrend (Phase 2) trägt, eine im Abwärtstrend (Phase 4) zieht jeden Titel mit; den Wechsel der "
        "Gruppe früh erkennen. Kristjan Kullamägi: Führer sind die stärksten Titel über 1, 3 und 6 Monate; dorthin, wo "
        "der Markt gerade jagt (Themen). Ergänzung John Murphy (Intermarket): Zinsen, Dollar, Rohstoffe und Aktien "
        "hängen zusammen; Geld rotiert im Konjunkturzyklus durch die Sektoren – nutze das, wo die Daten Gruppen und "
-       "Felder zeigen, um Zufluss und Abfluss einzuordnen.",
+       "Felder zeigen, um Zufluss und Abfluss einzuordnen. Die Daten enthalten dafür das Wirtschaftswetter der App (Quad "
+       "aus Wachstum und Inflation, mit Kupfer/Gold, Zyklisch gegen Basiskonsum, Öl, Rohstoffkorb, Breakeven-Inflation, "
+       "amtlichen Zahlen und den typischen Führern des Quads): passt die Strömung der Gruppen zum Quad oder läuft sie "
+       "dagegen?",
     3: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil (CAN SLIM): starke aktuelle Quartalsgewinne (C), "
        "wachsende Jahresgewinne (A), etwas Neues (N: Produkt, Management, neues Hoch), Führer statt Nachzügler (L), "
        "Unterstützung durch Institutionen (I), Marktrichtung (M). Mark Minervini: Beschleunigung – Gewinn und Umsatz "
        "wachsen von Quartal zu Quartal schneller, die Marge weitet sich, positive Überraschungen und angehobene "
        "Prognosen; die Reaktion des Kurses auf die Zahlen zeigt, ob die großen Käufer zustimmen. Ergänzung Pradeep "
-       "Bonde (Stockbee, Urheber des Episodic Pivot): Ein Ereignis zählt, wenn es die Sicht auf die Firma ändert "
-       "(Zahlen weit über Erwartung, Prognose, Auftrag, Zulassung) und der Kurs mit sehr hohem Volumen springt – am "
-       "stärksten aus einer Zeit, in der der Titel vernachlässigt war. Sonst ist es Lärm.",
+       "Bonde (Stockbee, Urheber des Episodic Pivot; Quelle: sein Blog stockbee.blogspot.com): Ein EP braucht drei "
+       "Dinge – Vernachlässigung (der Titel hat Monate oder Jahre wenig getan, wenig Volumen davor), einen Auslöser, der "
+       "die Sicht der Wall Street auf das Geschäft ändert (am stärksten: dreistelliges Gewinn- oder Umsatzwachstum, die "
+       "erste oder zweite große Überraschung; daneben Prognose, Aufträge, Zulassung, Politik, Managementwechsel), und "
+       "eine Kurslücke von etwa 10 % oder mehr mit gewaltigem Volumen. Je vernachlässigter, desto größer der mögliche "
+       "Lauf. Ein echter EP fällt nicht auf das Niveau vor der Lücke zurück. Viele laufen erst verzögert: nach Lücke, "
+       "kurzem Lauf und Ruhephase folgt Tage bis Monate später der zweite Schub – dann ist ein Einstieg aus der "
+       "Konsolidierung besser als das Hinterherlaufen. Ein bekannter, schon gelaufener Titel mit guten Zahlen ist "
+       "kein EP im Sinne Bondes.",
     4: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Trendvorlage (Kurs über steigenden Durchschnitten, nahe "
        "am Hoch, weit über dem Tief, starke RS); VCP – die Rücksetzer werden von links nach rechts enger, das Volumen "
        "trocknet aus, der Pivot ist die Stelle des geringsten Widerstands; gekauft wird am Pivot, nicht mehr als 5 % "
        "darüber. Kristjan Kullamägi: Ausbruch nach einem großen Vorlauf aus einer engen Konsolidierung, die an den "
        "steigenden 10- und 20-Tage-Linien entlangläuft; Flagge als Fortsetzung; Episodic Pivot nach einem Ereignis. "
-       "Ergänzung James Dalton und Peter Steidlmayer (Auction Market Theory): Eine Seitwärtszone ist Balance – der Wert "
-       "ist akzeptiert; ein Ausbruch ist Ungleichgewicht. Hält der Kurs außerhalb der Zone mit Volumen, wird der neue "
-       "Wert angenommen; kehrt er schnell in die Zone zurück, ist die Auktion gescheitert (Fehlausbruch), oft folgt die "
-       "Bewegung zur Gegenseite. Ergänzung Brian Shannon (Anchored VWAP): Der AVWAP ab einem wichtigen Punkt (Hoch, "
-       "Tief, Zahlen-Sprung) zeigt den durchschnittlichen Einstand – darüber sind die Käufer im Gewinn und stützen. Nur "
-       "nennen, wenn die Daten einen AVWAP enthalten.",
+       "Ergänzung James Dalton (Mind over Markets) und Peter Steidlmayer (Market Profile, CBOT): Der Markt ist "
+       "eine Auktion, die den fairen Wert sucht, und wechselt zwischen Balance und Ungleichgewicht. Balance: beide "
+       "Seiten sind sich über den Wert einig, der Kurs pendelt in der Zone (bei dir die Konsolidierung), Wert wird "
+       "angenommen. Ungleichgewicht: eine Seite drängt aggressiv und sucht neuen Wert (Ausbruch, Trend). Daltons "
+       "Grundsatz: Der Preis zeigt die Gelegenheit an, die Zeit regelt sie, das Volumen misst den Erfolg. Ein "
+       "Ausbruch ist angenommen, wenn der Kurs Zeit und Volumen außerhalb der alten Zone aufbaut; kehrt er schnell in "
+       "die Zone zurück, ist er abgelehnt (gescheiterte Auktion, Fehlausbruch) – oft läuft der Kurs dann zur "
+       "Gegenseite der Zone. Auf Tageskerzen übertragen: die Zone des Setups ist die Balance, der Pivot ihre Kante. "
+       "Ergänzung Brian Shannon (Maximum Trading Gains with Anchored VWAP; alphatrends.net): Der AVWAP ab einem "
+       "bedeutsamen Punkt – großes Hoch oder Tief, Zahlen- oder Nachrichten-Lücke, starke Wende; erst ankern, wenn "
+       "der Punkt klar wichtig ist – zeigt den durchschnittlichen Einstand aller, die seitdem gekauft haben. Kurs über "
+       "steigendem AVWAP: Käufer haben die Kontrolle; unter fallendem: Verkäufer; flacher AVWAP: Kampf. Ein Bruch "
+       "dreht Unterstützung in Widerstand und umgekehrt. Der AVWAP ist eine Zone zum Beobachten, kein mechanisches "
+       "Signal; schneidet der Kurs hindurch, nicht hoffen. Laufen AVWAPs von Hoch und Tief zusammen (Shannons "
+       "„Pinch“), steht eine Entscheidung bevor. Nur nennen, wenn die Daten einen AVWAP enthalten.",
     5: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Verluste klein halten; der Stopp steht vor dem Kauf fest; "
        "nie einen Verlierer verbilligen; Verluste deutlich kleiner als Gewinne; das Risiko je Position ist ein kleiner "
        "Teil des Kontos; vor Zahlen nur mit Gewinnpolster oder kleiner; in schwachem Markt weniger und kleinere "
-       "Positionen. Ergänzung Gil Morales und Chris Kacher (O'Neil-Schüler, Short-Muster): Short-Kandidaten sind "
-       "frühere Führer nach einem großen Lauf – späte, gescheiterte Basis, Bruch der 50-Tage-Linie mit hohem Volumen; "
-       "eröffnet wird in die Erholung an die Linie hinein, nicht am Tief; Gefahr des Short-Squeeze; Shorts vor allem, "
-       "wenn der Markt kippt.",
+       "Positionen. Ergänzung Gil Morales und Chris Kacher (O'Neil-Schüler; Short-Selling with the O'Neil Disciples, "
+       "Trade Like an O'Neil Disciple, virtueofselfishinvesting.com): Short-Ziele sind frühere große Führer nach einem "
+       "großen Lauf, aus denen die Institutionen aussteigen. Drei Muster: Kopf-Schulter-Top (rechte Schulter tiefer als "
+       "die linke, besonders schwach bei fallender Nackenlinie), Late-Stage Failed Base (LSFB – späte, oft weite und "
+       "lose Basis, Ausbruch scheitert; shortbar, wenn der Kurs unter den alten Ausbruchspunkt und die 50-Tage-Linie "
+       "fällt) und Punchbowl of Death (Doppeltop nach steilem Lauf). Zeitpunkt: meist 8 bis 12 Wochen nach dem Gipfel, "
+       "wenn das Top ausgebildet ist – die LSFB erlaubt den früheren Einstieg; die größten Brüche kommen im zweiten "
+       "und dritten Abwärtsschub. Eröffnet wird in die Erholung an die 50- oder 20-Tage-Linie, nicht am Tief. Nur "
+       "liquide Titel (mindestens 1 bis 2 Mio. Stück am Tag), enge Stopps (3 bis 5 %), Shorts vor allem in einem "
+       "kippenden oder fallenden Markt; Gefahr des Short-Squeeze bei starken Erholungen.",
     6: "HANDWERK – Du bist der Gegenspieler (rotes Team). Lies die Lage absichtlich gegen den Strich, mit denselben "
        "Meistern: Minervini (Kontraktionen nicht eng, Volumen nicht ausgetrocknet, über der Kaufzone), Kullamägi (kein "
        "großer Vorlauf, Linien flach), O'Neil (Gruppe schwach, Zahlen tragen nicht), Dalton (Ausbruch ohne Annahme, "
-       "Rückkehr in die Balance), Morales/Kacher (Topbildung, Squeeze-Gefahr bei Shorts), Marktlage gegen die Seite.",
+       "Rückkehr in die Balance), Bonde (Lücke ohne echte Vernachlässigung, Rückfall unter das "
+       "Niveau vor der Lücke), Shannon (Kurs unter dem AVWAP), Morales/Kacher (Topbildung, späte weite Basis, "
+       "Squeeze-Gefahr bei Shorts), Marktlage gegen die Seite.",
+}
+
+QUELLEN = {
+    "Minervini": "Trade Like a Stock Market Wizard; Think & Trade Like a Champion",
+    "O'Neil": "How to Make Money in Stocks (CAN SLIM)",
+    "Weinstein": "Secrets for Profiting in Bull and Bear Markets",
+    "Kullamägi": "qullamaggie.com, seine Streams",
+    "Murphy": "Intermarket Analysis",
+    "Bonde": "stockbee.blogspot.com (Episodic Pivots, Neglect, Delayed Reaction)",
+    "Dalton / Steidlmayer": "Mind over Markets; Steidlmayer on Markets (Market Profile)",
+    "Shannon": "Maximum Trading Gains with Anchored VWAP; alphatrends.net/anchored-vwap",
+    "Morales / Kacher": "Short-Selling with the O'Neil Disciples; Trade Like an O'Neil Disciple; "
+                        "virtueofselfishinvesting.com (Six Essential Rules of Short-Selling)",
+    "Livermore": "Reminiscences of a Stock Operator (Lefèvre); How to Trade in Stocks",
+    "Druckenmiller": "Reden und Interviews",
 }
 
 AUFTRAG[6] = ("Du bist der Gegenspieler. Suche zu jedem Volltreffer und zu den wichtigsten Angriffszielen long und short "
@@ -461,8 +504,21 @@ def lagebild():
                  "kullamaegi": markt_systeme.kullamaegi()}
     except Exception:  # noqa: BLE001
         pass
+    wetter = pendel = None
+    try:                                                 # Wirtschaftswetter und Pendel wie auf der Seite Rückenwind
+        import lage                                      # (10.11.2026, für Murphy und die Gefechtsfrage des Strategen)
+        q = lage.quadrant()
+        wetter = {"quad": q["quad"], "name": q["name"], "amtlich": q["amtlich"], "wechsel_moeglich": q["wechsel_moeglich"],
+                  "wachstum": q["wachstum"], "inflation": q["inflation"], "bip_rate": q["bip_rate"],
+                  "cpi_rate": q["cpi_rate"], "typische_fuehrer": q["fuehrer"]}
+        pe = lage.pendel()
+        pendel = {"zone": pe["zone"], "ampel": pe["ampel"], "vor_4_wochen": pe["vor_4_wochen"], "pfeil": pe["pfeil"],
+                  "messwerte": {k: (round(v, 2) if isinstance(v, float) else v) for k, v in pe["messwerte"].items()}}
+    except Exception:  # noqa: BLE001 – ohne Wetter tagt der Stab trotzdem
+        pass
     return {"heute": heute, "stand_rueckenwind": rw.get("stand"), "stand_kartentisch": tisch.get("stand"),
-            "barometer": tisch.get("barometer"), "markt": markt, "gruppen": gruppen, "stufenwechsel_heute": wechsel,
+            "barometer": tisch.get("barometer"), "markt": markt,
+            "wirtschaftswetter": wetter, "pendel": pendel, "gruppen": gruppen, "stufenwechsel_heute": wechsel,
             "schnellsuche": schnell, "dreifach": sorted(drei), "dreifach_neu": sorted(drei - vorher) if vorher else [],
             "dreifach_weg": sorted(vorher - drei) if vorher else [],
             "kandidaten": [akte(tk) for tk in alle],
@@ -475,8 +531,8 @@ def _ausschnitt(lb, nr):
     """Was jeder Stratege liest (spart Token, schärft den Blick)."""
     k = lb["kandidaten"]
     if nr == 2:
-        return {x: lb[x] for x in ("heute", "stand_rueckenwind", "gruppen", "stufenwechsel_heute", "schnellsuche",
-                                   "dreifach", "dreifach_neu", "dreifach_weg")} | {
+        return {x: lb.get(x) for x in ("heute", "stand_rueckenwind", "wirtschaftswetter", "gruppen", "stufenwechsel_heute",
+                                       "schnellsuche", "dreifach", "dreifach_neu", "dreifach_weg")} | {
             "kandidaten": [{a: c[a] for a in ("titel", "reihe", "dreifacher_rueckenwind", "volltreffer", "rueckenwind")}
                            for c in k]}
     if nr == 3:
@@ -490,7 +546,8 @@ def _ausschnitt(lb, nr):
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
                                "stopp_1_5_atr", "ausbruch", "kacheln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
-    return {"heute": lb["heute"], "barometer": lb["barometer"], "markt": lb["markt"], "depot": lb["depot"],
+    return {"heute": lb["heute"], "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
+            "wirtschaftswetter": lb.get("wirtschaftswetter"), "depot": lb["depot"],
             "kandidaten": [{a: c[a] for a in ("titel", "depot", "reihe", "volltreffer", "kurs", "pivot", "stopp_1_5_atr",
                                               "abstand_kurs_stopp_pct")}
                            | {"markt": c["kacheln"].get("Markt"), "naechste_zahlen": c["kacheln"].get("Nächste Zahlen"),
@@ -677,14 +734,15 @@ def konferenz(melden=lambda text: None):
         for h in m.get("hinweise") or []:
             genannt |= set(_ticker(h.get("titel"), bekannt))
     chart = _ausschnitt(lb, 4)
-    gegen = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"],
+    gegen = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
              "akten": [c for c in chart["kandidaten"] if c["titel"] in genannt],
              "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items()}}
     gegen_ = json.dumps(gegen, ensure_ascii=False, default=str)
     melden(f"{datetime.now():%H:%M:%S} Gegenspieler prüft {len(gegen['akten'])} Akten …")
     melden_lassen(6, f"{AUFTRAG[6]}\n\n{MEISTER[6]}\n\nDaten:\n{gegen_}", gegen_)
 
-    befehl_daten = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"], "volltreffer": [
+    befehl_daten = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
+                    "wirtschaftswetter": lb.get("wirtschaftswetter"), "volltreffer": [
         {a: c[a] for a in ("titel", "reihe", "abstand_zum_pivot_pct", "kaufzone_bis", "stopp_1_5_atr")}
         | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in lb["kandidaten"] if c["volltreffer"]],
         "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items() if nr != "6"},

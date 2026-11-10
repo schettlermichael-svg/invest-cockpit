@@ -537,6 +537,8 @@ def konferenz_zeigen():
             if m:
                 with sp[i % 2]:
                     st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
+        with st.expander("📖 Feldhandbuch · das Handwerk der Meister je Stratege (zum Gegenlesen)"):
+            st.markdown(ks.feldhandbuch())
         st.markdown(gestaltung.seite("<h2 style='margin:0'>Akten · Hinweise je Titel, als Nadeln im Chart</h2>", oben=16,
                                      unten=0), unsafe_allow_html=True)
         akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))

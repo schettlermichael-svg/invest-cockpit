@@ -109,6 +109,15 @@ def nadeln(eintraege, bis=None):
             if h.get("datum") and (not bis or str(h["datum"])[:10] <= bis)]
 
 
+def feldhandbuch():
+    """Das Feldhandbuch des Stabs als Text (10.11.2026) – so, wie es die Strategen lesen, mit Quellen. Korrekturen
+    Mickys werden hier Sätze (kern/stab.py, MEISTER)."""
+    teile = [f"**{nr} · {stab.STRATEGEN[nr][0]}**\n\n{stab.MEISTER[nr]}" for nr in (2, 3, 4, 5, 6, 1)]
+    quellen = "\n".join(f"- **{m}:** {q}" for m, q in stab.QUELLEN.items())
+    return ("Rangordnung bei Widerspruch: zuerst deine Haltung (Dienstanweisung), dann der Hauptmeister, dann der "
+            "Ergänzungsmeister.\n\n" + "\n\n".join(teile) + "\n\n**Quellen**\n\n" + quellen)
+
+
 ANLEITUNG = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
 
 1. Öffne **console.anthropic.com** und melde dich an (oder lege dort ein Konto an).
