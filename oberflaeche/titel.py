@@ -842,12 +842,11 @@ def _zahlen_gesamt(tk, fund, fd):
 
 def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
     """Was der Chart über die Zonen hinaus einzeichnet: Einstieg (Pivot) mit Kaufzone bis +5 % und Stopp 1,5 ATR,
-    Ausbruchstag, Anker des AVWAP (Beginn der Zone), Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus
+    Ausbruchstag, Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus
     Rückenwind, Short (Ermüdung) mit Stopp 1,5 ATR über der Unterkante. Einstieg: Minervinis Pivot aus der Enge, sonst
     der Pivot des Ausbruchs, sonst Kullamägis Breakout bzw. Episodic Pivot."""
     import atr as atr_modul
     a = atr_modul.wert(df)
-    jetzt = (zonen or {}).get("jetzt") or {}
     br = m_.get("ausbruch") or None
     ep = k_.get("ep") or {}
     kontr = ((zonen or {}).get("enge") or {}).get("kontraktionen") or []
@@ -858,7 +857,6 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
          "kz_oben": float(e) * 1.05 if e else None,
          "stopp": float(e) - ATR_STOPP * a if e and a else None,
          "ab": (br or {}).get("erster_tag") or (ep.get("tag") if quelle == "Episodic Pivot" else None) or enge_ab,
-         "avwap_ab": jetzt.get("start_t") if jetzt.get("zone") or jetzt.get("offen") else None,
          "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag")} if br else None,
          "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None}
     try:

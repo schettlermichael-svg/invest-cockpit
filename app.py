@@ -116,10 +116,10 @@ def chart_knoepfe(tk):
     avwap_wahl = None
     if ebene == "Tag":                           # AVWAP nach Shannon (10.11.2026): mehrere Anker, Zange = Hoch + Tief
         avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
-                              default=chart.AVWAP_START, format_func=chart.AVWAP_KURZ.get, key="avwap_wahl",
+                              default=chart.AVWAP_START, format_func=chart.AVWAP_KURZ.get, key="avwap_anker",
                               help="Hoch 52 W und Tief 6 M zusammen sind Shannons Zange: laufen beide Linien eng "
                                    "zusammen, steht eine Entscheidung an. Ereignistag: jüngste Lücke ab 4 % mit "
-                                   "doppeltem Volumen. Zone: Beginn der aktuellen Zone.")
+                                   "doppeltem Volumen.")
     return ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl
 
 

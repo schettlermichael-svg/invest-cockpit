@@ -5,13 +5,11 @@ Quelle für den Chart der Titelseite (Wahlschalter) und die Akte des Stabs.
   tief      Tief der letzten 6 Monate
   ereignis  jüngster Ereignistag der letzten 6 Monate: Kurslücke ab 4 % mit mindestens doppeltem 50-Tage-Volumen
             (meist Zahlen oder eine Nachricht)
-  zone      Beginn der aktuellen Zone (Anker des VCP-Scanners; kommt aus den Chartmarken, nicht von hier)
 
 Hoch und Tief zusammen sind Shannons Zange („Pinch“): laufen beide Linien eng zusammen, steht eine Entscheidung an."""
 import numpy as np
 import pandas as pd
 
-NAMEN = {"hoch": "Hoch 52 Wochen", "tief": "Tief 6 Monate", "ereignis": "Ereignistag", "zone": "Beginn der Zone"}
 LUECKE, VOLUMEN_FACH = 0.04, 2.0
 PINCH_PCT = 3.0
 

@@ -6,7 +6,7 @@ Zonen des VCP-Scanners (Baustein 1: Base, Flagge, Konsolidierung mit Vorgeschich
 Darunter Volumen mit 50er-Schnitt und dem Volumenband (türkis = Ruhe, grün/rot = viel Volumen am Aufwärts-/Abwärtstag), ganz unten die relative Stärke gegen den S&P 500 und gestrichelt gegen den eigenen
 Sektor-ETF (beide links bei 100).
 Erweitert 09.11.2026 (Lagekarte des Setups): Kaufzone Pivot bis +5 %, eine Stopp-Linie 1,5 ATR vom Einstieg (Short darüber),
-Ausbruchstag mit Volumen-Vielfachem, Fehlausbruch, Ermüdungstag, Basennummer an der Zone, AVWAP ab Zonenbeginn, Earnings
+Ausbruchstag mit Volumen-Vielfachem, Fehlausbruch, Ermüdungstag, Basennummer an der Zone, AVWAP nach Wahl (Hoch, Tief, Ereignistag), Earnings
 mit Kursreaktion und nächstem Termin, RS-Rang/Tempo und „RS-Hoch vor Kurs“ an der RS-Linie, Volumen nach Schluss zum
 Vortag gefärbt; darunter der Stundenchart der letzten 10 Handelstage (stunden()).
 Der frühere Chart (Market-Profile-Zonen, POC-Treppe, Pivot, Stopps, Volumenprofil, Phasenband, Zahlentermine) liegt in
@@ -24,11 +24,10 @@ ETIKETT = 120               # Spalte rechts neben den Kerzen für die Pfeile der
 SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trends, kräftig
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
-AVWAP_FARBE = "#F2F2F2"      # Anchored VWAP ab Zonenbeginn: weiß
 # Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
-AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA", "zone": AVWAP_FARBE}
-AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag", "zone": "Zone"}
-AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Micky: Zonenanker allein zu kurzfristig)
+AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA"}
+AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag"}
+AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Zonenanker gestrichen: zu kurzfristig, Micky)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 KAUFZONE_FARBE = GRUEN
 ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
@@ -171,8 +170,6 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
         import avwap
         anker = avwap.anker(voll)
-        if marken.get("avwap_ab") is not None:
-            anker["zone"] = pd.Timestamp(marken["avwap_ab"])
         reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
                   if k in anker}
         if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
@@ -636,7 +633,7 @@ def legende(ebene="Tag", gd_kurz=False):
     if ebene == "Tag":
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
                       (AVWAP_FARBEN["hoch"], "AVWAP ab Hoch 52 Wochen"), (AVWAP_FARBEN["tief"], "AVWAP ab Tief 6 Monate (mit Hoch: Zange)"),
-                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (AVWAP_FARBE, "AVWAP ab Beginn der Zone"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
+                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'
