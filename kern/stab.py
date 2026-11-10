@@ -409,6 +409,17 @@ def _seite(x):
         return "offen"
 
 
+def _runden(x, n=2):
+    """Zahlen in verschachtelten Daten runden (spart Token, liest sich wie auf dem Bildschirm)."""
+    if isinstance(x, float):
+        return round(x, n)
+    if isinstance(x, dict):
+        return {k: _runden(v, n) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_runden(v, n) for v in x]
+    return x
+
+
 class Aufklaerung(Exception):
     """Kartentisch fehlt oder ist veraltet – der Stab tagt nicht (keine Kosten für leere Antworten)."""
 
@@ -509,7 +520,7 @@ def lagebild():
         import lage                                      # (10.11.2026, für Murphy und die Gefechtsfrage des Strategen)
         q = lage.quadrant()
         wetter = {"quad": q["quad"], "name": q["name"], "amtlich": q["amtlich"], "wechsel_moeglich": q["wechsel_moeglich"],
-                  "wachstum": q["wachstum"], "inflation": q["inflation"], "bip_rate": q["bip_rate"],
+                  "wachstum": _runden(q["wachstum"]), "inflation": _runden(q["inflation"]), "bip_rate": q["bip_rate"],
                   "cpi_rate": q["cpi_rate"], "typische_fuehrer": q["fuehrer"]}
         pe = lage.pendel()
         pendel = {"zone": pe["zone"], "ampel": pe["ampel"], "vor_4_wochen": pe["vor_4_wochen"], "pfeil": pe["pfeil"],
