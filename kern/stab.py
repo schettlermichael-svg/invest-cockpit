@@ -147,24 +147,24 @@ def _anfrage(system, inhalt, max_tokens=3000, suchen=0):
 
 def _senden(k, daten):
     roh = json.dumps(daten).encode("utf-8")
-    for versuch in range(5):
+    for versuch in range(3):
         req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=roh, method="POST",
                                      headers={"x-api-key": k, "anthropic-version": "2023-06-01",
                                               "content-type": "application/json"})
         try:
-            with urllib.request.urlopen(req, timeout=300) as r:
+            with urllib.request.urlopen(req, timeout=180) as r:
                 return json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             text = e.read().decode("utf-8", "replace")[:300]
-            if e.code in (429, 500, 529) and versuch < 4:     # überlastet oder Rate-Limit: warten und noch einmal
+            if e.code in (429, 500, 529) and versuch < 2:     # überlastet oder Rate-Limit: warten und noch einmal
                 time.sleep(20 * (versuch + 1))
                 continue
             raise RuntimeError(f"Anthropic antwortet {e.code}: {text}") from None
-        except urllib.error.URLError as e:
-            if versuch < 4:
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            if versuch < 2:
                 time.sleep(10)
                 continue
-            raise RuntimeError(f"Anthropic nicht erreichbar: {e.reason}") from None
+            raise RuntimeError(f"Anthropic nicht erreichbar: {getattr(e, 'reason', e)}") from None
     raise RuntimeError("Anthropic nicht erreichbar")
 
 
@@ -249,13 +249,17 @@ def _ausschnitt(lb, nr):
 
 # ── Konferenz (Nachtlauf) und Fragen ──
 
-def konferenz():
-    """Alle fünf Strategen; speichert daten/konferenz/<datum>.json und gibt das Ergebnis zurück."""
+def konferenz(melden=lambda text: None):
+    """Alle fünf Strategen; speichert daten/konferenz/<datum>.json und gibt das Ergebnis zurück. `melden` schreibt
+    jeden Schritt ins Protokoll (Knopf-Lauf), damit ein Hänger sichtbar wird."""
+    melden(f"{datetime.now():%H:%M:%S} Lagebild wird gelesen …")
     lb = lagebild()
+    melden(f"{datetime.now():%H:%M:%S} Lagebild: {len(lb['kandidaten'])} Kandidaten, {len(lb['gruppen'])} Gruppen")
     heute = f"{datetime.now():%Y-%m-%d}"
     erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "meldungen": {}}
     for nr in (2, 3, 4, 5):
         name = STRATEGEN[nr][0]
+        melden(f"{datetime.now():%H:%M:%S} {name} liest …")
         inhalt = (f"{AUFTRAG[nr]}\n\n{FORMAT_MELDUNG}\n\nDaten der App (Stand des Nachtlaufs):\n"
                   + json.dumps(_ausschnitt(lb, nr), ensure_ascii=False, default=str))
         try:
@@ -264,6 +268,7 @@ def konferenz():
             raise
         except Exception as e:  # noqa: BLE001 – eine Meldung fehlt, die anderen laufen weiter
             m = {"meldung": f"Keine Meldung: {e}", "hinweise": [], "fehler": True}
+        melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}")
         erg["meldungen"][str(nr)] = {"name": name, **m}
     inhalt = ("Du bist der Stratege und führst den Stab. Lies die vier Lagemeldungen und schreibe den Tagesbefehl: "
               "die Lage in drei Sätzen und die drei wichtigsten Hinweise des Tages (mit Titel und Tag, wenn es um einen "
@@ -271,11 +276,13 @@ def konferenz():
               '"YYYY-MM-DD oder null", "ampel": "grün|gelb|rot", "text": "1 bis 2 Sätze"}]} – genau drei Hinweise.\n\n'
               + json.dumps({"barometer": lb["barometer"], "meldungen": erg["meldungen"]}, ensure_ascii=False,
                            default=str))
+    melden(f"{datetime.now():%H:%M:%S} Stratege schreibt den Tagesbefehl …")
     try:
         erg["befehl"] = _json(_anfrage(GRUNDSATZ, inhalt, 1500))
     except Exception as e:  # noqa: BLE001
         erg["befehl"] = {"lage": f"Kein Tagesbefehl: {e}", "hinweise": []}
     json_schreiben(_pfad(f"{heute}.json"), erg, ensure_ascii=False)
+    melden(f"{datetime.now():%H:%M:%S} fertig · Monat {kosten()['usd']:.2f} $")
     return erg
 
 

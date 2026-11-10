@@ -492,7 +492,15 @@ def konferenz_zeigen():
             nachtlauf.konferenz_starten()
             st.rerun()
         if laeuft:
-            st.caption("Der Stab tagt gerade …")
+            st.caption("Der Stab tagt gerade … (Seite mit ⌘ R neu laden)")
+    prot, zeilen = nachtlauf.konferenz_protokoll()
+    if prot:
+        with st.expander(f"Protokoll des Stabs · gestartet {prot.get('start')}"
+                         + (f" · fertig {prot['ende']}" if prot.get("ende") else " · läuft noch oder abgebrochen")
+                         + (" · ⚠ Fehler" if prot.get("fehler") else "")):
+            if prot.get("fehler"):
+                st.error(prot["fehler"])
+            st.code("\n".join(zeilen) or "noch keine Ausgabe", language=None)
     if not k:
         st.info("Noch keine Konferenz – sie läuft jede Nacht nach dem Nachtlauf, oder jetzt über den Knopf.")
     else:

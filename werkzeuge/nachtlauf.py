@@ -257,6 +257,12 @@ def _laeuft(datei, stunden):
             return False, p
         except PermissionError:
             pass
+        try:                                     # beendet, aber vom Elternprozess nicht abgeholt (Zombie) = läuft nicht
+            with open(f"/proc/{pid}/status", encoding="utf-8") as f:
+                if any(z.startswith("State:") and "Z" in z.split()[1] for z in f):
+                    return False, p
+        except OSError:
+            pass
     return True, p
 
 
@@ -384,12 +390,26 @@ def konferenz_starten():
     return True
 
 
+def konferenz_protokoll():
+    """Protokoll und die letzten Zeilen der Ausgabe des Knopf-Laufs – für die Anzeige im Konferenzraum."""
+    try:
+        p = json.load(open(KONFERENZ_PROTOKOLL, encoding="utf-8"))
+    except (OSError, ValueError):
+        p = None
+    try:
+        zeilen = open(os.path.join(os.path.dirname(KONFERENZ_PROTOKOLL), "konferenz_lauf.log"),
+                      encoding="utf-8", errors="replace").read().splitlines()[-40:]
+    except OSError:
+        zeilen = []
+    return p, zeilen
+
+
 def _konferenz_lauf():
-    import stab
     p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid()}
     _schreiben(p, KONFERENZ_PROTOKOLL)
     try:
-        stab.konferenz()
+        import stab
+        stab.konferenz(melden=print)
     except Exception as e:  # noqa: BLE001
         p["fehler"] = f"{type(e).__name__}: {e}"
         traceback.print_exc()
