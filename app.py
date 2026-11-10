@@ -550,7 +550,7 @@ def konferenz_zeigen():
                 st.markdown(ks.akte_text(eintraege), unsafe_allow_html=True)
                 ab = titel.abgelegt(tk)
                 if ab:
-                    st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege)),
+                    st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege, k.get("stand"))),
                                 unsafe_allow_html=True)
                 st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
     st.markdown(gestaltung.seite("<h2 style='margin:0'>Stab fragen</h2>", oben=16, unten=0), unsafe_allow_html=True)

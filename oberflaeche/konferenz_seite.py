@@ -33,9 +33,9 @@ def kopf(k):
 
 def _hinweis(nr, h, mit_titel=True):
     f = FARBE.get(h.get("ampel"), TEXT_2)
-    tk = (h.get("titel") or "").upper()
-    titel_ = (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="color:{BLAU};font-weight:600;'
-              f'text-decoration:none">{tk}</a> · ' if mit_titel and tk and tk != "NULL" else "")
+    tks = stab._ticker(h.get("titel"), None)
+    titel_ = (" · ".join(f'<a href="?seite=Titelseite&t={tk}" target="_self" style="color:{BLAU};font-weight:600;'
+                         f'text-decoration:none">{tk}</a>' for tk in tks) + " · " if mit_titel and tks else "")
     tag = f'<span style="color:{TEXT_3}">{h["datum"][8:10]}.{h["datum"][5:7]}. · </span>' if h.get("datum") else ""
     nadel = (f'<span style="display:inline-flex;width:20px;height:20px;border-radius:50%;border:2px solid {f};color:{f};'
              f'font-size:12px;font-weight:700;align-items:center;justify-content:center;margin-right:8px;flex:none">'
@@ -45,12 +45,22 @@ def _hinweis(nr, h, mit_titel=True):
 
 
 def befehl(k):
+    """Tagesbefehl in fester Gliederung (seit 10.11.2026): Lage, Volltreffer, long, short, Gefahren; ältere
+    Konferenzen mit drei freien Hinweisen werden weiter gezeigt."""
     b = (k or {}).get("befehl") or {}
+    teile = "".join(_hinweis(None, h) for h in b.get("hinweise") or [])
+    for teil, titel_ in stab.BEFEHL_TEILE:
+        liste = b.get(teil) or []
+        if teil in b:
+            teile += (f'<div style="font-size:14px;font-weight:600;color:{TEXT_2};margin:14px 0 2px">{titel_}'
+                      f'<span style="color:{TEXT_3};font-weight:400"> · {len(liste)}</span></div>'
+                      + ("".join(_hinweis(None, h) for h in liste)
+                         or f'<div style="font-size:14px;color:{TEXT_3}">keine</div>'))
     return seite(
         f'<div style="background:{KARTE};border:2px solid {BLAU};border-radius:14px;padding:18px 20px">'
         f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">1 · Stratege · '
         f'Tagesbefehl</div><p style="font-size:17px;line-height:1.6;margin:8px 0 10px;color:{TEXT}">{_h(b.get("lage"))}</p>'
-        + "".join(_hinweis(None, h) for h in b.get("hinweise") or []) + "</div>", oben=8, unten=8)
+        + teile + "</div>", oben=8, unten=8)
 
 
 def meldung(nr, m):
@@ -67,9 +77,12 @@ def akte_text(eintraege):
     return seite("".join(_hinweis(nr, h, mit_titel=False) for nr, h in eintraege), oben=4, unten=4)
 
 
-def nadeln(eintraege):
+def nadeln(eintraege, bis=None):
+    """Nadeln für den Chart – nur Hinweise mit einem Tag, der im Chart liegt (bis = Stand der Konferenz). Hinweise auf
+    künftige Tage (Termine) stehen nur im Text: früher landeten sie auf der letzten Kerze und sahen aus wie heute."""
     return [{"datum": h.get("datum"), "nr": nr, "ampel": h.get("ampel"),
-             "text": f'{stab.STRATEGEN[nr][0]}: {h.get("text", "")}'} for nr, h in eintraege]
+             "text": f'{stab.STRATEGEN[nr][0]}: {h.get("text", "")}'} for nr, h in eintraege
+            if h.get("datum") and (not bis or str(h["datum"])[:10] <= bis)]
 
 
 ANLEITUNG = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
