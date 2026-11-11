@@ -721,13 +721,17 @@ def _beleg(quelle):
 def faktenwache(hinweise_, quelle, bekannt):
     """Prüft jeden Hinweis (10.11.2026): Ticker, die die App nicht kennt, und Zahlen, die in den Daten nicht vorkommen
     (auch nicht gerundet). Kleine ganze Zahlen (Tage, Anzahl) und Jahreszahlen bleiben außen vor. Ergebnis steht im
-    Hinweis unter „wache“; „nicht gefunden“ heißt nicht „falsch“ (selbst gerechnet), aber: nachsehen."""
+    Hinweis unter „wache“; „nicht gefunden“ heißt nicht „falsch“, aber: nachsehen. Satzteile, die der Stratege mit
+    „gerechnet“ kennzeichnet, prüft die Wache nicht (Regel 10 der Dienstanweisung; 11.11.2026)."""
     beleg = _beleg(quelle)
     for h in hinweise_:
         tks = [str(x).upper().strip() for x in (h.get("titel") or []) if str(x).strip()]
         fremd = [x for x in tks if bekannt and x not in bekannt]
         offen = []
-        for z in _zahlen_in(" ".join(str(h.get(f) or "") for f in ("text", "einwand", "antwort"))):
+        import re
+        text_ = " ".join(str(h.get(f) or "") for f in ("text", "einwand", "antwort"))
+        teile = [t for t in re.split(r"(?<=[.;:!?])\s+|\s·\s|,\s(?=[a-zäöü])", text_) if "gerechnet" not in t]
+        for z in _zahlen_in(" ".join(teile)):           # selbst gerechnet und so gekennzeichnet: kein Fall der Wache
             w = abs(z)
             if (w == int(w) and w <= 31) or 1990 <= w <= 2100:
                 continue
@@ -955,24 +959,29 @@ def akten(k):
 
 
 def frage(text, tk=None):
-    """„Stab fragen“: freie Frage an den Stab, auf Wunsch zu einem Titel. Antwort als Text, gespeichert."""
+    """„Stab fragen“: freie Frage an den Stab, auf Wunsch zu einem Titel. Antwort als Text, gespeichert. Seit
+    11.11.2026 mit dem Feldhandbuch der Meister, Marktlage, Pendel und Wirtschaftswetter – auf Elite-Stand wie die
+    Konferenz."""
     try:
         lb = lagebild()
     except Aufklaerung:
         lb = {"barometer": None, "kandidaten": []}
     k = letzte() or {}
-    kontext = {"tagesbefehl": k.get("befehl"), "meldungen": {nr: m.get("meldung") for nr, m in
-                                                            (k.get("meldungen") or {}).items()},
-               "barometer": lb["barometer"]}
+    kontext = {"heute": HEUTE(), "tagesbefehl": k.get("befehl"),
+               "meldungen": {nr: m.get("meldung") for nr, m in (k.get("meldungen") or {}).items()},
+               "barometer": lb["barometer"], "markt": lb.get("markt"), "pendel": lb.get("pendel"),
+               "wirtschaftswetter": lb.get("wirtschaftswetter")}
     if tk:
         tk = tk.upper().strip()
         kontext["titel"] = next((a for a in lb["kandidaten"] if a["titel"] == tk), None) or _einzelakte(tk)
+    handbuch = "\n\n".join(f"{STRATEGEN[nr][0]}: {MEISTER[nr]}" for nr in (1, 2, 3, 4, 5, 6))
     inhalt = ("Der Trader fragt den Stab. Antworte als Stab (der Stratege führt, die Fachleute ergänzen) in höchstens "
               "12 Sätzen, auf Deutsch, nur mit Fakten aus den Daten oder aus Web-Fundstellen (dann Quelle nennen). "
-              "Antworte als Klartext, ohne Werkzeug.\n\nFrage: " + text + "\n\nDaten der App:\n"
-              + json.dumps(kontext, ensure_ascii=False, default=str))
+              "Jeder Fachmann urteilt nach dem Handwerk seiner Meister aus dem Feldhandbuch unten und nennt die Regel "
+              "beim Namen. Antworte als Klartext, ohne Werkzeug.\n\nFeldhandbuch des Stabs:\n" + handbuch
+              + "\n\nFrage: " + text + "\n\nDaten der App:\n" + json.dumps(kontext, ensure_ascii=False, default=str))
     antwort = _anfrage(dienstanweisung().replace("8. Gib deine Meldung ausschließlich über das Werkzeug ab.", ""),
-                       inhalt, 1500, SUCHEN_FRAGE)
+                       inhalt, 5000, SUCHEN_FRAGE)            # 5000: mit Web-Suche brauchte Opus mehr Platz (11.11.)
     buch = json_lesen(_pfad("fragen.json"), []) or []
     buch.insert(0, {"zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "titel": tk, "frage": text, "antwort": antwort})
     json_schreiben(_pfad("fragen.json"), buch[:50], ensure_ascii=False)
