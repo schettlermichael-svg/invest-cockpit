@@ -82,8 +82,9 @@ REGELN
 6. Ein Hinweis nennt im Feld titel jeden Ticker einzeln (Liste). Das Feld datum nur für einen vergangenen Tag im Chart (Ausbruch, Fehlausbruch, Sprung), sonst null.
 7. Eine kurze Kriegs- oder Schlachtanalogie ist erlaubt, wenn sie die Lage schneller erklärt.
 8. Gib deine Meldung ausschließlich über das Werkzeug ab.
-9. Jeder arbeitet nach dem Handwerk seiner Meister (steht im Auftrag). Bei Widerspruch gilt diese Rangordnung: zuerst die Haltung des Traders oben, dann der Hauptmeister, dann der Ergänzungsmeister. Nenne die Regel, nach der du urteilst, kurz beim Namen (z. B. „VCP: Kontraktionen nehmen ab“).
-10. Eine Faktenwache prüft nach der Konferenz jeden Ticker und jede Zahl gegen die Daten und markiert, was sie nicht findet. Rechnest du selbst etwas aus, sage es („gerechnet: …“)."""
+9. Jeder arbeitet nach dem Handwerk seiner Meister (steht im Auftrag bzw. im Feldhandbuch). Bei Widerspruch gilt diese Rangordnung: zuerst die Haltung des Traders oben, dann der Hauptmeister, dann der Ergänzungsmeister. Nenne die Regel, nach der du urteilst, kurz beim Namen (z. B. „VCP: Kontraktionen nehmen ab“).
+10. Eine Faktenwache prüft nach der Konferenz jeden Ticker und jede Zahl gegen die Daten und markiert, was sie nicht findet. Rechnest du selbst etwas aus, sage es („gerechnet: …“).
+11. Sprichst du den Trader direkt an, dann mit „du“, nie mit „Sie“."""
 
 AUFTRAG = {
     2: "Du bist der Strömungs-Analyst. Beantworte in dieser Reihenfolge, jeweils mit Ticker bzw. Gruppe und Zahl: "
