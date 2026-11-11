@@ -18,6 +18,21 @@ SPALTEN = ["name", "exchange", "description", "market_cap_basic", "gross_margin_
            "earnings_release_next_date", "beta_1_year"]
 # ROE und ROIC als Geschäftsjahr (fy): die ttm-Spalten liefert TradingView leer (geprüft 09.11.2026)
 MINDEST = 0.95
+_CACHE = {}
+
+
+def zeile(tk):
+    """Zeile eines Titels aus daten/tv/revier.csv (Börse, Margen, Aktien im Umlauf …) oder None; die Datei wird nur
+    neu gelesen, wenn sie sich geändert hat. (Vorher sic13._tv; SIC-13 entfernt am 11.11.2026.)"""
+    m = os.path.getmtime(DATEI) if os.path.exists(DATEI) else 0
+    if _CACHE.get("m") != m:
+        try:
+            _CACHE["t"] = pd.read_csv(DATEI, keep_default_na=True).set_index("ticker")
+        except Exception:  # noqa: BLE001
+            _CACHE["t"] = pd.DataFrame()
+        _CACHE["m"] = m
+    t = _CACHE["t"]
+    return t.loc[tk] if tk in t.index else None
 
 
 def _abfrage(markt, koerper):

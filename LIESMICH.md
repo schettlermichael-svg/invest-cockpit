@@ -18,7 +18,7 @@ und Deutung – entscheiden tust du.
   - `marktrichtung.py` – Marktrichtung nach O'Neil: Distributionstage, Erholungsversuch, Follow-Through-Day (S&P 500 und Nasdaq, Gegenprobe des Volumens mit Massive)
   - `rudel.py` – Rudel (Branchen-Breite), Kursverwandte, Themen-Gruppen, Mansfield-RS (Speicher in `daten/rudel/`)
   - `massive.py` – Tageskurse aller US-Aktien von Massive (eine Anfrage je Tag, Speicher in `daten/massive/`)
-  - `sic13.py` – SIC-13 · Sovereign Investment Compass (Mickys Raster): elf Kriterien in fünf Ebenen für jeden Titel, gemessen (RS, Risiko-History, Fonds-Fußabdruck, Krisen-Resistenz, Pricing Power, Zahlenproben) und eingeschätzt (`daten/sic13/einschaetzung.json`, von Claude für alle 1.884 Titel, 03.11.2026); TradingView-Kennzahlen aus `daten/tv/revier.csv`
+  - SIC-13 (Mickys Raster) und Fonds-Fußabdruck: am 11.11.2026 entfernt (`_to_delete/sic13_2026-11-11`); TradingView-Kennzahlen je Titel liest `tv_kennzahlen.zeile()` aus `daten/tv/revier.csv`
   - `namen_de.py` – deutsche Namen der Sektoren und Branchen; deutsche Unternehmensbeschreibungen aus `daten/steckbrief_de/beschreibungen.json` (von Claude aus Yahoos englischem Text übertragen, 03.11.2026 für alle 1.884 Titel; neue Titel ergänzt der Nachtlauf)
   - später: `risiko.py`
 - `oberflaeche/` – alles Sichtbare als HTML/SVG nach der Designvorlage: `gestaltung.py` (Farben, Bausteine), `chart.py` (Chart), `titel.py` (Titelseite), `uebersicht.py` (Lage am Abend), `frontkarte.py` (Rotationsbild der Sektoren und Themen-Gruppen), `uebergaenge.py` (Tafel „Übergänge“: Quad-Türen, Sektoren und Themen-Gruppen an der Tür, Haken, Breite je Gruppe), `rudelkarte.py` (Rudel und Kursverwandte auf der Titelseite), `stimmung.py` (Stimmungskurve)
@@ -294,7 +294,7 @@ Alter Scanner abgeschaltet: Ordner nach Apps/_to_delete/sepa verschoben (04.11.2
 aus Schritt 6 gestrichen (Begründungen als ⓘ und hier; eine Sperrliste wäre ein Filter).
 Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als Urteil.
 - Claudes Teil (geplante Aufgabe Di–Sa 00:37 Uhr, braucht Mac an und Claude-App): TradingView-Kennzahlen nach
-  `daten/tv/revier.csv`, samstags Revier-Pflege (Zugänge mit Steckbrief und SIC-13, Abgänge nur gemeldet), Scalable-Positionen
+  `daten/tv/revier.csv`, samstags Revier-Pflege (Zugänge mit Steckbrief, Abgänge nur gemeldet), Scalable-Positionen
   über `depot.uebernehmen()` sobald verbunden; Ergebnis in `daten/nachtlauf/claude_lauf.json`, steht mit in der Datenampel.
 
 ## Server (ab 05.11.2026)
@@ -309,7 +309,7 @@ Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als
 - Seit 05.11.2026 auf dem Server, ohne Claude und ohne Mac: TradingView-Kennzahlen (`kern/tv_kennzahlen.py`, Screener-
   Schnittstelle, Test 1.889 Titel = 100 %) und freitags die Revier-Pflege (`kern/revier_pflege.py`: Zugänge nach den
   Revier-Regeln mit Sektor/Branche von Yahoo, höchstens 40 je Woche, Abgänge nur gemeldet). Neue Titel haben zunächst
-  den englischen Yahoo-Steckbrief und noch keine SIC-13-Einschätzung (ergänzt Claude auf Zuruf).
+  den englischen Yahoo-Steckbrief.
 - Code kommt über GitHub (`schettlermichael-svg/invest-cockpit`, privat, nur Code): Der Server schaut alle 5 Minuten nach
   (`invest-update.timer`, `/usr/local/bin/invest-aktualisieren`, Deploy key nur lesend) und startet die App neu.
   `werkzeuge/server/uebertragen.sh` schickt nur noch Code (Daten auf dem Server sind das Original).

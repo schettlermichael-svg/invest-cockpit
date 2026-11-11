@@ -28,7 +28,7 @@ import rudel                                          # noqa: E402
 import rudelkarte                                     # noqa: E402
 import quellen                                        # noqa: E402
 import sektoren                                       # noqa: E402
-import sic13                                          # noqa: E402
+import tv_kennzahlen                                  # noqa: E402
 import lagekarte                                      # noqa: E402
 import markt_systeme                                  # noqa: E402
 import system_minervini                               # noqa: E402
@@ -45,7 +45,7 @@ def _tv_symbol(tk):
     import watchlists
     if watchlists.zu_tv(tk):                     # Börse außerhalb der USA (z. B. RHM.DE → XETR:RHM)
         return watchlists.zu_tv(tk)
-    z = sic13._tv(tk.upper())
+    z = tv_kennzahlen.zeile(tk.upper())
     ex = z["exchange"] if z is not None and isinstance(z.get("exchange"), str) else None
     sym = tk.upper().replace("-", ".")
     return f"{ex}:{sym}" if ex else sym
@@ -827,7 +827,7 @@ def _zahlenkarte(tk, fund, fd):
         links = f'<div style="color:{TEXT_2}">Fundamentdaten nicht verfügbar.</div>'
     if fund and fund["zeichen"]:
         links += "".join(ampelzeile(x, "gelb" if "prüfen" in x else "blau", "") for x in fund["zeichen"])
-    s_ = fundament.angebot(sic13._tv(tk))
+    s_ = fundament.angebot(tv_kennzahlen.zeile(tk))
     links += ampelzeile("S · Angebot (frei handelbare Aktien, Rückkäufe)", s_[0], s_[1],
                         "CAN SLIM S: Weniger Aktien im Umlauf und Rückkäufe verknappen das Angebot; Verwässerung über 2 % "
                         "ist ein Warnzeichen. Quelle TradingView. Zählt nicht zu den neun Punkten.")

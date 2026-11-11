@@ -260,7 +260,7 @@ def _codestand(mit_watchlists=False):
     hier = os.path.dirname(os.path.abspath(__file__))
     code = max(os.path.getmtime(os.path.join(hier, d, f)) for d in ("kern", "oberflaeche")
                for f in os.listdir(os.path.join(hier, d)) if f.endswith(".py"))
-    daten = [os.path.join(hier, "daten", x) for x in ("sic13/einschaetzung.json", "tv/revier.csv",
+    daten = [os.path.join(hier, "daten", x) for x in ("tv/revier.csv",
                                                        "steckbrief_de/beschreibungen.json")]
     daten += [depot.DATEI] + ([watchlists.DATEI] if mit_watchlists else [])   # Depot geändert: Seiten neu bauen;
     # Watchlists nur für den Kartentisch (Übersicht und Titelseiten hängen nicht von ihnen ab)
