@@ -978,9 +978,12 @@ def frage(text, tk=None):
         kontext["titel"] = next((a for a in lb["kandidaten"] if a["titel"] == tk), None) or _einzelakte(tk)
     handbuch = "\n\n".join(f"{STRATEGEN[nr][0]}: {MEISTER[nr]}" for nr in (1, 2, 3, 4, 5, 6))
     inhalt = ("Der Trader fragt den Stab. Antworte als Stab (der Stratege führt, die Fachleute ergänzen) in höchstens "
-              "12 Sätzen, auf Deutsch, nur mit Fakten aus den Daten oder aus Web-Fundstellen (dann Quelle nennen). "
+              "18 Sätzen, auf Deutsch, nur mit Fakten aus den Daten oder aus Web-Fundstellen (dann Quelle nennen). "
               "Jeder Fachmann urteilt nach dem Handwerk seiner Meister aus dem Feldhandbuch unten und nennt die Regel "
-              "beim Namen. Antworte als Klartext, ohne Werkzeug.\n\nFeldhandbuch des Stabs:\n" + handbuch
+              "beim Namen. Nennt die Frage nur bestimmte Meister, antworte zuerst mit diesen; danach sagt jeder weitere "
+              "Meister, dessen Regel für diesen Titel oder diese Lage zählt, in einem Satz, was er sieht (Abschnitt "
+              "„Die übrigen Meister“). Meister ohne Bezug (z. B. Short-Meister bei einem Long-Titel) lässt du weg. "
+              "Antworte als Klartext, ohne Werkzeug.\n\nFeldhandbuch des Stabs:\n" + handbuch
               + "\n\nFrage: " + text + "\n\nDaten der App:\n" + json.dumps(kontext, ensure_ascii=False, default=str))
     antwort = _anfrage(dienstanweisung().replace("8. Gib deine Meldung ausschließlich über das Werkzeug ab.", ""),
                        inhalt, 5000, SUCHEN_FRAGE)            # 5000: mit Web-Suche brauchte Opus mehr Platz (11.11.)
