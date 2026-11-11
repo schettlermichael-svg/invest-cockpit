@@ -845,11 +845,12 @@ def konferenz(melden=lambda text: None):
                 ziele = list(dict.fromkeys(voll + [c["titel"] for c in lb["kandidaten"]]))[:5]
                 notizen = _anfrage(system, "Suche aktuelle Nachrichten (Übernahmen, Prognosen, Ereignisse) zu diesen "
                                    f"Titeln: {', '.join(ziele)}. Schreibe knappe Notizen je Titel mit Quelle (URL). "
-                                   "Nichts erfinden.", 2000, SUCHEN_NACHT)
+                                   "Nichts erfinden.", 6000, SUCHEN_NACHT)
             except Deckel:
                 raise
             except Exception as e:  # noqa: BLE001
                 notizen = f"Web-Suche fehlgeschlagen: {e}"
+            melden(f"   Web-Suche: {len(notizen or '')} Zeichen Notizen (Ende: {_LETZTER['stop']})")
             vorlauf = "\n\nNotizen aus der Web-Suche:\n" + (notizen or "keine Fundstellen")
         buch = lagebuch(vorher, nr, lb)
         buch_ = LAGEBUCH_TEXT + json.dumps(buch, ensure_ascii=False, default=str) if buch else ""
