@@ -330,6 +330,7 @@ def _rufen(system, nachrichten, max_tokens, werkzeuge=None, wahl=None):
         antwort = _senden(k, daten)
         _buchen(antwort.get("usage") or {})
         bloecke += antwort.get("content", [])
+        _LETZTER["stop"] = antwort.get("stop_reason")
         if antwort.get("stop_reason") != "pause_turn":
             break
         nachrichten = nachrichten[:1] + [{"role": "assistant", "content": antwort["content"]}]
@@ -349,34 +350,81 @@ class Unlesbar(Exception):
         self.roh = roh
 
 
-def _formular(system, inhalt, name, schema, max_tokens=4000):
+_LETZTER = {"stop": None}
+
+
+def _ordnen(obj, schema):
+    """Felder, die das Modell als JSON-Text statt als Liste/Objekt schickt, in Listen/Objekte wandeln (rekursiv)."""
+    if not isinstance(obj, dict):
+        return obj
+    for key, sub in (schema.get("properties") or {}).items():
+        v = obj.get(key)
+        if isinstance(v, str) and sub.get("type") in ("array", "object"):
+            try:
+                v = json.loads(v)
+            except ValueError:
+                continue
+        if sub.get("type") == "array" and isinstance(v, list) and (sub.get("items") or {}).get("type") == "object":
+            neu = []
+            for x in v:
+                if isinstance(x, str):
+                    try:
+                        x = json.loads(x)
+                    except ValueError:
+                        continue
+                if isinstance(x, dict):
+                    neu.append(_ordnen(x, sub["items"]))
+            v = neu
+        if v is not None:
+            obj[key] = v
+    return obj
+
+
+def _gueltig(obj, schema):
+    """Alle Pflichtfelder da und vom richtigen Typ (Text nicht leer, Liste als Liste)."""
+    if not isinstance(obj, dict):
+        return False
+    for key in schema.get("required", []):
+        typ = ((schema.get("properties") or {}).get(key) or {}).get("type")
+        v = obj.get(key)
+        if v is None or (typ == "string" and not str(v).strip()) or (typ == "array" and not isinstance(v, list)):
+            return False
+    return True
+
+
+def _formular(system, inhalt, name, schema, max_tokens=8000):
     """Antwort über ein festes Formular (Werkzeug der Schnittstelle): die Schnittstelle gibt ein fertiges Objekt zurück,
     kein JSON-Text, der an Anführungszeichen zerbrechen kann. Opus 5.5 erlaubt kein erzwungenes Werkzeug
     (tool_choice „tool“/„any“ → Fehler 400, Nachtlauf 11.11.2026) – deshalb „auto“ mit klarer Anweisung; schreibt das
-    Modell trotzdem Text, wird ein JSON-Objekt darin gelesen. Ein zweiter Versuch, sonst Unlesbar mit der Rohantwort."""
+    Modell trotzdem Text, wird ein JSON-Objekt darin gelesen. Jede Meldung wird geprüft (alle Pflichtfelder, Listen als
+    Listen); unvollständig – etwa am Token-Limit abgeschnitten (11.11.: leere Meldung des Risikomanagers, Tagesbefehl
+    nur mit Lage) – gibt es einen zweiten Versuch mit doppeltem Limit, sonst Unlesbar mit der Rohantwort."""
     werkzeug = [{"name": name, "description": "Meldung an den Stab abgeben – der einzige Weg, die Meldung abzugeben",
                  "input_schema": schema}]
     auftrag = (f"{inhalt}\n\nGib deine Antwort ausschließlich über das Werkzeug „{name}“ ab – genau ein Aufruf, "
-               "kein Text davor oder danach.")
+               "alle Pflichtfelder ausgefüllt, Listen als echte Listen, kein Text davor oder danach.")
     roh = ""
     for versuch in range(2):
         bloecke = _rufen(system, [{"role": "user", "content": auftrag}], max_tokens, werkzeug, {"type": "auto"})
-        for b in bloecke:
-            if b.get("type") == "tool_use" and isinstance(b.get("input"), dict):
-                return b["input"]
+        kandidaten = [b["input"] for b in bloecke if b.get("type") == "tool_use" and isinstance(b.get("input"), dict)]
         text = "".join(b.get("text", "") for b in bloecke if b.get("type") == "text")
         a, e = text.find("{"), text.rfind("}")
         if a >= 0 and e > a:
             try:
-                obj = json.loads(text[a:e + 1])
-                if isinstance(obj, dict) and all(k in obj for k in schema.get("required", [])):
-                    return obj
+                kandidaten.append(json.loads(text[a:e + 1]))
             except ValueError:
                 pass
-        roh = json.dumps(bloecke, ensure_ascii=False)[:600]
-        auftrag = (f"{inhalt}\n\nWICHTIG: Deine letzte Antwort kam nicht über das Werkzeug. Rufe jetzt das Werkzeug "
-                   f"„{name}“ auf und fülle alle Pflichtfelder aus. Kein freier Text.")
-    raise Unlesbar("Antwort ohne ausgefülltes Formular", roh)
+        for obj in kandidaten:
+            obj = _ordnen(obj, schema)
+            if _gueltig(obj, schema):
+                return obj
+        roh = f"stop_reason={_LETZTER['stop']} · " + json.dumps(bloecke, ensure_ascii=False)[:600]
+        if _LETZTER["stop"] == "max_tokens":
+            max_tokens *= 2
+        auftrag = (f"{inhalt}\n\nWICHTIG: Deine letzte Antwort war unvollständig oder kam nicht über das Werkzeug. "
+                   f"Rufe jetzt das Werkzeug „{name}“ auf und fülle alle Pflichtfelder aus ({', '.join(schema.get('required', []))}); "
+                   "fasse dich kürzer. Kein freier Text.")
+    raise Unlesbar("Antwort ohne vollständiges Formular", roh)
 
 
 def _senden(k, daten):
@@ -845,7 +893,7 @@ def konferenz(melden=lambda text: None):
               f"{MEISTER[1]}\n\n{befehl_}{buch_}")
     melden(f"{datetime.now():%H:%M:%S} Stratege schreibt den Tagesbefehl …")
     try:
-        erg["befehl"] = _formular(system, inhalt, "tagesbefehl", BEFEHL, 4000)
+        erg["befehl"] = _formular(system, inhalt, "tagesbefehl", BEFEHL, 12000)
         b = erg["befehl"]
         faktenwache([h for teil, _ in BEFEHL_TEILE for h in b.get(teil) or []] + list(b.get("einwaende") or []),
                     befehl_ + gegen_ + buch_ + json.dumps(_ausschnitt(lb, 4), ensure_ascii=False, default=str),
