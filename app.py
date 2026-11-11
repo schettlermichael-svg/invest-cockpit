@@ -574,6 +574,8 @@ def konferenz_zeigen():
         with st.container(border=True):
             st.markdown(f"**{f['zeit']}{' · ' + f['titel'] if f.get('titel') else ''} — {f['frage']}**")
             st.markdown(f["antwort"])
+            if f.get("ende") and f["ende"] != "end_turn":          # Fehlersuche: warum endete die Antwort?
+                st.caption(f'Ende der Antwort: {f["ende"]} · Blöcke: {", ".join(f.get("bloecke") or [])}')
 
 
 if ansicht == "Konferenzraum":

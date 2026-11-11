@@ -341,6 +341,7 @@ def _anfrage(system, inhalt, max_tokens=3000, suchen=0):
     """Freier Text als Antwort (Probe, Stab fragen, Notizen der Web-Suche)."""
     werkzeuge = [{"type": "web_search_20250305", "name": "web_search", "max_uses": suchen}] if suchen else None
     bloecke = _rufen(system, [{"role": "user", "content": inhalt}], max_tokens, werkzeuge)
+    _LETZTER["bloecke"] = [b.get("type") for b in bloecke]               # zur Fehlersuche (Stab fragen, 11.11.)
     return "".join(b.get("text", "") for b in bloecke if b.get("type") == "text").strip()
 
 
@@ -983,7 +984,10 @@ def frage(text, tk=None):
     antwort = _anfrage(dienstanweisung().replace("8. Gib deine Meldung ausschließlich über das Werkzeug ab.", ""),
                        inhalt, 5000, SUCHEN_FRAGE)            # 5000: mit Web-Suche brauchte Opus mehr Platz (11.11.)
     buch = json_lesen(_pfad("fragen.json"), []) or []
-    buch.insert(0, {"zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "titel": tk, "frage": text, "antwort": antwort})
+    if _LETZTER.get("stop") == "max_tokens":
+        antwort += "\n\n*(Antwort am Platzlimit abgeschnitten)*"
+    buch.insert(0, {"zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "titel": tk, "frage": text, "antwort": antwort,
+                    "ende": _LETZTER.get("stop"), "bloecke": _LETZTER.get("bloecke")})
     json_schreiben(_pfad("fragen.json"), buch[:50], ensure_ascii=False)
     return antwort
 
