@@ -121,8 +121,8 @@ def feldhandbuch():
 ANLEITUNG = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
 
 1. Öffne **console.anthropic.com** und melde dich an (oder lege dort ein Konto an).
-2. Unter **Billing** Guthaben aufladen – für den Anfang reichen 30 $.
-3. Unter **Limits** ein Monatslimit setzen, z. B. 30 $ (zweite Sicherung neben dem Deckel der App).
+2. Unter **Billing** Guthaben aufladen – für den Anfang reichen 50 $.
+3. Unter **Limits** ein Monatslimit setzen, z. B. 50 $ (zweite Sicherung neben dem Deckel der App).
 4. Unter **API Keys** → **Create Key**, Name z. B. „Invest Cockpit“. Den Schlüssel (beginnt mit `sk-ant-`) kopieren –
    er wird nur einmal angezeigt.
 5. Hier unten einfügen und speichern. Er liegt dann nur auf dem Server (nicht in GitHub)."""

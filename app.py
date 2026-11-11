@@ -520,7 +520,7 @@ def konferenz_zeigen():
                     st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
     with knopf_:
         if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
-                     help="Die sechs Strategen lesen den Stand des letzten Nachtlaufs (rund 4–10 Minuten, etwa 1 $). "
+                     help="Die sechs Strategen lesen den Stand des letzten Nachtlaufs (rund 5–10 Minuten, etwa 2 $). "
                           "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
             nachtlauf.konferenz_starten()
             st.rerun()
