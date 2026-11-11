@@ -350,18 +350,32 @@ class Unlesbar(Exception):
 
 
 def _formular(system, inhalt, name, schema, max_tokens=4000):
-    """Antwort über ein festes Formular (Werkzeug der Schnittstelle, erzwungen): die Schnittstelle gibt ein fertiges
-    Objekt zurück, kein JSON-Text, der an Anführungszeichen zerbrechen kann. Ein zweiter Versuch, sonst Unlesbar mit
-    der Rohantwort."""
-    werkzeug = [{"name": name, "description": "Meldung an den Stab abgeben", "input_schema": schema}]
+    """Antwort über ein festes Formular (Werkzeug der Schnittstelle): die Schnittstelle gibt ein fertiges Objekt zurück,
+    kein JSON-Text, der an Anführungszeichen zerbrechen kann. Opus 5.5 erlaubt kein erzwungenes Werkzeug
+    (tool_choice „tool“/„any“ → Fehler 400, Nachtlauf 11.11.2026) – deshalb „auto“ mit klarer Anweisung; schreibt das
+    Modell trotzdem Text, wird ein JSON-Objekt darin gelesen. Ein zweiter Versuch, sonst Unlesbar mit der Rohantwort."""
+    werkzeug = [{"name": name, "description": "Meldung an den Stab abgeben – der einzige Weg, die Meldung abzugeben",
+                 "input_schema": schema}]
+    auftrag = (f"{inhalt}\n\nGib deine Antwort ausschließlich über das Werkzeug „{name}“ ab – genau ein Aufruf, "
+               "kein Text davor oder danach.")
     roh = ""
-    for _ in range(2):
-        bloecke = _rufen(system, [{"role": "user", "content": inhalt}], max_tokens, werkzeug,
-                         {"type": "tool", "name": name})
+    for versuch in range(2):
+        bloecke = _rufen(system, [{"role": "user", "content": auftrag}], max_tokens, werkzeug, {"type": "auto"})
         for b in bloecke:
             if b.get("type") == "tool_use" and isinstance(b.get("input"), dict):
                 return b["input"]
+        text = "".join(b.get("text", "") for b in bloecke if b.get("type") == "text")
+        a, e = text.find("{"), text.rfind("}")
+        if a >= 0 and e > a:
+            try:
+                obj = json.loads(text[a:e + 1])
+                if isinstance(obj, dict) and all(k in obj for k in schema.get("required", [])):
+                    return obj
+            except ValueError:
+                pass
         roh = json.dumps(bloecke, ensure_ascii=False)[:600]
+        auftrag = (f"{inhalt}\n\nWICHTIG: Deine letzte Antwort kam nicht über das Werkzeug. Rufe jetzt das Werkzeug "
+                   f"„{name}“ auf und fülle alle Pflichtfelder aus. Kein freier Text.")
     raise Unlesbar("Antwort ohne ausgefülltes Formular", roh)
 
 
@@ -389,12 +403,18 @@ def _senden(k, daten):
 
 
 def probe():
-    """Kurzer Test nach dem Eintragen des Schlüssels: (True, Text) oder (False, Grund). Kostet weniger als 1 Cent."""
+    """Kurzer Test nach dem Eintragen des Schlüssels: Text und Meldeformular. (True, Text) oder (False, Grund). Kostet
+    weniger als 1 Cent."""
     try:
         antwort = _anfrage("Antworte nur mit OK.", "Verbindungstest", 5)
-        return True, f"Verbindung steht – {MODELL} antwortet ({antwort[:20] or 'OK'})"
     except Exception as e:  # noqa: BLE001
         return False, str(e)
+    try:                                         # auch das Formular prüfen – daran scheiterte der Nachtlauf am 11.11.
+        f = _formular("Du testest eine Verbindung.", "Melde den Status ok.", "melden",
+                      {"type": "object", "properties": {"status": {"type": "string"}}, "required": ["status"]}, 200)
+    except Exception as e:  # noqa: BLE001
+        return False, f"Text geht ({antwort[:10] or 'OK'}), aber das Meldeformular nicht: {e}"
+    return True, f"Verbindung steht – {MODELL} antwortet, Meldeformular funktioniert ({f.get('status', 'ok')})"
 
 
 # ── Lagebild aus den Daten der App ──
