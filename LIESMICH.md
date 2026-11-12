@@ -640,10 +640,11 @@ Von den einsatzbereiten Titeln bekommen die besten 30 eine Akte; das Depot kommt
 2. Volltreffer.
 3. ★ in der Kaufzone bzw. Short-Zone.
 4. Geld in Richtung des Setups (Short gespiegelt: Abfluss zählt).
-5. Watchlist.
-6. RS-Rang (Short gespiegelt: der schwächere zuerst).
+5. RS-Rang (Short gespiegelt: der schwächere zuerst).
 
-Vorher zählte die Watchlist vor Geld und RS, die Kaufzone und der Termin zählten nicht, und bei Shorts wurde Geld nicht gespiegelt.
+Die Watchlist gibt keinen Vorteil. Die Auswahl ist neutral, damit kein schwächerer Titel vor einem stärkeren steht, nur weil er auf der Liste ist. Vorher zählte die Watchlist vor Geld und RS, die Kaufzone und der Termin zählten nicht, und bei Shorts wurde Geld nicht gespiegelt.
+
+Darunter steht der eigene Kasten „◆ Deine Watchlist · einsatzbereit“. Er enthält nur deine einsatzbereiten Titel, in derselben Rangfolge, mit 🎯 für „beim Stab“, sonst mit dem Grund. Alle übrigen Watchlist-Titel zeigt ② Stellung.
 
 Die Seite Setups zeigt unter der Tabelle „Knapp draußen“: die ersten 10 einsatzbereiten Titel ohne Platz, in derselben Rangfolge und mit denselben Merkmalen. So sieht man die Grenze auf einen Blick.
 

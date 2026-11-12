@@ -44,11 +44,11 @@ SUCHEN_FRAGE = 3
 # Depot; dazu nur einsatzbereite Setups – Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum
 # Pivot, Short bis 5 % unter der Unterkante); Volltreffer auch bis 10 % über dem Pivot. Rang (Micky 12.11.2026):
 # Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des Setups (Short
-# gespiegelt: Abfluss zählt), Watchlist, RS (Short gespiegelt: schwächer zählt). Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
+# gespiegelt: Abfluss zählt), RS (Short gespiegelt: schwächer zählt); die Watchlist gibt keinen Vorteil. Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
 # AKTEN_MAX. Alles andere zeigt der Kartentisch; Watchlist-Titel ohne Akte stehen mit festen Ampeln in der Tafel.
 AKTEN_MAX = 30
 RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des "
-             "Setups (Short: Abfluss), Watchlist, RS-Rang (Short: der schwächere zuerst)")
+             "Setups (Short: Abfluss), RS-Rang (Short: der schwächere zuerst) – die Watchlist gibt keinen Vorteil")
 AKTEN_JE_REIHE = 2
 ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
 
@@ -762,8 +762,8 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         voll = tk in drei and bool(x.get("reihe"))
         t_ = termin_tage(tk)
         rs = r.get("rang") or 0
-        return (t_ is not None and t_ <= 7, not voll, not x.get("stern"), not geld_mit(tk), tk not in wl,
-                rs if short(tk) else -rs)
+        return (t_ is not None and t_ <= 7, not voll, not x.get("stern"), not geld_mit(tk),   # Watchlist zählt nicht
+                rs if short(tk) else -rs)                     # (Micky 12.11.2026: neutral, die Stärke entscheidet)
 
     pool = set(titel_t) | set(drei) | set(wl)
     elite = sorted((tk for tk in pool if bereit(tk)), key=klasse)
@@ -809,8 +809,8 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
             else:
                 g = " · ".join(["Platz voll"] + merkmale)
         gruende[tk] = (tk in drin, g.replace(".", ","))
-    if mit_rest:                                       # die Einsatzbereiten ohne Platz, in Rangfolge (Seite Setups)
-        return alle, gruende, [tk for tk in elite if tk not in drin]
+    if mit_rest:                                       # alle Einsatzbereiten in Rangfolge (Seite Setups)
+        return alle, gruende, elite
     return alle, gruende
 
 

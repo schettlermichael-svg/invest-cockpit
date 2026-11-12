@@ -526,13 +526,13 @@ def plan(tisch=None):
         rw_erg = rueckenwind.laden() or {}
         drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
         pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
-        akten, gruende, rest = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, set(w[watchlists.STANDARD]),
-                                            pos, mit_rest=True)
+        wl_ = set(w[watchlists.STANDARD])
+        akten, gruende, elite = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, wl_, pos, mit_rest=True)
         for tk, g in gruende.items():
             if tk in tisch["titel"]:
                 tisch["titel"][tk]["stab"] = g
     except Exception:  # noqa: BLE001 – ohne Auswahl steht der Tisch trotzdem
-        akten, gruende, drei, rest = [], {}, set(), []
+        akten, gruende, drei, elite, wl_ = [], {}, set(), [], set()
     b = tisch["barometer"]
     if "m_gruen" in b:                            # ein System (12.11.2026): grüne Setups nach Richtung, „nur Muster“ nicht
         gr = [lagekarte.richtung(x) for x in tisch["titel"].values() if x.get("gruen") and x.get("reihe") not in (None, "vcp")]
@@ -562,7 +562,7 @@ def plan(tisch=None):
                     for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
     # ③ Stellung: Barometer, Lagekarte nach Sektoren, Reihen · ④ Termine (Seite Rückenwind seit 10.11.2026)
-    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei, rest)},
+    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei, elite, wl_)},
              {"art": "html", "rolle": "stellung", "html": station("stellung") + barometer},
              {"art": "html", "rolle": "lagekarte", "html": lagebild(tisch)}]
 
@@ -590,7 +590,7 @@ def plan(tisch=None):
     return teile
 
 
-def auswahl_html(tisch, akten, gruende, drei, rest=()):
+def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
     """Trichter vom Revier zum Stab und die Tabelle der Akten (Seite Setups, 12.11.2026) – so sieht man vor der
     Konferenz, was der Stab liest, und warum."""
     import stab
@@ -637,7 +637,8 @@ def auswahl_html(tisch, akten, gruende, drei, rest=()):
             f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Diese {len(akten)} Titel liest der Stab'
             f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
             f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table>'
-            + _knapp_draussen(tt, gruende, rest, namen) + '</div>')
+            + _knapp_draussen(tt, gruende, [tk for tk in elite if tk not in akten], namen) + '</div>'
+            + _watchlist_kasten(tt, gruende, [tk for tk in elite if tk in wl], set(akten), namen))
 
 
 def _knapp_draussen(tt, gruende, rest, namen, n=10):
@@ -651,6 +652,29 @@ def _knapp_draussen(tt, gruende, rest, namen, n=10):
                        for tk in rest[:n])
     return (f'<div style="margin-top:10px;font-size:13px;color:{TEXT_2}">Knapp draußen – {len(rest)} weitere '
             f'einsatzbereit, die ersten {min(n, len(rest))} in Rangfolge: {teile}</div>')
+
+
+def _watchlist_kasten(tt, gruende, liste, drin, namen):
+    """◆ Deine Watchlist · einsatzbereit (Micky 12.11.2026): die Auswahl für den Stab ist neutral, die eigene Truppe
+    steht hier getrennt – dieselbe Rangfolge, je Titel 🎯 beim Stab oder der Grund. Die übrigen Watchlist-Titel zeigt
+    ② Stellung vollständig."""
+    from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
+    zeilen = "".join(
+        f'<tr><td style="padding:6px 8px;width:28px">{"🎯" if tk in drin else ""}</td>'
+        f'<td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
+        f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
+        f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get((tt.get(tk) or {}).get("reihe"), "—"))}</td>'
+        f'<td style="padding:6px 8px">{"—" if (tt.get(tk) or {}).get("abstand_vz") is None else zahl(float(tt[tk]["abstand_vz"]), 1) + " %"}</td>'
+        f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (False, ""))[1])}</td></tr>'
+        for tk in liste)
+    n_drin = sum(1 for tk in liste if tk in drin)
+    return (f'<div style="margin-top:12px;background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'
+            f'overflow-x:auto"><div style="font-size:16px;font-weight:600;margin-bottom:2px">◆ Deine Watchlist · '
+            f'einsatzbereit · {len(liste)}, davon {n_drin} beim Stab</div>'
+            f'<div style="font-size:13px;color:{TEXT_3};margin-bottom:6px">Dieselbe Rangfolge wie oben, nur deine Titel · '
+            f'🎯 = beim Stab, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
+            f'<table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><tbody>'
+            f'{zeilen or "<tr><td>zurzeit keiner deiner Titel einsatzbereit</td></tr>"}</tbody></table></div>')
 
 
 def _marken(x):
