@@ -670,3 +670,24 @@ Darunter steht eine Zeichenzeile ohne Urteil: S&P 500 und Nasdaq gegen GD50 und 
 Vorher war genau das die Ampel, also eine eigene Faustregel mit dem falschen Etikett „Minervini“. Davor gab es zusätzlich Kullamägis 10/20-Regel.
 
 `kern/markt_systeme.py` ist entfernt. Die Akten tragen jetzt `regeln_base` und `regeln_momentum` statt `setup_minervini` und `setup_kullamaegi`. Die Dienstanweisung verbietet „Minervini grün“ und „Kullamägi rot“. Die Meister werden nur noch als Quelle einer Regel genannt.
+
+## Einstieg und Stopp aus dem einen Setup (12.11.2026)
+
+`depot.einstieg_setup(su, m, k, zr, kurs)` legt Seite und Einstieg nach dem Setup des Titels fest:
+
+| Setup | Seite | Einstieg |
+|---|---|---|
+| Sprung (EP) | long | Hoch des Sprungtags |
+| Zahlen-Reaktion | Seite der Reaktion | AVWAP ab dem Reaktionstag |
+| Ermüdung, Bärenflagge | short | Unterkante |
+| Base-Ausbruch | long | Pivot der Base |
+| Momentum-Ausbruch | long | Pivot der Konsolidierung |
+| Flagge, nur Muster | long | Pivot des Scanners |
+
+Diesen Einstieg nutzen Chart, Plan (`depot.plan`), Lagekarte, Kartentisch-Abstand und Stab. Der Stopp liegt 1,5 ATR darunter, beim Short darüber.
+
+Vorher nahm der Chart immer die alte Kette Sprung → Base → Momentum. Bei HWM (Zahlen-Reaktion long, Kurs 224 $) zeichnete er so den Pivot einer alten Base und einen Stopp von 247,93 $ über dem Kurs. Der Momentum-Ausbruch maß seinen Abstand zum Pivot der Base.
+
+Jede Planzeile unter dem Chart trägt jetzt den Stopp ihres eigenen Einstiegs. Der Chart zeichnet nur das aktive Setup. Ein Short gilt als gebrochen, wenn der Kurs über seinem Stopp steht.
+
+Der AVWAP-Text der Zahlen-Reaktion sagt jetzt „einmal gebrochen, Kurs wieder darüber“ statt „bricht den AVWAP“.

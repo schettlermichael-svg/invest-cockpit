@@ -196,6 +196,11 @@ def setup_feststellen(df, m, k, zr, scan):
                     luecken=[f"Momentum-Ausbruch: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
     elif r_ == "m_weitere":
         info["reihe"] = "m_weitere"
+    if r_ in ("k_ep", "m_spitze", "m_weitere", "k_breakout"):   # Abstand zum Einstieg DES Setups (12.11.2026: der
+        _, e_, _ = depot.einstieg_setup(info | {"reihe": r_}, m, k, zr, c[-1])   # Momentum-Ausbruch maß vorher zum
+        if e_:                                                                   # Pivot der Base)
+            info["abstand_vz"] = float((c[-1] / e_ - 1) * 100)
+            info["abstand"] = abs(info["abstand_vz"])
     info["auch"] = [NAME[x] for x in gefunden[1:] if NAME.get(x) != NAME.get(r_)]
     kb_ = (k.get("breakout") or {}).get("ausbruch")   # Ausbruchszeichen des Setups (12.11.2026: TREX im EP zeigte eine
     zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else kb_ if r_ == "k_breakout"

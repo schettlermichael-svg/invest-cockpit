@@ -453,20 +453,31 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     """Plan in Zeilen unter dem Chart (12.11.2026, statt der Karte „Plan“): je aktivem System Einstieg, Kaufzone, Stopp
     (dieselbe Linie wie im Chart) und die Ausstiegsregel des Meisters; ohne Pivot die Marken zur Trendvorlage."""
     marken = marken or {}
-    stopp = marken.get("stopp")
+    a = marken.get("atr")
     c, h, l = df["Close"], df["High"], df["Low"]
     kurs = float(c.iloc[-1])
+    su = su or {}
+
+    def st(e, short=False):
+        """Stopp einer Zeile: 1,5 ATR von IHREM Einstieg (12.11.2026 – vorher trug jede Zeile den Stopp des Charts)."""
+        return f" · Stopp {zahl(e + ATR_STOPP * a if short else e - ATR_STOPP * a)} $ (1,5 ATR)" if a and e else ""
+
     zeilen = []
     hk, em = k.get("haupt"), k.get("ermuedung")
     if em and em.get("ampel") in ("grün", "gelb") and not (hk and hk["ampel"] != "rot"):
-        st_ = ((marken.get("short") or {}).get("stopp")) or em.get("stopp")
-        zeilen.append(("k_short", f"Einstieg unter der Unterkante {zahl(em['unten'])} $ · Stopp {zahl(st_)} $ "
-                                           f"(1,5 ATR; Regel: über dem Hoch des Auslösetags)"))
-    if m.get("pivot"):
-        aus_ = (k["ausstieg"] if (su or {}).get("reihe") == "flagge" else      # Flagge: Regeln von Kullamägi
-                m["ausstieg"].replace("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", ""))
+        zeilen.append(("k_short", f"Einstieg unter der Unterkante {zahl(em['unten'])} $" + st(em["unten"], True)
+                                  + " · Regel: Stopp über dem Hoch des Auslösetags"))
+    if su.get("reihe") in ("flagge", "vcp"):                # Pivot des Scanners, wie im Kartentisch
+        import depot as depot_
+        _, e_, _ = depot_.einstieg_setup(su, m, k, zr, kurs)
+        if e_:
+            aus_ = k["ausstieg"] if su.get("reihe") == "flagge" else m["ausstieg"]
+            zeilen.append(("m", f"Kauf über dem Pivot {zahl(e_)} $ · Kaufzone bis {zahl(e_ * 1.05)} $" + st(e_)
+                                + f" · Ausstieg: {aus_}"))
+    elif m.get("pivot"):
+        aus_ = m["ausstieg"].replace("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", "")
         zeilen.append(("m", f"Kauf über dem Pivot {zahl(m['pivot'])} $ · Kaufzone bis {zahl(m['pivot'] * 1.05)} $"
-                                    + (f" · Stopp {zahl(stopp)} $ (1,5 ATR)" if stopp else "") + f" · Ausstieg: {aus_}"))
+                            + st(m["pivot"]) + f" · Ausstieg: {aus_}"))
     elif len(c) >= 260:
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
         tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
@@ -480,20 +491,19 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     if hk and hk["ampel"] != "rot":
         ziel = (f"über dem Hoch des Sprungtags {zahl(hk['pivot'])} $" if hk["art"] == "Episodic Pivot"
                 else f"beim Ausbruch über die Oberkante {zahl(hk['pivot'])} $" if hk.get("pivot") else "beim Ausbruch")
-        zeilen.append(("k", f"Einstieg {ziel}, über dem Hoch der ersten 5-, 30- oder "
-                                                   f"60-Minuten-Kerze" + (f" · Stopp {zahl(stopp)} $ (1,5 ATR)" if stopp
-                                                                          else "") + f" · Ausstieg: {k['ausstieg']}"))
+        zeilen.append(("k", f"Einstieg {ziel}, über dem Hoch der ersten 5-, 30- oder 60-Minuten-Kerze"
+                            + st(hk.get("pivot")) + f" · Ausstieg: {k['ausstieg']}"))
     if zr and zr.get("ampel") != "rot" and zr.get("avwap"):
         short = zr["seite"] == "short"
         zeilen.insert(0, ("zahlen",
-                          f"Einstieg am AVWAP vom Zahlentag {zahl(zr['avwap'])} $ (ruhiger Rücksetzer) · gescheitert bei "
-                          f"Schluss {'über dem Hoch' if short else 'unter dem Tief'} des Reaktionstags "
-                          f"{zahl(zr['hoch'] if short else zr['tief'])} $ oder {'über' if short else 'unter'} dem AVWAP"))
+                          f"Einstieg am AVWAP vom Zahlentag {zahl(zr['avwap'])} $ (ruhiger Rücksetzer)" + st(zr["avwap"], short)
+                          + f" · gescheitert bei Schluss {'über dem Hoch' if short else 'unter dem Tief'} des "
+                            f"Reaktionstags {zahl(zr['hoch'] if short else zr['tief'])} $ oder "
+                            f"{'über' if short else 'unter'} dem AVWAP"))
     if not zeilen:
         return ""
     # Namen unseres Systems (12.11.2026): das Setup des Titels zuerst, die übrigen als „Auch“
     import kartentisch
-    su = su or {}
     r_ = su.get("reihe")
     name = {"m": "Flagge" if r_ == "flagge" else "Base-Ausbruch",
             "k": "Sprung (EP)" if (hk or {}).get("art") == "Episodic Pivot" else "Momentum-Ausbruch",
@@ -531,6 +541,9 @@ def _stellung(df, marken):
     st_ = (marken or {}).get("stopp")
     if st_ and kurs < st_:
         aus.append(("rot", f"Stellung gebrochen: Kurs {zahl(kurs)} $ unter dem Stopp {zahl(st_)} $ (1,5 ATR)"))
+    sst = ((marken or {}).get("short") or {}).get("stopp")
+    if sst and kurs > sst:
+        aus.append(("rot", f"Short-Stellung gebrochen: Kurs {zahl(kurs)} $ über dem Stopp {zahl(sst)} $ (1,5 ATR)"))
     br = (marken or {}).get("ausbruch") or {}
     if br.get("fehl_tag") is not None:
         aus.append(("rot", f"Fehlausbruch am {pd.Timestamp(br['fehl_tag']):%d.%m.} – der Kurs fiel zurück unter den "
@@ -802,24 +815,29 @@ def _zahlen_gesamt(tk, fund, fd):
     return karte(f'<div>{_earnings_feld(fd)}</div><div>{_zahlenkarte(tk, fund, fd)}</div>', "Zahlen")
 
 
-def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
-    """Was der Chart über die Zonen hinaus einzeichnet: Einstieg (Pivot) mit Kaufzone bis +5 % und Stopp 1,5 ATR,
-    Ausbruchstag, Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus
-    Rückenwind, Short (Ermüdung) mit Stopp 1,5 ATR über der Unterkante. Einstieg: Minervinis Pivot aus der Enge, sonst
-    der Pivot des Ausbruchs, sonst Kullamägis Breakout bzw. Episodic Pivot."""
+def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
+    """Was der Chart über die Zonen hinaus einzeichnet: Einstieg und Stopp 1,5 ATR des EINEN Setups (12.11.2026,
+    depot.einstieg_setup – vorher die alte Kette Sprung → Base → Momentum, die bei HWM in der Zahlen-Reaktion den Pivot
+    einer alten Base und einen Stopp über dem Kurs zeichnete), long mit Kaufzone bis +5 %, short mit Stopp über dem
+    Einstieg; Ausbruchstag, Earnings mit Reaktion und nächstem Termin, RS-Rang und Tempo aus Rückenwind."""
     import atr as atr_modul
+    import depot
     a = atr_modul.wert(df)
     br = m_.get("ausbruch") or None
     ep = k_.get("ep") or {}
     kontr = ((zonen or {}).get("enge") or {}).get("kontraktionen") or []
     enge_ab = kontr[-1]["hoch_t"] if kontr else None           # Kaufzone und Stopp ab der Enge, nicht über die ganze Base
-    import depot
-    e, quelle = depot.einstieg_long(m_, k_)          # derselbe Einstieg wie Kartentisch, Plan und Stab
-    m = {"einstieg": float(e) if e else None, "quelle": quelle, "atr": a,
-         "kz_oben": float(e) * 1.05 if e else None,
-         "stopp": float(e) - ATR_STOPP * a if e and a else None,
-         "ab": (br or {}).get("erster_tag") or (ep.get("tag") if quelle == "Episodic Pivot" else None) or enge_ab,
-         "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag")} if br else None,
+    r_ = (su or {}).get("reihe")
+    seite, e, quelle = depot.einstieg_setup(su, m_, k_, zr, float(df["Close"].iloc[-1]))
+    lang = seite == "long" and e
+    ab = (pd.Timestamp((zr or {})["tag"]) if r_ == "zahlen" and (zr or {}).get("tag") else
+          ep.get("tag") if r_ == "k_ep" else (br or {}).get("erster_tag") or enge_ab)
+    m = {"einstieg": float(e) if lang else None, "quelle": quelle, "atr": a,
+         "kz_oben": float(e) * 1.05 if lang else None,
+         "stopp": float(e) - ATR_STOPP * a if lang and a else None,
+         "ab": ab,
+         "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag")}
+         if br and r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else None,
          "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None}
     try:
         termin = (fd or {}).get("termin")
@@ -829,10 +847,10 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None):
     except Exception:  # noqa: BLE001
         pass
     m["rs"] = rw
-    em = k_.get("ermuedung")
-    if em and a:
-        m["short"] = {"tag": em["tag"], "einstieg": float(em["unten"]), "stopp": float(em["unten"]) + ATR_STOPP * a,
-                      "volumen": em.get("volumen")}
+    if seite == "short" and e and a:
+        em = k_.get("ermuedung") or {}
+        m["short"] = {"tag": em.get("tag") if r_ != "zahlen" else pd.Timestamp(zr["tag"]), "einstieg": float(e),
+                      "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None}
     return m
 
 
@@ -1036,6 +1054,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     zr_ = zahlen_reaktion.pruefen(df, gewinne)
     su = kartentisch.setup_feststellen(df, m_, k_, zr_, scan)       # das eine Setup (12.11.2026), wie im Kartentisch
     erk["setup_info"] = su
+    erk["zahlen_reaktion"] = zr_
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
     gestaltung.SYSTEM = kartentisch.LEHRER.get(su.get("reihe"), "M")
     gestaltung.SYSTEM_SHORT = lagekarte.richtung(su) == "short"
@@ -1048,7 +1067,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gestaltung.MITSCHRIFT = None
         gestaltung.SYSTEM, gestaltung.SYSTEM_SHORT, gestaltung.SYSTEM_JE = None, False, {}
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
-    marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw)
+    marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw, su, zr_)
     stellung = _stellung(df, marken)
     oben = [_kopf(tk, sb, df, fd, mit_rueckgang=not reif) + _lagezeile(tk, rw, stellung) + warnung_kopf(erk)
             + hinweis_laufend, leiste]

@@ -214,6 +214,34 @@ def einstieg_long(m, k):
     return None, ""
 
 
+def einstieg_setup(su, m, k, zr=None, kurs=None):
+    """Einstieg des EINEN Setups eines Titels (12.11.2026 – vorher nahm der Chart immer die alte Kette Sprung →
+    Base-Ausbruch → Momentum-Ausbruch: HWM stand in Zahlen-Reaktion long bei 224 $, der Chart zeichnete den Pivot
+    einer alten Base und den Stopp 247,93 $ über dem Kurs). → (Seite, Einstieg, Quelle) oder (None, None, "").
+      Sprung (EP)          Hoch des Sprungtags (Pivot des EP)
+      Zahlen-Reaktion      AVWAP ab dem Reaktionstag, Seite der Reaktion
+      Ermüdung, Bärenflagge  Unterkante (short)
+      Base-Ausbruch        Pivot der Base (sonst Pivot des letzten Ausbruchs)
+      Momentum-Ausbruch    Pivot der Konsolidierung
+      Flagge, nur Muster   Pivot des Scanners (aus dem Abstand des Kartentischs)"""
+    su, m, k, zr = su or {}, m or {}, k or {}, zr or {}
+    r = su.get("reihe")
+    if r == "k_ep" and (k.get("ep") or {}).get("pivot"):
+        return "long", float(k["ep"]["pivot"]), "Sprung (EP)"
+    if r == "zahlen" and zr.get("avwap"):
+        return zr.get("seite", "long"), float(zr["avwap"]), "AVWAP ab dem Reaktionstag"
+    if r in ("k_ermuedung", "k_baerenflagge") and (k.get("ermuedung") or {}).get("unten"):
+        return "short", float(k["ermuedung"]["unten"]), "Unterkante"
+    if r in ("m_spitze", "m_weitere"):
+        e = m.get("pivot") or (m.get("ausbruch") or {}).get("pivot")
+        return ("long", float(e), "Pivot der Base") if e else (None, None, "")
+    if r == "k_breakout" and (k.get("breakout") or {}).get("pivot"):
+        return "long", float(k["breakout"]["pivot"]), "Pivot der Konsolidierung"
+    if r in ("flagge", "vcp") and su.get("abstand_vz") is not None and kurs:
+        return "long", float(kurs) / (1 + float(su["abstand_vz"]) / 100), "Pivot des Scanners"
+    return None, None, ""
+
+
 def plan(erk):
     """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
     Einstieg nach System: zuerst Minervini (Pivot), dann Kullamägi (Pivot), Ermüdung nach Überdehnung (short: Unterkante).
@@ -224,6 +252,11 @@ def plan(erk):
     m, k = sy.get("m") or {}, sy.get("k") or {}
     a = erk.get("atr")
     regel = f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
+    if erk.get("setup_info") is not None:          # das eine Setup bestimmt Einstieg und Stopp (12.11.2026)
+        seite, e, _ = einstieg_setup(erk["setup_info"], m, k, erk.get("zahlen_reaktion"), erk.get("kurs"))
+        if not e or not a:
+            return None
+        return seite, e, (e + ATR_STOPP * a if seite == "short" else e - ATR_STOPP * a), regel
     # Reihenfolge wie die Reihen des Kartentischs (10.11.2026: MU stand in „Ermüdung (Short)“, der Plan rechnete long):
     # Episodic Pivot, Ermüdung (short), Minervini, Kullamägi-Breakout
     ep, em = k.get("ep"), k.get("ermuedung")

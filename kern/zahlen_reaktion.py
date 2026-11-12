@@ -81,10 +81,19 @@ def pruefen(df, gewinne):
     tag = df.index[pos]
     text = (f"⚡ Zahlen-Reaktion {'+' if pct >= 0 else '−'}{k(abs(pct))} % am {tag:%d.%m.} (vor {tage_her} T.)"
             + (f" · Volumen {k(vol)}-fach" if vol else "") + f" · Schluss im {drittel} Drittel"
-            + (f" · {'hält' if halten else 'bricht'} den AVWAP {w:.2f} $".replace(".", ",") if w else ""))
+            + (f" · AVWAP {w:.2f} $ ".replace(".", ",") + _avwap_lage(halten, short, c[-1], w) if w else ""))
     return {"ampel": ampel, "seite": "short" if short else "long", "tag": f"{tag:%Y-%m-%d}", "pct": round(pct, 1),
             "volumen": round(vol, 2) if vol else None, "schluss_lage": round(lage, 2), "tage_her": tage_her,
             "avwap": round(w, 2) if w else None, "pivot": w, "abstand": abstand, "tief": float(l[pos]),
             "hoch": float(h[pos]), "regeln": regeln, "halten": bool(halten), "fehlt": fehlt, "text": text,
             "luecken": [f"Zahlen-Reaktion: {n_}" for n_, ok, _ in regeln if not ok]}
 
+
+def _avwap_lage(halten, short, kurs, w):
+    """Wort zum AVWAP (12.11.2026: HWM stand bei 224 $ über dem AVWAP 211,46 $, der Text sagte „bricht den AVWAP“ –
+    gemeint war: seit dem Reaktionstag einmal darunter geschlossen)."""
+    if halten:
+        return "gehalten"
+    zurueck = kurs < w if short else kurs > w
+    return ("einmal gebrochen, Kurs wieder " + ("darunter" if short else "darüber")) if zurueck else \
+        ("gebrochen, Kurs " + ("darüber" if short else "darunter"))
