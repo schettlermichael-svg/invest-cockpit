@@ -86,7 +86,12 @@ REGELN
 10. Eine Faktenwache prüft nach der Konferenz jeden Ticker und jede Zahl gegen die Daten und markiert, was sie nicht findet. Rechnest du selbst etwas aus, sage es („gerechnet: …“).
 11. Sprichst du den Trader direkt an, dann mit „du“, nie mit „Sie“.
 12. Die Daten enthalten „datenstand“: mit welchem Handelstag jeder Teil der App gerechnet hat. Haben die Teile
-   verschiedene Tage, ist das eine Gefahr ersten Ranges – nenne sie zuerst, die Lage kann dann nicht stimmen."""
+   verschiedene Tage, ist das eine Gefahr ersten Ranges – nenne sie zuerst, die Lage kann dann nicht stimmen.
+13. Jede Akte trägt „feste_ampeln“: Setup, Einstieg, Geld, Zahlen, Termin. Die rechnet der Code nach den Regeln der Meister
+   und festen Grenzen – sie sind gesetzt. Du prüfst sie nicht neu und färbst sie nicht um. Deine Ampel bewertet nur deine
+   eigene Frage. Weichst du von einer festen Ampel ab, dann nur mit einem Grund, den der Code nicht kennt, und nenne ihn.
+14. Im Feld „urteile“ gibst du je Titel, den du geprüft hast, genau ein Urteil: Ampel und Grund in höchstens 12 Wörtern,
+   mit Zahl. Daraus entsteht die Konsens-Matrix des Konferenzraums – kurz, klar, ohne Floskeln."""
 
 AUFTRAG = {
     2: "Du bist der Strömungs-Analyst. Beantworte in dieser Reihenfolge, jeweils mit Ticker bzw. Gruppe und Zahl: "
@@ -236,16 +241,29 @@ HINWEIS = {"type": "object", "properties": {
     "ampel": {"type": "string", "enum": ["grün", "gelb", "rot"]},
     "text": {"type": "string", "description": "1 bis 2 Sätze mit Zahl"}},
     "required": ["titel", "ampel", "text"]}
+URTEIL = {"type": "object", "properties": {
+    "titel": {"type": "string", "description": "genau ein Ticker"},
+    "ampel": {"type": "string", "enum": ["grün", "gelb", "rot"], "description": "nur deine Frage, nicht das Setup"},
+    "grund": {"type": "string", "description": "höchstens 12 Wörter, mit Zahl"}},
+    "required": ["titel", "ampel", "grund"]}
 MELDUNG = {"type": "object", "properties": {
     "meldung": {"type": "string", "description": "3 bis 6 Sätze Lage aus deiner Sicht, mit Tickern und Zahlen"},
-    "hinweise": {"type": "array", "items": HINWEIS, "description": "höchstens 12, die wichtigsten zuerst"}},
-    "required": ["meldung", "hinweise"]}
+    "hinweise": {"type": "array", "items": HINWEIS, "description": "höchstens 12, die wichtigsten zuerst"},
+    "urteile": {"type": "array", "items": URTEIL, "description": "dein Urteil je geprüftem Titel (höchstens 20): "
+                "Volltreffer, Angriffsziele, Depot zuerst"}},
+    "required": ["meldung", "hinweise", "urteile"]}
+ZIEL = {"type": "object", "properties": {**HINWEIS["properties"],
+    "kurz": {"type": "string", "description": "Kernsatz in höchstens 12 Wörtern, mit Zahl"}},
+    "required": ["titel", "ampel", "kurz", "text"]}
+HALTUNGEN = ("angreifen", "klein tasten", "abwarten", "verteidigen")
 BEFEHL = {"type": "object", "properties": {
+    "haltung": {"type": "string", "enum": list(HALTUNGEN), "description": "die Haltung des Tages in einem Wort"},
+    "lage_kurz": {"type": "string", "description": "die Lage in höchstens 8 Wörtern"},
     "lage": {"type": "string", "description": "die Lage in drei Sätzen"},
-    "volltreffer": {"type": "array", "items": HINWEIS, "description": "dreifacher Rückenwind und Setup am Auslöser"},
-    "long": {"type": "array", "items": HINWEIS, "description": "bis 5 Angriffsziele long"},
-    "short": {"type": "array", "items": HINWEIS, "description": "bis 3 Ziele short"},
-    "gefahren": {"type": "array", "items": HINWEIS, "description": "bis 3 Gefahren"},
+    "volltreffer": {"type": "array", "items": ZIEL, "description": "dreifacher Rückenwind und Setup am Auslöser"},
+    "long": {"type": "array", "items": ZIEL, "description": "bis 5 Angriffsziele long, das beste zuerst"},
+    "short": {"type": "array", "items": ZIEL, "description": "bis 3 Ziele short, das beste zuerst"},
+    "gefahren": {"type": "array", "items": ZIEL, "description": "bis 3 Gefahren"},
     "einwaende": {"type": "array", "description": "Antwort auf die schwersten Einwände des Gegenspielers", "items": {
         "type": "object", "properties": {
             "titel": {"type": "array", "items": {"type": "string"}},
@@ -254,7 +272,7 @@ BEFEHL = {"type": "object", "properties": {
             "einwand": {"type": "string", "description": "der Einwand in einem Satz"},
             "antwort": {"type": "string", "description": "deine Abwägung in 1 bis 2 Sätzen mit Zahl"}},
         "required": ["titel", "ampel", "einwand", "antwort"]}}},
-    "required": ["lage", "volltreffer", "long", "short", "gefahren", "einwaende"]}
+    "required": ["haltung", "lage_kurz", "lage", "volltreffer", "long", "short", "gefahren", "einwaende"]}
 BEFEHL_TEILE = (("volltreffer", "Volltreffer · dreifacher Rückenwind und Setup am Auslöser"),
                 ("long", "Angriffsziele long"), ("short", "Ziele short"), ("gefahren", "Gefahren"))
 
@@ -547,6 +565,121 @@ class Aufklaerung(Exception):
     """Kartentisch fehlt oder ist veraltet – der Stab tagt nicht (keine Kosten für leere Antworten)."""
 
 
+# ── Feste Ampeln (12.11.2026): Tatsachen färbt der Code nach festen Grenzen, nicht das Modell ──
+
+FESTE_REGELN = (
+    ("Setup", "grün = Setup grün nach allen Regeln seines Systems (Minervini bzw. Kullamägi) · gelb = in einer Reihe des "
+              "Kartentischs, aber nicht voll grün · grau = keine Reihe"),
+    ("Einstieg", "Abstand zum Pivot (Short: zur Unterkante, gespiegelt): grün = in der Kaufzone (Pivot bis +5 %) · "
+                 "gelb = am Auslöser (bis 5 % davor) oder 5–10 % darüber · rot = mehr als 10 % darüber (gelaufen) · "
+                 "grau = weiter weg oder kein Pivot"),
+    ("Geld", "Geld-Ampel des Rückenwinds: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen; beim "
+             "Short gespiegelt (Abfluss = grün)"),
+    ("Zahlen", "Zahlen-Ampel (Gewinn und Umsatz); beim Short nur Zeichen (grau)"),
+    ("Termin", "nächste Zahlen in höchstens 7 Tagen = rot · in 8–14 Tagen = gelb · später = grün · unbekannt = grau"),
+)
+_GEGEN = {"grün": "rot", "rot": "grün", "gelb": "gelb"}
+
+
+def feste_ampeln(c, heute=None):
+    """Die festen Ampeln einer Akte: {Name: (Ampel, kurzer Wert)}. Ampel grün/gelb/rot/grau."""
+    heute = heute or HEUTE()
+    short = c.get("seite") == "short"
+    r, z = c.get("rueckenwind") or {}, c.get("zahlen") or {}
+    aus = {}
+    if c.get("reihe") in (None, "keine Reihe"):
+        aus["Setup"] = ("grau", "keine Reihe")
+    else:
+        aus["Setup"] = ("grün" if c.get("setup_gruen") else "gelb", c.get("reihe"))
+    d = c.get("abstand_zum_pivot_pct")
+    if d is None:
+        aus["Einstieg"] = ("grau", "kein Pivot")
+    else:
+        e = -d if short else d
+        amp = ("grün" if 0 <= e <= 5 else "gelb" if -5 <= e < 0 or 5 < e <= 10 else "rot" if e > 10 else "grau")
+        wort = {"grün": "Kaufzone" if not short else "unter der Unterkante", "rot": "gelaufen", "grau": "weit weg"}.get(
+            amp, "am Auslöser" if e < 0 else "knapp drüber")
+        aus["Einstieg"] = (amp, f"{d:+.1f} % · {wort}".replace(".", ","))
+    g = r.get("geld_ampel")
+    zu = r.get("zufluss")
+    zu_ = f" · Zufluss {zu:.2f}×".replace(".", ",") if isinstance(zu, (int, float)) else ""
+    if g in _GEGEN:
+        aus["Geld"] = (_GEGEN[g] if short else g, f"Geld {g}{zu_}")
+    else:
+        aus["Geld"] = ("grau", "kein Rückenwind-Eintrag")
+    za = z.get("ampel")
+    aus["Zahlen"] = (("grau" if short else za) if za in _GEGEN else "grau",
+                     f"Zahlen {za}" + (f" · {z['punkte']} Punkte" if isinstance(z.get("punkte"), (int, float)) else "")
+                     if za else "unbekannt")
+    t_ = z.get("termin") or ((c.get("kacheln") or {}).get("Nächste Zahlen") or {}).get("wert")
+    tage = None
+    try:
+        import pandas as pd
+        dt = pd.to_datetime(str(t_)[:10], errors="coerce")
+        if not pd.isna(dt):
+            tage = (dt - pd.Timestamp(heute)).days
+    except Exception:  # noqa: BLE001
+        pass
+    if tage is None or tage < 0:
+        aus["Termin"] = ("grau", "unbekannt")
+    else:
+        aus["Termin"] = ("rot" if tage <= 7 else "gelb" if tage <= 14 else "grün", f"Zahlen in {tage} Tagen")
+    return aus
+
+
+def warum(c):
+    """Warum der Titel beim Stab liegt – in Worten (für die Tafel aller Akten)."""
+    teile = (["Depot"] if c.get("depot") else []) + (["Volltreffer"] if c.get("volltreffer") else []) \
+        + ([c["reihe"]] if c.get("reihe") not in (None, "keine Reihe") else []) \
+        + (["dreifacher Rückenwind"] if c.get("dreifacher_rueckenwind") and not c.get("volltreffer") else []) \
+        + (["Watchlist"] if c.get("watchlist") else [])
+    return " · ".join(teile) or "—"
+
+
+def tafel(lb):
+    """Die Akten als Tafel: je Titel Seite, Kurs, Pivot, Stopp, warum beim Stab, feste Ampeln (wird mit der Konferenz
+    gespeichert – die Lagekarte zeigt den Stand, mit dem der Stab gearbeitet hat)."""
+    return [{"titel": c["titel"], "seite": c.get("seite"), "warum": warum(c), "depot": c.get("depot"),
+             "watchlist": c.get("watchlist"), "volltreffer": c.get("volltreffer"), "kurs": c.get("kurs"),
+             "pivot": c.get("pivot"), "abstand": c.get("abstand_zum_pivot_pct"), "kaufzone_bis": c.get("kaufzone_bis"),
+             "stopp": c.get("stopp_1_5_atr"), "ampeln": c.get("feste_ampeln") or {k: {"ampel": a, "wert": w} for k, (a, w)
+                                                       in feste_ampeln(c, lb.get("heute")).items()}}
+            for c in lb["kandidaten"]]
+
+
+def brett(lb):
+    """Das Lagebrett: Markt beider Systeme, Pendel, Datenstand – Tatsachen der App, so wie der Stab sie las."""
+    m = lb.get("markt") or {}
+    pe = lb.get("pendel") or {}
+    ds = lb.get("datenstand") or {}
+    return {"markt": {k: {"ampel": (m.get(k) or {}).get("ampel"), "wort": (m.get(k) or {}).get("wort")}
+                      for k in ("minervini", "kullamaegi")},
+            "pendel": {"zone": pe.get("zone"), "ampel": pe.get("ampel"), "pfeil": pe.get("pfeil"),
+                       "vor_4_wochen": pe.get("vor_4_wochen")},
+            "datenstand": {"ampel": ds.get("ampel"), "text": ds.get("urteil")}, "barometer": lb.get("barometer")}
+
+
+def bilanz(vorher, kurs_heute):
+    """Was aus den Zielen der letzten Konferenz wurde: je Ziel (Volltreffer, long, short) Kurs damals → heute und ✓/✗
+    (long gestiegen bzw. short gefallen). Beobachtung, kein Urteil über Setups."""
+    if not vorher:
+        return None
+    b = vorher.get("befehl") or {}
+    kurse = vorher.get("kurse") or {}
+    aus, gesehen = [], set()
+    for teil in ("volltreffer", "long", "short"):
+        for h in b.get(teil) or []:
+            for tk in _ticker(h.get("titel"), None)[:1]:
+                if tk in gesehen:
+                    continue
+                gesehen.add(tk)
+                alt, neu = kurse.get(tk), kurs_heute(tk)
+                pct = _zahl((neu / alt - 1) * 100, 1) if alt and neu else None
+                aus.append({"titel": tk, "seite": "short" if teil == "short" else "long", "pct": pct,
+                            "treffer": None if pct is None else (pct < 0 if teil == "short" else pct > 0)})
+    return {"konferenz_vom": vorher.get("stand"), "ziele": aus}
+
+
 def lagebild():
     """Alles, was der Stab liest, als dict – nur aus gespeicherten Daten des Nachtlaufs (kein Abruf)."""
     import atr as atr_modul
@@ -604,7 +737,7 @@ def lagebild():
             if k_ == "Nächste Zahlen" and not _termin_ok(wert):
                 wert, text = "unbekannt", None
             kacheln[k_] = {"ampel": amp, "wert": wert, "text": text}
-        return {"titel": tk, "depot": tk in pos, "watchlist": tk in wl,
+        c = {"titel": tk, "depot": tk in pos, "watchlist": tk in wl, "setup_gruen": bool(x.get("gruen")),
                 "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
                 "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
@@ -622,6 +755,8 @@ def lagebild():
                                                          "jung")} if r else None,
                 "zahlen": {"ampel": z.get("ampel"), "punkte": z.get("punkte"), "termin": _termin_ok(z.get("termin")),
                            "reaktion": z.get("reaktion")} if z else None}
+        c["feste_ampeln"] = {k_: {"ampel": a_, "wert": w_} for k_, (a_, w_) in feste_ampeln(c, heute).items()}
+        return c
 
     fn = {"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}       # Namen wie auf dem Bildschirm
     gruppen = [{k: (fn.get(g.get(k), g.get(k)) if k in ("feld", "feld_vor4") else g.get(k))
@@ -654,7 +789,8 @@ def lagebild():
     try:
         import nachtlauf
         teile = nachtlauf.datenstand()             # live gemessen, nicht aus dem Protokoll (das schreibt erst das Ende)
-        ds = {"teile": teile, "urteil": nachtlauf.datenstand_zeile(teile)[1]}
+        amp_, urteil_ = nachtlauf.datenstand_zeile(teile)
+        ds = {"teile": teile, "urteil": urteil_, "ampel": amp_}
     except Exception:  # noqa: BLE001
         ds = None
     return {"heute": heute, "datenstand": ds, "stand_rueckenwind": rw.get("stand"), "stand_kartentisch": tisch.get("stand"),
@@ -674,23 +810,24 @@ def _ausschnitt(lb, nr):
     if nr == 2:
         return {x: lb.get(x) for x in ("heute", "datenstand", "stand_rueckenwind", "wirtschaftswetter", "gruppen", "stufenwechsel_heute",
                                        "schnellsuche", "dreifach", "dreifach_neu", "dreifach_weg")} | {
-            "kandidaten": [{a: c[a] for a in ("titel", "reihe", "dreifacher_rueckenwind", "volltreffer", "rueckenwind")}
+            "kandidaten": [{a: c.get(a) for a in ("titel", "reihe", "seite", "dreifacher_rueckenwind", "volltreffer", "rueckenwind",
+                                                  "feste_ampeln")}
                            for c in k]}
     if nr == 3:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "kandidaten": [
-            {a: c[a] for a in ("titel", "reihe", "volltreffer", "depot", "zahlen")}
+            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "depot", "zahlen", "feste_ampeln")}
             | {"kacheln": {n: c["kacheln"].get(n) for n in ("Fundament", "Nächste Zahlen") if n in c["kacheln"]}}
             for c in k]}
     if nr == 4:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
-            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_minervini", "setup_kullamaegi",
+            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "setup_minervini", "setup_kullamaegi",
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
-                               "stopp_1_5_atr", "ausbruch", "avwap", "kacheln")}
+                               "stopp_1_5_atr", "ausbruch", "avwap", "kacheln", "feste_ampeln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
     return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
             "wirtschaftswetter": lb.get("wirtschaftswetter"), "depot": lb["depot"],
-            "kandidaten": [{a: c[a] for a in ("titel", "depot", "reihe", "volltreffer", "kurs", "pivot", "stopp_1_5_atr",
-                                              "abstand_kurs_stopp_pct")}
+            "kandidaten": [{a: c.get(a) for a in ("titel", "depot", "reihe", "seite", "volltreffer", "kurs", "pivot",
+                                                  "stopp_1_5_atr", "abstand_kurs_stopp_pct", "feste_ampeln")}
                            | {"markt": c["kacheln"].get("Markt"), "naechste_zahlen": c["kacheln"].get("Nächste Zahlen"),
                               "sektor": (c["rueckenwind"] or {}).get("sektor"),
                               "branche": (c["rueckenwind"] or {}).get("branche"),
@@ -735,11 +872,12 @@ def faktenwache(hinweise_, quelle, bekannt):
     „gerechnet“ kennzeichnet, prüft die Wache nicht (Regel 10 der Dienstanweisung; 11.11.2026)."""
     beleg = _beleg(quelle)
     for h in hinweise_:
-        tks = [str(x).upper().strip() for x in (h.get("titel") or []) if str(x).strip()]
+        feld = h.get("titel") or []
+        tks = [str(x).upper().strip() for x in ([feld] if isinstance(feld, str) else feld) if str(x).strip()]
         fremd = [x for x in tks if bekannt and x not in bekannt]
         offen = []
         import re
-        text_ = " ".join(str(h.get(f) or "") for f in ("text", "einwand", "antwort"))
+        text_ = " ".join(str(h.get(f) or "") for f in ("kurz", "text", "einwand", "antwort", "grund"))
         teile = [t for t in re.split(r"(?<=[.;:!?])\s+|\s·\s|,\s(?=[a-zäöü])", text_) if "gerechnet" not in t]
         for z in _zahlen_in(" ".join(teile)):           # selbst gerechnet und so gekennzeichnet: kein Fall der Wache
             w = abs(z)
@@ -831,13 +969,16 @@ def konferenz(melden=lambda text: None):
     bekannt = _bekannt(lb)
     vorher = _vorige(heute)
     erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "meldungen": {},
-           "dreifach": lb["dreifach"], "kurse": {c["titel"]: c["kurs"] for c in lb["kandidaten"] if c.get("kurs")}}
+           "dreifach": lb["dreifach"], "kurse": {c["titel"]: c["kurs"] for c in lb["kandidaten"] if c.get("kurs")},
+           "tafel": tafel(lb), "brett": brett(lb)}
+    kurse_ = {c["titel"]: c.get("kurs") for c in lb["kandidaten"]}
+    erg["bilanz"] = bilanz(vorher, lambda tk: kurse_.get(tk) or _zahl(_kurs(tk)))
 
     def melden_lassen(nr, inhalt, quelle):
         name = STRATEGEN[nr][0]
         try:
             m = _formular(system, inhalt, "melden", MELDUNG)
-            faktenwache(m.get("hinweise") or [], quelle, bekannt)
+            faktenwache((m.get("hinweise") or []) + (m.get("urteile") or []), quelle, bekannt)
         except Deckel:
             raise
         except Unlesbar as e:
@@ -889,7 +1030,8 @@ def konferenz(melden=lambda text: None):
 
     befehl_daten = {"heute": heute, "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
                     "wirtschaftswetter": lb.get("wirtschaftswetter"), "volltreffer": [
-        {a: c[a] for a in ("titel", "reihe", "abstand_zum_pivot_pct", "kaufzone_bis", "stopp_1_5_atr")}
+        {a: c.get(a) for a in ("titel", "reihe", "seite", "abstand_zum_pivot_pct", "kaufzone_bis", "stopp_1_5_atr",
+                               "feste_ampeln")}
         | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in lb["kandidaten"] if c["volltreffer"]],
         "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items() if nr != "6"},
         "einwaende_gegenspieler": ohne_roh(erg["meldungen"].get("6") or {})}
@@ -898,13 +1040,17 @@ def konferenz(melden=lambda text: None):
     buch_ = LAGEBUCH_TEXT.replace("deiner Meldung", "der Lage") + json.dumps(buch, ensure_ascii=False, default=str) \
         if buch else ""
     inhalt = ("Du bist der Stratege und führst den Stab. Lies die vier Lagemeldungen und die Einwände des Gegenspielers "
-              "und schreibe den Tagesbefehl in fester Gliederung: lage (drei Sätze: Marktlage, wo die Strömung hingeht, "
+              "und schreibe den Tagesbefehl in fester Gliederung: haltung (ein Wort: angreifen, klein tasten, abwarten "
+              "oder verteidigen); lage_kurz (höchstens 8 Wörter, das Erste, was der Trader liest); "
+              "lage (drei Sätze: Marktlage, wo die Strömung hingeht, "
               "was das für heute heißt); volltreffer (alle Titel mit dreifachem Rückenwind und Setup am Auslöser – die "
               "Liste steht in den Daten; je Titel Setup, Abstand zum Pivot, Stufe); long (bis 5 Angriffsziele); short "
               "(bis 3 Ziele); gefahren (bis 3); einwaende (die schwersten Einwände des Gegenspielers, bis 5: halte der "
               "Einwand stand oder nicht, und warum – mit Zahl). Wiederhole nicht einfach eine Meldung, sondern wäge ab "
               "und verbinde: Wind, Stellung, Zahlen, Risiko. Benenne Widersprüche zwischen den Strategen ausdrücklich "
-              "(z. B. Chart grün, Fundament rot bei einem Ticker). Jeder Hinweis mit Ticker und Zahl.\n\n"
+              "(z. B. Chart grün, Fundament rot bei einem Ticker). Jeder Hinweis mit Ticker und Zahl. Jedes Ziel und "
+              "jede Gefahr trägt einen Kernsatz „kurz“ (höchstens 12 Wörter) – er steht in der Zielliste; der Text "
+              "darf länger sein. Die festen Ampeln der Akten sind gesetzt (Regel 13).\n\n"
               f"{MEISTER[1]}\n\n{befehl_}{buch_}")
     melden(f"{datetime.now():%H:%M:%S} Stratege schreibt den Tagesbefehl …")
     try:
@@ -916,7 +1062,7 @@ def konferenz(melden=lambda text: None):
     except Deckel:
         raise
     except Exception as e:  # noqa: BLE001
-        erg["befehl"] = {"lage": f"Kein Tagesbefehl: {e}", "volltreffer": [], "long": [], "short": [], "gefahren": [],
+        erg["befehl"] = {"haltung": None, "lage_kurz": "kein Tagesbefehl", "lage": f"Kein Tagesbefehl: {e}", "volltreffer": [], "long": [], "short": [], "gefahren": [],
                          "einwaende": []}
     json_schreiben(_pfad(f"{heute}.json"), erg, ensure_ascii=False)
     melden(f"{datetime.now():%H:%M:%S} fertig · Monat {kosten()['usd']:.2f} $")
@@ -1020,3 +1166,74 @@ def _einzelakte(tk):
     except Exception:  # noqa: BLE001
         pass
     return {"titel": tk, "rueckenwind": r, "kacheln": kach}
+
+
+# ── Lagekarte (12.11.2026): was der Konferenzraum auf einen Blick zeigt ──
+
+_RANG_AMPEL = {"rot": 3, "gelb": 2, "grün": 1}
+
+
+def _kurzsatz(h, n=90):
+    t_ = str(h.get("kurz") or h.get("text") or "").strip()
+    if h.get("kurz") or len(t_) <= n:
+        return t_
+    erster = t_.split(". ")[0]
+    return (erster if len(erster) <= n else t_[:n].rsplit(" ", 1)[0] + " …")
+
+
+def lagekarte(k):
+    """Alles für die Lagekarte einer Konferenz: brett, ziele, matrix, warten, gefahren, bilanz, tafel, live (True, wenn
+    Tafel und Brett nicht mit der Konferenz gespeichert waren und mit dem heutigen Stand gerechnet wurden)."""
+    k = k or {}
+    b = k.get("befehl") or {}
+    tf, br, live = k.get("tafel"), k.get("brett"), False
+    if tf is None or br is None:                       # Konferenzen vor dem 13.11.2026: Stand von heute
+        try:
+            lb = lagebild()
+            tf, br, live = tf or tafel(lb), br or brett(lb), True
+        except Exception:  # noqa: BLE001
+            tf, br = tf or [], br or {}
+    akten_ = {x["titel"]: x for x in tf}
+    einw = {}
+    for e in b.get("einwaende") or []:
+        for tk in _ticker(e.get("titel"), None):
+            einw.setdefault(tk, e)
+    ziele, gesehen = [], set()
+    for teil in ("volltreffer", "long", "short"):
+        for h in b.get(teil) or []:
+            tks = _ticker(h.get("titel"), None)
+            if not tks or tks[0] in gesehen:
+                continue
+            tk = tks[0]
+            gesehen.add(tk)
+            ziele.append({"titel": tk, "teil": teil, "ampel": h.get("ampel"), "kurz": _kurzsatz(h),
+                          "text": h.get("text"), "wache": h.get("wache"), "akte": akten_.get(tk),
+                          "einwand": einw.get(tk)})
+    zeilen = [z["titel"] for z in ziele] + [x["titel"] for x in tf if x.get("depot") and x["titel"] not in gesehen]
+    matrix = {}
+    for tk in zeilen:
+        reihe = {}
+        for nr in (2, 3, 4, 5, 6):
+            m = (k.get("meldungen") or {}).get(str(nr)) or {}
+            u = next((u for u in m.get("urteile") or [] if str(u.get("titel", "")).upper().strip() == tk), None)
+            if u:
+                reihe[nr] = {"ampel": u.get("ampel"), "grund": u.get("grund"), "wache": u.get("wache")}
+                continue
+            treffer = [h for h in m.get("hinweise") or [] if tk in _ticker(h.get("titel"), None)]
+            if treffer:                                 # ältere Konferenzen: schwerster Hinweis zum Titel
+                h = max(treffer, key=lambda h: _RANG_AMPEL.get(h.get("ampel"), 0))
+                reihe[nr] = {"ampel": h.get("ampel"), "grund": _kurzsatz(h), "wache": h.get("wache")}
+        matrix[tk] = reihe
+    warten = [x for x in tf if x["ampeln"].get("Setup", {}).get("ampel") == "grün"
+              and str(x["ampeln"].get("Einstieg", {}).get("wert", "")).endswith("am Auslöser")]
+    bil = k.get("bilanz")
+    if bil is None and k.get("stand"):
+        try:
+            bil = bilanz(_vorige(k["stand"]), lambda tk: (k.get("kurse") or {}).get(tk) or _zahl(_kurs(tk)))
+        except Exception:  # noqa: BLE001
+            bil = None
+    return {"haltung": b.get("haltung"), "lage_kurz": b.get("lage_kurz"), "lage": b.get("lage"), "brett": br,
+            "ziele": ziele, "matrix": matrix, "zeilen": zeilen, "warten": warten,
+            "gefahren": [{"titel": _ticker(h.get("titel"), None), "ampel": h.get("ampel"), "kurz": _kurzsatz(h)}
+                         for h in b.get("gefahren") or []],
+            "bilanz": bil, "tafel": tf, "live": live}

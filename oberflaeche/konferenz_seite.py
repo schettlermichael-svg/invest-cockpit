@@ -1,5 +1,7 @@
-"""Seite Konferenzraum (09.11.2026): Tagesbefehl des Strategen, die Lagemeldungen (vier Fachleute und der Gegenspieler), Einwände mit Abwägung, Faktenwache, Akten je Titel mit Nadeln im
-Chart, „Stab fragen“ und Kostenbuch. Rechnet nicht – liest die Konferenz des Nachtlaufs (kern/stab.py)."""
+"""Seite Konferenzraum (09.11.2026, Lagekarte seit 12.11.2026): oben die Lagekarte – Lagebrett (Haltung, Markt, Pendel,
+Datenstand), Zielliste, Konsens-Matrix (feste Ampeln des Codes links, Urteile der Strategen rechts), am Auslöser,
+Gefahren, Bilanz der letzten Ziele; darunter zugeklappt Tagesbefehl und Meldungen im Wortlaut, alle Akten, Feldhandbuch.
+Rechnet nicht – liest die Konferenz des Frühlaufs (kern/stab.py)."""
 import os
 import sys
 
@@ -8,7 +10,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 
 import stab  # noqa: E402
-from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t  # noqa: E402
+from gestaltung import AMPEL, BLAU, GELB, GRAU, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t  # noqa: E402
 
 FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT}
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
@@ -126,3 +128,172 @@ ANLEITUNG = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
 4. Unter **API Keys** → **Create Key**, Name z. B. „Invest Cockpit“. Den Schlüssel (beginnt mit `sk-ant-`) kopieren –
    er wird nur einmal angezeigt.
 5. Hier unten einfügen und speichern. Er liegt dann nur auf dem Server (nicht in GitHub)."""
+
+
+# ── Lagekarte (12.11.2026, Micky: „auf einen Blick sofort einen Überblick über die Lage“) ──
+
+HALTUNG_FARBE = {"angreifen": GRUEN, "klein tasten": GELB, "abwarten": GELB, "verteidigen": ROT}
+SPALTEN_CODE = ("Setup", "Einstieg", "Geld", "Zahlen", "Termin")
+SPALTEN_STAB = ((2, "Strömung"), (3, "Fundament"), (4, "Chart"), (5, "Risiko"), (6, "Gegen­spieler"))
+TEIL = {"volltreffer": "Volltreffer", "long": "long", "short": "short"}
+
+
+def _p(ampel, titel="", groesse=13):
+    f = AMPEL.get(ampel or "grau", GRAU)
+    return (f'<span title="{_h(titel)}" style="display:inline-block;width:{groesse}px;height:{groesse}px;'
+            f'border-radius:50%;background:{f};vertical-align:middle"></span>')
+
+
+def _tk(tk):
+    return (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="color:{BLAU};font-weight:600;'
+            f'text-decoration:none">{tk}</a>')
+
+
+def _zahl(x, n=2):
+    return "—" if x is None else f"{x:,.{n}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def _feld(kopf, gross, farbe, unter):
+    return (f'<div style="flex:1 1 200px;background:{KARTE};border:1px solid {RAND};border-left:4px solid {farbe};'
+            f'border-radius:10px;padding:12px 14px"><div style="font-size:12px;color:{TEXT_3};letter-spacing:0.06em;'
+            f'text-transform:uppercase">{kopf}</div><div style="font-size:20px;font-weight:600;color:{TEXT};'
+            f'margin:4px 0 2px">{gross}</div><div style="font-size:13px;color:{TEXT_2}">{unter}</div></div>')
+
+
+def _brett(lk):
+    br = lk.get("brett") or {}
+    h = lk.get("haltung")
+    m = br.get("markt") or {}
+    mm, mk = m.get("minervini") or {}, m.get("kullamaegi") or {}
+    markt_f = {"rot": ROT, "gelb": GELB, "grün": GRUEN}.get(
+        "rot" if "rot" in (mm.get("ampel"), mk.get("ampel")) else
+        "grün" if mm.get("ampel") == mk.get("ampel") == "grün" else "gelb")
+    pe = br.get("pendel") or {}
+    ds = br.get("datenstand") or {}
+    if isinstance(ds, str):
+        ds = {"text": ds}
+    return ('<div style="display:flex;flex-wrap:wrap;gap:12px">'
+            + _feld("Haltung des Stabs", _h(h or lk.get("lage_kurz") or "—"), HALTUNG_FARBE.get(h, BLAU),
+                    _h(lk.get("lage_kurz") if h else "") or "&nbsp;")
+            + _feld("Markt", f'{_p(mm.get("ampel"))} M &nbsp; {_p(mk.get("ampel"))} K', markt_f,
+                    _h(f'Minervini: {mm.get("wort") or "—"} · Kullamägi: {mk.get("wort") or "—"}'))
+            + _feld("Pendel", _h(f'{pe.get("zone") or "—"} {pe.get("pfeil") or ""}'), AMPEL.get(pe.get("ampel"), GRAU),
+                    _h(f'vor 4 Wochen: {pe.get("vor_4_wochen")}') if pe.get("vor_4_wochen") else "&nbsp;")
+            + _feld("Datenstand", _p(ds.get("ampel")) + " " + ("gleicher Tag" if ds.get("ampel") == "grün" else
+                                                                "prüfen" if ds.get("ampel") else "—"),
+                    AMPEL.get(ds.get("ampel"), GRAU), _h(ds.get("text") or ""))
+            + "</div>")
+
+
+def _tabelle(kopf, zeilen, mitte=()):
+    th = "".join(f'<th style="text-align:{"center" if i in mitte else "left"};padding:6px 8px;font-weight:500;'
+                 f'color:{TEXT_3};font-size:12px;border-bottom:1px solid {RAND};white-space:nowrap">{k}</th>'
+                 for i, k in enumerate(kopf))
+    tr = "".join("<tr>" + "".join(f'<td style="padding:7px 8px;border-bottom:1px solid {RAND};vertical-align:top;'
+                                  f'text-align:{"center" if i in mitte else "left"}">{z}</td>'
+                                  for i, z in enumerate(zeile)) + "</tr>" for zeile in zeilen)
+    return (f'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px;'
+            f'color:{TEXT}"><thead><tr>{th}</tr></thead><tbody>{tr}</tbody></table></div>')
+
+
+def _abschnitt(titel, inhalt, zusatz=""):
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px">'
+            f'<div style="font-size:15px;font-weight:600;color:{TEXT};margin-bottom:8px">{titel}'
+            f'<span style="font-weight:400;color:{TEXT_3};font-size:13px"> {zusatz}</span></div>{inhalt}</div>')
+
+
+def _ziele(lk):
+    zeilen = []
+    for i, z in enumerate(lk["ziele"], 1):
+        a = z.get("akte") or {}
+        amp = a.get("ampeln") or {}
+        se, ei = amp.get("Setup") or {}, amp.get("Einstieg") or {}
+        e = z.get("einwand")
+        einw = (_p(e.get("ampel"), f'Einwand: {e.get("einwand")} – Abwägung: {e.get("antwort")}') if e
+                else f'<span style="color:{TEXT_3}">—</span>')
+        zeilen.append((f'<b>{i}</b>', _tk(z["titel"]),
+                       f'<span style="color:{TEXT_2}">{TEIL[z["teil"]]}</span>',
+                       f'{_p(se.get("ampel"), se.get("wert"))} <span style="color:{TEXT_2}">{_h(se.get("wert") or "")}</span>',
+                       f'{_p(ei.get("ampel"), ei.get("wert"))} {_h(ei.get("wert") or "—")}',
+                       _zahl(a.get("stopp")),
+                       f'{_p(z.get("ampel"))} {_h(z["kurz"])}' + _wache(z), einw))
+    if not zeilen:
+        return _abschnitt("Angriffsziele", f'<div style="color:{TEXT_2};font-size:14px">Der Stab nennt heute kein Ziel.</div>')
+    return _abschnitt("Angriffsziele", _tabelle(("#", "Titel", "Seite", "Setup (Code)", "Einstieg (Code)", "Stopp",
+                                                 "Kernsatz des Strategen", "Einwand"), zeilen, mitte=(7,)),
+                      "· Rang des Strategen · Setup und Einstieg rechnet der Code · Stopp 1,5 ATR")
+
+
+def _matrix(lk):
+    if not lk["zeilen"]:
+        return ""
+    akten_ = {x["titel"]: x for x in lk["tafel"]}
+    kopf = ("Titel",) + SPALTEN_CODE + tuple(n for _, n in SPALTEN_STAB)
+    zeilen = []
+    for tk in lk["zeilen"]:
+        amp = (akten_.get(tk) or {}).get("ampeln") or {}
+        code = tuple(_p((amp.get(n) or {}).get("ampel"), f'{n}: {(amp.get(n) or {}).get("wert") or "—"}', 15)
+                     for n in SPALTEN_CODE)
+        r = lk["matrix"].get(tk) or {}
+        stab_ = tuple((_p(r[nr]["ampel"], f'{name}: {r[nr].get("grund")}', 15) if nr in r
+                       else f'<span style="color:{TEXT_3}" title="{name}: kein Urteil">·</span>') for nr, name in SPALTEN_STAB)
+        depot = f' <span style="color:{TEXT_3};font-size:12px">Depot</span>' if (akten_.get(tk) or {}).get("depot") else ""
+        zeilen.append((_tk(tk) + depot,) + code + stab_)
+    trenn = len(SPALTEN_CODE)
+    html = _tabelle(kopf, zeilen, mitte=tuple(range(1, len(kopf))))
+    return _abschnitt("Konsens-Matrix", html, f"· links {trenn} feste Ampeln des Codes, rechts das Urteil je Stratege "
+                                              "· Maus auf den Punkt zeigt den Grund · alle grün = der Stab ist sich einig")
+
+
+def _drei(lk):
+    w = lk["warten"]
+    warten = "".join(f'<div style="margin:4px 0">{_tk(x["titel"])} · {_h(x["ampeln"]["Einstieg"]["wert"])}'
+                     f'<span style="color:{TEXT_3}"> · Pivot {_zahl(x.get("pivot"))} · Stopp {_zahl(x.get("stopp"))}'
+                     f'</span></div>' for x in w) or f'<div style="color:{TEXT_3}">keiner</div>'
+    gef = "".join(f'<div style="margin:4px 0">{_p(g.get("ampel"))} '
+                  f'{" ".join(_tk(t_) for t_ in g["titel"]) + " · " if g["titel"] else ""}{_h(g["kurz"])}</div>'
+                  for g in lk["gefahren"]) or f'<div style="color:{TEXT_3}">keine genannt</div>'
+    bil = lk.get("bilanz") or {}
+    zi = bil.get("ziele") or []
+    tr = [z for z in zi if z.get("treffer") is not None]
+    bilanz_ = "".join(f'<div style="margin:4px 0">{_tk(z["titel"])} <span style="color:{TEXT_3}">{z["seite"]}</span> · '
+                      f'{_zahl(z.get("pct"), 1)} % ' + ("" if z.get("treffer") is None else
+                      f'<span style="color:{GRUEN if z["treffer"] else ROT}">{"✓" if z["treffer"] else "✗"}</span>')
+                      + "</div>" for z in zi) or f'<div style="color:{TEXT_3}">keine frühere Konferenz</div>'
+    zusatz = (f'· seit {bil["konferenz_vom"][8:10]}.{bil["konferenz_vom"][5:7]}. · '
+              f'{sum(1 for z in tr if z["treffer"])} von {len(tr)} in Richtung') if bil.get("konferenz_vom") else ""
+    sp = lambda inhalt: f'<div style="flex:1 1 280px;min-width:0">{inhalt}</div>'  # noqa: E731
+    return ('<div style="display:flex;flex-wrap:wrap;gap:12px">'
+            + sp(_abschnitt("Am Auslöser", f'<div style="font-size:14px">{warten}</div>', "· Setup grün, Kurs bis 5 % vor dem Einstieg"))
+            + sp(_abschnitt("Gefahren", f'<div style="font-size:14px">{gef}</div>'))
+            + sp(_abschnitt("Bilanz der letzten Ziele", f'<div style="font-size:14px">{bilanz_}</div>', zusatz))
+            + "</div>")
+
+
+def lagekarte_html(lk):
+    lage = (f'<div style="font-size:15px;line-height:1.55;color:{TEXT_2}">{_h(lk.get("lage"))}</div>'
+            if lk.get("lage") else "")
+    hinweis = (f'<div style="font-size:12px;color:{GELB}">Diese Konferenz stammt aus der Zeit vor der Lagekarte: '
+               f'feste Ampeln mit dem heutigen Stand gerechnet, Urteile aus den Hinweisen der Strategen gelesen.</div>'
+               if lk.get("live") else "")
+    return seite(_brett(lk) + lage + hinweis + _ziele(lk) + _matrix(lk) + _drei(lk), oben=8, unten=8)
+
+
+def regeln_text():
+    """Die Regeln der festen Ampeln (Legende unter der Matrix)."""
+    return "\n".join(f"- **{n}:** {r}" for n, r in stab.FESTE_REGELN) + (
+        "\n- **Strategen-Spalten:** jeder Stratege urteilt nur über seine Frage (Strömung, Zahlen und Termine, Chart, "
+        "Risiko, Einwand) – nicht über das Setup. Grau = kein Urteil zu diesem Titel.")
+
+
+def tafel_html(tf):
+    """Alle Akten des Stabs: warum der Titel dort liegt und seine festen Ampeln."""
+    zeilen = []
+    for x in tf:
+        amp = x.get("ampeln") or {}
+        zeilen.append((_tk(x["titel"]), f'<span style="color:{TEXT_2}">{_h(x.get("warum"))}</span>',
+                       _h(x.get("seite") or "—"), _zahl(x.get("kurs")), _zahl(x.get("pivot")), _zahl(x.get("stopp")))
+                      + tuple(f'{_p((amp.get(n) or {}).get("ampel"))} <span style="color:{TEXT_2};font-size:13px">'
+                              f'{_h((amp.get(n) or {}).get("wert") or "")}</span>' for n in SPALTEN_CODE))
+    return seite(_tabelle(("Titel", "Warum beim Stab", "Seite", "Kurs", "Pivot", "Stopp") + SPALTEN_CODE, zeilen),
+                 oben=4, unten=4)

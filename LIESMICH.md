@@ -564,3 +564,14 @@ Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und
 - Datenstand-Wache (`nachtlauf.datenstand()`): Kurstag von Massive, Yahoo, Rückenwind, RS-Rang und Führer-Rang im
   Protokoll; eine Zeile oben auf jeder Seite (grün = alle gleich, gelb = gleich, aber älter als der letzte Handelstag,
   rot = verschiedene Tage). Der Stab bekommt den Datenstand und nennt Abweichungen zuerst.
+
+## Konferenzraum als Lagekarte (12.11.2026)
+
+Oben steht die Lagekarte, darunter zugeklappt Wortlaut, Akten, Feldhandbuch und Technik.
+- **Lagebrett:** Haltung des Stabs (angreifen · klein tasten · abwarten · verteidigen), Markt M/K, Pendel, Datenstand.
+- **Angriffsziele:** Rang des Strategen, Setup und Einstieg vom Code, Stopp, Kernsatz (≤ 12 Wörter), Einwand.
+- **Konsens-Matrix:** links fünf feste Ampeln des Codes (`stab.FESTE_REGELN`: Setup, Einstieg, Geld, Zahlen, Termin), rechts das Urteil je Stratege (Feld `urteile` der Meldung).
+- **Drei Spalten:** am Auslöser (Setup grün, bis 5 % vor dem Einstieg), Gefahren, Bilanz der letzten Ziele (✓/✗).
+- **Alle Akten:** warum jeder Titel beim Stab liegt, mit seinen festen Ampeln.
+
+Regel 13 der Dienstanweisung: Die festen Ampeln sind gesetzt, der Stab färbt sie nicht um und urteilt nur über seine eigene Frage. Die Konferenz speichert `tafel`, `brett` und `bilanz`. Bei älteren Konferenzen rechnet die Lagekarte die festen Ampeln mit dem heutigen Stand.

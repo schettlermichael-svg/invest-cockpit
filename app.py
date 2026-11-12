@@ -476,8 +476,17 @@ def rueckenwind_zeigen():
                 st.caption("Das Logbuch beginnt mit dem ersten Nachtlauf.")
 
 
+@st.cache_data(ttl=900, show_spinner="Lagekarte wird gelegt …")
+def _lagekarte(stand, zeit):
+    """Lagekarte der jüngsten Konferenz (zwischengespeichert: bei älteren Konferenzen rechnet sie die festen Ampeln mit
+    dem heutigen Stand, das liest 40+ Kursreihen)."""
+    import stab
+    return stab.lagekarte(stab.letzte())
+
+
 def konferenz_zeigen():
-    """Seite „Konferenzraum“ (09.11.2026): Tagesbefehl, Lagemeldungen, Akten mit Nadeln, Stab fragen, Kostenbuch."""
+    """Seite „Konferenzraum“ (09.11.2026; Lagekarte seit 12.11.2026): Lagekarte oben, Wortlaut, Akten, Feldhandbuch und
+    Technik zugeklappt, Stab fragen."""
     import stab
     import konferenz_seite as ks
     k = stab.letzte()
@@ -498,66 +507,43 @@ def konferenz_zeigen():
     if probe_:
         (st.success if probe_[0] else st.error)(("✓ " if probe_[0] else "⚠ Der Schlüssel geht nicht: ") + probe_[1])
     laeuft = nachtlauf.konferenz_laeuft()
-    pruef_, handy_, knopf_ = st.columns([3, 5, 3])
-    with pruef_:
-        if st.button("Verbindung prüfen", key="stab_pruefen", help="Kurzer Test, ob Schlüssel und Guthaben gehen (kostet unter 1 Cent)."):
-            st.session_state["stab_probe"] = stab.probe()
-            st.rerun()
-    with handy_:
-        import meldung
-        with st.popover("📱 Meldung aufs Handy"):
-            st.markdown(
-                "Nach jedem Nachtlauf und jeder Konferenz kommt eine kurze Meldung aufs Handy – auch wenn etwas schiefging.\n\n"
-                "1. Im App Store die kostenlose App **ntfy** laden.\n"
-                "2. In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
-            st.code(meldung.kanal(), language=None)
-            st.markdown("3. Hier auf „Testnachricht senden“ drücken – sie sollte sofort ankommen.\n\n"
-                        "Der Kanalname ist zufällig – wer ihn nicht kennt, sieht nichts.")
-            if st.button("Testnachricht senden", key="ntfy_test"):
-                if meldung.senden("Test aus dem Konferenzraum – die Leitung steht.", "Invest Cockpit"):
-                    st.success("Gesendet.")
-                else:
-                    st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
-    with knopf_:
-        if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
-                     help="Die sechs Strategen lesen den Stand des letzten Nachtlaufs (rund 5–10 Minuten, etwa 2 $). "
-                          "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
-            nachtlauf.konferenz_starten()
-            st.rerun()
-        if laeuft:
-            st.caption("Der Stab tagt gerade … (Seite mit ⌘ R neu laden)")
-    prot, zeilen = nachtlauf.konferenz_protokoll()
-    if prot:
-        with st.expander(f"Protokoll des Stabs · gestartet {prot.get('start')}"
-                         + (f" · fertig {prot['ende']}" if prot.get("ende") else " · läuft noch oder abgebrochen")
-                         + (" · ⚠ Fehler" if prot.get("fehler") else "")):
-            if prot.get("fehler"):
-                st.error(prot["fehler"])
-            st.code("\n".join(zeilen) or "noch keine Ausgabe", language=None)
+    if laeuft:
+        st.info("Der Stab tagt gerade … (Seite mit ⌘ R neu laden)")
     if not k:
-        st.info("Noch keine Konferenz – sie läuft jede Nacht nach dem Nachtlauf, oder jetzt über den Knopf.")
+        st.info("Noch keine Konferenz – sie läuft jeden Morgen nach dem Frühlauf, oder über „Technik“ unten.")
     else:
-        st.markdown(ks.befehl(k), unsafe_allow_html=True)
-        sp = st.columns(2)
-        for i, nr in enumerate((2, 3, 4, 5, 6)):
-            m = (k.get("meldungen") or {}).get(str(nr))
-            if m:
-                with sp[i % 2]:
-                    st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
-        with st.expander("📖 Feldhandbuch · das Handwerk der Meister je Stratege (zum Gegenlesen)"):
-            st.markdown(ks.feldhandbuch())
-        st.markdown(gestaltung.seite("<h2 style='margin:0'>Akten · Hinweise je Titel, als Nadeln im Chart</h2>", oben=16,
-                                     unten=0), unsafe_allow_html=True)
-        akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
-        st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
-        for tk, eintraege in akten:
-            with st.expander(f"**{tk}** · {len(eintraege)} Hinweis{'e' if len(eintraege) > 1 else ''}"):
+        lk = _lagekarte(k.get("stand"), k.get("zeit"))   # Lagekarte (12.11.2026): auf einen Blick
+        st.markdown(ks.lagekarte_html(lk), unsafe_allow_html=True)
+        with st.expander("Regeln der festen Ampeln (Code) und der Strategen-Spalten"):
+            st.markdown(ks.regeln_text())
+        with st.expander(f"Alle Akten des Stabs · {len(lk['tafel'])} Titel · warum jeder dort liegt"):
+            st.caption("Reihenfolge, in der die Akten gezogen wurden: Depot, dann Volltreffer, Rang der Reihe, Setup grün, "
+                       "dreifacher Rückenwind, RS-Rang.")
+            st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)
+        with st.expander("Tagesbefehl und Einwände im Wortlaut"):
+            st.markdown(ks.befehl(k), unsafe_allow_html=True)
+        with st.expander("Meldungen der fünf Strategen im Wortlaut"):
+            sp = st.columns(2)
+            for i, nr in enumerate((2, 3, 4, 5, 6)):
+                m = (k.get("meldungen") or {}).get(str(nr))
+                if m:
+                    with sp[i % 2]:
+                        st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
+        with st.expander("Akten je Titel · Hinweise als Nadeln im Chart"):
+            akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
+            st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
+            wahl = st.selectbox("Titel", [tk for tk, _ in akten], index=None, placeholder="Titel wählen …",
+                                key="akte_wahl", format_func=lambda tk: f"{tk} · {len(dict(akten)[tk])} Hinweise")
+            if wahl:
+                eintraege = dict(akten)[wahl]
                 st.markdown(ks.akte_text(eintraege), unsafe_allow_html=True)
-                ab = titel.abgelegt(tk)
+                ab = titel.abgelegt(wahl)
                 if ab:
                     st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege, k.get("stand"))),
                                 unsafe_allow_html=True)
-                st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
+                st.link_button(f"{wahl}: Titelseite →", f"?seite=Titelseite&t={wahl}")
+        with st.expander("📖 Feldhandbuch · das Handwerk der Meister je Stratege (zum Gegenlesen)"):
+            st.markdown(ks.feldhandbuch())
     st.markdown(gestaltung.seite("<h2 style='margin:0'>Stab fragen</h2>", oben=16, unten=0), unsafe_allow_html=True)
     with st.form("stab_frage", clear_on_submit=True):
         text = st.text_area("Frage an den Stab", placeholder="z. B. Welche Branche kippt gerade, und welche Titel "
@@ -576,6 +562,47 @@ def konferenz_zeigen():
             st.markdown(f["antwort"])
             if f.get("ende") and f["ende"] != "end_turn":          # Fehlersuche: warum endete die Antwort?
                 st.caption(f'Ende der Antwort: {f["ende"]} · Blöcke: {", ".join(f.get("bloecke") or [])}')
+    with st.expander("⚙ Technik · Konferenz einberufen, Verbindung, Handy-Meldung, Protokoll"):
+        konferenz_technik(laeuft)
+
+
+def konferenz_technik(laeuft):
+    """Knöpfe und Protokoll des Stabs (seit 12.11.2026 zugeklappt unter der Lagekarte)."""
+    import stab
+    pruef_, handy_, knopf_ = st.columns([3, 5, 3])
+    with pruef_:
+        if st.button("Verbindung prüfen", key="stab_pruefen", help="Kurzer Test, ob Schlüssel und Guthaben gehen (kostet unter 1 Cent)."):
+            st.session_state["stab_probe"] = stab.probe()
+            st.rerun()
+    with handy_:
+        import meldung
+        with st.popover("📱 Meldung aufs Handy"):
+            st.markdown(
+                "Nach jedem Frühlauf und jeder Konferenz kommt eine kurze Meldung aufs Handy – auch wenn etwas schiefging.\n\n"
+                "1. Im App Store die kostenlose App **ntfy** laden.\n"
+                "2. In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
+            st.code(meldung.kanal(), language=None)
+            st.markdown("3. Hier auf „Testnachricht senden“ drücken – sie sollte sofort ankommen.\n\n"
+                        "Der Kanalname ist zufällig – wer ihn nicht kennt, sieht nichts.")
+            if st.button("Testnachricht senden", key="ntfy_test"):
+                if meldung.senden("Test aus dem Konferenzraum – die Leitung steht.", "Invest Cockpit"):
+                    st.success("Gesendet.")
+                else:
+                    st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
+    with knopf_:
+        if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
+                     help="Die sechs Strategen lesen den Stand des letzten Frühlaufs (rund 5–10 Minuten, etwa 2,50 $). "
+                          "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
+            nachtlauf.konferenz_starten()
+            st.rerun()
+    prot, zeilen = nachtlauf.konferenz_protokoll()
+    if prot:
+        st.markdown(f"**Protokoll des Stabs** · gestartet {prot.get('start')}"
+                    + (f" · fertig {prot['ende']}" if prot.get("ende") else " · läuft noch oder abgebrochen")
+                    + (" · ⚠ Fehler" if prot.get("fehler") else ""))
+        if prot.get("fehler"):
+            st.error(prot["fehler"])
+        st.code("\n".join(zeilen) or "noch keine Ausgabe", language=None)
 
 
 def datenstand_zeigen():
