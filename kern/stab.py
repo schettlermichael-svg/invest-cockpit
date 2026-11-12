@@ -766,7 +766,8 @@ def lagebild():
                 wert, text = "unbekannt", None
             kacheln[k_] = {"ampel": amp, "wert": wert, "text": text}
         c = {"titel": tk, "depot": tk in pos, "watchlist": tk in wl, "setup_gruen": bool(x.get("gruen")),
-                "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
+                "reihe": (namen.get(x.get("reihe"), x.get("reihe")) + (" · Bärenflagge" if x.get("short_art") == "Bärenflagge"
+                                                                       else "")) if x.get("reihe") else "keine Reihe",
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
                 "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),

@@ -126,6 +126,11 @@ def _stufe1(tk):
             # ★ – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
             in_zone = -KAUFZONE_M <= ab_ <= 0
             gruen_ = em["ampel"] == "grün" and in_zone
+            # Art des Shorts (Micky 12.11.2026: beide, aber getrennt benannt): Ermüdung eines Führers (GD200 steigt, das
+            # Hoch der letzten 6 Wochen lag über ihr) oder Bärenflagge (Erholungsrally im Abwärtstrend, z. B. ALNY)
+            g200 = c[-200:].mean() if len(c) >= 222 else None
+            fuehrer_ = g200 is not None and g200 > c[-222:-22].mean() and h[-30:].max() > g200
+            info["short_art"] = "Ermüdung" if fuehrer_ else "Bärenflagge"
             info.update(reihe="k_ermuedung", stern=gruen_, gruen=gruen_, abstand=abs(ab_), abstand_vz=ab_,
                         luecken=[] if gruen_ else ["Short: zurück in der Flagge"] if em["ampel"] != "grün"
                         else [f"Short: schon {-ab_:.1f} % unter der Unterkante – gelaufen".replace(".", ",")])
@@ -154,6 +159,9 @@ def _stufe1(tk):
             info.update(gruen=False, stern=False, still=True,
                         luecken=(info.get("luecken") or []) + [f"Kurs steht still: Tagesspanne {a_ / c[-1] * 100:.2f} % – "
                                                                f"Übernahme?".replace(".", ",")])
+        if info.get("short_art") and not zeichen_br:
+            info["ausbruch"] = ("▼ Ermüdung nach Überdehnung eines Führers (GD200 steigt)" if info["short_art"] == "Ermüdung"
+                                else "▼ Bärenflagge: Erholungsrally im Abwärtstrend, dann Bruch der Unterkante")
         if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch –
             info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)   # derselbe, mit dem das System der Reihe rechnet
         return info
@@ -278,7 +286,7 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json_lesen(pfad, {"titel": {}})
-        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch")
+        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch", "short_art")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
