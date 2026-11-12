@@ -1,6 +1,6 @@
 """Der Stab – MARAGA Investment (Konferenzraum, 09.11.2026).
 
-Sechs Strategen (fünf plus Gegenspieler, seit 10.11.2026 nach dem Handwerk ihrer Meister) lesen nach dem Nachtlauf die Daten der App und schreiben ihre Lagemeldung. Sie erklären und zeigen auf,
+Sechs Strategen (fünf plus Gegenspieler, seit 10.11.2026 nach dem Handwerk ihrer Meister) lesen nach dem Frühlauf die Daten der App und schreiben ihre Lagemeldung. Sie erklären und zeigen auf,
 sie filtern nichts und erfinden keine Werte: jede Zahl, die sie nennen, steht in den Daten, die sie bekommen.
   2 Strömungs-Analyst   Rückenwind: Geld in Sektoren, Branchen, Themen, Stufenwechsel, Anführer und Verfolger
   3 Fundamental-Analyst Zahlen der Kandidaten, Termine ≤ 14 Tage, Reaktionen; Nachrichten per Web-Suche (begrenzt)

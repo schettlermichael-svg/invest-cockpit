@@ -28,7 +28,7 @@ def kopf(k):
         f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Konferenzraum · MARAGA Investment</h1>'
         f'<div style="color:{TEXT_2};font-size:14px">{stand} · Kosten {ko["usd"]:.2f} $ von {stab.DECKEL_USD:.0f} $ im Monat'
         f' · {ko["aufrufe"]} Aufrufe · {ko["suchen"]} Web-Suchen</div></div>'
-        f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Sechs Strategen lesen nach dem Nachtlauf die Daten der App '
+        f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Sechs Strategen lesen nach dem Frühlauf die Daten der App '
         f'und erklären die Lage, jeder nach dem Handwerk seiner Meister; ein Gegenspieler sucht die Schwächen. Sie zeigen auf, sie filtern nichts und entscheiden nichts – jede Zahl stammt aus der App '
         f'oder einer genannten Quelle, die Faktenwache markiert, was sie nicht findet.</p>', oben=12, unten=8)
 

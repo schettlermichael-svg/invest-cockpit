@@ -656,7 +656,7 @@ def datenstand_zeigen():
 if ansicht == "Konferenzraum":
     datenstand_zeigen()
     try:
-        _QUELLE["text"] = "Konferenz des Nachtlaufs"
+        _QUELLE["text"] = "Konferenz des Frühlaufs"
         konferenz_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
