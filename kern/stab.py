@@ -14,7 +14,7 @@ werden die Nadeln im Chart der Akte.
 Umbau 10.11.2026 (Konferenz vom 10.11.: 3 von 4 Meldungen unlesbar, der Stab blind): festes Meldeformular über ein
 Werkzeug der Schnittstelle statt freiem JSON-Text (keine kaputten Anführungszeichen mehr), zweiter Versuch, Rohantwort
 im Protokoll; der Stab liest alle Reihen des Kartentischs (long, short), die Watchlist und den dreifachen Rückenwind –
-die stärksten 40, Volltreffer zuerst; vollständige Akten (alle Kacheln, Pivot, Kaufzone, Stopp 1,5 ATR, Ausbruch,
+seit 12.11.2026 feste Plätze je Reihe (AKTEN_PLAETZE), Depot, Watchlist und Volltreffer immer; vollständige Akten (alle Kacheln, Pivot, Kaufzone, Stopp 1,5 ATR, Ausbruch,
 Rückenwind, Zahlen); heutiges Datum, vergangene Termine aussortiert; Dienstanweisung mit den Setups und der Haltung
 des Traders; feste Gefechtsfragen je Stratege; Sperre, wenn der Kartentisch veraltet ist.
 
@@ -40,7 +40,13 @@ PREIS_EIN, PREIS_AUS, PREIS_SUCHE = 4.0 / 1e6, 20.0 / 1e6, 0.01       # $ je Tok
 DECKEL_USD = 50.0                                                      # Monatsdeckel (Micky 11.11.2026: alle Strategen auf Opus, gemessen ~2,10 $ je Konferenz)
 SUCHEN_NACHT = 10                                                      # Web-Suchen je Nacht (Fundamental-Analyst)
 SUCHEN_FRAGE = 3
-KANDIDATEN_MAX = 40
+# Akten des Stabs (Micky 12.11.2026: feste Plätze je Reihe, Watchlist immer): immer Depot, Watchlist und alle
+# Volltreffer; dazu je Reihe die besten (None = alle). Watchlist-Titel ohne Setup und ohne dreifachen Rückenwind
+# bekommen keine volle Akte, stehen aber mit ihren festen Ampeln in der Tafel (178 volle Akten: ~4 $ je Konferenz). So fällt kein Setup-Typ mehr heraus (vorher die ersten 40 nach
+# Rang – Short und niedrige Reihen wurden verdrängt).
+AKTEN_PLAETZE = {"m_spitze": None, "k_ep": None, "k_ermuedung": 8, "k_breakout": 8, "m_weitere": 8, "vcp": 4,
+                 "flagge": 4}
+AKTEN_DREIFACH_OHNE_SETUP = 4                                          # dreifacher Rückenwind, aber keine Reihe
 
 STRATEGEN = {
     1: ("Stratege", "Tagesbefehl"),
@@ -639,12 +645,15 @@ def warum(c):
 def tafel(lb):
     """Die Akten als Tafel: je Titel Seite, Kurs, Pivot, Stopp, warum beim Stab, feste Ampeln (wird mit der Konferenz
     gespeichert – die Lagekarte zeigt den Stand, mit dem der Stab gearbeitet hat)."""
-    return [{"titel": c["titel"], "seite": c.get("seite"), "warum": warum(c), "depot": c.get("depot"),
+    stab_ = {c["titel"] for c in lb["kandidaten"]}
+    return [{"titel": c["titel"], "seite": c.get("seite"), "beim_stab": c["titel"] in stab_,
+             "warum": warum(c) if c["titel"] in stab_ else "Watchlist · ohne Setup (nur feste Ampeln)",
+             "depot": c.get("depot"),
              "watchlist": c.get("watchlist"), "volltreffer": c.get("volltreffer"), "kurs": c.get("kurs"),
              "pivot": c.get("pivot"), "abstand": c.get("abstand_zum_pivot_pct"), "kaufzone_bis": c.get("kaufzone_bis"),
              "stopp": c.get("stopp_1_5_atr"), "ampeln": c.get("feste_ampeln") or {k: {"ampel": a, "wert": w} for k, (a, w)
                                                        in feste_ampeln(c, lb.get("heute")).items()}}
-            for c in lb["kandidaten"]]
+            for c in lb["kandidaten"] + (lb.get("beobachtet") or [])]
 
 
 def brett(lb):
@@ -711,7 +720,16 @@ def lagebild():
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
         voll = tk in drei and bool(x.get("reihe"))
         return (not voll, -rang.get(x.get("reihe"), 0), not x.get("gruen"), tk not in drei, -(r.get("rang") or 0))
-    alle = list(dict.fromkeys(pos + sorted(pool - set(pos), key=ordnung)))[:KANDIDATEN_MAX + len(pos)]
+    sortiert = sorted(pool, key=ordnung)
+    voll_ = [tk for tk in sortiert if tk in drei and (titel_t.get(tk) or {}).get("reihe")]
+    wl_mit = [tk for tk in sorted(wl, key=ordnung) if (titel_t.get(tk) or {}).get("reihe") or tk in drei]
+    alle = pos + wl_mit + voll_                       # Watchlist: volle Akte nur mit Setup oder Rückenwind (Micky 12.11.)
+    for reihe_, plaetze in AKTEN_PLAETZE.items():
+        in_reihe = [tk for tk in sortiert if (titel_t.get(tk) or {}).get("reihe") == reihe_ and tk not in alle]
+        alle += in_reihe if plaetze is None else in_reihe[:plaetze]
+    alle += [tk for tk in sortiert if tk in drei and not (titel_t.get(tk) or {}).get("reihe")
+             and tk not in alle][:AKTEN_DREIFACH_OHNE_SETUP]
+    alle = list(dict.fromkeys(alle))
 
     def akte(tk):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
@@ -799,6 +817,7 @@ def lagebild():
             "schnellsuche": schnell, "dreifach": sorted(drei), "dreifach_neu": sorted(drei - vorher) if vorher else [],
             "dreifach_weg": sorted(vorher - drei) if vorher else [],
             "kandidaten": [akte(tk) for tk in alle],
+            "beobachtet": [akte(tk) for tk in sorted(wl - set(alle))],   # nur feste Ampeln, nicht an den Stab
             "depot": {"konto": dep.get("konto"), "risiko_pct": dep.get("risiko_pct"),
                       "positionen": dep.get("positionen", []),
                       "hinweis": None if dep.get("konto") else "kein Kontostand eingetragen"}}

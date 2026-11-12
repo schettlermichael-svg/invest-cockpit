@@ -231,7 +231,8 @@ def _zahlen(tk, tv):
     t = fd.get("termin")
     if t is not None and len(t):
         d = pd.to_datetime(t["datum"].iloc[0], errors="coerce")
-        termin = f"{d:%Y-%m-%d}" if pd.notna(d) else None
+        heute = pd.Timestamp.today().normalize()
+        termin = f"{d:%Y-%m-%d}" if pd.notna(d) and d >= heute - pd.Timedelta(days=1) else None   # alte Termine verwerfen
     if termin is None:                           # sonst der nächste Termin laut TradingView
         d = pd.to_datetime((tv.get(tk) or {}).get("earnings_release_next_date"), errors="coerce")
         termin = f"{d:%Y-%m-%d}" if pd.notna(d) else None

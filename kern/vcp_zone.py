@@ -284,13 +284,15 @@ AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schlus
 KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
 
 
-def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None):
+def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
     """Ausbruch über den Pivot in den letzten `tage` Handelstagen oder None:
     {tag, tage_her, erster_tag, pivot, zone, enge, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, innen, eltern}.
     Zone und Enge so, wie sie am Vortag des ersten Ausbruchs standen (Indizes passen zu df). Schließt der Kurs danach
     wieder unter dem Pivot, ist es ein Fehlausbruch (fehl) – Zone und Pivot bleiben; ein neuer Schluss darüber ist ein
     neuer Ausbruch (tag, volumen von diesem Tag). Hat sich über dem Ausbruch schon eine neue fertige Zone gebildet
-    (jetzt = zone(df), sonst gerechnet), übernimmt sie: None."""
+    (jetzt = zone(df), sonst gerechnet), übernimmt sie: None. passt(zone) → bool: nur Zonen, die das System als Base
+    gelten lässt (Minervini, 12.11.2026: NIQ brach über eine 61 % tiefe Base aus, gerechnet wurde mit der Flagge darin –
+    Text +9,0 %, Abstand +2,9 % zu zwei verschiedenen Pivots)."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
     if n < 80:
@@ -306,7 +308,7 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None):
         if not z.get("zone"):
             continue
         for b in [z] + ([z["innen"]] if z.get("innen") else []):
-            if b.get("laenge") != "ok":
+            if b.get("laenge") != "ok" or (passt and not passt(b)):
                 continue
             e = enge(vor, b)
             pivot = float(e.get("pivot") or b["oben"])

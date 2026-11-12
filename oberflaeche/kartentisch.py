@@ -121,9 +121,14 @@ def _stufe1(tk):
             info.update(reihe="k_ep", stern=k["ep"]["ampel"] == "grün", gruen=k["ep"]["ampel"] == "grün")
         elif k.get("ermuedung"):
             em = k["ermuedung"]
-            info.update(reihe="k_ermuedung", stern=em["ampel"] == "grün", gruen=em["ampel"] == "grün",
-                        abstand=abs((c[-1] / em["unten"] - 1) * 100), abstand_vz=(c[-1] / em["unten"] - 1) * 100,
-                        luecken=[] if em["ampel"] == "grün" else ["Short: zurück in der Flagge"])
+            ab_ = (c[-1] / em["unten"] - 1) * 100
+            # Short-Zone wie die Kaufzone gespiegelt (12.11.2026: DT stand 21,9 %, ALNY 25,2 % unter der Unterkante als
+            # ★ – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
+            in_zone = -KAUFZONE_M <= ab_ <= 0
+            gruen_ = em["ampel"] == "grün" and in_zone
+            info.update(reihe="k_ermuedung", stern=gruen_, gruen=gruen_, abstand=abs(ab_), abstand_vz=ab_,
+                        luecken=[] if gruen_ else ["Short: zurück in der Flagge"] if em["ampel"] != "grün"
+                        else [f"Short: schon {-ab_:.1f} % unter der Unterkante – gelaufen".replace(".", ",")])
         elif m["ampel"] == "grün" and m["abstand"] is not None and -PIVOT_NAH <= m["abstand"] <= KAUFZONE_M:
             info.update(reihe="m_spitze", stern=True)
         elif k.get("breakout") and k["breakout"]["ampel"] != "rot":
@@ -135,9 +140,20 @@ def _stufe1(tk):
         elif m["ampel"] in ("grün", "gelb"):
             info["reihe"] = "m_weitere"
         if "reihe" not in info:                  # VCP-Scanner (Zone und Enge) für Titel ohne Reihe in den Systemen
-            _scannerfeld(info, scan, m["ausbruch"])
-        zeichen_br = m["ausbruch"] or (k.get("breakout") or {}).get("ausbruch") if info.get("reihe") != "k_breakout" \
-            else (k["breakout"].get("ausbruch") or m["ausbruch"])
+            _scannerfeld(info, scan, m["ausbruch"])     # dieselbe Zone wie Minervini und der Chart
+        r_ = info.get("reihe")                  # das Ausbruchszeichen des Systems, das die Reihe trägt (12.11.2026: TREX
+        kb_ = (k.get("breakout") or {}).get("ausbruch")   # stand im EP mit −2,6 % zum Sprung-Pivot, der Text nannte
+        zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere") else kb_ if r_ == "k_breakout"   # +25,5 % zu
+                      else m["ausbruch"] if r_ in ("vcp", "flagge") else None if r_ in ("k_ep", "k_ermuedung")
+                      else m["ausbruch"] if m.get("pivot") else kb_)                 # einer alten Konsolidierung)
+        import atr as atr_
+        a_ = atr_.wert(df)
+        if info.get("reihe") and a_ and a_ / c[-1] * 100 < STILL_PCT:
+            # Kurs steht still (12.11.2026: ARX bei 19,85 $ mit 0,06 $ Tagesspanne – Übernahmeangebot, kein Setup;
+            # der Stopp lag 0,07 $ unter dem Pivot): bleibt in der Reihe, wird aber nicht grün
+            info.update(gruen=False, stern=False, still=True,
+                        luecken=(info.get("luecken") or []) + [f"Kurs steht still: Tagesspanne {a_ / c[-1] * 100:.2f} % – "
+                                                               f"Übernahme?".replace(".", ",")])
         if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch –
             info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)   # derselbe, mit dem das System der Reihe rechnet
         return info
@@ -145,6 +161,7 @@ def _stufe1(tk):
         return None
 
 
+STILL_PCT = 0.5               # ATR unter 0,5 % des Kurses: der Kurs steht still (Übernahme), kein handelbares Setup
 PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
 KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
 

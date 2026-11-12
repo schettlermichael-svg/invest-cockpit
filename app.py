@@ -516,9 +516,15 @@ def konferenz_zeigen():
         st.markdown(ks.lagekarte_html(lk), unsafe_allow_html=True)
         with st.expander("Regeln der festen Ampeln (Code) und der Strategen-Spalten"):
             st.markdown(ks.regeln_text())
-        with st.expander(f"Alle Akten des Stabs · {len(lk['tafel'])} Titel · warum jeder dort liegt"):
-            st.caption("Reihenfolge, in der die Akten gezogen wurden: Depot, dann Volltreffer, Rang der Reihe, Setup grün, "
-                       "dreifacher Rückenwind, RS-Rang.")
+        n_stab = sum(1 for x in lk["tafel"] if x.get("beim_stab", True))
+        with st.expander(f"Alle Akten des Stabs · {n_stab} beim Stab, {len(lk['tafel']) - n_stab} nur Watchlist · warum jeder dort liegt"):
+            pl = " · ".join(f"{n}: {'alle' if stab.AKTEN_PLAETZE.get(k_, 0) is None else f'bis {stab.AKTEN_PLAETZE[k_]}'}"
+                            for k_, n, _ in kartentisch.REIHEN if k_ in stab.AKTEN_PLAETZE)
+            st.caption(f"So werden die Akten gezogen: immer Depot, alle Volltreffer und jeder Watchlist-Titel mit Setup oder "
+                       f"dreifachem Rückenwind; dazu je Reihe die besten "
+                       f"(Setup grün, dreifacher Rückenwind, RS-Rang) – {pl}; dazu bis "
+                       f"{stab.AKTEN_DREIFACH_OHNE_SETUP} Titel mit dreifachem Rückenwind ohne Setup. Watchlist-Titel ohne Setup stehen "
+                       f"unten nur mit den festen Ampeln des Codes – der Stab liest sie nicht.")
             st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)
         with st.expander("Tagesbefehl und Einwände im Wortlaut"):
             st.markdown(ks.befehl(k), unsafe_allow_html=True)

@@ -76,6 +76,10 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
         z_ = vcp_zone.zone(df)
         scan = (z_, vcp_zone.enge(df, z_))
     z, e = _waehle(*scan)
+    if br and not br["innen"] and not _reif(br["zone"]):
+        # Ausbruch über eine Zone, die für Minervini keine Base ist (z. B. über 50 % tief): gesucht wird der Ausbruch über
+        # die Base, mit der er rechnet – sonst sprechen Text und Abstand von zwei Pivots (NIQ, 12.11.2026)
+        br = vcp_zone.ausbruch(df, jetzt=scan[0] if scan else None, passt=_reif)
     if br:                                          # Ausbruch (bis 4 Wochen, auch Fehlausbruch): die Zone vom Vortag gilt –
         bz, be = (dict(br["zone"], in_zone=br["eltern"]), br["enge"]) if br["innen"] else _waehle(br["zone"], br["enge"])
         if _reif(bz) or not _reif(z):               # außer sie ist keine Base, die Zone von heute aber schon

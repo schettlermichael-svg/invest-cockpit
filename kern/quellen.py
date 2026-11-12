@@ -83,7 +83,9 @@ def yahoo(ticker):
     import yfinance as yf
     t = yf.Ticker(ticker)
     alle = t.get_earnings_dates(limit=28)
-    kuenftig = alle[alle["Reported EPS"].isna()].sort_index()
+    jetzt = pd.Timestamp.now(tz=alle.index.tz) - pd.Timedelta(days=1) if len(alle) else None
+    kuenftig = alle[alle["Reported EPS"].isna() & (alle.index >= jetzt)].sort_index() if len(alle) else alle
+    # nur künftige Termine (12.11.2026: Zeilen ohne gemeldeten Gewinn aus 2005/2017 standen vorne – IDT, GKOS)
     termin = pd.DataFrame({"datum": [kuenftig.index[0].tz_localize(None).isoformat()] if len(kuenftig) else [None],
                            "schaetzung": [float(kuenftig["EPS Estimate"].iloc[0])] if len(kuenftig) else [None]})
     ed = alle.dropna(subset=["Reported EPS"]).sort_index()
@@ -124,6 +126,11 @@ def _aus_json(roh):
     for k in ("gewinne", "qualitaet", "trend", "sec", "termin", "institutionen"):
         if k in roh:
             aus[k] = pd.read_json(StringIO(roh[k]), orient="split")
+    t = aus.get("termin")                              # gespeicherte Termine aus der Vergangenheit gelten nicht (12.11.)
+    if t is not None and len(t) and "datum" in t:
+        d = pd.to_datetime(t["datum"], errors="coerce")
+        if d.notna().all() and (d < pd.Timestamp.today().normalize() - pd.Timedelta(days=1)).all():
+            aus["termin"] = t.iloc[0:0]
     return aus
 
 
