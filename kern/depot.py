@@ -200,20 +200,6 @@ def _deutsch(text):
 ATR_STOPP = 1.5                                  # ein Stopp für alle Systeme: 1,5 ATR vom Einstieg (Micky, 09.11.2026)
 
 
-def einstieg_long(m, k):
-    """Der eine Einstieg (Pivot) eines Long-Setups für Chart, Kartentisch, Plan und Stab (10.11.2026 – vorher drei
-    verschiedene Reihenfolgen): Episodic Pivot (nicht rot), Minervinis Pivot, Pivot des letzten Ausbruchs,
-    Kullamägi-Breakout. → (Pivot, Quelle) oder (None, "")."""
-    m, k = m or {}, k or {}
-    ep, kb, br = k.get("ep") or {}, k.get("breakout") or {}, m.get("ausbruch") or {}
-    for e, quelle in (((ep.get("pivot") if ep.get("ampel") != "rot" else None), "Episodic Pivot"),
-                      (m.get("pivot"), "Minervini"), (br.get("pivot"), "Ausbruch"),
-                      (kb.get("pivot"), "Kullamägi Breakout")):
-        if e:
-            return float(e), quelle
-    return None, ""
-
-
 def einstieg_setup(su, m, k, zr=None, kurs=None):
     """Einstieg des EINEN Setups eines Titels (12.11.2026 – vorher nahm der Chart immer die alte Kette Sprung →
     Base-Ausbruch → Momentum-Ausbruch: HWM stand in Zahlen-Reaktion long bei 224 $, der Chart zeichnete den Pivot
@@ -237,52 +223,25 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
         return ("long", float(e), "Pivot der Base") if e else (None, None, "")
     if r == "k_breakout" and (k.get("breakout") or {}).get("pivot"):
         return "long", float(k["breakout"]["pivot"]), "Pivot der Konsolidierung"
-    if r in ("flagge", "vcp") and su.get("abstand_vz") is not None and kurs:
+    if r in ("flagge", "vcp") and su.get("pivot_scanner"):
+        return "long", float(su["pivot_scanner"]), "Pivot des Scanners"
+    if r in ("flagge", "vcp") and su.get("abstand_vz") is not None and kurs:   # Tische vor dem 13.11.2026
         return "long", float(kurs) / (1 + float(su["abstand_vz"]) / 100), "Pivot des Scanners"
     return None, None, ""
 
 
 def plan(erk):
-    """Einstieg und Stopp des aktuellen Setups wie auf der Lagekarte: (Seite, Einstieg, Stopp, Stopp-Regel) oder None.
-    Einstieg nach System: zuerst Minervini (Pivot), dann Kullamägi (Pivot), Ermüdung nach Überdehnung (short: Unterkante).
-    Stopp (10.11.2026): eine Linie für alle, 1,5 ATR vom Einstieg (wie im Chart) – vorher je System ein eigener Stopp
-    (Tief der letzten Kontraktion, Tagestief, Hoch des Auslösetags), der neben der ATR-Linie stand. Ohne ATR in erk
-    bleibt der Stopp des Systems."""
+    """Einstieg und Stopp DES Setups wie im Chart: (Seite, Einstieg, Stopp, Stopp-Regel) oder None. Einstieg aus
+    einstieg_setup (das eine Setup, kartentisch.setup_feststellen), Stopp 1,5 ATR vom Einstieg (long darunter, short
+    darüber). Ohne Setup oder ATR kein Plan. (Bis 12.11.2026 eine eigene Kette Sprung → Ermüdung → Base → Momentum;
+    der Prüf-Agent fand sie als zweite Quelle neben dem Setup.)"""
     sy = erk.get("systeme") or {}
     m, k = sy.get("m") or {}, sy.get("k") or {}
     a = erk.get("atr")
-    regel = f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
-    if erk.get("setup_info") is not None:          # das eine Setup bestimmt Einstieg und Stopp (12.11.2026)
-        seite, e, _ = einstieg_setup(erk["setup_info"], m, k, erk.get("zahlen_reaktion"), erk.get("kurs"))
-        if not e or not a:
-            return None
-        return seite, e, (e + ATR_STOPP * a if seite == "short" else e - ATR_STOPP * a), regel
-    # Reihenfolge wie die Reihen des Kartentischs (10.11.2026: MU stand in „Ermüdung (Short)“, der Plan rechnete long):
-    # Episodic Pivot, Ermüdung (short), Minervini, Kullamägi-Breakout
-    ep, em = k.get("ep"), k.get("ermuedung")
-    if ep and ep.get("ampel") != "rot" and ep.get("pivot") and a:
-        e = float(ep["pivot"])
-        return "long", e, e - ATR_STOPP * a, regel
-    if em and not (ep and ep.get("ampel") != "rot"):
-        e = float(em["unten"])
-        return ("short", e, e + ATR_STOPP * a, regel) if a else \
-            ("short", float(erk.get("kurs") or e), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)")
-    if m.get("pivot") and m.get("ampel") != "rot":
-        e = einstieg_long(m, k)[0] or float(m["pivot"])
-        return ("long", e, e - ATR_STOPP * a, regel) if a else \
-            ("long", e, float(m["stopp"]), "unter der letzten Kontraktion, höchstens 8 % (Minervini)")
-    h = k.get("haupt") or {}
-    if h.get("pivot") and h.get("ampel") != "rot" and (a or k.get("adtr")):
-        e = float(h["pivot"])
-        if a:
-            return "long", e, e - ATR_STOPP * a, regel
-        return "long", e, float(h.get("stopp") or e - float(k["adtr"])), "Tagestief, höchstens eine Tagesspanne (Kullamägi)"
-    em = k.get("ermuedung")
-    if em:
-        e = float(em["unten"])
-        return ("short", e, e + ATR_STOPP * a, regel) if a else \
-            ("short", float(erk.get("kurs") or e), float(em["stopp"]), "über dem Hoch des Auslösetags (Kullamägi)")
-    return None                                  # ohne Setup der Systeme kein Plan (06.11.2026: kein Wertzonen-Plan mehr)
+    seite, e, _ = einstieg_setup(erk.get("setup_info"), m, k, erk.get("zahlen_reaktion"), erk.get("kurs"))
+    if not e or not a:
+        return None
+    return seite, e, (e + ATR_STOPP * a if seite == "short" else e - ATR_STOPP * a), f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
 
 
 def zahl_kurz(x):
@@ -353,8 +312,8 @@ def _nach_dem_kauf(p, df, erk=None):
         i = int(lo.argmin())
         if i < len(lo) - 1 and lo[i] < e * 0.97 and k > hi[:i + 1].max() and len(lo) - 1 - i <= 5:
             aus.append(("grün", "Tennisball: nach dem Rücksetzer schnell auf neues Hoch – Zeichen von Stärke (Minervini)"))
-    sy = (erk or {}).get("systeme") or {}
-    piv = (sy.get("m") or {}).get("pivot") or ((sy.get("k") or {}).get("haupt") or {}).get("pivot")
+    pl_ = plan(erk) if erk else None                 # Einstieg des Setups (Prüf-Agent 12.11.2026)
+    piv = pl_[1] if pl_ and pl_[0] == "long" else None
     if lang and piv and e >= piv * 0.98 and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))

@@ -149,3 +149,30 @@ def laden(ticker, neu=False):
         daten["sec"] = pd.DataFrame()
     json_schreiben(pfad, _als_json(daten))
     return daten
+
+
+def nach_terminen(titel, heute=None):
+    """Zahlen neu laden für Titel, deren gespeicherter Termin seit dem letzten Laden vorbei ist (Prüf-Agent 12.11.2026:
+    Kartentisch las alte Zahlen und fand die Zahlen-Reaktion nicht, die Titelseite – frisch geladen – fand sie).
+    → (neu geladen, gescheitert)."""
+    import datetime as _dt
+    heute = heute or _dt.date.today().isoformat()
+    neu, fehler = 0, 0
+    for tk in titel:
+        pfad = os.path.join(SPEICHER, f"{tk.upper()}.json")
+        if not os.path.exists(pfad):
+            continue
+        try:
+            fd = _aus_json(json_lesen(pfad))
+            t = fd.get("termin")
+            tag = f"{pd.Timestamp(t['datum'].iloc[0]):%Y-%m-%d}" if t is not None and len(t) and t["datum"].iloc[0] else None
+        except Exception:  # noqa: BLE001
+            continue
+        geladen = _dt.date.fromtimestamp(os.path.getmtime(pfad)).isoformat()
+        if tag and geladen <= tag <= heute:        # Termin lag nach dem letzten Laden und ist jetzt vorbei
+            try:
+                laden(tk, neu=True)
+                neu += 1
+            except Exception:  # noqa: BLE001
+                fehler += 1
+    return neu, fehler

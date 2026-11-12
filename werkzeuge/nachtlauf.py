@@ -126,7 +126,7 @@ def main(nur_tisch=False):
         import kartentisch
         t_ = kartentisch.rechnen(alle, melden=lambda x: print(x, flush=True))
         p["neu"] = len(t_["neu"])
-        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "k_breakout", "k_ep", "zahlen", "k_ermuedung", "k_baerenflagge", "vcp", "flagge")}
+        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "zahlen", "k_ermuedung", "k_baerenflagge", "vcp", "flagge")}
         return f"{len(t_['titel'])} Titel auf dem Tisch, {len(t_['neu'])} Neuigkeiten"
 
     def raenge():
@@ -143,6 +143,14 @@ def main(nur_tisch=False):
     def tradingview():
         import tv_kennzahlen
         return tv_kennzahlen.aktualisieren(alle)
+
+    def zahlen_nach_terminen():
+        """Zahlen neu für alle Titel, deren Termin seit dem letzten Laden vorbei ist – vor Rückenwind und Kartentisch,
+        damit beide (und die Titelseite) dieselben Zahlen lesen (12.11.2026)."""
+        import quellen
+        import watchlists
+        neu, fehler = quellen.nach_terminen(sorted(set(alle) | set(watchlists.alle())))
+        return f"{neu} Titel nach ihren Zahlen neu geladen" + (f", {fehler} gescheitert" if fehler else "")
 
     def rueckenwind_():
         import rueckenwind
@@ -214,6 +222,7 @@ def main(nur_tisch=False):
         schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
+    schritt("Zahlen nach den Terminen neu laden", zahlen_nach_terminen)
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
@@ -276,7 +285,7 @@ QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurst
     "Yahoo-Tageskurse": "Charts, Kartentisch, Akten des Stabs",
     "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
     "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
-    "RS-Rang": "Minervini-RS im Kartentisch",
+    "RS-Rang": "RS-Rang (IBD-Formel) im Kartentisch",
     "Führer-Rang": "Kullamägi-Führer (oberste 1–2 %)",
 }
 

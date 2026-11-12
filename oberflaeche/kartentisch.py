@@ -35,7 +35,8 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
                                                 "fehlen (meist Trendvorlage, RS oder Zahlen) – sichtbar, geht nicht in die "
                                                 "Konferenz"),
           ("flagge", "Flagge", "Fahnenstange ab 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, auch "
-                               "in einer Base; grün im Ausbruch über die Oberkante"),
+                               "in einer Base; grün, sobald der Kurs höchstens 5 % unter der Oberkante steht oder darüber (nach einem "
+                               "Ausbruch: in der Kaufzone bis +5 %)"),
           ("k_breakout", "Momentum-Ausbruch", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit einer Pause von 1–3 Wochen "
                                               "nach einem Schub; gelb = Führer knapp oder Pause bis 8 Wochen"),
           ("k_ep", "Sprung (EP)", "Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, Kurs hält das "
@@ -46,7 +47,8 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
                                                        "Reaktionstags, Kurs über (unter) GD50; Einstieg am AVWAP"),
           ("k_ermuedung", "Ermüdung · Short", "Ein Führer (GD200 steigt) bricht nach einer Fahnenstange ab 30 % aus seiner "
                                               "Flagge nach unten (Schluss unter der Unterkante, letzte 5 Tage); grün bis "
-                                              "5 % darunter; Stopp über dem Hoch des Auslösetags"),
+                                              "5 % darunter; Stopp 1,5 ATR über der Unterkante, das Setup erlischt schon "
+                                              "über dem Hoch des Auslösetags"),
           ("k_baerenflagge", "Bärenflagge · Short", "Eine Erholungsrally im Abwärtstrend (GD200 fällt) bricht aus ihrer "
                                                     "Flagge nach unten; grün bis 5 % unter der Unterkante")]
 WATCHLISTS_NACH = "m_spitze"
@@ -133,10 +135,6 @@ def setup_feststellen(df, m, k, zr, scan):
     c, h = df["Close"].to_numpy(float), df["High"].to_numpy(float)
     info = {}
     hk = k.get("haupt") or {}
-    piv, _ = depot.einstieg_long(m, k)              # derselbe Einstieg wie Chart, Plan und Stab (10.11.2026)
-    if piv:
-        info["abstand_vz"] = float((c[-1] / piv - 1) * 100)   # mit Vorzeichen, für den Stab
-        info["abstand"] = abs(info["abstand_vz"])
     info["gruen"] = m["ampel"] == "grün" or (hk.get("ampel") == "grün")
     info["luecken"] = ([f"Base-Ausbruch: {n}" for n, ok, _ in m["regeln"] if not ok] if m["ampel"] != "grün" else [])
     if zr:
@@ -196,11 +194,16 @@ def setup_feststellen(df, m, k, zr, scan):
                     luecken=[f"Momentum-Ausbruch: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
     elif r_ == "m_weitere":
         info["reihe"] = "m_weitere"
-    if r_ in ("k_ep", "m_spitze", "m_weitere", "k_breakout"):   # Abstand zum Einstieg DES Setups (12.11.2026: der
-        _, e_, _ = depot.einstieg_setup(info | {"reihe": r_}, m, k, zr, c[-1])   # Momentum-Ausbruch maß vorher zum
-        if e_:                                                                   # Pivot der Base)
-            info["abstand_vz"] = float((c[-1] / e_ - 1) * 100)
-            info["abstand"] = abs(info["abstand_vz"])
+    # Einstieg DES Setups (Prüf-Agent 12.11.2026): einmal hier festgestellt und gespeichert – Chart, Plan, Lagekarte
+    # und Stab lesen ihn; der Abstand gilt nur zu diesem Einstieg (vorher zuerst zur alten Pivot-Kette).
+    seite_, e_, quelle_ = depot.einstieg_setup(info | {"reihe": r_}, m, k, zr, c[-1]) if r_ else (None, None, "")
+    if e_:
+        info["einstieg"] = {"seite": seite_, "wert": float(e_), "quelle": quelle_}
+        info["abstand_vz"] = float((c[-1] / e_ - 1) * 100)
+        info["abstand"] = abs(info["abstand_vz"])
+    else:
+        info.pop("abstand_vz", None)
+        info.pop("abstand", None)
     info["auch"] = [NAME[x] for x in gefunden[1:] if NAME.get(x) != NAME.get(r_)]
     kb_ = (k.get("breakout") or {}).get("ausbruch")   # Ausbruchszeichen des Setups (12.11.2026: TREX im EP zeigte eine
     zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else kb_ if r_ == "k_breakout"
@@ -238,11 +241,13 @@ def _scannerfeld(info, scan, br=None):
         bz, be = br["zone"], br["enge"]
         if be.get("ampel") == "grün" and abs(br["abstand"]) <= PIVOT_NAH:
             info.update(reihe="vcp", gruen=not br["fehl"], stern=False, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
+                        pivot_scanner=float(br["pivot"]),
                         scanner=f'{bz["name"]} {zahl(bz["wochen"], 1)} Wochen · Enge {be["folge"]} % · Pivot '
                                 f'{zahl(br["pivot"])} $')
             return
         if bz.get("name") == "Flagge":
             info.update(reihe="flagge", gruen=br["kaufzone"], stern=False, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
+                        pivot_scanner=float(br["pivot"]),
                         scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
                                 f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
                                 + (" · in einer Base" if br["innen"] else ""))
@@ -252,6 +257,7 @@ def _scannerfeld(info, scan, br=None):
         return
     if e.get("ampel") == "grün" and -PIVOT_NAH <= e["abstand"] <= PIVOT_NAH:
         info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]), abstand_vz=e["abstand"],
+                    pivot_scanner=float(e["pivot"]),
                     scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · Pivot {zahl(e["pivot"])} $ '
                             f'({"+" if e["abstand"] >= 0 else "−"}{zahl(abs(e["abstand"]), 1)} %)')
         return
@@ -259,6 +265,7 @@ def _scannerfeld(info, scan, br=None):
     if f and f["laenge"] == "ok":
         nah = f["abstand"] >= -PIVOT_NAH
         info.update(reihe="flagge", gruen=nah, stern=False, abstand=abs(f["abstand"]), abstand_vz=f["abstand"],
+                    pivot_scanner=float(f["oben"]),
                     scanner=f'Flagge {zahl(f["wochen"], 1)} Wochen, {zahl(f["tiefe"], 0)} % tief · Stange '
                             f'+{zahl(f["stange"]["prozent"], 0)} % in {zahl(f["stange"]["wochen"], 1)} Wochen · '
                             f'Kurs {zahl(f["abstand"], 1)} % zur Oberkante'
@@ -342,7 +349,8 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json_lesen(pfad, {"titel": {}})
-        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch", "short_art", "zr_seite", "zr", "auch")
+        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch", "short_art", "zr_seite", "zr", "auch",
+                  "einstieg")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 

@@ -718,3 +718,27 @@ Ein Tipp auf die Meldung öffnet den Konferenzraum (`meldung.APP`, Kopfzeile „
 Rot heißt Fehler der App: Der Schritt wird rot, und eine Warnung geht aufs Handy. Gelb sind Hinweise: Die Kopfzeile wird gelb, und eine Meldung geht aufs Handy. Die Liste steht unter der Datenstand-Zeile jeder Seite („Wachen vom …“).
 
 Der erste Probelauf auf dem Mac hat die alten Seiten aus dem Schrank sofort erkannt (UNP, BNY, MA: Einstieg im Chart ≠ Kartentisch).
+
+## Eine Quelle je Tatsache (12.11.2026, nach dem unabhängigen Prüf-Agenten)
+
+| Tatsache | eine Quelle | vorher daneben |
+|---|---|---|
+| Einstieg und Seite | `depot.einstieg_setup`, im Kartentisch als `einstieg` {seite, wert, quelle} gespeichert; `pivot_scanner` für Flagge/VCP | Lagekarte (alte Pivot-Kette), `depot.plan` (eigene Kette), `depot.einstieg_long` (entfernt), Stab (Kurs von heute ÷ alter Abstand) |
+| Stopp | Einstieg ∓ 1,5 ATR (`depot.plan`) | Planzeilen mit dem Stopp des Charts |
+| Plan unter dem Chart | aktive Zeile aus dem Einstieg des Setups, übrige als „Auch“ | erste Zeile nach `k.haupt` (Sprung + Momentum: falsches Setup), Short-Zeile fehlte bei gelbem Breakout |
+| RS-Rang | `rs_rang.rang` liest den Rang aus Rückenwind (gleicher Handelstag), sonst die Revier-Rechnung | zwei Ränge (Stärke-Kachel „RS 68“ neben „RS-Rang 72“) |
+| Zahlen nah | `gestaltung.termin_ampel`: bis 7 Tage rot, bis 14 gelb | 7/10/14 an fünf Stellen |
+| Termin | `stab.termin_datum`: ein vergangener Rückenwind-Termin fällt auf die Kachel zurück | „unbekannt“ |
+| Zahlen der Titel | Frühlauf-Schritt „Zahlen nach den Terminen neu laden“ (`quellen.nach_terminen`) vor Rückenwind und Kartentisch | Kartentisch las alte Zahlen, die Titelseite frische |
+| Geld beim Short | Kachel gespiegelt wie die feste Ampel | Kachel zeigte die Long-Sicht |
+| Volltreffer | nur mit Long-Setup | auch Ermüdung/Bärenflagge |
+| Einstiegs-Ampel | ungerundeter Abstand (`abstand_roh`) | gerundet (−0,04 % → grün) |
+
+Dazu sind Texte angeglichen:
+- Flagge: grün ab 5 % unter der Oberkante.
+- Ermüdung: Stopp 1,5 ATR, das Setup erlischt über dem Hoch des Auslösetags.
+- Zufluss: 50 Handelstage.
+- Geld gelb: auch „zwei vorne, eine schwächelt“.
+- „Entsteht“: zweiter Weg über das RS-Hoch.
+- Stab: Einstieg je Setup, Short-Zone.
+- Ausstiegstexte ohne den alten Tagestief-Stopp.

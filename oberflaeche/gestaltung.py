@@ -145,6 +145,18 @@ SYSTEM = None        # ein eigenes System (12.11.2026): "M" oder "K" = aus wesse
 SYSTEM_SHORT = False  # Titels urteilt; dann zeigt kachel2 eine Ampel statt zwei. Markt immer nach Indizes und Hochs/Tiefs
 SYSTEM_JE = {}        # Ausnahme je Kachel, z. B. {"Stärke": "M"}: Sprung und Zahlen-Reaktion lesen die RS wie der Base-Ausbruch
 _GEGEN = {"grün": "rot", "rot": "grün", "gelb": "gelb", "grau": "grau"}
+TERMIN_ROT, TERMIN_GELB = 7, 14     # Zahlen nah: eine Regel für die ganze App (Prüf-Agent 12.11.2026: vorher 7/10/14)
+
+
+def termin_ampel(tage):
+    """Ampel der nächsten Zahlen: höchstens 7 Tage rot, 8–14 Tage gelb, später grün, unbekannt grau."""
+    if tage is None or tage < 0:
+        return "grau"
+    return "rot" if tage <= TERMIN_ROT else "gelb" if tage <= TERMIN_GELB else "grün"
+
+
+TERMIN_TEXT = ("Zahlen in höchstens 7 Tagen = rot, in 8–14 Tagen = gelb: ein Ausbruch kurz vor den Zahlen ist ein "
+               "Würfelwurf (O'Neil, Minervini).")
 
 
 def kachel2(beschriftung, m, k, zeile="", hilfe=""):

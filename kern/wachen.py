@@ -78,7 +78,8 @@ def gleichlauf(tisch, akten, tafel):
         if df is None or not len(df):
             continue
         kurs = float(df["Close"].iloc[-1])
-        e_tisch = kurs / (1 + float(x["abstand_vz"]) / 100)
+        e_tisch = (float(x["einstieg"]["wert"]) if (x.get("einstieg") or {}).get("wert")   # gespeicherter Einstieg
+                   else kurs / (1 + float(x["abstand_vz"]) / 100))
         seite = _seite_aus_reihe(x)
         mk = _abgelegte_marken(tk)
         if mk:

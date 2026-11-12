@@ -24,7 +24,7 @@ FELD_TEXT = {"Führend": "Führend · Geld ist drin", "Erstarkend": "Erstarkend 
              "Ermüdend": "Schwächelnd · Geld fließt ab", "Abgehängt": "Zurückfallend · Geld ist weg"}
 STUFE_TEXT = {
     "Entsteht": "RS-Rang 50–84, in 4 Wochen um mindestens 15 Punkte gestiegen und schneller als davor – oder die "
-                "RS-Linie steht am 52-Wochen-Hoch, der Kurs noch nicht. Der Trend am Anfang.",
+                "RS-Linie steht am 52-Wochen-Hoch, der Kurs noch nicht, und der Rang steigt (dann ohne Ranggrenze). Der Trend am Anfang.",
     "Läuft": "RS-Rang ab 85, das Tempo hält (höchstens 5 Punkte verloren in 4 Wochen).",
     "Ermüdet": "RS-Rang noch ab 80, aber das Tempo bricht ein (Beschleunigung −15 oder schlechter, kaum noch "
                "Vorrücken: höchstens +5) oder 10 Punkte verloren in 4 Wochen – früheste Warnung, das Geld beginnt abzufließen.",
@@ -35,7 +35,7 @@ STUFE_TEXT = {
           "vorhandenen Quartalen, RS-Hoch seit dem Börsengang.",
 }
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
-TERMIN_WARNUNG = 14
+from gestaltung import TERMIN_GELB as TERMIN_WARNUNG   # eine Regel für die App (12.11.2026)
 
 
 def _chip(text, farbe):
@@ -59,7 +59,7 @@ def kopf(erg, titel=True):
         + (f' · {len(erg.get("ohne_daten") or [])} ohne Daten' if erg.get("ohne_daten") else "")
         + '</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 14px">Kurs, Geld und Zahlen: RS-Dynamik des Titels, '
-        f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne = grün), Fundament – eigenes Setup der Strömung, '
+        f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne und keine schwächelnd = grün), Fundament – eigenes Setup der Strömung, '
         f'getrennt von den sieben Setups der Stellung (Seite Setups, ②). '
         f'Ampeln, nichts gefiltert.</p>'
         f'<div style="display:flex;flex-wrap:wrap;gap:12px">'
@@ -193,7 +193,7 @@ def wetterkarte(erg, art):
     return seite(MITGLIEDER_STIL + f'<div class="wk" style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 18px">'
                  + "".join(teile)
                  + f'<div style="color:{TEXT_3};font-size:13px;margin-top:8px">{legende_} · je Kästchen eine Woche · '
-                   f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen · Zahl hinter dem Namen = Titel im Revier, '
+                   f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 50 Handelstage (Up/Down-Volumen nach O’Neil) · Zahl hinter dem Namen = Titel im Revier, '
                    f'Klick auf die Zeile zeigt sie · Zahlen beim Darüberfahren</div>'
                  + "</div>", oben=8, unten=8)
 

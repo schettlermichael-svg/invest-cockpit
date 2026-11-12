@@ -49,7 +49,7 @@ def _tv_symbol(tk):
 
 
 def _termin(fd):
-    """„ · Zahlen am Di 12.11. (in 7 Tagen)“ – innerhalb von 10 Tagen gelb markiert (O'Neil: nicht kurz davor kaufen)."""
+    """„ · Zahlen am Di 12.11. (in 7 Tagen)“ – Farbe nach gestaltung.termin_ampel (bis 7 Tage rot, bis 14 gelb)."""
     termin = (fd or {}).get("termin")
     if termin is None or not len(termin) or not termin["datum"].iloc[0]:
         return ""
@@ -59,7 +59,7 @@ def _termin(fd):
     bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
     if bis < 0:
         return ""
-    farbe = GELB if bis <= 10 else TEXT_2
+    farbe = {"rot": ROT, "gelb": GELB}.get(gestaltung.termin_ampel(bis), TEXT_2)
     return (f' · <span style="color:{farbe}">Zahlen {WOCHENTAGE[tag.weekday()]} {tag:%d.%m.}'
             f' ({"heute" if bis == 0 else "morgen" if bis == 1 else f"in {bis} Tagen"})</span>')
 
@@ -179,7 +179,8 @@ def _k_geld(x):
     Sektor, Branche, Thema; grün = zwei vorne und keine im Abfluss."""
     hilfe = ("Geld aus der Seite Rückenwind: Wohin fließt das Geld? Drei Stimmen – Sektor, Branche und Thema, je mit ihrem "
              "Feld in der Strömungskarte (Führend, Erstarkend, Schwächelnd, Zurückfallend). Grün = mindestens zwei vorne "
-             "(führend oder erstarkend) und keine schwächelnd; gelb = eine vorne; rot = keine. Stand des Nachtlaufs.")
+             "(führend oder erstarkend) und keine schwächelnd; gelb = eine vorne, oder zwei vorne und eine schwächelnd; rot = "
+             "keine vorne. Beim Short gespiegelt: Abfluss ist Rückenwind. Stand des Nachtlaufs.")
     if not x:
         return kachel("Geld", "grau", "–", "erst nach dem nächsten Nachtlauf", hilfe)
     wort = {"Führend": "führend", "Erstarkend": "erstarkend", "Ermüdend": "schwächelnd", "Abgehängt": "zurückfallend"}
@@ -187,8 +188,12 @@ def _k_geld(x):
                        for art, k in (("Sektor", "sektor"), ("Branche", "branche"), ("Thema", "thema")))
     hilfe += (f"\n\nSektor: {x.get('sektor') or '–'} · Branche: {namen_de.branche(x.get('branche') or '') or '–'}"
               + (f" · Thema: {x['thema'].split(' · ')[0]}" if x.get("thema") else ""))
-    return kachel("Geld", x["geld_ampel"], {"grün": "Rückenwind", "gelb": "halb", "rot": "Gegenwind"}[x["geld_ampel"]],
-                  zeile, hilfe)
+    ampel, wort_ = x["geld_ampel"], {"grün": "Rückenwind", "gelb": "halb", "rot": "Gegenwind"}[x["geld_ampel"]]
+    if gestaltung.SYSTEM_SHORT:                     # Short: Abfluss ist Rückenwind (Prüf-Agent 12.11.2026 – wie die
+        ampel = gestaltung._GEGEN.get(ampel, ampel)  # feste Ampel beim Stab; vorher zeigte die Kachel long)
+        wort_ = {"grün": "Rückenwind (Abfluss)", "gelb": "halb", "rot": "Gegenwind (Zufluss)"}[ampel]
+        zeile = "für Short gespiegelt · " + zeile
+    return kachel("Geld", ampel, wort_, zeile, hilfe)
 
 
 def _ereignis(df, gewinne, fund):
@@ -236,11 +241,12 @@ def _k_zahlen(fd, fund):
         return kachel("Nächste Zahlen", "grau", "noch offen",
                       f"zuletzt gemeldet {WOCHENTAGE[tag.weekday()]} {tag:%d.%m.%Y}" + _zuletzt(fund),
                       "Der letzte Termin liegt hinter uns; der nächste ist noch nicht angekündigt.")
-    nah = 0 <= bis <= 10
-    return kachel("Nächste Zahlen", "gelb" if nah else "grün",
+    amp = gestaltung.termin_ampel(bis)
+    nah = amp in ("rot", "gelb")
+    return kachel("Nächste Zahlen", amp,
                   "heute" if bis == 0 else "morgen" if bis == 1 else f"in {bis} Tagen",
                   f"{WOCHENTAGE[tag.weekday()]} {tag:%d.%m.%Y}" + (" · Ausbruch davor riskant" if nah else _zuletzt(fund)),
-                  "Ein Ausbruch in den letzten zehn Tagen vor den Zahlen ist ein Würfelwurf (O'Neil, Minervini).")
+                  gestaltung.TERMIN_TEXT)
 
 
 def _zuletzt(fund):
@@ -450,35 +456,55 @@ def fehlt(m, k):
 
 
 def planzeile(m, k, df, marken=None, zr=None, su=None):
-    """Plan in Zeilen unter dem Chart (12.11.2026, statt der Karte „Plan“): je aktivem System Einstieg, Kaufzone, Stopp
-    (dieselbe Linie wie im Chart) und die Ausstiegsregel des Meisters; ohne Pivot die Marken zur Trendvorlage."""
+    """Plan in Zeilen unter dem Chart: zuerst DAS Setup des Titels – Einstieg aus depot.einstieg_setup, dieselbe Linie
+    wie Chart, Kartentisch und Stab (Prüf-Agent 12.11.2026: vorher nahm die erste Zeile bei Sprung + Momentum-Ausbruch
+    den Pivot des Momentum-Ausbruchs, und die Short-Zeile fehlte bei gelbem Breakout) –, darunter „Auch · …“ die
+    übrigen Setups mit dem Stopp IHRES Einstiegs; ohne Pivot die Marken zur Trendvorlage."""
+    import depot as depot_
+    import kartentisch
     marken = marken or {}
     a = marken.get("atr")
     c, h, l = df["Close"], df["High"], df["Low"]
     kurs = float(c.iloc[-1])
     su = su or {}
+    r_ = su.get("reihe")
+    hk, em = k.get("haupt"), k.get("ermuedung")
 
     def st(e, short=False):
-        """Stopp einer Zeile: 1,5 ATR von IHREM Einstieg (12.11.2026 – vorher trug jede Zeile den Stopp des Charts)."""
         return f" · Stopp {zahl(e + ATR_STOPP * a if short else e - ATR_STOPP * a)} $ (1,5 ATR)" if a and e else ""
 
+    def zone(e, short=False):
+        return (f" · Short-Zone bis {zahl(e * 0.95)} $" if short else f" · Kaufzone bis {zahl(e * 1.05)} $") if e else ""
+
     zeilen = []
-    hk, em = k.get("haupt"), k.get("ermuedung")
-    if em and em.get("ampel") in ("grün", "gelb") and not (hk and hk["ampel"] != "rot"):
-        zeilen.append(("k_short", f"Einstieg unter der Unterkante {zahl(em['unten'])} $" + st(em["unten"], True)
-                                  + " · Regel: Stopp über dem Hoch des Auslösetags"))
-    if su.get("reihe") in ("flagge", "vcp"):                # Pivot des Scanners, wie im Kartentisch
-        import depot as depot_
-        _, e_, _ = depot_.einstieg_setup(su, m, k, zr, kurs)
-        if e_:
-            aus_ = k["ausstieg"] if su.get("reihe") == "flagge" else m["ausstieg"]
-            zeilen.append(("m", f"Kauf über dem Pivot {zahl(e_)} $ · Kaufzone bis {zahl(e_ * 1.05)} $" + st(e_)
-                                + f" · Ausstieg: {aus_}"))
-    elif m.get("pivot"):
-        aus_ = m["ausstieg"].replace("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", "")
-        zeilen.append(("m", f"Kauf über dem Pivot {zahl(m['pivot'])} $ · Kaufzone bis {zahl(m['pivot'] * 1.05)} $"
-                            + st(m["pivot"]) + f" · Ausstieg: {aus_}"))
-    elif len(c) >= 260:
+    seite, e, quelle = depot_.einstieg_setup(su, m, k, zr, kurs)
+    if r_ and e:                                         # das aktive Setup
+        kurz_ = seite == "short"
+        import re as re_
+        k_aus = re_.sub(r"^Stopp am Tagestief des Einstiegstags \([^)]*\)\. ", "", str(k.get("ausstieg", "")))   # der Stopp
+        if r_ == "zahlen":
+            regel = (f" · gescheitert bei Schluss {'über dem Hoch' if kurz_ else 'unter dem Tief'} des Reaktionstags "
+                     f"{zahl((zr or {}).get('hoch') if kurz_ else (zr or {}).get('tief'))} $ oder "
+                     f"{'über' if kurz_ else 'unter'} dem AVWAP")
+        elif r_ in ("k_ermuedung", "k_baerenflagge"):
+            regel = (f" · Setup erlischt bei Kurs über dem Hoch des Auslösetags {zahl(em['stopp'])} $"
+                     if (em or {}).get("stopp") else "")
+        elif r_ in ("k_ep", "k_breakout", "flagge"):
+            regel = f" · Ausstieg: {k_aus}" if k_aus else ""
+        else:
+            regel = " · Ausstieg: " + str(m.get("ausstieg", "")).replace(
+                "Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", "")
+        name = kartentisch.NAME.get(r_, r_).replace(" ★", "")
+        if r_ == "zahlen":
+            name += f" ({seite})"
+        zeilen.append((name, f"Einstieg {zahl(e)} $ ({quelle})" + zone(e, kurz_) + st(e, kurz_) + regel))
+    # übrige Setups, die der Titel zeigt („Auch“)
+    if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge"):
+        zeilen.append(("Auch · Short (Ermüdung/Bärenflagge)", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
+                       + st(em["unten"], True)))
+    if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
+        zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
+    elif not m.get("pivot") and len(c) >= 260:
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
         tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
         marken_ = [(p_, x) for p_, x, f in ((max(g150, g200), "GD150/200", kurs < max(g150, g200)),
@@ -486,33 +512,20 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
                                             (0.75 * hoch52, "−25 % unter dem Hoch", kurs < 0.75 * hoch52),
                                             (g50, "GD50", kurs < g50)) if f]
         if marken_:
-            zeilen.append(("m", "Marken zur Trendvorlage: " + " · ".join(
+            zeilen.append(("Auch · Base-Ausbruch", "Marken zur Trendvorlage: " + " · ".join(
                 f"{zahl(p_)} $ ({x})" for p_, x in sorted(marken_))))
-    if hk and hk["ampel"] != "rot":
-        ziel = (f"über dem Hoch des Sprungtags {zahl(hk['pivot'])} $" if hk["art"] == "Episodic Pivot"
-                else f"beim Ausbruch über die Oberkante {zahl(hk['pivot'])} $" if hk.get("pivot") else "beim Ausbruch")
-        zeilen.append(("k", f"Einstieg {ziel}, über dem Hoch der ersten 5-, 30- oder 60-Minuten-Kerze"
-                            + st(hk.get("pivot")) + f" · Ausstieg: {k['ausstieg']}"))
-    if zr and zr.get("ampel") != "rot" and zr.get("avwap"):
-        short = zr["seite"] == "short"
-        zeilen.insert(0, ("zahlen",
-                          f"Einstieg am AVWAP vom Zahlentag {zahl(zr['avwap'])} $ (ruhiger Rücksetzer)" + st(zr["avwap"], short)
-                          + f" · gescheitert bei Schluss {'über dem Hoch' if short else 'unter dem Tief'} des "
-                            f"Reaktionstags {zahl(zr['hoch'] if short else zr['tief'])} $ oder "
-                            f"{'über' if short else 'unter'} dem AVWAP"))
+    for art, schluessel in (("Episodic Pivot", "k_ep"), (None, "k_breakout")):
+        x_ = k.get("ep") if art else k.get("breakout")
+        if x_ and x_.get("ampel") != "rot" and x_.get("pivot") and r_ != schluessel:
+            zeilen.append(("Auch · " + kartentisch.NAME[schluessel],
+                           (f"Hoch des Sprungtags {zahl(x_['pivot'])} $" if art else f"Pivot der Konsolidierung "
+                            f"{zahl(x_['pivot'])} $") + st(x_["pivot"])))
+    if zr and zr.get("ampel") != "rot" and zr.get("avwap") and r_ != "zahlen":
+        kurz_ = zr["seite"] == "short"
+        zeilen.append((f"Auch · Zahlen-Reaktion ({zr['seite']})", f"AVWAP vom Zahlentag {zahl(zr['avwap'])} $"
+                       + st(zr["avwap"], kurz_)))
     if not zeilen:
         return ""
-    # Namen unseres Systems (12.11.2026): das Setup des Titels zuerst, die übrigen als „Auch“
-    import kartentisch
-    r_ = su.get("reihe")
-    name = {"m": "Flagge" if r_ == "flagge" else "Base-Ausbruch",
-            "k": "Sprung (EP)" if (hk or {}).get("art") == "Episodic Pivot" else "Momentum-Ausbruch",
-            "k_short": kartentisch.NAME.get(r_) if r_ in ("k_ermuedung", "k_baerenflagge") else "Short",
-            "zahlen": f"Zahlen-Reaktion ({(zr or {}).get('seite', '')})"}
-    aktiv = {"m_spitze": "m", "m_weitere": "m", "vcp": "m", "flagge": "m", "k_breakout": "k", "k_ep": "k",
-             "k_ermuedung": "k_short", "k_baerenflagge": "k_short", "zahlen": "zahlen"}.get(r_)
-    zeilen.sort(key=lambda z: z[0] != aktiv)
-    zeilen = [((name[n] if n == aktiv else "Auch · " + name[n]), x) for n, x in zeilen]
     return ('<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;'
             f'border-top:1px solid {RAND}">'
             + "".join(f'<div style="font-size:14px;line-height:1.5"><b>{t(n)}</b> '
@@ -570,7 +583,8 @@ def _lagezeile(tk, rw, stellung):
             reihe = ({k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN).get(e["reihe"], e["reihe"])
         except Exception:  # noqa: BLE001
             reihe = e["reihe"]
-    if drei and reihe:
+    kurz_ = e.get("reihe") in ("k_ermuedung", "k_baerenflagge") or (e.get("reihe") == "zahlen" and e.get("zr_seite") == "short")
+    if drei and reihe and not kurz_:                    # Volltreffer nur mit Long-Setup (Prüf-Agent 12.11.2026)
         chips.append((GRUEN, "★ Volltreffer: dreifacher Rückenwind und Setup"))
     elif drei:
         chips.append((GRUEN, "▲▲▲ dreifacher Rückenwind (Kurs, Geld, Zahlen grün)"))
@@ -665,14 +679,14 @@ def _earnings_feld(fd):
     if termin is not None and len(termin) and termin["datum"].iloc[0] and not pd.isna(pd.Timestamp(termin["datum"].iloc[0])):
         tag = pd.Timestamp(termin["datum"].iloc[0])
         bis = (tag.normalize() - pd.Timestamp.today().normalize()).days
-        ampel = "gelb" if 0 <= bis <= 10 else "grün"
+        ampel = gestaltung.termin_ampel(bis)
         if bis < 0:                              # Termin vorbei, der neue ist noch nicht gemeldet
             zeilen.append(ampelzeile("Nächster Termin", "grau", f"noch offen (zuletzt {tag:%d.%m.%Y})"))
         else:
             zeilen.append(ampelzeile("Nächster Termin", ampel,
                                      f'{WOCHENTAGE[tag.weekday()]} {tag:%d.%m.%Y} · in {bis} Tagen'
-                                     + (" – innerhalb von 10 Tagen: Ausbruch vor Zahlen ist ein Würfelwurf"
-                                        if ampel == "gelb" else "")))
+                                     + (" – Ausbruch vor Zahlen ist ein Würfelwurf"
+                                        if ampel in ("rot", "gelb") else "")))
     gemeldet = g.dropna(subset=["eps"])
     if len(gemeldet):                            # junge Börsengänge: noch keine gemeldeten Zahlen (TKMS.DE, 10.11.2026)
         letzte = gemeldet.iloc[-1]

@@ -130,32 +130,25 @@ def _kleinchart(df, erk, tage=126):
 
 
 def _pivot(erk):
-    """Pivot des Systems, das das Setup liefert: Minervini zuerst, dann Kullamägi (EP: Hoch des Sprungtags, Breakout:
-    Oberkante der Zone des Scanners); sonst keiner."""
-    sy = erk.get("systeme") or {}
-    m, k = sy.get("m") or {}, sy.get("k") or {}
-    if m.get("pivot"):
-        return m["pivot"]
-    h = k.get("haupt") or {}
-    if h.get("pivot") and h.get("ampel") != "rot":
-        return h["pivot"]
-    return None
+    """Einstieg DES Setups (depot.plan → depot.einstieg_setup; Prüf-Agent 12.11.2026: vorher Minervini-Pivot zuerst,
+    dann Kullamägi – bei HWM in der Zahlen-Reaktion der Pivot einer alten Base)."""
+    import depot
+    pl = depot.plan(erk)
+    return pl[1] if pl else None
 
 
 def _abstand(erk, kurs):
-    """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe)."""
-    em = ((erk.get("systeme") or {}).get("k") or {}).get("ermuedung")
-    p = _pivot(erk)
-    if p:
-        ab = (kurs / p - 1) * 100
-        anteil = min(1.0, max(0.0, 1 + ab / 10)) if ab <= 0 else 1.0
-        wert = "±0,0" if round(abs(ab), 1) == 0 else f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)}"
-        return "Abstand zum Pivot (long)", f"{wert} %", anteil, \
-            (GRUEN if 0 <= ab <= 5 else BLAU)
-    if em:
-        ab = (kurs / em["unten"] - 1) * 100
-        return "Abstand zur Unterkante (short)", f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)} %", 1.0, ROT
-    return "Abstand zum Pivot", "kein Setup", 0.0, GRAU
+    """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe) – zum Einstieg des Setups, Short gespiegelt."""
+    import depot
+    pl = depot.plan(erk)
+    if not pl:
+        return "Abstand zum Einstieg", "kein Setup", 0.0, GRAU
+    seite, p = pl[0], pl[1]
+    ab = (kurs / p - 1) * 100
+    e = -ab if seite == "short" else ab                 # positiv = in Richtung des Setups
+    anteil = min(1.0, max(0.0, 1 + e / 10)) if e <= 0 else 1.0
+    wert = "±0,0" if round(abs(ab), 1) == 0 else f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)}"
+    return f"Abstand zum Einstieg ({seite})", f"{wert} %", anteil, (GRUEN if 0 <= e <= 5 else ROT if e > 10 else BLAU)
 
 
 def _stopp(erk):

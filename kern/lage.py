@@ -1,4 +1,4 @@
-"""Lageleiste: Marktampel, Dalio-Quadrant (Makro) und Marks-Pendel (Zyklus).
+"""Lageleiste: Dalio-Quadrant (Makro) und Marks-Pendel (Zyklus).
 
 Alle drei Funktionen nehmen einen Stichtag (Standard: heute) und rechnen nur mit Daten bis zu
 diesem Tag – so lassen sie sich an bekannten Zeitpunkten prüfen (werkzeuge/lage_test.py).
@@ -9,7 +9,6 @@ import pandas as pd
 
 import marktdaten as md
 
-# ── Marktampel ──────────────────────────────────────────────────────────────
 # ── Dalio-Quadrant ──────────────────────────────────────────────────────────
 QUADS = {1: "Goldilocks", 2: "Reflation", 3: "Stagflation", 4: "Deflation"}
 FUEHRER = {1: "Technologie, zyklischer Konsum, Kommunikation",

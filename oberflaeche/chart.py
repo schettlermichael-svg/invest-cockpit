@@ -511,10 +511,12 @@ def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
         termin = pd.Timestamp(termin)
         tage = -1 if pd.isna(termin) else (termin.normalize() - pd.Timestamp.now().normalize()).days
         if tage >= 0:
-            nah = tage <= 14
+            import gestaltung
+            amp = gestaltung.termin_ampel(tage)
+            nah = amp in ("rot", "gelb")
             t_ = f'{"⚠ " if nah else ""}E in {tage} T · {termin:%d.%m.}'
             spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, 448, t_, 12, "start", False):.1f}" '
-                          f'fill="{GELB if nah else TEXT_3}" font-size="12" font-weight="600">{t_}</text>')
+                          f'fill="{ROT if amp == "rot" else GELB if nah else TEXT_3}" font-size="12" font-weight="600">{t_}</text>')
 
 
 def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):

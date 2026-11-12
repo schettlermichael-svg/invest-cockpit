@@ -72,7 +72,7 @@ def linien(erk, atr_wert, df=None):
     r_a = abs(e - s_a)
     if r_a <= 0:
         return None
-    r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert else None
+    r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert - 1e-6 * atr_wert else None   # Rundung: kein B gleich A
     w = widerstand(df, seite, e, ((erk.get("profil") or {}).get("knoten")))
     erg = {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a,
            "stopp_b": (e - r_b if seite == "long" else e + r_b) if r_b else None, "risiko_b": r_b, "widerstand": w}

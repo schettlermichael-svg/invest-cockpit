@@ -77,11 +77,11 @@ BEGRIFFE DER APP
 - Reihen des Kartentischs (ein Titel steht in genau einer): {reihen}
 - Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „regeln_base“ (Base-Ausbruch) und „regeln_momentum“ (Momentum-Ausbruch, Sprung) sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
 - Stufen des Rückenwinds: {stufen}
-- Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
+- Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 50 Handelstage (ab 1,10 rein, unter 0,90 raus).
 - Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt.
 - Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
-- Volltreffer: dreifacher Rückenwind UND der Titel steht in einer Reihe des Kartentischs (Setup).
-- Kaufzone: Pivot bis +5 %. Stopp im Chart: 1,5 ATR unter dem Pivot (Short: 1,5 ATR über der Unterkante).
+- Volltreffer: dreifacher Rückenwind UND ein Long-Setup im Kartentisch (dreifacher Rückenwind ist Wind für long; ein Short-Setup ist nie Volltreffer).
+- Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung und Bärenflagge Unterkante. Kaufzone long: Einstieg bis +5 %; Short-Zone: bis 5 % unter dem Einstieg. Stopp im Chart: 1,5 ATR vom Einstieg (long darunter, short darüber); ein Short-Setup erlischt schon, wenn der Kurs über das Hoch des Auslösetags steigt.
 - Zahlen-Reaktion: der Einstieg („pivot“) ist der AVWAP ab dem Reaktionstag; „zahlen_reaktion“ nennt Tag, Reaktion
   in %, Volumen, Lage des Schlusses (1 = Hoch, 0 = Tief), Tage seitdem und ob Tief/Hoch und AVWAP gehalten wurden.
 
@@ -537,7 +537,10 @@ def termin_datum(zahlen, kachel, heute=None):
     Zahlen“ (deren Wert lautet „in n Tagen“ vom Tag der Kartentisch-Rechnung – das Datum steht im Text, „Do 13.11.2026“).
     Vergangene Termine zählen nicht (12.11.2026: vorher las die Termin-Ampel aus „in 3 Tagen“ kein Datum → grau)."""
     import re
+    heute = heute or HEUTE()
     t_ = (zahlen or {}).get("termin")
+    if t_ and str(t_)[:10] < heute:                 # Rückenwind behält auch den gestrigen Termin: dann die Kachel
+        t_ = None                                   # (Prüf-Agent 12.11.2026)
     if not t_ and kachel:
         teile = [kachel.get("wert"), kachel.get("text")] if isinstance(kachel, dict) else list(kachel)[1:3]
         for teil in teile:
@@ -546,7 +549,7 @@ def termin_datum(zahlen, kachel, heute=None):
                 t_ = f"{m_.group(3)}-{m_.group(2)}-{m_.group(1)}"
                 break
     d = str(t_)[:10] if t_ and re.match(r"\d{4}-\d{2}-\d{2}", str(t_)) else None
-    return d if d and d >= (heute or HEUTE()) else None          # vergangene Termine zählen nicht
+    return d if d and d >= heute else None                       # vergangene Termine zählen nicht
 
 
 def termin_tage(zahlen, kachel, heute=None):
@@ -619,7 +622,7 @@ class Aufklaerung(Exception):
 FESTE_REGELN = (
     ("Setup", "grün = das Setup des Titels erfüllt alle seine Regeln · gelb = in einer Reihe des Kartentischs, aber "
               "nicht voll grün · grau = keine Reihe"),
-    ("Einstieg", "Abstand zum Pivot (Short: zur Unterkante, gespiegelt): grün = in der Kaufzone (Pivot bis +5 %) · "
+    ("Einstieg", "Abstand zum Einstieg des Setups (Short gespiegelt): grün = in der Kaufzone (Pivot bis +5 %) · "
                  "gelb = am Auslöser (bis 5 % davor) oder 5–10 % darüber · rot = mehr als 10 % darüber (gelaufen) · "
                  "grau = weiter weg oder kein Pivot"),
     ("Geld", "Geld-Ampel des Rückenwinds: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt; beim "
@@ -640,7 +643,7 @@ def feste_ampeln(c, heute=None):
         aus["Setup"] = ("grau", "keine Reihe")
     else:
         aus["Setup"] = ("grün" if c.get("setup_gruen") else "gelb", c.get("reihe"))
-    d = c.get("abstand_zum_pivot_pct")
+    d = c.get("abstand_roh") if c.get("abstand_roh") is not None else c.get("abstand_zum_pivot_pct")   # Ampel ungerundet
     if d is None:
         aus["Einstieg"] = ("grau", "kein Pivot")
     else:
@@ -664,7 +667,8 @@ def feste_ampeln(c, heute=None):
     if tage is None or tage < 0:
         aus["Termin"] = ("grau", "unbekannt")
     else:
-        aus["Termin"] = ("rot" if tage <= 7 else "gelb" if tage <= 14 else "grün", f"Zahlen in {tage} Tagen")
+        import gestaltung
+        aus["Termin"] = (gestaltung.termin_ampel(tage), f"Zahlen in {tage} Tagen")
     return aus
 
 
@@ -758,10 +762,10 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
 
     def klasse(tk):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
-        voll = tk in drei and bool(x.get("reihe"))
+        voll = tk in drei and bool(x.get("reihe")) and not short(tk)   # Volltreffer nur long (Prüf-Agent 12.11.2026)
         t_ = termin_tage(tk)
         rs = r.get("rang") or 0
-        return (t_ is not None and t_ <= 7, not voll, not x.get("stern"), not geld_mit(tk),   # Watchlist zählt nicht
+        return (t_ is not None and t_ <= 7, not voll,                 # 7 = gestaltung.TERMIN_ROT not x.get("stern"), not geld_mit(tk),   # Watchlist zählt nicht
                 rs if short(tk) else -rs)                     # (Micky 12.11.2026: neutral, die Stärke entscheidet)
 
     pool = set(titel_t) | set(drei) | set(wl)
@@ -781,7 +785,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         if not x.get("reihe") and tk not in pos and tk not in wl:
             continue
         r = rw_t.get(tk) or {}
-        merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") else []) + ([("★ Short-Zone" if short(tk) else "★ Kaufzone")] if x.get("stern") else [])
+        merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") and not short(tk) else []) + ([("★ Short-Zone" if short(tk) else "★ Kaufzone")] if x.get("stern") else [])
                     + ([("Geld fließt ab" if short(tk) else "Geld grün")] if geld_mit(tk) else [])
                     + (["Watchlist"] if tk in wl else []) + ([f'RS {r["rang"]}'] if r.get("rang") else [])
                     + ([f"Zahlen in {termin_tage(tk)} Tagen"] if (termin_tage(tk) is not None and termin_tage(tk) <= 7)
@@ -853,9 +857,12 @@ def lagebild():
                 av = avwaps(df, (x.get("zr") or {}).get("tag") if x.get("reihe") == "zahlen" else None)
         except Exception:  # noqa: BLE001
             pass
-        abst = x.get("abstand_vz")                      # mit Vorzeichen; „abstand“ ist nur der Betrag (10.11.2026)
-        if kurs and abst is not None:
-            pivot = kurs / (1 + float(abst) / 100)
+        ein = x.get("einstieg") or {}                   # Einstieg des Setups, im Kartentisch festgestellt (Prüf-Agent
+        if ein.get("wert"):                             # 12.11.2026: vorher aus dem Kurs von heute und dem Abstand
+            pivot = float(ein["wert"])                  # eines älteren Tischs zurückgerechnet)
+        elif kurs and x.get("abstand_vz") is not None:  # Tische vor dem 13.11.2026
+            pivot = kurs / (1 + float(x["abstand_vz"]) / 100)
+        abst = (kurs / pivot - 1) * 100 if kurs and pivot else None   # zum Kurs von heute, ungerundet für die Ampel
         short_ = _seite(x) == "short"                   # Short: Stopp über dem Einstieg (12.11.2026, vorher darunter)
         stopp = (pivot + 1.5 * a if short_ else pivot - 1.5 * a) if pivot and a else None
         kacheln = {}
@@ -873,11 +880,13 @@ def lagebild():
         c = {"titel": tk, "depot": tk in pos, "watchlist": tk in wl, "setup_gruen": bool(x.get("gruen")),
                 "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
                 "auch": x.get("auch") or [],
-                "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
+                "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")) and _seite(x) != "short",
                 "seite": _seite(x), "regeln_base": x.get("m"), "regeln_momentum": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
                 "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(abst, 1),
-                "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
+                "abstand_roh": abst, "einstieg_quelle": ein.get("quelle"),
+                "kaufzone_bis": _zahl(pivot * 1.05) if pivot and not short_ else None,
+                "shortzone_bis": _zahl(pivot * 0.95) if pivot and short_ else None, "atr": _zahl(a),
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
                 if kurs and stopp else None,
                 "ausbruch": x.get("ausbruch"), "zahlen_reaktion": x.get("zr"), "avwap": av, "kacheln": kacheln,
@@ -957,7 +966,7 @@ def _ausschnitt(lb, nr):
     if nr == 4:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
             {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "regeln_base", "regeln_momentum",
-                               "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
+                               "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "shortzone_bis", "einstieg_quelle", "atr",
                                "stopp_1_5_atr", "ausbruch", "zahlen_reaktion", "avwap", "kacheln", "feste_ampeln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
     return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
@@ -1166,7 +1175,7 @@ def konferenz(melden=lambda text: None):
 
     befehl_daten = {"heute": heute, "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
                     "wirtschaftswetter": lb.get("wirtschaftswetter"), "volltreffer": [
-        {a: c.get(a) for a in ("titel", "reihe", "seite", "abstand_zum_pivot_pct", "kaufzone_bis", "stopp_1_5_atr",
+        {a: c.get(a) for a in ("titel", "reihe", "seite", "abstand_zum_pivot_pct", "kaufzone_bis", "shortzone_bis", "stopp_1_5_atr",
                                "feste_ampeln")}
         | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in lb["kandidaten"] if c["volltreffer"]],
         "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items() if nr != "6"},

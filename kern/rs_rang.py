@@ -38,6 +38,33 @@ def raenge():
     return rang.to_dict(), stand
 
 
+_RW = {}
+
+
+def _rueckenwind_raenge():
+    """RS-Ränge aus Rückenwind ({Ticker: Rang}, Stand) – einmal je Datei gelesen."""
+    import rueckenwind
+    pfad = rueckenwind._pfad("stand.json")
+    if not os.path.exists(pfad):
+        return {}, None
+    m = os.path.getmtime(pfad)
+    if _RW.get("m") != m:
+        from dateien import json_lesen
+        e = json_lesen(pfad) or {}
+        _RW.update(m=m, stand=e.get("stand"),
+                   r={tk: int(x["rang"]) for tk, x in (e.get("titel") or {}).items() if x.get("rang") is not None})
+    return _RW["r"], _RW["stand"]
+
+
 def rang(ticker):
+    """Der eine RS-Rang der App (Prüf-Agent 12.11.2026: vorher zwei – hier nur Revier mit voller Historie, in Rückenwind
+    auch Watchlist und junge Titel; die Stärke-Kachel zeigte dann „RS 68“ neben „RS-Rang 72“). Quelle: Rückenwind, wenn
+    er auf demselben Handelstag steht; sonst die Revier-Rechnung hier."""
     r, stand = raenge()
+    try:
+        rw, rw_stand = _rueckenwind_raenge()
+        if rw_stand == stand and ticker.upper() in rw:
+            return rw[ticker.upper()], stand
+    except Exception:  # noqa: BLE001
+        pass
     return r.get(ticker.upper()), stand
