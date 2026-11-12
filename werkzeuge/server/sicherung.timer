@@ -1,0 +1,7 @@
+[Unit]
+Description=Invest Cockpit: Sicherung täglich 12:10 (Berlin), nach dem Frühlauf
+[Timer]
+OnCalendar=*-*-* 12:10 Europe/Berlin
+Persistent=true
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,6 @@
+[Unit]
+Description=Invest Cockpit: tägliche Sicherung der Daten nach GitHub (Zweig daten)
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/bin/bash /opt/invest-cockpit/werkzeuge/server/sicherung.sh

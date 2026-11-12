@@ -9,6 +9,16 @@ if [ -f werkzeuge/server/nachtlauf.timer ] && ! cmp -s werkzeuge/server/nachtlau
   systemctl daemon-reload && systemctl restart nachtlauf.timer
   echo "$(date '+%d.%m.%Y %H:%M') Zeitplan des Laufs übernommen: $(grep OnCalendar werkzeuge/server/nachtlauf.timer)" >> /var/log/invest-cockpit-update.log
 fi
+# Tägliche Sicherung (12.11.2026): Dienst und Zeitplan aus dem Speicher übernehmen, sobald sie sich unterscheiden
+for u in sicherung.service sicherung.timer; do
+  if [ -f werkzeuge/server/$u ] && ! cmp -s werkzeuge/server/$u /etc/systemd/system/$u; then
+    cp werkzeuge/server/$u /etc/systemd/system/$u && NEU_SICHERUNG=1
+  fi
+done
+if [ -n "$NEU_SICHERUNG" ]; then
+  systemctl daemon-reload && systemctl enable -q --now sicherung.timer
+  echo "$(date '+%d.%m.%Y %H:%M') Sicherung eingerichtet: $(grep OnCalendar werkzeuge/server/sicherung.timer)" >> /var/log/invest-cockpit-update.log
+fi
 git fetch -q origin main 2>/dev/null || exit 0
 [ "$(git rev-parse HEAD 2>/dev/null)" = "$(git rev-parse origin/main)" ] && exit 0
 if .venv/bin/python werkzeuge/nachtlauf.py --laeuft 2>/dev/null; then

@@ -599,3 +599,11 @@ Neue Reihe im Kartentisch, long und short (`kern/zahlen_reaktion.py`). Vorrang: 
   - Kurs über (Short: unter) GD50
 - **Einstieg:** am AVWAP ab dem Reaktionstag. Im Chart heißt der Anker „Zahlentag“ und ist bei diesen Titeln vorgewählt.
 - **Stopp in der Akte:** beim Short 1,5 ATR über dem Einstieg (vorher darunter, auch bei der Ermüdung).
+
+## Tägliche Sicherung (12.11.2026)
+
+Jeden Tag um 12:10 (nach dem Frühlauf) sichert der Server die Daten mit Geschichte in den GitHub-Zweig `daten`, Ordner `sicherung/` (`werkzeuge/server/sicherung.sh`, Zeitplan `sicherung.timer`). `aktualisieren.sh` richtet beides selbst ein.
+- **Gesichert:** Konferenzen samt Kostenbuch und Fragen, Logbuch des Rückenwinds, Protokoll des Laufs, Depot, Watchlists, Revier.
+- **Nie gesichert:** Schlüssel.
+- **Nicht gesichert:** Kartentische (rund 12 MB je Tag, werden neu gerechnet) und Kurse.
+- **Wiederherstellen:** `sicherung/` aus dem Zweig `daten` holen und unter denselben Pfaden nach `/opt/invest-cockpit` kopieren.
