@@ -20,11 +20,14 @@ _SETUP = re.compile(r'(<div title="[^"]*" style="background:#1C2430;border:)1px 
 
 
 def richtung(x):
-    """long (Reihen der Systeme und des VCP-Scanners), short (Ermüdung nach Überdehnung) oder None (Richtung offen)."""
+    """long (Reihen der Systeme und des VCP-Scanners), short (Ermüdung nach Überdehnung), bei der Zahlen-Reaktion die
+    Richtung der Reaktion, sonst None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
     if reihe == "k_ermuedung":
         return "short"
+    if reihe == "zahlen":                              # Zahlen-Reaktion: Richtung der Reaktion (12.11.2026)
+        return x.get("zr_seite") or None
     if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "vcp", "flagge"):
         return "long"
     return None

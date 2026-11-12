@@ -126,7 +126,7 @@ def main(nur_tisch=False):
         import kartentisch
         t_ = kartentisch.rechnen(alle, melden=lambda x: print(x, flush=True))
         p["neu"] = len(t_["neu"])
-        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "k_breakout", "k_ep", "k_ermuedung", "vcp", "flagge")}
+        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "k_breakout", "k_ep", "zahlen", "k_ermuedung", "vcp", "flagge")}
         return f"{len(t_['titel'])} Titel auf dem Tisch, {len(t_['neu'])} Neuigkeiten"
 
     def raenge():

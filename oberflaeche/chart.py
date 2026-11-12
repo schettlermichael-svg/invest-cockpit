@@ -25,8 +25,8 @@ SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trend
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
 # Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
-AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA"}
-AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag"}
+AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA", "zahlen": "#FFD54F"}
+AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag", "zahlen": "Zahlentag"}
 AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Zonenanker gestrichen: zu kurzfristig, Micky)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 KAUFZONE_FARBE = GRUEN
@@ -170,6 +170,11 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
         import avwap
         anker = avwap.anker(voll)
+        import zahlen_reaktion
+        zt = [t_ for t_, p_ in (marken.get("earnings") or []) if abs(p_) >= zahlen_reaktion.REAKTION_PCT
+              and t_ >= voll.index[max(0, len(voll) - 126)]]
+        if zt:                                     # Reaktionstag der jüngsten Zahlen ab 3 % (Zahlen-Reaktion, 12.11.2026)
+            anker["zahlen"] = zt[-1]
         reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
                   if k in anker}
         if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
@@ -633,7 +638,7 @@ def legende(ebene="Tag", gd_kurz=False):
     if ebene == "Tag":
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
                       (AVWAP_FARBEN["hoch"], "AVWAP ab Hoch 52 Wochen"), (AVWAP_FARBEN["tief"], "AVWAP ab Tief 6 Monate (mit Hoch: Zange)"),
-                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
+                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (AVWAP_FARBEN["zahlen"], "AVWAP ab Zahlentag (Reaktion ab 3 %)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'

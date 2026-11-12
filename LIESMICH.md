@@ -587,3 +587,15 @@ Regel 13 der Dienstanweisung: Die festen Ampeln sind gesetzt, der Stab färbt si
 - **Konferenzraum (Beschlusszentrale):** die Lagekarte des Stabs.
 
 Akten des Stabs: Depot plus einsatzbereite Setups (grün und am Auslöser oder in der Kaufzone), je Reihe 2 Plätze vorab, höchstens 30.
+
+## Zahlen-Reaktion (12.11.2026)
+
+Neue Reihe im Kartentisch, long und short (`kern/zahlen_reaktion.py`). Vorrang: EP → Zahlen-Reaktion → Ermüdung → ★ Spitze M → …
+- **Voraussetzung:** Der Kurs reagiert am Reaktionstag mit mindestens 3 % (Short −3 %) auf die Zahlen, in den letzten 20 Handelstagen.
+- **Grün, wenn alle vier Regeln erfüllt sind:**
+  - Volumen über dem 50-Tage-Schnitt
+  - Schluss im oberen (Short: unteren) Drittel
+  - Tief (Short: Hoch) und AVWAP des Reaktionstags gehalten
+  - Kurs über (Short: unter) GD50
+- **Einstieg:** am AVWAP ab dem Reaktionstag. Im Chart heißt der Anker „Zahlentag“ und ist bei diesen Titeln vorgewählt.
+- **Stopp in der Akte:** beim Short 1,5 ATR über dem Einstieg (vorher darunter, auch bei der Ermüdung).

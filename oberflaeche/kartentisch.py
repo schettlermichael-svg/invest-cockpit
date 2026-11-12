@@ -39,6 +39,10 @@ REIHEN = [("m_spitze", "★ Spitze · Minervini", "Setup grün (alle Regeln), Ku
           ("m_weitere", "Weitere · Minervini", "Setup grün, Kurs weiter weg vom Pivot – oder genau eine Regel fehlt"),
           ("k_ep", "Episodic Pivot · Kullamägi", "Sprung ab 10 % mit Lücke und Volumen ab 3-fach in den letzten 10 Tagen, "
                                                  "Kurs hält das Tief des Sprungtags; grün mit Nachricht (Zahlen)"),
+          ("zahlen", "Zahlen-Reaktion · long und short", "Kurs reagiert auf die Zahlen ab 3 % (Short ab −3 %) in den "
+                                                       "letzten 20 Handelstagen, Volumen über dem Schnitt, Schluss im "
+                                                       "oberen (Short: unteren) Drittel, hält Tief und AVWAP des "
+                                                       "Reaktionstags, Kurs über (unter) GD50; Einstieg am AVWAP"),
           ("k_breakout", "Breakout · Kullamägi", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit Konsolidierung von 1–3 "
                                                  "Wochen; gelb = Führer knapp oder Konsolidierung bis 8 Wochen"),
           ("k_ermuedung", "Ermüdung nach Überdehnung · Short", "Flagge nach einer Fahnenstange ab 30 % in höchstens 13 "
@@ -117,8 +121,18 @@ def _stufe1(tk):
             info["abstand"] = abs(info["abstand_vz"])
         info["gruen"] = m["ampel"] == "grün" or (hk.get("ampel") == "grün")
         info["luecken"] = ([f"M: {x}" for x in info["m"]["fehlt"]] if m["ampel"] != "grün" else [])
+        import zahlen_reaktion
+        zr = zahlen_reaktion.pruefen(df, gewinne)     # Zahlen-Reaktion (Micky 12.11.2026): Vorrang nach dem EP
+        if zr:
+            info["zr"] = {k_: zr[k_] for k_ in ("ampel", "seite", "tag", "pct", "volumen", "schluss_lage", "tage_her",
+                                                "avwap", "tief", "hoch", "halten", "text")}
         if k.get("ep") and k["ep"]["ampel"] != "rot":
             info.update(reihe="k_ep", stern=k["ep"]["ampel"] == "grün", gruen=k["ep"]["ampel"] == "grün")
+        elif zr and zr["ampel"] != "rot" and zr["abstand"] is not None:
+            e_ = -zr["abstand"] if zr["seite"] == "short" else zr["abstand"]
+            info.update(reihe="zahlen", zr_seite=zr["seite"], gruen=zr["ampel"] == "grün",
+                        stern=bool(zr["ampel"] == "grün" and 0 <= e_ <= KAUFZONE_M), abstand=float(abs(zr["abstand"])),
+                        abstand_vz=float(zr["abstand"]), luecken=zr["luecken"])
         elif k.get("ermuedung"):
             em = k["ermuedung"]
             ab_ = (c[-1] / em["unten"] - 1) * 100
@@ -149,7 +163,7 @@ def _stufe1(tk):
         r_ = info.get("reihe")                  # das Ausbruchszeichen des Systems, das die Reihe trägt (12.11.2026: TREX
         kb_ = (k.get("breakout") or {}).get("ausbruch")   # stand im EP mit −2,6 % zum Sprung-Pivot, der Text nannte
         zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere") else kb_ if r_ == "k_breakout"   # +25,5 % zu
-                      else m["ausbruch"] if r_ in ("vcp", "flagge") else None if r_ in ("k_ep", "k_ermuedung")
+                      else m["ausbruch"] if r_ in ("vcp", "flagge") else None if r_ in ("k_ep", "k_ermuedung", "zahlen")
                       else m["ausbruch"] if m.get("pivot") else kb_)                 # einer alten Konsolidierung)
         import atr as atr_
         a_ = atr_.wert(df)
@@ -159,6 +173,8 @@ def _stufe1(tk):
             info.update(gruen=False, stern=False, still=True,
                         luecken=(info.get("luecken") or []) + [f"Kurs steht still: Tagesspanne {a_ / c[-1] * 100:.2f} % – "
                                                                f"Übernahme?".replace(".", ",")])
+        if r_ == "zahlen":
+            info["ausbruch"] = zr["text"]
         if info.get("short_art") and not zeichen_br:
             info["ausbruch"] = ("▼ Ermüdung nach Überdehnung eines Führers (GD200 steigt)" if info["short_art"] == "Ermüdung"
                                 else "▼ Bärenflagge: Erholungsrally im Abwärtstrend, dann Bruch der Unterkante")
@@ -286,12 +302,12 @@ def eintrag_von(tk):
     if schluessel not in _REIHEN_CACHE:
         _REIHEN_CACHE.clear()
         tisch = json_lesen(pfad, {"titel": {}})
-        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch", "short_art")
+        felder = ("reihe", "stern", "gruen", "zdir", "luecken", "scanner", "ausbruch", "short_art", "zr_seite", "zr")
         _REIHEN_CACHE[schluessel] = {k: {f: x.get(f) for f in felder} for k, x in tisch["titel"].items()}
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"m_spitze": 5, "k_ep": 5, "k_ermuedung": 4, "k_breakout": 4, "m_weitere": 3, "vcp": 2, "flagge": 2, None: 0}
+RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "k_ermuedung": 4, "k_breakout": 4, "m_weitere": 3, "vcp": 2, "flagge": 2, None: 0}
 
 
 ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
@@ -648,6 +664,8 @@ def lagebild(tisch):
         text = ("★ " if stern else "") + tk
         if x.get("reihe") in ("vcp", "flagge"):
             text += " VCP" if x["reihe"] == "vcp" else " F"
+        if x.get("reihe") == "zahlen":
+            text += " ⚡"
         if x.get("listen"):
             text += " ◆"
         g = gruppen.get(tk)

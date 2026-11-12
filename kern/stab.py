@@ -79,6 +79,8 @@ BEGRIFFE DER APP
 - Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
 - Volltreffer: dreifacher Rückenwind UND der Titel steht in einer Reihe des Kartentischs (Setup).
 - Kaufzone: Pivot bis +5 %. Stopp im Chart: 1,5 ATR unter dem Pivot (Short: 1,5 ATR über der Unterkante).
+- Zahlen-Reaktion: der Einstieg („pivot“) ist der AVWAP ab dem Reaktionstag; „zahlen_reaktion“ nennt Tag, Reaktion
+  in %, Volumen, Lage des Schlusses (1 = Hoch, 0 = Tief), Tage seitdem und ob Tief/Hoch und AVWAP gehalten wurden.
 
 REGELN
 1. Heute ist der {heute}. Termine vor heute sind vergangen.
@@ -170,7 +172,10 @@ MEISTER = {
        "Lauf. Ein echter EP fällt nicht auf das Niveau vor der Lücke zurück. Viele laufen erst verzögert: nach Lücke, "
        "kurzem Lauf und Ruhephase folgt Tage bis Monate später der zweite Schub – dann ist ein Einstieg aus der "
        "Konsolidierung besser als das Hinterherlaufen. Ein bekannter, schon gelaufener Titel mit guten Zahlen ist "
-       "kein EP im Sinne Bondes.",
+       "kein EP im Sinne Bondes. Ergänzung Drift nach den Zahlen (Ball und Brown 1968, Bernard und Thomas 1989): "
+       "Reagiert der Kurs klar auf die Zahlen, läuft er oft Wochen in dieselbe Richtung weiter, weil die Fonds ihre "
+       "Positionen nicht an einem Tag umbauen – nach oben wie nach unten. Prüfe bei der Reihe Zahlen-Reaktion, ob "
+       "die Zahlen die Reaktion tragen (Überraschung, Beschleunigung, Ausblick) oder ob sie nur eine Erleichterung war.",
     4: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Trendvorlage (Kurs über steigenden Durchschnitten, nahe "
        "am Hoch, weit über dem Tief, starke RS); VCP – die Rücksetzer werden von links nach rechts enger, das Volumen "
        "trocknet aus, der Pivot ist die Stelle des geringsten Widerstands; gekauft wird am Pivot, nicht mehr als 5 % "
@@ -195,7 +200,10 @@ MEISTER = {
        "Signal; schneidet der Kurs hindurch, nicht hoffen. Laufen AVWAPs von Hoch und Tief zusammen (Shannons "
        "„Pinch“), steht eine Entscheidung bevor. Die Akte enthält je Titel unter „avwap“ drei Anker (Hoch der "
        "letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag mit Lücke und Volumen) mit Wert, Abstand und "
-       "Richtung sowie „pinch“. Fehlt der Eintrag, sage nichts zum AVWAP.",
+       "Richtung sowie „pinch“, bei einer Zahlen-Reaktion zusätzlich den Anker „zahlentag“. Fehlt der Eintrag, sage "
+       "nichts zum AVWAP. Zur Reihe Zahlen-Reaktion: Der Einstieg ist der ruhige Rücksetzer an den AVWAP ab dem "
+       "Reaktionstag (Bondes „Delayed Reaction“) oder eine enge Flagge darüber; schließt der Kurs unter dem Tief des "
+       "Reaktionstags oder unter diesem AVWAP, ist die Reaktion gescheitert (Short spiegelbildlich).",
     5: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Verluste klein halten; der Stopp steht vor dem Kauf fest; "
        "nie einen Verlierer verbilligen; Verluste deutlich kleiner als Gewinne; das Risiko je Position ist ein kleiner "
        "Teil des Kontos; vor Zahlen nur mit Gewinnpolster oder kleiner; in schwachem Markt weniger und kleinere "
@@ -234,6 +242,7 @@ QUELLEN = {
                         "virtueofselfishinvesting.com (Six Essential Rules of Short-Selling)",
     "Livermore": "How to Trade in Stocks (1940: Pivotal Points, Schwesteraktien, Gefahrenzeichen, Zeit); Reminiscences "
                  "of a Stock Operator (Lefèvre, 1923)",
+    "Drift nach den Zahlen": "Ball und Brown (1968), Bernard und Thomas (1989): Post-Earnings-Announcement Drift",
     "Druckenmiller": "Reden und Interviews (Liquidität, 18 bis 24 Monate voraus, Bündeln bei Überzeugung)",
 }
 
@@ -540,23 +549,26 @@ def _runden(x, n=2):
     return x
 
 
-def avwaps(df):
+def avwaps(df, zahlentag=None):
     """Anchored VWAP nach Brian Shannon für die Akte des Stabs (10.11.2026), dieselben Anker wie der Wahlschalter im
     Chart (kern/avwap.py): Hoch der letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag. Je Anker:
     Datum, Wert, Abstand des Kurses in %, Richtung (über 5 Tage: steigt, fällt, flach); „pinch“, wenn Hoch- und
     Tief-AVWAP weniger als 3 % auseinander liegen."""
     import avwap
     a = avwap.anker(df)
+    if zahlentag:                                        # Reaktionstag der Zahlen-Reaktion (12.11.2026)
+        import pandas as pd
+        a["zahlentag"] = pd.Timestamp(zahlentag)
     if not a:
         return None
     kurs = float(df["Close"].iloc[-1])
-    namen = {"hoch": "hoch_52_wochen", "tief": "tief_6_monate", "ereignis": "ereignistag"}
+    namen = {"hoch": "hoch_52_wochen", "tief": "tief_6_monate", "ereignis": "ereignistag", "zahlentag": "zahlentag"}
     aus = {}
     for k, tag in a.items():
         av = avwap.reihe(df, tag)
         if len(av) < 6:                                  # Anker erst wenige Tage alt: noch keine Aussage
             aus[namen[k]] = {"ab": f"{tag:%Y-%m-%d}", "hinweis": "Anker erst wenige Tage alt – Kurs steht am "
-                             + {"hoch": "Hoch", "tief": "Tief", "ereignis": "Ereignis"}[k]}
+                             + {"hoch": "Hoch", "tief": "Tief", "ereignis": "Ereignis", "zahlentag": "Reaktionstag"}[k]}
             continue
         w, vor = float(av.iloc[-1]), float(av.iloc[-6])
         r = (w / vor - 1) * 100 if vor else 0
@@ -604,7 +616,7 @@ def feste_ampeln(c, heute=None):
     else:
         e = -d if short else d
         amp = ("grün" if 0 <= e <= 5 else "gelb" if -5 <= e < 0 or 5 < e <= 10 else "rot" if e > 10 else "grau")
-        wort = {"grün": "Kaufzone" if not short else "unter der Unterkante", "rot": "gelaufen", "grau": "weit weg"}.get(
+        wort = {"grün": "Kaufzone" if not short else "Short-Zone", "rot": "gelaufen", "grau": "weit weg"}.get(
             amp, "am Auslöser" if e < 0 else "knapp drüber")
         aus["Einstieg"] = (amp, f"{d:+.1f} % · {wort}".replace(".", ","))
     g = r.get("geld_ampel")
@@ -699,7 +711,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
 
     def zone(tk):
         x = titel_t.get(tk) or {}
-        if x.get("reihe") == "k_ermuedung":
+        if x.get("reihe") == "k_ermuedung" or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
             return ZONE_SHORT
         return ZONE_VOLLTREFFER if tk in drei else ZONE_LONG
 
@@ -749,7 +761,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
         else:
             a_ = float(x["abstand_vz"])
             lo, hi = zone(tk)
-            short = x.get("reihe") == "k_ermuedung"
+            short = zone(tk) == ZONE_SHORT
             if a_ > hi:
                 g = f"{'über der Unterkante' if short else 'gelaufen'} {a_:+.1f} %"
             elif a_ < lo:
@@ -797,13 +809,14 @@ def lagebild():
             if df is not None and len(df):
                 kurs = float(df["Close"].iloc[-1])
                 a = atr_modul.wert(df)
-                av = avwaps(df)
+                av = avwaps(df, (x.get("zr") or {}).get("tag") if x.get("reihe") == "zahlen" else None)
         except Exception:  # noqa: BLE001
             pass
         abst = x.get("abstand_vz")                      # mit Vorzeichen; „abstand“ ist nur der Betrag (10.11.2026)
         if kurs and abst is not None:
             pivot = kurs / (1 + float(abst) / 100)
-        stopp = pivot - 1.5 * a if pivot and a else None
+        short_ = _seite(x) == "short"                   # Short: Stopp über dem Einstieg (12.11.2026, vorher darunter)
+        stopp = (pivot + 1.5 * a if short_ else pivot - 1.5 * a) if pivot and a else None
         kacheln = {}
         for k_, v in (x.get("kacheln") or {}).items():
             amp = v[0] if not isinstance(v[0], list) else {"M": v[0][0], "K": v[0][1] if len(v[0]) > 1 else None}
@@ -822,7 +835,7 @@ def lagebild():
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
                 if kurs and stopp else None,
-                "ausbruch": x.get("ausbruch"), "avwap": av, "kacheln": kacheln,
+                "ausbruch": x.get("ausbruch"), "zahlen_reaktion": x.get("zr"), "avwap": av, "kacheln": kacheln,
                 "rueckenwind": {k_: ({"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}.get(r.get(k_), r.get(k_))
                                      if k_.endswith("_feld") else r.get(k_))
                                 for k_ in ("stufe", "rang", "rang_vor4", "tempo", "beschleunigung",
@@ -892,14 +905,15 @@ def _ausschnitt(lb, nr):
                            for c in k]}
     if nr == 3:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "kandidaten": [
-            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "depot", "zahlen", "feste_ampeln")}
+            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "depot", "zahlen", "zahlen_reaktion",
+                                   "feste_ampeln")}
             | {"kacheln": {n: c["kacheln"].get(n) for n in ("Fundament", "Nächste Zahlen") if n in c["kacheln"]}}
             for c in k]}
     if nr == 4:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
             {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "setup_minervini", "setup_kullamaegi",
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
-                               "stopp_1_5_atr", "ausbruch", "avwap", "kacheln", "feste_ampeln")}
+                               "stopp_1_5_atr", "ausbruch", "zahlen_reaktion", "avwap", "kacheln", "feste_ampeln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
     return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
             "wirtschaftswetter": lb.get("wirtschaftswetter"), "depot": lb["depot"],
