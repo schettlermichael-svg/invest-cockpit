@@ -35,7 +35,6 @@ STUFE_TEXT = {
           "vorhandenen Quartalen, RS-Hoch seit dem Börsengang.",
 }
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
-from gestaltung import TERMIN_GELB as TERMIN_WARNUNG   # eine Regel für die App (12.11.2026)
 
 
 def _chip(text, farbe):
@@ -246,7 +245,9 @@ def _termin(x, stand):
     tage = (d - pd.Timestamp(stand)).days
     if tage < 0:                                 # Termin vorbei, die neuen Daten kommen mit dem nächsten Laden
         return "", False
-    return f'{d:%d.%m.}' + (f" (in {tage} T.)" if 0 <= tage <= 60 else ""), 0 <= tage <= TERMIN_WARNUNG
+    import gestaltung
+    amp = gestaltung.termin_ampel(tage)             # eine Regel für die App: bis 7 Tage rot, bis 14 gelb
+    return f'{d:%d.%m.}' + (f" (in {tage} T.)" if 0 <= tage <= 60 else ""), (amp if amp in ("rot", "gelb") else False)
 
 
 def _reaktion(x):
@@ -306,7 +307,7 @@ def dreifach(erg):
             f'<div style="color:{TEXT_2};font-size:13px">{t(x["sektor"])}{" ◇" if x.get("sektor_stabil") else ""} · '
             f'{t(x["branche"])}{" ◇" if x.get("branche_stabil") else ""}</div>'
             + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")
-            + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn else TEXT_2}">'
+            + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn == "rot" else GELB if warn else TEXT_2}">'
             + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
             + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
             + _punkte_html(x) + '</div></a>')
@@ -327,7 +328,7 @@ def _zeile(tk, x, stand):
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
             "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
             "Thema": (x["thema"] or "").split(" · ")[0][:40],
-            "Zahlen am": ("⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
+            "Zahlen am": ("🔴 " if warn == "rot" else "⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
             "Zahlen im Einzelnen": _punkte_text(x)}
 
 

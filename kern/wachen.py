@@ -96,8 +96,10 @@ def gleichlauf(tisch, akten, tafel):
                                        f"{mk['einstieg']:.2f} $ ({mk['seite']})"))
         a = taf.get(tk)
         if a and a.get("pivot"):
-            if _pct(a["pivot"], e_tisch) > TOL_EINSTIEG:
-                aus.append(("rot", f"{tk}: Einstieg beim Stab {a['pivot']:.2f} $, im Kartentisch {e_tisch:.2f} $"))
+            # gegen den Chart (frisch gerechnet aus den Kursen) – der Tisch-Wert ist dieselbe Quelle wie der Stab
+            ref, wo = (mk["einstieg"], "im Chart") if mk and mk.get("einstieg") else (e_tisch, "im Kartentisch")
+            if _pct(a["pivot"], ref) > TOL_EINSTIEG:
+                aus.append(("rot", f"{tk}: Einstieg beim Stab {a['pivot']:.2f} $, {wo} {ref:.2f} $"))
             if a.get("stopp"):
                 kurz = (a.get("seite") == "short")
                 if (a["stopp"] <= a["pivot"]) if kurz else (a["stopp"] >= a["pivot"]):

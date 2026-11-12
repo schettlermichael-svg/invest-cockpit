@@ -765,8 +765,11 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         voll = tk in drei and bool(x.get("reihe")) and not short(tk)   # Volltreffer nur long (Prüf-Agent 12.11.2026)
         t_ = termin_tage(tk)
         rs = r.get("rang") or 0
-        return (t_ is not None and t_ <= 7, not voll,                 # 7 = gestaltung.TERMIN_ROT not x.get("stern"), not geld_mit(tk),   # Watchlist zählt nicht
-                rs if short(tk) else -rs)                     # (Micky 12.11.2026: neutral, die Stärke entscheidet)
+        import gestaltung
+        # Rang: Termin nah nach hinten, Volltreffer, ★, Geld in Setup-Richtung, RS – die Watchlist zählt nicht
+        # (Micky 12.11.2026: neutral, die Stärke entscheidet)
+        return (t_ is not None and t_ <= gestaltung.TERMIN_ROT, not voll, not x.get("stern"), not geld_mit(tk),
+                rs if short(tk) else -rs)
 
     pool = set(titel_t) | set(drei) | set(wl)
     elite = sorted((tk for tk in pool if bereit(tk)), key=klasse)
@@ -862,7 +865,9 @@ def lagebild():
             pivot = float(ein["wert"])                  # eines älteren Tischs zurückgerechnet)
         elif kurs and x.get("abstand_vz") is not None:  # Tische vor dem 13.11.2026
             pivot = kurs / (1 + float(x["abstand_vz"]) / 100)
-        abst = (kurs / pivot - 1) * 100 if kurs and pivot else None   # zum Kurs von heute, ungerundet für die Ampel
+        # Abstand wie die Auswahl: vom Tag des Kartentischs (Prüf-Agent: sonst misst die Akte am Kurs von heute und
+        # die Auswahl am Tisch-Tag – ein Titel stand dann „einsatzbereit“ und zugleich „gelaufen“); ungerundet für die Ampel
+        abst = float(x["abstand_vz"]) if x.get("abstand_vz") is not None else None
         short_ = _seite(x) == "short"                   # Short: Stopp über dem Einstieg (12.11.2026, vorher darunter)
         stopp = (pivot + 1.5 * a if short_ else pivot - 1.5 * a) if pivot and a else None
         kacheln = {}

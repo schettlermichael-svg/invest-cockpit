@@ -439,6 +439,11 @@ def rueckenwind_zeichen(x):
     if not rw:
         return ""
     p = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
+    if lagekarte.richtung(x) == "short":              # Short: Kurs und Geld gespiegelt (Prüf-Agent 12.11.2026)
+        import stab
+        g = lambda a: stab._GEGEN.get(a, a)       # noqa: E731
+        return (f'Gegenwind für long = Rückenwind für Short · Kurs {p.get(g(rw["kurs"]), "⚪")} '
+                f'Geld {p.get(g(rw["geld"]), "⚪")}' + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
     return (f'Rückenwind Kurs {p.get(rw["kurs"], "⚪")} Geld {p.get(rw["geld"], "⚪")} Zahlen {p.get(rw["zahlen"], "⚪")}'
             + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
 
@@ -466,7 +471,8 @@ def zeile(tk, x):
             "Stab": ("🎯 " if st_[0] else "") + st_[1] if st_ else "",
             "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
                                              "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
-            "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
+            "Abstand %": zahl(x["abstand_vz"], 1) if x.get("abstand_vz") is not None else "",   # ohne Einstieg leer
+            "Was fehlt": lagekarte.grund(x)}
 
 
 def _klapp(titel, zeile_, inhalt):
@@ -639,11 +645,11 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
                    f'background:{geld}"></span></td>'
                    f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (True, "Depot"))[1])}</td></tr>')
     kopf = "".join(f'<th style="text-align:left;padding:6px 8px;font-size:13px;font-weight:500;color:{TEXT_3};'
-                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "zum Pivot", "Geld",
+                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "zum Einstieg", "Geld",
                                                                          "Warum dabei"))
     regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(stab.ZONE_LONG[0], 0)} "
-             f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Pivot, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter der "
-             f"Unterkante, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {stab.RANG_TEXT} · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
+             f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Einstieg des Setups, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter dem "
+             f"Einstieg, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {stab.RANG_TEXT} · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
     return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
             f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'

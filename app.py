@@ -524,8 +524,8 @@ def konferenz_zeigen():
         n_stab = sum(1 for x in lk["tafel"] if x.get("beim_stab", True))
         with st.expander(f"Alle Akten des Stabs · {n_stab} beim Stab, {len(lk['tafel']) - n_stab} nur Watchlist · warum jeder dort liegt"):
             st.caption(f"So werden die Akten gezogen (Klasse statt Masse): immer das Depot; dazu nur einsatzbereite Setups – "
-                       f"Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, Short bis 5 % "
-                       f"unter der Unterkante, Volltreffer bis +10 %). Rang: {stab.RANG_TEXT}; je "
+                       f"Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Einstieg des Setups, "
+                       f"Short bis 5 % unter dem Einstieg, Volltreffer bis +10 %). Rang: {stab.RANG_TEXT}; je "
                        f"Reihe bis {stab.AKTEN_JE_REIHE} Plätze vorab, höchstens {stab.AKTEN_MAX}. Alles andere zeigt der "
                        f"Kartentisch; Watchlist-Titel ohne Akte stehen unten nur mit den festen Ampeln.")
             st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)

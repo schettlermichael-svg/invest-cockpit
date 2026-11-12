@@ -84,8 +84,15 @@ def _chip(text, ampel=None):
 
 
 def _zone(erk):
-    """Die Zone des Systems, das das Setup liefert: Minervini, sonst die Konsolidierung des Kullamägi-Breakouts."""
+    """Die Zone des Setups: Base (Base-Ausbruch, Flagge, nur Muster) bzw. Konsolidierung (Momentum-Ausbruch); bei Sprung,
+    Zahlen-Reaktion und den Shorts kein Rahmen (Prüf-Agent 12.11.2026: sonst stand die Base neben dem Einstieg eines
+    anderen Setups)."""
+    r_ = (erk.get("setup_info") or {}).get("reihe")
+    if r_ in ("k_ep", "zahlen", "k_ermuedung", "k_baerenflagge"):
+        return None
     sy = erk.get("systeme") or {}
+    if r_ == "k_breakout":
+        return ((sy.get("k") or {}).get("breakout") or {}).get("zone")
     z = (sy.get("m") or {}).get("zone") or {}
     if z.get("zone"):
         return z
@@ -129,21 +136,26 @@ def _kleinchart(df, erk, tage=126):
     return "".join(s)
 
 
-def _pivot(erk):
-    """Einstieg DES Setups (depot.plan → depot.einstieg_setup; Prüf-Agent 12.11.2026: vorher Minervini-Pivot zuerst,
-    dann Kullamägi – bei HWM in der Zahlen-Reaktion der Pivot einer alten Base)."""
+def _einstieg(erk):
+    """(Seite, Einstieg) DES Setups direkt aus depot.einstieg_setup – auch ohne ATR (junge Titel)."""
     import depot
-    pl = depot.plan(erk)
-    return pl[1] if pl else None
+    sy = erk.get("systeme") or {}
+    seite, e, _ = depot.einstieg_setup(erk.get("setup_info"), sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"),
+                                       erk.get("kurs"))
+    return seite, e
+
+
+def _pivot(erk):
+    """Einstieg DES Setups (Prüf-Agent 12.11.2026: vorher Minervini-Pivot zuerst, dann Kullamägi – bei HWM in der
+    Zahlen-Reaktion der Pivot einer alten Base)."""
+    return _einstieg(erk)[1]
 
 
 def _abstand(erk, kurs):
     """(Beschriftung, Wert, Anteil 0–1 für die Leiste, Farbe) – zum Einstieg des Setups, Short gespiegelt."""
-    import depot
-    pl = depot.plan(erk)
-    if not pl:
+    seite, p = _einstieg(erk)
+    if not p:
         return "Abstand zum Einstieg", "kein Setup", 0.0, GRAU
-    seite, p = pl[0], pl[1]
     ab = (kurs / p - 1) * 100
     e = -ab if seite == "short" else ab                 # positiv = in Richtung des Setups
     anteil = min(1.0, max(0.0, 1 + e / 10)) if e <= 0 else 1.0

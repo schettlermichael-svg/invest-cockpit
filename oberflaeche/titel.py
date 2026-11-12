@@ -504,7 +504,7 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
                        + st(em["unten"], True)))
     if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
         zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
-    elif not m.get("pivot") and len(c) >= 260:
+    elif not m.get("pivot") and len(c) >= 260 and r_ not in ("m_spitze", "m_weitere"):
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
         tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
         marken_ = [(p_, x) for p_, x, f in ((max(g150, g200), "GD150/200", kurs < max(g150, g200)),
