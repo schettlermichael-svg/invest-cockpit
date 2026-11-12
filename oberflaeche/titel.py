@@ -258,7 +258,7 @@ def _k2_markt(mm, km, mr):
     k = (km["ampel"], km["wort"]) if km else ("grau", "–")
     oneil = (f"O'Neil: {mr['zustand']} seit {mr['seit']:%d.%m.%Y}" if mr else "")
     return kachel2("Markt", m, k, oneil,
-                   "M – " + (mm["regel"] + "\n" + mm["text"] if mm else "keine Daten") + "\n\nK – "
+                   "Base-Ausbruch – " + (mm["regel"] + "\n" + mm["text"] if mm else "keine Daten") + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – "
                    + (km["regel"] + "\n" + km["text"] if km else "keine Daten")
                    + ("\n\nZeichen O'Neil (keine Regel mehr): " + mr["text"] if mr else ""))
 
@@ -291,10 +291,10 @@ def _k2_trend(m, ph, ph_reihe, df=None):
              + (f" seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
              + _weinstein_ausbruch(m, ph, df)) if ph else ""
     return kachel2("Trend", mm, None, zeile,
-                   "M – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
+                   "Base-Ausbruch – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
                    "der Kachel „Stärke“). Sie entspricht Weinsteins Stufe 2: "
                    + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in tv.items())
-                   + "\n\nK – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
+                   + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
                    + "\n\nPhase nach Weinstein nur noch als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
                      "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
                      "steigender 30-Wochen-Linie.")
@@ -311,9 +311,9 @@ def _k2_staerke(m, k, rang, rw=None):
     zeile = (f'Rückenwind: {rw["stufe"] or "keine Stufe"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
              f'({rw["tempo"]:+d} in 4 Wo.)' if rw else fuehrer_rang.text(fr))
     return kachel2("Stärke", mm, kk, zeile,
-                   "M – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
+                   "Base-Ausbruch – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
                    "unserem Revier. Minervini verlangt mindestens 70 – der achte Punkt der Trendvorlage. Die Zahl ist "
-                   "kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\n\nK – Kullamägi sucht die ein bis "
+                   "kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi sucht die ein bis "
                    "zwei Prozent mit den größten Kursanstiegen über 1, 3 und 6 Monate. Grün = in einem Zeitraum unter "
                    "den obersten 2 %, gelb = oberste 5 %. Angezeigt: der beste der drei Zeiträume ("
                    + fuehrer_rang.text(fr) + ").\n\nRückenwind – die Stufe aus der Seite Rückenwind: Entsteht = früh, "
@@ -336,10 +336,10 @@ def _k2_fundament(m, k, fund, ph, df, gewinne):
     zeile = z[2] + (f" · {ev[1]}" if ev and ev[0] != "grau" else "")
     gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün") if fund else 0
     return kachel2("Fundament", mm, kk, zeile,
-                   "M – Minervini kauft Führer mit wachsenden Zahlen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot "
+                   "Base-Ausbruch – Minervini kauft Führer mit wachsenden Zahlen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot "
                    f"(grün ab 25 %). Alle sieben Prüfpunkte: {gruen} von 7 grün (Liste weiter unten). "
                    + (_widerspruch(ph) or "")
-                   + "\n\nK – Beim Breakout schaut Kullamägi nicht auf die Zahlen (rein technisch). Beim Episodic Pivot "
+                   + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Beim Breakout schaut Kullamägi nicht auf die Zahlen (rein technisch). Beim Episodic Pivot "
                      "braucht er eine Nachricht, die den Markt zur Neubewertung zwingt – oft überraschend starke Zahlen."
                    + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
 
@@ -355,8 +355,8 @@ def _k2_setup(m, k, erk, df):
               if h and h["ampel"] != "rot" else ("rot", "keines"))
     teile = ([f"Pivot {zahl(m['pivot'])} $ · {m['lage']}"] if m.get("pivot")     # Base und Tiefe stehen in „Base“
              else [next(x for n, _, x in m["regeln"] if n.startswith("Reife Base"))])
-    hilfe = ("M – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
-             + "\n\nK – " + "\n".join(
+    hilfe = ("Base-Ausbruch – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
+             + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – " + "\n".join(
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), em) if x))
     su = erk.get("setup_info")
@@ -394,10 +394,10 @@ def _k2_enge(m, k, erk, df):
         zeile = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
                                                      if e.get("volumen") == e.get("volumen") and e.get("volumen") else "")
     return kachel2("Enge", mm, kk, zeile,
-                   "M – Minervinis VCP (Baustein 2 des Scanners, wie im Chart): jede Kontraktion höchstens 70 % so tief "
+                   "Base-Ausbruch – Minervinis VCP (Baustein 2 des Scanners, wie im Chart): jede Kontraktion höchstens 70 % so tief "
                    "wie die vorige, die letzte höchstens 10 %, das Volumen leiser als in der ersten. Grün = mindestens "
                    "zwei schrumpfende Kontraktionen; rot = die letzte ist tiefer als die vorige.\n\n"
-                   "K – Kullamägi: kurze Konsolidierung, meist 1–3 Wochen, nach einem Schub nach oben, vorzugsweise bei "
+                   "Flagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi: kurze Konsolidierung, meist 1–3 Wochen, nach einem Schub nach oben, vorzugsweise bei "
                    "reduziertem Volumen. Gelb bis 8 Wochen.")
 
 

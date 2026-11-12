@@ -7,7 +7,9 @@ breite()           Anteil der Aktien der Breite-Liste (einstellungen/breite.txt,
                    über ihrem GD200, täglich – fest, weil das Pendel an dieser Liste geeicht ist;
                    neue Tage aus Massive, Ersatz Yahoo
 breite_pruefung()  Plausibilitätswächter: Abdeckung, Sprünge, Aktualität, Ersatzquelle
-Alles wird höchstens einmal je 12 Stunden neu geholt.
+Alles wird höchstens einmal je 12 Stunden neu geholt. Kurse von Yahoo (Prüfung 12.11.2026): eine noch laufende Tageskerze
+wird nie gespeichert, und eine Datei ohne den letzten abgeschlossenen Handelstag gilt nicht als frisch – vorher konnte ein
+Aufruf während der US-Börse (z. B. 17 Uhr) den halben Tag speichern, und der Frühlauf am Morgen las ihn noch als „frisch“.
 """
 import io
 import os
@@ -23,6 +25,37 @@ START = "2006-01-01"
 
 def _frisch(pfad, stunden=12):
     return os.path.exists(pfad) and time.time() - os.path.getmtime(pfad) < stunden * 3600
+
+
+def _kurs_frisch(pfad):
+    """Kursdatei frisch: jünger als 12 Stunden UND mit dem letzten abgeschlossenen Handelstag (oder in der letzten Stunde
+    geholt – an US-Feiertagen gibt es den Tag nicht, dann nicht bei jedem Aufruf neu laden)."""
+    if not _frisch(pfad):
+        return False
+    if _frisch(pfad, 1):
+        return True
+    try:
+        import massive
+        soll = massive._letzter_schluss()
+        while soll.weekday() >= 5:
+            soll -= pd.Timedelta(days=1)
+        with open(pfad, "rb") as f:                 # letzte Zeile genügt
+            f.seek(max(0, os.path.getsize(pfad) - 200))
+            letzte = f.read().decode("utf-8", "ignore").strip().splitlines()[-1]
+        return pd.Timestamp(letzte.split(",")[0]) >= soll
+    except Exception:  # noqa: BLE001
+        return True
+
+
+def _ohne_laufende(ticker, df):
+    """Laufende Tageskerze (Börse heute noch offen) weglassen – gespeichert werden nur abgeschlossene Tage."""
+    try:
+        import daten
+        if len(df) and daten._offen(ticker, df.index[-1]):
+            return df.iloc[:-1]
+    except Exception:  # noqa: BLE001
+        pass
+    return df
 
 
 def _pfad(name):
@@ -75,7 +108,7 @@ def fred(reihe):
 
 def yahoo(ticker):
     pfad = _pfad(ticker)
-    if not _frisch(pfad):
+    if not _kurs_frisch(pfad):
         import yfinance as yf
         df = yf.download(ticker, start=START, auto_adjust=True, progress=False, threads=False)
         if isinstance(df.columns, pd.MultiIndex):
@@ -85,14 +118,14 @@ def yahoo(ticker):
         df = df[["Close"]].dropna()
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df.index.name = "Datum"
-        df.to_csv(pfad)
+        _ohne_laufende(ticker, df).to_csv(pfad)
     return pd.read_csv(pfad, parse_dates=["Datum"], index_col="Datum")["Close"]
 
 
 def yahoo_ohlc(ticker):
     """Tageskerzen mit Volumen ab 1985 (Datei <ticker>_ohlc.csv) – für Distributionstage und Follow-Through-Day."""
     pfad = _pfad(ticker + "_ohlc")
-    if not _frisch(pfad):
+    if not _kurs_frisch(pfad):
         import yfinance as yf
         df = yf.download(ticker, start="1985-01-01", auto_adjust=False, progress=False, threads=False)
         if isinstance(df.columns, pd.MultiIndex):
@@ -102,7 +135,7 @@ def yahoo_ohlc(ticker):
         df = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
         df.index = pd.to_datetime(df.index).tz_localize(None)
         df.index.name = "Datum"
-        df.to_csv(pfad)
+        _ohne_laufende(ticker, df).to_csv(pfad)
     return pd.read_csv(pfad, parse_dates=["Datum"], index_col="Datum")
 
 
@@ -141,7 +174,7 @@ def breite():
     (wie viele Werte einen Kurs hatten) und die Quelle – für breite_pruefung()."""
     pfad_schluss = _pfad("revier_schluesse")
     pfad = _pfad("breite")
-    if _frisch(pfad):
+    if _kurs_frisch(pfad):
         return pd.read_csv(pfad, parse_dates=["Datum"], index_col="Datum")["breite"]
     titel = [z.strip() for z in open(BREITE_LISTE, encoding="utf-8") if z.strip() and not z.startswith("#")]
     quelle_pfad = os.path.join(SPEICHER, "breite_quelle.txt")

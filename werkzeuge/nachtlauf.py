@@ -210,7 +210,7 @@ def main(nur_tisch=False):
     _kopf_neu()
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
-                + f"{(p.get('reihen') or {}).get('m_spitze', 0)} Spitzenkandidaten · {p.get('neu', 0)} Neuigkeiten")
+                + f"{(p.get('reihen') or {}).get('m_spitze', 0)} × Base-Ausbruch ★ · {p.get('neu', 0)} Neuigkeiten")
 
     # Zweiter Anlauf der Konferenz (10.11.2026; seit dem Frühlauf 12.11.2026 30 Minuten nach dem ersten, vor den
     # Massive-Durchgängen): ist sie gescheitert, noch einmal
@@ -256,7 +256,8 @@ def main(nur_tisch=False):
 
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
     "Massive-Tageskurse": "Rückenwind, RS-Rang, Führer-Rang, Rudel, Breite",
-    "Yahoo-Tageskurse": "Charts, Kartentisch, Akten des Stabs, Marktampeln",
+    "Yahoo-Tageskurse": "Charts, Kartentisch, Akten des Stabs",
+    "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
     "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
     "RS-Rang": "Minervini-RS im Kartentisch",
     "Führer-Rang": "Kullamägi-Führer (oberste 1–2 %)",
@@ -281,6 +282,13 @@ def datenstand():
         aus["Yahoo-Tageskurse"] = f"{i.index[-1]:%Y-%m-%d}" if i is not None and len(i) else None
     except Exception:  # noqa: BLE001
         aus["Yahoo-Tageskurse"] = None
+    try:                                        # Marktdaten der Lage (Prüfung 12.11.2026 – vorher nicht bewacht)
+        import marktdaten
+        pf = marktdaten._pfad("^GSPC_ohlc")
+        aus["Marktdaten (Indizes)"] = (f"{pd.read_csv(pf, parse_dates=['Datum']).Datum.iloc[-1]:%Y-%m-%d}"
+                                       if os.path.exists(pf) else None)
+    except Exception:  # noqa: BLE001
+        aus["Marktdaten (Indizes)"] = None
     try:
         import rueckenwind
         aus["Rückenwind"] = (rueckenwind.laden() or {}).get("stand")

@@ -146,7 +146,7 @@ def _gruppe(art, name, mitglieder, C, V):
 
 def _geld_ampel(sek, bra, th=None):
     """Drei Stimmen: Sektor, Branche, Thema (Micky, 09.11.2026). Grün = mindestens zwei vorne (führend oder
-    erstarkend) und keine im Abfluss (schwächelnd); gelb = eine vorne; rot = keine. Ohne Thema zählen Sektor und
+    erstarkend) und keine schwächelnd (Feld „Ermüdend“, das Geld fließt ab); gelb = eine vorne; rot = keine. Ohne Thema zählen Sektor und
     Branche – dann müssen beide vorne sein."""
     stimmen = [x for x in (sek, bra, th) if x]
     vorne = sum(1 for x in stimmen if x["feld"] in VORNE)

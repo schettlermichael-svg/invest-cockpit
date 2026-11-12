@@ -75,7 +75,7 @@ BEGRIFFE DER APP
 - Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „setup_minervini“ und „setup_kullamaegi“ sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
 - Stufen des Rückenwinds: {stufen}
 - Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
-- Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen.
+- Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt.
 - Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
 - Volltreffer: dreifacher Rückenwind UND der Titel steht in einer Reihe des Kartentischs (Setup).
 - Kaufzone: Pivot bis +5 %. Stopp im Chart: 1,5 ATR unter dem Pivot (Short: 1,5 ATR über der Unterkante).
@@ -592,7 +592,7 @@ FESTE_REGELN = (
     ("Einstieg", "Abstand zum Pivot (Short: zur Unterkante, gespiegelt): grün = in der Kaufzone (Pivot bis +5 %) · "
                  "gelb = am Auslöser (bis 5 % davor) oder 5–10 % darüber · rot = mehr als 10 % darüber (gelaufen) · "
                  "grau = weiter weg oder kein Pivot"),
-    ("Geld", "Geld-Ampel des Rückenwinds: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen; beim "
+    ("Geld", "Geld-Ampel des Rückenwinds: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt; beim "
              "Short gespiegelt (Abfluss = grün)"),
     ("Zahlen", "Zahlen-Ampel (Gewinn und Umsatz); beim Short nur Zeichen (grau)"),
     ("Termin", "nächste Zahlen in höchstens 7 Tagen = rot · in 8–14 Tagen = gelb · später = grün · unbekannt = grau"),
