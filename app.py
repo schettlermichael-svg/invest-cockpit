@@ -587,14 +587,19 @@ def konferenz_technik(laeuft):
         import meldung
         with st.popover("📱 Meldung aufs Handy"):
             st.markdown(
-                "Nach jedem Frühlauf und jeder Konferenz kommt eine kurze Meldung aufs Handy – auch wenn etwas schiefging.\n\n"
+                "Nach jeder Konferenz kommt der Tagesbefehl in Kurzfassung aufs Handy (Frühlauf: gegen 7 Uhr) – Haltung, "
+                "Markt, Pendel, Ziele und Gefahren; ein Tipp öffnet den Konferenzraum. Geht etwas schief, kommt eine "
+                "Warnung.\n\n"
                 "1. Im App Store die kostenlose App **ntfy** laden.\n"
                 "2. In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
             st.code(meldung.kanal(), language=None)
-            st.markdown("3. Hier auf „Testnachricht senden“ drücken – sie sollte sofort ankommen.\n\n"
+            st.markdown("3. Hier auf „Tagesbefehl senden“ drücken – der jüngste Tagesbefehl sollte sofort ankommen.\n\n"
                         "Der Kanalname ist zufällig – wer ihn nicht kennt, sieht nichts.")
-            if st.button("Testnachricht senden", key="ntfy_test"):
-                if meldung.senden("Test aus dem Konferenzraum – die Leitung steht.", "Invest Cockpit"):
+            if st.button("Tagesbefehl senden", key="ntfy_test"):
+                k_ = stab.letzte()
+                titel_, text_ = (stab.kurzfassung(k_) if k_ else
+                                 ("Invest Cockpit", "Test aus dem Konferenzraum – die Leitung steht."))
+                if meldung.senden(text_, titel_, False, "Konferenzraum"):
                     st.success("Gesendet.")
                 else:
                     st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
