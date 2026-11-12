@@ -406,12 +406,19 @@ def _gruende(p):
 
 def tisch_lauf_stand():
     """Für den Knopf: (laeuft, Text). Läuft gerade der Nachtlauf, wird nicht doppelt gerechnet."""
-    nacht, _ = _laeuft(PROTOKOLL, 12)
+    nacht, pn = _laeuft(PROTOKOLL, 12)
     if nacht:
         return True, "Der Nachtlauf rechnet gerade – der Kartentisch kommt mit ihm."
     laeuft, p = _laeuft(TISCH_PROTOKOLL, 3)
     if p is None:
         return False, ""
+    if not laeuft and pn and pn.get("start"):
+        # Ein späterer Nachtlauf hat den Kartentisch neu gerechnet: die alte Meldung des Knopfs gilt nicht mehr
+        # (12.11.2026: „Zuletzt 06.11. – gescheitert“ stand eine Woche lang da, obwohl jeder Nachtlauf danach lief)
+        import pandas as pd
+        a_, b_ = (pd.to_datetime(str(x.get("start")), dayfirst=True, errors="coerce") for x in (p, pn))
+        if not pd.isna(a_) and not pd.isna(b_) and b_ > a_:
+            return False, ""
     namen = ["Ränge", "Rückenwind", "Kartentisch", "Lage"]
     fehler = _gruende(p)
     if laeuft:

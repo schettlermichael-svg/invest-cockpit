@@ -526,12 +526,13 @@ def plan(tisch=None):
         rw_erg = rueckenwind.laden() or {}
         drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
         pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
-        akten, gruende = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, set(w[watchlists.STANDARD]), pos)
+        akten, gruende, rest = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, set(w[watchlists.STANDARD]),
+                                            pos, mit_rest=True)
         for tk, g in gruende.items():
             if tk in tisch["titel"]:
                 tisch["titel"][tk]["stab"] = g
     except Exception:  # noqa: BLE001 – ohne Auswahl steht der Tisch trotzdem
-        akten, gruende, drei = [], {}, set()
+        akten, gruende, drei, rest = [], {}, set(), []
     b = tisch["barometer"]
     if "m_gruen" in b:                            # ein System (12.11.2026): grüne Setups nach Richtung, „nur Muster“ nicht
         gr = [lagekarte.richtung(x) for x in tisch["titel"].values() if x.get("gruen") and x.get("reihe") not in (None, "vcp")]
@@ -561,7 +562,7 @@ def plan(tisch=None):
                     for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
     # ③ Stellung: Barometer, Lagekarte nach Sektoren, Reihen · ④ Termine (Seite Rückenwind seit 10.11.2026)
-    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei)},
+    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei, rest)},
              {"art": "html", "rolle": "stellung", "html": station("stellung") + barometer},
              {"art": "html", "rolle": "lagekarte", "html": lagebild(tisch)}]
 
@@ -589,7 +590,7 @@ def plan(tisch=None):
     return teile
 
 
-def auswahl_html(tisch, akten, gruende, drei):
+def auswahl_html(tisch, akten, gruende, drei, rest=()):
     """Trichter vom Revier zum Stab und die Tabelle der Akten (Seite Setups, 12.11.2026) – so sieht man vor der
     Konferenz, was der Stab liest, und warum."""
     import stab
@@ -598,7 +599,7 @@ def auswahl_html(tisch, akten, gruende, drei):
     n_revier = (tisch.get("barometer") or {}).get("titel") or len(tt)
     in_reihe = [tk for tk, x in tt.items() if x.get("reihe") and not str(x.get("reihe")).endswith("_alt")]
     gruen = [tk for tk in in_reihe if tt[tk].get("gruen")]
-    bereit = [tk for tk in gruen if gruende.get(tk) and (gruende[tk][0] or gruende[tk][1] == "Platz voll")]
+    bereit = [tk for tk in gruen if gruende.get(tk) and (gruende[tk][0] or gruende[tk][1].startswith("Platz voll"))]
     stufen = (("Revier", n_revier), ("in einer Reihe", len(in_reihe)), ("Setup grün", len(gruen)),
               ("einsatzbereit", len(bereit)), ("beim Stab", len(akten)))
     trichter = "".join(
@@ -612,7 +613,10 @@ def auswahl_html(tisch, akten, gruende, drei):
         x = tt.get(tk) or {}
         a_ = x.get("abstand_vz")
         r = (x.get("rueckenwind") or {})
-        geld = AMPEL.get(r.get("geld"), GRAU)
+        g_ = r.get("geld")
+        if g_ and lagekarte.richtung(x) == "short":       # Short: Abfluss ist Rückenwind (gespiegelt wie die Matrix)
+            g_ = stab._GEGEN.get(g_, g_)
+        geld = AMPEL.get(g_, GRAU)
         zeilen += (f'<tr><td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
                    f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
                    f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get(x.get("reihe"), "Depot" if not x else "—"))}'
@@ -626,14 +630,27 @@ def auswahl_html(tisch, akten, gruende, drei):
                                                                          "Warum dabei"))
     regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(stab.ZONE_LONG[0], 0)} "
              f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Pivot, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter der "
-             f"Unterkante, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: Volltreffer, "
-             f"Watchlist, Geld grün, RS-Rang · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
+             f"Unterkante, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {stab.RANG_TEXT} · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
     return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
             f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'
             f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Diese {len(akten)} Titel liest der Stab'
             f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
-            f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table></div>')
+            f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table>'
+            + _knapp_draussen(tt, gruende, rest, namen) + '</div>')
+
+
+def _knapp_draussen(tt, gruende, rest, namen, n=10):
+    """Die Grenze sichtbar: die ersten Einsatzbereiten ohne Platz, in derselben Rangfolge (12.11.2026 – so prüft man
+    mit einem Blick, ob draußen jemand Besseres steht als drinnen)."""
+    from gestaltung import TEXT_2, TEXT_3, t
+    if not rest:
+        return ""
+    teile = " · ".join(f'<b>{t(tk)}</b> {t(namen.get((tt.get(tk) or {}).get("reihe"), ""))} '
+                       f'<span style="color:{TEXT_3}">({t((gruende.get(tk) or (False, ""))[1])})</span>'
+                       for tk in rest[:n])
+    return (f'<div style="margin-top:10px;font-size:13px;color:{TEXT_2}">Knapp draußen – {len(rest)} weitere '
+            f'einsatzbereit, die ersten {min(n, len(rest))} in Rangfolge: {teile}</div>')
 
 
 def _marken(x):

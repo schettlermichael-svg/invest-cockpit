@@ -198,14 +198,14 @@ def _tisch_starten():
 
 
 def _tisch_knopf():
-    """Übersicht: Kartentisch (Ränge, Erkennung beider Systeme, Lage) mit den vorhandenen Kursen neu rechnen."""
+    """Kartentisch (Ränge, alle Setups, Lage) mit den vorhandenen Kursen neu rechnen."""
     laeuft, text = nachtlauf.tisch_lauf_stand()
     if st.session_state.get("tisch_lief") and not laeuft:   # gerade fertig geworden: ganze Seite neu zeigen
         st.session_state.tisch_lief = False
         st.rerun()
     st.session_state.tisch_lief = laeuft
     st.button("↻ Kartentisch neu rechnen", use_container_width=True, disabled=laeuft, on_click=_tisch_starten,
-              help="Rechnet RS-Rang, Führer-Rang, den Kartentisch mit beiden Systemen und die Lage neu – "
+              help="Rechnet RS-Rang, Führer-Rang, den Kartentisch mit allen Setups und die Lage neu – "
                    "mit den Kursen des letzten Nachtlaufs, ohne neuen Download. Läuft auf dem Server weiter, auch wenn "
                    "du die Seite schließt.")
     if text:
@@ -539,7 +539,7 @@ def konferenz_zeigen():
         with st.expander(f"Alle Akten des Stabs · {n_stab} beim Stab, {len(lk['tafel']) - n_stab} nur Watchlist · warum jeder dort liegt"):
             st.caption(f"So werden die Akten gezogen (Klasse statt Masse): immer das Depot; dazu nur einsatzbereite Setups – "
                        f"Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, Short bis 5 % "
-                       f"unter der Unterkante, Volltreffer bis +10 %). Rang: Volltreffer, Watchlist, Geld grün, RS-Rang; je "
+                       f"unter der Unterkante, Volltreffer bis +10 %). Rang: {stab.RANG_TEXT}; je "
                        f"Reihe bis {stab.AKTEN_JE_REIHE} Plätze vorab, höchstens {stab.AKTEN_MAX}. Alles andere zeigt der "
                        f"Kartentisch; Watchlist-Titel ohne Akte stehen unten nur mit den festen Ampeln.")
             st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)

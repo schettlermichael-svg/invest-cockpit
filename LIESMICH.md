@@ -631,3 +631,20 @@ Statt „Minervini“ und „Kullamägi“ gibt es sieben Setups: Base-Ausbruch 
   - Momentum-Setups: Trend nach dem GD50.
   - Zahlen-Reaktion: Enge = hält den AVWAP.
 - **Inneres:** Die Schlüssel der Reihen bleiben (m_spitze, k_breakout, …). Neu ist `k_baerenflagge`. „nur Muster“ (`vcp`) geht nicht in die Konferenz.
+
+## Rangfolge der Auswahl für den Stab (12.11.2026)
+
+Von den einsatzbereiten Titeln bekommen die besten 30 eine Akte; das Depot kommt immer dazu, und jede Reihe hat 2 Plätze vorab. Die Rangfolge (`stab.auswahl`, Text in `stab.RANG_TEXT`):
+
+1. Zahlen in höchstens 7 Tagen nach hinten.
+2. Volltreffer.
+3. ★ in der Kaufzone bzw. Short-Zone.
+4. Geld in Richtung des Setups (Short gespiegelt: Abfluss zählt).
+5. Watchlist.
+6. RS-Rang (Short gespiegelt: der schwächere zuerst).
+
+Vorher zählte die Watchlist vor Geld und RS, die Kaufzone und der Termin zählten nicht, und bei Shorts wurde Geld nicht gespiegelt.
+
+Die Seite Setups zeigt unter der Tabelle „Knapp draußen“: die ersten 10 einsatzbereiten Titel ohne Platz, in derselben Rangfolge und mit denselben Merkmalen. So sieht man die Grenze auf einen Blick.
+
+Die Termin-Ampel liest das Datum jetzt aus dem Text der Kachel. Vorher stand dort „in n Tagen“ als Wert, und die Ampel blieb grau. Eine alte Meldung des Knopfs „Kartentisch neu rechnen“ verschwindet, sobald ein späterer Nachtlauf gelaufen ist.

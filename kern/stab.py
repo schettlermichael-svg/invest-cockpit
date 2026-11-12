@@ -42,10 +42,13 @@ SUCHEN_NACHT = 10                                                      # Web-Suc
 SUCHEN_FRAGE = 3
 # Akten des Stabs (Micky 12.11.2026: „Klasse statt Masse – nur das Beste vom Besten im Konferenzraum“): immer das
 # Depot; dazu nur einsatzbereite Setups – Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum
-# Pivot, Short bis 5 % unter der Unterkante); Volltreffer auch bis 10 % über dem Pivot. Rang: Volltreffer, Watchlist,
-# Geld-Ampel grün, RS-Rang. Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
+# Pivot, Short bis 5 % unter der Unterkante); Volltreffer auch bis 10 % über dem Pivot. Rang (Micky 12.11.2026):
+# Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des Setups (Short
+# gespiegelt: Abfluss zählt), Watchlist, RS (Short gespiegelt: schwächer zählt). Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
 # AKTEN_MAX. Alles andere zeigt der Kartentisch; Watchlist-Titel ohne Akte stehen mit festen Ampeln in der Tafel.
 AKTEN_MAX = 30
+RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des "
+             "Setups (Short: Abfluss), Watchlist, RS-Rang (Short: der schwächere zuerst)")
 AKTEN_JE_REIHE = 2
 ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
 
@@ -529,6 +532,33 @@ def _termin_ok(text_oder_datum):
     return s_
 
 
+def termin_datum(zahlen, kachel, heute=None):
+    """Nächster Zahlentermin als ISO-Datum oder None: aus den Zahlen des Rückenwinds, sonst aus der Kachel „Nächste
+    Zahlen“ (deren Wert lautet „in n Tagen“ vom Tag der Kartentisch-Rechnung – das Datum steht im Text, „Do 13.11.2026“).
+    Vergangene Termine zählen nicht (12.11.2026: vorher las die Termin-Ampel aus „in 3 Tagen“ kein Datum → grau)."""
+    import re
+    t_ = (zahlen or {}).get("termin")
+    if not t_ and kachel:
+        teile = [kachel.get("wert"), kachel.get("text")] if isinstance(kachel, dict) else list(kachel)[1:3]
+        for teil in teile:
+            m_ = re.search(r"(\d{2})\.(\d{2})\.(\d{4})", str(teil or ""))
+            if m_:
+                t_ = f"{m_.group(3)}-{m_.group(2)}-{m_.group(1)}"
+                break
+    d = str(t_)[:10] if t_ and re.match(r"\d{4}-\d{2}-\d{2}", str(t_)) else None
+    return d if d and d >= (heute or HEUTE()) else None          # vergangene Termine zählen nicht
+
+
+def termin_tage(zahlen, kachel, heute=None):
+    """Tage bis zu den nächsten Zahlen (0 = heute) oder None."""
+    import pandas as pd
+    d = termin_datum(zahlen, kachel, heute)
+    return None if d is None else (pd.Timestamp(d) - pd.Timestamp(heute or HEUTE())).days
+
+
+_tage = termin_tage
+
+
 def _seite(x):
     """Long oder short aus der Reihe des Setups (10.11.2026) – nicht aus der Weinstein-Phase, die nur Zeichen ist."""
     try:
@@ -630,15 +660,7 @@ def feste_ampeln(c, heute=None):
     aus["Zahlen"] = (("grau" if short else za) if za in _GEGEN else "grau",
                      f"Zahlen {za}" + (f" · {z['punkte']} Punkte" if isinstance(z.get("punkte"), (int, float)) else "")
                      if za else "unbekannt")
-    t_ = z.get("termin") or ((c.get("kacheln") or {}).get("Nächste Zahlen") or {}).get("wert")
-    tage = None
-    try:
-        import pandas as pd
-        dt = pd.to_datetime(str(t_)[:10], errors="coerce")
-        if not pd.isna(dt):
-            tage = (dt - pd.Timestamp(heute)).days
-    except Exception:  # noqa: BLE001
-        pass
+    tage = termin_tage(z, (c.get("kacheln") or {}).get("Nächste Zahlen"), heute)
     if tage is None or tage < 0:
         aus["Termin"] = ("grau", "unbekannt")
     else:
@@ -702,7 +724,7 @@ def bilanz(vorher, kurs_heute):
     return {"konferenz_vom": vorher.get("stand"), "ziele": aus}
 
 
-def auswahl(titel_t, rw_t, drei, wl, pos):
+def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
     """Welche Titel eine Akte bekommen (eine Funktion für Stab und Seite Setups – was die Seite zeigt, geht in die
     Konferenz). → (Liste in Rangfolge, {Ticker: (beim Stab?, Grund)}) für jeden Titel mit Reihe, auf der Watchlist oder
     im Depot."""
@@ -723,10 +745,25 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
         lo, hi = zone(tk)
         return lo <= float(a_) <= hi
 
+    def short(tk):
+        return zone(tk) == ZONE_SHORT
+
+    def geld_mit(tk):
+        """Geld in Richtung des Setups: long grün, Short gespiegelt (Abfluss = rot ist der Rückenwind des Shorts)."""
+        g = (rw_t.get(tk) or {}).get("geld_ampel")
+        return g == ("rot" if short(tk) else "grün")
+
+    def termin_tage(tk):
+        x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
+        return _tage((r.get("zahlen") or {}), (x.get("kacheln") or {}).get("Nächste Zahlen"))
+
     def klasse(tk):
-        r = rw_t.get(tk) or {}
-        voll = tk in drei and bool((titel_t.get(tk) or {}).get("reihe"))
-        return (not voll, tk not in wl, r.get("geld_ampel") != "grün", -(r.get("rang") or 0))
+        x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
+        voll = tk in drei and bool(x.get("reihe"))
+        t_ = termin_tage(tk)
+        rs = r.get("rang") or 0
+        return (t_ is not None and t_ <= 7, not voll, not x.get("stern"), not geld_mit(tk), tk not in wl,
+                rs if short(tk) else -rs)
 
     pool = set(titel_t) | set(drei) | set(wl)
     elite = sorted((tk for tk in pool if bereit(tk)), key=klasse)
@@ -745,11 +782,13 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
         if not x.get("reihe") and tk not in pos and tk not in wl:
             continue
         r = rw_t.get(tk) or {}
+        merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") else []) + ([("★ Short-Zone" if short(tk) else "★ Kaufzone")] if x.get("stern") else [])
+                    + ([("Geld fließt ab" if short(tk) else "Geld grün")] if geld_mit(tk) else [])
+                    + (["Watchlist"] if tk in wl else []) + ([f'RS {r["rang"]}'] if r.get("rang") else [])
+                    + ([f"Zahlen in {termin_tage(tk)} Tagen"] if (termin_tage(tk) is not None and termin_tage(tk) <= 7)
+                       else []))
         if tk in drin:
-            g = ("Depot" if tk in pos else " · ".join(
-                (["Volltreffer"] if tk in drei and x.get("reihe") else []) + (["Watchlist"] if tk in wl else [])
-                + (["Geld grün"] if r.get("geld_ampel") == "grün" else []) + ([f'RS {r["rang"]}'] if r.get("rang") else []))
-                 or "einsatzbereit")
+            g = "Depot" if tk in pos else (" · ".join(merkmale) or "einsatzbereit")
         elif not x.get("reihe"):
             g = "kein Setup"
         elif x.get("still"):
@@ -763,14 +802,15 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
         else:
             a_ = float(x["abstand_vz"])
             lo, hi = zone(tk)
-            short = zone(tk) == ZONE_SHORT
             if a_ > hi:
-                g = f"{'über der Unterkante' if short else 'gelaufen'} {a_:+.1f} %"
+                g = f"{'über der Unterkante' if short(tk) else 'gelaufen'} {a_:+.1f} %"
             elif a_ < lo:
-                g = f"{'gelaufen' if short else 'noch weit vor dem Pivot'} {a_:+.1f} %"
+                g = f"{'gelaufen' if short(tk) else 'noch weit vor dem Pivot'} {a_:+.1f} %"
             else:
-                g = "Platz voll"
+                g = " · ".join(["Platz voll"] + merkmale)
         gruende[tk] = (tk in drin, g.replace(".", ","))
+    if mit_rest:                                       # die Einsatzbereiten ohne Platz, in Rangfolge (Seite Setups)
+        return alle, gruende, [tk for tk in elite if tk not in drin]
     return alle, gruende
 
 
@@ -824,8 +864,12 @@ def lagebild():
             amp = v[0] if not isinstance(v[0], list) else {"M": v[0][0], "K": v[0][1] if len(v[0]) > 1 else None}
             wert = v[1] if len(v) > 1 else None
             text = v[2] if len(v) > 2 else None
-            if k_ == "Nächste Zahlen" and not _termin_ok(wert):
-                wert, text = "unbekannt", None
+            if k_ == "Nächste Zahlen":                 # Wert „in n Tagen“ auf heute umrechnen, alte Termine weg
+                n_ = termin_tage(None, v)
+                if n_ is not None:
+                    wert = "heute" if n_ == 0 else "morgen" if n_ == 1 else f"in {n_} Tagen"
+                elif not _termin_ok(wert) or str(wert).startswith("in ") or wert in ("heute", "morgen"):
+                    wert, text = "unbekannt", None
             kacheln[k_] = {"ampel": amp, "wert": wert, "text": text}
         c = {"titel": tk, "depot": tk in pos, "watchlist": tk in wl, "setup_gruen": bool(x.get("gruen")),
                 "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
