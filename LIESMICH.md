@@ -293,9 +293,7 @@ die Rudel-Breite.
 Alter Scanner abgeschaltet: Ordner nach Apps/_to_delete/sepa verschoben (04.11.2026). Einstellungsseite und Sperrliste
 aus Schritt 6 gestrichen (Begründungen als ⓘ und hier; eine Sperrliste wäre ein Filter).
 Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als Urteil.
-- Claudes Teil (geplante Aufgabe Di–Sa 00:37 Uhr, braucht Mac an und Claude-App): TradingView-Kennzahlen nach
-  `daten/tv/revier.csv`, samstags Revier-Pflege (Zugänge mit Steckbrief, Abgänge nur gemeldet), Scalable-Positionen
-  über `depot.uebernehmen()` sobald verbunden; Ergebnis in `daten/nachtlauf/claude_lauf.json`, steht mit in der Datenampel.
+- Claudes früherer Teil (00:37 Uhr: TradingView, Revier) entfällt seit 05.11.2026 – der Server holt beides selbst; Scalable-Positionen folgen, sobald die Schnittstelle verbunden ist.
 
 ## Server (ab 05.11.2026)
 

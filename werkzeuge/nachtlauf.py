@@ -195,6 +195,7 @@ def main(nur_tisch=False):
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
+    _kopf_neu()
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
                 + f"{(p.get('reihen') or {}).get('m_spitze', 0)} Spitzenkandidaten · {p.get('neu', 0)} Neuigkeiten")
@@ -240,8 +241,20 @@ def main(nur_tisch=False):
                 if s_["name"].startswith("Konferenz"):
                     s_["ok"], s_["text"] = True, "im zweiten Anlauf (6 Uhr) geklappt"
         _schreiben(p)
+        _kopf_neu()
         _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
                     f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
+
+
+def _kopf_neu():
+    """Die abgelegte Seite Rückenwind noch einmal bauen, wenn das Protokoll fertig ist (12.11.2026): Sie wird im Schritt
+    „Lage“ mitten im Lauf gebaut und zeigte deshalb bis zur nächsten Programmänderung „Nachtlauf läuft noch oder brach
+    ab“."""
+    try:
+        import uebersicht
+        uebersicht.ablegen(uebersicht.seite_uebersicht())
+    except Exception as e:  # noqa: BLE001 – die alte Ablage bleibt, die App baut sonst selbst
+        print(f"Seite Rückenwind nach Laufende nicht neu abgelegt: {e}", flush=True)
 
 
 def stand():
@@ -260,15 +273,9 @@ def stand():
         return "rot", f"Nachtlauf {p['start']}: gescheitert – {_gruende(p)}"
     if alter > (72 if wochenende else 26):
         return "rot", f"letzter Nachtlauf {p['start']} – Daten veraltet"
-    text = f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig"
-    try:                                         # Teil von Claude (TradingView, Revier, Scalable), 00:37 Uhr
-        c = json.load(open(os.path.join(os.path.dirname(PROTOKOLL), "claude_lauf.json"), encoding="utf-8"))
-        text += f" · Claude {c.get('zeit', '')}: TradingView {c.get('tradingview', '–')}"
-        if str(c.get("tradingview", "")).startswith("Fehler"):
-            return "gelb", text
-    except (OSError, ValueError):
-        pass
-    return "grün", text
+    # Der frühere Teil von Claude um 00:37 (claude_lauf.json) entfällt: TradingView und Revier holt seit 05.11.2026
+    # der Server selbst; die alte Datei zeigte sonst einen veralteten Stand an (12.11.2026).
+    return "grün", f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig"
 
 
 def _laeuft(datei, stunden):
