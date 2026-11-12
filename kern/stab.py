@@ -899,7 +899,8 @@ def lagebild():
                           "rueckschlag", "stabil")} for g in rw.get("gruppen", [])]
     wechsel = [{"titel": tk, **e[-1]} for tk, e in (rw.get("logbuch") or {}).items()
                if e and e[-1].get("seit") and e[-1]["seit"] >= (rw.get("stand") or "")[:10]][:60]
-    schnell = {a: list(rueckenwind_seite.schnell(rw, a)[1])[:15] for a in ("Anführer", "Verfolger")} if rw else {}
+    import rueckenwind as rw_kern
+    schnell = rw_kern.anfuehrer_verfolger(rw) if rw else {}
     vorher = set((_vorige(heute) or {}).get("dreifach") or [])
     markt = {}
     try:

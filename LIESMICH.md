@@ -582,7 +582,7 @@ Regel 13 der Dienstanweisung: Die festen Ampeln sind gesetzt, der Stab färbt si
 - **Setups (Aufklärung und Filter):**
   - ① Auswahl für den Stab: Trichter vom Revier zum Stab und die Akten mit Grund. Gerechnet von `stab.auswahl()`, derselben Funktion, die die Konferenz nutzt.
   - ② Stellung: grüne Setups, die Reihen und die Watchlist, jede Karte mit 🎯 oder dem Grund, warum nicht.
-  - ③ Rückenwind je Titel: dreifacher Rückenwind, Schnellsuche, Titel nach Stufe, Logbuch.
+  - ③ Rückenwind je Titel: dreifacher Rückenwind, Titel nach Stufe, Logbuch.
   - ④ Termine.
 - **Konferenzraum (Beschlusszentrale):** die Lagekarte des Stabs.
 
@@ -648,3 +648,9 @@ Vorher zählte die Watchlist vor Geld und RS, die Kaufzone und der Termin zählt
 Die Seite Setups zeigt unter der Tabelle „Knapp draußen“: die ersten 10 einsatzbereiten Titel ohne Platz, in derselben Rangfolge und mit denselben Merkmalen. So sieht man die Grenze auf einen Blick.
 
 Die Termin-Ampel liest das Datum jetzt aus dem Text der Kachel. Vorher stand dort „in n Tagen“ als Wert, und die Ampel blieb grau. Eine alte Meldung des Knopfs „Kartentisch neu rechnen“ verschwindet, sobald ein späterer Nachtlauf gelaufen ist.
+
+## Schnellsuche entfernt (12.11.2026)
+
+Die Schnellsuche „die Besten auf einen Blick“ auf der Seite Setups ist weg. Ihre Anführer waren genau die ersten 25 Zeilen der Liste „Läuft“ in „Titel nach Stufe“, ihre Verfolger deckten sich größtenteils mit „Entsteht“. Ein Setup prüfte sie nicht.
+
+Der Stab bekommt Anführer und Verfolger weiter (`rueckenwind.anfuehrer_verfolger`, je 15 Titel). Die Verfolger kommen jetzt nur noch aus dem Band von „Entsteht“ (Rang 50 bis unter 85). Vorher gab es keine Untergrenze, und eine Erholung von Rang 5 auf Rang 30 stand ganz oben. Der alte Code liegt auf dem Mac in `_to_delete/schnellsuche_entfernt_2026-11-12.py`.

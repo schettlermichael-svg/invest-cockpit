@@ -1,7 +1,7 @@
 """Teile der Seite Rückenwind, die früher die Übersicht „Lageeinschätzung“ waren (zusammengelegt am 10.11.2026):
   ① Lage           Markt (Indizes und Hochs/Tiefs), Moral der Truppe, Wirtschaftswetter; aufklappbar das
                    Wirtschaftswetter im Einzelnen (Dalio-Quad mit Spur, Instrumente, Abgleich mit den Sektoren)
-  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, dreifacher Rückenwind, Schnellsuche, Stufen, Logbuch)
+  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, dreifacher Rückenwind, Stufen, Logbuch)
   ③ Stellung       Barometer, Lagekarte nach Sektoren, Reihen long und short, Watchlist (kartentisch.plan)
   ④ Termine        Neu seit gestern, Earnings 14 Tage (kartentisch.plan)
   ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze

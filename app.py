@@ -446,7 +446,7 @@ def rueckenwind_zeigen():
 
 def rueckenwind_titel_zeigen():
     """Seite Setups, ③ Rückenwind je Titel (bis 12.11.2026 auf der Seite Rückenwind): dreifacher Rückenwind,
-    Schnellsuche, Titel nach Stufe, Logbuch."""
+    Titel nach Stufe, Logbuch."""
     import rueckenwind as rw_kern
     import rueckenwind_seite as rw
     erg = rw_kern.laden()
@@ -456,20 +456,6 @@ def rueckenwind_titel_zeigen():
         st.markdown(gestaltung.seite("<h3 style='margin:0'>Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h3>",
                                      oben=16, unten=0), unsafe_allow_html=True)
         st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
-        st.markdown(gestaltung.seite("<h3 style='margin:0'>Schnellsuche · die Besten auf einen Blick</h3>", oben=16,
-                                     unten=0), unsafe_allow_html=True)
-        knopf = getattr(st, "segmented_control", None)
-        wahl = (knopf("Schnellsuche", ["Anführer", "Verfolger"], key="rw_schnell", label_visibility="collapsed")
-                if knopf else st.radio("Schnellsuche", ["–", "Anführer", "Verfolger"], horizontal=True, key="rw_schnell"))
-        if wahl in rw.SCHNELL_TEXT:
-            df, tks = rw.schnell(erg, wahl)
-            st.caption(rw.SCHNELL_TEXT[wahl] + " · Zeile anklicken → Titelseite")
-            ereignis = st.dataframe(df, hide_index=True, use_container_width=True, on_select="rerun",
-                                    selection_mode="single-row", key=f"rw_schnell_tab_{wahl}",
-                                    height=min(560, 35 * (len(df) + 1) + 3))
-            reihen = ereignis.selection.rows if ereignis is not None else []
-            if reihen:
-                st.link_button(f"{tks[reihen[0]]}: Titelseite →", f"?seite=Titelseite&t={tks[reihen[0]]}")
         st.markdown(gestaltung.seite("<h3 style='margin:0'>Titel nach Stufe</h3>", oben=16, unten=4),
                     unsafe_allow_html=True)
         st.caption("◆ = auf der Watchlist")

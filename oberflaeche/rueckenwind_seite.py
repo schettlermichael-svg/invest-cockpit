@@ -347,28 +347,6 @@ def stufe(erg, name):
     return pd.DataFrame(reihen), tks
 
 
-SPITZE = 25
-SCHNELL_TEXT = {
-    "Anführer": "Die 25 Titel mit dem höchsten RS-Rang, deren Tempo hält (Stufe Läuft) – bei gleichem Rang der "
-                "stärkere Volumen-Zufluss zuerst. Die Vorhut, die schon an der Front steht.",
-    "Verfolger": "Die 25 Titel, die in 4 Wochen am meisten Rang gewonnen haben und dabei schneller werden "
-                 "(Beschleunigung positiv), noch unter Rang 85. Die Einheiten, die gerade am schnellsten nachrücken.",
-}
-
-
-def schnell(erg, art):
-    """Schnellsuche (09.11.2026): Anführer = Top 25 nach RS-Rang in Stufe Läuft; Verfolger = Top 25 nach Tempo mit
-    positiver Beschleunigung unter Rang 85. Nur eine Sicht – die Listen nach Stufe bleiben vollständig."""
-    t = erg["titel"].items()
-    if art == "Anführer":
-        liste = sorted(((tk, x) for tk, x in t if x["stufe"] == "Läuft"),
-                       key=lambda p: (-p[1]["rang"], -(p[1].get("zufluss") or 0)))[:SPITZE]
-    else:
-        liste = sorted(((tk, x) for tk, x in t if x["rang"] < 85 and x["beschleunigung"] > 0),
-                       key=lambda p: (-p[1]["tempo"], -p[1]["beschleunigung"]))[:SPITZE]
-    return pd.DataFrame([_zeile(tk, x, erg["stand"]) for tk, x in liste]), [tk for tk, _ in liste]
-
-
 def logbuch(erg, tage=28):
     """Offene Einträge (seit wann in der Stufe, Kurs seitdem) und Austritte der letzten Wochen – Beobachtung."""
     lb = erg.get("logbuch") or {}
