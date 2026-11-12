@@ -578,7 +578,20 @@ def konferenz_zeigen():
                 st.caption(f'Ende der Antwort: {f["ende"]} · Blöcke: {", ".join(f.get("bloecke") or [])}')
 
 
+def datenstand_zeigen():
+    """Datenstand-Wache (12.11.2026): eine Zeile oben – mit welchem Handelstag die App rechnet; rot, wenn Teile der
+    App verschiedene Tage haben."""
+    try:
+        ampel, text = nachtlauf.datenstand_zeile()
+    except Exception as e:  # noqa: BLE001
+        ampel, text = "grau", f"Datenstand nicht lesbar: {e}"
+    farbe = {"grün": gestaltung.GRUEN, "rot": gestaltung.ROT, "gelb": gestaltung.GELB}.get(ampel, gestaltung.GRAU)
+    st.markdown(f'<div style="font-size:13px;color:{TEXT_2};margin:2px 0 6px"><span style="color:{farbe}">●</span> '
+                f'{text}</div>', unsafe_allow_html=True)
+
+
 if ansicht == "Konferenzraum":
+    datenstand_zeigen()
     try:
         _QUELLE["text"] = "Konferenz des Nachtlaufs"
         konferenz_zeigen()
@@ -594,6 +607,7 @@ elif ansicht == "Rückenwind":                  # seit 10.11.2026 mit der Übers
         konto_knopf()
     zeigen("uebersicht")
 elif ticker:
+    datenstand_zeigen()
     lauf = st.session_state.get("laufend")
     args = (ticker, True, lauf[1]) if lauf and lauf[0] == ticker else (ticker,)
     try:

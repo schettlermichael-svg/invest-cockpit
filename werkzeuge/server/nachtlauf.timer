@@ -1,0 +1,7 @@
+[Unit]
+Description=Frühlauf Di–Sa 6:05 (Berlin) – Massive gibt den Handelstag erst nach Mitternacht New York frei
+[Timer]
+OnCalendar=Tue..Sat 06:05 Europe/Berlin
+Persistent=true
+[Install]
+WantedBy=timers.target

@@ -301,7 +301,7 @@ Schritt 11 (Messung, Backtest der Ebenen) gestrichen: keine Ertragsmessungen als
 - `werkzeuge/server/einrichten.sh` (einmalig, `ssh root@2.31.188.241 'bash -s' < werkzeuge/server/einrichten.sh`):
   Zeitzone Berlin, automatische Sicherheitsupdates, Firewall (22/80/443), Benutzer `cockpit`, Ordner
   `/opt/invest-cockpit` mit Python-Umgebung, Dienst `invest-cockpit` (Streamlit, immer an), Zeitplan `nachtlauf.timer`
-  (Mo–Fr 22:45 Berlin), Caddy mit https unter `2-31-188-241.sslip.io` und Passwort (Benutzer micky).
+  (seit 12.11.2026 Frühlauf Di–Sa 6:05 Berlin, `werkzeuge/server/nachtlauf.timer`), Caddy mit https unter `2-31-188-241.sslip.io` und Passwort (Benutzer micky).
 - `werkzeuge/server/uebertragen.sh`: Ordner vom Mac auf den Server (rsync, ohne _to_delete) und App neu starten.
 - Geplant: Code über privaten GitHub-Speicher `schettlermichael-svg/invest-cockpit`, Server holt Änderungen selbst.
 - Seit 05.11.2026 auf dem Server, ohne Claude und ohne Mac: TradingView-Kennzahlen (`kern/tv_kennzahlen.py`, Screener-
@@ -551,3 +551,16 @@ Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und
 - Depot: Feld „System“ je Position (M/K) bestimmt die Zeichen nach dem Kauf; kein festes Gewinnziel mehr.
 - Nachtlauf: Schritt „RS-Rang, Führer-Rang“ vor dem Kartentisch; „Lage“ läuft nach dem Kartentisch.
 - Gemessen am 05.11.2026 (700 Revier-Titel, Kurse bis 04.11.): Minervini 26 grün / 57 gelb, Kullamägi 21 grün / 41 gelb.
+
+
+## Frühlauf und Datenstand-Wache (12.11.2026)
+
+- Massive gibt im kostenlosen Plan einen Handelstag erst nach Mitternacht New York frei (6 Uhr Berlin; Massive
+  Knowledge Base). Der Abendlauf um 22:45 rechnete deshalb Rückenwind, RS-Rang und Führer-Rang mit dem Vortag,
+  Charts, Kartentisch und Akten (Yahoo) aber mit dem neuen Tag. Die Notiz vom 06.11. („ohne Tag Verzug“) galt nicht.
+- Seitdem: Frühlauf Di–Sa 6:05 Uhr (`werkzeuge/server/nachtlauf.timer`; `aktualisieren.sh` übernimmt den Zeitplan
+  selbst). Massive-Schritt wartet bis 30 Minuten, bis der Tag freigegeben ist. Zweiter Anlauf der Konferenz 30 Minuten
+  nach dem ersten, Massive-Durchgänge für Lücken bis 11:30 Uhr, Revier-Pflege samstags.
+- Datenstand-Wache (`nachtlauf.datenstand()`): Kurstag von Massive, Yahoo, Rückenwind, RS-Rang und Führer-Rang im
+  Protokoll; eine Zeile oben auf jeder Seite (grün = alle gleich, gelb = gleich, aber älter als der letzte Handelstag,
+  rot = verschiedene Tage). Der Stab bekommt den Datenstand und nennt Abweichungen zuerst.

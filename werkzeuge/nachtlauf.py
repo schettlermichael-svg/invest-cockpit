@@ -1,19 +1,22 @@
-"""Nachtlauf (Schritt 8, 04.11.2026): alle Daten aller Titel, jeden Handelsabend, ohne Ausnahme – mit Protokoll.
+"""Nachtlauf, seit 12.11.2026 ein Frühlauf (Schritt 8, 04.11.2026): alle Daten aller Titel, jeden Handelstag, ohne
+Ausnahme – mit Protokoll.
 
-Start automatisch über launchd (werkzeuge/nachtlauf_einrichten.sh, Mo–Fr 22:45 Uhr) oder von Hand im Ordner InvestCockpit:
-    caffeinate -i python3 werkzeuge/nachtlauf.py
+Start auf dem Server über den Timer nachtlauf.timer (werkzeuge/server/nachtlauf.timer, Di–Sa 6:05 Uhr Berlin; der
+Server übernimmt ihn selbst aus dem Speicher) oder von Hand:  python3 werkzeuge/nachtlauf.py
+Warum morgens: Massive gibt im kostenlosen Plan einen Handelstag erst nach Mitternacht New York (6 Uhr Berlin) heraus.
+Abends um 22:45 rechneten Rückenwind, RS-Rang und Führer-Rang deshalb mit dem Vortag, Charts und Akten (Yahoo) mit dem
+neuen Tag. Morgens haben beide Quellen denselben abgeschlossenen Handelstag; die Datenstand-Wache prüft das.
 Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weiter und das Protokoll meldet ihn):
-  1. Massive: Tageskurse aller US-Aktien des letzten Handelstags und Splits (Rudel, Kursverwandte, Themen-Gruppen, RS-Rang)
+  1. Massive: Tageskurse aller US-Aktien des letzten Handelstags (bis 30 Min warten, bis Massive ihn freigibt), Splits
   2. Rudel, Kursverwandte und Themen-Gruppen neu rechnen
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
-  4. Tageskurse aller Titel (Revier, Watchlists, Positionen, geöffnete Titel, Gesamtmarkt) und Wechselkurse
-  5. Lage: Wirtschaftswetter, Pendel, Marktbreite, Frontkarte, Marktrichtung (Übersicht einmal bauen = alle Quellen frisch)
-  6. freitags Revier-Pflege (kern/revier_pflege.py: Zugänge nach den Revier-Regeln, Abgänge nur gemeldet)
-     und TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login): Aktienzahl, Rückkäufe, Margen, Zahlentermine
-  7. Kartentisch (Erkennung aller Titel, volle Titelseite der Titel in Reihen und Watchlists, Fundamentdaten inklusive)
-  8. Massive-Durchgänge für Lücken der 30-Minuten-Kerzen bis spätestens 07:00 Uhr (Erstbefüllung, neue Titel)
-Protokoll: daten/nachtlauf/protokoll.json – die Übersicht zeigt daraus die Datenampel im Kopf. Am Ende eine
-Mitteilung auf dem Mac mit den Neuigkeiten.
+  4. Tageskurse aller Titel (Revier, Watchlist, Positionen, Gesamtmarkt) und Wechselkurse (Yahoo)
+  5. samstags (nach dem Freitag) Revier-Pflege; TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login)
+  6. RS-Rang, Führer-Rang, Rückenwind, Kartentisch, Lage (Seite Rückenwind), Konferenz des Stabs, Schrank
+  7. Datenstand-Wache: Kurstag jedes Teils ins Protokoll (rot, wenn sie verschiedene Tage haben)
+  8. bei Bedarf zweiter Anlauf der Konferenz (30 Min später), danach Massive-Durchgänge für Lücken der
+     30-Minuten-Kerzen bis 11:30 Uhr (Erstbefüllung, neue Titel)
+Protokoll: daten/nachtlauf/protokoll.json – die Seiten zeigen daraus Statuszeile und Datenstand.
 """
 import json
 import os
@@ -34,7 +37,7 @@ TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.jso
 TISCH_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.log")
 SEITEN_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.json")   # Schrank nach Änderungen
 SEITEN_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.log")
-SCHLUSS = (7, 0)              # Massive-Durchgänge enden morgens, damit der Mac tagsüber frei ist
+SCHLUSS = (11, 30)            # Massive-Durchgänge für Lücken enden vormittags (Frühlauf ab 6:05, seit 12.11.2026)
 
 
 def _schreiben(p, datei=PROTOKOLL):
@@ -84,6 +87,13 @@ def main(nur_tisch=False):
 
     def massive_tage():
         import massive
+        soll = massive._letzter_schluss()          # Frühlauf: der gestrige Handelstag (in New York nach Mitternacht)
+        for versuch in range(7):                   # Massive gibt ihn kurz nach Mitternacht New York frei: bis 30 Min warten
+            massive.tag(soll)
+            if os.path.exists(os.path.join(massive.SPEICHER, f"{soll:%Y-%m-%d}.csv")):
+                break                              # gespeichert (auch ein Feiertag wird als leerer Tag gespeichert)
+            print(f"    Massive hat den {soll:%d.%m.} noch nicht – Versuch {versuch + 1}, warte 5 Minuten", flush=True)
+            time.sleep(300)
         tage = massive.letzte_tage(495)
         von, bis = tage[-5][0], tage[-1][0]
         massive.splits_zeitraum(von, bis)
@@ -176,6 +186,7 @@ def main(nur_tisch=False):
         schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
         schritt("Kartentisch", tisch)
         schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
+        p["datenstand"] = datenstand()
         p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
         _schreiben(p, datei)
         return
@@ -184,7 +195,7 @@ def main(nur_tisch=False):
     schritt("Rudel, Kursverwandte, Themen-Gruppen", rudel_neu)
     schritt("30-Minuten-Kerzen (Yahoo)", kerzen_neu)
     schritt("Tageskurse und Wechselkurse", tageskurse)
-    if datetime.now().weekday() == 4:            # freitags: Revier-Pflege (Zugänge, Abgänge gemeldet)
+    if datetime.now().weekday() == 5:            # samstags früh (nach dem Freitag): Revier-Pflege
         schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
@@ -193,6 +204,7 @@ def main(nur_tisch=False):
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
     schritt("Konferenz des Stabs (MARAGA Investment)", konferenz_)
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
+    p["datenstand"] = datenstand()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
     _kopf_neu()
@@ -200,35 +212,10 @@ def main(nur_tisch=False):
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
                 + f"{(p.get('reihen') or {}).get('m_spitze', 0)} Spitzenkandidaten · {p.get('neu', 0)} Neuigkeiten")
 
-    # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis morgens
-    durchgang = 0
-    while datetime.now().hour < 12 and (datetime.now().hour, datetime.now().minute) < SCHLUSS or datetime.now().hour >= 18:
-        kal = tpo_daten._kalender()
-        offen = [t for t in alle if not tpo_daten.auslaendisch(t) and tpo_daten.luecke(t, kal)]
-        if not offen:
-            break
-        durchgang += 1
-        offen.sort(key=tpo_laden._neuester)
-        print(f"Durchgang {durchgang}: {len(offen)} Titel mit Lücke", flush=True)
-        for t in offen:
-            if datetime.now().hour < 12 and (datetime.now().hour, datetime.now().minute) >= SCHLUSS:
-                break
-            try:
-                tpo_daten.schritt(t, kal)
-            except Exception as e:  # noqa: BLE001
-                print(f"  {t}: {e}", flush=True)
-    p["massive_durchgaenge"] = durchgang
-    _schreiben(p)
-
-    # Zweiter Anlauf der Konferenz (10.11.2026): ist sie in der Nacht gescheitert, um 6 Uhr noch einmal
+    # Zweiter Anlauf der Konferenz (10.11.2026; seit dem Frühlauf 12.11.2026 30 Minuten nach dem ersten, vor den
+    # Massive-Durchgängen): ist sie gescheitert, noch einmal
     if any(s_["name"].startswith("Konferenz") and not s_["ok"] for s_ in p["schritte"]):
-        jetzt = datetime.now()
-        if jetzt.hour >= 18 or jetzt.hour < 6:
-            ziel = jetzt.replace(hour=6, minute=0, second=0, microsecond=0)
-            if jetzt.hour >= 18:
-                from datetime import timedelta
-                ziel += timedelta(days=1)
-            time.sleep(max(0, (ziel - jetzt).total_seconds()))
+        time.sleep(30 * 60)
         try:
             import stab
             k = stab.konferenz(melden=print)
@@ -239,11 +226,106 @@ def main(nur_tisch=False):
         if ok_:                                  # Ampel der Übersicht: Schritt gilt dann als erledigt
             for s_ in p["schritte"]:
                 if s_["name"].startswith("Konferenz"):
-                    s_["ok"], s_["text"] = True, "im zweiten Anlauf (6 Uhr) geklappt"
+                    s_["ok"], s_["text"] = True, "im zweiten Anlauf geklappt"
         _schreiben(p)
         _kopf_neu()
         _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
                     f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
+
+    # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
+    durchgang = 0
+    while (datetime.now().hour, datetime.now().minute) < SCHLUSS:
+        kal = tpo_daten._kalender()
+        offen = [t for t in alle if not tpo_daten.auslaendisch(t) and tpo_daten.luecke(t, kal)]
+        if not offen:
+            break
+        durchgang += 1
+        offen.sort(key=tpo_laden._neuester)
+        print(f"Durchgang {durchgang}: {len(offen)} Titel mit Lücke", flush=True)
+        for t in offen:
+            if (datetime.now().hour, datetime.now().minute) >= SCHLUSS:
+                break
+            try:
+                tpo_daten.schritt(t, kal)
+            except Exception as e:  # noqa: BLE001
+                print(f"  {t}: {e}", flush=True)
+    p["massive_durchgaenge"] = durchgang
+    _schreiben(p)
+
+
+
+QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
+    "Massive-Tageskurse": "Rückenwind, RS-Rang, Führer-Rang, Rudel, Breite",
+    "Yahoo-Tageskurse": "Charts, Kartentisch, Akten des Stabs, Marktampeln",
+    "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
+    "RS-Rang": "Minervini-RS im Kartentisch",
+    "Führer-Rang": "Kullamägi-Führer (oberste 1–2 %)",
+}
+
+
+def datenstand():
+    """Datenstand-Wache (12.11.2026): mit welchem Kurstag jeder Teil gerechnet hat, {Teil: 'YYYY-MM-DD' oder None}.
+    Alle Teile müssen denselben abgeschlossenen Handelstag haben – sonst meldet die Statuszeile es rot."""
+    import pandas as pd
+    aus = {}
+    try:
+        import massive
+        tage = sorted(f[:10] for f in os.listdir(massive.SPEICHER) if f[:4].isdigit() and f.endswith(".csv")
+                      and os.path.getsize(os.path.join(massive.SPEICHER, f)) > 200)     # leere Tage (Feiertag) nicht
+        aus["Massive-Tageskurse"] = tage[-1] if tage else None
+    except Exception:  # noqa: BLE001
+        aus["Massive-Tageskurse"] = None
+    try:
+        import daten
+        i = daten.kurse_gespeichert(daten.INDEX)
+        aus["Yahoo-Tageskurse"] = f"{i.index[-1]:%Y-%m-%d}" if i is not None and len(i) else None
+    except Exception:  # noqa: BLE001
+        aus["Yahoo-Tageskurse"] = None
+    try:
+        import rueckenwind
+        aus["Rückenwind"] = (rueckenwind.laden() or {}).get("stand")
+    except Exception:  # noqa: BLE001
+        aus["Rückenwind"] = None
+    for teil, modul in (("RS-Rang", "rs_rang"), ("Führer-Rang", "fuehrer_rang")):
+        try:
+            m = __import__(modul)
+            d = pd.read_csv(m.DATEI, nrows=1, keep_default_na=False) if os.path.exists(m.DATEI) else None
+            aus[teil] = str(d["stand"].iloc[0]) if d is not None and len(d) else None
+        except Exception:  # noqa: BLE001
+            aus[teil] = None
+    return aus
+
+
+def datenstand_zeile(ds=None):
+    """(Ampel, Text) für jede Seite: „Kurse vom Mi 11.11.“ oder rot, wenn die Teile verschiedene Tage haben."""
+    import pandas as pd
+    if ds is None:
+        try:
+            ds = json.load(open(PROTOKOLL, encoding="utf-8")).get("datenstand")
+        except (OSError, ValueError):
+            ds = None
+    if not ds:
+        return "grau", "Datenstand unbekannt (noch kein Lauf mit Datenstand-Wache)"
+    tage = {v for v in ds.values() if v}
+    fehlt = [k for k, v in ds.items() if not v]
+    tag_ = lambda t: f"{['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'][pd.Timestamp(t).weekday()]} {pd.Timestamp(t):%d.%m.}"  # noqa: E731
+    if len(tage) == 1 and not fehlt:
+        t = next(iter(tage))
+        try:                                       # einheitlich, aber alt? Erwartet: der letzte abgeschlossene Handelstag
+            import massive
+            soll = massive._letzter_schluss()
+            while soll.weekday() >= 5:
+                soll -= pd.Timedelta(days=1)
+            if pd.Timestamp(t) < soll:
+                return "gelb", (f"Kurse vom {tag_(t)} – alle Teile gleich, aber der letzte Handelstag wäre der "
+                                f"{tag_(soll)} (Feiertag in den USA oder Lauf ausgefallen?)")
+        except Exception:  # noqa: BLE001
+            pass
+        return "grün", f"Kurse vom {tag_(t)} – alle Teile auf demselben Handelstag"
+    neu = max(tage) if tage else None
+    alt = [f"{k} {tag_(v)}" for k, v in ds.items() if v and v != neu] + [f"{k} fehlt" for k in fehlt]
+    return "rot", (f"Datenstand uneinheitlich: neuester Tag {tag_(neu)}, abweichend " + ", ".join(alt)
+                   if neu else "Datenstand fehlt: " + ", ".join(alt))
 
 
 def _kopf_neu():
@@ -275,7 +357,10 @@ def stand():
         return "rot", f"letzter Nachtlauf {p['start']} – Daten veraltet"
     # Der frühere Teil von Claude um 00:37 (claude_lauf.json) entfällt: TradingView und Revier holt seit 05.11.2026
     # der Server selbst; die alte Datei zeigte sonst einen veralteten Stand an (12.11.2026).
-    return "grün", f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig"
+    ampel, ds = datenstand_zeile(p.get("datenstand"))
+    if ampel in ("rot", "gelb"):
+        return ampel, f"Nachtlauf {p['start']}–{p['ende'][-5:]} · {ds}"
+    return "grün", f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig · {ds}"
 
 
 def _laeuft(datei, stunden):

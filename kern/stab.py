@@ -84,7 +84,9 @@ REGELN
 8. Gib deine Meldung ausschließlich über das Werkzeug ab.
 9. Jeder arbeitet nach dem Handwerk seiner Meister (steht im Auftrag bzw. im Feldhandbuch). Bei Widerspruch gilt diese Rangordnung: zuerst die Haltung des Traders oben, dann der Hauptmeister, dann der Ergänzungsmeister. Nenne die Regel, nach der du urteilst, kurz beim Namen (z. B. „VCP: Kontraktionen nehmen ab“).
 10. Eine Faktenwache prüft nach der Konferenz jeden Ticker und jede Zahl gegen die Daten und markiert, was sie nicht findet. Rechnest du selbst etwas aus, sage es („gerechnet: …“).
-11. Sprichst du den Trader direkt an, dann mit „du“, nie mit „Sie“."""
+11. Sprichst du den Trader direkt an, dann mit „du“, nie mit „Sie“.
+12. Die Daten enthalten „datenstand“: mit welchem Handelstag jeder Teil der App gerechnet hat. Haben die Teile
+   verschiedene Tage, ist das eine Gefahr ersten Ranges – nenne sie zuerst, die Lage kann dann nicht stimmen."""
 
 AUFTRAG = {
     2: "Du bist der Strömungs-Analyst. Beantworte in dieser Reihenfolge, jeweils mit Ticker bzw. Gruppe und Zahl: "
@@ -649,7 +651,13 @@ def lagebild():
                   "messwerte": {k: (round(v, 2) if isinstance(v, float) else v) for k, v in pe["messwerte"].items()}}
     except Exception:  # noqa: BLE001 – ohne Wetter tagt der Stab trotzdem
         pass
-    return {"heute": heute, "stand_rueckenwind": rw.get("stand"), "stand_kartentisch": tisch.get("stand"),
+    try:
+        import nachtlauf
+        teile = nachtlauf.datenstand()             # live gemessen, nicht aus dem Protokoll (das schreibt erst das Ende)
+        ds = {"teile": teile, "urteil": nachtlauf.datenstand_zeile(teile)[1]}
+    except Exception:  # noqa: BLE001
+        ds = None
+    return {"heute": heute, "datenstand": ds, "stand_rueckenwind": rw.get("stand"), "stand_kartentisch": tisch.get("stand"),
             "barometer": tisch.get("barometer"), "markt": markt,
             "wirtschaftswetter": wetter, "pendel": pendel, "gruppen": gruppen, "stufenwechsel_heute": wechsel,
             "schnellsuche": schnell, "dreifach": sorted(drei), "dreifach_neu": sorted(drei - vorher) if vorher else [],
@@ -664,22 +672,22 @@ def _ausschnitt(lb, nr):
     """Was jeder Stratege liest (spart Token, schärft den Blick)."""
     k = lb["kandidaten"]
     if nr == 2:
-        return {x: lb.get(x) for x in ("heute", "stand_rueckenwind", "wirtschaftswetter", "gruppen", "stufenwechsel_heute",
+        return {x: lb.get(x) for x in ("heute", "datenstand", "stand_rueckenwind", "wirtschaftswetter", "gruppen", "stufenwechsel_heute",
                                        "schnellsuche", "dreifach", "dreifach_neu", "dreifach_weg")} | {
             "kandidaten": [{a: c[a] for a in ("titel", "reihe", "dreifacher_rueckenwind", "volltreffer", "rueckenwind")}
                            for c in k]}
     if nr == 3:
-        return {"heute": lb["heute"], "kandidaten": [
+        return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "kandidaten": [
             {a: c[a] for a in ("titel", "reihe", "volltreffer", "depot", "zahlen")}
             | {"kacheln": {n: c["kacheln"].get(n) for n in ("Fundament", "Nächste Zahlen") if n in c["kacheln"]}}
             for c in k]}
     if nr == 4:
-        return {"heute": lb["heute"], "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
+        return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
             {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_minervini", "setup_kullamaegi",
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
                                "stopp_1_5_atr", "ausbruch", "avwap", "kacheln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
-    return {"heute": lb["heute"], "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
+    return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
             "wirtschaftswetter": lb.get("wirtschaftswetter"), "depot": lb["depot"],
             "kandidaten": [{a: c[a] for a in ("titel", "depot", "reihe", "volltreffer", "kurs", "pivot", "stopp_1_5_atr",
                                               "abstand_kurs_stopp_pct")}
@@ -879,7 +887,7 @@ def konferenz(melden=lambda text: None):
     melden(f"{datetime.now():%H:%M:%S} Gegenspieler prüft {len(gegen['akten'])} Akten …")
     melden_lassen(6, f"{AUFTRAG[6]}\n\n{MEISTER[6]}\n\nDaten:\n{gegen_}", gegen_)
 
-    befehl_daten = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
+    befehl_daten = {"heute": heute, "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
                     "wirtschaftswetter": lb.get("wirtschaftswetter"), "volltreffer": [
         {a: c[a] for a in ("titel", "reihe", "abstand_zum_pivot_pct", "kaufzone_bis", "stopp_1_5_atr")}
         | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in lb["kandidaten"] if c["volltreffer"]],

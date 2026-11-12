@@ -3,6 +3,12 @@
 # (Kartentisch neu rechnen oder Konferenz) läuft: der Neustart würde ihn abschießen. Dann beim nächsten Mal (5 Min).
 # Aufgerufen von /usr/local/bin/invest-aktualisieren (Timer invest-update, alle 5 Minuten).
 cd /opt/invest-cockpit || exit 0
+# Zeitplan des Laufs aus dem Speicher übernehmen (12.11.2026: Frühlauf Di–Sa 6:05), sobald er sich unterscheidet
+if [ -f werkzeuge/server/nachtlauf.timer ] && ! cmp -s werkzeuge/server/nachtlauf.timer /etc/systemd/system/nachtlauf.timer; then
+  cp werkzeuge/server/nachtlauf.timer /etc/systemd/system/nachtlauf.timer
+  systemctl daemon-reload && systemctl restart nachtlauf.timer
+  echo "$(date '+%d.%m.%Y %H:%M') Zeitplan des Laufs übernommen: $(grep OnCalendar werkzeuge/server/nachtlauf.timer)" >> /var/log/invest-cockpit-update.log
+fi
 git fetch -q origin main 2>/dev/null || exit 0
 [ "$(git rev-parse HEAD 2>/dev/null)" = "$(git rev-parse origin/main)" ] && exit 0
 if .venv/bin/python werkzeuge/nachtlauf.py --laeuft 2>/dev/null; then

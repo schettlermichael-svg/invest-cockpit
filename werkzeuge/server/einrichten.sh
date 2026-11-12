@@ -56,9 +56,9 @@ ExecStart=$ZIEL/.venv/bin/python -u werkzeuge/nachtlauf.py
 EOF
 cat > /etc/systemd/system/nachtlauf.timer <<EOF
 [Unit]
-Description=Nachtlauf Mo–Fr 22:45 (Berlin)
+Description=Frühlauf Di–Sa 6:05 (Berlin) – wie werkzeuge/server/nachtlauf.timer (seit 12.11.2026)
 [Timer]
-OnCalendar=Mon..Fri 22:45 Europe/Berlin
+OnCalendar=Tue..Sat 06:05 Europe/Berlin
 Persistent=true
 [Install]
 WantedBy=timers.target
