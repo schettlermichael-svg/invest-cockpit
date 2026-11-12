@@ -607,3 +607,14 @@ Jeden Tag um 12:10 (nach dem Frühlauf) sichert der Server die Daten mit Geschic
 - **Nie gesichert:** Schlüssel.
 - **Nicht gesichert:** Kartentische (rund 12 MB je Tag, werden neu gerechnet) und Kurse.
 - **Wiederherstellen:** `sicherung/` aus dem Zweig `daten` holen und unter denselben Pfaden nach `/opt/invest-cockpit` kopieren.
+
+## Verschlankt (12.11.2026)
+
+- **Titelseite:** Die Karten „Plan“ und „Warnzeichen“ sind weg. Was nur dort stand, steht jetzt an anderer Stelle:
+  - „Es fehlt: …“ in der Setup-Kachel
+  - der Plan je System (Einstieg, Kaufzone, Stopp, Ausstiegsregel des Meisters, Marken zur Trendvorlage, Zahlen-Reaktion) als Zeilen unter dem Chart
+  - echte Warnungen (Daten gestört, Klimax, Übernahme, rote Datenampel) als roter Hinweis im Kopf, nur wenn es eine gibt
+- **Entfernt:**
+  - Weinsteins Frühwarnung (`kern/fruehwarnung.py`), `phase.phase_heute` und die Korrektur der Gruppe
+  - die Selbstprüfung mit Basenhistorie (`werkzeuge/massenlauf.py`, `erkennung.basen_historie`/`selbstpruefung`)
+  - tote Funktionen (`lage.marktampel`, `sektoren.stark_anteil`)

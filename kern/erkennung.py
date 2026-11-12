@@ -195,7 +195,7 @@ def uebernahme_verdacht(h, l):
     vorher = np.mean(h[-250:-8] / l[-250:-8] - 1)
     if spanne <= 0.03 and tag <= 0.008 and vorher >= 3 * tag:
         return (f"Übernahme-Verdacht: Kurs klebt seit 8 Tagen in {spanne * 100:.1f} % Spanne "
-                f"(Tagesspanne {tag * 100:.2f} % statt {vorher * 100:.1f} %) – kein Muster bewertet")
+                f"(Tagesspanne {tag * 100:.2f} % statt {vorher * 100:.1f} %) – kein Muster bewertet").replace(".", ",")
     return None
 
 
@@ -210,8 +210,6 @@ def korrektur_markt(df, index, start):
     hi, lo = teil["High"].to_numpy(float), teil["Low"].to_numpy(float)
     rueckgang = float(np.max(1 - lo / np.maximum.accumulate(hi)) * 100)
     return rueckgang
-
-
 
 
 _PHASEN = {}
@@ -352,51 +350,6 @@ def _erkenne_mp(df, woche=False, index=None):
     return r
 
 
-def _historie_mp(df, index, tage):
-    """Frühere Wertzonen (Market Profile), die mindestens 3 Wochen standen und verlassen wurden – in beide Richtungen.
-    Ausbruch = erster Auslöser A/F/B in Richtung des Verlassens; Ausgang nach O'Neil, short gespiegelt:
-    gelungen = 20 % jenseits des Auslösers, bevor ein Schluss 8 % dagegen liegt."""
-    a = mp_von(df)
-    if a is None:
-        return []
-    h, l, c = (df[s].to_numpy(float) for s in ("High", "Low", "Close"))
-    n = len(h)
-    grenze = df.index[max(0, n - tage)]
-    aus = []
-    for z in a["zonen"]:
-        if z["richtung"] is None or z["wochen"] < 3 or z["ende"] < grenze:
-            continue
-        d = z["richtung"]
-        beginn, ende = _tag_index(df, z["beginn"]), _tag_index(df, z["ende"])
-        bwoche = a["wochen"][z["ausbruch"]]
-        sig = next((s for s in a["signale"] if s["dir"] == d and s["art"] in ("A", "F", "B") and
-                    s.get("zone") == z["nr"]), None)
-        aus_i = _tag_index(df, sig["tag"]) if sig else _tag_index(df, bwoche["ende"])
-        pivot = float(z["hoch"] if d == "↑" else z["tief"])
-        ausgang, ergebnis = "offen", None
-        for j in range(aus_i, n):
-            if (d == "↑" and h[j] >= pivot * (1 + HIST_GEWINN)) or (d == "↓" and l[j] <= pivot * (1 - HIST_GEWINN)):
-                ausgang, ergebnis = "gelungen", j
-                break
-            if (d == "↑" and c[j] < pivot * (1 - HIST_VERLUST)) or (d == "↓" and c[j] > pivot * (1 + HIST_VERLUST)):
-                ausgang, ergebnis = "gescheitert", j
-                break
-        teil = df.iloc[:aus_i].copy()
-        teil.attrs = {"tk_mp": df.attrs.get("ticker") or df.attrs.get("tk_mp"), "jung": df.attrs.get("jung")}
-        try:
-            r = erkenne(teil, index=index[index.index <= teil.index[-1]] if index is not None else None)
-        except Exception:
-            r = {"kaufsetup": False, "werte": {}}
-        damals = bool(r.get("kaufsetup")) if d == "↑" else bool((r.get("short") or {}).get("setup"))
-        weite = (h[aus_i:].max() / pivot - 1) * 100 if d == "↑" else (1 - l[aus_i:].min() / pivot) * 100
-        aus.append({"beginn": beginn, "ende": ende, "ausbruch": aus_i, "pivot": pivot, "innen": {},
-                    "muster": ["Base" if d == "↑" else "Wertzone ↓"], "richtung": d, "wochen": z["wochen"],
-                    "val": z["val"], "vah": z["vah"], "poc": z["poc"],
-                    "kaufsetup": damals, "tiefe_pct": round((1 - z["tief"] / z["hoch"]) * 100, 1),
-                    "ausgang": ausgang, "ergebnis_index": ergebnis, "max_gewinn_pct": round(weite, 1)})
-    return aus
-
-
 def erkenne(df, woche=False, index=None, _vor_hoch=False):
     """Erkennung über die Balance-Zone: die Wertzone, die heute gilt (laufend oder höchstens 4 Wochen nach ihrem Kippen),
     eingeordnet nach den Regeln der Meister als Base oder Flagge (Powerplay). Pivot = Hoch der letzten Enge (innere
@@ -480,71 +433,3 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
             kaufsetup = False
             hinweise.append("Daten gestört" + (" in der Base" if in_base else "") + " – Muster nicht verlässlich")
     return {"muster": gefunden, "kaufsetup": kaufsetup, "hinweise": hinweise, "werte": werte, "daten": daten}
-
-
-# ── Basenhistorie: frühere Basen mit Form, Pivot und Ausgang des Ausbruchs ──
-# Die Vergangenheit ist Lernstoff: welche Base Nr., welche Form, ist der Ausbruch gelungen oder gescheitert.
-HIST_GEWINN = 0.20          # gelungen: Hoch mindestens 20 % über dem Pivot (O'Neils Gewinnziel) …
-HIST_VERLUST = 0.08         # … bevor ein Schluss 8 % unter dem Pivot liegt (O'Neils Verlustgrenze) – sonst gescheitert
-
-
-def basen_historie(df, index=None, tage=520):
-    """Abgeschlossene Basen der letzten `tage` Handelstage (ohne die laufende Base am rechten Rand).
-    Eine Base = mindestens 4 Wochen vom linken Rand und mindestens 5 % Rücksetzer (_base_zaehlt), beendet durch ein neues Hoch
-    (dieselbe Abgrenzung wie die Basenzählung). Je Base: Form und Pivot aus der Erkennung am Tag vor dem neuen Hoch,
-    Ausbruchstag (erster Schluss über dem Pivot nach dem Tief der Base) und Ausgang:
-    gelungen (+20 % vor −8 %), gescheitert (Schluss 8 % unter dem Pivot zuerst) oder offen."""
-    return _historie_mp(df, index, tage)
-
-
-# ── Selbstprüfung: innere Widersprüche der Erkennung (wie der eingebaute Selbsttest im Flugzeug) ──
-# Jede Prüfung beschreibt eine Bedingung, die bei richtiger Erkennung immer gilt. Schlägt eine an, ist das Muster
-# unsicher und wird so gezeigt – die Erkennung selbst bleibt unverändert (Zeichen, kein Filter).
-def selbstpruefung(df, erk, historie=None):
-    h, l, c = (df[s].to_numpy(float) for s in ("High", "Low", "Close"))
-    n = len(h)
-    befunde = []
-    w, muster = erk.get("werte", {}), erk.get("muster", [])
-    if muster:
-        s_i = w.get("start_index")
-        e_i = w.get("ende_index", n - 1)
-        if s_i is None or not 0 <= s_i <= e_i < n:
-            befunde.append(f"Fenster der Base ungültig (Beginn {s_i}, Ende {e_i})")
-        else:
-            hb, tb = h[s_i:e_i + 1].max(), l[s_i:e_i + 1].min()
-            p = w.get("pivot")
-            if p is None or not tb <= p <= hb * 1.001:
-                befunde.append(f"Pivot {p:.2f} liegt außerhalb der Base ({tb:.2f}–{hb:.2f})" if p else "kein Pivot")
-            tiefe = (1 - tb / hb) * 100
-            if abs(tiefe - (w.get("tiefe_pct") or 0)) > 1.0:
-                befunde.append(f"Tiefe {w.get('tiefe_pct')} % passt nicht zum Fenster ({tiefe:.1f} %)")
-            if e_i - s_i + 1 < FLAGGE_MIN:
-                befunde.append(f"Base nur {e_i - s_i + 1} Tage lang")
-            for a, b, _ in w.get("kontraktionen_lage", []):
-                if not s_i <= a <= b <= e_i:
-                    befunde.append("Kontraktion außerhalb der Base")
-                    break
-            db = w.get("doppelboden")
-            if db and not (db["tief1"] < db["mitte"] < db["tief2"]):
-                befunde.append("Doppelboden: Reihenfolge Tief – Zwischenhoch – Tief verletzt")
-            if db and h[db["mitte"]] <= max(l[db["tief1"]], l[db["tief2"]]):
-                befunde.append("Doppelboden: Zwischenhoch nicht über den Tiefs")
-            ta = w.get("tasse")
-            if ta and not (ta["links"] < ta["boden"] < ta["henkel_hoch"] <= ta["ende"]):
-                befunde.append("Tasse: Reihenfolge linker Rand – Boden – Henkel verletzt")
-        if len(set(muster)) != len(muster):
-            befunde.append("Muster doppelt genannt")
-        if "Doppelboden" in muster and not w.get("doppelboden"):
-            befunde.append("Doppelboden genannt, aber nicht vermessen")
-        if erk.get("kaufsetup") and s_i is not None and c[-1] < l[s_i:].min() * 0.999:
-            befunde.append("Kaufsetup, aber Kurs unter dem Tief der Base")
-    vorige_ende = -1
-    for b in historie or []:
-        if not b["beginn"] <= b["ende"] < n:
-            befunde.append(f"Frühere Base {df.index[min(b['ende'], n - 1)].date()}: Fenster ungültig")
-        elif b["beginn"] <= vorige_ende:
-            befunde.append(f"Frühere Base ab {df.index[b['beginn']].date()} überlappt die vorige")
-        elif not l[b["beginn"]:b["ende"] + 1].min() * 0.995 <= b["pivot"] <= h[b["beginn"]:b["ende"] + 1].max() * 1.005:
-            befunde.append(f"Frühere Base ab {df.index[b['beginn']].date()}: Pivot außerhalb der Base")
-        vorige_ende = max(vorige_ende, b["ende"])
-    return befunde

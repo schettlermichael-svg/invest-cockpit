@@ -73,12 +73,6 @@ def rotation(bis=None):
     return aus
 
 
-def stark_anteil(etf, jahr):
-    """Anteil der Wochen eines Jahres, in denen der Sektor stärker als der Markt war (Prozent)."""
-    r = reihen(etf)["staerke"][str(jahr)]
-    return float((r > 100).mean() * 100)
-
-
 def abgleich(rot, quad):
     """Stehen die typischen Führer des Quads tatsächlich im Feld Führend/Erstarkend?"""
     erwartet = QUAD_ETFS[quad]

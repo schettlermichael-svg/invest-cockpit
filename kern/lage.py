@@ -10,18 +10,6 @@ import pandas as pd
 import marktdaten as md
 
 # ── Marktampel ──────────────────────────────────────────────────────────────
-def marktampel(bis=None):
-    """S&P 500 über GD200 und GD50 über GD200 = grün; eines davon = gelb; keines = rot."""
-    s = md.yahoo("^GSPC")
-    s = s[s.index <= pd.Timestamp(bis)] if bis else s
-    g50, g200 = s.rolling(50).mean().iloc[-1], s.rolling(200).mean().iloc[-1]
-    a, b = s.iloc[-1] > g200, g50 > g200
-    ampel = "grün" if a and b else "gelb" if a or b else "rot"
-    abstand = (s.iloc[-1] / s.iloc[-252:].max() - 1) * 100
-    return {"ampel": ampel, "text": f"S&P 500 {'über' if a else 'unter'} GD200, GD50 {'über' if b else 'unter'} GD200",
-            "abstand_hoch_pct": round(float(abstand), 1)}
-
-
 # ── Dalio-Quadrant ──────────────────────────────────────────────────────────
 QUADS = {1: "Goldilocks", 2: "Reflation", 3: "Stagflation", 4: "Deflation"}
 FUEHRER = {1: "Technologie, zyklischer Konsum, Kommunikation",

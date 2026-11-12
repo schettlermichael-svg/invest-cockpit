@@ -1,7 +1,6 @@
 """Phasenerkennung nach Weinstein/Minervini (Regelkatalog Kap. 5) – auf Wochenbasis.
 
 phasen(df) -> pandas.Series   Phase 1–4 für jede Woche (Freitag), aus Tageskursen
-phase_heute(df) -> dict       aktuelle Phase, die sechs Übergangskriterien als Ampeln, Warnzeichen
 
 Phase 2: Kurs über GD30W und GD40W, GD30W über GD40W, GD40W steigt.
 Phase 4: Kurs unter GD40W, GD40W fällt, GD30W unter GD40W, Kurs mehr als 5 % unter dem Stand
@@ -89,35 +88,3 @@ def phasen(df):
         seit4 = seit4 + 1 if phase == 4 else 0
         aus.append(phase)
     return pd.Series(aus, index=w.index, name="phase")
-
-
-def phase_heute(df):
-    w = wochen(df)
-    if len(w) < 45:
-        return {"phase": None, "kriterien": {}, "warnungen": ["zu kurze Historie"]}
-    ph = phasen(df)
-    z = w.iloc[-1]
-    letzte = w.iloc[-20:]
-    hochs = letzte["High"].rolling(5).max().iloc[[-16, -11, -6, -1]].to_numpy()
-    tiefs = letzte["Low"].rolling(5).min().iloc[[-16, -11, -6, -1]].to_numpy()
-    auf = letzte[letzte["Close"] > letzte["Open"]]
-    ab = letzte[letzte["Close"] <= letzte["Open"]]
-    vol_schnitt = w["Volume"].iloc[-50:].mean()
-    kriterien = {
-        "Kurs über GD30W und GD40W": bool(z.Close > z.gd30 and z.Close > z.gd40),
-        "GD30W über GD40W": bool(z.gd30 > z.gd40),
-        "GD40W steigt": bool(z.steig40 > STEIGT),
-        "höhere Hochs und höhere Tiefs": bool(np.all(np.diff(hochs) >= 0) and np.all(np.diff(tiefs) >= 0)),
-        "Volumenspitzen an Aufwärtswochen": bool(auf["Volume"].max() > ab["Volume"].max()) if len(auf) and len(ab) else False,
-        "mehr Aufwärts- als Abwärtswochen mit hohem Volumen":
-            bool((auf["Volume"] > vol_schnitt).sum() > (ab["Volume"] > vol_schnitt).sum()),
-    }
-    warnungen = []
-    # Größter Wochenrückgang seit Beginn von Phase 2, mit hohem Volumen (Phase-3-Zeichen)
-    beginn = ph[ph != 2].index[-1] if (ph != 2).any() else ph.index[0]
-    seit = w[w.index > beginn]
-    if len(seit) >= 8:
-        rueck = seit["Close"].pct_change()
-        if rueck.iloc[-1] == rueck.min() and rueck.iloc[-1] < -0.05 and z.Volume > 2 * vol_schnitt:
-            warnungen.append("größter Wochenrückgang seit Phase-2-Beginn mit hohem Volumen")
-    return {"phase": int(ph.iloc[-1]), "kriterien": kriterien, "warnungen": warnungen}
