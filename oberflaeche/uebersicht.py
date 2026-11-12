@@ -144,14 +144,15 @@ def seite_uebersicht():
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
     import kartentisch
     b = ((kartentisch.laden() or {}).get("barometer")) or {}
-    import markt_systeme
+    import marktklima
     try:
-        mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
+        mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))
     except Exception:  # noqa: BLE001
         mm = None
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
-        _kachel("Markt", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",   # eine Ampel (Micky 12.11.2026):
+        _kachel("Markt", mm["ampel"], mm["wort"], "", f'O\'Neil: {mm["zustand"]} seit {mm["seit"]} · {mm["text"]}'
+                + (f' · Zeichen: {mm["zeichen"]}' if mm["zeichen"] else "")) if mm else "",   # eine Ampel (Micky 12.11.2026):
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),

@@ -67,7 +67,7 @@ TISCH_MAX_TAGE = 4                                                     # ältere
 DIENSTANWEISUNG = """Du bist Mitglied im Stab von MARAGA Investment, dem Handelsstab eines Swing-Traders. Du arbeitest im Invest Cockpit, seiner App.
 
 HALTUNG DES TRADERS
-- Er handelt long und short, Aktien und Knock-outs, nach einem eigenen System (seit 12.11.2026) mit sieben Setups: Base-Ausbruch (VCP), Flagge, Momentum-Ausbruch, Sprung (EP), Zahlen-Reaktion, Ermüdung (Short), Bärenflagge (Short). Die Regeln stammen von den Meistern (Base-Ausbruch: Minervini; Flagge, Momentum-Ausbruch, Sprung, Ermüdung: Kullamägi; dazu Bonde, Shannon, Morales/Kacher); nenne die Setups bei ihrem Namen, die Meister nur als Quelle einer Regel. O'Neil und Weinstein dienen nur als Zeichen.
+- Er handelt long und short, Aktien und Knock-outs, nach einem eigenen System (seit 12.11.2026) mit sieben Setups: Base-Ausbruch (VCP), Flagge, Momentum-Ausbruch, Sprung (EP), Zahlen-Reaktion, Ermüdung (Short), Bärenflagge (Short). Die Regeln stammen von den Meistern (Base-Ausbruch: Minervini; Flagge, Momentum-Ausbruch, Sprung, Ermüdung: Kullamägi; dazu Bonde, Shannon, Morales/Kacher); nenne die Setups bei ihrem Namen, die Meister nur als Quelle einer Regel – schreibe nie „Minervini grün“ oder „Kullamägi rot“. Den Markt bestimmt eine Ampel nach O'Neil (Feld „markt“: Distributionstage, Follow-Through-Day; darunter „zeichen“: Indizes gegen GD50/GD200 und neue Hochs gegen Tiefs, ohne Urteil). Weinstein dient nur als Zeichen.
 - Sein Hauptsetup ist der Ausbruch aus einer Konsolidierungszone, wenn der Kurs danach wieder anzieht (Qullamaggie-Stil). Eine Konsolidierung darf auch eine tiefe Korrektur über 30 % sein. Ausbruchsvolumen über dem 50-Tage-Schnitt reicht ihm.
 - Zweites Setup: die Flagge als Trendfortsetzung. Drittes: Short nach Überdehnung (Ermüdung). Dazu der Episodic Pivot.
 - Seinen stärksten Vorteil sieht er in relativer Stärke und Geldfluss in Sektor und Branche: Er will Strömungen früher erkennen als die Masse, auch den Abfluss. Stärke in der Schwäche ist das, was ihn am meisten interessiert.
@@ -75,7 +75,7 @@ HALTUNG DES TRADERS
 
 BEGRIFFE DER APP
 - Reihen des Kartentischs (ein Titel steht in genau einer): {reihen}
-- Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „setup_minervini“ und „setup_kullamaegi“ sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
+- Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „regeln_base“ (Base-Ausbruch) und „regeln_momentum“ (Momentum-Ausbruch, Sprung) sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
 - Stufen des Rückenwinds: {stufen}
 - Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
 - Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt.
@@ -124,7 +124,7 @@ AUFTRAG = {
     5: "Du bist der Risikomanager. Beantworte, jeweils mit Ticker und Zahl: 1) Depot: Stopps, Abstand, Earnings vor dem "
        "Stopp. Ist kein Depot oder Konto eingetragen, sage das einmal und prüfe stattdessen die Kandidaten am Auslöser: "
        "Stopp 1,5 ATR und Abstand in %. 2) Klumpen: stehen mehrere Volltreffer oder Spitzenkandidaten im selben Sektor, "
-       "in derselben Branche oder im selben Thema? 3) Marktlage (Barometer, Markt: Indizes und Hochs/Tiefs): was heißt das "
+       "in derselben Branche oder im selben Thema? 3) Marktlage (Markt nach O'Neil, dazu Barometer, Indizes und Hochs/Tiefs): was heißt das "
        "für long und für short? 4) Welche Kandidaten am Auslöser haben Zahlen vor dem Stopp?",
 }
 
@@ -692,12 +692,11 @@ def tafel(lb):
 
 
 def brett(lb):
-    """Das Lagebrett: Markt beider Systeme, Pendel, Datenstand – Tatsachen der App, so wie der Stab sie las."""
+    """Das Lagebrett: Markt (O'Neil), Pendel, Datenstand – Tatsachen der App, so wie der Stab sie las."""
     m = lb.get("markt") or {}
     pe = lb.get("pendel") or {}
     ds = lb.get("datenstand") or {}
-    return {"markt": {k: {"ampel": (m.get(k) or {}).get("ampel"), "wort": (m.get(k) or {}).get("wort")}
-                      for k in ("minervini",)},
+    return {"markt": {"ampel": m.get("ampel"), "wort": m.get("wort"), "seit": m.get("seit")},
             "pendel": {"zone": pe.get("zone"), "ampel": pe.get("ampel"), "pfeil": pe.get("pfeil"),
                        "vor_4_wochen": pe.get("vor_4_wochen")},
             "datenstand": {"ampel": ds.get("ampel"), "text": ds.get("urteil")}, "barometer": lb.get("barometer")}
@@ -875,7 +874,7 @@ def lagebild():
                 "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
                 "auch": x.get("auch") or [],
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
-                "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
+                "seite": _seite(x), "regeln_base": x.get("m"), "regeln_momentum": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
                 "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(abst, 1),
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot else None, "atr": _zahl(a),
@@ -904,9 +903,9 @@ def lagebild():
     vorher = set((_vorige(heute) or {}).get("dreifach") or [])
     markt = {}
     try:
-        import markt_systeme
+        import marktklima
         b = tisch.get("barometer") or {}
-        markt = {"minervini": markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))}   # eine Ampel (Micky 12.11.2026)
+        markt = marktklima.markt(b.get("hochs"), b.get("tiefs"))     # eine Ampel nach O'Neil (Micky 12.11.2026)
     except Exception:  # noqa: BLE001
         pass
     wetter = pendel = None
@@ -957,7 +956,7 @@ def _ausschnitt(lb, nr):
             for c in k]}
     if nr == 4:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
-            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "setup_minervini", "setup_kullamaegi",
+            {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "regeln_base", "regeln_momentum",
                                "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "atr",
                                "stopp_1_5_atr", "ausbruch", "zahlen_reaktion", "avwap", "kacheln", "feste_ampeln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}

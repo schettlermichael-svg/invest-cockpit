@@ -21,14 +21,13 @@ import depotleiste                                    # noqa: E402
 import rs_rang                                        # noqa: E402
 import phase as phasen_modul                          # noqa: E402
 import namen_de                                       # noqa: E402
-import marktrichtung                                  # noqa: E402
 import marktdaten                                     # noqa: E402
 import rudelkarte                                     # noqa: E402
 import quellen                                        # noqa: E402
 import sektoren                                       # noqa: E402
 import tv_kennzahlen                                  # noqa: E402
 import lagekarte                                      # noqa: E402
-import markt_systeme                                  # noqa: E402
+import marktklima                                     # noqa: E402
 import system_minervini                               # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
@@ -252,15 +251,13 @@ def _zuletzt(fund):
     return f" · zuletzt {x} {'über' if not x.startswith('−') else 'unter'} Erwartung"
 
 
-# ── Zwei Systeme (05.11.2026): Minervini (M) und Kullamägi (K) getrennt, je Kachel eine Ampel pro System ──
-def _k2_markt(mm, km, mr):
+def _k2_markt(mm):
+    """Markt: eine Ampel nach O'Neil (12.11.2026); beim Short gespiegelt (gestaltung.kachel2)."""
     m = (mm["ampel"], mm["wort"]) if mm else ("grau", "–")
-    k = (km["ampel"], km["wort"]) if km else ("grau", "–")
-    oneil = (f"O'Neil: {mr['zustand']} seit {mr['seit']:%d.%m.%Y}" if mr else "")
-    return kachel2("Markt", m, k, oneil,
-                   "Base-Ausbruch – " + (mm["regel"] + "\n" + mm["text"] if mm else "keine Daten") + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – "
-                   + (km["regel"] + "\n" + km["text"] if km else "keine Daten")
-                   + ("\n\nZeichen O'Neil (keine Regel mehr): " + mr["text"] if mr else ""))
+    zeile = f"O'Neil seit {mm['seit']}" if mm else ""
+    return kachel2("Markt", m, None, zeile,
+                   (mm["regel"] + "\n\nHeute: " + mm["text"] + ("\n\nZeichen ohne Urteil: " + mm["zeichen"]
+                                                               if mm["zeichen"] else "")) if mm else "keine Daten")
 
 
 def _weinstein_ausbruch(m, ph, df):
@@ -424,7 +421,7 @@ def _k_enge_zahlen(zr):
                   "Tag (Short: über dem Hoch und über dem AVWAP) – Bondes „Delayed Reaction“, Shannons Anker.", ganz=True)
 
 
-def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km, rw=None):
+def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, gewinne, m, k, mm, rw=None):
     """Die acht Kacheln der Titelseite. Seit 12.11.2026 (ein eigenes System) urteilt jede Kachel mit einer Ampel für das
     eine Setup des Titels (gestaltung.SYSTEM: aus wessen Regeln); Geld und Base als Zeichen. Fehlt ein Wert, steht ein
     grauer Punkt mit dem Grund."""
@@ -433,7 +430,7 @@ def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km, rw=
     su = erk.get("setup_info") or {}
     trend = _k2_trend(m, ph, ph_reihe, df) if gestaltung.SYSTEM != "K" else _k_trend50(df, gestaltung.SYSTEM_SHORT)
     enge = (_k_enge_zahlen(su["zr"]) if su.get("reihe") == "zahlen" and su.get("zr") else _k2_enge(m, k, erk, df))
-    kl = [_k2_markt(mm, km, mr), trend, _k2_staerke(m, k, rang, rw),
+    kl = [_k2_markt(mm), trend, _k2_staerke(m, k, rang, rw),
           _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), enge,
           _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
@@ -932,21 +929,17 @@ _SPEICHER = {}
 
 
 def maerkte():
-    """Markt je System (Minervini, Kullamägi), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Kartentisch."""
+    """Die eine Markt-Ampel (O'Neil, marktklima.py), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Kartentisch."""
     schluessel = pd.Timestamp.now().strftime("%Y%m%d%H")
     if _SPEICHER.get("markt", (None,))[0] != schluessel:
         try:
             import kartentisch
             b = (kartentisch.laden() or {}).get("barometer") or {}
-            mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
+            mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))
         except Exception:  # noqa: BLE001
             mm = None
-        try:
-            km = markt_systeme.kullamaegi()
-        except Exception:  # noqa: BLE001
-            km = None
-        _SPEICHER["markt"] = (schluessel, mm, km)
-    return _SPEICHER["markt"][1], _SPEICHER["markt"][2]
+        _SPEICHER["markt"] = (schluessel, mm)
+    return _SPEICHER["markt"][1]
 
 
 def seite_titel(ticker, laufend=False, _stand=None):
@@ -1000,10 +993,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gewinne = fd["gewinne"]
     except Exception:
         fd, fund, gewinne = None, None, None
-    try:
-        mr = marktrichtung.richtung()
-    except Exception:
-        mr = None
     etf = sektoren.sektor_von(sb.get("sektor", ""))
     try:                                          # Sektor-ETF für die RS-Linie gegen den Sektor
         sek = marktdaten.yahoo(etf) if etf else None
@@ -1040,7 +1029,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
             erk["basen"]["markt"] = basen.markt_rueckgang(index, df.index[m_["zone"]["start_i"]])
     except Exception:  # noqa: BLE001 – Kachel ohne Zählung
         erk["basen"] = None
-    mm_, km_ = maerkte()
+    mm_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
     import kartentisch
     import zahlen_reaktion
@@ -1053,7 +1042,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     gestaltung.SYSTEM_JE = {"Stärke": "M"} if su.get("reihe") in ("zahlen", "k_ep") else {}
     try:
         rw = _rueckenwind(tk)
-        leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, mr, gewinne, m_, k_, mm_, km_, rw)
+        leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, gewinne, m_, k_, mm_, rw)
         k_info = dict(gestaltung.MITSCHRIFT)
     finally:
         gestaltung.MITSCHRIFT = None

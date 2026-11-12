@@ -541,8 +541,7 @@ Die Market-Profile-Zonen bleiben das gemeinsame Werkzeug, das Konsolidierung und
   Short: Ermüdung nach Überdehnung (siehe unten).
   Stopp am Tagestief, kein Trade weiter als eine Tagesspanne (ADTR 20 Tage). Ausstieg: Teilgewinn Tag 3–5, Einstand,
   Rest bis Schluss unter 10er/20er. Quelle: Interview mit Jack Schwager (Market Wizards).
-- `kern/markt_systeme.py` – Markt je System: Kullamägi 10er über 20er, beide steigend (S&P 500 und Nasdaq);
-  Minervini (Umsetzung der App, keine Buchformel): Indizes über GD50/GD200 und mehr neue Hochs als Tiefs. Kein Filter.
+- Markt: seit 12.11.2026 eine Ampel nach O'Neil in `kern/marktklima.py` (siehe „Marktklima nach O'Neil“ unten). Kein Filter.
 - Titelseite: acht Kacheln – Markt, Trend, Stärke, Fundament, Setup, Enge mit je einer M- und einer K-Ampel
   (`gestaltung.kachel2`), Branche und Base als Zeichen. Karte „Plan“ je System mit Regeln, Marken, Stopp, Ausstieg.
 - Lagekarte: Setup je System oben rechts, acht geteilte Punkte (links M, rechts K, `gestaltung.punkt2`).
@@ -655,3 +654,19 @@ Die Termin-Ampel liest das Datum jetzt aus dem Text der Kachel. Vorher stand dor
 Die Schnellsuche „die Besten auf einen Blick“ auf der Seite Setups ist weg. Ihre Anführer waren genau die ersten 25 Zeilen der Liste „Läuft“ in „Titel nach Stufe“, ihre Verfolger deckten sich größtenteils mit „Entsteht“. Ein Setup prüfte sie nicht.
 
 Der Stab bekommt Anführer und Verfolger weiter (`rueckenwind.anfuehrer_verfolger`, je 15 Titel). Die Verfolger kommen jetzt nur noch aus dem Band von „Entsteht“ (Rang 50 bis unter 85). Vorher gab es keine Untergrenze, und eine Erholung von Rang 5 auf Rang 30 stand ganz oben. Der alte Code liegt auf dem Mac in `_to_delete/schnellsuche_entfernt_2026-11-12.py`.
+
+## Marktklima nach O'Neil (12.11.2026)
+
+Die eine Markt-Ampel (Rückenwind ① Lage, Titelseite, Konferenzraum, Stab) bestimmt jetzt O'Neil, das „M“ in CAN SLIM (`kern/marktklima.py`, gerechnet in `kern/marktrichtung.py`):
+
+| Ampel | Zustand | Bedingung |
+|---|---|---|
+| grün | Bestätigter Aufwärtstrend | nach einem Follow-Through-Day, höchstens 3 Distributionstage in 5 Wochen |
+| gelb | Aufwärtstrend unter Druck | 4 Distributionstage in einem Index |
+| rot | Korrektur | 5 Distributionstage und Bruch der Wertzone bzw. des Tiefs vor dem Follow-Through-Day |
+
+Darunter steht eine Zeichenzeile ohne Urteil: S&P 500 und Nasdaq gegen GD50 und GD200 sowie neue Hochs gegen Tiefs.
+
+Vorher war genau das die Ampel, also eine eigene Faustregel mit dem falschen Etikett „Minervini“. Davor gab es zusätzlich Kullamägis 10/20-Regel.
+
+`kern/markt_systeme.py` ist entfernt. Die Akten tragen jetzt `regeln_base` und `regeln_momentum` statt `setup_minervini` und `setup_kullamaegi`. Die Dienstanweisung verbietet „Minervini grün“ und „Kullamägi rot“. Die Meister werden nur noch als Quelle einer Regel genannt.

@@ -24,7 +24,7 @@ Stopp (alle): Tagestief beim Long, Tageshoch beim Short. Liegt er weiter weg als
   (ADTR), kein Trade. Risiko 0,5 % des Kontos, höchstens 1 %.
 Ausstieg: Teilgewinn in den ersten 3–5 Tagen, Stopp für den Rest auf Einstand, dann Schluss unter dem 10- oder
   20-Tage-Durchschnitt (je nachdem, wie weit der Titel schon gestiegen ist).
-Markt (markt_systeme.kullamaegi): Breakout und EP nur im Aufwärtstrend – eigene Ampel, gehört nicht zu „grün“, kein Filter.
+Markt: seit 12.11.2026 eine Ampel nach O'Neil (marktklima.py) – gehört nicht zu „grün“, kein Filter.
 """
 import numpy as np
 

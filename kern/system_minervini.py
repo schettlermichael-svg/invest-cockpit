@@ -20,7 +20,7 @@ Pivot = Fehlausbruch (Zeichen, Zone bleibt). Volumen am Ausbruchstag über dem 5
 Pivot = Hoch der letzten Kontraktion (ohne Kontraktion: Oberkante der Zone); Kaufzone bis +5 %. Stopp unter dem Tief der
 letzten Kontraktion, höchstens 8 % unter dem Pivot. Ausstieg: Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise
 verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
-Der Markt (markt_systeme.minervini) ist eine eigene Ampel und gehört nicht zu „grün“ – kein Filter.
+Der Markt (marktklima.py, O'Neil, seit 12.11.2026) ist eine eigene Ampel und gehört nicht zu „grün“ – kein Filter.
 """
 import vcp_zone
 
