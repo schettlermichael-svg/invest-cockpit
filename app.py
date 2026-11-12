@@ -647,6 +647,20 @@ def datenstand_zeigen():
     st.markdown(f'<div title="{gestaltung.t(hilfe)}" style="font-size:13px;color:{TEXT_2};margin:2px 0 6px">'
                 f'<span style="color:{farbe}">●</span> {text} <span style="color:{gestaltung.TEXT_3}">ⓘ</span></div>',
                 unsafe_allow_html=True)
+    try:                                         # Wachen des Frühlaufs (12.11.2026): nur sichtbar, wenn sie etwas melden
+        import wachen
+        w = wachen.laden()
+    except Exception:  # noqa: BLE001
+        w = None
+    if w and w.get("zeichen"):
+        punkt_ = {"rot": "🔴", "gelb": "🟡"}
+        with st.expander(f"{punkt_.get(w['ampel'], '⚪')} Wachen vom {w['stand'][8:10]}.{w['stand'][5:7]}. · "
+                         f"{len(w['zeichen'])} Meldungen"):
+            st.caption("Jeden Morgen geprüft: Gleichlauf von Chart, Kartentisch und Stab · Plausibilität der Setups · "
+                       "Gegenprobe von 10 Titeln mit TradingView · Hinweise der Strategen auf Datenfehler. "
+                       "Rot = Fehler der App, gelb = beachten.")
+            for a_, t_ in w["zeichen"]:
+                st.markdown(f"{punkt_.get(a_, '⚪')} {gestaltung.t(t_)}")
 
 
 if ansicht == "Konferenzraum":

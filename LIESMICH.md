@@ -705,3 +705,16 @@ Die Meldung enthält:
 - bis zu 3 Gefahren
 
 Ein Tipp auf die Meldung öffnet den Konferenzraum (`meldung.APP`, Kopfzeile „Click“). Ohne eingerichtete ntfy-App kommt nichts an, die App läuft trotzdem weiter.
+
+## Wachen im Frühlauf (12.11.2026)
+
+`kern/wachen.py` läuft als eigener Schritt nach dem Schrank und schreibt `daten/nachtlauf/wachen.json`. Die vier Wachen:
+
+1. **Gleichlauf:** Kartentisch, abgelegte Titelseite (nur gültige Seiten) und Tafel des Stabs nennen dasselbe Setup, dieselbe Seite und denselben Einstieg (±0,5 %). Der Stopp liegt beim Long unter, beim Short über dem Einstieg.
+2. **Plausibilität:** Die Reihe stimmt mit der Seite der Lagekarte überein. Ein grünes Setup hat eine Reihe. Akten liegen in der Zone ihres Setups. Kein vergangener Zahlentermin zählt noch.
+3. **Gegenprobe:** 10 Akten (Zufall mit dem Tag als Startwert) gegen TradingView: Schluss ±0,5 %, GD50 ±1 %, Zahlentermin ±1 Tag.
+4. **Stab als Prüfer:** Schreibt ein Stratege „Datenfehler“, „Widerspruch“, „doppelt“ oder Ähnliches, wird das ein Hinweis.
+
+Rot heißt Fehler der App: Der Schritt wird rot, und eine Warnung geht aufs Handy. Gelb sind Hinweise: Die Kopfzeile wird gelb, und eine Meldung geht aufs Handy. Die Liste steht unter der Datenstand-Zeile jeder Seite („Wachen vom …“).
+
+Der erste Probelauf auf dem Mac hat die alten Seiten aus dem Schrank sofort erkannt (UNP, BNY, MA: Einstieg im Chart ≠ Kartentisch).

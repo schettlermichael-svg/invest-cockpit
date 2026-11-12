@@ -182,6 +182,20 @@ def main(nur_tisch=False):
         return (f"{sum(len(m.get('hinweise') or []) for m in k['meldungen'].values())} Hinweise · Monat "
                 f"{ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $")
 
+    def wachen_():
+        """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Stab, Gegenprobe)."""
+        import wachen
+        w = wachen.pruefen()
+        rot = [t for a, t in w["zeichen"] if a == "rot"]
+        gelb = [t for a, t in w["zeichen"] if a == "gelb"]
+        p["wachen"] = {"ampel": w["ampel"], "rot": len(rot), "gelb": len(gelb)}
+        if rot:
+            _mitteilung(f"⚠ Wachen: {len(rot)} Fehler der App – " + " · ".join(rot[:3]), True)
+            raise RuntimeError(f"{len(rot)} Fehler: " + " · ".join(rot[:3]))
+        if gelb:
+            _mitteilung(f"Wachen: {len(gelb)} Hinweise – " + " · ".join(gelb[:3]))
+        return f"{w['akten']} Akten geprüft · " + ("alles im Gleichlauf" if not gelb else f"{len(gelb)} Hinweise")
+
     if nur_tisch:
         schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
         schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
@@ -205,6 +219,7 @@ def main(nur_tisch=False):
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
     schritt("Konferenz des Stabs (MARAGA Investment)", konferenz_)
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
+    schritt("Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView, Stab", wachen_)
     p["datenstand"] = datenstand()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
@@ -370,6 +385,9 @@ def stand():
     ampel, ds = datenstand_zeile(p.get("datenstand"))
     if ampel in ("rot", "gelb"):
         return ampel, f"Nachtlauf {p['start']}–{p['ende'][-5:]} · {ds}"
+    if (p.get("wachen") or {}).get("gelb"):
+        return "gelb", (f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig · {ds} · Wachen: "
+                        f"{p['wachen']['gelb']} Hinweise")
     return "grün", f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig · {ds}"
 
 
