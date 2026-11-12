@@ -1384,6 +1384,7 @@ def kurzfassung(k):
     lk = lagekarte(k)
     br = lk.get("brett") or {}
     m = br.get("markt") or {}
+    quelle = "O'Neil" if "ampel" in m else "alte Regel"      # Konferenzen vor dem 13.11.2026: eigene Faustregel
     m = m if "ampel" in m else (m.get("minervini") or {})
     pe = br.get("pendel") or {}
     tag = str(k.get("stand") or HEUTE())[:10]
@@ -1391,7 +1392,7 @@ def kurzfassung(k):
     zeilen = []
     if lk.get("lage_kurz"):
         zeilen.append(lk["lage_kurz"])
-    teile = ([f"Markt {PUNKT.get(m.get('ampel'), '⚪')} {m.get('wort')} (O'Neil)"] if m.get("wort") else []) \
+    teile = ([f"Markt {PUNKT.get(m.get('ampel'), '⚪')} {m.get('wort')} ({quelle})"] if m.get("wort") else []) \
         + ([f"Pendel {PUNKT.get(pe.get('ampel'), '⚪')} {pe.get('zone')}"] if pe.get("zone") else [])
     if teile:
         zeilen.append(" · ".join(teile))
