@@ -1,5 +1,5 @@
 """Lagekarte (4.11.2026, Zwei Systeme seit 05.11.2026): ein Titel auf einen Blick – dieselbe Karte auf Titelseite,
-Übersicht (Kartentisch) und in den Watchlists. Aufbau: Kopf mit dem Setup je System (M = Minervini, K = Kullamägi),
+Übersicht (Kartentisch) und in den Watchlists. Aufbau: Kopf mit dem einen Setup des Titels (seit 12.11.2026),
 Chips (Auktion, Stärke, Trend, Base), Befund des VCP-Scanners, Kleinchart 6 Monate mit der Zone des Scanners und dem
 Pivot (seit 06.11.2026; die Wertzone ist nur noch das Zeichen „Auktion“), acht Ampelpunkte wie die Kacheln (geteilter Punkt: links M, rechts K; Maus darauf zeigt die Zeile),
 Abstand zum Pivot, Fußzeile mit Stopp und nächsten Zahlen. Die Karte erfindet nichts: jeder Wert stammt aus den
@@ -24,7 +24,7 @@ def richtung(x):
     Richtung der Reaktion, sonst None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
-    if reihe == "k_ermuedung":
+    if reihe in ("k_ermuedung", "k_baerenflagge"):
         return "short"
     if reihe == "zahlen":                              # Zahlen-Reaktion: Richtung der Reaktion (12.11.2026)
         return x.get("zr_seite") or None
@@ -206,6 +206,11 @@ def _setup_kasten(kacheln, erk):
     m, k = sy.get("m") or {}, sy.get("k") or {}
     s_ = kacheln.get("Setup", ((None, None), "", ""))
     zeile = s_[2]
+    if not isinstance(s_[0], tuple):                 # ein eigenes System (12.11.2026): das eine Setup des Titels
+        return (f'<div title="{t(zeile)}" style="background:#1C2430;border:1px solid {RAND};border-radius:8px;'
+                f'padding:6px 10px;font-size:14px;text-align:right;max-width:55%"><span style="display:inline-block;'
+                f'width:10px;height:10px;border-radius:50%;background:{AMPEL.get(s_[0] or "grau", GRAU)};margin:0 6px">'
+                f'</span>{t(s_[1] or "kein Setup")}</div>')
     am = s_[0][0] if isinstance(s_[0], tuple) else s_[0]
     ak = s_[0][1] if isinstance(s_[0], tuple) else None
     kw = (k.get("haupt") or {}).get("art") if (k.get("haupt") or {}).get("ampel") not in (None, "rot") else None
@@ -271,7 +276,7 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(_befund(erk))}</div>'
         f'{_kleinchart(df, erk)}'
-        f'<div title="Geteilter Punkt: links Minervini (M), rechts Kullamägi (K); grau = gilt für das System nicht" '
+        f'<div title="Ampel je Punkt für das Setup des Titels; grau = gilt für dieses Setup nicht" '
         f'style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">{punkte}</div>'
         f'<div style="display:flex;justify-content:space-between;font-size:14px;margin-top:8px">'
         f'<span>{titel_}</span><span style="font-family:IBM Plex Mono,monospace">{wert_}</span></div>'

@@ -122,29 +122,42 @@ def klapp(titel, zeile_, inhalt):
 MITSCHRIFT = None             # dict, solange die Kacheln einer Titelseite gebaut werden
 
 
-def kachel(beschriftung, ampel, wert, zeile="", hilfe=""):
+def kachel(beschriftung, ampel, wert, zeile="", hilfe="", ganz=False):
     """Kachel der Leiste „Lage in fünf Sekunden“: feste Höhe, ein Wert, eine Zeile; die Erklärung als Hinweis
-    (Maus darauf, kleines ⓘ)."""
+    (Maus darauf, kleines ⓘ). ganz=True: die Zeile wird nie abgeschnitten (Kacheln des Setups, wie früher kachel2)."""
     if MITSCHRIFT is not None:                   # die Lagekarte liest Ampel, Wert und Zeile jeder Kachel mit
         MITSCHRIFT[beschriftung] = (ampel, str(wert), str(zeile))
     titel = f' title="{t(hilfe).replace(chr(10), "&#10;")}"' if hilfe else ""
     zeile = str(zeile).replace(" %", "\u00a0%").replace(" $", "\u00a0$").replace(" Mio.", "\u00a0Mio.")  # Zahl und Einheit nie getrennt
     zeichen = f'<span style="float:right;color:{TEXT_3};text-transform:none">ⓘ</span>' if hilfe else ""
     return (f'<div{titel} style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'
-            f'display:flex;flex-direction:column;gap:6px;height:136px;box-sizing:border-box;overflow:hidden">'
+            f'display:flex;flex-direction:column;gap:6px;{"min-height" if ganz else "height"}:136px;box-sizing:border-box;'
+            f'{"" if ganz else "overflow:hidden"}">'
             f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(beschriftung)}{zeichen}</div>'
             f'<div style="display:flex;align-items:center;gap:10px;min-width:0">{punkt(ampel)}'
             f'<span style="font-size:22px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(wert)}</span></div>'
-            f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;'
-            f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>')
+            + (f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4">{t(zeile)}</div></div>' if ganz else
+               f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;'
+               f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>'))
 
 
-SYSTEM = {"M": "Minervini", "K": "Kullamägi"}
+SYSTEM = None        # ein eigenes System (12.11.2026): "M" oder "K" = aus wessen Regeln die Kachel für das Setup des
+SYSTEM_SHORT = False  # Titels urteilt; dann zeigt kachel2 eine Ampel statt zwei. Markt immer nach Indizes und Hochs/Tiefs
+SYSTEM_JE = {}        # Ausnahme je Kachel, z. B. {"Stärke": "M"}: Sprung und Zahlen-Reaktion lesen die RS wie der Base-Ausbruch
+_GEGEN = {"grün": "rot", "rot": "grün", "gelb": "gelb", "grau": "grau"}
 
 
 def kachel2(beschriftung, m, k, zeile="", hilfe=""):
-    """Kachel der zwei Systeme (05.11.2026): je eine Zeile mit Ampel und Wort für Minervini (M) und Kullamägi (K).
-    m, k = (Ampel, Wort) oder None, wenn das System diesen Punkt nicht kennt (grau, „gilt nicht“)."""
+    """Kachel mit den Urteilen der Regeln von Minervini (m) und Kullamägi (k): (Ampel, Wort) oder None („gilt nicht“).
+    Seit 12.11.2026 (ein eigenes System) zeigt sie, wenn SYSTEM gesetzt ist, nur das Urteil für das Setup des Titels –
+    eine Ampel; die Meister stehen im ⓘ."""
+    if SYSTEM:
+        wahl = "M" if beschriftung == "Markt" else SYSTEM_JE.get(beschriftung, SYSTEM)
+        x = (m if wahl == "M" else k) or ("grau", "gilt nicht")
+        if beschriftung in ("Markt", "Stärke") and SYSTEM_SHORT and x[0] != "grau":   # Gegenwind für long =
+            x = (_GEGEN.get(x[0], x[0]), x[1])                                          # Rückenwind für Short
+            zeile = "für Short gespiegelt" + (f" · {zeile}" if zeile else "")
+        return kachel(beschriftung, x[0], x[1], zeile, hilfe, ganz=True)
     m_, k_ = m or ("grau", "gilt nicht"), k or ("grau", "gilt nicht")
     if MITSCHRIFT is not None:
         MITSCHRIFT[beschriftung] = ((m_[0] if m else None, k_[0] if k else None), f"M {m_[1]} · K {k_[1]}", str(zeile))

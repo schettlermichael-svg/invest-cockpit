@@ -618,3 +618,16 @@ Jeden Tag um 12:10 (nach dem Frühlauf) sichert der Server die Daten mit Geschic
   - Weinsteins Frühwarnung (`kern/fruehwarnung.py`), `phase.phase_heute` und die Korrektur der Gruppe
   - die Selbstprüfung mit Basenhistorie (`werkzeuge/massenlauf.py`, `erkennung.basen_historie`/`selbstpruefung`)
   - tote Funktionen (`lage.marktampel`, `sektoren.stark_anteil`)
+
+## Ein eigenes System (12.11.2026)
+
+Statt „Minervini“ und „Kullamägi“ gibt es sieben Setups: Base-Ausbruch (★ in der Kaufzone · weiter weg oder eine Regel fehlt · nur Muster), Flagge, Momentum-Ausbruch, Sprung (EP), Zahlen-Reaktion, Ermüdung (Short) und Bärenflagge (Short).
+- **Eine Entscheidung für alle:** `kartentisch.setup_feststellen` bestimmt für Kartentisch und Titelseite dasselbe eine Setup.
+  - Vorrang: Sprung → Zahlen-Reaktion → Ermüdung/Bärenflagge → Base-Ausbruch ★ → Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster.
+  - `auch` nennt die übrigen Setups des Titels.
+- **Titelseite:** jede Kachel mit einer Ampel für das Setup des Titels (`gestaltung.SYSTEM` = aus wessen Regeln; `LEHRER` in kartentisch).
+  - Markt: nur Indizes und Hochs/Tiefs.
+  - Short: Markt und Stärke gespiegelt.
+  - Momentum-Setups: Trend nach dem GD50.
+  - Zahlen-Reaktion: Enge = hält den AVWAP.
+- **Inneres:** Die Schlüssel der Reihen bleiben (m_spitze, k_breakout, …). Neu ist `k_baerenflagge`. „nur Muster“ (`vcp`) geht nicht in die Konferenz.

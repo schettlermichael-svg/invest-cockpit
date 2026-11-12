@@ -64,7 +64,7 @@ TISCH_MAX_TAGE = 4                                                     # ältere
 DIENSTANWEISUNG = """Du bist Mitglied im Stab von MARAGA Investment, dem Handelsstab eines Swing-Traders. Du arbeitest im Invest Cockpit, seiner App.
 
 HALTUNG DES TRADERS
-- Er handelt long und short, Aktien und Knock-outs, nach zwei getrennten Systemen: Mark Minervini und Kristjan Kullamägi (Qullamaggie). O'Neil und Weinstein dienen nur als Zeichen.
+- Er handelt long und short, Aktien und Knock-outs, nach einem eigenen System (seit 12.11.2026) mit sieben Setups: Base-Ausbruch (VCP), Flagge, Momentum-Ausbruch, Sprung (EP), Zahlen-Reaktion, Ermüdung (Short), Bärenflagge (Short). Die Regeln stammen von den Meistern (Base-Ausbruch: Minervini; Flagge, Momentum-Ausbruch, Sprung, Ermüdung: Kullamägi; dazu Bonde, Shannon, Morales/Kacher); nenne die Setups bei ihrem Namen, die Meister nur als Quelle einer Regel. O'Neil und Weinstein dienen nur als Zeichen.
 - Sein Hauptsetup ist der Ausbruch aus einer Konsolidierungszone, wenn der Kurs danach wieder anzieht (Qullamaggie-Stil). Eine Konsolidierung darf auch eine tiefe Korrektur über 30 % sein. Ausbruchsvolumen über dem 50-Tage-Schnitt reicht ihm.
 - Zweites Setup: die Flagge als Trendfortsetzung. Drittes: Short nach Überdehnung (Ermüdung). Dazu der Episodic Pivot.
 - Seinen stärksten Vorteil sieht er in relativer Stärke und Geldfluss in Sektor und Branche: Er will Strömungen früher erkennen als die Masse, auch den Abfluss. Stärke in der Schwäche ist das, was ihn am meisten interessiert.
@@ -72,7 +72,7 @@ HALTUNG DES TRADERS
 
 BEGRIFFE DER APP
 - Reihen des Kartentischs (ein Titel steht in genau einer): {reihen}
-- M = Minervini, K = Kullamägi. Jede Kachel trägt eine Ampel je System.
+- Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „setup_minervini“ und „setup_kullamaegi“ sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
 - Stufen des Rückenwinds: {stufen}
 - Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 4 Wochen (ab 1,10 rein, unter 0,90 raus).
 - Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen.
@@ -121,7 +121,7 @@ AUFTRAG = {
     5: "Du bist der Risikomanager. Beantworte, jeweils mit Ticker und Zahl: 1) Depot: Stopps, Abstand, Earnings vor dem "
        "Stopp. Ist kein Depot oder Konto eingetragen, sage das einmal und prüfe stattdessen die Kandidaten am Auslöser: "
        "Stopp 1,5 ATR und Abstand in %. 2) Klumpen: stehen mehrere Volltreffer oder Spitzenkandidaten im selben Sektor, "
-       "in derselben Branche oder im selben Thema? 3) Marktlage (Barometer, Markt Minervini und Kullamägi): was heißt das "
+       "in derselben Branche oder im selben Thema? 3) Marktlage (Barometer, Markt: Indizes und Hochs/Tiefs): was heißt das "
        "für long und für short? 4) Welche Kandidaten am Auslöser haben Zahlen vor dem Stopp?",
 }
 
@@ -587,8 +587,8 @@ class Aufklaerung(Exception):
 # ── Feste Ampeln (12.11.2026): Tatsachen färbt der Code nach festen Grenzen, nicht das Modell ──
 
 FESTE_REGELN = (
-    ("Setup", "grün = Setup grün nach allen Regeln seines Systems (Minervini bzw. Kullamägi) · gelb = in einer Reihe des "
-              "Kartentischs, aber nicht voll grün · grau = keine Reihe"),
+    ("Setup", "grün = das Setup des Titels erfüllt alle seine Regeln · gelb = in einer Reihe des Kartentischs, aber "
+              "nicht voll grün · grau = keine Reihe"),
     ("Einstieg", "Abstand zum Pivot (Short: zur Unterkante, gespiegelt): grün = in der Kaufzone (Pivot bis +5 %) · "
                  "gelb = am Auslöser (bis 5 % davor) oder 5–10 % darüber · rot = mehr als 10 % darüber (gelaufen) · "
                  "grau = weiter weg oder kein Pivot"),
@@ -675,7 +675,7 @@ def brett(lb):
     pe = lb.get("pendel") or {}
     ds = lb.get("datenstand") or {}
     return {"markt": {k: {"ampel": (m.get(k) or {}).get("ampel"), "wort": (m.get(k) or {}).get("wort")}
-                      for k in ("minervini", "kullamaegi")},
+                      for k in ("minervini",)},
             "pendel": {"zone": pe.get("zone"), "ampel": pe.get("ampel"), "pfeil": pe.get("pfeil"),
                        "vor_4_wochen": pe.get("vor_4_wochen")},
             "datenstand": {"ampel": ds.get("ampel"), "text": ds.get("urteil")}, "barometer": lb.get("barometer")}
@@ -711,15 +711,15 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
 
     def zone(tk):
         x = titel_t.get(tk) or {}
-        if x.get("reihe") == "k_ermuedung" or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
+        if x.get("reihe") in ("k_ermuedung", "k_baerenflagge") or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
             return ZONE_SHORT
         return ZONE_VOLLTREFFER if tk in drei else ZONE_LONG
 
     def bereit(tk):
         x = titel_t.get(tk) or {}
         a_ = x.get("abstand_vz")
-        if not x.get("reihe") or not x.get("gruen") or a_ is None:
-            return False
+        if not x.get("reihe") or x.get("reihe") == "vcp" or not x.get("gruen") or a_ is None:
+            return False                               # „Base-Ausbruch · nur Muster“ geht nicht in die Konferenz
         lo, hi = zone(tk)
         return lo <= float(a_) <= hi
 
@@ -754,6 +754,8 @@ def auswahl(titel_t, rw_t, drei, wl, pos):
             g = "kein Setup"
         elif x.get("still"):
             g = "Kurs steht still"
+        elif x.get("reihe") == "vcp":
+            g = "nur Muster"
         elif not x.get("gruen"):
             g = "Setup gelb"
         elif x.get("abstand_vz") is None:
@@ -826,8 +828,8 @@ def lagebild():
                 wert, text = "unbekannt", None
             kacheln[k_] = {"ampel": amp, "wert": wert, "text": text}
         c = {"titel": tk, "depot": tk in pos, "watchlist": tk in wl, "setup_gruen": bool(x.get("gruen")),
-                "reihe": (namen.get(x.get("reihe"), x.get("reihe")) + (" · Bärenflagge" if x.get("short_art") == "Bärenflagge"
-                                                                       else "")) if x.get("reihe") else "keine Reihe",
+                "reihe": namen.get(x.get("reihe"), x.get("reihe")) if x.get("reihe") else "keine Reihe",
+                "auch": x.get("auch") or [],
                 "dreifacher_rueckenwind": tk in drei, "volltreffer": tk in drei and bool(x.get("reihe")),
                 "seite": _seite(x), "setup_minervini": x.get("m"), "setup_kullamaegi": x.get("k"),
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
@@ -859,8 +861,7 @@ def lagebild():
     try:
         import markt_systeme
         b = tisch.get("barometer") or {}
-        markt = {"minervini": markt_systeme.minervini(b.get("hochs"), b.get("tiefs")),
-                 "kullamaegi": markt_systeme.kullamaegi()}
+        markt = {"minervini": markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))}   # eine Ampel (Micky 12.11.2026)
     except Exception:  # noqa: BLE001
         pass
     wetter = pendel = None

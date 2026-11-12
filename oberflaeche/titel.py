@@ -359,6 +359,20 @@ def _k2_setup(m, k, erk, df):
              + "\n\nK – " + "\n".join(
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), em) if x))
+    su = erk.get("setup_info")
+    if gestaltung.SYSTEM and su is not None:         # ein eigenes System: das eine Setup mit seinem Namen
+        import kartentisch
+        r_ = su.get("reihe")
+        name = kartentisch.NAME.get(r_, "kein Setup")
+        ampel = ("grün" if su.get("gruen") else "grau" if r_ == "vcp" else "gelb") if r_ else "rot"
+        zeile_ = [su["scanner"]] if su.get("scanner") else (teile if r_ in ("m_spitze", "m_weitere") else [])
+        if su.get("ausbruch") and r_ not in ("m_spitze", "m_weitere"):
+            zeile_.append(su["ausbruch"])
+        if su.get("luecken") and not su.get("gruen"):
+            zeile_.append("Es fehlt: " + "; ".join(su["luecken"]))
+        if su.get("auch"):
+            zeile_.append("Auch: " + ", ".join(su["auch"]))
+        return kachel("Setup", ampel, name, " · ".join(x for x in zeile_ if x), hilfe, ganz=True)
     f_ = fehlt(m, k)
     if f_:
         teile.append("Es fehlt: " + "; ".join(f_))
@@ -387,13 +401,40 @@ def _k2_enge(m, k, erk, df):
                    "reduziertem Volumen. Gelb bis 8 Wochen.")
 
 
+def _k_trend50(df, short=False):
+    """Trend für Flagge, Momentum-Ausbruch, Sprung und Zahlen-Reaktion (Kullamägi): Kurs über dem GD50 (Short: darunter)."""
+    c = df["Close"]
+    if len(c) < 50:
+        return kachel("Trend", "grau", "zu kurze Historie", "")
+    g50, kurs = float(c.iloc[-50:].mean()), float(c.iloc[-1])
+    ueber = kurs > g50
+    ok = (not ueber) if short else ueber
+    return kachel("Trend", "grün" if ok else "rot", f"Kurs {'über' if ueber else 'unter'} GD50",
+                  f"GD50 {zahl(g50)} $ · {_vorzeichen((kurs / g50 - 1) * 100)} %",
+                  "Momentum-Setups (Kullamägi): Kurs über dem 50-Tage-Durchschnitt, beim Short darunter. Die volle "
+                  "Trendvorlage gilt nur für den Base-Ausbruch.", ganz=True)
+
+
+def _k_enge_zahlen(zr):
+    """Enge-Kachel der Zahlen-Reaktion: hält der Kurs Tief (Short: Hoch) und AVWAP des Reaktionstags?"""
+    return kachel("Enge", "grün" if zr.get("halten") else "rot",
+                  "hält den AVWAP" if zr.get("halten") else "AVWAP gebrochen",
+                  f"AVWAP Zahlentag {zahl(zr['avwap'])} $" if zr.get("avwap") else "",
+                  "Zahlen-Reaktion: Seit dem Reaktionstag kein Schluss unter dessen Tief und unter dem AVWAP ab diesem "
+                  "Tag (Short: über dem Hoch und über dem AVWAP) – Bondes „Delayed Reaction“, Shannons Anker.", ganz=True)
+
+
 def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, mr, gewinne, m, k, mm, km, rw=None):
-    """Die acht Kacheln der Titelseite (Zwei Systeme, 05.11.2026): sechs mit je einer Ampel für Minervini (M) und
-    Kullamägi (K), Branche und Base als Zeichen. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
+    """Die acht Kacheln der Titelseite. Seit 12.11.2026 (ein eigenes System) urteilt jede Kachel mit einer Ampel für das
+    eine Setup des Titels (gestaltung.SYSTEM: aus wessen Regeln); Geld und Base als Zeichen. Fehlt ein Wert, steht ein
+    grauer Punkt mit dem Grund."""
     _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte, hier nicht gezeigt
     rang = (erk.get("rs_rang") or (None, ""))[0]
-    kl = [_k2_markt(mm, km, mr), _k2_trend(m, ph, ph_reihe, df), _k2_staerke(m, k, rang, rw),
-          _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), _k2_enge(m, k, erk, df),
+    su = erk.get("setup_info") or {}
+    trend = _k2_trend(m, ph, ph_reihe, df) if gestaltung.SYSTEM != "K" else _k_trend50(df, gestaltung.SYSTEM_SHORT)
+    enge = (_k_enge_zahlen(su["zr"]) if su.get("reihe") == "zahlen" and su.get("zr") else _k2_enge(m, k, erk, df))
+    kl = [_k2_markt(mm, km, mr), trend, _k2_staerke(m, k, rang, rw),
+          _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), enge,
           _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
             f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(kl)}</section>')
@@ -411,7 +452,7 @@ def fehlt(m, k):
     return aus
 
 
-def planzeile(m, k, df, marken=None, zr=None):
+def planzeile(m, k, df, marken=None, zr=None, su=None):
     """Plan in Zeilen unter dem Chart (12.11.2026, statt der Karte „Plan“): je aktivem System Einstieg, Kaufzone, Stopp
     (dieselbe Linie wie im Chart) und die Ausstiegsregel des Meisters; ohne Pivot die Marken zur Trendvorlage."""
     marken = marken or {}
@@ -422,11 +463,12 @@ def planzeile(m, k, df, marken=None, zr=None):
     hk, em = k.get("haupt"), k.get("ermuedung")
     if em and em.get("ampel") in ("grün", "gelb") and not (hk and hk["ampel"] != "rot"):
         st_ = ((marken.get("short") or {}).get("stopp")) or em.get("stopp")
-        zeilen.append(("Short · Ermüdung", f"Einstieg unter der Unterkante {zahl(em['unten'])} $ · Stopp {zahl(st_)} $ "
+        zeilen.append(("k_short", f"Einstieg unter der Unterkante {zahl(em['unten'])} $ · Stopp {zahl(st_)} $ "
                                            f"(1,5 ATR; Regel: über dem Hoch des Auslösetags)"))
     if m.get("pivot"):
-        aus_ = m["ausstieg"].replace("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", "")
-        zeilen.append(("Minervini", f"Kauf über dem Pivot {zahl(m['pivot'])} $ · Kaufzone bis {zahl(m['pivot'] * 1.05)} $"
+        aus_ = (k["ausstieg"] if (su or {}).get("reihe") == "flagge" else      # Flagge: Regeln von Kullamägi
+                m["ausstieg"].replace("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", ""))
+        zeilen.append(("m", f"Kauf über dem Pivot {zahl(m['pivot'])} $ · Kaufzone bis {zahl(m['pivot'] * 1.05)} $"
                                     + (f" · Stopp {zahl(stopp)} $ (1,5 ATR)" if stopp else "") + f" · Ausstieg: {aus_}"))
     elif len(c) >= 260:
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
@@ -436,22 +478,34 @@ def planzeile(m, k, df, marken=None, zr=None):
                                             (0.75 * hoch52, "−25 % unter dem Hoch", kurs < 0.75 * hoch52),
                                             (g50, "GD50", kurs < g50)) if f]
         if marken_:
-            zeilen.append(("Minervini", "Marken zur Trendvorlage: " + " · ".join(
+            zeilen.append(("m", "Marken zur Trendvorlage: " + " · ".join(
                 f"{zahl(p_)} $ ({x})" for p_, x in sorted(marken_))))
     if hk and hk["ampel"] != "rot":
         ziel = (f"über dem Hoch des Sprungtags {zahl(hk['pivot'])} $" if hk["art"] == "Episodic Pivot"
                 else f"beim Ausbruch über die Oberkante {zahl(hk['pivot'])} $" if hk.get("pivot") else "beim Ausbruch")
-        zeilen.append((f"Kullamägi · {hk['art']}", f"Einstieg {ziel}, über dem Hoch der ersten 5-, 30- oder "
+        zeilen.append(("k", f"Einstieg {ziel}, über dem Hoch der ersten 5-, 30- oder "
                                                    f"60-Minuten-Kerze" + (f" · Stopp {zahl(stopp)} $ (1,5 ATR)" if stopp
                                                                           else "") + f" · Ausstieg: {k['ausstieg']}"))
     if zr and zr.get("ampel") != "rot" and zr.get("avwap"):
         short = zr["seite"] == "short"
-        zeilen.insert(0, (f"Zahlen-Reaktion ({zr['seite']})",
+        zeilen.insert(0, ("zahlen",
                           f"Einstieg am AVWAP vom Zahlentag {zahl(zr['avwap'])} $ (ruhiger Rücksetzer) · gescheitert bei "
                           f"Schluss {'über dem Hoch' if short else 'unter dem Tief'} des Reaktionstags "
                           f"{zahl(zr['hoch'] if short else zr['tief'])} $ oder {'über' if short else 'unter'} dem AVWAP"))
     if not zeilen:
         return ""
+    # Namen unseres Systems (12.11.2026): das Setup des Titels zuerst, die übrigen als „Auch“
+    import kartentisch
+    su = su or {}
+    r_ = su.get("reihe")
+    name = {"m": "Flagge" if r_ == "flagge" else "Base-Ausbruch",
+            "k": "Sprung (EP)" if (hk or {}).get("art") == "Episodic Pivot" else "Momentum-Ausbruch",
+            "k_short": kartentisch.NAME.get(r_) if r_ in ("k_ermuedung", "k_baerenflagge") else "Short",
+            "zahlen": f"Zahlen-Reaktion ({(zr or {}).get('seite', '')})"}
+    aktiv = {"m_spitze": "m", "m_weitere": "m", "vcp": "m", "flagge": "m", "k_breakout": "k", "k_ep": "k",
+             "k_ermuedung": "k_short", "k_baerenflagge": "k_short", "zahlen": "zahlen"}.get(r_)
+    zeilen.sort(key=lambda z: z[0] != aktiv)
+    zeilen = [((name[n] if n == aktiv else "Auch · " + name[n]), x) for n, x in zeilen]
     return ('<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;'
             f'border-top:1px solid {RAND}">'
             + "".join(f'<div style="font-size:14px;line-height:1.5"><b>{t(n)}</b> '
@@ -988,13 +1042,22 @@ def seite_titel(ticker, laufend=False, _stand=None):
         erk["basen"] = None
     mm_, km_ = maerkte()
     erk["systeme"] = {"m": m_, "k": k_}
+    import kartentisch
+    import zahlen_reaktion
+    zr_ = zahlen_reaktion.pruefen(df, gewinne)
+    su = kartentisch.setup_feststellen(df, m_, k_, zr_, scan)       # das eine Setup (12.11.2026), wie im Kartentisch
+    erk["setup_info"] = su
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
+    gestaltung.SYSTEM = kartentisch.LEHRER.get(su.get("reihe"), "M")
+    gestaltung.SYSTEM_SHORT = lagekarte.richtung(su) == "short"
+    gestaltung.SYSTEM_JE = {"Stärke": "M"} if su.get("reihe") in ("zahlen", "k_ep") else {}
     try:
         rw = _rueckenwind(tk)
         leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, mr, gewinne, m_, k_, mm_, km_, rw)
         k_info = dict(gestaltung.MITSCHRIFT)
     finally:
         gestaltung.MITSCHRIFT = None
+        gestaltung.SYSTEM, gestaltung.SYSTEM_SHORT, gestaltung.SYSTEM_JE = None, False, {}
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
     marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw)
     stellung = _stellung(df, marken)
@@ -1006,8 +1069,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
         zonen["jetzt"] = dict(zonen["jetzt"], nummer=erk["basen"]["zahl"])     # Basennummer an der Zone von heute
     zwischen["zonen"] = zonen
     zwischen["marken"] = marken
-    import zahlen_reaktion
-    zwischen["plan"] = planzeile(m_, k_, df, marken, zahlen_reaktion.pruefen(df, gewinne))   # Plan unter dem Chart
+    zwischen["plan"] = planzeile(m_, k_, df, marken, zr_, su)        # Plan unter dem Chart (12.11.2026)
     zwischen["stunde"] = _stundenkerzen(tk, df)
     teile = [_zahlen_gesamt(tk, fund, fd if fund else None)]        # Earnings und Zahlen in einer Karte (10.11.2026)
     teile.append(depotleiste.titelkarte(tk, df, erk))

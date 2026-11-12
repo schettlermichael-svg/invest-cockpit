@@ -1,5 +1,5 @@
 """Teile der Seite Rückenwind, die früher die Übersicht „Lageeinschätzung“ waren (zusammengelegt am 10.11.2026):
-  ① Lage           Markt je System (Minervini, Kullamägi), Moral der Truppe, Wirtschaftswetter; aufklappbar das
+  ① Lage           Markt (Indizes und Hochs/Tiefs), Moral der Truppe, Wirtschaftswetter; aufklappbar das
                    Wirtschaftswetter im Einzelnen (Dalio-Quad mit Spur, Instrumente, Abgleich mit den Sektoren)
   ② Rückenwind     rueckenwind_seite.py (Wetterkarte, dreifacher Rückenwind, Schnellsuche, Stufen, Logbuch)
   ③ Stellung       Barometer, Lagekarte nach Sektoren, Reihen long und short, Watchlist (kartentisch.plan)
@@ -147,14 +147,11 @@ def seite_uebersicht():
     import markt_systeme
     try:
         mm = markt_systeme.minervini(b.get("hochs"), b.get("tiefs"))
-        km = markt_systeme.kullamaegi()
     except Exception:  # noqa: BLE001
-        mm = km = None
+        mm = None
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
-        _kachel("Markt · Minervini", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",
-        _kachel("Markt · Kullamägi", km["ampel"], km["wort"], "",
-                km["text"] + " – Breakout und Episodic Pivot nur im Aufwärtstrend") if km else "",
+        _kachel("Markt", mm["ampel"], mm["wort"], "", mm["text"]) if mm else "",   # eine Ampel (Micky 12.11.2026):
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),

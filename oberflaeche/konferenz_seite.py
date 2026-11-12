@@ -164,10 +164,8 @@ def _brett(lk):
     br = lk.get("brett") or {}
     h = lk.get("haltung")
     m = br.get("markt") or {}
-    mm, mk = m.get("minervini") or {}, m.get("kullamaegi") or {}
-    markt_f = {"rot": ROT, "gelb": GELB, "grün": GRUEN}.get(
-        "rot" if "rot" in (mm.get("ampel"), mk.get("ampel")) else
-        "grün" if mm.get("ampel") == mk.get("ampel") == "grün" else "gelb")
+    mm = m.get("minervini") or {}
+    markt_f = AMPEL.get(mm.get("ampel"), GRAU)       # eine Ampel: Indizes und Hochs/Tiefs (Micky 12.11.2026)
     pe = br.get("pendel") or {}
     ds = br.get("datenstand") or {}
     if isinstance(ds, str):
@@ -175,8 +173,8 @@ def _brett(lk):
     return ('<div style="display:flex;flex-wrap:wrap;gap:12px">'
             + _feld("Haltung des Stabs", _h(h or lk.get("lage_kurz") or "—"), HALTUNG_FARBE.get(h, BLAU),
                     _h(lk.get("lage_kurz") if h else "") or "&nbsp;")
-            + _feld("Markt", f'{_p(mm.get("ampel"))} M &nbsp; {_p(mk.get("ampel"))} K', markt_f,
-                    _h(f'Minervini: {mm.get("wort") or "—"} · Kullamägi: {mk.get("wort") or "—"}'))
+            + _feld("Markt", f'{_p(mm.get("ampel"))} {_h(mm.get("wort") or "—")}', markt_f,
+                    "Indizes über GD50/GD200 und neue Hochs gegen Tiefs")
             + _feld("Pendel", _h(f'{pe.get("zone") or "—"} {pe.get("pfeil") or ""}'), AMPEL.get(pe.get("ampel"), GRAU),
                     _h(f'vor 4 Wochen: {pe.get("vor_4_wochen")}') if pe.get("vor_4_wochen") else "&nbsp;")
             + _feld("Datenstand", _p(ds.get("ampel")) + " " + ("gleicher Tag" if ds.get("ampel") == "grün" else
