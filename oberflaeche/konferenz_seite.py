@@ -174,7 +174,8 @@ def _brett(lk):
             + _feld("Haltung des Stabs", _h(h or lk.get("lage_kurz") or "—"), HALTUNG_FARBE.get(h, BLAU),
                     _h(lk.get("lage_kurz") if h else "") or "&nbsp;")
             + _feld("Markt", f'{_p(mm.get("ampel"))} {_h(mm.get("wort") or "—")}', markt_f,
-                    f'O\'Neil · seit {_h(mm["seit"])}' if mm.get("seit") else "O'Neil")
+                    (f'O\'Neil · seit {_h(mm["seit"])}' if mm.get("seit") else "O'Neil") if "ampel" in m
+                    else "alte Markt-Regel (Konferenz vor dem 13.11.2026)")
             + _feld("Pendel", _h(f'{pe.get("zone") or "—"} {pe.get("pfeil") or ""}'), AMPEL.get(pe.get("ampel"), GRAU),
                     _h(f'vor 4 Wochen: {pe.get("vor_4_wochen")}') if pe.get("vor_4_wochen") else "&nbsp;")
             + _feld("Datenstand", _p(ds.get("ampel")) + " " + ("gleicher Tag" if ds.get("ampel") == "grün" else
