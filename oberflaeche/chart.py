@@ -430,7 +430,7 @@ def _enge(e, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster):
           f'stroke-width="1.6"><title>Enge: {zahl(letzte["tiefe"], 1)} % · Pivot {zahl(e["pivot"])} $</title></rect>')
         A(f'<line x1="{xe:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(e["pivot"]):.1f}" y2="{Y(e["pivot"]):.1f}" stroke="{TEXT}" '
           f'stroke-width="1.4" stroke-dasharray="6 4"/>')
-        t_ = f'Pivot {zahl(e["pivot"])} $'
+        t_ = f'Pivot der Base {zahl(e["pivot"])} $'       # 12.11.2026: nicht mit dem Einstieg des Setups verwechseln
         y_, strich = _rechts(platz, ENDE, Y(e["pivot"]), t_)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{TEXT}" font-size="12" font-weight="600">{t_}</text>')
     t_ = f'● Enge {e.get("ampel", "")} · {e.get("text", "")}'
@@ -468,6 +468,10 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
             y_, strich = _rechts(platz, ENDE, Y(m["kz_oben"]), t_)
             spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{KAUFZONE_FARBE}" font-size="12" '
                           f'font-weight="600">{t_}</text>')
+            t_ = f'Einstieg {zahl(e)} $'                  # Einstieg des Setups beschriftet (12.11.2026)
+            y_, strich = _rechts(platz, ENDE, Y(e), t_, nach_oben=False)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{KAUFZONE_FARBE}" font-size="12" '
+                          f'font-weight="600"><title>{m.get("quelle", "")}</title>{t_}</text>')
         if st:
             A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(st):.1f}" y2="{Y(st):.1f}" stroke="{ROT}" stroke-width="1.8">'
               f'<title>Stopp 1,5 ATR unter dem Einstieg {zahl(e)} $ (ATR {zahl(m.get("atr"))} $)</title></line>')
@@ -478,8 +482,11 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
     if sh.get("stopp") and pd.Timestamp(sh["tag"]) >= d.index[0]:
         x0 = X(pos(sh["tag"]))
         A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(sh["stopp"]):.1f}" y2="{Y(sh["stopp"]):.1f}" stroke="{ROT}" '
-          f'stroke-width="1.8" stroke-dasharray="7 4"><title>Short-Stopp 1,5 ATR über der Unterkante {zahl(sh["einstieg"])} $'
+          f'stroke-width="1.8" stroke-dasharray="7 4"><title>Short-Stopp 1,5 ATR über dem Einstieg {zahl(sh["einstieg"])} $'
           f'</title></line>')
+        t_ = f'Einstieg Short {zahl(sh["einstieg"])} $'      # 12.11.2026: Einstieg des Short-Setups beschriftet
+        y_, strich = _rechts(platz, ENDE, Y(sh["einstieg"]), t_, nach_oben=False)
+        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
         t_ = f'Stopp Short {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
         y_, strich = _rechts(platz, ENDE, Y(sh["stopp"]), t_)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
@@ -530,7 +537,7 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
     if sh.get("tag") is not None and pd.Timestamp(sh["tag"]) >= d.index[0]:
         i = pos(sh["tag"])
         v_ = sh.get("volumen")
-        t_ = "↓ Ermüdung" + (f' {zahl(v_, 1)}×' if v_ else "")
+        t_ = "↓ " + sh.get("art", "Ermüdung") + (f' {zahl(v_, 1)}×' if v_ else "")
         spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(h[i]) - 10, t_, 12):.1f}" fill="{ROT}" font-size="12" '
                       f'font-weight="700" text-anchor="middle">{t_}</text>')
 

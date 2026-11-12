@@ -850,7 +850,8 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
     if seite == "short" and e and a:
         em = k_.get("ermuedung") or {}
         m["short"] = {"tag": em.get("tag") if r_ != "zahlen" else pd.Timestamp(zr["tag"]), "einstieg": float(e),
-                      "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None}
+                      "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None,
+                      "art": __import__("kartentisch").NAME.get(r_, "Short").split(" (")[0]}
     return m
 
 
