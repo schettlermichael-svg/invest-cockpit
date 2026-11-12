@@ -14,7 +14,7 @@ werden die Nadeln im Chart der Akte.
 Umbau 10.11.2026 (Konferenz vom 10.11.: 3 von 4 Meldungen unlesbar, der Stab blind): festes Meldeformular über ein
 Werkzeug der Schnittstelle statt freiem JSON-Text (keine kaputten Anführungszeichen mehr), zweiter Versuch, Rohantwort
 im Protokoll; der Stab liest alle Reihen des Kartentischs (long, short), die Watchlist und den dreifachen Rückenwind –
-seit 12.11.2026 feste Plätze je Reihe (AKTEN_PLAETZE), Depot, Watchlist und Volltreffer immer; vollständige Akten (alle Kacheln, Pivot, Kaufzone, Stopp 1,5 ATR, Ausbruch,
+seit 12.11.2026 nur einsatzbereite Setups (AKTEN_MAX, Depot immer); vollständige Akten (alle Kacheln, Pivot, Kaufzone, Stopp 1,5 ATR, Ausbruch,
 Rückenwind, Zahlen); heutiges Datum, vergangene Termine aussortiert; Dienstanweisung mit den Setups und der Haltung
 des Traders; feste Gefechtsfragen je Stratege; Sperre, wenn der Kartentisch veraltet ist.
 
@@ -40,13 +40,14 @@ PREIS_EIN, PREIS_AUS, PREIS_SUCHE = 4.0 / 1e6, 20.0 / 1e6, 0.01       # $ je Tok
 DECKEL_USD = 50.0                                                      # Monatsdeckel (Micky 11.11.2026: alle Strategen auf Opus, gemessen ~2,10 $ je Konferenz)
 SUCHEN_NACHT = 10                                                      # Web-Suchen je Nacht (Fundamental-Analyst)
 SUCHEN_FRAGE = 3
-# Akten des Stabs (Micky 12.11.2026: feste Plätze je Reihe, Watchlist immer): immer Depot, Watchlist und alle
-# Volltreffer; dazu je Reihe die besten (None = alle). Watchlist-Titel ohne Setup und ohne dreifachen Rückenwind
-# bekommen keine volle Akte, stehen aber mit ihren festen Ampeln in der Tafel (178 volle Akten: ~4 $ je Konferenz). So fällt kein Setup-Typ mehr heraus (vorher die ersten 40 nach
-# Rang – Short und niedrige Reihen wurden verdrängt).
-AKTEN_PLAETZE = {"m_spitze": None, "k_ep": None, "k_ermuedung": 8, "k_breakout": 8, "m_weitere": 8, "vcp": 4,
-                 "flagge": 4}
-AKTEN_DREIFACH_OHNE_SETUP = 4                                          # dreifacher Rückenwind, aber keine Reihe
+# Akten des Stabs (Micky 12.11.2026: „Klasse statt Masse – nur das Beste vom Besten im Konferenzraum“): immer das
+# Depot; dazu nur einsatzbereite Setups – Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum
+# Pivot, Short bis 5 % unter der Unterkante); Volltreffer auch bis 10 % über dem Pivot. Rang: Volltreffer, Watchlist,
+# Geld-Ampel grün, RS-Rang. Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
+# AKTEN_MAX. Alles andere zeigt der Kartentisch; Watchlist-Titel ohne Akte stehen mit festen Ampeln in der Tafel.
+AKTEN_MAX = 30
+AKTEN_JE_REIHE = 2
+ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
 
 STRATEGEN = {
     1: ("Stratege", "Tagesbefehl"),
@@ -716,19 +717,28 @@ def lagebild():
     pos = [p["ticker"] for p in dep.get("positionen", [])]
     wl = set(watchlists.alle())
     pool = set(titel_t) | drei | wl
-    def ordnung(tk):
-        x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
-        voll = tk in drei and bool(x.get("reihe"))
-        return (not voll, -rang.get(x.get("reihe"), 0), not x.get("gruen"), tk not in drei, -(r.get("rang") or 0))
-    sortiert = sorted(pool, key=ordnung)
-    voll_ = [tk for tk in sortiert if tk in drei and (titel_t.get(tk) or {}).get("reihe")]
-    wl_mit = [tk for tk in sorted(wl, key=ordnung) if (titel_t.get(tk) or {}).get("reihe") or tk in drei]
-    alle = pos + wl_mit + voll_                       # Watchlist: volle Akte nur mit Setup oder Rückenwind (Micky 12.11.)
-    for reihe_, plaetze in AKTEN_PLAETZE.items():
-        in_reihe = [tk for tk in sortiert if (titel_t.get(tk) or {}).get("reihe") == reihe_ and tk not in alle]
-        alle += in_reihe if plaetze is None else in_reihe[:plaetze]
-    alle += [tk for tk in sortiert if tk in drei and not (titel_t.get(tk) or {}).get("reihe")
-             and tk not in alle][:AKTEN_DREIFACH_OHNE_SETUP]
+    def bereit(tk, voll=False):
+        x = titel_t.get(tk) or {}
+        a_ = x.get("abstand_vz")
+        if not x.get("reihe") or not x.get("gruen") or a_ is None:
+            return False
+        lo, hi = ZONE_SHORT if x["reihe"] == "k_ermuedung" else ZONE_VOLLTREFFER if voll else ZONE_LONG
+        return lo <= float(a_) <= hi
+
+    def klasse(tk):
+        r = rw_t.get(tk) or {}
+        voll = tk in drei and bool((titel_t.get(tk) or {}).get("reihe"))
+        return (not voll, tk not in wl, r.get("geld_ampel") != "grün", -(r.get("rang") or 0))
+
+    elite = sorted((tk for tk in pool if bereit(tk, tk in drei)), key=klasse)
+    alle = list(pos)
+    for reihe_ in rang:                                # bis zu 2 Plätze je Reihe vorab
+        if reihe_:
+            alle += [tk for tk in elite if (titel_t.get(tk) or {}).get("reihe") == reihe_
+                     and tk not in alle][:AKTEN_JE_REIHE]
+    alle += [tk for tk in elite if tk not in alle]
+    alle = alle[:AKTEN_MAX + len(pos)]
+    alle = pos + sorted(set(alle) - set(pos), key=klasse)
     alle = list(dict.fromkeys(alle))
 
     def akte(tk):
