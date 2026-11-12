@@ -93,6 +93,10 @@ def _zone(erk):
     sy = erk.get("systeme") or {}
     if r_ == "k_breakout":
         return ((sy.get("k") or {}).get("breakout") or {}).get("zone")
+    if r_ in ("flagge", "vcp"):                        # Flagge in einer Base: Rahmen nur, wenn seine Oberkante der
+        z_ = (sy.get("m") or {}).get("zone") or {}     # Einstieg ist (Prüf-Agent: sonst Pivot-Linie neben dem Rahmen)
+        p_ = (erk.get("setup_info") or {}).get("pivot_scanner")
+        return z_ if z_.get("zone") and p_ and abs(float(z_["oben"]) / float(p_) - 1) < 0.005 else None
     z = (sy.get("m") or {}).get("zone") or {}
     if z.get("zone"):
         return z

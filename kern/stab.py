@@ -82,6 +82,7 @@ BEGRIFFE DER APP
 - Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
 - Volltreffer: dreifacher Rückenwind UND ein Long-Setup im Kartentisch (dreifacher Rückenwind ist Wind für long; ein Short-Setup ist nie Volltreffer).
 - Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung und Bärenflagge Unterkante. Kaufzone long: Einstieg bis +5 %; Short-Zone: bis 5 % unter dem Einstieg. Stopp im Chart: 1,5 ATR vom Einstieg (long darunter, short darüber); ein Short-Setup erlischt schon, wenn der Kurs über das Hoch des Auslösetags steigt.
+- „abstand_zum_pivot_pct“ gilt zum Kurs am Tag des Kartentischs („kurs_tisch_tag“), wie die Auswahl der Akten; „kurs“ und „abstand_kurs_stopp_pct“ sind vom jüngsten Schluss. Sind beide Tage gleich, sind beide Kurse gleich.
 - Zahlen-Reaktion: der Einstieg („pivot“) ist der AVWAP ab dem Reaktionstag; „zahlen_reaktion“ nennt Tag, Reaktion
   in %, Volumen, Lage des Schlusses (1 = Hoch, 0 = Tief), Tage seitdem und ob Tief/Hoch und AVWAP gehalten wurden.
 
@@ -890,6 +891,7 @@ def lagebild():
                 "luecken": x.get("luecken"), "wertzone": x.get("zustand"),
                 "kurs": _zahl(kurs), "pivot": _zahl(pivot), "abstand_zum_pivot_pct": _zahl(abst, 1),
                 "abstand_roh": abst, "einstieg_quelle": ein.get("quelle"),
+                "kurs_tisch_tag": _zahl(pivot * (1 + abst / 100)) if pivot and abst is not None else None,
                 "kaufzone_bis": _zahl(pivot * 1.05) if pivot and not short_ else None,
                 "shortzone_bis": _zahl(pivot * 0.95) if pivot and short_ else None, "atr": _zahl(a),
                 "stopp_1_5_atr": _zahl(stopp), "abstand_kurs_stopp_pct": _zahl((kurs / stopp - 1) * 100, 1)
@@ -971,7 +973,7 @@ def _ausschnitt(lb, nr):
     if nr == 4:
         return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "stand_kartentisch": lb["stand_kartentisch"], "kandidaten": [
             {a: c.get(a) for a in ("titel", "reihe", "seite", "volltreffer", "setup_gruen", "regeln_base", "regeln_momentum",
-                               "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kaufzone_bis", "shortzone_bis", "einstieg_quelle", "atr",
+                               "luecken", "wertzone", "kurs", "pivot", "abstand_zum_pivot_pct", "kurs_tisch_tag", "kaufzone_bis", "shortzone_bis", "einstieg_quelle", "atr",
                                "stopp_1_5_atr", "ausbruch", "zahlen_reaktion", "avwap", "kacheln", "feste_ampeln")}
             | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in k]}
     return {"heute": lb["heute"], "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
