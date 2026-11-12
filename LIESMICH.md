@@ -575,3 +575,15 @@ Oben steht die Lagekarte, darunter zugeklappt Wortlaut, Akten, Feldhandbuch und 
 - **Alle Akten:** warum jeder Titel beim Stab liegt, mit seinen festen Ampeln.
 
 Regel 13 der Dienstanweisung: Die festen Ampeln sind gesetzt, der Stab färbt sie nicht um und urteilt nur über seine eigene Frage. Die Konferenz speichert `tafel`, `brett` und `bilanz`. Bei älteren Konferenzen rechnet die Lagekarte die festen Ampeln mit dem heutigen Stand.
+
+## Drei Seiten (12.11.2026)
+
+- **Rückenwind (Lagezentrum):** ① Lage, ② Strömung mit der Wetterkarte und direkt darunter der Lagekarte nach Sektoren, ③ Eigene Truppe.
+- **Setups (Aufklärung und Filter):**
+  - ① Auswahl für den Stab: Trichter vom Revier zum Stab und die Akten mit Grund. Gerechnet von `stab.auswahl()`, derselben Funktion, die die Konferenz nutzt.
+  - ② Stellung: grüne Setups, die Reihen und die Watchlist, jede Karte mit 🎯 oder dem Grund, warum nicht.
+  - ③ Rückenwind je Titel: dreifacher Rückenwind, Schnellsuche, Titel nach Stufe, Logbuch.
+  - ④ Termine.
+- **Konferenzraum (Beschlusszentrale):** die Lagekarte des Stabs.
+
+Akten des Stabs: Depot plus einsatzbereite Setups (grün und am Auslöser oder in der Kaufzone), je Reihe 2 Plätze vorab, höchstens 30.

@@ -355,6 +355,19 @@ def _grundzeile(x):
     return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
+def stab_marke(x):
+    """Marke über jeder Karte (Seite Setups, 12.11.2026): 🎯 beim Stab oder der Grund, warum nicht."""
+    from gestaltung import BLAU, TEXT_3, t
+    st_ = (x or {}).get("stab")
+    if not st_:
+        return ""
+    drin, grund = st_
+    if drin:
+        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">🎯 beim Stab'
+                f'<span style="font-weight:400"> · {t(grund)}</span></span>')
+    return f'<span style="font-size:13px;color:{TEXT_3}">nicht beim Stab · {t(grund)}</span>'
+
+
 def rueckenwind_zeichen(x):
     """Zeichen „Rückenwind“ (Seite Rückenwind, 09.11.2026): Kurs · Geld · Zahlen als Ampeln und die Stufe."""
     rw = (x or {}).get("rueckenwind")
@@ -369,7 +382,7 @@ def karte_html(x, kopf=""):
     """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
     Grund, was fehlt) und das Zeichen „Rückenwind“."""
     from gestaltung import TEXT_2, t
-    kopf = kopf or _grundzeile(x)
+    kopf = stab_marke(x) + (kopf or _grundzeile(x))
     rw = rueckenwind_zeichen(x)
     rw = f'<span style="font-size:13px;color:{TEXT_2}">{t(rw)}</span>' if rw else ""
     return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}'
@@ -380,10 +393,12 @@ def zeile(tk, x):
     """Eine Tabellenzeile für die übrigen Titel (Reihenfolge wie die Karten)."""
     from gestaltung import GELB, zahl
     if x is None:
-        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Befund": "",
+        return {"tk": tk, "farbe": GELB, "blass": False, "Setup": "neu – wird im Abendlauf gerechnet", "Befund": "", "Stab": "",
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
+    st_ = x.get("stab")
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
+            "Stab": ("🎯 " if st_[0] else "") + st_[1] if st_ else "",
             "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
                                              "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x.get("abstand", 0), 1), "Was fehlt": lagekarte.grund(x)}
@@ -452,6 +467,19 @@ def plan(tisch=None):
                                         **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge"
                                            and not x.get("scanner") else {}))
                                for tk, x in tisch["titel"].items()})
+    try:                                          # Auswahl für den Stab: dieselbe Funktion wie die Konferenz
+        import depot
+        import rueckenwind_seite
+        import stab
+        rw_erg = rueckenwind.laden() or {}
+        drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
+        pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
+        akten, gruende = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, set(w[watchlists.STANDARD]), pos)
+        for tk, g in gruende.items():
+            if tk in tisch["titel"]:
+                tisch["titel"][tk]["stab"] = g
+    except Exception:  # noqa: BLE001 – ohne Auswahl steht der Tisch trotzdem
+        akten, gruende, drei = [], {}, set()
     b = tisch["barometer"]
     if "m_gruen" in b:
         zahlen_ = f'{b["m_gruen"]} Minervini · {b["k_gruen"]} Kullamägi · {b.get("k_ermuedung", 0)} Ermüdung (short)'
@@ -480,8 +508,9 @@ def plan(tisch=None):
                     for _, tk, d, r in termine)
             or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
     # ③ Stellung: Barometer, Lagekarte nach Sektoren, Reihen · ④ Termine (Seite Rückenwind seit 10.11.2026)
-    teile = [{"art": "html", "html": station("stellung") + barometer},
-             {"art": "html", "html": lagebild(tisch)}]
+    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei)},
+             {"art": "html", "rolle": "stellung", "html": station("stellung") + barometer},
+             {"art": "html", "rolle": "lagekarte", "html": lagebild(tisch)}]
 
     def watchlist_abschnitte():
         """Watchlist: jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe."""
@@ -498,13 +527,60 @@ def plan(tisch=None):
         teile.append(_abschnitt(name, text, liste))
         if key == WATCHLISTS_NACH:             # Watchlist direkt nach ★ Spitze (05.11.2026)
             watchlist_abschnitte()
-    teile.append({"art": "html", "html": station("termine")
+    teile.append({"art": "html", "rolle": "termine", "html": station("termine")
                   + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
                   + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlist"
                            + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)
                   + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
                     f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
     return teile
+
+
+def auswahl_html(tisch, akten, gruende, drei):
+    """Trichter vom Revier zum Stab und die Tabelle der Akten (Seite Setups, 12.11.2026) – so sieht man vor der
+    Konferenz, was der Stab liest, und warum."""
+    import stab
+    from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
+    tt = tisch["titel"]
+    n_revier = (tisch.get("barometer") or {}).get("titel") or len(tt)
+    in_reihe = [tk for tk, x in tt.items() if x.get("reihe") and not str(x.get("reihe")).endswith("_alt")]
+    gruen = [tk for tk in in_reihe if tt[tk].get("gruen")]
+    bereit = [tk for tk in gruen if gruende.get(tk) and (gruende[tk][0] or gruende[tk][1] == "Platz voll")]
+    stufen = (("Revier", n_revier), ("in einer Reihe", len(in_reihe)), ("Setup grün", len(gruen)),
+              ("einsatzbereit", len(bereit)), ("beim Stab", len(akten)))
+    trichter = "".join(
+        f'<div style="flex:1 1 130px;background:{KARTE};border:1px solid {BLAU if i == 4 else RAND};border-radius:10px;'
+        f'padding:10px 14px"><div style="font-size:13px;color:{TEXT_3}">{n}</div>'
+        f'<div style="font-size:24px;font-weight:600;color:{BLAU if i == 4 else TEXT}">{zahl(z, 0)}</div></div>'
+        for i, (n, z) in enumerate(stufen))
+    namen = {k: n for k, n, _ in REIHEN}
+    zeilen = ""
+    for tk in akten:
+        x = tt.get(tk) or {}
+        a_ = x.get("abstand_vz")
+        r = (x.get("rueckenwind") or {})
+        geld = AMPEL.get(r.get("geld"), GRAU)
+        zeilen += (f'<tr><td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
+                   f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
+                   f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get(x.get("reihe"), "Depot" if not x else "—"))}'
+                   + (" · Bärenflagge" if x.get("short_art") == "Bärenflagge" else "") + '</td>'
+                   f'<td style="padding:6px 8px">{"—" if a_ is None else zahl(float(a_), 1) + " %"}</td>'
+                   f'<td style="padding:6px 8px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;'
+                   f'background:{geld}"></span></td>'
+                   f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (True, "Depot"))[1])}</td></tr>')
+    kopf = "".join(f'<th style="text-align:left;padding:6px 8px;font-size:13px;font-weight:500;color:{TEXT_3};'
+                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "zum Pivot", "Geld",
+                                                                         "Warum dabei"))
+    regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(stab.ZONE_LONG[0], 0)} "
+             f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Pivot, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter der "
+             f"Unterkante, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: Volltreffer, "
+             f"Watchlist, Geld grün, RS-Rang · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
+    return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
+            f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
+            f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'
+            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Diese {len(akten)} Titel liest der Stab'
+            f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
+            f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table></div>')
 
 
 def _marken(x):

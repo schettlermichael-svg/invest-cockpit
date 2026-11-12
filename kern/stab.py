@@ -690,6 +690,76 @@ def bilanz(vorher, kurs_heute):
     return {"konferenz_vom": vorher.get("stand"), "ziele": aus}
 
 
+def auswahl(titel_t, rw_t, drei, wl, pos):
+    """Welche Titel eine Akte bekommen (eine Funktion für Stab und Seite Setups – was die Seite zeigt, geht in die
+    Konferenz). → (Liste in Rangfolge, {Ticker: (beim Stab?, Grund)}) für jeden Titel mit Reihe, auf der Watchlist oder
+    im Depot."""
+    import kartentisch
+    rang = kartentisch.RANG
+
+    def zone(tk):
+        x = titel_t.get(tk) or {}
+        if x.get("reihe") == "k_ermuedung":
+            return ZONE_SHORT
+        return ZONE_VOLLTREFFER if tk in drei else ZONE_LONG
+
+    def bereit(tk):
+        x = titel_t.get(tk) or {}
+        a_ = x.get("abstand_vz")
+        if not x.get("reihe") or not x.get("gruen") or a_ is None:
+            return False
+        lo, hi = zone(tk)
+        return lo <= float(a_) <= hi
+
+    def klasse(tk):
+        r = rw_t.get(tk) or {}
+        voll = tk in drei and bool((titel_t.get(tk) or {}).get("reihe"))
+        return (not voll, tk not in wl, r.get("geld_ampel") != "grün", -(r.get("rang") or 0))
+
+    pool = set(titel_t) | set(drei) | set(wl)
+    elite = sorted((tk for tk in pool if bereit(tk)), key=klasse)
+    alle = list(pos)
+    for reihe_ in rang:                                # bis zu 2 Plätze je Reihe vorab
+        if reihe_:
+            alle += [tk for tk in elite if (titel_t.get(tk) or {}).get("reihe") == reihe_
+                     and tk not in alle][:AKTEN_JE_REIHE]
+    alle += [tk for tk in elite if tk not in alle]
+    alle = alle[:AKTEN_MAX + len(pos)]
+    alle = list(pos) + sorted(set(alle) - set(pos), key=klasse)
+    drin = set(alle)
+    gruende = {}
+    for tk in set(titel_t) | set(wl) | set(pos):
+        x = titel_t.get(tk) or {}
+        if not x.get("reihe") and tk not in pos and tk not in wl:
+            continue
+        r = rw_t.get(tk) or {}
+        if tk in drin:
+            g = ("Depot" if tk in pos else " · ".join(
+                (["Volltreffer"] if tk in drei and x.get("reihe") else []) + (["Watchlist"] if tk in wl else [])
+                + (["Geld grün"] if r.get("geld_ampel") == "grün" else []) + ([f'RS {r["rang"]}'] if r.get("rang") else []))
+                 or "einsatzbereit")
+        elif not x.get("reihe"):
+            g = "kein Setup"
+        elif x.get("still"):
+            g = "Kurs steht still"
+        elif not x.get("gruen"):
+            g = "Setup gelb"
+        elif x.get("abstand_vz") is None:
+            g = "kein Pivot"
+        else:
+            a_ = float(x["abstand_vz"])
+            lo, hi = zone(tk)
+            short = x.get("reihe") == "k_ermuedung"
+            if a_ > hi:
+                g = f"{'über der Unterkante' if short else 'gelaufen'} {a_:+.1f} %"
+            elif a_ < lo:
+                g = f"{'gelaufen' if short else 'noch weit vor dem Pivot'} {a_:+.1f} %"
+            else:
+                g = "Platz voll"
+        gruende[tk] = (tk in drin, g.replace(".", ","))
+    return alle, gruende
+
+
 def lagebild():
     """Alles, was der Stab liest, als dict – nur aus gespeicherten Daten des Nachtlaufs (kein Abruf)."""
     import atr as atr_modul
@@ -709,36 +779,13 @@ def lagebild():
     if alter > TISCH_MAX_TAGE:
         raise Aufklaerung(f"Aufklärung fehlt: Kartentisch vom {pd.Timestamp(tisch['stand']):%d.%m.%Y} ist {alter} Tage alt")
     namen = {k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN
-    rang = kartentisch.RANG
     titel_t = tisch.get("titel") or {}
     rw_t = rw.get("titel") or {}
     drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw)} if rw else set()
     dep = depot.laden()
     pos = [p["ticker"] for p in dep.get("positionen", [])]
     wl = set(watchlists.alle())
-    pool = set(titel_t) | drei | wl
-    def bereit(tk, voll=False):
-        x = titel_t.get(tk) or {}
-        a_ = x.get("abstand_vz")
-        if not x.get("reihe") or not x.get("gruen") or a_ is None:
-            return False
-        lo, hi = ZONE_SHORT if x["reihe"] == "k_ermuedung" else ZONE_VOLLTREFFER if voll else ZONE_LONG
-        return lo <= float(a_) <= hi
-
-    def klasse(tk):
-        r = rw_t.get(tk) or {}
-        voll = tk in drei and bool((titel_t.get(tk) or {}).get("reihe"))
-        return (not voll, tk not in wl, r.get("geld_ampel") != "grün", -(r.get("rang") or 0))
-
-    elite = sorted((tk for tk in pool if bereit(tk, tk in drei)), key=klasse)
-    alle = list(pos)
-    for reihe_ in rang:                                # bis zu 2 Plätze je Reihe vorab
-        if reihe_:
-            alle += [tk for tk in elite if (titel_t.get(tk) or {}).get("reihe") == reihe_
-                     and tk not in alle][:AKTEN_JE_REIHE]
-    alle += [tk for tk in elite if tk not in alle]
-    alle = alle[:AKTEN_MAX + len(pos)]
-    alle = pos + sorted(set(alle) - set(pos), key=klasse)
+    alle, _ = auswahl(titel_t, rw_t, drei, wl, pos)
     alle = list(dict.fromkeys(alle))
 
     def akte(tk):

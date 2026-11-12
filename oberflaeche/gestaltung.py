@@ -84,28 +84,30 @@ def feld_name(f):
     return FELD_NAME.get(f, f) if f else f
 
 
-STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind seit 10.11.2026 (mit Übersicht)
-             ("wind", "②", "Rückenwind", "Wohin fließt das Geld?"),
-             ("stellung", "③", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),
-             ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"),
-             ("truppe", "⑤", "Eigene Truppe", "Wie stehen meine Positionen?"))
+STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind = Lagezentrum (12.11.2026)
+             ("wind", "②", "Rückenwind", "Wohin fließt das Geld, wo sammeln sich die Angriffe?"),
+             ("truppe", "③", "Eigene Truppe", "Wie stehen meine Positionen?"))
+STATIONEN_SETUPS = (("auswahl", "①", "Auswahl für den Stab", "Was geht in die Konferenz – und warum?"),   # Seite Setups
+                    ("stellung", "②", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),
+                    ("titel", "③", "Rückenwind je Titel", "Wer hat Kurs, Geld und Zahlen hinter sich?"),
+                    ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"))
 
 
 def station(anker):
     """Überschrift einer Station der Übersicht (Trichter: breit oben, schmal auf der Titelseite) mit Sprungmarke."""
-    _, nr, name, frage = next(x for x in STATIONEN if x[0] == anker)
+    _, nr, name, frage = next(x for x in STATIONEN + STATIONEN_SETUPS if x[0] == anker)
     return (f'<div id="st-{anker}" style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;'
             f'border-bottom:1px solid {RAND};padding:8px 0 10px;margin-top:8px;scroll-margin-top:60px">'
             f'<h2 style="margin:0;font-size:28px;font-weight:600">{(nr + " " + t(name)).strip()}</h2>'
             f'<span style="font-size:17px;color:{TEXT_2}">{t(frage)}</span></div>')
 
 
-def sprungleiste():
+def sprungleiste(stationen=STATIONEN):
     """Leiste unter dem Kopf: je Station ein Sprung."""
     return ('<nav aria-label="Stationen" style="display:flex;flex-wrap:wrap;gap:8px">' + "".join(
         f'<a href="#st-{a}" target="_self" style="border:1px solid {RAND};border-radius:8px;padding:6px 12px;'
         f'font-size:15px;color:{TEXT};text-decoration:none;background:{KARTE}">{(nr + " " + t(n)).strip()} '
-        f'<span style="color:{TEXT_3}">· {t(f)}</span></a>' for a, nr, n, f in STATIONEN) + '</nav>')
+        f'<span style="color:{TEXT_3}">· {t(f)}</span></a>' for a, nr, n, f in stationen) + '</nav>')
 
 
 def klapp(titel, zeile_, inhalt):

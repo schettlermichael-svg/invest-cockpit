@@ -39,11 +39,11 @@ header[data-testid="stHeader"], footer, #MainMenu, [data-testid="stToolbar"],
 .block-container {{max-width:1440px; padding:16px 0 0 0 !important}}
 div[data-testid="stHorizontalBlock"] {{max-width:1392px; margin:0 auto; padding:0 24px; align-items:end}}
 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padding:0; max-width:none; align-items:center}}
-.st-key-kartentisch div[data-testid="stHorizontalBlock"] {{align-items:flex-start}}
-.st-key-kartentisch div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{align-items:center}}
-.st-key-kartentisch [data-testid="stExpander"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
-.st-key-rueckenwind [data-testid="stExpander"], .st-key-rueckenwind [data-testid="stHorizontalBlock"],
-.st-key-rueckenwind [data-testid="stRadio"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
+[class*="st-key-kartentisch"] div[data-testid="stHorizontalBlock"] {{align-items:flex-start}}
+[class*="st-key-kartentisch"] div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{align-items:center}}
+[class*="st-key-kartentisch"] [data-testid="stExpander"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
+[class*="st-key-rueckenwind"] [data-testid="stExpander"], [class*="st-key-rueckenwind"] [data-testid="stHorizontalBlock"],
+[class*="st-key-rueckenwind"] [data-testid="stRadio"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
 .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{background:{KARTE}; color:{TEXT};
   border:1px solid {RAND}; border-radius:10px; min-height:44px; font-size:16px}}
 .stTextInput label, .stRadio label p {{color:{TEXT_2} !important; font-size:14px}}
@@ -52,7 +52,8 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Titelseite", "Konferenzraum"]   # Übersicht ist seit 10.11.2026 Teil von Rückenwind
+ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Konferenzraum"]   # Rückenwind = Lagezentrum, Setups = Aufklärung
+# und Filter, Konferenzraum = Beschlusszentrale (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind
 ALTE_SEITEN = {"Übersicht": "Rückenwind"}                       # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
@@ -318,7 +319,7 @@ def _tabelle(teil, nr):
     zeilen = teil["zeilen"]
     if not zeilen:
         return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Setup": z["Setup"], "Befund": z["Befund"],
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Stab": z.get("Stab", ""), "Setup": z["Setup"], "Befund": z["Befund"],
                         "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
     farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
@@ -350,15 +351,20 @@ def _tabelle(teil, nr):
             st.link_button(f"{tk}: Deep Dive →", f"?seite=Titelseite&t={tk}")
 
 
-def _kartentisch_zeigen():
+def _kartentisch_zeigen(rollen=None, ohne=()):
+    """Teile des Kartentischs: rollen = nur diese (z. B. {"lagekarte"}), ohne = diese nicht; Abschnitte (Reihen,
+    Watchlist) haben die Rolle „reihe“."""
     def html(h):
         st.markdown(gestaltung.seite(h, oben=12, unten=12), unsafe_allow_html=True)
     try:
-        huelle = st.container(key="kartentisch")
+        huelle = st.container(key="kartentisch_" + "_".join(sorted(rollen or ())) + "_ohne_" + "_".join(sorted(ohne)))
     except TypeError:                               # ältere Streamlit-Version ohne key
         huelle = st.container()
     with huelle:
         for nr, teil in enumerate(_tischplan(_codestand(mit_watchlists=True))):
+            rolle = teil.get("rolle", "reihe")
+            if (rollen is not None and rolle not in rollen) or rolle in ohne:
+                continue
             if teil["art"] == "html":
                 html(teil["html"])
                 continue
@@ -403,11 +409,11 @@ def zeigen(name, *args):
         if isinstance(html, dict):                   # Seite Rückenwind: ① Lage, ② Rückenwind, ③ Stellung, ④, ⑤
             st.markdown(html["lage"], unsafe_allow_html=True)
             st.markdown(gestaltung.seite(gestaltung.station("wind"), oben=16, unten=0), unsafe_allow_html=True)
-            try:                                     # ein Fehler im Rückenwind lässt Stellung und Truppe stehen
+            try:                                     # ein Fehler im Rückenwind lässt Lagekarte und Truppe stehen
                 rueckenwind_zeigen()
             except Exception as e:  # noqa: BLE001
                 _fehler(e)
-            _kartentisch_zeigen()
+            _kartentisch_zeigen(rollen={"lagekarte"})   # direkt unter der Wetterkarte (Micky 12.11.2026)
             st.markdown(html["unten"], unsafe_allow_html=True)
         else:
             st.markdown(html, unsafe_allow_html=True)
@@ -416,8 +422,8 @@ def zeigen(name, *args):
 
 
 def rueckenwind_zeigen():
-    """Seite „Rückenwind“ (KONZEPT_RUECKENWIND.md): Strömungskarte, Gruppen nach Geldfluss, dreifacher Rückenwind,
-    Titel je Stufe, Logbuch. Rechnet nicht – liest den Stand des Nachtlaufs."""
+    """Seite „Rückenwind“, ② (KONZEPT_RUECKENWIND.md): Strömungskarte und Gruppen nach Geldfluss; die Titel-Listen stehen
+    seit 12.11.2026 auf der Seite Setups. Rechnet nicht – liest den Stand des Frühlaufs."""
     import rueckenwind as rw_kern
     import rueckenwind_seite as rw
     erg = rw_kern.laden()
@@ -434,6 +440,17 @@ def rueckenwind_zeigen():
         with st.expander(f"Alle {'Sektoren' if art == 'Sektor' else 'Branchen' if art == 'Branche' else 'Themen'} "
                          f"nach Geldfluss"):
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
+
+
+def rueckenwind_titel_zeigen():
+    """Seite Setups, ③ Rückenwind je Titel (bis 12.11.2026 auf der Seite Rückenwind): dreifacher Rückenwind,
+    Schnellsuche, Titel nach Stufe, Logbuch."""
+    import rueckenwind as rw_kern
+    import rueckenwind_seite as rw
+    erg = rw_kern.laden()
+    if not erg:
+        return
+    with st.container(key="rueckenwind_titel"):
         st.markdown(gestaltung.seite("<h3 style='margin:0'>Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h3>",
                                      oben=16, unten=0), unsafe_allow_html=True)
         st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
@@ -609,6 +626,21 @@ def konferenz_technik(laeuft):
         st.code("\n".join(zeilen) or "noch keine Ausgabe", language=None)
 
 
+def setups_zeigen():
+    """Seite „Setups“ (12.11.2026, Micky): Aufklärung und Filter – ① Auswahl für den Stab (Trichter, Akten), ② Stellung
+    (grüne Setups, Reihen, Watchlist mit Marke 🎯), ③ Rückenwind je Titel, ④ Termine."""
+    st.markdown(gestaltung.seite(
+        '<h1 style="margin:0;font-size:32px;font-weight:600">Setups · Aufklärung und Filter</h1>'
+        + gestaltung.sprungleiste(gestaltung.STATIONEN_SETUPS), oben=12, unten=0), unsafe_allow_html=True)
+    _kartentisch_zeigen(ohne={"lagekarte", "termine"})
+    st.markdown(gestaltung.seite(gestaltung.station("titel"), oben=16, unten=0), unsafe_allow_html=True)
+    try:
+        rueckenwind_titel_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
+    _kartentisch_zeigen(rollen={"termine"})
+
+
 def datenstand_zeigen():
     """Datenstand-Wache (12.11.2026): eine Zeile oben – mit welchem Handelstag die App rechnet; rot, wenn Teile der
     App verschiedene Tage haben."""
@@ -628,15 +660,23 @@ if ansicht == "Konferenzraum":
         konferenz_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
-elif ansicht == "Rückenwind":                  # seit 10.11.2026 mit der Übersicht: Lage, Rückenwind, Stellung, …
-    _, n_, w_, k_ = st.columns([6, 2, 2, 2])
+elif ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
+    _, k_ = st.columns([10, 2])
+    with k_:
+        konto_knopf()
+    zeigen("uebersicht")
+elif ansicht == "Setups":                      # Aufklärung und Filter (12.11.2026)
+    datenstand_zeigen()
+    _, n_, w_ = st.columns([8, 2, 2])
     with n_:
         tisch_knopf()
     with w_:
         watchlists_verwalten()
-    with k_:
-        konto_knopf()
-    zeigen("uebersicht")
+    try:
+        _QUELLE["text"] = "Kartentisch des Frühlaufs"
+        setups_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
 elif ticker:
     datenstand_zeigen()
     lauf = st.session_state.get("laufend")
