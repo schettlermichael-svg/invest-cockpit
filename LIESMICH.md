@@ -691,3 +691,17 @@ Vorher nahm der Chart immer die alte Kette Sprung → Base → Momentum. Bei HWM
 Jede Planzeile unter dem Chart trägt jetzt den Stopp ihres eigenen Einstiegs. Der Chart zeichnet nur das aktive Setup. Ein Short gilt als gebrochen, wenn der Kurs über seinem Stopp steht.
 
 Der AVWAP-Text der Zahlen-Reaktion sagt jetzt „einmal gebrochen, Kurs wieder darüber“ statt „bricht den AVWAP“.
+
+## Tagesbefehl aufs Handy (12.11.2026)
+
+Nach jeder gelungenen Konferenz schickt `nachtlauf._tagesbefehl_melden` die Kurzfassung (`stab.kurzfassung`) über ntfy. Das gilt für den Frühlauf (gleich nach der Konferenz, vor dem Schrank, also gegen 7 Uhr), für den zweiten Anlauf und für den Knopf „Konferenz jetzt einberufen“.
+
+Die Meldung enthält:
+- als Titel „Tagesbefehl TT.MM. · Haltung“
+- die Lage in Kurzform
+- Markt (O'Neil) und Pendel mit Ampel
+- einen Hinweis, wenn der Datenstand nicht stimmt
+- bis zu 6 Ziele mit Ampel, Richtung und Kernsatz
+- bis zu 3 Gefahren
+
+Ein Tipp auf die Meldung öffnet den Konferenzraum (`meldung.APP`, Kopfzeile „Click“). Ohne eingerichtete ntfy-App kommt nichts an, die App läuft trotzdem weiter.

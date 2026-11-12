@@ -45,16 +45,16 @@ def _schreiben(p, datei=PROTOKOLL):
     json_schreiben(datei, p, ensure_ascii=False, indent=1)
 
 
-def _mitteilung(text, wichtig=False):
+def _mitteilung(text, wichtig=False, titel="Invest Cockpit", seite=None):
     """Meldung aufs Handy (ntfy, kern/meldung.py) und – auf dem Mac – als Mitteilung am Bildschirm."""
     try:
         import meldung
-        meldung.senden(text, "Invest Cockpit", wichtig)
+        meldung.senden(text, titel, wichtig, seite)
     except Exception:  # noqa: BLE001
         pass
     if sys.platform == "darwin":
         try:
-            subprocess.run(["osascript", "-e", f'display notification "{text}" with title "Invest Cockpit"'], timeout=10)
+            subprocess.run(["osascript", "-e", f'display notification "{text[:200]}" with title "{titel}"'], timeout=10)
         except Exception:  # noqa: BLE001 – ohne Mitteilung läuft alles weiter
             pass
 
@@ -177,6 +177,7 @@ def main(nur_tisch=False):
         k = stab.konferenz()
         if all(m.get("fehler") for m in k["meldungen"].values()):
             raise RuntimeError(next(iter(k["meldungen"].values()))["meldung"])
+        _tagesbefehl_melden(k)                    # gleich nach der Konferenz aufs Handy, vor dem Schrank (~7 Uhr)
         ko = stab.kosten()
         return (f"{sum(len(m.get('hinweise') or []) for m in k['meldungen'].values())} Hinweise · Monat "
                 f"{ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $")
@@ -229,8 +230,9 @@ def main(nur_tisch=False):
                     s_["ok"], s_["text"] = True, "im zweiten Anlauf geklappt"
         _schreiben(p)
         _kopf_neu()
-        _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
-                    f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
+        if not (ok_ and _tagesbefehl_melden(k)):
+            _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
+                        f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
     durchgang = 0
@@ -562,8 +564,21 @@ def _konferenz_lauf():
         traceback.print_exc()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p, KONFERENZ_PROTOKOLL)
-    _mitteilung(f"⚠ Konferenz gescheitert: {p['fehler'][:150]}" if p.get("fehler") else
-                "Konferenz fertig – der Tagesbefehl liegt im Konferenzraum.", bool(p.get("fehler")))
+    if p.get("fehler") or not _tagesbefehl_melden():
+        _mitteilung(f"⚠ Konferenz gescheitert: {p['fehler'][:150]}" if p.get("fehler") else
+                    "Konferenz fertig – der Tagesbefehl liegt im Konferenzraum.", bool(p.get("fehler")))
+
+
+def _tagesbefehl_melden(k=None):
+    """Tagesbefehl in Kurzfassung aufs Handy (12.11.2026); ein Tipp öffnet den Konferenzraum."""
+    try:
+        import stab
+        titel, text = stab.kurzfassung(k or stab.letzte())
+        _mitteilung(text, titel=titel, seite="Konferenzraum")
+        return True
+    except Exception:  # noqa: BLE001 – dann bleibt die kurze Meldung
+        traceback.print_exc()
+        return False
 
 
 def laeuft_etwas():

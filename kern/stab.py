@@ -1373,3 +1373,36 @@ def lagekarte(k):
             "gefahren": [{"titel": _ticker(h.get("titel"), None), "ampel": h.get("ampel"), "kurz": _kurzsatz(h)}
                          for h in b.get("gefahren") or []],
             "bilanz": bil, "tafel": tf, "live": live}
+
+
+PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
+
+
+def kurzfassung(k):
+    """Der Tagesbefehl als Meldung aufs Handy (Micky 12.11.2026: „Tagesbefehl gegen 7 Uhr“) → (Titel, Text).
+    Nur Tatsachen der Konferenz: Haltung, Lage, Markt und Pendel vom Lagebrett, Ziele mit Kernsatz, Gefahren."""
+    lk = lagekarte(k)
+    br = lk.get("brett") or {}
+    m = br.get("markt") or {}
+    m = m if "ampel" in m else (m.get("minervini") or {})
+    pe = br.get("pendel") or {}
+    tag = str(k.get("stand") or HEUTE())[:10]
+    titel = f"Tagesbefehl {tag[8:10]}.{tag[5:7]}. · {lk.get('haltung') or 'ohne Haltung'}"
+    zeilen = []
+    if lk.get("lage_kurz"):
+        zeilen.append(lk["lage_kurz"])
+    teile = ([f"Markt {PUNKT.get(m.get('ampel'), '⚪')} {m.get('wort')} (O'Neil)"] if m.get("wort") else []) \
+        + ([f"Pendel {PUNKT.get(pe.get('ampel'), '⚪')} {pe.get('zone')}"] if pe.get("zone") else [])
+    if teile:
+        zeilen.append(" · ".join(teile))
+    ds = br.get("datenstand") or {}
+    if ds.get("ampel") and ds.get("ampel") != "grün":
+        zeilen.append(f"⚠ Datenstand prüfen: {ds.get('text') or ''}".strip())
+    pfeil = {"short": "↓"}
+    for z in (lk.get("ziele") or [])[:6]:
+        zeilen.append(f"{PUNKT.get(z.get('ampel'), '⚪')} {pfeil.get(z.get('teil'), '↑')} {z['titel']}: {z.get('kurz') or ''}".rstrip(": "))
+    for g in (lk.get("gefahren") or [])[:3]:
+        zeilen.append(f"⚠ {', '.join(g.get('titel') or []) or 'Gefahr'}: {g.get('kurz') or ''}".rstrip(": "))
+    if not lk.get("ziele"):
+        zeilen.append("Keine Angriffsziele heute.")
+    return titel, "\n".join(zeilen)
