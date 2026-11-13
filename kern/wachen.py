@@ -188,7 +188,14 @@ def gegenprobe(akten, n=STICHPROBE):
             except Exception:  # noqa: BLE001
                 unser = None
             if unser and unser >= stab.HEUTE() and abs((pd.Timestamp(unser) - pd.Timestamp(tv_tag)).days) > 1:
-                aus.append(("gelb", f"{tk}: Zahlentermin {unser}, TradingView {tv_tag}"))
+                # Micky 13.11.2026: gelb nur, wo der Termin zählt – einer der beiden liegt in den nächsten 14 Tagen
+                # (die Termin-Ampel wird gelb oder rot); ferne Schätzungen weichen oft ab: stiller Hinweis (grau)
+                import gestaltung
+                naechster = min(pd.Timestamp(unser), pd.Timestamp(tv_tag))
+                tage = (naechster - pd.Timestamp(stab.HEUTE())).days
+                amp = "gelb" if tage <= gestaltung.TERMIN_GELB else "grau"
+                aus.append((amp, f"{tk}: Zahlentermin {unser}, TradingView {tv_tag}"
+                                 + ("" if amp == "gelb" else " (Schätzung, mehr als 14 Tage entfernt – kein Alarm)")))
     return aus
 
 
@@ -290,7 +297,8 @@ def pruefen():
             zeichen += [(a, f"{name} · {t}") for a, t in f()]
         except Exception as e:  # noqa: BLE001 – eine Wache, die selbst scheitert, ist ein Befund
             zeichen.append(("rot", f"{name} · Wache gescheitert: {type(e).__name__}: {e}"[:200]))
-    ampel = "rot" if any(a == "rot" for a, _ in zeichen) else "gelb" if zeichen else "grün"
+    ampel = ("rot" if any(a == "rot" for a, _ in zeichen) else "gelb" if any(a == "gelb" for a, _ in zeichen)
+             else "grün")                         # grau = stiller Hinweis, färbt nichts
     erg = {"stand": heute, "ampel": ampel, "akten": len(akten), "zeichen": zeichen}
     os.makedirs(os.path.dirname(DATEI), exist_ok=True)
     with open(DATEI, "w", encoding="utf-8") as f:

@@ -784,3 +784,4 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
   - Breite der Aufklärung (Micky 13.11.): das Depot immer, dazu 20 Titel – 12 Akten und 8 Anwärter in Rangfolge; freie Plätze der einen Gruppe füllt die andere.
   - Budget: Annahme etwa wie bisher; jede Konferenz misst ihre Kosten (`kosten_usd`).
 - Anwärter (Micky 13.11.): Titel ohne Akte mit frühen Zeichen der Stärke – Stärke in der Schwäche, Wechsel zu Phase 1 oder 2, aufsteigende Einquetschung, Akkumulation, Pocket Pivot, schlechte Zahlen gehalten, erstes höheres Tief (`stab.fruehe_zeichen`); höchstens 30 an den Jäger, auch wenn der Markt nicht schwach ist.
+- Wache Zahlentermine (Micky 13.11.): Weichen Yahoo und TradingView mehr als 1 Tag ab, ist das nur gelb, wenn einer der beiden Termine in den nächsten 14 Tagen liegt; sonst grauer, stiller Hinweis (färbt Kopfzeile und Handy nicht).

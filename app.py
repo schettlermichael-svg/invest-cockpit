@@ -673,8 +673,8 @@ def datenstand_zeigen():
         with st.expander(f"{punkt_.get(w['ampel'], '⚪')} Wachen vom {w['stand'][8:10]}.{w['stand'][5:7]}. · "
                          f"{len(w['zeichen'])} Meldungen"):
             st.caption("Jeden Morgen geprüft: Gleichlauf von Chart, Kartentisch und Stab · Plausibilität der Setups · "
-                       "Gegenprobe von 10 Titeln mit TradingView · Hinweise der Strategen auf Datenfehler. "
-                       "Rot = Fehler der App, gelb = beachten.")
+                       "Gegenprobe von 10 Titeln mit TradingView · Hinweise des Stabs auf Datenfehler · Form des Stabs. "
+                       "Rot = Fehler der App, gelb = beachten, grau = stiller Hinweis (färbt nichts).")
             for a_, t_ in w["zeichen"]:
                 st.markdown(f"{punkt_.get(a_, '⚪')} {gestaltung.t(t_)}")
 
