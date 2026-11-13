@@ -9,6 +9,10 @@ punkt_wort(k)                    Phase in einem Wort mit farbigem Punkt für Tab
 from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
 
 FARBE = {1: "#8A94A6", 2: "#1D9E75", 3: "#8A94A6", 4: "#D85A30"}      # Balance grau, aufwärts grün, abwärts rot
+# Wechsel zeichnet sich ab (Micky 13.11.2026: „dann lass uns die Kurve doch in hellrot darstellen“): die laufende Phase
+# hell, ab dem Punkt, an dem das erste Zeichen kam – 4 → 1 hellrot, 2 → 3 hellgrün; aus der Balance 1 → 2 hellgrün,
+# 3 → 4 hellrot (die Farbe dessen, was kommt)
+HELL = {(4, 1): "#F0997B", (2, 3): "#9FE1CB", (1, 2): "#9FE1CB", (3, 4): "#F0997B"}
 PUNKT = {1: "⚪", 2: "🟢", 3: "⚪", 4: "🔴"}
 NAME = {1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
 
@@ -29,7 +33,19 @@ def punkt_wort(k):
     return f'{PUNKT[k["phase"]]} {wort(k)}' if k else ""
 
 
-def _pfade(kurve, phasen, x0, y0, b, h, dicke):
+def _farben(k):
+    """Farbe je Woche: Phase, die letzten wechsel_wochen Wochen der laufenden Phase hell, wenn ein Wechsel sich abzeichnet."""
+    ph = list(k["phasen"])
+    f = [FARBE[p] for p in ph]
+    hell = HELL.get((k.get("phase"), k.get("ziel")))
+    if hell and k.get("wechsel_wochen"):
+        for i in range(max(0, len(ph) - int(k["wechsel_wochen"]) - 1), len(ph)):
+            if ph[i] == k["phase"]:
+                f[i] = hell
+    return f
+
+
+def _pfade(kurve, farben, x0, y0, b, h, dicke):
     lo, hi = min(kurve), max(kurve)
     sp = (hi - lo) or 1.0
     n = len(kurve)
@@ -37,10 +53,10 @@ def _pfade(kurve, phasen, x0, y0, b, h, dicke):
     ys = [y0 + h - h * (v - lo) / sp for v in kurve]
     teile, start = [], 0
     for i in range(1, n + 1):
-        if i == n or phasen[i] != phasen[start]:
+        if i == n or farben[i] != farben[start]:
             von = max(start - 1, 0)                         # an die vorige Strecke anschließen, keine Lücke
             pts = " ".join(f"{xs[j]:.1f},{ys[j]:.1f}" for j in range(von, i))
-            teile.append(f'<polyline points="{pts}" fill="none" stroke="{FARBE[phasen[start]]}" '
+            teile.append(f'<polyline points="{pts}" fill="none" stroke="{farben[start]}" '
                          f'stroke-width="{dicke}" stroke-linejoin="round" stroke-linecap="round"/>')
             start = i
     return teile, xs, ys
@@ -49,10 +65,10 @@ def _pfade(kurve, phasen, x0, y0, b, h, dicke):
 def mini(k, breite=120, hoehe=30):
     if not k or not k.get("kurve"):
         return ""
-    teile, xs, ys = _pfade(k["kurve"], k["phasen"], 2, 3, breite - 6, hoehe - 6, 1.6)
+    teile, xs, ys = _pfade(k["kurve"], _farben(k), 2, 3, breite - 6, hoehe - 6, 1.6)
     return (f'<svg width="{breite}" height="{hoehe}" viewBox="0 0 {breite} {hoehe}" role="img" '
             f'aria-label="Kreislauf ein Jahr, Phase {t(wort(k))}" style="display:block">' + "".join(teile)
-            + f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="2.6" fill="{FARBE[k["phase"]]}"/></svg>')
+            + f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="2.6" fill="{_farben(k)[-1]}"/></svg>')
 
 
 def _ring(k):
@@ -74,7 +90,7 @@ def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):
     """Großes Kreislaufbild (HTML). satz_stab: der Satz des Stabs zu diesem Titel, wenn es einen gibt."""
     if not k or not k.get("kurve"):
         return ""
-    teile, xs, ys = _pfade(k["kurve"], k["phasen"], 8, 12, breite - 120, hoehe - 34, 2.4)
+    teile, xs, ys = _pfade(k["kurve"], _farben(k), 8, 12, breite - 120, hoehe - 34, 2.4)
     x, y = xs[-1], ys[-1]
     lo, hi = min(k["kurve"]), max(k["kurve"])
     svg = (f'<svg viewBox="0 0 {breite} {hoehe}" width="100%" role="img" aria-label="Kreislauf {t(titel)}: '
@@ -82,13 +98,15 @@ def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):
            f'<text x="8" y="10" font-size="11" fill="{TEXT_3}">{zahl(hi)} $</text>'
            f'<text x="8" y="{hoehe - 4}" font-size="11" fill="{TEXT_3}">{zahl(lo)} $ · {t(k.get("kurve_von", ""))} – '
            f'{t(k.get("kurve_bis", ""))} (Wochenschlüsse)</text>' + "".join(teile)
-           + f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{FARBE[k["phase"]]}" stroke="{TEXT}" stroke-width="1.5"/>'
+           + f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{_farben(k)[-1]}" stroke="{TEXT}" stroke-width="1.5"/>'
            f'<line x1="{x + 7:.1f}" y1="{y:.1f}" x2="{x + 20:.1f}" y2="{y:.1f}" stroke="{TEXT_2}" stroke-width="1"/>'
            f'<text x="{x + 24:.1f}" y="{y + 4:.1f}" font-size="13" fill="{TEXT}">hier steht er</text></svg>')
     leg = " ".join(f'<span style="color:{TEXT_3};font-size:12px;margin-right:10px">'
                    f'<span style="display:inline-block;width:14px;height:3px;background:{f};vertical-align:middle;'
                    f'margin-right:4px"></span>{n}</span>'
-                   for f, n in ((FARBE[2], "aufwärts"), (FARBE[1], "Balance"), (FARBE[4], "abwärts")))
+                   for f, n in ((FARBE[2], "aufwärts"), (FARBE[1], "Balance"), (FARBE[4], "abwärts"))
+                   + (((HELL[(k["phase"], k["ziel"])], "hell: Wechsel zeichnet sich ab"),)
+                      if HELL.get((k.get("phase"), k.get("ziel"))) and k.get("wechsel_wochen") else ()))
     zeilen = []
     for name, liste, f in (("Stärke", k.get("staerke") or [], FARBE[2]), ("Schwäche", k.get("schwaeche") or [], FARBE[4])):
         if liste:

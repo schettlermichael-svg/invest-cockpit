@@ -389,6 +389,24 @@ def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=
     elif p == 3 and ((dw or {}).get("struktur") == "abwärts" or dow_sw) and len(sw) >= 2 and len(sw) > len(st):
         ziel = 4
     wort = f"{p} → {ziel}" if ziel else str(p)
+    # Seit wann zeichnet sich der Wechsel ab (Micky 13.11.2026: Kurve ab dort hell färben): beim Wechsel zu Stärke
+    # (4 → 1, 1 → 2) ab dem letzten Schwungtief bzw. dem eigenen Tief der Divergenz, zu Schwäche (2 → 3, 3 → 4) ab dem
+    # letzten Schwunghoch
+    wechsel_wochen = None
+    if ziel:
+        hs_, ts_ = schwungpunkte(df["High"], df["Low"], 5)
+        tag = None
+        if ziel in (1, 2):
+            if ts_:
+                tag = df.index[ts_[-1][0]]
+            if rel and rel.get("seit"):
+                d_ = df["Low"].loc[pd.Timestamp(rel["seit"].split(".")[2] + "-" + rel["seit"].split(".")[1] + "-"
+                                                + rel["seit"].split(".")[0]):].idxmin()
+                tag = min(tag, d_) if tag is not None else d_
+        elif hs_:
+            tag = df.index[hs_[-1][0]]
+        if tag is not None:
+            wechsel_wochen = max(1, int(np.ceil((df.index[-1] - tag).days / 7)))
     if eq:
         wort += " · Einquetschung"
     tq = trendqualitaet(df)
@@ -403,7 +421,8 @@ def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=
     return {"phase": p, "ziel": ziel, "wort": wort, "satz": satz, "staerke": st, "schwaeche": sw,
             "dow_tag": dt, "dow_woche": dw, "einquetschung": eq, "akkumulation": ak, "relativ": rel, "trend": tq,
             "kurve": [round(float(x), 2) for x in kurve], "phasen": [int(x) for x in ph.iloc[-52:]],
-            "kurve_von": f"{kurve.index[0]:%d.%m.%Y}", "kurve_bis": f"{df.index[-1]:%d.%m.%Y}"}
+            "kurve_von": f"{kurve.index[0]:%d.%m.%Y}", "kurve_bis": f"{df.index[-1]:%d.%m.%Y}",
+            "wechsel_wochen": wechsel_wochen}
 
 
 # ── Speicher: der Frühlauf rechnet den Kreislauf aller Titel mit dem Kartentisch (daten/kreislauf/<stand>.json) ───
