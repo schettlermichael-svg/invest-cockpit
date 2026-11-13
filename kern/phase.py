@@ -63,12 +63,15 @@ def phasen(df):
     w = wochen(df)
     roh = [bild(z) for z in w.itertuples()]
     phase, aus, spanne2, serie2, seit4 = 1, [], None, 0, 0
+    basis_hoch = None             # höchster Wochenschluss seit Beginn der Phase 1 (Prüf-Agent 13.11.2026: nach einem tiefen
+    #                               Fall kam Phase 2 erst über dem Hoch der letzten 26 Wochen – viel zu spät)
     for i, b in enumerate(roh):
         vorher = roh[i - 1] if i else 0
         z = w.iloc[i]
         serie2 = serie2 + 1 if b == 2 else 0
         if b == 2 and (serie2 >= 2 if phase == 2 else serie2 >= NEUSTART_WOCHEN):
-            if phase in (1, 4) and (z.Close < 1.25 * z.tief52 or z.Close <= z.hoch26_vor):
+            ueber = z.Close <= (basis_hoch if phase == 1 and basis_hoch is not None else z.hoch26_vor)
+            if phase in (1, 4) and (z.Close < 1.25 * z.tief52 or ueber):
                 aus.append(phase)                           # noch keine Rallye vom Tief bzw. kein
                 continue                                    # Ausbruch über die Spanne der Bodenphase
             phase = 2
@@ -85,6 +88,9 @@ def phasen(df):
             phase = 4                                       # zwei Wochen unter fallendem GD40W
         elif phase == 4 and seit4 >= 8 and b != 4 and vorher != 4 and z.steig40 >= FAELLT:
             phase = 1                                       # Abwärtsbild weg, GD40W fällt nicht mehr
+            basis_hoch = None
+        if phase == 1:
+            basis_hoch = z.Close if basis_hoch is None else max(basis_hoch, z.Close)
         seit4 = seit4 + 1 if phase == 4 else 0
         aus.append(phase)
     return pd.Series(aus, index=w.index, name="phase")

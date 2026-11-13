@@ -1120,23 +1120,16 @@ def _nachbarn(tk, rw_t, n=5):
              "phase": ((_kreis_kurz(t_) or {}).get("wort"))} for t_, x in liste]
 
 
-def fruehe_zeichen(k):
-    """Frühe Zeichen der Stärke eines Titels (Micky 13.11.2026), aus dem Kreislauf des Frühlaufs → [(Gewicht, Text)].
-    Gewicht nur für die Rangfolge der Anwärter, nirgends angezeigt."""
-    aus = [(2, s_) for s_ in (k.get("relativ") or {}).get("staerke") or []]            # Stärke in der Schwäche
-    if k.get("ziel") in (1, 2):
-        aus.append((2, f"Wechsel zu Phase {k['ziel']} zeichnet sich ab ({k.get('wort')})"))
-    eq = k.get("einquetschung") or {}
-    if eq.get("art") == "aufsteigend":
-        aus.append((2, f"Einquetschung: steigende Tiefs unter der Oberkante {_zahl_de(eq.get('oberkante') or 0)} $"))
-    ak = k.get("akkumulation") or {}
-    if ak.get("bild") == "Akkumulation":
-        aus.append((1, f"Akkumulation: {ak.get('kauftage')} Kauftage gegen {ak.get('abgabetage')} Abgabetage mit Volumen"))
-    if ak.get("pocket_pivot"):
-        aus.append((1, f"Pocket Pivot am {ak['pocket_pivot']}"))
-    for s_ in k.get("staerke") or []:
-        if "Nachfrage trägt" in s_ or s_.startswith("erstes höheres Tief"):
-            aus.append((1, s_))
+def fruehe_zeichen(k, seite="stärke"):
+    """Frühe Zeichen eines Titels (Micky 13.11.2026), aus dem Kreislauf des Frühlaufs → [(Gewicht, Text)]: jedes
+    gemessene Zeichen der Seite mit seinem Gewicht (Struktur und Stärke gegen den Markt 2, sonst 1) und der Wechsel,
+    der sich abzeichnet. seite="schwäche" für die Short-Anwärter. Gewicht nur für die Rangfolge, nirgends angezeigt."""
+    aus = [(x.get("gewicht", 1), x["text"]) for x in k.get("zeichen") or [] if x.get("seite") == seite]
+    if not k.get("zeichen"):                     # ältere Ablage ohne Zeichenliste
+        aus = [(1, s_) for s_ in k.get("staerke" if seite == "stärke" else "schwaeche") or []]
+    ziele = (1, 2) if seite == "stärke" else (3, 4)
+    if k.get("ziel") in ziele:
+        aus.insert(0, (3, f"Wechsel zu Phase {k['ziel']} zeichnet sich ab ({k.get('wort')})"))
     return aus
 
 
