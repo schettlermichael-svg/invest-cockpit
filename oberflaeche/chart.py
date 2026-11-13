@@ -33,12 +33,12 @@ SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trend
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
 # Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
-AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#FFD54F"}
+AVWAP_FARBEN = {"gipfel": "#E57373", "hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#FFD54F"}
 # Anker aus Ereignis und Struktur, nie aus dem Kalender (13.11.2026, kern/avwap.py): Hoch, von dem der Fall ausging;
 # Tief, von dem die Bewegung ausging; Ereignis = jüngere von Zahlenreaktion ab 3 % und Lücke ab 4 % mit Volumen ×2
-AVWAP_KURZ = {"hoch": "Hoch", "tief": "Tief der Bewegung", "ereignis": "Ereignis"}
+AVWAP_KURZ = {"gipfel": "Hoch des Rückgangs", "hoch": "letztes Hoch", "tief": "Tief der Bewegung", "ereignis": "Ereignis"}
 PROFIL_FARBE = "#8FA3BF"
-AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Zonenanker gestrichen: zu kurzfristig, Micky)
+AVWAP_START = ["gipfel", "hoch", "tief"]       # Voreinstellung: Gipfel und Zange übereinander wie Shannon (14.11.2026)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
 INDEX_SCHATTEN = "#9AA3AF"   # S&P 500 im Kurschart, gestrichelt, am linken Rand auf den Kurs gelegt
@@ -597,7 +597,7 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
 
 
 def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
-    """Verankertes Volumenprofil (13.11.2026): grau ab Zone bzw. Ereignis als durchscheinende Balken von rechts mit dem
+    """Verankertes Volumenprofil (13.11.2026, Dalton 14.11.2026): grau ab dem Beginn der laufenden Balance als durchscheinende Balken von rechts mit dem
     akzeptierten Wert, die Mauer (Knoten seit dem Hoch über dem Kurs) rot und die Stütze (Knoten seit dem Tief unter dem
     Kurs) grün als schmale Bänder am rechten Rand. Der Chart behält seine Breite."""
     if not vv:
@@ -605,6 +605,19 @@ def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
     g = vv.get("grau") or {}
     p = g.get("profil")
     if p:
+        # die Balance selbst (Dalton): Zeitraum ab ihrem Beginn mit dem Wertbereich (70 %) als Feld – Micky 14.11.2026
+        # (LUV: das Profil war als blasser Streifen am rechten Rand kaum zu sehen)
+        try:
+            x0 = X(pos(pd.Timestamp(g["ab"]))) if pd.Timestamp(g["ab"]) >= d.index[0] else X(0)
+        except Exception:  # noqa: BLE001
+            x0 = ENDE - breite
+        wu, wo = max(p["wert_unten"], pmin), min(p["wert_oben"], pmax)
+        if wo > wu:
+            A(f'<rect x="{x0:.1f}" y="{Y(wo):.1f}" width="{max(1, ENDE - x0):.1f}" height="{Y(wu) - Y(wo):.1f}" '
+              f'fill="{PROFIL_FARBE}" fill-opacity="0.10" stroke="{PROFIL_FARBE}" stroke-opacity="0.5" '
+              f'stroke-dasharray="4 3"/>')
+            A(f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="{Y(pmax):.1f}" y2="{Y(pmin):.1f}" stroke="{PROFIL_FARBE}" '
+              f'stroke-opacity="0.5" stroke-dasharray="2 4"/>')
         vmax = float(max(p["volumen"])) or 1.0
         for k in range(len(p["volumen"])):
             lo_, hi_ = float(p["grenzen"][k]), float(p["grenzen"][k + 1])
@@ -613,17 +626,18 @@ def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
             w = breite * float(p["volumen"][k]) / vmax
             y1, y2 = Y(min(hi_, pmax)), Y(max(lo_, pmin))
             A(f'<rect x="{ENDE - w:.1f}" y="{y1:.1f}" width="{w:.1f}" height="{max(1, y2 - y1 - 1):.1f}" '
-              f'fill="{PROFIL_FARBE}" fill-opacity="0.26"/>')
+              f'fill="{PROFIL_FARBE}" fill-opacity="0.45"/>')
         if pmin <= p["poc"] <= pmax:
             y_ = Y(p["poc"])
             A(f'<line x1="{ENDE - breite}" x2="{ENDE}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{PROFIL_FARBE}" stroke-width="1.5"/>')
             t_ = f"akzeptierter Wert {zahl(p['poc'])} $"
             spaete.append(f'<text x="{ENDE - breite - 4}" y="{platz(ENDE - breite - 4, y_ - 4, t_, 11, "end"):.1f}" '
                           f'fill="{TEXT_2}" font-size="11" text-anchor="end">{t_}</text>')
-        art = {"Zone": "seit Beginn der Zone", "Ereignis": "seit dem Ereignis", "Tief": "seit dem Tief"}.get(g.get("art"), "")
+        art = {"Wertzone": "der Balance seit", "Zone": "seit Beginn der Zone", "Tief": "seit dem Tief",
+               "Hoch": "seit dem Hoch"}.get(g.get("art"), "")
         spaete.append(f'<text x="{ENDE - 4}" y="44" fill="{TEXT_3}" font-size="12" text-anchor="end">VOLUMEN {art.upper()} '
                       f'{pd.Timestamp(g["ab"]):%d.%m.} ({g.get("tage")} Tage)</text>')
-    for schl, farbe, wort in (("mauer", ROT, "Mauer seit Hoch"), ("stuetze", GRUEN, "Stütze seit Tief")):
+    for schl, farbe, wort in (("mauer", ROT, "Mauer seit Hoch"), ("stuetze", GRUEN, "Stütze seit Tief")):  # Hoch: Gipfel bzw. letztes
         k_ = vv.get(schl)
         if not k_:
             continue
@@ -762,11 +776,12 @@ def legende(ebene="Tag", gd_kurz=False):
                   (GRUEN, "Band: viel Volumen am Aufwärtstag (blass über dem Schnitt, kräftig ab 1,5-fach), rot am Abwärtstag")]
     if ebene == "Tag":
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
-                      (AVWAP_FARBEN["hoch"], "AVWAP ab dem Hoch, von dem der Fall ausging"),
-                      (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief, von dem die Bewegung ausging (mit Hoch: Zange)"),
+                      (AVWAP_FARBEN["gipfel"], "AVWAP ab dem Hoch des Rückgangs (Gipfel der ganzen Korrektur, Wochen-Schwunghoch)"),
+                      (AVWAP_FARBEN["hoch"], "AVWAP ab dem letzten Hoch (jüngstes nicht überschrittenes Wochen-Schwunghoch)"),
+                      (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief der Bewegung (tiefstes Tief seit dem letzten Hoch; mit ihm: Zange)"),
                       (AVWAP_FARBEN["ereignis"], "AVWAP ab dem Ereignis (Zahlen ab 3 % oder Lücke ab 4 % mit Volumen ×2)"),
-                      (PROFIL_FARBE, "Volumenprofil seit Zone bzw. Ereignis, Linie = akzeptierter Wert"),
-                      (ROT, "Band rechts rot: Mauer (Knoten seit dem Hoch) · grün: Stütze (Knoten seit dem Tief)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
+                      (PROFIL_FARBE, "Volumenprofil der laufenden Balance (Wertzone nach Dalton), Linie = akzeptierter Wert"),
+                      (ROT, "Band rechts rot: Mauer (Knoten seit dem Hoch des Rückgangs) · grün: Stütze (Knoten seit dem Tief der Bewegung)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),
                       (TEXT_2, "○ Schwungpunkte (Dow) · PP = Pocket Pivot · S = Spring · U = Upthrust · ◆ = höheres Tief "
                                "(grün) bzw. tieferes Hoch (rot) gegen den Index"),

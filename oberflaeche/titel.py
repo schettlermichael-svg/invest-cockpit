@@ -1086,7 +1086,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
         import volumenprofil
         z_j = (zonen or {}).get("jetzt") or {}
         erk["zahltag"] = avwap.zahlentag(df, gewinne) if gewinne is not None else None
-        vv = volumenprofil.verankert(df, erk["zahltag"], z_j.get("start_t") if z_j.get("zone") else None)
+        vv = volumenprofil.verankert(df, erk["zahltag"], z_j.get("start_t") if z_j.get("zone") else None,
+                                     avwap.wert_beginn(erk.get("mp")))        # Balance nach Dalton (14.11.2026)
         erk["profil"] = {"knoten": vv["knoten"], "verankert": vv} if vv else None
     except Exception:  # noqa: BLE001
         erk["profil"] = None

@@ -886,3 +886,22 @@ Profile, Feld, O'Neil, Marktzone) stehen als Unterzeile.
 
 Gemessen über 1.907 Titel (Daten bis 04.11.2026, ein breiter Ausbruchstag – 23 % mit Ausbruch des Scanners in 10
 Tagen): angenommen 43 %, Balance 26 %, abgelehnt 20 %, Test am Rand 8 %, Ende des Laufs 2,5 %, Ungleichgewicht 1,2 %.
+
+## Anker nach Shannon und Dalton (14.11.2026)
+
+Micky (LUV): „Der AVWAP ist komplett falsch verankert und das Volumenprofil fehlt.“ Das alte Hoch der 52 Wochen hing
+bei LUV am 17.02., das Tief am 02.04. – beide aus einem Zyklus, der im April endete. Neu nach den Meistern
+(`kern/avwap.py`):
+- **Letztes Hoch:** jüngstes Schwunghoch der Wochenkerzen (n = 2, erst durch den Rückgang danach bestätigt – Shannon),
+  das der Kurs nicht überschritten hat; steht er über allen, das letzte (Ausbruchspunkt).
+- **Tief der Bewegung:** tiefstes Tief seit dem letzten Hoch, sobald der Kurs mindestens 1 ATR darüber steht.
+- **Hoch des Rückgangs:** höchstes nicht überschrittenes Wochen-Schwunghoch, nach dem der Kurs nie unter das tiefste
+  Tief seit dem letzten Hoch fiel (der Gipfel der Korrektur). Beide Hochs werden gezeigt (Shannon legt Anker übereinander).
+- **Ereignis:** unverändert.
+- **Volumenprofil:** ab dem Beginn der laufenden Wertzone des Market Profile (Daltons überlappender Wert), bei unter
+  2 Wochen ab der vorigen; im Chart mit dem Wertbereich als Feld über dem Zeitraum der Balance. Mauer aus dem Profil
+  ab dem Hoch des Rückgangs, Stütze ab dem Tief der Bewegung.
+
+Gemessen über 1.892 Titel: kein Anker am Rand des Datenfensters, kein Kurs unter dem Tief der Bewegung. Hoch des
+Rückgangs bei 48 % (sonst gleich dem letzten Hoch), Tief der Bewegung bei 82 % (sonst steht der Kurs am Tief). Profil
+der Balance bei 99 % aus der Wertzone, 91 % davon 10–40 Handelstage lang.

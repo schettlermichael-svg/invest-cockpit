@@ -478,7 +478,8 @@ def fuer_titel(tk, df, k, idx=None, mp=None, br=None, zone=None, gewinne=None):
         import avwap
         import volumenprofil
         zahltag = avwap.zahlentag(df, gewinne) if gewinne is not None else None
-        profil = volumenprofil.verankert(df, zahltag, (zone.get("start_t") or zone.get("start")) if zone and zone.get("zone") else None)
+        profil = volumenprofil.verankert(df, zahltag, (zone.get("start_t") or zone.get("start")) if zone and zone.get("zone")
+                                         else None, avwap.wert_beginn(mp))
     except Exception:  # noqa: BLE001
         pass
     try:
