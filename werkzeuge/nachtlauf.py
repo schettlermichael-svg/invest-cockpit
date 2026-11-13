@@ -187,7 +187,7 @@ def main(nur_tisch=False):
             raise RuntimeError(stab.gescheitert(k))
         _tagesbefehl_melden(k)                    # gleich nach der Konferenz aufs Handy, vor dem Schrank (~7 Uhr)
         ko = stab.kosten()
-        return f"{stab.ergebnis_zeile(k)} · Monat {ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $"
+        return f"{stab.ergebnis_zeile(k)} · Monat {stab._zahl_de(ko['usd'])} $ von {stab._zahl_de(stab.DECKEL_USD, 0)} $"
 
     def wachen_():
         """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Stab, Gegenprobe)."""

@@ -337,7 +337,7 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
             fehl = fehl_tag is not None
             return {"tag": df.index[letzter], "tage_her": n - 1 - letzter, "erster_tag": df.index[t],
                     "vortag_i": t, "pivot": pivot, "zone": b, "enge": e, "volumen": vol,
-                    "mit_volumen": bool(vol and vol > 1), "abstand": ab, "kaufzone": not fehl and 0 <= ab <= KAUFZONE,
+                    "mit_volumen": bool(vol and vol > 1), "abstand": ab, "kaufzone": not fehl and rueck_tag is None and 0 <= ab <= KAUFZONE,
                     "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None,
                     "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
                     "tief_ausbruchstag": float(lo[letzter]), "innen": b is not z,

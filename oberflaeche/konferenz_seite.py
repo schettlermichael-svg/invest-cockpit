@@ -27,7 +27,7 @@ def kopf(k):
             f'<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
             f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Konferenzraum · MARAGA Investment</h1>'
             f'<div style="color:{TEXT_2};font-size:14px">{"Konferenz vom " + k["zeit"] if k else "noch keine Konferenz"}'
-            f' · Kosten {ko["usd"]:.2f} $ von {stab.DECKEL_USD:.0f} $ im Monat · {ko["aufrufe"]} Aufrufe · '
+            f' · Kosten {_zahl(ko["usd"])} $ von {_zahl(stab.DECKEL_USD, 0)} $ im Monat · {ko["aufrufe"]} Aufrufe · '
             f'{ko["suchen"]} Web-Suchen</div></div>'
             f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Acht Missionen, jede mit einer Frage: Lage, '
             f'Aufklärung, Jäger, Operationsplaner, Gegenspieler, Truppenführung, Kriegsgeschichte, Feldherr. Die App '
@@ -38,7 +38,7 @@ def kopf(k):
     return seite(
         f'<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
         f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Konferenzraum · MARAGA Investment</h1>'
-        f'<div style="color:{TEXT_2};font-size:14px">{stand} · Kosten {ko["usd"]:.2f} $ von {stab.DECKEL_USD:.0f} $ im Monat'
+        f'<div style="color:{TEXT_2};font-size:14px">{stand} · Kosten {_zahl(ko["usd"])} $ von {_zahl(stab.DECKEL_USD, 0)} $ im Monat'
         f' · {ko["aufrufe"]} Aufrufe · {ko["suchen"]} Web-Suchen</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Sechs Strategen lesen nach dem Frühlauf die Daten der App '
         f'und erklären die Lage, jeder nach dem Handwerk seiner Meister; ein Gegenspieler sucht die Schwächen. Sie zeigen auf, sie filtern nichts und entscheiden nichts – jede Zahl stammt aus der App '
@@ -148,6 +148,10 @@ def _p(ampel, titel="", groesse=13):
 
 
 def _tk(tk):
+    import html
+    tk = html.escape(str(tk or "").strip().upper())        # Ticker kommen auch vom Modell (Prüf-Agent 13.11.2026)
+    if not tk:
+        return ""
     return (f'<a href="?seite=Titelseite&t={tk}" target="_self" style="color:{BLAU};font-weight:600;'
             f'text-decoration:none">{tk}</a>')
 
@@ -371,11 +375,21 @@ def befehl_neu_html(lk):
                                                  f'{_h(d_.get("anweisung"))}</div>' for d_ in dep)))
     if b.get("lehre"):
         teile.append(_abschnitt("Lehre aus gestern", f'<div style="font-size:15px">{_h(b.get("lehre"))}</div>'))
+    bil = k.get("bilanz") or {}
+    if bil.get("ziele"):
+        tr = [z for z in bil["ziele"] if z.get("treffer") is not None]
+        teile.append(_abschnitt("Bilanz der letzten Ziele", "".join(
+            f'<div style="font-size:14px;margin:3px 0">{_tk(z["titel"])} <span style="color:{TEXT_3}">{z["seite"]}</span> · '
+            f'{_zahl(z.get("pct"), 1)} % ' + ("" if z.get("treffer") is None else
+                                            f'<span style="color:{GRUEN if z["treffer"] else ROT}">{"✓" if z["treffer"] else "✗"}</span>')
+            + "</div>" for z in bil["ziele"]),
+            f'· seit {str(bil.get("konferenz_vom"))[8:10]}.{str(bil.get("konferenz_vom"))[5:7]}. · '
+            f'{sum(1 for z in tr if z["treffer"])} von {len(tr)} in Richtung'))
     if k.get("wache_code"):
         teile.append(f'<div style="font-size:13px;color:{GELB};margin-top:6px">Wache im Code: '
                      + " · ".join(_h(w) for w in k["wache_code"]) + "</div>")
     kosten_ = (f'<div style="font-size:12px;color:{TEXT_3};margin-top:6px">Diese Konferenz kostete '
-               f'{k["kosten_usd"]:.2f} $.</div>' if k.get("kosten_usd") is not None else "")
+               f'{_zahl(k["kosten_usd"])} $.</div>' if k.get("kosten_usd") is not None else "")
     return seite("".join(t_ if t_.startswith('<div style="display:flex;flex-wrap:wrap;gap:12px">') else
                          f'<div style="margin-top:12px">{t_}</div>' for t_ in teile) + kosten_, oben=8, unten=8)
 

@@ -687,6 +687,15 @@ def bilanz(vorher, kurs_heute):
     b = vorher.get("befehl") or {}
     kurse = vorher.get("kurse") or {}
     aus, gesehen = [], set()
+    if vorher.get("format") == 2:                      # neuer Stab: die Chancen des Befehls
+        for c in b.get("chancen") or []:
+            tk = str(c.get("titel") or "").upper()
+            alt, neu = kurse.get(tk), kurs_heute(tk)
+            pct = _zahl((neu / alt - 1) * 100, 1) if alt and neu else None
+            sh = c.get("seite") == "short"
+            aus.append({"titel": tk, "seite": c.get("seite") or "long", "pct": pct,
+                        "treffer": None if pct is None else (pct < 0 if sh else pct > 0)})
+        return {"konferenz_vom": vorher.get("stand"), "ziele": aus}
     for teil in ("volltreffer", "long", "short"):
         for h in b.get(teil) or []:
             for tk in _ticker(h.get("titel"), None)[:1]:
@@ -1003,7 +1012,8 @@ def faktenwache(hinweise_, quelle, bekannt):
         fremd = [x for x in tks if bekannt and x not in bekannt]
         offen = []
         import re
-        text_ = " ".join(str(h.get(f) or "") for f in ("kurz", "text", "einwand", "antwort", "grund"))
+        text_ = " ".join(str(h.get(f) or "") for f in FELDER_WACHE + ("text",) if isinstance(h.get(f), str))
+        text_ += " " + " ".join(str(h[f]) for f in ("einstieg", "stopp") if isinstance(h.get(f), (int, float)))
         teile = [t for t in re.split(r"(?<=[.;:!?])\s+|\s·\s|,\s(?=[a-zäöü])", text_) if "gerechnet" not in t]
         for z in _zahlen_in(" ".join(teile)):           # selbst gerechnet und so gekennzeichnet: kein Fall der Wache
             w = abs(z)
@@ -1035,38 +1045,6 @@ def _kurs(tk):
         return float(df["Close"].iloc[-1]) if df is not None and len(df) else None
     except Exception:  # noqa: BLE001
         return None
-
-
-def lagebuch(vorher, nr, lb):
-    """Was aus den Hinweisen der letzten Konferenz geworden ist (10.11.2026): je Titel Hinweis von damals, Kurs damals
-    und heute, Reihe und Ausbruch heute. Beobachtung zum Lernen am Gelände, kein Urteil über Setups."""
-    if not vorher:
-        return None
-    if nr == 1:
-        b = vorher.get("befehl") or {}
-        alte = [h for teil, _ in BEFEHL_TEILE for h in b.get(teil) or []]
-    else:
-        alte = ((vorher.get("meldungen") or {}).get(str(nr)) or {}).get("hinweise") or []
-    kand = {c["titel"]: c for c in lb["kandidaten"]}
-    kurse_alt = vorher.get("kurse") or {}
-    eintraege = []
-    for h in alte:
-        for tk in _ticker(h.get("titel"), None)[:3]:
-            c = kand.get(tk) or {}
-            k_neu = c.get("kurs") or _zahl(_kurs(tk))
-            k_alt = kurse_alt.get(tk)
-            eintraege.append({"titel": tk, "ampel_damals": h.get("ampel"), "damals": str(h.get("text") or "")[:220],
-                              "kurs_damals": k_alt, "kurs_heute": k_neu,
-                              "veraenderung_pct": _zahl((k_neu / k_alt - 1) * 100, 1) if k_neu and k_alt else None,
-                              "reihe_heute": c.get("reihe"), "abstand_zum_pivot_pct": c.get("abstand_zum_pivot_pct"),
-                              "ausbruch_heute": c.get("ausbruch")})
-        if len(eintraege) >= 15:
-            break
-    return {"konferenz_vom": vorher.get("stand"), "eintraege": eintraege} if eintraege else None
-
-
-LAGEBUCH_TEXT = ("\n\nLagebuch – deine Hinweise der letzten Konferenz und was daraus wurde (Beobachtung, kein Urteil "
-                 "über Setups). Sage zu Beginn deiner Meldung in einem Satz, was sich bestätigt hat und was nicht:\n")
 
 
 def _bekannt(lb):
@@ -1344,6 +1322,18 @@ def konferenz(melden=lambda text: None):
     if anw:
         jaeger = mission(3, {"heute": heute, "markt": lb.get("markt"), "gruppen": lb.get("gruppen"),
                              "anwaerter": [a | {"aufklaerung": aufkl_von.get(a["titel"])} for a in anw]}, F_JAEGER, 6000)
+        erlaubt, ges = {a["titel"] for a in anw}, set()
+        liste = []
+        for a in jaeger.get("anwaerter") or []:
+            a["titel"] = str(a.get("titel", "")).upper().strip()
+            if a["titel"] in erlaubt and a["titel"] not in ges:
+                ges.add(a["titel"])
+                liste.append(a)
+            elif a["titel"] not in erlaubt:
+                erg["wache_code"].append(f"Jäger: {a['titel']} steht nicht auf der Liste der Anwärter – entfernt")
+        if not jaeger.get("fehler"):
+            jaeger["anwaerter"] = liste[:10]
+            erg["missionen"]["3"]["anwaerter"] = jaeger["anwaerter"]
     else:
         erg["missionen"]["3"] = {"name": MISSIONEN[3][0], "anwaerter": [],
                                  "hinweis": "Der Markt ist nicht schwach – kein Titel zeigt Stärke in der Schwäche."}
@@ -1363,33 +1353,57 @@ def konferenz(melden=lambda text: None):
                                      for c in akten_],
                            "anwaerter_des_jaegers": [{a: x.get(a) for a in ("titel", "these", "phase", "warten_auf")}
                                                      for x in jaeger.get("anwaerter") or []]}, F_PLAN, 9000)
-    # Wachen im Code: Auftrag nur auf eine Akte, nie bei roter Setup-Ampel; jede Akte eingeordnet
-    setup_amp = {c["titel"]: ((c.get("feste_ampeln") or {}).get("Setup") or {}).get("ampel") for c in akten_}
-    ok, weg = [], []
+    # Wachen im Code (Prüf-Agent 13.11.2026): Auftrag nur auf eine Akte mit grünem Setup, Einstieg nicht rot (gelaufen),
+    # Seite wie das Setup, jeder Titel einmal, höchstens 5; jede Akte eingeordnet; Titel groß geschrieben
+    fest = {c["titel"]: c.get("feste_ampeln") or {} for c in akten_}
+    ok, weg, gesehen = [], [], set()
     for a in plan.get("auftraege") or []:
         tk = str(a.get("titel", "")).upper().strip()
         a["titel"] = tk
-        if tk not in setup_amp:
+        f_ = fest.get(tk)
+        if tk in gesehen:
+            continue
+        gesehen.add(tk)
+        if f_ is None:
             weg.append({"titel": tk, "grund": "keine Akte (kein einsatzbereites Setup) – vom Code aus den Aufträgen genommen"})
-        elif setup_amp[tk] == "rot":
-            weg.append({"titel": tk, "grund": "Setup-Ampel rot – rot ist nie ein Auftrag (Code)"})
+        elif (f_.get("Setup") or {}).get("ampel") != "grün":
+            weg.append({"titel": tk, "grund": f"Setup-Ampel {(f_.get('Setup') or {}).get('ampel') or 'grau'} – ein Auftrag "
+                                              "braucht ein grünes Setup (Code)"})
+        elif (f_.get("Einstieg") or {}).get("ampel") == "rot":
+            weg.append({"titel": tk, "grund": f"Einstieg rot ({(f_.get('Einstieg') or {}).get('wert')}) – rot ist nie ein "
+                                              "Auftrag (Code)"})
+        elif akte_von[tk].get("seite") and a.get("seite") != akte_von[tk]["seite"]:
+            weg.append({"titel": tk, "grund": f"Seite {a.get('seite')} gegen das Setup ({akte_von[tk]['seite']}) (Code)"})
+        elif len(ok) >= 5:
+            weg.append({"titel": tk, "grund": "mehr als 5 Aufträge – der sechste und weitere fallen weg (Code)"})
         else:
             c = akte_von[tk]
             a["einstieg_app"], a["stopp_app"] = c.get("pivot"), c.get("stopp_1_5_atr")
             ok.append(a)
+    for teil in ("beobachten", "verworfen"):
+        liste, ges = [], set()
+        for x in plan.get(teil) or []:
+            x["titel"] = str(x.get("titel", "")).upper().strip()
+            if x["titel"] and x["titel"] not in ges and x["titel"] not in gesehen - {w["titel"] for w in weg}:
+                ges.add(x["titel"])
+                liste.append(x)
+        plan[teil] = liste
     if not akten_:
         erg["missionen"]["4"] = {"name": MISSIONEN[4][0], **plan, "hinweis": "keine Akte – kein einsatzbereites Setup"}
     elif not plan.get("fehler"):
-        plan["auftraege"] = ok[:5]
-        plan["verworfen"] = (plan.get("verworfen") or []) + weg
+        plan["auftraege"] = ok
+        schon = {x["titel"] for x in plan["verworfen"]}
+        plan["verworfen"] += [w for w in weg if w["titel"] not in schon]
+        plan["beobachten"] = [x for x in plan["beobachten"] if x["titel"] not in {w["titel"] for w in weg}]
         erg["wache_code"] += [f"Operationsplaner: {w['titel']} – {w['grund']}" for w in weg]
-        eingeordnet = {a["titel"] for a in plan["auftraege"]} | {str(x.get("titel", "")).upper().strip()
-                                                                for x in (plan.get("beobachten") or []) + plan["verworfen"]}
+        eingeordnet = {a["titel"] for a in ok} | {x["titel"] for x in plan["beobachten"] + plan["verworfen"]}
         fehlt = [c["titel"] for c in akten_ if c["titel"] not in eingeordnet]
         if fehlt:
-            plan["beobachten"] = (plan.get("beobachten") or []) + [
-                {"titel": tk, "warten_auf": "vom Operationsplaner nicht eingeordnet (Code)"} for tk in fehlt]
+            plan["beobachten"] += [{"titel": tk, "warten_auf": "vom Operationsplaner nicht eingeordnet (Code)"}
+                                   for tk in fehlt]
             erg["wache_code"].append(f"Operationsplaner: {len(fehlt)} Akte(n) nicht eingeordnet – {', '.join(fehlt)}")
+        erg["missionen"]["4"].update(auftraege=plan["auftraege"], beobachten=plan["beobachten"],
+                                     verworfen=plan["verworfen"])
 
     # 5 Gegenspieler
     gegen = {"einwaende": []}
@@ -1431,10 +1445,13 @@ def konferenz(melden=lambda text: None):
                    "anwaerter": [], "depot": [], "lehre": None, "fehler": True}
     # Wache im Code: eine Chance nur aus einem Auftrag, den der Gegenspieler nicht gekippt hat
     auftr = {a["titel"]: a for a in plan.get("auftraege") or []}
-    bleiben = []
+    bleiben, ges = [], set()
     for c in befehl_.get("chancen") or []:
         tk = str(c.get("titel", "")).upper().strip()
         c["titel"] = tk
+        if tk in ges:
+            continue
+        ges.add(tk)
         if tk not in auftr:
             erg["wache_code"].append(f"Feldherr: {tk} ist kein Auftrag des Planers – aus den Chancen genommen")
         elif (urteil.get(tk) or {}).get("urteil") == "kippt":
@@ -1445,6 +1462,20 @@ def konferenz(melden=lambda text: None):
                      stopp_app=a.get("stopp_app"), einwand=urteil.get(tk))
             bleiben.append(c)
     befehl_["chancen"] = bleiben
+    erlaubt = {a["titel"] for a in jaeger.get("anwaerter") or []} | {a["titel"] for a in anw}
+    an_, ges = [], set()
+    for a in befehl_.get("anwaerter") or []:
+        a["titel"] = str(a.get("titel", "")).upper().strip()
+        if a["titel"] in erlaubt and a["titel"] not in ges:
+            ges.add(a["titel"])
+            an_.append(a)
+        elif a["titel"] not in erlaubt:
+            erg["wache_code"].append(f"Feldherr: Anwärter {a['titel']} kommt nicht vom Jäger – entfernt")
+    befehl_["anwaerter"] = an_
+    for d_ in befehl_.get("depot") or []:
+        d_["titel"] = str(d_.get("titel", "")).upper().strip()
+    if "8" in erg["missionen"]:
+        erg["missionen"]["8"].update(chancen=bleiben, anwaerter=an_)
     befehl_["anhang"] = {"beobachten": plan.get("beobachten") or [], "verworfen": plan.get("verworfen") or []}
     erg["befehl"] = befehl_
     try:                                               # Kreislaufbild so, wie es am Tag der Konferenz stand
@@ -1455,7 +1486,8 @@ def konferenz(melden=lambda text: None):
         erg["kreislauf"] = {}
     erg["kosten_usd"] = round(kosten()["usd"] - usd_vorher, 2)
     json_schreiben(_pfad(f"{heute}.json"), erg, ensure_ascii=False)
-    melden(f"{datetime.now():%H:%M:%S} fertig · diese Konferenz {erg['kosten_usd']:.2f} $ · Monat {kosten()['usd']:.2f} $")
+    melden(f"{datetime.now():%H:%M:%S} fertig · diese Konferenz {_zahl_de(erg['kosten_usd'])} $ · Monat "
+           f"{_zahl_de(kosten()['usd'])} $")
     return erg
 
 
@@ -1769,5 +1801,9 @@ def ergebnis_zeile(k):
     if k.get("format") == 2:
         b = k.get("befehl") or {}
         return (f"{len(b.get('chancen') or [])} Chancen · {len(b.get('anwaerter') or [])} Anwärter · Haltung "
-                f"{b.get('haltung') or '—'} · {k.get('kosten_usd', 0):.2f} $")
+                f"{b.get('haltung') or '—'} · {_zahl_de(k.get('kosten_usd') or 0)} $")
     return f"{sum(len(m.get('hinweise') or []) for m in (k.get('meldungen') or {}).values())} Hinweise"
+
+
+def _zahl_de(x, n=2):
+    return f"{x:,.{n}f}".replace(",", "X").replace(".", ",").replace("X", ".")

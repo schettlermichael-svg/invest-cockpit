@@ -29,8 +29,9 @@ import numpy as np
 import pandas as pd
 
 GLEICH_PCT = 1.5          # Einquetschung: Hochs innerhalb ±1,5 %
-MIN_RUECKGANG = 3.0
-HAELT_PCT = 5.0           # „hält in der Schwäche“: seit dem Indexhoch mindestens 5 % im Plus       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
+MIN_RUECKGANG = 3.0       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
+HAELT_PCT = 5.0           # „hält in der Schwäche“: seit dem Indexhoch mindestens 5 % im Plus
+KEIN = "kein"             # Startdatum schon gesucht, der Markt ist nicht schwach (statt None = noch nicht gesucht)
 WERT_WANDERT_PCT = 3.0       # der akzeptierte Wert (POC) wandert in 5 Tagen um mindestens 3 %
 PHASE_NAME = {1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
 
@@ -175,7 +176,7 @@ def korrekturbeginn(idx):
     mindestens 3 % darunter liegt; sonst None."""
     try:
         import marktrichtung
-        mr = marktrichtung.richtung()
+        mr = marktrichtung.richtung(bis=idx.index[-1])
         if mr.get("ampel") != "grün" and mr.get("seit") is not None:
             vor = idx["Close"].loc[:pd.Timestamp(mr["seit"])].iloc[-60:]    # das Hoch vor der Korrektur
             return vor.idxmax()
@@ -204,7 +205,7 @@ def relativ(df, idx, start=None):
     i_c = idx["Close"].reindex(c.index).ffill()
     rs = (c / i_c).dropna()
     aus = {"staerke": [], "schwaeche": []}
-    start = start if start is not None else startdatum(idx)
+    start = None if start == KEIN else start if start is not None else startdatum(idx)
     if start is not None and (c.index >= start).any():
         s = c.index[c.index >= start][0]
         t_pct = float(c.iloc[-1] / c.loc[s] - 1) * 100
@@ -305,7 +306,9 @@ def kreislauf(df, idx=None, gewinne=None, df30=None, fehlausbruch=None, start=No
     ph = phase_mod.phasen(df)
     w = wochenkerzen(df)
     ph = ph.reindex(w.index).ffill().fillna(1).astype(int)
-    p = int(ph.iloc[-1])
+    # Phase wie erkennung._phase_von (Karte, Weinstein-Zeichen): die laufende Woche zählt erst ab ihrem Freitag
+    p = int(ph[ph.index <= df.index[-1]].iloc[-1]) if (ph.index <= df.index[-1]).any() else int(ph.iloc[0])
+    ph.iloc[-1] = p
     dt, dw = dow(df, 5), dow(w, 2)
     eq = einquetschung(df)
     ak = akkumulation(df)
@@ -366,7 +369,7 @@ def kreislauf(df, idx=None, gewinne=None, df30=None, fehlausbruch=None, start=No
     return {"phase": p, "ziel": ziel, "wort": wort, "satz": satz, "staerke": st, "schwaeche": sw,
             "dow_tag": dt, "dow_woche": dw, "einquetschung": eq, "akkumulation": ak, "relativ": rel, "trend": tq,
             "kurve": [round(float(x), 2) for x in kurve], "phasen": [int(x) for x in ph.iloc[-52:]],
-            "kurve_von": f"{kurve.index[0]:%m.%Y}", "kurve_bis": f"{kurve.index[-1]:%d.%m.%Y}"}
+            "kurve_von": f"{kurve.index[0]:%d.%m.%Y}", "kurve_bis": f"{df.index[-1]:%d.%m.%Y}"}
 
 
 # ── Speicher: der Frühlauf rechnet den Kreislauf aller Titel mit dem Kartentisch (daten/kreislauf/<stand>.json) ───
@@ -377,11 +380,13 @@ _START, _GELADEN = {}, {}
 
 
 def startdatum(idx):
-    """korrekturbeginn() einmal je Indextag (die Marktrichtung lädt die Indizes)."""
+    """korrekturbeginn() einmal je Indextag (die Marktrichtung lädt die Indizes); KEIN, wenn der Markt nicht schwach ist."""
     schl = (len(idx), idx.index[-1])
     if schl not in _START:
         _START.clear()
         _START[schl] = korrekturbeginn(idx)
+        if _START[schl] is None:
+            _START[schl] = KEIN
     return _START[schl]
 
 
@@ -396,8 +401,8 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
             df30 = tpo_daten.kerzen(tk, abruf=False)
         except Exception:  # noqa: BLE001
             df30 = None
+    st = start if start is not None else startdatum(idx)      # einmal je Indextag, nicht je Titel
     i_ = idx[idx.index <= df.index[-1]]
-    st = start if start is not None else startdatum(i_)
     k = kreislauf(df, i_, gewinne, df30, fehlausbruch, start=st)
     if k:
         k["stand"] = f"{df.index[-1]:%Y-%m-%d}"
@@ -407,9 +412,14 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     return k
 
 
-def ablegen(stand, alle):
+def ablegen(stand, alle, behalten=10):
     from dateien import json_schreiben
     os.makedirs(SPEICHER, exist_ok=True)
+    for f in sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))[:-behalten]:
+        try:                                     # nur die jüngsten Tage behalten (Prüf-Agent 13.11.2026)
+            os.remove(os.path.join(SPEICHER, f))
+        except OSError:
+            pass
     json_schreiben(os.path.join(SPEICHER, f"{stand}.json"), {"stand": stand, "titel": alle}, ensure_ascii=False)
 
 

@@ -6,7 +6,7 @@ gross(k, titel, satz_stab=None)  großes Bild für Titelseite, Akte und Chance i
 mini(k, breite, hoehe)           Mini-Kurve für die Karten auf Rückenwind und Setups (SVG)
 punkt_wort(k)                    Phase in einem Wort mit farbigem Punkt für Tabellen, z. B. „● 4 → 1 Abwärts → Basis“
 """
-from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3, t
+from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
 
 FARBE = {1: "#8A94A6", 2: "#1D9E75", 3: "#8A94A6", 4: "#D85A30"}      # Balance grau, aufwärts grün, abwärts rot
 PUNKT = {1: "⚪", 2: "🟢", 3: "⚪", 4: "🔴"}
@@ -79,8 +79,8 @@ def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):
     lo, hi = min(k["kurve"]), max(k["kurve"])
     svg = (f'<svg viewBox="0 0 {breite} {hoehe}" width="100%" role="img" aria-label="Kreislauf {t(titel)}: '
            f'{t(wort(k))}" style="display:block;max-width:{breite}px">'
-           f'<text x="8" y="10" font-size="11" fill="{TEXT_3}">{hi:.2f} $</text>'
-           f'<text x="8" y="{hoehe - 4}" font-size="11" fill="{TEXT_3}">{lo:.2f} $ · {t(k.get("kurve_von", ""))} – '
+           f'<text x="8" y="10" font-size="11" fill="{TEXT_3}">{zahl(hi)} $</text>'
+           f'<text x="8" y="{hoehe - 4}" font-size="11" fill="{TEXT_3}">{zahl(lo)} $ · {t(k.get("kurve_von", ""))} – '
            f'{t(k.get("kurve_bis", ""))} (Wochenschlüsse)</text>' + "".join(teile)
            + f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{FARBE[k["phase"]]}" stroke="{TEXT}" stroke-width="1.5"/>'
            f'<line x1="{x + 7:.1f}" y1="{y:.1f}" x2="{x + 20:.1f}" y2="{y:.1f}" stroke="{TEXT_2}" stroke-width="1"/>'

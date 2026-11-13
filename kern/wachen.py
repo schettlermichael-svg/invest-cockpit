@@ -213,7 +213,8 @@ def stab_hinweise(k):
                 for v in x:
                     gehe(nr, v)
         for nr, m in (k.get("missionen") or {}).items():
-            gehe(nr, m)
+            if nr in ("2", "4", "5", "7"):       # die Lage soll Widersprüche des Marktes benennen – kein App-Fehler
+                gehe(nr, m)
     for nr, m in (k.get("meldungen") or {}).items():
         texte.append((nr, m.get("meldung") or ""))
         texte += [(nr, f"{_tk(h.get('titel'))}: {h.get('text') or ''}") for h in m.get("hinweise") or []]
@@ -242,12 +243,13 @@ def stab_form(k):
         if m.get("fehler") and m.get("meldung"):
             aus.append(("rot" if nr in ("4", "8") else "gelb", f"Mission {nr} ({m.get('name')}) ohne Meldung: "
                                                               f"{str(m.get('meldung'))[:120]}"))
-    rot = {x["titel"] for x in k.get("tafel") or [] if ((x.get("ampeln") or {}).get("Setup") or {}).get("ampel") == "rot"}
+    nicht_gruen = {x["titel"] for x in k.get("tafel") or []
+                   if ((x.get("ampeln") or {}).get("Setup") or {}).get("ampel") != "grün"}
     plan = mi.get("4") or {}
     b = k.get("befehl") or {}
     for a in (plan.get("auftraege") or []) + (b.get("chancen") or []):
-        if a.get("titel") in rot:
-            aus.append(("rot", f"{a['titel']}: Auftrag bei roter Setup-Ampel"))
+        if a.get("titel") in nicht_gruen:
+            aus.append(("rot", f"{a['titel']}: Auftrag ohne grünes Setup"))
     for c in b.get("chancen") or []:
         fehlt = [f for f in ("warum", "tun", "phase") if not str(c.get(f) or "").strip()]
         if fehlt:

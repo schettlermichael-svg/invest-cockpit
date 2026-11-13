@@ -114,7 +114,7 @@ def _stufe1(tk, start=None):
         info.update(setup_feststellen(df, m, k, zahlen_reaktion.pruefen(df, gewinne), scan))
         try:                                        # Kreislauf und Zeichen der Stärke/Schwäche (13.11.2026)
             import zeichen
-            fa = vcp_zone.ausbruch_text(br) if br and br.get("fehl") else None
+            fa = info.get("ausbruch") if str(info.get("ausbruch") or "").startswith("🔴 Fehlausbruch") else None
             info["_kreislauf"] = zeichen.fuer_titel(tk, df, index, gewinne, start=start, fehlausbruch=fa)
         except Exception:  # noqa: BLE001
             info["_kreislauf"] = None
@@ -309,7 +309,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     try:                                            # Beginn der Marktschwäche einmal für alle Titel
         start = zeichen.startdatum(daten.kurse_gespeichert(daten.INDEX))
     except Exception:  # noqa: BLE001
-        start = None
+        start = zeichen.KEIN
     with ProcessPoolExecutor(prozesse) as ex:
         stufe1 = [x for x in ex.map(functools.partial(_stufe1, start=start), ticker_liste, chunksize=20) if x]
     melden(f"  Stufe 1: {len(stufe1)} Titel gerechnet in {time.time() - beginn:.0f} s")
@@ -329,7 +329,6 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     for x in in_reihe:
         x["karte"], x["kacheln"] = karten.get(x["tk"], (None, None))
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")
-    import zeichen
     zeichen.ablegen(stand, {x["tk"]: x.pop("_kreislauf") for x in stufe1 if x.get("_kreislauf")})
     for x in stufe1:
         x.pop("_kreislauf", None)
