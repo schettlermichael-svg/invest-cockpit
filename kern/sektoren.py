@@ -5,7 +5,7 @@ Elf Sektor-ETFs gegen den S&P 500 (SPY), Wochenschlüsse:
   RS-Stärke = 100 · RS / Schnitt der RS über 26 Wochen, über 4 Wochen geglättet
               (über 100 = stärker als der Markt im letzten halben Jahr)
   Schwung   = 100 + Veränderung der RS-Stärke in 6 Wochen   (über 100 = Stärke nimmt zu)
-Gewählt nach der Abnahme (werkzeuge/sektoren_test.py): mit 10 statt 26 Wochen trennt die Stärke
+Gewählt nach der Abnahme an bekannten Rotationen 2008–2023: mit 10 statt 26 Wochen trennt die Stärke
 Führer und Abgehängte schlechter (Energie 2022 nur 77 % der Wochen stark statt 98 %), ohne Glättung
 wechselt jeder Sektor rund 16-mal im Jahr das Feld statt rund 8-mal.
 Felder: Führend (stark, Schwung +), Ermüdend (stark, Schwung −), Abgehängt (schwach, Schwung −),
@@ -27,7 +27,6 @@ YAHOO = {"Technology": "XLK", "Communication Services": "XLC", "Consumer Cyclica
 # typische Führer je Quad (Konzept, Abschnitt Quadrant) als ETFs
 QUAD_ETFS = {1: ["XLK", "XLY", "XLC"], 2: ["XLE", "XLB", "XLI", "XLF"],
              3: ["XLE", "XLU"], 4: ["XLU", "XLP", "XLV"]}
-FELDER = {"Führend": "grün", "Ermüdend": "gelb", "Abgehängt": "rot", "Erstarkend": "blau"}
 VERLAUF = 26                                   # so weit zurück wird „seit … Wochen“ gezählt
 SCHWEIF = 11                                   # heute und die 10 Wochen davor
 

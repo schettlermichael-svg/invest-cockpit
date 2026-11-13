@@ -20,10 +20,8 @@ from phase import phasen
 
 # Grenzen aus dem Regelkatalog (Wochen × 5 Handelstage)
 BASE_MIN, BASE_MAX = 15, 325          # 3–65 Wochen
-FLAGGE_MIN, FLAGGE_MAX = 5, 30        # 1–6 Wochen
 STANGE_FENSTER = 40                   # Fahnenstange in höchstens 8 Wochen
 HOCH_TOLERANZ = 0.025                 # Hochs bis 2,5 % unter dem Höchsten zählen zum linken Rand
-FLAGGE_KURZ, FLAGGE_STEIL = 20, 50    # Flagge bis 4 Wochen; bis 6 Wochen nur nach Stange ab 50 %
 
 
 def gd(werte, n):

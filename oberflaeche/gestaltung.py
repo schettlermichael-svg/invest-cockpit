@@ -16,11 +16,9 @@ GELB = "#D29922"
 ROT = "#F85149"
 BLAU = "#7DB4FF"
 LILA = "#D2A8FF"
-ORANGE = "#F0883E"
 GRAU = "#5A6475"
 AMPEL = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": GRAU, "blau": BLAU}
 SCHRIFT = "'IBM Plex Sans', system-ui, sans-serif"
-MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
 KOPF = (
     "<style>"
@@ -201,6 +199,5 @@ def ampelzeile(name, ampel, text="", hilfe=""):
             f'<span style="font-size:15px;font-weight:500">{t(name)}{i_}</span>{unter}</div></div>')
 
 
-SETUPS = ("Flagge", "Powerplay", "Umkehr")      # eigenes Setup (Trendfortsetzung), behält seinen Namen
 
 

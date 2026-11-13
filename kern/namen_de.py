@@ -1,9 +1,4 @@
-"""Deutsche Namen für Yahoos Sektoren und Branchen und die deutschen Unternehmensbeschreibungen
-(daten/steckbrief_de/beschreibungen.json, von Claude aus Yahoos englischem Text übertragen; neue Titel ergänzt der
-Nachtlauf)."""
-import os
-
-PFAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "daten", "steckbrief_de", "beschreibungen.json")
+"""Deutsche Namen für Yahoos Sektoren und Branchen."""
 
 SEKTOR = {
     "Basic Materials": "Grundstoffe", "Communication Services": "Kommunikation", "Consumer Cyclical": "Zyklischer Konsum",
@@ -77,10 +72,6 @@ BRANCHE = {
     "Utilities - Regulated Water": "Wasserversorger", "Utilities - Renewable": "Erneuerbare Energien",
     "Waste Management": "Entsorgung",
 }
-
-_beschreibungen = None
-_stand = None
-
 
 
 def branche(name):

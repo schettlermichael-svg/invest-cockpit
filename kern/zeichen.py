@@ -357,12 +357,6 @@ def korrekturfenster(idx):
     return None
 
 
-def korrekturbeginn(idx):
-    """Verträglich mit älteren Aufrufen: der Beginn des Fensters oder None."""
-    f = korrekturfenster(idx)
-    return f[0] if f else None
-
-
 def divergenz(df, idx, s, ende=None):
     """Höheres Tief gegen den Index → Liste mit einem Zeichen. Der Titel fiel seit dem Indexhoch bis zu seinem Tief um
     mindestens max(5 %, 3 ATR, den Rückgang des Index); dieses Tief liegt mindestens 3 Handelstage vor dem Tief des

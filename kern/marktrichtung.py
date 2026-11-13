@@ -24,7 +24,7 @@ brachten – O'Neils seltene Ausnahme), oder – Ergänzung, nicht aus dem Buch 
 Hoch vor der Korrektur („Aufwärtstrend wieder aufgenommen“; ein Index auf neuem Hoch ist nicht in Korrektur).
 
 richtung(bis=None)   Zustand am Stichtag (Standard: letzter Handelstag) mit Text und Zeichen
-verlauf(daten)       Zustand an jedem Tag (für werkzeuge/markt_test.py)
+verlauf(daten)       Zustand an jedem Tag
 Regeln: pruefgalerie/oneil/regelkatalog_oneil.md, Abschnitt 7 (M – Marktrichtung).
 """
 import pandas as pd
@@ -42,7 +42,7 @@ STAU_HOCH = 3.0         # unteren Hälfte der Tagesspanne, Index höchstens 3 % 
 DRUCK, KORREKTUR = 4, 5
 FTD_AB_TAG = 4          # Follow-Through-Day frühestens an Tag 4 des Erholungsversuchs …
 FTD_SCHWELLE = 1.7      # … mit mindestens +1,7 % bei höherem Volumen als am Vortag (Buch: früher 1 %, heute deutlich
-                        # über 1,5 %; werkzeuge/markt_test.py: 11 von 11 Buchfällen, 1,0–1,5 % je 10 von 11)
+                        # über 1,5 %; Abnahme an den Fällen aus O'Neils Buch: 11 von 11, mit 1,0–1,5 % je 10 von 11)
 TAG3_SCHNITT = 2.0      # Ausnahme Tag 3: Tage 1–3 im Schnitt mindestens +2 %
 HOCH_FENSTER = 60       # Hoch vor der Korrektur: höchster Schluss der letzten 60 Handelstage beim Wechsel
 VORLAUF = 520           # der Zustand hängt an der Vorgeschichte: so viele Tage werden vor dem Stichtag durchlaufen

@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 
 LUECKE, VOLUMEN_FACH = 0.04, 2.0
-PINCH_PCT = 3.0
 RAND = 5                      # ein Extrem in den ersten 5 Tagen des Fensters ist kein Anker, sondern der Rand
 TIEF_MIN_TAGE = 10            # Tief seit dem Hoch zählt als Beginn der Bewegung ab 10 Handelstagen Abstand
 PROFIL_MIN_TAGE = 5

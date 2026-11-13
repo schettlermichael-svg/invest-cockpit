@@ -4,7 +4,7 @@ er“, dazu die Wochentiefs (gepunktet) und der S&P 500 als Schatten (gestrichel
 Schwäche gegen den Markt sofort sichtbar ist. Zeichnet sich ein Wechsel ab, verblasst die laufende Phase (hell) ab dem
 ersten Zeichen. Darunter die Phase in Worten und die Zeichen der Stärke und Schwäche, die die App gemessen hat.
 
-gross(k, titel, satz_stab=None)  großes Bild für Titelseite, Akte und Chance im Tagesbefehl (HTML mit SVG)
+gross(k, titel, satz_stab=None)  großes Bild für die Titelseite (HTML mit SVG); satz_stab für den künftigen Strategen-Call
 mini(k, breite, hoehe)           Mini-Kurve für die Karten auf Rückenwind und Setups (SVG)
 punkt_wort(k)                    Phase in einem Wort mit farbigem Punkt für Tabellen, z. B. „● 4 → 1 Abwärts → Basis“
 """

@@ -1,7 +1,7 @@
 """Lageleiste: Dalio-Quadrant (Makro) und Marks-Pendel (Zyklus).
 
 Alle drei Funktionen nehmen einen Stichtag (Standard: heute) und rechnen nur mit Daten bis zu
-diesem Tag – so lassen sie sich an bekannten Zeitpunkten prüfen (werkzeuge/lage_test.py).
+diesem Tag – so lassen sie sich an bekannten Zeitpunkten prüfen.
 Regeln: Konzept, Abschnitte „Ebene 1“ und „Ebene 2“.
 """
 import numpy as np

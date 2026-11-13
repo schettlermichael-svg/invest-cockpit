@@ -234,7 +234,7 @@ def _mehr_dateien():
     """macOS erlaubt einem Programm zunächst nur 256 offene Dateien; für den Abendlauf auf 4.096 anheben."""
     try:
         import resource
-        weich, hart = resource.getrlimit(resource.RLIMIT_NOFILE)
+        _, hart = resource.getrlimit(resource.RLIMIT_NOFILE)
         resource.setrlimit(resource.RLIMIT_NOFILE, (min(4096, hart), hart))
     except (ImportError, ValueError, OSError):
         pass
