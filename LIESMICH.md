@@ -751,8 +751,8 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Dow-Struktur der Schwungpunkte auf Tag (n = 5) und Woche (n = 2). Signale: Schluss unter dem letzten höheren Tief, erstes höheres Tief nach tieferen Hochs und Tiefs (und gespiegelt).
 - Einquetschung: steigende Tiefs unter flacher Oberkante, dazu das Spiegelbild.
 - Akkumulation und Distribution: 20 Tage, Saldo ±3, Pocket Pivot in 5 Tagen über GD10 und GD50.
-- Stärke in der Schwäche, gemessen ab dem Indexhoch vor O'Neils Korrektur. Zeichen: hält (mindestens +5 % und 10 Punkte vor dem Index), führt aus der Korrektur (10 Punkte vor dem Index seit dem Indextief), nah am Hoch, RS-Linie am Hoch. Dazu das Spiegelbild.
-- Reaktion auf Zahlen: Überraschung gegen Kursreaktion.
+- Stärke in der Schwäche, gemessen im Korrekturfenster (Regeln seit dem Abschnitt „Blinde Flecken“ unten).
+- Reaktion auf Zahlen: Überraschung gegen Kursreaktion, Lücke gekauft/verkauft, Zahlen verworfen (siehe unten).
 - Wanderung der Wertzone: POC 5 gegen 5 Tage, ±3 %, nur in der Seitwärtszone (Schluss in 10 Tagen höchstens ±4 %); aus derselben Market-Profile-Analyse wie Karte und Chart (`erkennung.mp_von`, Rohdaten-Speicher auf 50 Titel begrenzt).
 - Kreislauf: die Phase nach Weinstein (phase.py), dazu der Wechsel, der sich abzeichnet („4 → 1“), ein fester Satz und 52 Wochenschlüsse mit Phase je Woche.
 
@@ -763,7 +763,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Ein Schluss über dem Pivot nach einem Fehlausbruch zählt als neuer Ausbruch.
 
 **Kreislaufbild (`oberflaeche/kreislaufbild.py`):**
-- Darstellung: echter Wochenverlauf eines Jahres, nach Phasen gefärbt (aufwärts grün, Balance grau, abwärts rot), dazu „hier steht er“, die vier Phasen als Leiste sowie die Zeichen der Stärke und Schwäche.
+- Darstellung: echter Wochenverlauf eines Jahres, nach Phasen gefärbt (Farben seit dem Abschnitt „Blinde Flecken“ unten), dazu „hier steht er“, die vier Phasen als Leiste sowie die Zeichen der Stärke und Schwäche.
 - Titelseite: das große Bild unter den Kacheln, über dem Chart, mit dem Satz des Stabs (`stab.satz_zu`).
 - Konferenzraum: das große Bild in jeder Chance.
 - Karten (Setups, dreifacher Rückenwind) und die Tabelle „Diese Titel liest der Stab“: Mini-Kurve mit Phasenwort.
@@ -783,7 +783,47 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Offen gelassen von Micky:
   - Breite der Aufklärung (Micky 13.11.): das Depot immer, dazu 10 Titel – 6 Akten und 4 Anwärter in Rangfolge; freie Plätze der einen Gruppe füllt die andere. (Erst 20; die Probekonferenz kostete 2,94 $, davon geschätzt rund 2,50 $ für die Web-Suchen.)
   - Budget: Annahme etwa wie bisher; jede Konferenz misst ihre Kosten (`kosten_usd`).
-- Anwärter (Micky 13.11.): Titel ohne Akte mit frühen Zeichen der Stärke – Stärke in der Schwäche, Wechsel zu Phase 1 oder 2, aufsteigende Einquetschung, Akkumulation, Pocket Pivot, schlechte Zahlen gehalten, erstes höheres Tief (`stab.fruehe_zeichen`); höchstens 30 an den Jäger, auch wenn der Markt nicht schwach ist.
+- Anwärter (Micky 13.11.): Titel ohne Akte mit frühen Zeichen – seit dem Abschnitt „Blinde Flecken“ beide Seiten (20 long, 10 short) und Depotwarnungen.
 - Wache Zahlentermine (Micky 13.11.): Weichen Yahoo und TradingView mehr als 1 Tag ab, ist das nur gelb, wenn einer der beiden Termine in den nächsten 14 Tagen liegt; sonst grauer, stiller Hinweis (färbt Kopfzeile und Handy nicht).
-- Divergenz (Micky 13.11., HWM): höheres Tief gegen den Index als Zeichen der Stärke in der Schwäche – der Titel fiel mindestens 10 % bis zu seinem Tief, der Index macht mindestens 3 Handelstage später ein um mindestens 0,5 % tieferes Tief, der Titel bleibt dabei 5 % über seinem Tief und liegt seit seinem Tief 10 Punkte vor dem Index (`zeichen.divergenz`). Trifft auf rund 6 % der Titel; HWM wird damit „4 → 1“.
-- Kreislaufbild hell (Micky 13.11.): Zeichnet sich ein Wechsel ab, wird die laufende Phase ab dem ersten Zeichen hell gezeichnet – 4 → 1 und 3 → 4 hellrot, 2 → 3 und 1 → 2 hellgrün (`kreislaufbild.HELL`, `wechsel_wochen` im Kreislauf); ab dem letzten Schwungtief bzw. dem eigenen Tief seit dem Indexhoch (zur Stärke) oder dem letzten Schwunghoch (zur Schwäche).
+- Divergenz (Micky 13.11., HWM): höheres Tief gegen den Index als Zeichen der Stärke in der Schwäche – der Titel fiel mindestens 10 % bis zu seinem Tief, der Index macht mindestens 3 Handelstage später ein um mindestens 0,5 % tieferes Tief, der Titel bleibt dabei 5 % über seinem Tief und liegt seit seinem Tief 10 Punkte vor dem Index (`zeichen.divergenz`). HWM wird damit „4 → 1“. Seit dem Abschnitt „Blinde Flecken“: Mindestfall max(5 %, 3 ATR, Fall des Index), zählt als Struktur und RS.
+- Kreislaufbild hell (Micky 13.11.): Zeichnet sich ein Wechsel ab, verblasst die laufende Phase ab dem ersten Zeichen (hell in ihrer eigenen Farbe: 4 → 1 hellrot, 2 → 3 hellgrün, 1 → 2/4 hell-blaugrau, 3 → 2/4 hell-ambergrau) (`kreislaufbild.HELL`, `wechsel_wochen` im Kreislauf); ab dem letzten Schwungtief bzw. dem eigenen Tief seit dem Indexhoch (zur Stärke) oder dem letzten Schwunghoch (zur Schwäche).
+
+
+## Blinde Flecken entfernt (13.11.2026)
+
+Micky: „Unsere ganze App steckt wahrscheinlich noch voll dieser blinden Flecken. Diese müssen rigoros entfernt werden.“ Grundlage ist die Prüfliste im Konzeptdokument (Abschnitt „Blinde Flecken“); umgesetzt wurden alle A- und B-Punkte außer der Korrektur ab −8 % (Micky: „nur Distributionstage“). Gemessen am Mac über 1.907 Titel (Daten bis 04.11.2026).
+
+**Zeichen (`kern/zeichen.py`):**
+- Jedes Zeichen hat Seite, Art (Struktur, Volumen, RS, Ereignis) und Gewicht. Ein Wechsel der Phase zeichnet sich nur ab, wenn ein Zeichen der Struktur und eines aus Volumen oder RS auf derselben Seite stehen und die Seite mindestens Gewicht 4 hat und doppelt so schwer wiegt wie die andere. Der Satz nennt die stärksten Zeichen zuerst.
+- Korrekturfenster: Stärke in der Schwäche bleibt 45 Handelstage nach dem Tief des Index stehen („in der Korrektur vom … bis …“) – vorher verschwand sie mit dem Follow-Through-Day.
+- Hält: am Indextief (Index mindestens 3 % gefallen) mindestens so weit im Plus wie der Index im Minus und 15 Punkte vor ihm (mit 10 Punkten schlug jeder zweite Titel den S&P 500: der Rückgang war eng von wenigen Riesen getragen, QQQ −10 %, IWM −1 %). Trifft 23 %.
+- Führt: 10 Punkte vor dem Index seit dem Indextief und höchstens 15 % unter dem 52-Wochen-Hoch. Nah am Hoch: höchstens halb so weit wie der Index und höchstens 15 %.
+- Divergenz: höheres Tief gegen den Index (5 %), Spiegelbild tieferes Hoch gegen den Index.
+- Neu: Spring/Upthrust (Spanne der 20 Tage davor höchstens 15 %, Unterschreitung höchstens 1 ATR, mit Volumen zurückgekauft), Tage gegen den Markt (mindestens 4 und 60 % der Indextage mit ±1 %), RS-Linie in der Base (+2 % in 20 Tagen bei fallendem Kurs; höheres RS-Tief bei tieferem Kurstief), 3 Wochen eng, Volumen-Trockenheit, verdeckte Abgabe (Churning).
+- Volumen: Kauftag braucht Schluss im oberen, Abgabetag im unteren Drittel; Akkumulation bei Saldo ≥ 3 und doppelt so vielen Kauf- wie Abgabetagen. Pocket Pivot höchstens 4 % über dem GD10 nach einer ruhigen Woche.
+- Dow: Schluss 0,5 ATR unter dem letzten höheren Tief bzw. über dem letzten tieferen Hoch.
+- Zahlen: Reaktionstag und Schwelle 3 % wie `zahlen_reaktion`; Lücke gekauft/verkauft; Kurs heute unter dem Schluss vor den Zahlen nach positivem Tag 1 = Zahlen verworfen (wie die Kachel).
+- Ein Maßstab für das RS-Hoch: 0,99 (`zeichen.RS_HOCH`, auch Chart und Rückenwind).
+
+**Kreislauf:**
+- Junge Titel ab 70 Handelstagen bekommen Zeichen, Phase erst ab 300 („jung“).
+- Phase 2 kommt nach einem tiefen Fall schon über dem höchsten Wochenschluss der Basis (`phase.py`, vorher erst über dem Hoch der letzten 26 Wochen).
+- Rückschlag in Phase 2: Wochenschluss unter GD10W und mindestens 15 % unter dem 52-Wochen-Hoch („2 · Rückschlag“, amber).
+- Neue Wechsel 1 → 4 (Schluss unter dem Tief der Basis) und 3 → 2 (Schluss über dem Hoch der Verteilung, RS-Linie über ihrem GD50).
+- Die Phase wird überall gleich gelesen: die Woche zählt erst ab ihrem Freitag (`phase.aktuell`). Ein Name je Phase: Basis, Aufwärts, Verteilung, Abwärts (`zeichen.PHASE_NAME`).
+- Kreislaufbild: Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag amber; Wochentiefs gepunktet, S&P 500 gestrichelt mit gleichem Start, darunter beide Prozente.
+
+**Setups:**
+- Base-Ausbruch grün erst ab 2 Kontraktionen (Micky: „ab zwei Kontraktionen“).
+- Momentum-Ausbruch grün nur, wenn die Pause den GD20 hält und der Kurs davor 3 Wochen über dem GD50 stand.
+- Sprung ohne Zahlen grün ab 5-fach Volumen und Schluss im oberen Drittel.
+- Flagge grün nur über steigendem GD50 und mit leiserem Volumen als in der Fahnenstange.
+- Echte Bärenflagge (`vcp_zone.baerenflagge`): Fall ab 15 % in höchstens 30 Tagen, leises Driften (3–25 Tage, höchstens die Hälfte zurück, steigende Tiefs), GD50 fällt, Schluss unter dem Tief der letzten 5 Tage. Trifft 2 %.
+- Neues Setup Bruch der Spanne (`vcp_zone.spannenbruch`, Reihe `k_bruch`): Basis oder Verteilung ab 6 Wochen und höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Trifft 1 %. Damit acht Setups.
+- Ermüdung: jede Flagge nach einer Fahnenstange ab 30 %, die nach unten bricht.
+
+**Markt (`kern/marktrichtung.py`):** Distributionstage verfallen ab +5 % (vorher 10 %); Stautage (höchstens +0,4 % bei höherem Volumen, Schluss in der unteren Hälfte, nahe am Hoch) zählen mit.
+
+**Chart (`oberflaeche/chart.py`):** S&P 500 gestrichelt im Kurschart; Schwungpunkte, Pocket Pivot (PP), Spring (S), Upthrust (U), Divergenz (◆); Abgabetage und verdeckte Abgabe über dem Volumen; RS-Tief vor Kurs.
+
+**Stab:** Jäger mit 20 Anwärtern long und 10 short (zwei long, ein short im Wechsel), dazu jede Depotposition mit frühen Zeichen der Schwäche (muss genannt werden, sonst Wache). Die Rangfolge der Akten kennt den Kreislauf. Zahlen gibt es jetzt für jeden Titel, nicht nur für Titel mit Stufe.
