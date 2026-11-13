@@ -458,7 +458,8 @@ def _senden(k, daten):
                 return json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as e:
             text = e.read().decode("utf-8", "replace")[:300]
-            if e.code in (429, 500, 529) and versuch < 2:     # überlastet oder Rate-Limit: warten und noch einmal
+            if e.code in (429, 500, 502, 503, 504, 529) and versuch < 2:   # überlastet, Rate-Limit oder kurz nicht
+                # erreichbar (13.11.2026: 503 „credential validation failed“ mitten in der Konferenz): warten, noch einmal
                 time.sleep(20 * (versuch + 1))
                 continue
             raise RuntimeError(f"Anthropic antwortet {e.code}: {text}") from None
@@ -1312,18 +1313,29 @@ def konferenz(melden=lambda text: None):
         inhalt = (f"Mission {nr} · {name}: {frage_}\n\nAUFTRAG\n{AUFTRAG_MISSION[nr]}\n\n{LEHRSTELLE[nr]}\n\n"
                   f"MATERIAL DER APP (Stand des Frühlaufs)\n{daten_}{vorlauf}")
         melden(f"{datetime.now():%H:%M:%S} {name} …")
-        try:
-            m = _formular(system, inhalt, "melden", schema, max_tokens)
-            _wache_auf(m, daten_ + vorlauf, bekannt)
-        except Deckel:
-            raise
-        except Unlesbar as e:
-            m = {"fehler": True, "meldung": f"Keine Meldung: {e}", "roh": e.roh}
-        except Exception as e:  # noqa: BLE001 – eine Mission fehlt, die anderen laufen weiter
-            m = {"fehler": True, "meldung": f"Keine Meldung: {e}"}
-        melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}")
+        usd0 = kosten()["usd"]
+        for versuch in range(2):                       # eine Mission, die an der Schnittstelle scheitert, noch einmal
+            try:
+                m = _formular(system, inhalt, "melden", schema, max_tokens)
+                _wache_auf(m, daten_ + vorlauf, bekannt)
+                break
+            except Deckel:
+                raise
+            except Unlesbar as e:
+                m = {"fehler": True, "meldung": f"Keine Meldung: {e}", "roh": e.roh}
+                break
+            except Exception as e:  # noqa: BLE001 – eine Mission fehlt, die anderen laufen weiter
+                m = {"fehler": True, "meldung": f"Keine Meldung: {e}"}
+                if versuch == 0:
+                    melden(f"   {name}: {e} – zweiter Versuch in 60 s")
+                    time.sleep(60)
+        m["kosten_usd"] = round(kosten()["usd"] - usd0 + (vorkosten.pop(nr, 0.0)), 3)
+        melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}"
+               f" · {_zahl_de(m['kosten_usd'])} $")
         erg["missionen"][str(nr)] = {"name": name, **m}
         return m
+
+    vorkosten = {}                                     # Kosten vor dem Formular einer Mission (Web-Suche der Aufklärung)
 
     # 1 Lage
     alt_lage = (((vorher or {}).get("missionen") or {}).get("1") or {}) if (vorher or {}).get("format") == 2 else {}
@@ -1345,6 +1357,7 @@ def konferenz(melden=lambda text: None):
                       "kreislauf": (c.get("kreislauf") or {}).get("wort")})
     aufkl = {"titel": []}
     if ziele:
+        usd_s = kosten()["usd"]
         try:
             notizen = _anfrage(system, "Suche zu jedem dieser Titel, warum er sich in den letzten Wochen bewegt hat "
                                "(Zahlen, Ausblick, Aufträge, Produkte, Übernahmen, Analysten, Branche, Makro): "
@@ -1355,7 +1368,8 @@ def konferenz(melden=lambda text: None):
             raise
         except Exception as e:  # noqa: BLE001
             notizen = f"Web-Suche fehlgeschlagen: {e}"
-        melden(f"   Web-Suche: {len(notizen or '')} Zeichen Notizen")
+        vorkosten[2] = kosten()["usd"] - usd_s
+        melden(f"   Web-Suche: {len(notizen or '')} Zeichen Notizen · {_zahl_de(vorkosten[2])} $")
         aufkl = mission(2, {"heute": heute, "titel": stoff}, F_AUFKL, 8000,
                         "\n\nNOTIZEN DER WEB-SUCHE (Quellen)\n" + (notizen or "keine Fundstellen"))
     aufkl_von = {a.get("titel"): a for a in aufkl.get("titel") or []}

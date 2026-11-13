@@ -423,7 +423,7 @@ def mission_html(nr, m):
     else:
         zeilen = []
         for k_, v in m.items():
-            if k_ in ("name", "roh", "wache", "fehler"):
+            if k_ in ("name", "roh", "wache", "fehler", "kosten_usd"):
                 continue
             if isinstance(v, list):
                 zeilen += [f'<div style="margin:4px 0;font-size:14px">{_h(_wert(x))}{_wache(x) if isinstance(x, dict) else ""}</div>'
@@ -433,7 +433,9 @@ def mission_html(nr, m):
         inhalt = "".join(zeilen)
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;margin-bottom:12px">'
             f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{nr} · {name}'
-            f'</div><div style="font-size:14px;color:{TEXT_2};margin:2px 0 8px">{frage_}</div>{inhalt}</div>')
+            f'</div><div style="font-size:14px;color:{TEXT_2};margin:2px 0 8px">{frage_}'
+            + (f' <span style="color:{TEXT_3}">· {_zahl(m["kosten_usd"])} $</span>' if m.get("kosten_usd") is not None
+               else "") + f'</div>{inhalt}</div>')
 
 
 def lehre():
