@@ -301,7 +301,7 @@ _DIALOG = getattr(st, "dialog", None) or getattr(st, "experimental_dialog", None
 def _karte_zeigen(tk, x, liste):
     """Lagekarte eines Tabellen-Titels im Pop-up (✕ oben rechts schließt es), darunter dieselben Knöpfe."""
     if x and x.get("karte"):
-        st.markdown(kartentisch.karte_html(x, kartentisch._marken(x) if liste else ""), unsafe_allow_html=True)
+        st.markdown(kartentisch.karte_html(x, kartentisch._marken(x) if liste else "", tk), unsafe_allow_html=True)
     else:
         st.markdown(f"**{tk}**: noch keine Lagekarte – sie wird im Abendlauf gerechnet.")
     _knopfleiste(tk, liste, "dlg_")
@@ -468,7 +468,10 @@ def rueckenwind_titel_zeigen():
                 st.caption("Sortiert: Geld, dann Zahlen, dann Tempo · Zeile anklicken → Titelseite")
                 ereignis = st.dataframe(df, hide_index=True, use_container_width=True, on_select="rerun",
                                         selection_mode="single-row", key=f"rw_tab_{nr}",
-                                        height=min(560, 35 * (len(df) + 1) + 3))
+                                        height=min(560, 35 * (len(df) + 1) + 3),
+                                        column_config={"Kreislauf": st.column_config.LineChartColumn(
+                                            "Kreislauf (1 Jahr)", help="Wochenschlüsse eines Jahres; die Farben der "
+                                            "Phasen zeigt die Titelseite")})
                 reihen = ereignis.selection.rows if ereignis is not None else []
                 if reihen:
                     tk = tks[reihen[0]]
@@ -529,18 +532,31 @@ def konferenz_zeigen():
                        f"Reihe bis {stab.AKTEN_JE_REIHE} Plätze vorab, höchstens {stab.AKTEN_MAX}. Alles andere zeigt der "
                        f"Kartentisch; Watchlist-Titel ohne Akte stehen unten nur mit den festen Ampeln.")
             st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)
-        with st.expander("Tagesbefehl und Einwände im Wortlaut"):
-            st.markdown(ks.befehl(k), unsafe_allow_html=True)
-        with st.expander("Meldungen der fünf Strategen im Wortlaut"):
-            sp = st.columns(2)
-            for i, nr in enumerate((2, 3, 4, 5, 6)):
-                m = (k.get("meldungen") or {}).get(str(nr))
-                if m:
-                    with sp[i % 2]:
-                        st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
+        if k.get("format") == 2:                  # neuer Stab (13.11.2026)
+            with st.expander("Anhang · beobachten und verworfen (jede Akte eingeordnet)"):
+                st.markdown(ks.anhang_html(k), unsafe_allow_html=True)
+            with st.expander("Die Missionen im Wortlaut"):
+                sp = st.columns(2)
+                for i, nr in enumerate((1, 2, 3, 4, 5, 6, 7)):
+                    m = (k.get("missionen") or {}).get(str(nr))
+                    if m:
+                        with sp[i % 2]:
+                            st.markdown(ks.mission_html(nr, m), unsafe_allow_html=True)
+        else:
+            with st.expander("Tagesbefehl und Einwände im Wortlaut"):
+                st.markdown(ks.befehl(k), unsafe_allow_html=True)
+            with st.expander("Meldungen der fünf Strategen im Wortlaut"):
+                sp = st.columns(2)
+                for i, nr in enumerate((2, 3, 4, 5, 6)):
+                    m = (k.get("meldungen") or {}).get(str(nr))
+                    if m:
+                        with sp[i % 2]:
+                            st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
         with st.expander("Akten je Titel · Hinweise als Nadeln im Chart"):
             akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
-            st.caption("Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
+            st.caption("Nummer der Nadel = Mission: " + " · ".join(f"{nr} {n}" for nr, (n, _) in stab.MISSIONEN.items())
+                       if k.get("format") == 2 else
+                       "Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
             wahl = st.selectbox("Titel", [tk for tk, _ in akten], index=None, placeholder="Titel wählen …",
                                 key="akte_wahl", format_func=lambda tk: f"{tk} · {len(dict(akten)[tk])} Hinweise")
             if wahl:
@@ -551,8 +567,8 @@ def konferenz_zeigen():
                     st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege, k.get("stand"))),
                                 unsafe_allow_html=True)
                 st.link_button(f"{wahl}: Titelseite →", f"?seite=Titelseite&t={wahl}")
-        with st.expander("📖 Feldhandbuch · das Handwerk der Meister je Stratege (zum Gegenlesen)"):
-            st.markdown(ks.feldhandbuch())
+        with st.expander("📖 Lehre des Stabs · Stärke und Schwäche, die Missionen und ihre Lehrstellen"):
+            st.markdown(ks.lehre())
     st.markdown(gestaltung.seite("<h2 style='margin:0'>Stab fragen</h2>", oben=16, unten=0), unsafe_allow_html=True)
     with st.form("stab_frage", clear_on_submit=True):
         text = st.text_area("Frage an den Stab", placeholder="z. B. Welche Branche kippt gerade, und welche Titel "
@@ -605,7 +621,7 @@ def konferenz_technik(laeuft):
                     st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
     with knopf_:
         if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
-                     help="Die sechs Strategen lesen den Stand des letzten Frühlaufs (rund 5–10 Minuten, etwa 2,50 $). "
+                     help="Die acht Missionen lesen den Stand des letzten Frühlaufs (rund 10–15 Minuten, etwa 2–3 $). "
                           "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
             nachtlauf.konferenz_starten()
             st.rerun()

@@ -201,6 +201,19 @@ def stab_hinweise(k):
     if not k:
         return []
     texte = []
+    if k.get("format") == 2:                     # neuer Stab: alle Texte der Missionen
+        def gehe(nr, x):
+            if isinstance(x, str):
+                texte.append((nr, x))
+            elif isinstance(x, dict):
+                for k_, v in x.items():
+                    if k_ not in ("roh", "wache", "name"):
+                        gehe(nr, v)
+            elif isinstance(x, list):
+                for v in x:
+                    gehe(nr, v)
+        for nr, m in (k.get("missionen") or {}).items():
+            gehe(nr, m)
     for nr, m in (k.get("meldungen") or {}).items():
         texte.append((nr, m.get("meldung") or ""))
         texte += [(nr, f"{_tk(h.get('titel'))}: {h.get('text') or ''}") for h in m.get("hinweise") or []]
@@ -215,6 +228,39 @@ def stab_hinweise(k):
                 gesehen.add(satz)
                 aus.append(("gelb", f"Stab ({nr}): {satz.strip()[:220]}"))
     return aus[:8]
+
+
+def stab_form(k):
+    """Wache 5 (13.11.2026): Form des neuen Stabs – jede Mission hat gemeldet, kein Auftrag und keine Chance bei roter
+    Setup-Ampel, jede Akte eingeordnet, jede Chance trägt Warum, Tun und Phase; dazu, was die Wache im Code schon
+    entfernt hat → Liste (Ampel, Text)."""
+    if not k or k.get("format") != 2:
+        return []
+    aus = []
+    mi = k.get("missionen") or {}
+    for nr, m in sorted(mi.items()):
+        if m.get("fehler") and m.get("meldung"):
+            aus.append(("rot" if nr in ("4", "8") else "gelb", f"Mission {nr} ({m.get('name')}) ohne Meldung: "
+                                                              f"{str(m.get('meldung'))[:120]}"))
+    rot = {x["titel"] for x in k.get("tafel") or [] if ((x.get("ampeln") or {}).get("Setup") or {}).get("ampel") == "rot"}
+    plan = mi.get("4") or {}
+    b = k.get("befehl") or {}
+    for a in (plan.get("auftraege") or []) + (b.get("chancen") or []):
+        if a.get("titel") in rot:
+            aus.append(("rot", f"{a['titel']}: Auftrag bei roter Setup-Ampel"))
+    for c in b.get("chancen") or []:
+        fehlt = [f for f in ("warum", "tun", "phase") if not str(c.get(f) or "").strip()]
+        if fehlt:
+            aus.append(("gelb", f"Chance {c.get('titel')}: ohne {', '.join(fehlt)}"))
+    akten = {x["titel"] for x in k.get("tafel") or [] if x.get("beim_stab", True)}
+    an = b.get("anhang") or {}
+    da = {a.get("titel") for a in plan.get("auftraege") or []} | {x.get("titel") for x in (an.get("beobachten") or [])
+                                                                  + (an.get("verworfen") or [])}
+    offen = sorted(akten - da)
+    if offen and not plan.get("fehler"):
+        aus.append(("gelb", f"nicht eingeordnet: {', '.join(offen)}"))
+    aus += [("gelb", f"Wache im Code: {w}") for w in k.get("wache_code") or []]
+    return aus[:10]
 
 
 def pruefen():
@@ -237,7 +283,7 @@ def pruefen():
     for name, f in (("Gleichlauf", lambda: gleichlauf(tisch, akten, (k or {}).get("tafel"))),
                     ("Plausibilität", lambda: plausibel(tisch, gruende, heute)),
                     ("Gegenprobe", lambda: gegenprobe(akten)),
-                    ("Stab", lambda: stab_hinweise(k))):
+                    ("Stab", lambda: stab_hinweise(k)), ("Form des Stabs", lambda: stab_form(k))):
         try:
             zeichen += [(a, f"{name} · {t}") for a, t in f()]
         except Exception as e:  # noqa: BLE001 – eine Wache, die selbst scheitert, ist ein Befund

@@ -742,3 +742,44 @@ Dazu sind Texte angeglichen:
 - „Entsteht“: zweiter Weg über das RS-Hoch.
 - Stab: Einstieg je Setup, Short-Zone.
 - Ausstiegstexte ohne den alten Tagestief-Stopp.
+
+## Neuer Stab, Lehre von Stärke und Schwäche, Kreislaufbild (13.11.2026)
+
+Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdokument (Abschnitte „Lehre von Stärke und Schwäche“, „Aufträge der Missionen im Wortlaut“).
+
+**Messungen (`kern/zeichen.py`, Frühlauf im Kartentisch, gespeichert in `daten/kreislauf/<stand>.json`):**
+- Dow-Struktur der Schwungpunkte auf Tag (n = 5) und Woche (n = 2). Signale: Schluss unter dem letzten höheren Tief, erstes höheres Tief nach tieferen Hochs und Tiefs (und gespiegelt).
+- Einquetschung: steigende Tiefs unter flacher Oberkante, dazu das Spiegelbild.
+- Akkumulation und Distribution: 20 Tage, Saldo ±3, Pocket Pivot in 5 Tagen über GD10 und GD50.
+- Stärke in der Schwäche, gemessen ab dem Indexhoch vor O'Neils Korrektur. Zeichen: hält (+5 %), führt aus der Korrektur (+10 Punkte seit dem Indextief), nah am Hoch, RS-Linie am Hoch. Dazu das Spiegelbild.
+- Reaktion auf Zahlen: Überraschung gegen Kursreaktion.
+- Wanderung der Wertzone: POC 5 gegen 5 Tage, ±3 %.
+- Kreislauf: die Phase nach Weinstein (phase.py), dazu der Wechsel, der sich abzeichnet („4 → 1“), ein fester Satz und 52 Wochenschlüsse mit Phase je Woche.
+
+**Fehlausbruch neu (`vcp_zone.ausbruch`):**
+- Fehlausbruch: Schluss unter dem Tief des Ausbruchstags oder mehr als 3 % unter dem Pivot.
+- Rücktest: Schluss knapp unter dem Pivot.
+- Beide sind nicht einsatzbereit (Kartentisch: grün und ★ aus) und bleiben unter Beobachtung.
+- Ein Schluss über dem Pivot nach einem Fehlausbruch zählt als neuer Ausbruch.
+
+**Kreislaufbild (`oberflaeche/kreislaufbild.py`):**
+- Darstellung: echter Wochenverlauf eines Jahres, nach Phasen gefärbt (aufwärts grün, Balance grau, abwärts rot), dazu „hier steht er“, die vier Phasen als Leiste sowie die Zeichen der Stärke und Schwäche.
+- Titelseite: das große Bild unter den Kacheln, über dem Chart, mit dem Satz des Stabs (`stab.satz_zu`).
+- Konferenzraum: das große Bild in jeder Chance.
+- Karten (Setups, dreifacher Rückenwind) und die Tabelle „Diese Titel liest der Stab“: Mini-Kurve mit Phasenwort.
+- Tabellen (Stufen): einfarbige Kurve (LineChartColumn) und Phasenwort mit Farbpunkt.
+
+**Stab mit acht Missionen (`kern/stab.py`):**
+- Missionen: Lage, Aufklärung (Web-Suche, höchstens 20 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
+- Gemeinsame Dienstanweisung mit unserer Lehre und 7 Regeln. Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
+- Wachen im Code:
+  - Ein Auftrag geht nur auf eine Akte und nie bei roter Setup-Ampel.
+  - Jede Akte wird eingeordnet (beobachten/verworfen).
+  - Eine Chance entsteht nur aus einem Auftrag, den der Gegenspieler nicht gekippt hat.
+- Die Wache „Form des Stabs“ im Frühlauf prüft dasselbe noch einmal.
+- Handy: zuerst „Hey Micky“, dann die Chancen mit Phase, Anwärter, Leitfrage und Markt; verworfene Titel stehen nicht darin.
+- Konferenzen vor dem 13.11. werden weiter angezeigt.
+- Entfernter Code liegt in `_to_delete/stab_strategen_entfernt_2026-11-13.py`.
+- Offen gelassen von Micky:
+  - Breite der Aufklärung: Annahme 15–20 Titel.
+  - Budget: Annahme etwa wie bisher; jede Konferenz misst ihre Kosten (`kosten_usd`).

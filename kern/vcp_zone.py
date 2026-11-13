@@ -282,6 +282,7 @@ def verlauf(df, tage=600):
 
 AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter dem Pivot (Micky, 06.11.2026)
 KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
+FEHL_PCT = 3.0                 # Fehlausbruch: Schluss mehr als 3 % unter dem Pivot (oder unter dem Tief des Ausbruchstags)
 
 
 def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
@@ -317,19 +318,29 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
             jz = jetzt if jetzt is not None else zone(df)
             if jz.get("zone") and jz.get("laenge") == "ok" and jz["start_i"] > t:
                 return None                                # neue fertige Zone über dem Ausbruch
-            letzter, fehl_tag = t, None                    # Verlauf seit dem Ausbruch: zurück unter den Pivot, wieder drüber
+            # Verlauf seit dem Ausbruch (Micky 13.11.2026): Fehlausbruch erst bei Schluss unter dem Tief des
+            # Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest. Ein Schluss
+            # über dem Pivot nach einem Fehlausbruch ist ein neuer Ausbruch (Tag und Volumen von dort).
+            letzter, fehl_tag, rueck_tag = t, None, None
+            lo = df["Low"].to_numpy(float)
             for u in range(t + 1, n):
-                if fehl_tag is None and c[u] < pivot:
-                    fehl_tag = u
-                elif fehl_tag is not None and c[u] > pivot:
-                    letzter, fehl_tag = u, None
+                if c[u] > pivot:
+                    if fehl_tag is not None:
+                        letzter = u
+                    fehl_tag = rueck_tag = None
+                elif fehl_tag is None and (c[u] < lo[letzter] or c[u] < pivot * (1 - FEHL_PCT / 100)):
+                    fehl_tag, rueck_tag = u, None
+                elif fehl_tag is None and rueck_tag is None:
+                    rueck_tag = u
             vol = v[letzter] / v50[letzter] if v50[letzter] == v50[letzter] and v50[letzter] else None
             ab = (c[-1] / pivot - 1) * 100
             fehl = fehl_tag is not None
             return {"tag": df.index[letzter], "tage_her": n - 1 - letzter, "erster_tag": df.index[t],
                     "vortag_i": t, "pivot": pivot, "zone": b, "enge": e, "volumen": vol,
                     "mit_volumen": bool(vol and vol > 1), "abstand": ab, "kaufzone": not fehl and 0 <= ab <= KAUFZONE,
-                    "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None, "innen": b is not z,
+                    "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None,
+                    "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
+                    "tief_ausbruchstag": float(lo[letzter]), "innen": b is not z,
                     "eltern": z["name"]}
     return None
 
@@ -344,8 +355,12 @@ def ausbruch_text(a):
     ab = ("±0,0" if round(abs(a["abstand"]), 1) == 0 else f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))}") \
         + " % zum Pivot"
     if a["fehl"]:
-        return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} zurück in der Zone · {ab} – "
-                f"kein Kauf, bis der Kurs wieder über dem Pivot schließt")
+        return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} unter dem Tief des "
+                f"Ausbruchstags bzw. mehr als 3 % unter dem Pivot · {ab} – kein Kauf, bleibt unter Beobachtung, bis der "
+                f"Kurs wieder über dem Pivot schließt")
+    if a.get("ruecktest"):
+        return (f"🟡 Rücktest: Ausbruch am {a['tag']:%d.%m.}, seit {a['rueck_tag']:%d.%m.} knapp unter dem Pivot · {ab} – "
+                f"hält das Tief des Ausbruchstags {v(a['tief_ausbruchstag'])} $, ist der Ausbruch nicht gescheitert")
     vol = (f"mit Volumen {v(a['volumen'])}-fach" if a["mit_volumen"] else
            f"ohne Volumen ({v(a['volumen'])}-fach)" if a["volumen"] else "Volumen unbekannt")
     lage = "in der Kaufzone" if a["kaufzone"] else "ausgedehnt"

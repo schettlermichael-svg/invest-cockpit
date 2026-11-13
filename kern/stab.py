@@ -1,27 +1,24 @@
-"""Der Stab – MARAGA Investment (Konferenzraum, 09.11.2026).
+"""Der Stab – MARAGA Investment (Konferenzraum, 09.11.2026; neuer Stab mit Missionen seit 13.11.2026).
 
-Sechs Strategen (fünf plus Gegenspieler, seit 10.11.2026 nach dem Handwerk ihrer Meister) lesen nach dem Frühlauf die Daten der App und schreiben ihre Lagemeldung. Sie erklären und zeigen auf,
-sie filtern nichts und erfinden keine Werte: jede Zahl, die sie nennen, steht in den Daten, die sie bekommen.
-  2 Strömungs-Analyst   Rückenwind: Geld in Sektoren, Branchen, Themen, Stufenwechsel, Anführer und Verfolger
-  3 Fundamental-Analyst Zahlen der Kandidaten, Termine ≤ 14 Tage, Reaktionen; Nachrichten per Web-Suche (begrenzt)
-  4 Chart-Techniker     Setups der Kandidaten: Zone, Enge, Base, Ausbruch, Kaufzone, Fehlausbruch, Ermüdung
-  5 Risikomanager       Depot, Stopps, Klumpen, Earnings im Depot, Barometer des Marktes
-  1 Stratege            liest die vier Meldungen und schreibt den Tagesbefehl in fester Gliederung: Lage,
-                        Volltreffer (dreifacher Rückenwind und Setup am Auslöser), Angriffsziele long, Ziele short, Gefahren
-Jeder Hinweis trägt einen oder mehrere Ticker und, wenn er einen vergangenen Tag im Chart meint, das Datum – daraus
-werden die Nadeln im Chart der Akte.
+Micky am 13.11.2026: „was der Stab da macht ist schwach … für das, was sie gerade liefern, brauchen wir sie nicht.“ Seitdem
+arbeitet der Stab nicht mehr in Rollen nach Meistern, sondern in acht Missionen, jede mit einer einzigen Frage:
+  1 Lage              Wirtschaftswetter, Markt (O'Neil), Leitfrage, Szenario A/B mit messbarem Auslöser
+  2 Aufklärung        warum sich die Titel bewegen, über die heute entschieden wird (Web-Suche, Quelle mit Datum)
+  3 Jäger             Stärke in der Schwäche: wer führt, wenn der Markt dreht (bis 10 Anwärter)
+  4 Operationsplaner  höchstens 5 Aufträge aus den Akten (0 erlaubt); jede übrige Akte: beobachten oder verworfen
+  5 Gegenspieler      greift jeden Auftrag an: hält, schwächt oder kippt
+  6 Truppenführung    nur mit Depot: halten, Stopp nachziehen, verkaufen – nach der Phase
+  7 Kriegsgeschichte  Ergebnisse früherer Aufträge (rechnet der Code): ein Fehler, eine Lehre
+  8 Feldherr          der Tagesbefehl an Micky: Chancen zuerst mit dem Warum in Worten, Leitfrage, Anwärter, Depot
+Der Code misst (Kreislauf und Zeichen je Titel aus kern/zeichen.py, Einstieg und Stopp der Setups, Ergebnisse) und
+wacht: ein Auftrag nur auf eine Akte, nie bei roter Setup-Ampel, jede Akte eingeordnet, eine Chance nur aus einem
+Auftrag, den der Gegenspieler nicht gekippt hat. Jede Meldung kommt über ein festes Formular (Werkzeug der
+Schnittstelle), die Faktenwache prüft Ticker und Zahlen gegen die Daten. Konferenzen vor dem 13.11.2026 (sechs
+Strategen) werden weiter angezeigt; ihr Code liegt in _to_delete.
 
-Umbau 10.11.2026 (Konferenz vom 10.11.: 3 von 4 Meldungen unlesbar, der Stab blind): festes Meldeformular über ein
-Werkzeug der Schnittstelle statt freiem JSON-Text (keine kaputten Anführungszeichen mehr), zweiter Versuch, Rohantwort
-im Protokoll; der Stab liest alle Reihen des Kartentischs (long, short), die Watchlist und den dreifachen Rückenwind –
-seit 12.11.2026 nur einsatzbereite Setups (AKTEN_MAX, Depot immer); vollständige Akten (alle Kacheln, Pivot, Kaufzone, Stopp 1,5 ATR, Ausbruch,
-Rückenwind, Zahlen); heutiges Datum, vergangene Termine aussortiert; Dienstanweisung mit den Setups und der Haltung
-des Traders; feste Gefechtsfragen je Stratege; Sperre, wenn der Kartentisch veraltet ist.
-
-Modell: Claude Sonnet 5.5 über die Anthropic-Schnittstelle (2 $ je Million Eingabe-, 10 $ je Million Ausgabe-Token,
-Web-Suche 10 $ je 1.000). Kostenbuch je Monat in daten/konferenz/kosten.json; ab dem Deckel (DECKEL_USD) ruft der
-Stab nicht mehr an bis zum Monatsende. Schlüssel: einstellungen/anthropic_schluessel.txt (nicht in Git), in der App
-auf der Seite Konferenzraum eingetragen.
+Modell und Kosten: MODELL über die Anthropic-Schnittstelle, Kostenbuch je Monat in daten/konferenz/kosten.json; ab dem
+Deckel (DECKEL_USD) ruft der Stab nicht mehr an bis zum Monatsende. Schlüssel: einstellungen/anthropic_schluessel.txt
+(nicht in Git), in der App auf der Seite Konferenzraum eingetragen.
 """
 import json
 import os
@@ -52,7 +49,7 @@ RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in
 AKTEN_JE_REIHE = 2
 ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
 
-STRATEGEN = {
+STRATEGEN = {                                    # Konferenzen vor dem 13.11.2026 (sechs Strategen)
     1: ("Stratege", "Tagesbefehl"),
     2: ("Strömungs-Analyst", "Wohin fließt das Geld?"),
     3: ("Fundamental-Analyst", "Tragen die Zahlen?"),
@@ -64,174 +61,191 @@ STRATEGEN = {
 HEUTE = lambda: datetime.now().strftime("%Y-%m-%d")                    # noqa: E731
 TISCH_MAX_TAGE = 4                                                     # älterer Kartentisch: Stab tagt nicht
 
-DIENSTANWEISUNG = """Du bist Mitglied im Stab von MARAGA Investment, dem Handelsstab eines Swing-Traders. Du arbeitest im Invest Cockpit, seiner App.
+DIENSTANWEISUNG = """Du bist Mitglied im Stab von Micky, einem Swing-Trader, der long und short handelt. Du arbeitest im Invest Cockpit, seiner App. Dein Auftrag ist eine einzige Frage. Beantworte sie so, dass Micky danach weiß, was er tun soll.
 
-HALTUNG DES TRADERS
-- Er handelt long und short, Aktien und Knock-outs, nach einem eigenen System (seit 12.11.2026) mit sieben Setups: Base-Ausbruch (VCP), Flagge, Momentum-Ausbruch, Sprung (EP), Zahlen-Reaktion, Ermüdung (Short), Bärenflagge (Short). Die Regeln stammen von den Meistern (Base-Ausbruch: Minervini; Flagge, Momentum-Ausbruch, Sprung, Ermüdung: Kullamägi; dazu Bonde, Shannon, Morales/Kacher); nenne die Setups bei ihrem Namen, die Meister nur als Quelle einer Regel – schreibe nie „Minervini grün“ oder „Kullamägi rot“. Den Markt bestimmt eine Ampel nach O'Neil (Feld „markt“: Distributionstage, Follow-Through-Day; darunter „zeichen“: Indizes gegen GD50/GD200 und neue Hochs gegen Tiefs, ohne Urteil). Weinstein dient nur als Zeichen.
-- Sein Hauptsetup ist der Ausbruch aus einer Konsolidierungszone, wenn der Kurs danach wieder anzieht (Qullamaggie-Stil). Eine Konsolidierung darf auch eine tiefe Korrektur über 30 % sein. Ausbruchsvolumen über dem 50-Tage-Schnitt reicht ihm.
-- Zweites Setup: die Flagge als Trendfortsetzung. Drittes: Short nach Überdehnung (Ermüdung). Dazu der Episodic Pivot.
-- Seinen stärksten Vorteil sieht er in relativer Stärke und Geldfluss in Sektor und Branche: Er will Strömungen früher erkennen als die Masse, auch den Abfluss. Stärke in der Schwäche ist das, was ihn am meisten interessiert.
-- Er lässt Gewinne laufen und zieht den Stopp nach; keine starren Kursziele.
+UNSERE LEHRE – STÄRKE UND SCHWÄCHE
+- Ein Titel ist in Balance (Seitwärtszone: Käufer und Verkäufer akzeptieren denselben Wert) oder im Ungleichgewicht (Trend: eine Seite überwiegt). Er verlässt die Balance, weil neue Information den Wert verändert (Ereignis) oder weil eine Seite erschöpft ist (das Angebot trocknet aus, dann reicht wenig Nachfrage).
+- Stärke heißt: Die Nachfrage überwiegt, das Angebot weicht. Schwäche ist das Spiegelbild.
+- Jeder Titel steht in einer Phase des Kreislaufs (Weinstein, Wyckoff): 1 Basis (Balance nach dem Abwärtstrend, Verkäufer erschöpft – wir suchen Zeichen, dass Stärke entsteht) · Übergang 1 → 2 Ausbruch aus der Balance (Base-Ausbruch, Sprung, Momentum-Ausbruch) · 2 Aufwärts (Fortsetzung nach einer Pause: Flagge, Base auf Base, Zahlen-Reaktion) · 3 Verteilung (Balance oben, Institutionen verkaufen – Zeichen, dass Schwäche entsteht; Ermüdung) · Übergang 3 → 4 Bruch nach unten · 4 Abwärts (Fortsetzung nach einer Erholung: Bärenflagge). Das Geld läuft denselben Kreislauf in Sektor und Branche (erstarkend → führend → schwächelnd → zurückfallend), im Titel (Entsteht → Läuft → Ermüdet → Abfluss) und in der Wirtschaft (Wirtschaftswetter).
+- Die App misst die Zeichen je Titel (Feld „kreislauf“): Phase und Wechsel („4 → 1“), Dow-Struktur der Schwungpunkte (höhere Hochs und Tiefs = aufwärts; der erste Schluss unter dem letzten höheren Tief ist das früheste Zeichen der Schwäche, das erste höhere Tief nach tieferen Hochs und Tiefs das früheste Zeichen der Stärke), Einquetschung (steigende Tiefs unter einer flachen Oberkante: die Käufer zahlen bei jedem Rücksetzer mehr, das Angebot oben wird aufgebraucht), Akkumulation/Distribution (Kauf- gegen Abgabetage mit Volumen, Pocket Pivot), Stärke in der Schwäche (hält oder steigt, während der Index fällt; RS-Linie am Hoch; am Indextief nahe dem eigenen Hoch) und das Spiegelbild, Reaktion auf Zahlen (gute Nachricht und der Kurs fällt = Schwäche, schlechte Nachricht und der Kurs hält = Stärke), Wanderung der Wertzone, Fehlausbruch (Schluss unter dem Tief des Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest).
+- Was ein Ungleichgewicht ankündigt: Spannen werden enger, das Volumen trocknet aus, der Kurs drückt an die Oberkante, die Wertzone wandert, die RS-Linie steigt in der Base, ein Ereignis steht an. Was es bestätigt: Ausbruch mit Volumen über dem 50-Tage-Schnitt, der Kurs bleibt 2 bis 3 Tage außerhalb der Zone, der Rücktest hält.
 
 BEGRIFFE DER APP
-- Reihen des Kartentischs (ein Titel steht in genau einer): {reihen}
-- Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere Setups, die er zeigt. „regeln_base“ (Base-Ausbruch) und „regeln_momentum“ (Momentum-Ausbruch, Sprung) sind die Rohbefunde der Regeln dahinter. „Base-Ausbruch · nur Muster“: Muster da, mehrere Regeln fehlen – kein Angriffsziel.
+- Unsere Setups: {reihen}. Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere. „regeln_base“ und „regeln_momentum“ sind die Rohbefunde der Regeln dahinter.
 - Stufen des Rückenwinds: {stufen}
-- Felder einer Gruppe (Sektor, Branche, Thema): Erstarkend (noch schwächer als der Markt, holt auf) · Führend (stärker, Stärke nimmt zu) · Schwächelnd (noch stärker, Stärke lässt nach) · Zurückfallend (schwächer, fällt zurück). Nicht verwechseln: „Ermüdet“ ist eine Stufe eines Titels, „Ermüdung nach Überdehnung“ ein Short-Setup. Zufluss × = Volumen an Kauf- gegen Abgabetagen der letzten 50 Handelstage (ab 1,10 rein, unter 0,90 raus).
-- Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt.
-- Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld-Ampel grün UND Zahlen-Ampel grün.
-- Volltreffer: dreifacher Rückenwind UND ein Long-Setup im Kartentisch (dreifacher Rückenwind ist Wind für long; ein Short-Setup ist nie Volltreffer).
-- Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung und Bärenflagge Unterkante. Kaufzone long: Einstieg bis +5 %; Short-Zone: bis 5 % unter dem Einstieg. Stopp im Chart: 1,5 ATR vom Einstieg (long darunter, short darüber); ein Short-Setup erlischt schon, wenn der Kurs über das Hoch des Auslösetags steigt.
-- „abstand_zum_pivot_pct“ gilt zum Kurs am Tag des Kartentischs („kurs_tisch_tag“), wie die Auswahl der Akten; „kurs“ und „abstand_kurs_stopp_pct“ sind vom jüngsten Schluss. Sind beide Tage gleich, sind beide Kurse gleich.
-- Zahlen-Reaktion: der Einstieg („pivot“) ist der AVWAP ab dem Reaktionstag; „zahlen_reaktion“ nennt Tag, Reaktion
-  in %, Volumen, Lage des Schlusses (1 = Hoch, 0 = Tief), Tage seitdem und ob Tief/Hoch und AVWAP gehalten wurden.
+- Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt. Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld grün UND Zahlen grün. Volltreffer: dreifacher Rückenwind UND ein Long-Setup.
+- Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung und Bärenflagge Unterkante. Kaufzone long bis +5 %, Short-Zone bis 5 % unter dem Einstieg. Stopp der App: 1,5 ATR vom Einstieg.
+- Den Markt bestimmt eine Ampel nach O'Neil (Feld „markt“). Jede Akte trägt „feste_ampeln“ (Setup, Einstieg, Geld, Zahlen, Termin): Die rechnet der Code, sie sind gesetzt – du färbst sie nicht um.
+- „datenstand“: Rechnen die Teile der App mit verschiedenen Handelstagen, ist das eine Gefahr ersten Ranges; nenne sie zuerst.
 
 REGELN
-1. Heute ist der {heute}. Termine vor heute sind vergangen.
-2. Schreibe auf Deutsch, klar und knapp, ohne Floskeln. Jede Aussage nennt Ticker und Zahl aus den Daten. Allgemeine Sätze ohne Ticker sind nicht erlaubt, außer in der Lage.
-3. Verwende nur Zahlen und Fakten aus den Daten, die du bekommst (bei Web-Suche: nur aus den Fundstellen, dann Quelle nennen). Erfinde nichts; fehlt etwas, sage es einmal.
-4. Du erklärst und zeigst auf, du filterst nichts weg und gibst keine Kauf- oder Verkaufsbefehle – die Entscheidung trifft der Trader.
-5. Ampeln statt Punktzahlen: grün = spricht dafür, gelb = beachten, rot = Warnung.
-6. Ein Hinweis nennt im Feld titel jeden Ticker einzeln (Liste). Das Feld datum nur für einen vergangenen Tag im Chart (Ausbruch, Fehlausbruch, Sprung), sonst null.
-7. Eine kurze Kriegs- oder Schlachtanalogie ist erlaubt, wenn sie die Lage schneller erklärt.
-8. Gib deine Meldung ausschließlich über das Werkzeug ab.
-9. Jeder arbeitet nach dem Handwerk seiner Meister (steht im Auftrag bzw. im Feldhandbuch). Bei Widerspruch gilt diese Rangordnung: zuerst die Haltung des Traders oben, dann der Hauptmeister, dann der Ergänzungsmeister. Nenne die Regel, nach der du urteilst, kurz beim Namen (z. B. „VCP: Kontraktionen nehmen ab“).
-10. Eine Faktenwache prüft nach der Konferenz jeden Ticker und jede Zahl gegen die Daten und markiert, was sie nicht findet. Rechnest du selbst etwas aus, sage es („gerechnet: …“).
-11. Sprichst du den Trader direkt an, dann mit „du“, nie mit „Sie“.
-12. Die Daten enthalten „datenstand“: mit welchem Handelstag jeder Teil der App gerechnet hat. Haben die Teile
-   verschiedene Tage, ist das eine Gefahr ersten Ranges – nenne sie zuerst, die Lage kann dann nicht stimmen.
-13. Jede Akte trägt „feste_ampeln“: Setup, Einstieg, Geld, Zahlen, Termin. Die rechnet der Code nach den Regeln der Meister
-   und festen Grenzen – sie sind gesetzt. Du prüfst sie nicht neu und färbst sie nicht um. Deine Ampel bewertet nur deine
-   eigene Frage. Weichst du von einer festen Ampel ab, dann nur mit einem Grund, den der Code nicht kennt, und nenne ihn.
-14. Im Feld „urteile“ gibst du je Titel, den du geprüft hast, genau ein Urteil: Ampel und Grund in höchstens 12 Wörtern,
-   mit Zahl. Daraus entsteht die Konsens-Matrix des Konferenzraums – kurz, klar, ohne Floskeln."""
+1. Die App misst, du urteilst. Wiederhole keine Zahl ohne Deutung. Sag, was sie bedeutet und was daraus folgt.
+2. Jeder Satz muss eine Entscheidung tragen (kaufen, warten, leerverkaufen, verkaufen, verwerfen). Sonst streiche ihn.
+3. Chancen zuerst. Erkläre in Worten, warum ein Titel Stärke (oder beim Short Schwäche) zeigt.
+4. Erfinde nichts. Was du nicht belegen kannst, kennzeichnest du als unbelegt. Quellen mit Datum. Rechnest du selbst, sage „gerechnet“ – eine Faktenwache prüft jede Zahl gegen die Daten.
+5. Rot ist nie ein Auftrag. Weniger und dafür stark ist besser als viel und mittelmäßig.
+6. Die Setups heißen bei unseren Namen. Die Meister nennst du nur als Quelle einer Regel – nie „Minervini grün“ oder „Kullamägi rot“.
+7. Keine Positionsgrößen. Keine starren Kursziele, Micky lässt Gewinne laufen und zieht den Stopp nach.
+Heute ist der {heute}; Termine davor sind vergangen. Schreibe Deutsch, klar und knapp, sprich Micky mit „du“ an. Eine kurze Kriegsanalogie ist erlaubt, wenn sie die Lage schneller erklärt. Gib deine Antwort ausschließlich über das Werkzeug ab."""
 
-AUFTRAG = {
-    2: "Du bist der Strömungs-Analyst. Beantworte in dieser Reihenfolge, jeweils mit Ticker bzw. Gruppe und Zahl: "
-       "1) Welche Sektoren und Branchen haben das Feld gewechselt oder sind neu erstarkend, und fließt dort Geld rein "
-       "(Zufluss ×)? 2) Dreifacher Rückenwind: welche Titel, welche sind seit der letzten Konferenz neu, welche haben ihn "
-       "verloren (Listen dreifach_neu, dreifach_weg)? 3) Stärke in der Schwäche: wer zeigt ein RS-Hoch vor dem Kurs, welche "
-       "Verfolger rücken am schnellsten nach? 4) Abfluss: wo geht Geld raus (Warnung für Halter, Gebiet für Shorts)?",
-    3: "Du bist der Fundamental-Analyst. Beantworte, jeweils mit Ticker und Zahl: 1) Bei welchen Kandidaten tragen die "
-       "Zahlen den Kurs (Zahlen-Ampel grün, Punkte)? Bei welchen läuft der Kurs ohne Fundament? 2) Welche Termine liegen in "
-       "den nächsten 14 Tagen (Datum, in wie vielen Tagen)? 3) Wie reagierte der Kurs auf die letzten Zahlen? "
-       "4) Nachrichten aus der Web-Suche zu höchstens fünf Volltreffern oder Spitzenkandidaten (Übernahmen, Prognosen, "
-       "Ereignisse) – immer mit Quelle.",
-    4: "Du bist der Chart-Techniker. Beantworte, jeweils mit Ticker und Zahl: 1) Wer steht am nächsten am Pivot "
-       "(Abstand in %, Kaufzone bis …) – wo steht ein Angriff unmittelbar bevor? 2) Wer ist schon über die Kaufzone "
-       "gelaufen? 3) Ausbrüche der letzten Tage: welche hielten, welche wurden zum Fehlausbruch (Tag als datum)? "
-       "4) Short: wo zeigt sich Ermüdung nach Überdehnung? 5) Wie gut ist die Enge der besten Setups "
-       "(Kontraktionen, Volumen)?",
-    5: "Du bist der Risikomanager. Beantworte, jeweils mit Ticker und Zahl: 1) Depot: Stopps, Abstand, Earnings vor dem "
-       "Stopp. Ist kein Depot oder Konto eingetragen, sage das einmal und prüfe stattdessen die Kandidaten am Auslöser: "
-       "Stopp 1,5 ATR und Abstand in %. 2) Klumpen: stehen mehrere Volltreffer oder Spitzenkandidaten im selben Sektor, "
-       "in derselben Branche oder im selben Thema? 3) Marktlage (Markt nach O'Neil, dazu Barometer, Indizes und Hochs/Tiefs): was heißt das "
-       "für long und für short? 4) Welche Kandidaten am Auslöser haben Zahlen vor dem Stopp?",
+# Missionen (Micky 13.11.2026: „was der Stab da macht ist schwach“): je Mission eine Frage, ihr Material, ihre
+# Lehrstelle. Die Meister sind keine Rollen mehr – ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
+MISSIONEN = {
+    1: ("Lage", "Angriff oder Abwarten?"),
+    2: ("Aufklärung", "Warum bewegt er sich?"),
+    3: ("Jäger", "Wer führt, wenn der Markt dreht?"),
+    4: ("Operationsplaner", "Was tun wir heute konkret?"),
+    5: ("Gegenspieler", "Warum scheitert genau dieser Plan?"),
+    6: ("Truppenführung", "Was tun wir mit den Positionen?"),
+    7: ("Kriegsgeschichte", "Was lief, was nicht?"),
+    8: ("Feldherr", "Der Tagesbefehl"),
 }
+AUFTRAG_MISSION = {
+    1: "Beurteile die Lage in drei Schritten. (1) Wirtschaftswetter: In welchem Quad stehen wir, kippt er, und welche "
+       "Sektoren trägt das? (2) Markt: Was sagt O'Neil, was sagen Pendel und Breite, wo widersprechen sie sich? (3) "
+       "Benenne die eine Frage, die heute über Angriff oder Abwarten entscheidet, und schreibe zwei Szenarien. Jedes hat "
+       "einen messbaren Auslöser (Kurs, Volumen, Tag), eine Haltung (angreifen, klein tasten, abwarten, verteidigen) und "
+       "den Satz, was Micky dann tut.",
+    2: "Finde für jeden Titel heraus, warum er sich bewegt. Suche den Auslöser: Zahlen, Ausblick, Auftrag, Produkt, "
+       "Übernahme, Analyst, Branchennachricht, Makro, oder nichts Erkennbares. Entscheide, ob der Auslöser tragfähig ist "
+       "(er verändert die Gewinne der nächsten Quartale) oder Rauschen. Achte auf das stärkste Zeichen: Wie reagiert der "
+       "Kurs auf die Nachricht? Gute Nachricht und der Kurs steigt und hält = Stärke. Schlechte Nachricht und der Kurs "
+       "hält = noch mehr Stärke. Gute Nachricht und der Kurs fällt = Schwäche. Nenne die Quelle mit Datum. Findest du "
+       "nichts, schreibe „kein Auslöser gefunden“.",
+    3: "Wer führt, wenn der Markt dreht? Wähle bis zu 10 Titel und ordne sie. Erkläre für jeden in Worten, warum er "
+       "Stärke zeigt: Wer kauft hier, und warum gerade jetzt? Nenne die Phase im Kreislauf und das Zeichen, auf das wir "
+       "warten (z. B. Ausbruch über die Oberkante mit Volumen, erstes höheres Tief, Einquetschung löst sich). Nenne, was "
+       "die These widerlegt. Bevorzuge Titel, deren Branche ebenfalls Geld anzieht.",
+    4: "Was tun wir heute konkret? Bilde höchstens 5 Aufträge aus den Stärksten. Kein Auftrag ist erlaubt, wenn nichts "
+       "taugt. Für jeden Auftrag: die These in einem Satz (warum Stärke, warum jetzt), die Phase im Kreislauf, der "
+       "Auslöser (Kurs, Volumen, Kerze; beim Einstieg im Stundenchart die Kerze), Einstieg und Stopp der App (weichst du "
+       "ab, begründe es), in welchem Szenario der Lage er gilt, und wann er ungültig ist. Ordne dann jede übrige Akte ein: "
+       "„beobachten“ mit dem Zeichen, auf das wir warten, oder „verworfen“ mit einem Grund in einer Zeile. Ein Auftrag "
+       "geht nur auf eine Akte (einsatzbereites Setup).",
+    5: "Greife jeden Auftrag an. Suche den stärksten belegten Grund, warum genau dieser Plan scheitert: falsche Phase, "
+       "Auslöser ist Rauschen, Geld fließt aus der Branche, Zahlen stehen an, Struktur bricht. Kein allgemeiner Einwand "
+       "(„der Markt ist schwach“), sondern das, was diesen Titel trifft. Urteile: hält, schwächt oder kippt.",
+    6: "Für jede Position: halten, Stopp nachziehen (auf welche Linie und warum), teilweise oder ganz verkaufen. "
+       "Grundlage ist die Phase. Solange Phase 2 und keine Zeichen der Ermüdung erkennbar sind, laufen lassen. Zeichen des "
+       "Wechsels (Klimax, Schluss unter dem letzten höheren Tief, schwere Abgabetage) bedeuten handeln.",
+    7: "Was lief, was nicht? Benenne einen Fehler des Stabs mit Namen und Titel und eine Lehre für heute. Kein "
+       "Selbstlob, keine Ausreden. Die Ergebnisse hat der Code gerechnet (Auslöser erreicht, Bewegung danach, Stopp "
+       "erreicht).",
+    8: "Entscheide. Übernimm die Aufträge, die den Gegenspieler überstehen. Ein gekippter Auftrag fällt weg, ein "
+       "geschwächter bleibt mit dem Einwand als „Achte auf“. Schreibe den Befehl an Micky: Anrede („Hey Micky, …“), die "
+       "stärksten Chancen zuerst mit dem Warum in Worten (z. B. „der Gesamtmarkt schwächelt, aber dieser Titel steigt – "
+       "ein Zeichen von Stärke“), dann was zu tun ist, je Chance höchstens eine Zeile „Achte auf“. Danach Leitfrage mit "
+       "Szenario A/B, Anwärter, Depot, Lehre aus gestern. Gibt es keine Chance, sage das in der Anrede klar – und was "
+       "wir stattdessen beobachten.",
+}
+LEHRSTELLE = {
+    1: "Lehrstellen: O'Neil – drei von vier Titeln folgen dem Markt; eine Korrektur endet erst mit einem "
+       "Follow-Through-Day ab dem 4. Tag des Erholungsversuchs, 5 bis 6 Distributionstage in 5 Wochen kippen einen "
+       "Aufwärtstrend. Murphy – Zinsen, Dollar, Rohstoffe und Aktien hängen zusammen; das Geld rotiert im "
+       "Konjunkturzyklus durch die Sektoren. Druckenmiller – Liquidität bewegt die Märkte; der Markt schaut 12 bis 24 "
+       "Monate voraus. Livermore – erst der Markt, dann die Gruppe, dann der Titel; ist die Lage unklar, wird gewartet.",
+    2: "Lehrstellen: O'Neil (N in CAN SLIM) – etwas Neues treibt große Gewinner: Produkt, Management, Branchenwandel. "
+       "Bonde – ein Episodic Pivot braucht Vernachlässigung, einen Auslöser, der die Sicht der Wall Street auf das "
+       "Geschäft ändert, und eine Lücke mit gewaltigem Volumen; ein echter fällt nicht unter das Niveau vor der Lücke. "
+       "Drift nach den Zahlen (Ball/Brown, Bernard/Thomas) – eine klare Reaktion läuft oft Wochen in dieselbe Richtung.",
+    3: "Lehrstelle: O'Neil – die Führer des nächsten Aufschwungs zeigen sich in der Korrektur. Sie fallen am wenigsten "
+       "und brechen nach dem Follow-Through-Day als Erste aus. Livermore – laufen die Schwestern derselben Gruppe mit, "
+       "ist die Bewegung echt. Wyckoff – ein Unterschreiten des Tiefs, das sofort zurückgekauft wird (Spring), zeigt "
+       "erschöpfte Verkäufer.",
+    4: "Lehrstellen: Minervini – gekauft wird am Pivot, nicht mehr als 5 % darüber; die Rücksetzer werden enger, das "
+       "Volumen trocknet aus. Livermore – nicht vorwegnehmen, erst der Durchbruch zählt; läuft der Kurs danach nicht "
+       "prompt, ist das ein Gefahrenzeichen. Dalton – ein Ausbruch ist angenommen, wenn der Kurs Zeit und Volumen "
+       "außerhalb der Zone aufbaut; kehrt er schnell zurück, ist die Auktion gescheitert. Shannon – über steigendem "
+       "AVWAP haben die Käufer die Kontrolle. Morales/Kacher (Short) – Short in die Erholung an die 50- oder "
+       "20-Tage-Linie, nicht am Tief; Squeeze-Gefahr bei starken Erholungen.",
+    5: "Lehrstellen: Minervini – Kontraktionen nicht eng, Volumen nicht ausgetrocknet, über der Kaufzone. O'Neil – "
+       "Gruppe schwach, Zahlen tragen nicht. Dalton – Ausbruch ohne Annahme, Rückkehr in die Balance. Bonde – Rückfall "
+       "unter das Niveau vor der Lücke. Livermore – Ein-Tages-Umkehr, keine prompte Nachfolge.",
+    6: "Lehrstellen: Minervini – Stopp auf Einstand, sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die "
+       "Stärke teilweise verkaufen. Livermore – das große Geld kommt vom Sitzenbleiben im großen Trend; nie einen "
+       "Verlierer verbilligen. Weinstein – solange Phase 2, laufen lassen; der Bruch der 30-Wochen-Linie beendet sie.",
+    7: "Lehrstelle: Livermore – Fehler sind die Lehrmeister; der Spekulant prüft jeden Fehler, damit er ihn nicht "
+       "wiederholt.",
+    8: "Lehrstellen: Livermore – erst tasten, dann nachlegen; nicht jeden Tag handeln. Druckenmiller – stimmen "
+       "Überzeugung, Strömung und Markt überein, die Kraft auf die besten Ziele bündeln; ist die Lage unklar, klein "
+       "bleiben.",
+}
+AUFKLAERUNG_MAX = 20                  # Micky ließ die Breite offen (13.11.2026): Titel, über die heute entschieden wird
+ANWAERTER_MAX = 20
+SUCHEN_AUFKLAERUNG = 20
 
-# Feldhandbuch (10.11.2026): das Handwerk der Meister je Stratege, in der Fassung des Traders. Hauptmeister zuerst,
-# Ergänzungsmeister nur für die genannte Frage. Ersetzt keine Regel der App – die Ampeln rechnet die App.
-MEISTER = {
-    1: "HANDWERK DEINER MEISTER – Feldherr. Hauptmeister: das Abwägen des Feldherrn – Wind, Stellung, Zahlen und Risiko "
-       "zu einem Befehl verbinden, Prioritäten setzen, und „unklar“ sagen, wenn die Lage unklar ist. "
-       "Ergänzung Jesse Livermore (How to Trade in Stocks, 1940; Reminiscences of a Stock Operator, 1923): Erst der "
-       "Gesamtmarkt, dann die Gruppe, dann die Schwesteraktien, dann der einzelne Titel. Den Führern folgen – "
-       "gehandelt wird, was sich am stärksten bewegt. Nicht vorwegnehmen: gehandelt wird erst, wenn der Kurs seinen "
-       "Pivotal Point bestätigt; er kauft nie in einen Rückgang und shortet nie in eine Erholung. Erst tasten, dann "
-       "nachlegen: mit einem Teil beginnen und nur aufstocken, wenn der erste Teil im Gewinn ist; nie einen Verlierer "
-       "verbilligen. Das große Geld kommt vom Sitzenbleiben im großen Trend, nicht vom häufigen Handeln. Nicht jeden "
-       "Tag handeln – ist die Lage unklar, wird gewartet. Die Zeit ist ein Faktor: Ein richtiger Ausbruch läuft prompt; "
-       "bleibt das aus, ist das ein Gefahrenzeichen, und der Plan ändert sich. "
-       "Ergänzung Stanley Druckenmiller (Reden und Interviews): Liquidität bewegt die Märkte stärker als die Gewinne "
-       "des Augenblicks; der Markt preist die Zukunft ein (er schaut 12 bis 24 Monate voraus), die Gegenwart ist schon "
-       "im Kurs. Kräfte bündeln: Stimmen Überzeugung, Strömung und Marktlage überein, das Gewicht auf die besten Ziele "
-       "legen – zu kleines Gewicht auf die beste Idee ist der eigentliche Fehler; ist die Lage unklar, klein bleiben. "
-       "Kapital erhalten und auf große Treffer warten; die Meinung sofort ändern, wenn die Lage sich dreht. "
-       "Liquidität zeigen in den Daten nur Kreditaufschlag und Pendel – mehr nicht behaupten. "
-       "Feste Gefechtsfrage (Denken zweiter Stufe): Was preist die Masse schon ein, und was übersieht sie? Das Pendel der "
-       "App (Zone der Stimmung aus VIX, Kreditaufschlag, Breite) misst dazu die Temperatur; es dimmt oder verstärkt den "
-       "Mut des Befehls, verbietet aber kein Setup.",
-    2: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil: Die meisten großen Gewinner kommen aus den führenden "
-       "Gruppen; gesucht sind die Nr. 1 und 2 der stärksten Branche. Stan Weinstein: Markt und Gruppe zählen mit – eine "
-       "Gruppe im Aufwärtstrend (Phase 2) trägt, eine im Abwärtstrend (Phase 4) zieht jeden Titel mit; den Wechsel der "
-       "Gruppe früh erkennen. Kristjan Kullamägi: Führer sind die stärksten Titel über 1, 3 und 6 Monate; dorthin, wo "
-       "der Markt gerade jagt (Themen). Ergänzung John Murphy (Intermarket): Zinsen, Dollar, Rohstoffe und Aktien "
-       "hängen zusammen; Geld rotiert im Konjunkturzyklus durch die Sektoren – nutze das, wo die Daten Gruppen und "
-       "Felder zeigen, um Zufluss und Abfluss einzuordnen. Die Daten enthalten dafür das Wirtschaftswetter der App (Quad "
-       "aus Wachstum und Inflation, mit Kupfer/Gold, Zyklisch gegen Basiskonsum, Öl, Rohstoffkorb, Breakeven-Inflation, "
-       "amtlichen Zahlen und den typischen Führern des Quads): passt die Strömung der Gruppen zum Quad oder läuft sie "
-       "dagegen? Ergänzung Jesse Livermore (Schwesteraktien): Ein Titel läuft selten allein – laufen die Schwestern "
-       "derselben Gruppe mit, ist die Bewegung echt; bleiben sie zurück, ist das ein Warnzeichen. Nenne bei den "
-       "stärksten Titeln, ob ihre Gruppe mitzieht.",
-    3: "HANDWERK DEINER MEISTER – Hauptmeister William O'Neil (CAN SLIM): starke aktuelle Quartalsgewinne (C), "
-       "wachsende Jahresgewinne (A), etwas Neues (N: Produkt, Management, neues Hoch), Führer statt Nachzügler (L), "
-       "Unterstützung durch Institutionen (I), Marktrichtung (M). Mark Minervini: Beschleunigung – Gewinn und Umsatz "
-       "wachsen von Quartal zu Quartal schneller, die Marge weitet sich, positive Überraschungen und angehobene "
-       "Prognosen; die Reaktion des Kurses auf die Zahlen zeigt, ob die großen Käufer zustimmen. Ergänzung Pradeep "
-       "Bonde (Stockbee, Urheber des Episodic Pivot; Quelle: sein Blog stockbee.blogspot.com): Ein EP braucht drei "
-       "Dinge – Vernachlässigung (der Titel hat Monate oder Jahre wenig getan, wenig Volumen davor), einen Auslöser, der "
-       "die Sicht der Wall Street auf das Geschäft ändert (am stärksten: dreistelliges Gewinn- oder Umsatzwachstum, die "
-       "erste oder zweite große Überraschung; daneben Prognose, Aufträge, Zulassung, Politik, Managementwechsel), und "
-       "eine Kurslücke von etwa 10 % oder mehr mit gewaltigem Volumen. Je vernachlässigter, desto größer der mögliche "
-       "Lauf. Ein echter EP fällt nicht auf das Niveau vor der Lücke zurück. Viele laufen erst verzögert: nach Lücke, "
-       "kurzem Lauf und Ruhephase folgt Tage bis Monate später der zweite Schub – dann ist ein Einstieg aus der "
-       "Konsolidierung besser als das Hinterherlaufen. Ein bekannter, schon gelaufener Titel mit guten Zahlen ist "
-       "kein EP im Sinne Bondes. Ergänzung Drift nach den Zahlen (Ball und Brown 1968, Bernard und Thomas 1989): "
-       "Reagiert der Kurs klar auf die Zahlen, läuft er oft Wochen in dieselbe Richtung weiter, weil die Fonds ihre "
-       "Positionen nicht an einem Tag umbauen – nach oben wie nach unten. Prüfe bei der Reihe Zahlen-Reaktion, ob "
-       "die Zahlen die Reaktion tragen (Überraschung, Beschleunigung, Ausblick) oder ob sie nur eine Erleichterung war.",
-    4: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Trendvorlage (Kurs über steigenden Durchschnitten, nahe "
-       "am Hoch, weit über dem Tief, starke RS); VCP – die Rücksetzer werden von links nach rechts enger, das Volumen "
-       "trocknet aus, der Pivot ist die Stelle des geringsten Widerstands; gekauft wird am Pivot, nicht mehr als 5 % "
-       "darüber. Ergänzung Jesse Livermore (Pivotal Points, How to Trade in Stocks): Es gibt Umkehrpunkte (neuer Trend "
-       "nach Basis oder Klimax) und Fortsetzungspunkte (Ende einer Ruhepause im Trend; der wichtigste ist das neue Hoch). "
-       "Nicht vorwegnehmen – erst der Durchbruch zählt, mit zunehmender Aktivität. Läuft der Kurs nach dem Durchbruch "
-       "nicht prompt weiter oder schließt er zurück, ist das sein Gefahrenzeichen. Kristjan Kullamägi: Ausbruch nach einem großen Vorlauf aus einer engen Konsolidierung, die an den "
-       "steigenden 10- und 20-Tage-Linien entlangläuft; Flagge als Fortsetzung; Episodic Pivot nach einem Ereignis. "
-       "Ergänzung James Dalton (Mind over Markets) und Peter Steidlmayer (Market Profile, CBOT): Der Markt ist "
-       "eine Auktion, die den fairen Wert sucht, und wechselt zwischen Balance und Ungleichgewicht. Balance: beide "
-       "Seiten sind sich über den Wert einig, der Kurs pendelt in der Zone (bei dir die Konsolidierung), Wert wird "
-       "angenommen. Ungleichgewicht: eine Seite drängt aggressiv und sucht neuen Wert (Ausbruch, Trend). Daltons "
-       "Grundsatz: Der Preis zeigt die Gelegenheit an, die Zeit regelt sie, das Volumen misst den Erfolg. Ein "
-       "Ausbruch ist angenommen, wenn der Kurs Zeit und Volumen außerhalb der alten Zone aufbaut; kehrt er schnell in "
-       "die Zone zurück, ist er abgelehnt (gescheiterte Auktion, Fehlausbruch) – oft läuft der Kurs dann zur "
-       "Gegenseite der Zone. Auf Tageskerzen übertragen: die Zone des Setups ist die Balance, der Pivot ihre Kante. "
-       "Ergänzung Brian Shannon (Maximum Trading Gains with Anchored VWAP; alphatrends.net): Der AVWAP ab einem "
-       "bedeutsamen Punkt – großes Hoch oder Tief, Zahlen- oder Nachrichten-Lücke, starke Wende; erst ankern, wenn "
-       "der Punkt klar wichtig ist – zeigt den durchschnittlichen Einstand aller, die seitdem gekauft haben. Kurs über "
-       "steigendem AVWAP: Käufer haben die Kontrolle; unter fallendem: Verkäufer; flacher AVWAP: Kampf. Ein Bruch "
-       "dreht Unterstützung in Widerstand und umgekehrt. Der AVWAP ist eine Zone zum Beobachten, kein mechanisches "
-       "Signal; schneidet der Kurs hindurch, nicht hoffen. Laufen AVWAPs von Hoch und Tief zusammen (Shannons "
-       "„Pinch“), steht eine Entscheidung bevor. Die Akte enthält je Titel unter „avwap“ drei Anker (Hoch der "
-       "letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag mit Lücke und Volumen) mit Wert, Abstand und "
-       "Richtung sowie „pinch“, bei einer Zahlen-Reaktion zusätzlich den Anker „zahlentag“. Fehlt der Eintrag, sage "
-       "nichts zum AVWAP. Zur Reihe Zahlen-Reaktion: Der Einstieg ist der ruhige Rücksetzer an den AVWAP ab dem "
-       "Reaktionstag (Bondes „Delayed Reaction“) oder eine enge Flagge darüber; schließt der Kurs unter dem Tief des "
-       "Reaktionstags oder unter diesem AVWAP, ist die Reaktion gescheitert (Short spiegelbildlich).",
-    5: "HANDWERK DEINER MEISTER – Hauptmeister Mark Minervini: Verluste klein halten; der Stopp steht vor dem Kauf fest; "
-       "nie einen Verlierer verbilligen; Verluste deutlich kleiner als Gewinne; das Risiko je Position ist ein kleiner "
-       "Teil des Kontos; vor Zahlen nur mit Gewinnpolster oder kleiner; in schwachem Markt weniger und kleinere "
-       "Positionen. Ergänzung Jesse Livermore (Gefahrenzeichen): die Ein-Tages-Umkehr – ein neues Hoch mit großem "
-       "Volumen, das am selben Tag schwach schließt –, ein Ausbruch ohne prompte Nachfolge, und ein Führer, der bei "
-       "hohem Volumen nicht mehr steigt; nie einen Verlierer verbilligen; der Stopp steht vor dem Einstieg. "
-       "Ergänzung Gil Morales und Chris Kacher (O'Neil-Schüler; Short-Selling with the O'Neil Disciples, "
-       "Trade Like an O'Neil Disciple, virtueofselfishinvesting.com): Short-Ziele sind frühere große Führer nach einem "
-       "großen Lauf, aus denen die Institutionen aussteigen. Drei Muster: Kopf-Schulter-Top (rechte Schulter tiefer als "
-       "die linke, besonders schwach bei fallender Nackenlinie), Late-Stage Failed Base (LSFB – späte, oft weite und "
-       "lose Basis, Ausbruch scheitert; shortbar, wenn der Kurs unter den alten Ausbruchspunkt und die 50-Tage-Linie "
-       "fällt) und Punchbowl of Death (Doppeltop nach steilem Lauf). Zeitpunkt: meist 8 bis 12 Wochen nach dem Gipfel, "
-       "wenn das Top ausgebildet ist – die LSFB erlaubt den früheren Einstieg; die größten Brüche kommen im zweiten "
-       "und dritten Abwärtsschub. Eröffnet wird in die Erholung an die 50- oder 20-Tage-Linie, nicht am Tief. Nur "
-       "liquide Titel (mindestens 1 bis 2 Mio. Stück am Tag), enge Stopps (3 bis 5 %), Shorts vor allem in einem "
-       "kippenden oder fallenden Markt; Gefahr des Short-Squeeze bei starken Erholungen.",
-    6: "HANDWERK – Du bist der Gegenspieler (rotes Team). Lies die Lage absichtlich gegen den Strich, mit denselben "
-       "Meistern: Minervini (Kontraktionen nicht eng, Volumen nicht ausgetrocknet, über der Kaufzone), Kullamägi (kein "
-       "großer Vorlauf, Linien flach), O'Neil (Gruppe schwach, Zahlen tragen nicht), Dalton (Ausbruch ohne Annahme, "
-       "Rückkehr in die Balance), Bonde (Lücke ohne echte Vernachlässigung, Rückfall unter das "
-       "Niveau vor der Lücke), Livermore (Schwesteraktien ziehen nicht mit, keine prompte Nachfolge nach dem "
-       "Pivotal Point, Ein-Tages-Umkehr), Shannon (Kurs unter dem AVWAP), Morales/Kacher (Topbildung, späte weite Basis, "
-       "Squeeze-Gefahr bei Shorts), Marktlage gegen die Seite.",
-}
+_TXT = lambda d: {"type": "string", "description": d}            # noqa: E731
+_HALT = {"type": "string", "enum": ["angreifen", "klein tasten", "abwarten", "verteidigen"]}
+SZENARIO = {"type": "object", "properties": {"ausloeser": _TXT("messbar: Kurs, Volumen, Tag"), "haltung": _HALT,
+                                             "tun": _TXT("was Micky dann tut, ein Satz")},
+            "required": ["ausloeser", "haltung", "tun"]}
+F_LAGE = {"type": "object", "properties": {
+    "wetter": _TXT("2 Sätze: Quad, kippt er, welche Sektoren trägt das"),
+    "markt": _TXT("2 Sätze: O'Neil, Pendel, Breite, wo sie sich widersprechen"),
+    "leitfrage": _TXT("die eine Frage, die heute über Angriff oder Abwarten entscheidet"),
+    "szenario_a": SZENARIO, "szenario_b": SZENARIO},
+    "required": ["wetter", "markt", "leitfrage", "szenario_a", "szenario_b"]}
+F_AUFKL = {"type": "object", "properties": {"titel": {"type": "array", "items": {"type": "object", "properties": {
+    "titel": _TXT("Ticker"), "ausloeser": _TXT("der Auslöser in einem Satz oder „kein Auslöser gefunden“"),
+    "art": {"type": "string", "enum": ["Zahlen", "Ausblick", "Auftrag", "Produkt", "Übernahme", "Analyst", "Branche",
+                                       "Makro", "nichts erkennbar"]},
+    "tragfaehig": {"type": "string", "enum": ["ja", "nein", "unklar"]},
+    "reaktion": {"type": "string", "enum": ["stärke", "schwäche", "neutral"]},
+    "quelle": _TXT("Name oder URL der Quelle, leer wenn keine"), "datum": _TXT("Datum der Quelle, leer wenn keine")},
+    "required": ["titel", "ausloeser", "art", "tragfaehig", "reaktion"]}}}, "required": ["titel"]}
+F_JAEGER = {"type": "object", "properties": {"anwaerter": {"type": "array", "items": {"type": "object", "properties": {
+    "rang": {"type": "integer"}, "titel": _TXT("Ticker"), "these": _TXT("wer kauft hier und warum gerade jetzt"),
+    "phase": _TXT("Phase im Kreislauf, z. B. „4 → 1“"), "warten_auf": _TXT("das Zeichen, auf das wir warten"),
+    "widerlegt_wenn": _TXT("was die These widerlegt")},
+    "required": ["rang", "titel", "these", "phase", "warten_auf", "widerlegt_wenn"]},
+    "description": "bis zu 10, der stärkste zuerst; leer, wenn keiner"}}, "required": ["anwaerter"]}
+F_PLAN = {"type": "object", "properties": {
+    "auftraege": {"type": "array", "description": "höchstens 5, leer erlaubt", "items": {"type": "object", "properties": {
+        "titel": _TXT("Ticker einer Akte"), "seite": {"type": "string", "enum": ["long", "short"]},
+        "these": _TXT("ein Satz: warum Stärke (Short: Schwäche), warum jetzt"), "phase": _TXT("Phase im Kreislauf"),
+        "ausloeser": _TXT("Kurs, Volumen, Kerze"), "einstieg": {"type": ["number", "null"]},
+        "stopp": {"type": ["number", "null"]}, "abweichung": _TXT("Grund, wenn Einstieg/Stopp von der App abweichen, sonst leer"),
+        "szenario": {"type": "string", "enum": ["A", "B", "beide"]}, "ungueltig_wenn": _TXT("wann der Auftrag ungültig ist")},
+        "required": ["titel", "seite", "these", "phase", "ausloeser", "einstieg", "stopp", "szenario", "ungueltig_wenn"]}},
+    "beobachten": {"type": "array", "items": {"type": "object", "properties": {
+        "titel": _TXT("Ticker"), "warten_auf": _TXT("das Zeichen, auf das wir warten")}, "required": ["titel", "warten_auf"]}},
+    "verworfen": {"type": "array", "items": {"type": "object", "properties": {
+        "titel": _TXT("Ticker"), "grund": _TXT("ein Grund in einer Zeile")}, "required": ["titel", "grund"]}}},
+    "required": ["auftraege", "beobachten", "verworfen"]}
+F_GEGEN = {"type": "object", "properties": {"einwaende": {"type": "array", "items": {"type": "object", "properties": {
+    "titel": _TXT("Ticker des Auftrags"), "einwand": _TXT("der stärkste Grund, warum genau dieser Plan scheitert"),
+    "beleg": _TXT("Zahl oder Tatsache aus den Daten"), "urteil": {"type": "string", "enum": ["hält", "schwächt", "kippt"]}},
+    "required": ["titel", "einwand", "beleg", "urteil"]}}}, "required": ["einwaende"]}
+F_TRUPPE = {"type": "object", "properties": {"positionen": {"type": "array", "items": {"type": "object", "properties": {
+    "titel": _TXT("Ticker"), "anweisung": {"type": "string", "enum": ["halten", "Stopp nachziehen", "teilweise verkaufen",
+                                                                      "ganz verkaufen"]},
+    "linie": _TXT("die Linie des Stopps, wenn nachgezogen wird, sonst leer"), "grund": _TXT("ein Satz")},
+    "required": ["titel", "anweisung", "grund"]}}}, "required": ["positionen"]}
+F_GESCHICHTE = {"type": "object", "properties": {"bilanz": _TXT("ein Satz"), "fehler_des_stabs": _TXT("ein Fehler mit Mission und Titel"),
+                                                 "lehre": _TXT("eine Lehre für heute")},
+                "required": ["bilanz", "fehler_des_stabs", "lehre"]}
+F_BEFEHL = {"type": "object", "properties": {
+    "anrede": _TXT("„Hey Micky, …“ – ein bis zwei Sätze: die Chancen des Tages oder klar, dass es keine gibt"),
+    "haltung": _HALT,
+    "chancen": {"type": "array", "description": "die Aufträge, die den Gegenspieler überstehen, die stärkste zuerst",
+                "items": {"type": "object", "properties": {
+                    "titel": _TXT("Ticker"), "seite": {"type": "string", "enum": ["long", "short"]},
+                    "warum": _TXT("warum Stärke (Short: Schwäche) – in Worten, 1 bis 2 Sätze"),
+                    "tun": _TXT("was zu tun ist: Auslöser, Einstieg, Stopp"), "achte_auf": _TXT("höchstens eine Zeile"),
+                    "phase": _TXT("Phase im Kreislauf in Worten, z. B. „Phase 1 → kurz vor dem Ausbruch“")},
+                    "required": ["titel", "seite", "warum", "tun", "achte_auf", "phase"]}},
+    "leitfrage": _TXT("die Leitfrage der Lage"),
+    "szenarien": {"type": "array", "items": {"type": "object", "properties": {
+        "name": {"type": "string", "enum": ["A", "B"]}, **SZENARIO["properties"]},
+        "required": ["name", "ausloeser", "haltung", "tun"]}},
+    "anwaerter": {"type": "array", "items": {"type": "object", "properties": {
+        "titel": _TXT("Ticker"), "warum": _TXT("ein Satz"), "warten_auf": _TXT("das Zeichen")},
+        "required": ["titel", "warum", "warten_auf"]}},
+    "depot": {"type": "array", "items": {"type": "object", "properties": {
+        "titel": _TXT("Ticker"), "anweisung": _TXT("ein Satz")}, "required": ["titel", "anweisung"]}},
+    "lehre": _TXT("die Lehre aus gestern, ein Satz")},
+    "required": ["anrede", "haltung", "chancen", "leitfrage", "szenarien", "anwaerter", "depot", "lehre"]}
+
 
 QUELLEN = {
     "Minervini": "Trade Like a Stock Market Wizard; Think & Trade Like a Champion",
@@ -250,49 +264,7 @@ QUELLEN = {
     "Druckenmiller": "Reden und Interviews (Liquidität, 18 bis 24 Monate voraus, Bündeln bei Überzeugung)",
 }
 
-AUFTRAG[6] = ("Du bist der Gegenspieler. Suche zu jedem Volltreffer und zu den wichtigsten Angriffszielen long und short "
-              "aus den Meldungen den stärksten Grund, warum der Angriff scheitern kann – mit Ticker, Zahl und der Regel "
-              "des Meisters. Ein Einwand je Titel, die schwersten zuerst. Ampel rot = schwerer Einwand, gelb = beachten. "
-              "Findest du keinen ernsten Einwand, sage das (Ampel grün). Erfinde keine Schwächen.")
-
-HINWEIS = {"type": "object", "properties": {
-    "titel": {"type": "array", "items": {"type": "string"}, "description": "Ticker, jeder einzeln; leer, wenn kein Titel"},
-    "datum": {"type": ["string", "null"], "description": "YYYY-MM-DD eines vergangenen Tages im Chart, sonst null"},
-    "ampel": {"type": "string", "enum": ["grün", "gelb", "rot"]},
-    "text": {"type": "string", "description": "1 bis 2 Sätze mit Zahl"}},
-    "required": ["titel", "ampel", "text"]}
-URTEIL = {"type": "object", "properties": {
-    "titel": {"type": "string", "description": "genau ein Ticker"},
-    "ampel": {"type": "string", "enum": ["grün", "gelb", "rot"], "description": "nur deine Frage, nicht das Setup"},
-    "grund": {"type": "string", "description": "höchstens 12 Wörter, mit Zahl"}},
-    "required": ["titel", "ampel", "grund"]}
-MELDUNG = {"type": "object", "properties": {
-    "meldung": {"type": "string", "description": "3 bis 6 Sätze Lage aus deiner Sicht, mit Tickern und Zahlen"},
-    "hinweise": {"type": "array", "items": HINWEIS, "description": "höchstens 12, die wichtigsten zuerst"},
-    "urteile": {"type": "array", "items": URTEIL, "description": "dein Urteil je geprüftem Titel (höchstens 20): "
-                "Volltreffer, Angriffsziele, Depot zuerst"}},
-    "required": ["meldung", "hinweise", "urteile"]}
-ZIEL = {"type": "object", "properties": {**HINWEIS["properties"],
-    "kurz": {"type": "string", "description": "Kernsatz in höchstens 12 Wörtern, mit Zahl"}},
-    "required": ["titel", "ampel", "kurz", "text"]}
 HALTUNGEN = ("angreifen", "klein tasten", "abwarten", "verteidigen")
-BEFEHL = {"type": "object", "properties": {
-    "haltung": {"type": "string", "enum": list(HALTUNGEN), "description": "die Haltung des Tages in einem Wort"},
-    "lage_kurz": {"type": "string", "description": "die Lage in höchstens 8 Wörtern"},
-    "lage": {"type": "string", "description": "die Lage in drei Sätzen"},
-    "volltreffer": {"type": "array", "items": ZIEL, "description": "dreifacher Rückenwind und Setup am Auslöser"},
-    "long": {"type": "array", "items": ZIEL, "description": "bis 5 Angriffsziele long, das beste zuerst"},
-    "short": {"type": "array", "items": ZIEL, "description": "bis 3 Ziele short, das beste zuerst"},
-    "gefahren": {"type": "array", "items": ZIEL, "description": "bis 3 Gefahren"},
-    "einwaende": {"type": "array", "description": "Antwort auf die schwersten Einwände des Gegenspielers", "items": {
-        "type": "object", "properties": {
-            "titel": {"type": "array", "items": {"type": "string"}},
-            "ampel": {"type": "string", "enum": ["grün", "gelb", "rot"],
-                      "description": "wie schwer der Einwand nach deiner Abwägung bleibt"},
-            "einwand": {"type": "string", "description": "der Einwand in einem Satz"},
-            "antwort": {"type": "string", "description": "deine Abwägung in 1 bis 2 Sätzen mit Zahl"}},
-        "required": ["titel", "ampel", "einwand", "antwort"]}}},
-    "required": ["haltung", "lage_kurz", "lage", "volltreffer", "long", "short", "gefahren", "einwaende"]}
 BEFEHL_TEILE = (("volltreffer", "Volltreffer · dreifacher Rückenwind und Setup am Auslöser"),
                 ("long", "Angriffsziele long"), ("short", "Ziele short"), ("gefahren", "Gefahren"))
 
@@ -906,6 +878,8 @@ def lagebild():
                 "zahlen": {"ampel": z.get("ampel"), "punkte": z.get("punkte"), "termin": _termin_ok(z.get("termin")),
                            "reaktion": z.get("reaktion")} if z else None}
         c["feste_ampeln"] = {k_: {"ampel": a_, "wert": w_} for k_, (a_, w_) in feste_ampeln(c, heute).items()}
+        c["kreislauf"] = _kreis_kurz(tk)              # Phase und Zeichen der Stärke/Schwäche (13.11.2026)
+        c["bewegung"] = _bewegung(tk)
         return c
 
     fn = {"Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}       # Namen wie auf dem Bildschirm
@@ -1106,118 +1080,382 @@ def _bekannt(lb):
     return aus
 
 
+def _kreis_kurz(tk):
+    """Der Kreislauf eines Titels für den Stab (ohne Kurvenpunkte) – vom Frühlauf gespeichert (zeichen.laden)."""
+    try:
+        import zeichen
+        k = zeichen.von(tk)
+    except Exception:  # noqa: BLE001
+        k = None
+    if not k:
+        return None
+    rel = k.get("relativ") or {}
+    return {"phase": k["phase"], "wechsel_zu": k.get("ziel"), "wort": k["wort"], "satz": k["satz"],
+            "staerke": k.get("staerke"), "schwaeche": k.get("schwaeche"),
+            "dow_tag": (k.get("dow_tag") or {}).get("struktur"), "dow_woche": (k.get("dow_woche") or {}).get("struktur"),
+            "einquetschung": k.get("einquetschung"), "akkumulation": k.get("akkumulation"), "trend": k.get("trend"),
+            "seit_korrekturbeginn": {"seit": rel.get("seit"), "titel_pct": rel.get("titel_pct"),
+                                     "index_pct": rel.get("index_pct")} if rel.get("seit") else None}
+
+
+def _kerzen(tk, n=60):
+    """Die letzten n Tageskerzen kompakt: [Tag, Eröffnung, Hoch, Tief, Schluss, Volumen in Tausend]."""
+    try:
+        import daten
+        df = daten.kurse_gespeichert(tk)
+    except Exception:  # noqa: BLE001
+        return None
+    if df is None or not len(df):
+        return None
+    return [[f"{i:%m-%d}", _zahl(r.Open), _zahl(r.High), _zahl(r.Low), _zahl(r.Close), int(r.Volume / 1000)]
+            for i, r in df.iloc[-n:].iterrows()]
+
+
+def _bewegung(tk):
+    try:
+        import daten
+        df = daten.kurse_gespeichert(tk)
+        c, v = df["Close"], df["Volume"]
+        return {"5_tage_pct": _zahl((c.iloc[-1] / c.iloc[-6] - 1) * 100, 1),
+                "20_tage_pct": _zahl((c.iloc[-1] / c.iloc[-21] - 1) * 100, 1),
+                "volumen_5_zu_50": _zahl(v.iloc[-5:].mean() / v.iloc[-55:-5].mean(), 2)}
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _nachbarn(tk, rw_t, n=5):
+    """Schwestern derselben Branche (Livermore): RS-Rang, Stufe, Phase."""
+    br = (rw_t.get(tk) or {}).get("branche")
+    if not br:
+        return []
+    liste = sorted(((t_, x) for t_, x in rw_t.items() if t_ != tk and x.get("branche") == br),
+                   key=lambda p: -(p[1].get("rang") or 0))[:n]
+    return [{"titel": t_, "rang": x.get("rang"), "stufe": x.get("stufe"),
+             "phase": ((_kreis_kurz(t_) or {}).get("wort"))} for t_, x in liste]
+
+
+def anwaerter_liste(lb, n=ANWAERTER_MAX):
+    """Material des Jägers: Titel mit Zeichen der Stärke in der Schwäche (zeichen.relativ), die meisten Zeichen zuerst,
+    dann der RS-Rang. Leer, wenn der Markt nicht schwach ist."""
+    import rueckenwind
+    try:
+        import zeichen
+        alle = zeichen.laden().get("titel") or {}
+    except Exception:  # noqa: BLE001
+        alle = {}
+    rw_t = (rueckenwind.laden() or {}).get("titel") or {}
+    zeilen = []
+    for tk, k in alle.items():
+        rel = (k.get("relativ") or {}).get("staerke") or []
+        if rel:
+            zeilen.append((len(rel), len(k.get("staerke") or []) - len(k.get("schwaeche") or []),
+                           (rw_t.get(tk) or {}).get("rang") or 0, tk))
+    zeilen.sort(reverse=True)
+    aus = []
+    for _, _, _, tk in zeilen[:n]:
+        r = rw_t.get(tk) or {}
+        z = r.get("zahlen") or {}
+        aus.append({"titel": tk, "kreislauf": _kreis_kurz(tk), "bewegung": _bewegung(tk), "kerzen_30": _kerzen(tk, 30),
+                    "rueckenwind": {a: r.get(a) for a in ("stufe", "rang", "tempo", "rs_hoch_vor_kurs", "geld_ampel",
+                                                          "sektor", "sektor_feld", "branche", "branche_feld",
+                                                          "zufluss")} if r else None,
+                    "zahlen": {"ampel": z.get("ampel"), "termin": _termin_ok(z.get("termin")),
+                               "reaktion": z.get("reaktion")} if z else None,
+                    "nachbarn": _nachbarn(tk, rw_t)})
+    return aus
+
+
+def geschichte_daten(heute, n=10):
+    """Material der Kriegsgeschichte – vom Code gerechnet: je Auftrag bzw. Ziel der letzten n Konferenzen Kurs damals,
+    ob der Auslöser (Einstieg) erreicht wurde, die größte Bewegung danach, ob der Stopp fiel, Kurs heute."""
+    import daten
+    import pandas as pd
+    if not os.path.isdir(SPEICHER):
+        return []
+    aus = []
+    for f in sorted((f for f in os.listdir(SPEICHER) if f[:4].isdigit() and f.endswith(".json") and f[:10] < heute),
+                    reverse=True)[:n]:
+        k = json_lesen(os.path.join(SPEICHER, f)) or {}
+        kurse = k.get("kurse") or {}
+        ziele = []
+        if k.get("format") == 2:
+            plan = ((k.get("missionen") or {}).get("4") or {})
+            chancen = {c["titel"] for c in (k.get("befehl") or {}).get("chancen") or []}
+            for a in plan.get("auftraege") or []:
+                ziele.append({"mission": "Operationsplaner" + (" · Chance im Befehl" if a["titel"] in chancen else ""),
+                              "titel": a["titel"], "seite": a.get("seite"), "einstieg": a.get("einstieg"),
+                              "stopp": a.get("stopp")})
+            for a in ((k.get("missionen") or {}).get("3") or {}).get("anwaerter") or []:
+                ziele.append({"mission": "Jäger", "titel": a["titel"], "seite": "long"})
+        else:
+            b = k.get("befehl") or {}
+            for teil in ("volltreffer", "long", "short"):
+                for h in b.get(teil) or []:
+                    for tk in _ticker(h.get("titel"), None)[:1]:
+                        ziele.append({"mission": "alter Stab · " + teil, "titel": tk,
+                                      "seite": "short" if teil == "short" else "long"})
+        for z in ziele:
+            try:
+                df = daten.kurse_gespeichert(z["titel"])
+                nach = df[df.index > pd.Timestamp(k["stand"])]
+            except Exception:  # noqa: BLE001
+                continue
+            alt = kurse.get(z["titel"])
+            if nach is None or not len(nach) or not alt:
+                continue
+            short_ = z.get("seite") == "short"
+            hoch, tief, jetzt = float(nach["High"].max()), float(nach["Low"].min()), float(nach["Close"].iloc[-1])
+            e, s = z.get("einstieg"), z.get("stopp")
+            z.update(konferenz=k["stand"], kurs_damals=alt, kurs_heute=_zahl(jetzt),
+                     bewegung_pct=_zahl((jetzt / alt - 1) * 100, 1),
+                     bestes_pct=_zahl(((tief / alt - 1) if short_ else (hoch / alt - 1)) * 100, 1),
+                     ausloeser_erreicht=(tief <= e if short_ else hoch >= e) if e else None,
+                     stopp_erreicht=(hoch >= s if short_ else tief <= s) if s else None)
+            aus.append(z)
+    return aus
+
+
+def _truppe_daten(lb):
+    import atr as atr_modul
+    import daten
+    aus = []
+    for p in (lb.get("depot") or {}).get("positionen") or []:
+        tk = p["ticker"]
+        try:
+            df = daten.kurse_gespeichert(tk)
+            kurs, a = float(df["Close"].iloc[-1]), atr_modul.wert(df)
+        except Exception:  # noqa: BLE001
+            kurs = a = None
+        e = p.get("einstieg")
+        short_ = p.get("seite") == "short"
+        aus.append({"titel": tk, "seite": p.get("seite"), "einstieg": e, "stopp": p.get("stopp"), "kurs": _zahl(kurs),
+                    "gewinn_in_atr": _zahl(((e - kurs) if short_ else (kurs - e)) / a, 1) if e and kurs and a else None,
+                    "kreislauf": _kreis_kurz(tk), "kerzen_30": _kerzen(tk, 30)})
+    return aus
+
+
+FELDER_WACHE = ("kurz", "text", "einwand", "antwort", "grund", "these", "warum", "tun", "achte_auf", "ausloeser",
+                "beleg", "widerlegt_wenn", "warten_auf", "ungueltig_wenn", "anweisung", "wetter", "markt", "leitfrage",
+                "anrede", "lehre", "bilanz", "fehler_des_stabs")
+
+
+def _wache_auf(obj, quelle, bekannt):
+    """Faktenwache über eine Meldung beliebiger Form: jedes Objekt mit Text wird geprüft."""
+    sammel = []
+
+    def gehe(x):
+        if isinstance(x, dict):
+            if any(isinstance(x.get(f), str) for f in FELDER_WACHE):
+                sammel.append(x)
+            for v in x.values():
+                if isinstance(v, (dict, list)):
+                    gehe(v)
+        elif isinstance(x, list):
+            for v in x:
+                gehe(v)
+    gehe(obj)
+    if sammel:
+        faktenwache(sammel, quelle, bekannt)
+
+
 def konferenz(melden=lambda text: None):
-    """Alle Strategen; speichert daten/konferenz/<datum>.json und gibt das Ergebnis zurück. `melden` schreibt jeden
-    Schritt ins Protokoll (Knopf-Lauf), damit ein Hänger sichtbar wird. Ist der Kartentisch veraltet, tagt der Stab
-    nicht (Aufklaerung). Seit 10.11.2026 (Elite-Stab): Feldhandbuch der Meister je Stratege, Lagebuch, Gegenspieler,
-    Antwort des Strategen auf die Einwände, Faktenwache."""
+    """Der neue Stab (Micky 13.11.2026): acht Missionen statt sechs Strategen nach Meistern. Reihenfolge: Lage und
+    Aufklärung → Jäger und Operationsplaner → Gegenspieler → Truppenführung (nur mit Depot) und Kriegsgeschichte →
+    Feldherr. Der Code misst (Kreislauf, Zeichen, Ergebnisse früherer Aufträge), die Missionen urteilen. Wachen im Code:
+    ein Auftrag nur auf eine Akte mit nicht roter Setup-Ampel, jede Akte eingeordnet, eine Chance nur aus einem
+    Auftrag, den der Gegenspieler nicht gekippt hat. Speichert daten/konferenz/<datum>.json (format 2)."""
     melden(f"{datetime.now():%H:%M:%S} Lagebild wird gelesen …")
     lb = lagebild()
-    voll = [c["titel"] for c in lb["kandidaten"] if c["volltreffer"]]
-    melden(f"{datetime.now():%H:%M:%S} Lagebild: {len(lb['kandidaten'])} Kandidaten ({len(voll)} Volltreffer), "
-           f"{len(lb['dreifach'])} mit dreifachem Rückenwind, {len(lb['gruppen'])} Gruppen")
     heute = lb["heute"]
     system = dienstanweisung()
     bekannt = _bekannt(lb)
     vorher = _vorige(heute)
-    erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "meldungen": {},
-           "dreifach": lb["dreifach"], "kurse": {c["titel"]: c["kurs"] for c in lb["kandidaten"] if c.get("kurs")},
-           "tafel": tafel(lb), "brett": brett(lb)}
-    kurse_ = {c["titel"]: c.get("kurs") for c in lb["kandidaten"]}
+    usd_vorher = kosten()["usd"]
+    akten_ = lb["kandidaten"]
+    import rueckenwind
+    rw_t = (rueckenwind.laden() or {}).get("titel") or {}
+    for c in akten_:
+        c["kerzen_60"] = _kerzen(c["titel"], 60)
+    anw = anwaerter_liste(lb)
+    bekannt |= {a["titel"] for a in anw}
+    melden(f"{datetime.now():%H:%M:%S} {len(akten_)} Akten, {len(anw)} Anwärter (Stärke in der Schwäche)")
+    kurse_ = {c["titel"]: c.get("kurs") for c in akten_} | {a["titel"]: _zahl(_kurs(a["titel"])) for a in anw}
+    erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "format": 2, "missionen": {},
+           "dreifach": lb["dreifach"], "kurse": {k_: v for k_, v in kurse_.items() if v}, "tafel": tafel(lb),
+           "brett": brett(lb), "wache_code": []}
     erg["bilanz"] = bilanz(vorher, lambda tk: kurse_.get(tk) or _zahl(_kurs(tk)))
 
-    def melden_lassen(nr, inhalt, quelle):
-        name = STRATEGEN[nr][0]
+    def mission(nr, material, schema, max_tokens=6000, vorlauf=""):
+        name, frage_ = MISSIONEN[nr]
+        daten_ = json.dumps(material, ensure_ascii=False, default=str)
+        inhalt = (f"Mission {nr} · {name}: {frage_}\n\nAUFTRAG\n{AUFTRAG_MISSION[nr]}\n\n{LEHRSTELLE[nr]}\n\n"
+                  f"MATERIAL DER APP (Stand des Frühlaufs)\n{daten_}{vorlauf}")
+        melden(f"{datetime.now():%H:%M:%S} {name} …")
         try:
-            m = _formular(system, inhalt, "melden", MELDUNG)
-            faktenwache((m.get("hinweise") or []) + (m.get("urteile") or []), quelle, bekannt)
+            m = _formular(system, inhalt, "melden", schema, max_tokens)
+            _wache_auf(m, daten_ + vorlauf, bekannt)
         except Deckel:
             raise
         except Unlesbar as e:
-            m = {"meldung": f"Keine Meldung: {e}", "hinweise": [], "fehler": True, "roh": e.roh}
-            melden(f"   Rohantwort: {e.roh}")
-        except Exception as e:  # noqa: BLE001 – eine Meldung fehlt, die anderen laufen weiter
-            m = {"meldung": f"Keine Meldung: {e}", "hinweise": [], "fehler": True}
-        wache = sum(1 for h in m.get("hinweise") or [] if h.get("wache"))
-        melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}"
-               + (f" · Faktenwache: {wache} Hinweis(e) markiert" if wache else ""))
-        erg["meldungen"][str(nr)] = {"name": name, **m}
+            m = {"fehler": True, "meldung": f"Keine Meldung: {e}", "roh": e.roh}
+        except Exception as e:  # noqa: BLE001 – eine Mission fehlt, die anderen laufen weiter
+            m = {"fehler": True, "meldung": f"Keine Meldung: {e}"}
+        melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}")
+        erg["missionen"][str(nr)] = {"name": name, **m}
+        return m
 
-    for nr in (2, 3, 4, 5):
-        melden(f"{datetime.now():%H:%M:%S} {STRATEGEN[nr][0]} liest …")
-        daten_ = json.dumps(_ausschnitt(lb, nr), ensure_ascii=False, default=str)
-        vorlauf = ""
-        if nr == 3:                                      # erst die Web-Suche als Notizen, dann das Formular
-            try:
-                ziele = list(dict.fromkeys(voll + [c["titel"] for c in lb["kandidaten"]]))[:5]
-                notizen = _anfrage(system, "Suche aktuelle Nachrichten (Übernahmen, Prognosen, Ereignisse) zu diesen "
-                                   f"Titeln: {', '.join(ziele)}. Schreibe knappe Notizen je Titel mit Quelle (URL). "
-                                   "Nichts erfinden.", 6000, SUCHEN_NACHT)
-            except Deckel:
-                raise
-            except Exception as e:  # noqa: BLE001
-                notizen = f"Web-Suche fehlgeschlagen: {e}"
-            melden(f"   Web-Suche: {len(notizen or '')} Zeichen Notizen (Ende: {_LETZTER['stop']})")
-            vorlauf = "\n\nNotizen aus der Web-Suche:\n" + (notizen or "keine Fundstellen")
-        buch = lagebuch(vorher, nr, lb)
-        buch_ = LAGEBUCH_TEXT + json.dumps(buch, ensure_ascii=False, default=str) if buch else ""
-        melden_lassen(nr, f"{AUFTRAG[nr]}\n\n{MEISTER[nr]}\n\nDaten der App (Stand des Nachtlaufs):\n{daten_}"
-                      f"{vorlauf}{buch_}", daten_ + vorlauf + buch_)
+    # 1 Lage
+    alt_lage = (((vorher or {}).get("missionen") or {}).get("1") or {}) if (vorher or {}).get("format") == 2 else {}
+    lage_ = mission(1, {x: lb.get(x) for x in ("heute", "datenstand", "markt", "barometer", "pendel",
+                                               "wirtschaftswetter", "gruppen")}
+                    | {"lagebuch_gestern": {a: alt_lage.get(a) for a in ("leitfrage", "szenario_a", "szenario_b")}
+                       if alt_lage else None}, F_LAGE, 4000)
 
-    def ohne_roh(m):
-        return {k_: v for k_, v in m.items() if k_ not in ("roh", "wache")}
+    # 2 Aufklärung: Depot, die ersten Akten, die ersten Anwärter – höchstens AUFKLAERUNG_MAX
+    depot_tk = [p["ticker"] for p in (lb["depot"].get("positionen") or [])]
+    ziele = list(dict.fromkeys(depot_tk + [c["titel"] for c in akten_][:10] + [a["titel"] for a in anw][:8]))
+    ziele = ziele[:AUFKLAERUNG_MAX]
+    akte_von = {c["titel"]: c for c in akten_}
+    anw_von = {a["titel"]: a for a in anw}
+    stoff = []
+    for tk in ziele:
+        c = akte_von.get(tk) or anw_von.get(tk) or {}
+        stoff.append({"titel": tk, "bewegung": c.get("bewegung") or _bewegung(tk),
+                      "zahlen": c.get("zahlen"), "zahlen_reaktion": c.get("zahlen_reaktion"),
+                      "kreislauf": (c.get("kreislauf") or {}).get("wort")})
+    aufkl = {"titel": []}
+    if ziele:
+        try:
+            notizen = _anfrage(system, "Suche zu jedem dieser Titel, warum er sich in den letzten Wochen bewegt hat "
+                               "(Zahlen, Ausblick, Aufträge, Produkte, Übernahmen, Analysten, Branche, Makro): "
+                               f"{', '.join(ziele)}. Schreibe knappe Notizen je Titel mit Quelle (URL) und Datum. "
+                               "Nichts erfinden; findest du nichts, schreibe das.", 8000, SUCHEN_AUFKLAERUNG)
+        except Deckel:
+            raise
+        except Exception as e:  # noqa: BLE001
+            notizen = f"Web-Suche fehlgeschlagen: {e}"
+        melden(f"   Web-Suche: {len(notizen or '')} Zeichen Notizen")
+        aufkl = mission(2, {"heute": heute, "titel": stoff}, F_AUFKL, 8000,
+                        "\n\nNOTIZEN DER WEB-SUCHE (Quellen)\n" + (notizen or "keine Fundstellen"))
+    aufkl_von = {a.get("titel"): a for a in aufkl.get("titel") or []}
 
-    # Gegenspieler: dieselben Akten (Chart-Ausschnitt) der Titel, die in den Meldungen vorkommen, plus Marktlage
-    genannt = set(voll)
-    for m in erg["meldungen"].values():
-        for h in m.get("hinweise") or []:
-            genannt |= set(_ticker(h.get("titel"), bekannt))
-    chart = _ausschnitt(lb, 4)
-    gegen = {"heute": heute, "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
-             "akten": [c for c in chart["kandidaten"] if c["titel"] in genannt],
-             "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items()}}
-    gegen_ = json.dumps(gegen, ensure_ascii=False, default=str)
-    melden(f"{datetime.now():%H:%M:%S} Gegenspieler prüft {len(gegen['akten'])} Akten …")
-    melden_lassen(6, f"{AUFTRAG[6]}\n\n{MEISTER[6]}\n\nDaten:\n{gegen_}", gegen_)
+    # 3 Jäger
+    jaeger = {"anwaerter": []}
+    if anw:
+        jaeger = mission(3, {"heute": heute, "markt": lb.get("markt"), "gruppen": lb.get("gruppen"),
+                             "anwaerter": [a | {"aufklaerung": aufkl_von.get(a["titel"])} for a in anw]}, F_JAEGER, 6000)
+    else:
+        erg["missionen"]["3"] = {"name": MISSIONEN[3][0], "anwaerter": [],
+                                 "hinweis": "Der Markt ist nicht schwach – kein Titel zeigt Stärke in der Schwäche."}
 
-    befehl_daten = {"heute": heute, "datenstand": lb.get("datenstand"), "barometer": lb["barometer"], "markt": lb["markt"], "pendel": lb.get("pendel"),
-                    "wirtschaftswetter": lb.get("wirtschaftswetter"), "volltreffer": [
-        {a: c.get(a) for a in ("titel", "reihe", "seite", "abstand_zum_pivot_pct", "kaufzone_bis", "shortzone_bis", "stopp_1_5_atr",
-                               "feste_ampeln")}
-        | {"stufe": (c["rueckenwind"] or {}).get("stufe")} for c in lb["kandidaten"] if c["volltreffer"]],
-        "meldungen": {nr: ohne_roh(m) for nr, m in erg["meldungen"].items() if nr != "6"},
-        "einwaende_gegenspieler": ohne_roh(erg["meldungen"].get("6") or {})}
-    buch = lagebuch(vorher, 1, lb)
-    befehl_ = json.dumps(befehl_daten, ensure_ascii=False, default=str)
-    buch_ = LAGEBUCH_TEXT.replace("deiner Meldung", "der Lage") + json.dumps(buch, ensure_ascii=False, default=str) \
-        if buch else ""
-    inhalt = ("Du bist der Stratege und führst den Stab. Lies die vier Lagemeldungen und die Einwände des Gegenspielers "
-              "und schreibe den Tagesbefehl in fester Gliederung: haltung (ein Wort: angreifen, klein tasten, abwarten "
-              "oder verteidigen); lage_kurz (höchstens 8 Wörter, das Erste, was der Trader liest); "
-              "lage (drei Sätze: Marktlage, wo die Strömung hingeht, "
-              "was das für heute heißt); volltreffer (alle Titel mit dreifachem Rückenwind und Setup am Auslöser – die "
-              "Liste steht in den Daten; je Titel Setup, Abstand zum Pivot, Stufe); long (bis 5 Angriffsziele); short "
-              "(bis 3 Ziele); gefahren (bis 3); einwaende (die schwersten Einwände des Gegenspielers, bis 5: halte der "
-              "Einwand stand oder nicht, und warum – mit Zahl). Wiederhole nicht einfach eine Meldung, sondern wäge ab "
-              "und verbinde: Wind, Stellung, Zahlen, Risiko. Benenne Widersprüche zwischen den Strategen ausdrücklich "
-              "(z. B. Chart grün, Fundament rot bei einem Ticker). Jeder Hinweis mit Ticker und Zahl. Jedes Ziel und "
-              "jede Gefahr trägt einen Kernsatz „kurz“ (höchstens 12 Wörter) – er steht in der Zielliste; der Text "
-              "darf länger sein. Die festen Ampeln der Akten sind gesetzt (Regel 13).\n\n"
-              f"{MEISTER[1]}\n\n{befehl_}{buch_}")
-    melden(f"{datetime.now():%H:%M:%S} Stratege schreibt den Tagesbefehl …")
-    try:
-        erg["befehl"] = _formular(system, inhalt, "tagesbefehl", BEFEHL, 12000)
-        b = erg["befehl"]
-        faktenwache([h for teil, _ in BEFEHL_TEILE for h in b.get(teil) or []] + list(b.get("einwaende") or []),
-                    befehl_ + gegen_ + buch_ + json.dumps(_ausschnitt(lb, 4), ensure_ascii=False, default=str),
-                    bekannt)
-    except Deckel:
-        raise
-    except Exception as e:  # noqa: BLE001
-        erg["befehl"] = {"haltung": None, "lage_kurz": "kein Tagesbefehl", "lage": f"Kein Tagesbefehl: {e}", "volltreffer": [], "long": [], "short": [], "gefahren": [],
-                         "einwaende": []}
+    # 4 Operationsplaner
+    felder = ("titel", "depot", "reihe", "auch", "seite", "volltreffer", "setup_gruen", "kurs", "pivot",
+              "abstand_zum_pivot_pct", "kurs_tisch_tag", "kaufzone_bis", "shortzone_bis", "einstieg_quelle", "atr",
+              "stopp_1_5_atr", "ausbruch", "zahlen_reaktion", "avwap", "wertzone", "feste_ampeln", "kreislauf",
+              "bewegung", "kerzen_60", "luecken")
+    plan = {"auftraege": [], "beobachten": [], "verworfen": []}
+    if akten_:
+        plan = mission(4, {"heute": heute, "datenstand": lb.get("datenstand"), "markt": lb.get("markt"),
+                           "szenarien": {"a": lage_.get("szenario_a"), "b": lage_.get("szenario_b")},
+                           "akten": [{a: c.get(a) for a in felder} | {"stufe": (c.get("rueckenwind") or {}).get("stufe"),
+                                                                        "geld": (c.get("rueckenwind") or {}).get("geld_ampel"),
+                                                                        "aufklaerung": aufkl_von.get(c["titel"])}
+                                     for c in akten_],
+                           "anwaerter_des_jaegers": [{a: x.get(a) for a in ("titel", "these", "phase", "warten_auf")}
+                                                     for x in jaeger.get("anwaerter") or []]}, F_PLAN, 9000)
+    # Wachen im Code: Auftrag nur auf eine Akte, nie bei roter Setup-Ampel; jede Akte eingeordnet
+    setup_amp = {c["titel"]: ((c.get("feste_ampeln") or {}).get("Setup") or {}).get("ampel") for c in akten_}
+    ok, weg = [], []
+    for a in plan.get("auftraege") or []:
+        tk = str(a.get("titel", "")).upper().strip()
+        a["titel"] = tk
+        if tk not in setup_amp:
+            weg.append({"titel": tk, "grund": "keine Akte (kein einsatzbereites Setup) – vom Code aus den Aufträgen genommen"})
+        elif setup_amp[tk] == "rot":
+            weg.append({"titel": tk, "grund": "Setup-Ampel rot – rot ist nie ein Auftrag (Code)"})
+        else:
+            c = akte_von[tk]
+            a["einstieg_app"], a["stopp_app"] = c.get("pivot"), c.get("stopp_1_5_atr")
+            ok.append(a)
+    if not akten_:
+        erg["missionen"]["4"] = {"name": MISSIONEN[4][0], **plan, "hinweis": "keine Akte – kein einsatzbereites Setup"}
+    elif not plan.get("fehler"):
+        plan["auftraege"] = ok[:5]
+        plan["verworfen"] = (plan.get("verworfen") or []) + weg
+        erg["wache_code"] += [f"Operationsplaner: {w['titel']} – {w['grund']}" for w in weg]
+        eingeordnet = {a["titel"] for a in plan["auftraege"]} | {str(x.get("titel", "")).upper().strip()
+                                                                for x in (plan.get("beobachten") or []) + plan["verworfen"]}
+        fehlt = [c["titel"] for c in akten_ if c["titel"] not in eingeordnet]
+        if fehlt:
+            plan["beobachten"] = (plan.get("beobachten") or []) + [
+                {"titel": tk, "warten_auf": "vom Operationsplaner nicht eingeordnet (Code)"} for tk in fehlt]
+            erg["wache_code"].append(f"Operationsplaner: {len(fehlt)} Akte(n) nicht eingeordnet – {', '.join(fehlt)}")
+
+    # 5 Gegenspieler
+    gegen = {"einwaende": []}
+    if plan.get("auftraege"):
+        gegen = mission(5, {"heute": heute, "markt": lb.get("markt"), "auftraege": plan["auftraege"],
+                            "akten": [{a: akte_von[x["titel"]].get(a) for a in felder}
+                                      | {"rueckenwind": akte_von[x["titel"]].get("rueckenwind"),
+                                         "zahlen": akte_von[x["titel"]].get("zahlen"),
+                                         "nachbarn": _nachbarn(x["titel"], rw_t),
+                                         "aufklaerung": aufkl_von.get(x["titel"])} for x in plan["auftraege"]],
+                            "anwaerter_des_jaegers": jaeger.get("anwaerter")}, F_GEGEN, 5000)
+    else:
+        erg["missionen"]["5"] = {"name": MISSIONEN[5][0], "einwaende": [], "hinweis": "kein Auftrag – nichts anzugreifen"}
+    urteil = {str(e.get("titel", "")).upper().strip(): e for e in gegen.get("einwaende") or []}
+
+    # 6 Truppenführung, 7 Kriegsgeschichte
+    truppe = {"positionen": []}
+    if depot_tk:
+        truppe = mission(6, {"heute": heute, "markt": lb.get("markt"), "positionen": _truppe_daten(lb),
+                             "aufklaerung": [aufkl_von.get(tk) for tk in depot_tk if aufkl_von.get(tk)]}, F_TRUPPE, 4000)
+    gesch_d = geschichte_daten(heute)
+    gesch = {}
+    if gesch_d:
+        gesch = mission(7, {"heute": heute, "ergebnisse": gesch_d}, F_GESCHICHTE, 3000)
+    else:
+        erg["missionen"]["7"] = {"name": MISSIONEN[7][0], "bilanz": "Noch keine früheren Aufträge mit Kursen danach.",
+                                 "fehler_des_stabs": None, "lehre": None}
+
+    # 8 Feldherr
+    befehl_ = mission(8, {"heute": heute, "datenstand": lb.get("datenstand"), "lage": lage_,
+                          "auftraege": [a | {"einwand": urteil.get(a["titel"]),
+                                             "kreislauf": (akte_von[a["titel"]].get("kreislauf") or {}).get("wort")}
+                                        for a in plan.get("auftraege") or []],
+                          "anwaerter_des_jaegers": jaeger.get("anwaerter"), "depot": truppe.get("positionen"),
+                          "kriegsgeschichte": gesch if gesch else erg["missionen"]["7"]}, F_BEFEHL, 8000)
+    if befehl_.get("fehler"):
+        befehl_ = {"anrede": "Hey Micky, heute gibt es keinen Tagesbefehl – " + befehl_.get("meldung", ""),
+                   "haltung": None, "chancen": [], "leitfrage": lage_.get("leitfrage"), "szenarien": [],
+                   "anwaerter": [], "depot": [], "lehre": None, "fehler": True}
+    # Wache im Code: eine Chance nur aus einem Auftrag, den der Gegenspieler nicht gekippt hat
+    auftr = {a["titel"]: a for a in plan.get("auftraege") or []}
+    bleiben = []
+    for c in befehl_.get("chancen") or []:
+        tk = str(c.get("titel", "")).upper().strip()
+        c["titel"] = tk
+        if tk not in auftr:
+            erg["wache_code"].append(f"Feldherr: {tk} ist kein Auftrag des Planers – aus den Chancen genommen")
+        elif (urteil.get(tk) or {}).get("urteil") == "kippt":
+            erg["wache_code"].append(f"Feldherr: {tk} vom Gegenspieler gekippt – aus den Chancen genommen")
+        else:
+            a = auftr[tk]
+            c.update(einstieg=a.get("einstieg"), stopp=a.get("stopp"), einstieg_app=a.get("einstieg_app"),
+                     stopp_app=a.get("stopp_app"), einwand=urteil.get(tk))
+            bleiben.append(c)
+    befehl_["chancen"] = bleiben
+    befehl_["anhang"] = {"beobachten": plan.get("beobachten") or [], "verworfen": plan.get("verworfen") or []}
+    erg["befehl"] = befehl_
+    try:                                               # Kreislaufbild so, wie es am Tag der Konferenz stand
+        import zeichen
+        tks = set(auftr) | {a.get("titel") for a in jaeger.get("anwaerter") or []} | set(akte_von) | set(depot_tk)
+        erg["kreislauf"] = {tk: zeichen.von(tk) for tk in tks if tk and zeichen.von(tk)}
+    except Exception:  # noqa: BLE001
+        erg["kreislauf"] = {}
+    erg["kosten_usd"] = round(kosten()["usd"] - usd_vorher, 2)
     json_schreiben(_pfad(f"{heute}.json"), erg, ensure_ascii=False)
-    melden(f"{datetime.now():%H:%M:%S} fertig · Monat {kosten()['usd']:.2f} $")
+    melden(f"{datetime.now():%H:%M:%S} fertig · diese Konferenz {erg['kosten_usd']:.2f} $ · Monat {kosten()['usd']:.2f} $")
     return erg
 
 
@@ -1241,7 +1479,9 @@ def _ticker(feld, bekannt):
 
 
 def hinweise(k):
-    """Alle Hinweise einer Konferenz als [(Nr. des Strategen, Hinweis)], Tagesbefehl zuerst (alt und neu)."""
+    """Alle Hinweise einer Konferenz als [(Nr. des Strategen bzw. der Mission, Hinweis)], Tagesbefehl zuerst."""
+    if k.get("format") == 2:
+        return _hinweise_neu(k)
     b = k.get("befehl") or {}
     liste = [(1, h) for h in b.get("hinweise") or []] + [(1, h) for teil, _ in BEFEHL_TEILE for h in b.get(teil) or []]
     liste += [(1, {**e, "text": f"Einwand: {e.get('einwand', '')} – Abwägung: {e.get('antwort', '')}"})
@@ -1282,16 +1522,14 @@ def frage(text, tk=None):
     if tk:
         tk = tk.upper().strip()
         kontext["titel"] = next((a for a in lb["kandidaten"] if a["titel"] == tk), None) or _einzelakte(tk)
-    handbuch = "\n\n".join(f"{STRATEGEN[nr][0]}: {MEISTER[nr]}" for nr in (1, 2, 3, 4, 5, 6))
-    inhalt = ("Der Trader fragt den Stab. Antworte als Stab (der Stratege führt, die Fachleute ergänzen) in höchstens "
-              "18 Sätzen, auf Deutsch, nur mit Fakten aus den Daten oder aus Web-Fundstellen (dann Quelle nennen). "
-              "Jeder Fachmann urteilt nach dem Handwerk seiner Meister aus dem Feldhandbuch unten und nennt die Regel "
-              "beim Namen. Nennt die Frage nur bestimmte Meister, antworte zuerst mit diesen; danach sagt jeder weitere "
-              "Meister, dessen Regel für diesen Titel oder diese Lage zählt, in einem Satz, was er sieht (Abschnitt "
-              "„Die übrigen Meister“). Meister ohne Bezug (z. B. Short-Meister bei einem Long-Titel) lässt du weg. "
-              "Antworte als Klartext, ohne Werkzeug.\n\nFeldhandbuch des Stabs:\n" + handbuch
+    handbuch = "\n\n".join(f"{MISSIONEN[nr][0]}: {LEHRSTELLE[nr]}" for nr in MISSIONEN)
+    inhalt = ("Micky fragt den Stab. Antworte als Stab in höchstens 18 Sätzen, auf Deutsch, nur mit Fakten aus den "
+              "Daten oder aus Web-Fundstellen (dann Quelle mit Datum). Urteile nach unserer Lehre von Stärke und "
+              "Schwäche (Dienstanweisung) und nenne die Regel beim Namen; nennt die Frage einen Meister, antworte "
+              "zuerst mit seiner Regel. Jeder Satz trägt eine Entscheidung. Antworte als Klartext, ohne Werkzeug."
+              "\n\nLehrstellen der Missionen:\n" + handbuch
               + "\n\nFrage: " + text + "\n\nDaten der App:\n" + json.dumps(kontext, ensure_ascii=False, default=str))
-    antwort = _anfrage(dienstanweisung().replace("8. Gib deine Meldung ausschließlich über das Werkzeug ab.", ""),
+    antwort = _anfrage(dienstanweisung().replace(" Gib deine Antwort ausschließlich über das Werkzeug ab.", ""),
                        inhalt, 5000, SUCHEN_FRAGE)            # 5000: mit Web-Suche brauchte Opus mehr Platz (11.11.)
     buch = json_lesen(_pfad("fragen.json"), []) or []
     if _LETZTER.get("stop") == "max_tokens":
@@ -1338,6 +1576,9 @@ def lagekarte(k):
     Tafel und Brett nicht mit der Konferenz gespeichert waren und mit dem heutigen Stand gerechnet wurden)."""
     k = k or {}
     b = k.get("befehl") or {}
+    if k.get("format") == 2:                           # neuer Stab (13.11.2026): der Befehl selbst ist die Lagekarte
+        return {"neu": True, "k": k, "haltung": b.get("haltung"), "lage_kurz": b.get("anrede"), "brett": k.get("brett") or {},
+                "tafel": k.get("tafel") or [], "bilanz": k.get("bilanz"), "live": False}
     tf, br, live = k.get("tafel"), k.get("brett"), False
     if tf is None or br is None:                       # Konferenzen vor dem 13.11.2026: Stand von heute
         try:
@@ -1397,6 +1638,8 @@ PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
 def kurzfassung(k):
     """Der Tagesbefehl als Meldung aufs Handy (Micky 12.11.2026: „Tagesbefehl gegen 7 Uhr“) → (Titel, Text).
     Nur Tatsachen der Konferenz: Haltung, Lage, Markt und Pendel vom Lagebrett, Ziele mit Kernsatz, Gefahren."""
+    if (k or {}).get("format") == 2:
+        return _kurzfassung_neu(k)
     lk = lagekarte(k)
     br = lk.get("brett") or {}
     m = br.get("markt") or {}
@@ -1423,3 +1666,108 @@ def kurzfassung(k):
     if not lk.get("ziele"):
         zeilen.append("Keine Angriffsziele heute.")
     return titel, "\n".join(zeilen)
+
+
+_URTEIL_AMPEL = {"hält": "grün", "schwächt": "gelb", "kippt": "rot"}
+_REAKTION_AMPEL = {"stärke": "grün", "neutral": "gelb", "schwäche": "rot"}
+
+
+def _hinweise_neu(k):
+    """Die Meldungen der Missionen (format 2) als [(Nr., Hinweis)] – für Akten je Titel und Nadeln."""
+    mi = k.get("missionen") or {}
+    b = k.get("befehl") or {}
+    aus = []
+
+    def h(nr, tk, ampel, text):
+        aus.append((nr, {"titel": [tk] if isinstance(tk, str) else tk, "ampel": ampel, "text": text,
+                         "von": MISSIONEN[nr][0], "datum": None}))
+    for c in b.get("chancen") or []:
+        h(8, c["titel"], "grün", f"Chance: {c.get('warum', '')} Tun: {c.get('tun', '')} Achte auf: {c.get('achte_auf', '')}")
+    for a in b.get("anwaerter") or []:
+        h(8, a.get("titel"), "gelb", f"Anwärter: {a.get('warum', '')} Warten auf: {a.get('warten_auf', '')}")
+    for a in (mi.get("4") or {}).get("auftraege") or []:
+        h(4, a["titel"], "grün", f"Auftrag: {a.get('these', '')} Auslöser: {a.get('ausloeser', '')} · ungültig, wenn "
+                                 f"{a.get('ungueltig_wenn', '')}")
+    for a in (mi.get("4") or {}).get("beobachten") or []:
+        h(4, a.get("titel"), "gelb", f"Beobachten: {a.get('warten_auf', '')}")
+    for a in (mi.get("4") or {}).get("verworfen") or []:
+        h(4, a.get("titel"), "rot", f"Verworfen: {a.get('grund', '')}")
+    for a in (mi.get("3") or {}).get("anwaerter") or []:
+        h(3, a.get("titel"), "gelb", f"{a.get('these', '')} Warten auf: {a.get('warten_auf', '')} · widerlegt, wenn "
+                                     f"{a.get('widerlegt_wenn', '')}")
+    for a in (mi.get("2") or {}).get("titel") or []:
+        q = " · ".join(x for x in (a.get("quelle"), a.get("datum")) if x)
+        h(2, a.get("titel"), _REAKTION_AMPEL.get(a.get("reaktion"), "gelb"),
+          f"Auslöser ({a.get('art')}, tragfähig: {a.get('tragfaehig')}): {a.get('ausloeser', '')}" + (f" · {q}" if q else ""))
+    for e in (mi.get("5") or {}).get("einwaende") or []:
+        h(5, e.get("titel"), _URTEIL_AMPEL.get(e.get("urteil"), "gelb"),
+          f"Einwand ({e.get('urteil')}): {e.get('einwand', '')} Beleg: {e.get('beleg', '')}")
+    for p in (mi.get("6") or {}).get("positionen") or []:
+        h(6, p.get("titel"), "gelb", f"{p.get('anweisung')}: {p.get('grund', '')}" + (f" · Linie {p['linie']}" if p.get("linie") else ""))
+    return aus
+
+
+def satz_zu(tk):
+    """Der Satz des Stabs zu einem Titel aus der jüngsten Konferenz (für das Kreislaufbild der Titelseite) oder None."""
+    k = letzte() or {}
+    if k.get("format") != 2:
+        return None
+    tk = tk.upper()
+    b = k.get("befehl") or {}
+    mi = k.get("missionen") or {}
+    tag = f'Stab {str(k.get("stand"))[8:10]}.{str(k.get("stand"))[5:7]}.: '
+    for c in b.get("chancen") or []:
+        if c.get("titel") == tk:
+            return tag + f"Chance – {c.get('warum', '')} {c.get('tun', '')}".strip()
+    for a in (mi.get("3") or {}).get("anwaerter") or []:
+        if str(a.get("titel", "")).upper() == tk:
+            return tag + f"Anwärter – {a.get('these', '')} Wir warten auf: {a.get('warten_auf', '')}"
+    for a in (mi.get("4") or {}).get("beobachten") or []:
+        if str(a.get("titel", "")).upper() == tk:
+            return tag + f"beobachten – {a.get('warten_auf', '')}"
+    for a in (mi.get("4") or {}).get("verworfen") or []:
+        if str(a.get("titel", "")).upper() == tk:
+            return tag + f"verworfen – {a.get('grund', '')}"
+    return None
+
+
+def _kurzfassung_neu(k):
+    """Tagesbefehl (format 2) aufs Handy: Chancen zuerst, mit Phase in Worten; kein Verworfen."""
+    b = k.get("befehl") or {}
+    br = k.get("brett") or {}
+    m = br.get("markt") or {}
+    tag = str(k.get("stand") or HEUTE())[:10]
+    titel = f"Tagesbefehl {tag[8:10]}.{tag[5:7]}. · {b.get('haltung') or 'ohne Haltung'}"
+    zeilen = [b.get("anrede") or "Hey Micky,"]
+    for c in (b.get("chancen") or [])[:5]:
+        pf = "↓" if c.get("seite") == "short" else "↑"
+        zeilen.append(f"🟢 {pf} {c['titel']} · {c.get('phase') or ''}: {c.get('warum') or ''}".replace(" · :", ":"))
+    for a in (b.get("anwaerter") or [])[:3]:
+        zeilen.append(f"◇ Anwärter {a.get('titel')}: {a.get('warten_auf') or a.get('warum') or ''}")
+    if b.get("leitfrage"):
+        zeilen.append(f"❓ {b['leitfrage']}")
+    if m.get("wort"):
+        zeilen.append(f"Markt {PUNKT.get(m.get('ampel'), '⚪')} {m.get('wort')} (O'Neil)")
+    ds = br.get("datenstand") or {}
+    if ds.get("ampel") and ds.get("ampel") != "grün":
+        zeilen.append(f"⚠ Datenstand prüfen: {ds.get('text') or ''}".strip())
+    return titel, "\n".join(zeilen)
+
+
+def gescheitert(k):
+    """Grund, wenn keine Mission (bzw. kein Stratege) gemeldet hat und kein Befehl steht – sonst None."""
+    teile = (k.get("missionen") or k.get("meldungen") or {}).values()
+    if teile and all(m.get("fehler") for m in teile):
+        return next(iter(teile)).get("meldung") or "keine Meldung"
+    if k.get("format") == 2 and (k.get("befehl") or {}).get("fehler"):
+        return (k.get("befehl") or {}).get("anrede") or "kein Tagesbefehl"
+    return None
+
+
+def ergebnis_zeile(k):
+    """Eine Zeile fürs Protokoll des Frühlaufs."""
+    if k.get("format") == 2:
+        b = k.get("befehl") or {}
+        return (f"{len(b.get('chancen') or [])} Chancen · {len(b.get('anwaerter') or [])} Anwärter · Haltung "
+                f"{b.get('haltung') or '—'} · {k.get('kosten_usd', 0):.2f} $")
+    return f"{sum(len(m.get('hinweise') or []) for m in (k.get('meldungen') or {}).values())} Hinweise"

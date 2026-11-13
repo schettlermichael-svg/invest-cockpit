@@ -13,6 +13,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
+import kreislaufbild  # noqa: E402
 
 ZUFLUSS = (1.1, 0.9)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
@@ -286,6 +287,14 @@ def _punkte_text(x):
     return " ".join(f'{PUNKT.get(a, "⚪")}{KURZ.get(n, n)}' for n, (a, _) in pk.items())
 
 
+def _mini(tk):
+    kr = _kreis(tk)
+    if not kr:
+        return ""
+    return (f'<div style="display:flex;align-items:center;gap:8px;margin-top:8px">{kreislaufbild.mini(kr)}'
+            f'<span style="font-size:13px;color:{TEXT_2}">{t(kreislaufbild.punkt_wort(kr))}</span></div>')
+
+
 def dreifach(erg):
     """Karten: Kurs, Geld und Zahlen grün (Entsteht oder Läuft)."""
     liste = sorted(dreifach_liste(erg), key=lambda p: (p[1]["stufe"] != "Entsteht", -p[1]["tempo"]))
@@ -310,16 +319,26 @@ def dreifach(erg):
             + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn == "rot" else GELB if warn else TEXT_2}">'
             + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
             + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
-            + _punkte_html(x) + '</div></a>')
+            + _punkte_html(x) + _mini(tk) + '</div></a>')
     return seite('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">'
                  + "".join(karten) + '</div>', oben=4, unten=4)
+
+
+def _kreis(tk):
+    try:
+        import zeichen
+        return zeichen.von(tk)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _zeile(tk, x, stand):
     """Eine Tabellenzeile eines Titels (Stufen, Anführer, Verfolger)."""
     z = x.get("zahlen") or {}
     termin, warn = _termin(x, stand)
+    kr = _kreis(tk)
     return {"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
+            "Phase": kreislaufbild.punkt_wort(kr), "Kreislauf": (kr or {}).get("kurve") or [],
             "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
             "Zahlen": PUNKT[z.get("ampel") or "grau"],
             "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],

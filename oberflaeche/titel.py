@@ -559,9 +559,11 @@ def _stellung(df, marken):
         aus.append(("rot", f"Short-Stellung gebrochen: Kurs {zahl(kurs)} $ über dem Stopp {zahl(sst)} $ (1,5 ATR)"))
     br = (marken or {}).get("ausbruch") or {}
     if br.get("fehl_tag") is not None:
-        aus.append(("rot", f"Fehlausbruch am {pd.Timestamp(br['fehl_tag']):%d.%m.} – der Kurs fiel zurück unter den "
-                           f"Pivot {zahl(marken['einstieg'])} $" if marken.get("einstieg") else
-                           f"Fehlausbruch am {pd.Timestamp(br['fehl_tag']):%d.%m.}"))
+        aus.append(("rot", f"Fehlausbruch am {pd.Timestamp(br['fehl_tag']):%d.%m.} – Schluss unter dem Tief des "
+                           f"Ausbruchstags bzw. mehr als 3 % unter dem Pivot; kein Kauf, weiter beobachten"))
+    elif br.get("rueck_tag") is not None:
+        aus.append(("gelb", f"Rücktest seit {pd.Timestamp(br['rueck_tag']):%d.%m.} – knapp unter dem Pivot, das Tief des "
+                            f"Ausbruchstags hält"))
     v = br.get("volumen")
     if br.get("tag") is not None and v and v == v and v < 1.0:
         aus.append(("gelb", f"Ausbruch am {pd.Timestamp(br['tag']):%d.%m.} ohne Volumen: {zahl(v, 1)}-fach des "
@@ -850,7 +852,8 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
          "kz_oben": float(e) * 1.05 if lang else None,
          "stopp": float(e) - ATR_STOPP * a if lang and a else None,
          "ab": ab,
-         "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag")}
+         "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag"),
+                      "rueck_tag": br.get("rueck_tag")}
          if br and r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else None,
          "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None}
     try:
@@ -975,6 +978,32 @@ def maerkte():
     return _SPEICHER["markt"][1]
 
 
+def _kreislauf_box(tk, df, index, gewinne, m_):
+    """Kreislaufbild unter den Kacheln, über dem Chart (13.11.2026): Phase, Wechsel, Zeichen – und der Satz des Stabs,
+    wenn die letzte Konferenz über den Titel gesprochen hat."""
+    try:
+        import kreislaufbild
+        import zeichen
+        br = (m_ or {}).get("ausbruch")
+        k = zeichen.fuer_titel(tk, df, index, gewinne,
+                               fehlausbruch=vcp_zone_text(br) if br and br.get("fehl") else None)
+        if not k:
+            return ""
+        try:
+            import stab
+            satz = stab.satz_zu(tk)
+        except Exception:  # noqa: BLE001
+            satz = None
+        return kreislaufbild.gross(k, tk, satz)
+    except Exception:  # noqa: BLE001 – die Seite steht auch ohne Bild
+        return ""
+
+
+def vcp_zone_text(br):
+    import vcp_zone
+    return vcp_zone.ausbruch_text(br)
+
+
 def seite_titel(ticker, laufend=False, _stand=None):
     """Gibt drei Teile zurück: oben (Kopf bis Kacheln), chart (Zwischenstand für chartkarte), unten (ab Frühere Basen).
     Zwischen oben und Chart setzt app.py die Chart-Knöpfe. laufend=True: mit der unvollständigen Kerze des laufenden Börsentags (Knopf „Kurse aktualisieren“);
@@ -1085,7 +1114,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw, su, zr_)
     stellung = _stellung(df, marken)
     oben = [_kopf(tk, sb, df, fd, mit_rueckgang=not reif) + _lagezeile(tk, rw, stellung) + warnung_kopf(erk)
-            + hinweis_laufend, leiste]
+            + hinweis_laufend, leiste, _kreislauf_box(tk, df, index, gewinne, m_)]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
     if zonen and (erk.get("basen") or {}).get("zahl") and zonen.get("jetzt"):

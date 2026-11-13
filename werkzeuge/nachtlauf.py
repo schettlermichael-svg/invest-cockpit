@@ -183,12 +183,11 @@ def main(nur_tisch=False):
         if not stab.schluessel():
             return "übersprungen – kein API-Schlüssel"
         k = stab.konferenz()
-        if all(m.get("fehler") for m in k["meldungen"].values()):
-            raise RuntimeError(next(iter(k["meldungen"].values()))["meldung"])
+        if stab.gescheitert(k):
+            raise RuntimeError(stab.gescheitert(k))
         _tagesbefehl_melden(k)                    # gleich nach der Konferenz aufs Handy, vor dem Schrank (~7 Uhr)
         ko = stab.kosten()
-        return (f"{sum(len(m.get('hinweise') or []) for m in k['meldungen'].values())} Hinweise · Monat "
-                f"{ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $")
+        return f"{stab.ergebnis_zeile(k)} · Monat {ko['usd']:.2f} $ von {stab.DECKEL_USD:.0f} $"
 
     def wachen_():
         """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Stab, Gegenprobe)."""
@@ -244,9 +243,9 @@ def main(nur_tisch=False):
         try:
             import stab
             k = stab.konferenz(melden=print)
-            ok_ = not all(m.get("fehler") for m in k["meldungen"].values())
+            ok_ = not stab.gescheitert(k)
         except Exception as e:  # noqa: BLE001
-            ok_, k = False, {"befehl": {"lage": str(e)}}
+            ok_, k = False, {"befehl": {"lage": str(e), "anrede": str(e)}}
         p["konferenz_zweiter_anlauf"] = "geklappt" if ok_ else "gescheitert"
         if ok_:                                  # Ampel der Übersicht: Schritt gilt dann als erledigt
             for s_ in p["schritte"]:
@@ -256,7 +255,7 @@ def main(nur_tisch=False):
         _kopf_neu()
         if not (ok_ and _tagesbefehl_melden(k)):
             _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
-                        f"wieder gescheitert – {(k.get('befehl') or {}).get('lage', '')[:120]}"), not ok_)
+                        f"wieder gescheitert – {str((k.get('befehl') or {}).get('lage') or (k.get('befehl') or {}).get('anrede') or '')[:120]}"), not ok_)
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
     durchgang = 0
@@ -584,8 +583,8 @@ def _konferenz_lauf():
     try:
         import stab
         k = stab.konferenz(melden=print)
-        if all(m.get("fehler") for m in k["meldungen"].values()):
-            p["fehler"] = next(iter(k["meldungen"].values()))["meldung"]
+        if stab.gescheitert(k):
+            p["fehler"] = stab.gescheitert(k)
     except Exception as e:  # noqa: BLE001
         p["fehler"] = f"{type(e).__name__}: {e}"
         traceback.print_exc()

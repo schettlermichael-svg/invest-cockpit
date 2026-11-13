@@ -12,6 +12,7 @@ Rechnung in zwei Stufen: 1. alle Titel VCP-Scanner, die Regeln und Auktion als Z
 für die Titel in einer Reihe die volle Titelseite (dieselben Kacheln, dieselbe Lagekarte). Ergebnis:
 daten/kartentisch/<Datum>.json; die Übersicht liest nur diese Datei.
 """
+import functools
 import json
 import os
 import sys
@@ -68,7 +69,7 @@ def _fund_gespeichert(tk):
         return None, None
 
 
-def _stufe1(tk):
+def _stufe1(tk, start=None):
     """VCP-Scanner, beide Systeme und die Auktion (Market Profile, nur Zeichen) eines Titels aus dem Speicher; Reihe
     oder None. Seit 06.11.2026 entscheidet die Wertzone nirgends mehr mit; ein Titel ohne 30-Minuten-Kerzen wird trotzdem
     gerechnet."""
@@ -111,6 +112,15 @@ def _stufe1(tk):
                       "ermuedung": (k["ermuedung"] or {}).get("ampel")}}
         import zahlen_reaktion
         info.update(setup_feststellen(df, m, k, zahlen_reaktion.pruefen(df, gewinne), scan))
+        try:                                        # Kreislauf und Zeichen der Stärke/Schwäche (13.11.2026)
+            import zeichen
+            fa = vcp_zone.ausbruch_text(br) if br and br.get("fehl") else None
+            info["_kreislauf"] = zeichen.fuer_titel(tk, df, index, gewinne, start=start, fehlausbruch=fa)
+        except Exception:  # noqa: BLE001
+            info["_kreislauf"] = None
+        if info["_kreislauf"]:
+            info["kreislauf"] = {"wort": info["_kreislauf"]["wort"], "phase": info["_kreislauf"]["phase"],
+                                 "ziel": info["_kreislauf"]["ziel"]}
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
@@ -224,6 +234,11 @@ def setup_feststellen(df, m, k, zr, scan):
         info["ausbruch"] = "▼ Bärenflagge: Erholungsrally im Abwärtstrend, dann Bruch der Unterkante"
     if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch
         info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)
+    if zeichen_br and (zeichen_br.get("fehl") or zeichen_br.get("ruecktest")):
+        # Fehlausbruch (13.11.2026: Schluss unter dem Tief des Ausbruchstags oder > 3 % unter dem Pivot) und Rücktest
+        # sind nicht einsatzbereit, bleiben aber in der Reihe unter Beobachtung
+        info.update(gruen=False, stern=False, luecken=(info.get("luecken") or []) + [
+            "Fehlausbruch – beobachten" if zeichen_br.get("fehl") else "Rücktest des Pivots – beobachten"])
     info["gruen"], info["stern"] = bool(info.get("gruen")), bool(info.get("stern"))
     return info
 
@@ -289,8 +304,14 @@ def _stufe2(tk):
 def rechnen(ticker_liste, prozesse=None, melden=print):
     beginn = time.time()
     prozesse = prozesse or max(1, (os.cpu_count() or 2) - 1)
+    import daten
+    import zeichen
+    try:                                            # Beginn der Marktschwäche einmal für alle Titel
+        start = zeichen.startdatum(daten.kurse_gespeichert(daten.INDEX))
+    except Exception:  # noqa: BLE001
+        start = None
     with ProcessPoolExecutor(prozesse) as ex:
-        stufe1 = [x for x in ex.map(_stufe1, ticker_liste, chunksize=20) if x]
+        stufe1 = [x for x in ex.map(functools.partial(_stufe1, start=start), ticker_liste, chunksize=20) if x]
     melden(f"  Stufe 1: {len(stufe1)} Titel gerechnet in {time.time() - beginn:.0f} s")
     import watchlists
     w = watchlists.laden()
@@ -308,6 +329,10 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     for x in in_reihe:
         x["karte"], x["kacheln"] = karten.get(x["tk"], (None, None))
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")
+    import zeichen
+    zeichen.ablegen(stand, {x["tk"]: x.pop("_kreislauf") for x in stufe1 if x.get("_kreislauf")})
+    for x in stufe1:
+        x.pop("_kreislauf", None)
     vorher = laden()
     ergebnis = {"stand": stand, "erzeugt": time.strftime("%d.%m.%Y %H:%M"),
                 "barometer": {"m_gruen": sum(1 for x in stufe1 if (x.get("m") or {}).get("ampel") == "grün"),
@@ -448,15 +473,33 @@ def rueckenwind_zeichen(x):
             + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
 
 
-def karte_html(x, kopf=""):
+def karte_html(x, kopf="", tk=None):
     """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
-    Grund, was fehlt) und das Zeichen „Rückenwind“."""
+    Grund, was fehlt), das Zeichen „Rückenwind“ und der Kreislauf (Mini-Kurve des Jahres und Phase, 13.11.2026)."""
     from gestaltung import TEXT_2, t
     kopf = stab_marke(x) + (kopf or _grundzeile(x))
     rw = rueckenwind_zeichen(x)
     rw = f'<span style="font-size:13px;color:{TEXT_2}">{t(rw)}</span>' if rw else ""
-    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}'
+    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}{kreislauf_zeile(tk)}'
             f'{lagekarte.faerben(x["karte"], x)}</div>')
+
+
+def kreislauf_zeile(tk):
+    """Mini-Kurve des Jahres nach Phasen gefärbt und die Phase in einem Wort; ein Klick öffnet die Titelseite."""
+    if not tk:
+        return ""
+    try:
+        import kreislaufbild
+        import zeichen
+        k = zeichen.von(tk)
+    except Exception:  # noqa: BLE001
+        return ""
+    if not k:
+        return ""
+    from gestaltung import TEXT_2, t
+    return (f'<a href="?seite=Titelseite&t={t(tk)}" target="_self" style="display:flex;align-items:center;gap:8px;'
+            f'text-decoration:none">{kreislaufbild.mini(k)}<span style="font-size:13px;color:{TEXT_2}">'
+            f'{t(kreislaufbild.punkt_wort(k))}</span></a>')
 
 
 def zeile(tk, x):
@@ -472,7 +515,16 @@ def zeile(tk, x):
             "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
                                              "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x["abstand_vz"], 1) if x.get("abstand_vz") is not None else "",   # ohne Einstieg leer
-            "Was fehlt": lagekarte.grund(x)}
+            "Phase": _phase_wort(tk), "Was fehlt": lagekarte.grund(x)}
+
+
+def _phase_wort(tk):
+    try:
+        import kreislaufbild
+        import zeichen
+        return kreislaufbild.punkt_wort(zeichen.von(tk))
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _klapp(titel, zeile_, inhalt):
@@ -505,7 +557,7 @@ def _abschnitt(name, text, liste, liste_name=None, fehlen=(), zahl_=None):
     sichtbar = [(tk, x) for tk, x in liste[:SICHTBAR] if x.get("karte")]
     rest = liste[SICHTBAR:] + [(tk, x) for tk, x in liste[:SICHTBAR] if not x.get("karte")]
     return {"art": "abschnitt", "kopf": kopf, "name": name, "zahl": zahl_, "text": text, "liste": liste_name,
-            "karten": [(tk, x, karte_html(x, _marken(x) if liste_name else "")) for tk, x in sichtbar],
+            "karten": [(tk, x, karte_html(x, _marken(x) if liste_name else "", tk)) for tk, x in sichtbar],
             "zeilen": [zeile(tk, x) for tk, x in rest] + [zeile(tk, None) for tk in fehlen],
             "titel": {tk: x for tk, x in rest}}
 
@@ -640,13 +692,14 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
                    f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
                    f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get(x.get("reihe"), "Depot" if not x else "—"))}'
                    + '</td>'
+                   f'<td style="padding:4px 8px">{kreislauf_zeile(tk)}</td>'
                    f'<td style="padding:6px 8px">{"—" if a_ is None else zahl(float(a_), 1) + " %"}</td>'
                    f'<td style="padding:6px 8px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;'
                    f'background:{geld}"></span></td>'
                    f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (True, "Depot"))[1])}</td></tr>')
     kopf = "".join(f'<th style="text-align:left;padding:6px 8px;font-size:13px;font-weight:500;color:{TEXT_3};'
-                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "zum Einstieg", "Geld",
-                                                                         "Warum dabei"))
+                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "Kreislauf", "zum Einstieg",
+                                                                         "Geld", "Warum dabei"))
     regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(stab.ZONE_LONG[0], 0)} "
              f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Einstieg des Setups, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter dem "
              f"Einstieg, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {stab.RANG_TEXT} · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")

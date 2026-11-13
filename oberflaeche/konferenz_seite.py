@@ -22,6 +22,18 @@ def _h(text):
 
 def kopf(k):
     ko = stab.kosten()
+    if not k or k.get("format") == 2:
+        return seite(
+            f'<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
+            f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Konferenzraum · MARAGA Investment</h1>'
+            f'<div style="color:{TEXT_2};font-size:14px">{"Konferenz vom " + k["zeit"] if k else "noch keine Konferenz"}'
+            f' · Kosten {ko["usd"]:.2f} $ von {stab.DECKEL_USD:.0f} $ im Monat · {ko["aufrufe"]} Aufrufe · '
+            f'{ko["suchen"]} Web-Suchen</div></div>'
+            f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 0">Acht Missionen, jede mit einer Frage: Lage, '
+            f'Aufklärung, Jäger, Operationsplaner, Gegenspieler, Truppenführung, Kriegsgeschichte, Feldherr. Die App '
+            f'misst Phase und Zeichen der Stärke und Schwäche, der Stab urteilt – Chancen zuerst, rot ist nie ein '
+            f'Auftrag. Jede Zahl stammt aus der App oder einer genannten Quelle; die Faktenwache markiert, was sie nicht '
+            f'findet.</p>', oben=12, unten=8)
     stand = f'Konferenz vom {k["zeit"]}' if k else "noch keine Konferenz"
     return seite(
         f'<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
@@ -107,17 +119,8 @@ def nadeln(eintraege, bis=None):
     """Nadeln für den Chart – nur Hinweise mit einem Tag, der im Chart liegt (bis = Stand der Konferenz). Hinweise auf
     künftige Tage (Termine) stehen nur im Text: früher landeten sie auf der letzten Kerze und sahen aus wie heute."""
     return [{"datum": h.get("datum"), "nr": nr, "ampel": h.get("ampel"),
-             "text": f'{stab.STRATEGEN[nr][0]}: {h.get("text", "")}'} for nr, h in eintraege
+             "text": f'{h.get("von") or stab.STRATEGEN[nr][0]}: {h.get("text", "")}'} for nr, h in eintraege
             if h.get("datum") and (not bis or str(h["datum"])[:10] <= bis)]
-
-
-def feldhandbuch():
-    """Das Feldhandbuch des Stabs als Text (10.11.2026) – so, wie es die Strategen lesen, mit Quellen. Korrekturen
-    Mickys werden hier Sätze (kern/stab.py, MEISTER)."""
-    teile = [f"**{nr} · {stab.STRATEGEN[nr][0]}**\n\n{stab.MEISTER[nr]}" for nr in (2, 3, 4, 5, 6, 1)]
-    quellen = "\n".join(f"- **{m}:** {q}" for m, q in stab.QUELLEN.items())
-    return ("Rangordnung bei Widerspruch: zuerst deine Haltung (Dienstanweisung), dann der Hauptmeister, dann der "
-            "Ergänzungsmeister.\n\n" + "\n\n".join(teile) + "\n\n**Quellen**\n\n" + quellen)
 
 
 ANLEITUNG = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
@@ -270,6 +273,8 @@ def _drei(lk):
 
 
 def lagekarte_html(lk):
+    if lk.get("neu"):
+        return befehl_neu_html(lk)
     lage = (f'<div style="font-size:15px;line-height:1.55;color:{TEXT_2}">{_h(lk.get("lage"))}</div>'
             if lk.get("lage") else "")
     hinweis = (f'<div style="font-size:12px;color:{GELB}">Diese Konferenz stammt aus der Zeit vor der Lagekarte: '
@@ -296,3 +301,133 @@ def tafel_html(tf):
                               f'{_h((amp.get(n) or {}).get("wert") or "")}</span>' for n in SPALTEN_CODE))
     return seite(_tabelle(("Titel", "Warum beim Stab", "Seite", "Kurs", "Pivot", "Stopp") + SPALTEN_CODE, zeilen),
                  oben=4, unten=4)
+
+
+# ── Neuer Stab (13.11.2026): Befehl mit Chancen, Kreislaufbild, Leitfrage, Anwärter, Depot, Lehre ──
+
+def _chance(c, kreis):
+    import kreislaufbild
+    e = c.get("einwand") or {}
+    zahlen = []
+    if c.get("einstieg") is not None:
+        zahlen.append(f'Einstieg {_zahl(c.get("einstieg"))} $')
+    if c.get("stopp") is not None:
+        zahlen.append(f'Stopp {_zahl(c.get("stopp"))} $')
+    app = (f' <span style="color:{TEXT_3}">(App: {_zahl(c.get("einstieg_app"))} / {_zahl(c.get("stopp_app"))})</span>'
+           if c.get("einstieg_app") is not None and (c.get("einstieg_app") != c.get("einstieg")
+                                                      or c.get("stopp_app") != c.get("stopp")) else "")
+    einw = (f'<div style="font-size:14px;color:{TEXT_2};margin-top:4px">{_p(_URTEIL.get(e.get("urteil")))} '
+            f'Gegenspieler ({_h(e.get("urteil"))}): {_h(e.get("einwand"))}</div>' if e else "")
+    pf = "↓ short" if c.get("seite") == "short" else "↑ long"
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:4px solid {GRUEN};border-radius:12px;'
+            f'padding:14px 16px;margin:10px 0">'
+            f'<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">'
+            f'<div style="font-size:20px">{_tk(c["titel"])} <span style="font-size:14px;color:{TEXT_2}">{pf}</span></div>'
+            f'<div style="font-size:14px;color:{TEXT_2}">{_h(c.get("phase"))}</div></div>'
+            f'<div style="font-size:16px;line-height:1.55;color:{TEXT};margin:6px 0">{_h(c.get("warum"))}{_wache(c)}</div>'
+            f'<div style="font-size:15px;color:{TEXT}"><b>Tun:</b> {_h(c.get("tun"))}</div>'
+            f'<div style="font-size:14px;color:{TEXT_2};margin-top:2px">{" · ".join(zahlen)}{app}</div>'
+            f'<div style="font-size:14px;color:{GELB};margin-top:4px"><b>Achte auf:</b> {_h(c.get("achte_auf"))}</div>'
+            + einw + (kreislaufbild.gross(kreis, c["titel"]) if kreis else "") + "</div>")
+
+
+_URTEIL = {"hält": "grün", "schwächt": "gelb", "kippt": "rot"}
+
+
+def befehl_neu_html(lk):
+    import kreislaufbild
+    k = lk["k"]
+    b = k.get("befehl") or {}
+    kreis = k.get("kreislauf") or {}
+    teile = [_brett(lk)]
+    teile.append(f'<div style="background:{KARTE};border:2px solid {BLAU};border-radius:14px;padding:16px 18px;'
+                 f'margin-top:12px"><div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;'
+                 f'text-transform:uppercase">Tagesbefehl · Feldherr</div><div style="font-size:19px;line-height:1.55;'
+                 f'color:{TEXT};margin-top:6px">{_h(b.get("anrede"))}{_wache(b)}</div></div>')
+    ch = b.get("chancen") or []
+    teile.append(f'<div style="font-size:17px;font-weight:600;color:{TEXT};margin:16px 0 0">Chancen · {len(ch)}</div>'
+                 + ("".join(_chance(c, kreis.get(c["titel"])) for c in ch)
+                    or f'<div style="font-size:15px;color:{TEXT_2};margin:6px 0">Heute keine Chance, die den '
+                       f'Gegenspieler übersteht. Rot ist nie ein Auftrag.</div>'))
+    sz = "".join(f'<div style="flex:1 1 280px;border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
+                 f'<div style="font-size:13px;color:{TEXT_3}">Szenario {_h(s_.get("name"))} · '
+                 f'{_h(s_.get("haltung"))}</div><div style="font-size:15px;color:{TEXT};margin:4px 0">'
+                 f'<b>Wenn</b> {_h(s_.get("ausloeser"))}</div><div style="font-size:15px;color:{TEXT_2}">'
+                 f'<b>dann</b> {_h(s_.get("tun"))}</div></div>' for s_ in b.get("szenarien") or [])
+    teile.append(_abschnitt("Leitfrage", f'<div style="font-size:16px;color:{TEXT};margin-bottom:8px">'
+                            f'{_h(b.get("leitfrage"))}</div><div style="display:flex;flex-wrap:wrap;gap:10px">{sz}</div>'))
+    anw = b.get("anwaerter") or []
+    if anw:
+        z = "".join(f'<div style="display:flex;gap:12px;align-items:center;margin:8px 0">'
+                    f'<div style="flex:none">{kreislaufbild.mini(kreis.get(a.get("titel")))}</div>'
+                    f'<div style="font-size:15px">{_tk(a.get("titel"))} · '
+                    f'<span style="color:{TEXT_2}">{_h(kreislaufbild.wort(kreis.get(a.get("titel"))))}</span><br>'
+                    f'{_h(a.get("warum"))} <span style="color:{GELB}">Warten auf: {_h(a.get("warten_auf"))}</span>'
+                    f'</div></div>' for a in anw)
+        teile.append(_abschnitt("Anwärter · Stärke in der Schwäche", z, "· der Jäger: wer führt, wenn der Markt dreht"))
+    dep = b.get("depot") or []
+    if dep:
+        teile.append(_abschnitt("Depot", "".join(f'<div style="font-size:15px;margin:4px 0">{_tk(d_.get("titel"))} · '
+                                                 f'{_h(d_.get("anweisung"))}</div>' for d_ in dep)))
+    if b.get("lehre"):
+        teile.append(_abschnitt("Lehre aus gestern", f'<div style="font-size:15px">{_h(b.get("lehre"))}</div>'))
+    if k.get("wache_code"):
+        teile.append(f'<div style="font-size:13px;color:{GELB};margin-top:6px">Wache im Code: '
+                     + " · ".join(_h(w) for w in k["wache_code"]) + "</div>")
+    kosten_ = (f'<div style="font-size:12px;color:{TEXT_3};margin-top:6px">Diese Konferenz kostete '
+               f'{k["kosten_usd"]:.2f} $.</div>' if k.get("kosten_usd") is not None else "")
+    return seite("".join(t_ if t_.startswith('<div style="display:flex;flex-wrap:wrap;gap:12px">') else
+                         f'<div style="margin-top:12px">{t_}</div>' for t_ in teile) + kosten_, oben=8, unten=8)
+
+
+def anhang_html(k):
+    """Anhang des Befehls: beobachten und verworfen (der Operationsplaner, jede Akte eingeordnet)."""
+    an = (k.get("befehl") or {}).get("anhang") or {}
+    be = "".join(f'<div style="margin:3px 0">{_tk(x.get("titel"))} · {_h(x.get("warten_auf"))}</div>'
+                 for x in an.get("beobachten") or []) or f'<div style="color:{TEXT_3}">keine</div>'
+    ve = "".join(f'<div style="margin:3px 0">{_tk(x.get("titel"))} · {_h(x.get("grund"))}</div>'
+                 for x in an.get("verworfen") or []) or f'<div style="color:{TEXT_3}">keine</div>'
+    return seite('<div style="display:flex;flex-wrap:wrap;gap:12px">'
+                 f'<div style="flex:1 1 300px">{_abschnitt("Beobachten", f"<div style=font-size:14px>{be}</div>", "· das Zeichen, auf das wir warten")}</div>'
+                 f'<div style="flex:1 1 300px">{_abschnitt("Verworfen", f"<div style=font-size:14px>{ve}</div>")}</div>'
+                 '</div>', oben=4, unten=4)
+
+
+def _wert(v):
+    if isinstance(v, dict):
+        return " · ".join(f"{k_}: {_wert(x)}" for k_, x in v.items() if x not in (None, "", [], {}))
+    if isinstance(v, list):
+        return "; ".join(_wert(x) for x in v)
+    return str(v)
+
+
+def mission_html(nr, m):
+    """Eine Mission im Wortlaut (neuer Stab)."""
+    name, frage_ = stab.MISSIONEN[nr]
+    if m.get("fehler") and m.get("meldung"):
+        inhalt = f'<p style="color:{ROT}">{_h(m.get("meldung"))}</p>'
+    else:
+        zeilen = []
+        for k_, v in m.items():
+            if k_ in ("name", "roh", "wache", "fehler"):
+                continue
+            if isinstance(v, list):
+                zeilen += [f'<div style="margin:4px 0;font-size:14px">{_h(_wert(x))}{_wache(x) if isinstance(x, dict) else ""}</div>'
+                           for x in v] or [f'<div style="color:{TEXT_3};font-size:14px">{_h(k_)}: keine</div>']
+            elif v not in (None, ""):
+                zeilen.append(f'<div style="margin:4px 0;font-size:14px"><b>{_h(k_)}:</b> {_h(_wert(v))}</div>')
+        inhalt = "".join(zeilen)
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;margin-bottom:12px">'
+            f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{nr} · {name}'
+            f'</div><div style="font-size:14px;color:{TEXT_2};margin:2px 0 8px">{frage_}</div>{inhalt}</div>')
+
+
+def lehre():
+    """Die Lehre des Stabs zum Gegenlesen (ersetzt das Feldhandbuch der Strategen, 13.11.2026)."""
+    d = stab.DIENSTANWEISUNG
+    lehre_ = d[d.index("UNSERE LEHRE"):d.index("BEGRIFFE DER APP")].strip()
+    regeln = d[d.index("REGELN"):].strip()
+    teile = [f"**{nr} · {n} – {f}**\n\n{stab.AUFTRAG_MISSION[nr]}\n\n*{stab.LEHRSTELLE[nr]}*"
+             for nr, (n, f) in stab.MISSIONEN.items()]
+    quellen = "\n".join(f"- **{m}:** {q}" for m, q in stab.QUELLEN.items())
+    return lehre_ + "\n\n" + regeln + "\n\n" + "\n\n".join(teile) + "\n\n**Quellen**\n\n" + quellen
