@@ -164,6 +164,14 @@ def wetterkarte(erg, art):
             lage = ("neu " + wort if seit == 1 else f"seit {seit} Wochen {wort}")
             if g.get("stabil"):
                 lage += " · ◇ stabil"
+            if g.get("breite") is not None:          # folgen die Schwestern (13.11.2026)
+                lage += f' · Breite {zahl(g["breite_vor4"], 0) if g.get("breite_vor4") is not None else "–"} → ' \
+                        f'{zahl(g["breite"], 0)} %'
+            if g.get("vorne"):
+                lage += f' · vorne {g["vorne"][0]} von {g["vorne"][1]}'
+            import auktion
+            import zustandsbild
+            lage = zustandsbild.pille(auktion.gruppe(g), klein=True, mit_belegen=True) + " " + t(lage)
             z = g.get("zufluss")
             if z:
                 fz, wz = ((GRUEN, "rein") if z >= ZUFLUSS[0] else (ROT, "raus") if z < ZUFLUSS[1] else (TEXT_2, "gleich"))
@@ -332,13 +340,18 @@ def _kreis(tk):
         return None
 
 
+def _zustand(kr):
+    import auktion
+    return auktion.wort((kr or {}).get("auktion"))
+
+
 def _zeile(tk, x, stand):
     """Eine Tabellenzeile eines Titels (Stufen, Anführer, Verfolger)."""
     z = x.get("zahlen") or {}
     termin, warn = _termin(x, stand)
     kr = _kreis(tk)
     return {"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
-            "Phase": kreislaufbild.punkt_wort(kr), "Kreislauf": (kr or {}).get("kurve") or [],
+            "Zustand": _zustand(kr), "Phase": kreislaufbild.punkt_wort(kr), "Kreislauf": (kr or {}).get("kurve") or [],
             "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
             "Zahlen": PUNKT[z.get("ampel") or "grau"],
             "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],

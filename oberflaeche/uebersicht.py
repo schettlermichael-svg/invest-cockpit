@@ -187,6 +187,11 @@ def seite_uebersicht():
                     f"heute Quad {q['quad']} · {q['name']}", quad_bild + abgleich)
     # Seite Rückenwind (10.11.2026): ① Lage hier, ② Rückenwind aus rueckenwind_seite, ③ Stellung und ④ Termine aus dem
     # Kartentisch (app.py, mit Knöpfen), ⑤ Eigene Truppe hier.
-    return {"lage": seite(kopf + sprungleiste() + station("lage") + leiste + '<div style="height:12px"></div>' + einzeln,
+    try:                                         # Zustand des Marktes zuerst (13.11.2026), die Ampeln darunter
+        import zustandsbild
+        zustand = zustandsbild.box((mm or {}).get("auktion"), "Zustand des Marktes")
+    except Exception:  # noqa: BLE001
+        zustand = ""
+    return {"lage": seite(kopf + sprungleiste() + station("lage") + zustand + leiste + '<div style="height:12px"></div>' + einzeln,
                           unten=12),
             "unten": seite(station("truppe") + depotleiste.leiste(), oben=12)}

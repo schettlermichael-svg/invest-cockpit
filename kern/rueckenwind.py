@@ -136,6 +136,13 @@ def _gruppe(art, name, mitglieder, C, V):
     while seit < len(s) and sektoren.feld(s.iloc[-1 - seit], w.iloc[-1 - seit]) == feld:
         seit += 1
     ud = _ud(kurs, vol)
+    # Breite in der Gruppe (Auktion, 13.11.2026): Anteil der Mitglieder über dem GD50, heute und vor 4 Wochen
+    x = C[g]
+    g50 = x.rolling(50, min_periods=40).mean()
+    def _br(i):
+        ok = g50.iloc[i].notna() & x.iloc[i].notna()
+        return round(float((x.iloc[i][ok] > g50.iloc[i][ok]).mean() * 100), 0) if ok.sum() >= 5 else None
+    breite, breite_vor4 = _br(-1), _br(-1 - WOCHEN4)
     k8 = kurs.iloc[-2 * WOCHEN4:]
     rueck = float((1 - k8 / k8.cummax()).max() * 100)
     return {"art": art, "name": name, "anzahl": len(g), "feld": feld, "feld_vor4": vorher, "seit_wochen": seit,
@@ -143,7 +150,8 @@ def _gruppe(art, name, mitglieder, C, V):
             "stabil": feld == "Führend" and seit >= STABIL_WOCHEN and rueck <= STABIL_RUECKSCHLAG,
             "staerke": round(float(s.iloc[-1]), 1), "schwung": round(float(w.iloc[-1]), 1),
             "weg": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(s.iloc[-5:], w.iloc[-5:])],
-            "zufluss": round(ud, 2) if ud else None}
+            "zufluss": round(ud, 2) if ud else None, "breite": breite, "breite_vor4": breite_vor4,
+            "mitglieder": g}
 
 
 def _geld_ampel(sek, bra, th=None):
@@ -381,6 +389,8 @@ def rechnen(netz=False):
             z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
         x["zahlen"] = z
         titel[tk] = x
+    for g in gruppen:                            # Anführer und Verfolger je Gruppe: folgen die Schwestern?
+        anfuehrer_verfolger(g, titel)
     stand = f"{C.index[-1]:%Y-%m-%d}"
     erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten,
            "schwellen": {"stark": STARK, "mittel": MITTEL, "tempo_hoch": TEMPO_HOCH, "ermuedet": ERMUEDET,
@@ -388,6 +398,20 @@ def rechnen(netz=False):
     _logbuch(erg)
     json_schreiben(_pfad("stand.json"), erg, ensure_ascii=False)
     return erg
+
+
+def anfuehrer_verfolger(g, titel, n=3):
+    """Anführer = höchster RS-Rang in Stufe Läuft (bei Gleichstand mehr Zufluss); Verfolger = Stufe Entsteht, größtes
+    Tempo zuerst. Je Gruppe (13.11.2026; bis 13.11.2026 über alle Titel für den Stab). Zählt auch, wie viele der
+    Mitglieder vorne sind (Entsteht oder Läuft)."""
+    m = [(tk, titel[tk]) for tk in g.get("mitglieder", []) if tk in titel]
+    anf = sorted(((tk, x) for tk, x in m if x.get("stufe") == "Läuft"),
+                 key=lambda p: (-p[1]["rang"], -(p[1].get("zufluss") or 0)))
+    ver = sorted(((tk, x) for tk, x in m if x.get("stufe") == "Entsteht"), key=lambda p: -p[1]["tempo"])
+    g["anfuehrer"] = [tk for tk, _ in anf[:n]]
+    g["verfolger"] = [tk for tk, _ in ver[:n]]
+    g["vorne"] = [len(anf) + len(ver), len(m)]
+    return g
 
 
 def _logbuch(erg):

@@ -101,6 +101,7 @@ def verlauf(daten, bruch=None):
     zustand, dts, versuch, boden, ftd = "Korrektur", {n: [] for n in namen}, {n: None for n in namen}, None, None
     hoch = {n: float("inf") for n in namen}             # Hoch vor der Korrektur je Index
     wieder = None                                       # Tag der Wiederaufnahme ohne Follow-Through-Day
+    gescheitert = None                                  # letzter gescheiterter Erholungsversuch (Auktion: abgelehnt)
     aus = []
     for i in range(1, len(tage)):
         neuer_ftd = None
@@ -117,6 +118,8 @@ def verlauf(daten, bruch=None):
                 continue
             w = versuch[n]
             if w is None or c < w["tief"] or (w["tag1"] is not None and L[n][i] < w["tief_low"]):
+                if w is not None and w["tag1"] is not None:
+                    gescheitert = tage[i]
                 versuch[n] = {"tief": c, "tief_low": L[n][i], "tag1": None}
             elif w["tag1"] is None:
                 if c > c0:
@@ -129,7 +132,7 @@ def verlauf(daten, bruch=None):
                     boden = (n, w["tief_low"])
         neues_hoch = zustand == "Korrektur" and any(C[n][i] > hoch[n] for n in namen)
         if neuer_ftd or neues_hoch:
-            zustand, ftd = "Bestätigter Aufwärtstrend", neuer_ftd
+            zustand, ftd, gescheitert = "Bestätigter Aufwärtstrend", neuer_ftd, None
             wieder = None if neuer_ftd else tage[i]
             dts = {n: [] for n in namen}                       # Zählung beginnt neu
         elif zustand != "Korrektur":
@@ -146,7 +149,8 @@ def verlauf(daten, bruch=None):
             lauf = max(laeufe) if laeufe else None
         aus.append({"tag": tage[i], "zustand": zustand, "dt": {n: [tage[j] for j, _ in x] for n, x in dts.items()},
                     "ftd": ftd if zustand != "Korrektur" else None, "versuch": lauf,
-                    "wieder": wieder if zustand != "Korrektur" else None})
+                    "wieder": wieder if zustand != "Korrektur" else None,
+                    "gescheitert": gescheitert if zustand == "Korrektur" else None})
     return aus
 
 
@@ -196,7 +200,8 @@ def richtung(bis=None):
     return {"zustand": heute["zustand"], "ampel": AMPEL[heute["zustand"]], "seit": seit,
             "zonen": {n_: a_["zustand"]["wort"] for n_, (a_, _, _) in bruch.items()},
             "distributionstage": {n: len(d) for n, d in heute["dt"].items()}, "dt_daten": heute["dt"],
-            "ftd": heute["ftd"], "text": " · ".join(teile), "zeichen": zeichen}
+            "ftd": heute["ftd"], "versuch": heute["versuch"], "gescheitert": heute["gescheitert"],
+            "text": " · ".join(teile), "zeichen": zeichen}
 
 
 def zahl_de(x):

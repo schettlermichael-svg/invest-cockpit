@@ -321,7 +321,8 @@ def _tabelle(teil, nr):
     zeilen = teil["zeilen"]
     if not zeilen:
         return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Liste": z.get("Stab", ""), "Setup": z["Setup"], "Befund": z["Befund"],
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Zustand": z.get("Zustand", ""), "Liste": z.get("Stab", ""),
+                        "Setup": z["Setup"], "Befund": z["Befund"],
                         "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
     farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
@@ -547,6 +548,38 @@ def setups_zeigen():
     verbindungen_zeigen()
 
 
+def strategen_call(tk, teile):
+    """Knopf „Strategen-Call“ unter dem Kreislaufbild (Micky 13.11.2026): auf Wunsch die Deutung eines Strategen aus
+    dem Material der App; einmal je Titel und Kurstag, danach aus dem Speicher."""
+    import strategen
+    import zustandsbild
+    z = teile.get("chart") or {}
+    erk, df = z.get("erk") or {}, z.get("df")
+    e = erk.get("auktion")
+    if e is None or df is None:
+        return
+    stand = f"{df.index[-1]:%Y-%m-%d}"
+    erg = strategen.gespeichert(tk, stand)
+    if erg is None:
+        if not st.button("🎯 Strategen-Call", key=f"strategen_{tk}",
+                         help="Der Stratege deutet den Zustand aus dem Material der App (kein Online-Gang). Kostet "
+                              "einige Cent, einmal je Titel und Kurstag."):
+            return
+        try:
+            rw = titel._rueckenwind(tk) or {}
+            mm = titel.maerkte() or {}
+            su = erk.get("setup_info") or {}
+            import kartentisch
+            with st.spinner("Der Stratege deutet …"):
+                erg = strategen.rufen(tk, stand, e, float(df["Close"].iloc[-1]), atr=erk.get("atr"), rw=rw,
+                                      markt=mm.get("auktion"), setup=kartentisch.NAME.get(su.get("reihe")),
+                                      termin=((rw.get("zahlen") or {}).get("termin")))
+        except Exception as x:  # noqa: BLE001
+            st.error(f"Strategen-Call ging nicht: {x}")
+            return
+    st.markdown(zustandsbild.strategen_karte(erg), unsafe_allow_html=True)
+
+
 def datenstand_zeigen():
     """Datenstand-Wache (12.11.2026): eine Zeile oben – mit welchem Handelstag die App rechnet; rot, wenn Teile der
     App verschiedene Tage haben."""
@@ -614,6 +647,7 @@ elif ticker:
                 except Exception:  # noqa: BLE001
                     pass
         st.markdown(teile["oben"], unsafe_allow_html=True)
+        strategen_call(ticker, teile)
         ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl = chart_knoepfe(ticker)
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
                     unsafe_allow_html=True)

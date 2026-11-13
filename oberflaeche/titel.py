@@ -36,7 +36,6 @@ from chart import chart, legende, reaktionen, stunden  # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, kachel2, karte,  # noqa: E402
                         seite, t, zahl)
 
-from zeichen import PHASE_NAME as PHASENTEXT   # noqa: E402  Basis · Aufwärts · Verteilung · Abwärts – ein Name je Phase in der App
 def _tv_symbol(tk):
     """BÖRSE:TICKER für TradingView aus daten/tv/revier.csv; ohne Eintrag nur der Ticker (TradingView sucht dann)."""
     import watchlists
@@ -290,9 +289,10 @@ def _k2_trend(m, ph, ph_reihe, df=None):
     n = sum(tv.values()) if tv else 0
     mm = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
     seit = _seit(ph_reihe) if ph else None
-    zeile = (f"Zeichen Weinstein: Phase {ph} {PHASENTEXT[ph]}"
-             + (f" seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
-             + _weinstein_ausbruch(m, ph, df)) if ph else ""
+    # Die Phase selbst steht im Zustand und im Kreislauf darunter (13.11.2026: die Weinstein-Zeile doppelte ihn);
+    # hier bleibt nur, was es dort nicht gibt – seit wann und die Bestätigung einer Rückkehr in Phase 2
+    zeile = ((f"Phase {ph} seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
+             + _weinstein_ausbruch(m, ph, df)).lstrip(" ·") if ph else ""
     return kachel2("Trend", mm, None, zeile,
                    "Base-Ausbruch – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
                    "der Kachel „Stärke“). Sie entspricht Phase 2 (Aufwärts) nach Weinstein: "
@@ -977,18 +977,30 @@ def maerkte():
     return _SPEICHER["markt"][1]
 
 
-def _kreislauf_box(tk, df, index, gewinne, m_):
-    """Kreislaufbild unter den Kacheln, über dem Chart (13.11.2026): Phase, Wechsel, Zeichen (bis 13.11.2026 mit dem
-    Satz des Stabs; der Konferenzraum wurde abgebaut)."""
+def _kreislauf_box(tk, df, index, gewinne, m_, erk=None, zonen=None):
+    """Zustand (Code für Balance und Ungleichgewicht, 13.11.2026) und darunter das Kreislaufbild, unter den Kacheln,
+    über dem Chart. Der Zustand steht auch in erk["auktion"] (für den Strategen-Call)."""
     try:
+        import auktion
+        import erkennung
         import kreislaufbild
         import zeichen
+        import zustandsbild
         br = (m_ or {}).get("ausbruch")
         k = zeichen.fuer_titel(tk, df, index, gewinne,
                                fehlausbruch=vcp_zone_text(br) if br and br.get("fehl") else None)
         if not k:
             return ""
-        return kreislaufbild.gross(k, tk)
+        erk = erk if erk is not None else {}
+        try:
+            e = auktion.titel(df, k, index, erk.get("mp"), br, (zonen or {}).get("jetzt"),
+                              (erk.get("profil") or {}).get("verankert"), erk.get("zahltag"),
+                              erkennung._ROH.get(tk))
+        except Exception:  # noqa: BLE001 – dann ohne Zustand
+            e = None
+        erk["auktion"] = e
+        erk["kreislauf"] = k
+        return zustandsbild.box(e) + kreislaufbild.gross(k, tk)
     except Exception:  # noqa: BLE001 – die Seite steht auch ohne Bild
         return ""
 
@@ -1111,8 +1123,14 @@ def seite_titel(ticker, laufend=False, _stand=None):
     marken["profil"] = (erk.get("profil") or {}).get("verankert")
     marken["zahltag"] = erk.get("zahltag")
     stellung = _stellung(df, marken)
-    oben = [_kopf(tk, sb, df, fd, mit_rueckgang=not reif) + _lagezeile(tk, rw, stellung) + warnung_kopf(erk)
-            + hinweis_laufend, leiste, _kreislauf_box(tk, df, index, gewinne, m_)]
+    kb = _kreislauf_box(tk, df, index, gewinne, m_, erk, zonen)      # setzt erk["auktion"]
+    try:
+        import zustandsbild
+        kz = zustandsbild.kopfzeile(erk.get("auktion"))             # Zustand zuerst (13.11.2026)
+    except Exception:  # noqa: BLE001
+        kz = ""
+    oben = [_kopf(tk, sb, df, fd, mit_rueckgang=not reif) + kz + _lagezeile(tk, rw, stellung) + warnung_kopf(erk)
+            + hinweis_laufend, leiste, kb]
     zwischen = {"df": df, "erk": erk, "ph_reihe": ph_reihe, "index": index, "gewinne": gewinne, "sek": sek,
                 "etf": etf or "", "rs_lesart": _rs_lesart(df, index, sek, etf)}
     if zonen and (erk.get("basen") or {}).get("zahl") and zonen.get("jetzt"):

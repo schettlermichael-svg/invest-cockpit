@@ -50,8 +50,6 @@ FUEHRT_PUNKTE = 10.0      # „führt“, Divergenz: mindestens 10 Prozentpunkte
 FUEHRT_NAH_HOCH = 15.0    # „führt“ und „nah“ nur höchstens 15 % unter dem 52-Wochen-Hoch
 NACHWIRKUNG_TAGE = 45     # Stärke in der Korrektur bleibt nach dem Tief des Index 45 Handelstage stehen
 KEIN = "kein"             # Startdatum schon gesucht, kein Fenster (statt None = noch nicht gesucht)
-SEITWAERTS_PCT = 4.0      # Seitwärtszone: Schluss in 10 Tagen höchstens ±4 %
-WERT_WANDERT_PCT = 3.0    # der akzeptierte Wert (POC) wandert in 5 Tagen um mindestens 3 %
 RS_HOCH = 0.99            # RS-Linie „am Hoch“: höchstens 1 % darunter – ein Maßstab für die ganze App
 JUNG_TAGE = 70            # Zeichen ab 70 Handelstagen; Phase erst ab 300 (vorher „jung“)
 PHASE_NAME = {0: "jung", 1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
@@ -604,22 +602,20 @@ def reaktion(df, gewinne, max_tage=60):
     return aus
 
 
-# ── Wertzone wandert (Market Profile) ─────────────────────────────────────────────────────────────────────────────
-def wertzone(tage, df=None):
-    """tage: Tagesprofile des Market Profile (erkennung.mp_von(df)["tage"], chronologisch, je Tag mit poc). Nur in der
-    Seitwärtszone (Schluss in 10 Tagen höchstens ±4 %) – im Trend sagt das nichts Neues."""
-    if not tage or len(tage) < 10:
+# ── Wert an der Schwelle (Market Profile) ─────────────────────────────────────────────────────────────────────────
+def wertzone(mp, df=None):
+    """Zeichen aus dem Zustand des Market Profile: „an der Schwelle ↑/↓“ (Tageswerte der letzten 5 Tage überwiegend
+    höher bzw. tiefer, POC steigt bzw. fällt, Kurs im oberen bzw. unteren Drittel der Wertzone). Bis 13.11.2026 stand
+    hier eine eigene Messung „Wert wandert“ (POC 5 gegen 5 Tage, ±3 %) – doppelt zum Market Profile, dort
+    zusammengeführt (Zuordnung in unseren drei Bildern)."""
+    z = (mp or {}).get("zustand") or {}
+    w = z.get("wort", "")
+    if not w.startswith("an der Schwelle"):
         return None
-    if df is not None and len(df) > 11 and abs(float(df["Close"].iloc[-1] / df["Close"].iloc[-11]) - 1) * 100 > SEITWAERTS_PCT:
-        return None
-    jetzt = np.mean([x["poc"] for x in tage[-5:]])
-    vorher = np.mean([x["poc"] for x in tage[-10:-5]])
-    d = (jetzt / vorher - 1) * 100
-    if d >= WERT_WANDERT_PCT:
-        return _zeichen("stärke", "ereignis", f"Wert wandert nach oben (POC 5 Tage {_z(d, '+.1f')} %)")
-    if d <= -WERT_WANDERT_PCT:
-        return _zeichen("schwäche", "ereignis", f"Wert wandert nach unten (POC 5 Tage {_z(d, '+.1f')} %)")
-    return None
+    beleg = (z.get("belege") or [""])[0]
+    if z.get("dir") == "↑":
+        return _zeichen("stärke", "ereignis", f"Market Profile an der Schwelle ↑: {beleg}")
+    return _zeichen("schwäche", "ereignis", f"Market Profile an der Schwelle ↓: {beleg}")
 
 
 # ── Kreislauf ─────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -640,7 +636,7 @@ def _traegt(liste):
     return "struktur" in arten and bool(arten & {"volumen", "rs"})
 
 
-def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=None):
+def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None):
     """Phase, Wechsel und Zeichen eines Titels → dict mit phase (0 jung, 1–4), ziel, wort, satz, zeichen (Liste),
     staerke/schwaeche (Texte, stärkste zuerst), dow_tag, dow_woche, einquetschung, akkumulation, relativ, trend,
     kurve, tiefs, index_kurve, phasen (52 Wochen; 21 = Rückschlag in Phase 2), wechsel_wochen, rueckschlag, jung."""
@@ -701,7 +697,7 @@ def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=
         zs += rs_linie(df, idx)
     if gewinne is not None:
         zs += reaktion(df, gewinne)
-    wz = wertzone(tage30, df)
+    wz = wertzone(mp, df)
     if wz:
         zs.append(wz)
     if fehlausbruch:
@@ -817,18 +813,18 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     """kreislauf() mit Index-Bezug und – wenn gespeichert – der Market-Profile-Analyse; None bei zu kurzer Reihe."""
     if df is None or len(df) < JUNG_TAGE or idx is None:
         return None
-    tage30 = None
+    mp = None
     if mit_wertzone:                             # dieselbe Market-Profile-Analyse wie Karte und Chart (zwischengespeichert)
         try:
             import erkennung
             if not df.attrs.get("ticker"):
                 df.attrs["ticker"] = tk
-            tage30 = (erkennung.mp_von(df) or {}).get("tage")
+            mp = erkennung.mp_von(df)
         except Exception:  # noqa: BLE001
-            tage30 = None
+            mp = None
     st = start if start is not None else startdatum(idx)      # einmal je Indextag, nicht je Titel
     i_ = idx[idx.index <= df.index[-1]]
-    k = kreislauf(df, i_, gewinne, tage30, fehlausbruch, start=st)
+    k = kreislauf(df, i_, gewinne, mp, fehlausbruch, start=st)
     if k:
         k["stand"] = f"{df.index[-1]:%Y-%m-%d}"
         for x in ("dow_tag", "dow_woche"):       # nur Speicherbares (keine Zeitstempel)

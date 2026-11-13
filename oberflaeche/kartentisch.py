@@ -121,6 +121,10 @@ def _stufe1(tk, start=None):
             import zeichen
             fa = info.get("ausbruch") if str(info.get("ausbruch") or "").startswith("🔴 Fehlausbruch") else None
             info["_kreislauf"] = zeichen.fuer_titel(tk, df, index, gewinne, start=start, fehlausbruch=fa)
+            if info["_kreislauf"]:                  # Zustand im Code für Balance und Ungleichgewicht (13.11.2026)
+                import auktion
+                e = auktion.fuer_titel(tk, df, info["_kreislauf"], index, a, br, zs, gewinne)
+                info["_kreislauf"]["auktion"] = auktion.speicherbar(e) if e else None
         except Exception:  # noqa: BLE001
             info["_kreislauf"] = None
         if info["_kreislauf"]:
@@ -525,9 +529,10 @@ def kreislauf_zeile(tk):
     if not k:
         return ""
     from gestaltung import TEXT_2, t
+    import zustandsbild                      # zuerst der Zustand (13.11.2026), die Phase als Unterzeile
     return (f'<a href="?seite=Titelseite&t={t(tk)}" target="_self" style="display:flex;align-items:center;gap:8px;'
-            f'text-decoration:none">{kreislaufbild.mini(k)}<span style="font-size:13px;color:{TEXT_2}">'
-            f'{t(kreislaufbild.punkt_wort(k))}</span></a>')
+            f'flex-wrap:wrap;text-decoration:none">{zustandsbild.pille(k.get("auktion"))}{kreislaufbild.mini(k)}'
+            f'<span style="font-size:13px;color:{TEXT_2}">{t(kreislaufbild.punkt_wort(k))}</span></a>')
 
 
 def zeile(tk, x):
@@ -541,9 +546,18 @@ def zeile(tk, x):
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
             "Stab": ("🎯 " if st_[0] else "") + st_[1] if st_ else "",
             "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
-                                             "Auktion: " + x["zustand"] if x.get("zustand") else "") if z),
+                                             "Market Profile: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x["abstand_vz"], 1) if x.get("abstand_vz") is not None else "",   # ohne Einstieg leer
-            "Phase": _phase_wort(tk), "Was fehlt": lagekarte.grund(x)}
+            "Zustand": _zustand_wort(tk), "Phase": _phase_wort(tk), "Was fehlt": lagekarte.grund(x)}
+
+
+def _zustand_wort(tk):
+    try:
+        import auktion
+        import zeichen
+        return auktion.wort((zeichen.von(tk) or {}).get("auktion"))
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def _phase_wort(tk):

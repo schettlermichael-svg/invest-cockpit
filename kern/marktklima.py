@@ -40,5 +40,15 @@ def markt(hochs=None, tiefs=None):
         z = zeichen(hochs, tiefs)
     except Exception:  # noqa: BLE001 – die Ampel steht auch ohne Zeichenzeile
         z = ""
+    try:                                         # derselbe Zustand wie bei Titel und Gruppe (13.11.2026)
+        import auktion
+        import lage
+        try:
+            p = lage.pendel()
+        except Exception:  # noqa: BLE001 – ohne Marktzone
+            p = None
+        a = auktion.markt(mr, p)
+    except Exception:  # noqa: BLE001
+        a = None
     return {"ampel": mr["ampel"], "wort": WORT[mr["ampel"]], "zustand": mr["zustand"],
-            "seit": f'{mr["seit"]:%d.%m.%Y}', "text": mr["text"], "zeichen": z, "regel": REGEL}
+            "seit": f'{mr["seit"]:%d.%m.%Y}', "text": mr["text"], "zeichen": z, "regel": REGEL, "auktion": a}

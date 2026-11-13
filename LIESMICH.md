@@ -852,3 +852,37 @@ Micky: „Der Konferenzraum kann weg. Den brauchen wir nicht mehr.“ Die Strate
 - Seite Setups: ① heißt „Einsatzbereit“ (vorher „Auswahl für den Stab“), die Tabelle „🎯 Einsatzbereit · N Titel auf der Liste“ (vorher „Diese Titel liest der Stab“). Ganz unten „⚙ Verbindungen“: API-Schlüssel, Verbindung prüfen, Kosten des Monats, Kanal fürs Handy mit Testmeldung.
 - Handy: der Frühlauf meldet weiter „Lage steht …“ und Warnungen; was künftig aufs Handy kommt, legt Micky separat fest.
 - Alte Lesezeichen `?seite=Konferenzraum` öffnen die Seite Setups.
+
+## Der Code für Balance und Ungleichgewicht – eine Zustandsmaschine (13.11.2026)
+
+Micky: „Diese 3 Bilder bilden jetzt die Grundlage für unsere ganze App und den Strategen.“ Ein Modul `kern/auktion.py`
+gibt Titel, Gruppe und Markt denselben Zustand: Balance · Test am Rand · abgelehnt · angenommen · Ungleichgewicht ·
+Ende des Laufs (Farben aus dem Bild: grau, grau, grün, rot, rot, grün; Anlass lila). Jedes Ergebnis trägt den Anlass,
+die Belege an ihrem Platz in der Kette, die Kraft, die den Lauf beendet (Gegner antwortet · Antrieb erlischt · Wert
+akzeptiert), wo die Gegenseite wartet und ob die Kraft eigen oder geliehen ist. Die alten Wörter (Phase, Market
+Profile, Feld, O'Neil, Marktzone) stehen als Unterzeile.
+
+- **Titel:** das jüngste Ereignis der letzten 10 Handelstage am Rand entscheidet (Ausbruch/Fehlausbruch des
+  VCP-Scanners, Ausbruch A, Umkehr U und Scheitern S des Market Profile, Spring, Upthrust, Bruch der Spanne, Ausbruch
+  aus der Verteilung). Ereignisse des Market Profile innerhalb der Zone des Scanners sind innere Rotation, kein Test am
+  Rand. Ohne Ereignis: Kurs in der Zone = Balance bzw. Test am Rand (höchstens 3 % vom Rand oder MP „an der Schwelle“);
+  Phase 2/4 außerhalb der Zone = Ungleichgewicht, mit einer der drei Kräfte = Ende des Laufs.
+- **Gruppe:** Feld der Rotationskarte plus Breite (Anteil der Mitglieder über dem GD50, heute und vor 4 Wochen) und
+  Anführer/Verfolger je Gruppe (`rueckenwind.anfuehrer_verfolger`, zurückgeholt und je Gruppe gerechnet).
+- **Markt:** O'Neil (Marktrichtung) mit dem gescheiterten Erholungsversuch als „abgelehnt“
+  (`marktrichtung.verlauf` merkt ihn sich jetzt), die Marktzone der Lage als Unterzeile.
+- **Lücken gemessen:** Kraft ohne Weg am Rand, Exzess bzw. flache Kante aus den 30-Minuten-Kerzen (Exzess ab 15 % der
+  ATR), Volumenlücke bis Mauer/Stütze, Verkaufs- und Kauf-Klimax, anderer Rand nach einer Ablehnung, Größe der Ursache.
+- **Zusammengeführt:** „Wert wandert“ ist im Market Profile aufgegangen (Zeichen jetzt „an der Schwelle“); die
+  Weinstein-Zeile der Kachel Trend nennt nur noch, seit wann die Phase gilt.
+- **Anzeige:** Titelseite – Zustand unter dem Kopf und als Karte mit der Kette über dem Kreislaufbild; Setups – Pille
+  vor der Mini-Kurve, Spalte „Zustand“ in den Tabellen; Rückenwind – Zustand des Marktes oben, Zustand jeder Gruppe in
+  der Wetterkarte (Belege beim Darüberfahren).
+- **Strategen-Call** (`kern/strategen.py`, Knopf unter dem Kreislaufbild): ein Stratege, nur das Material der App mit
+  Feldnummern, Kette Zustand → Anlass → wer ist am Rand stärker → angenommen/abgelehnt → Gegenseite → eigen/geliehen.
+  Antwort: Schuss long/short/kein, Disbalance, höchstens 3 Belege, Auslöser, widerlegt bei, Gegenzeuge. Der Code prüft
+  Felder, Zahlen und Seiten und zeigt jeden Befund. Einmal je Titel und Kurstag (`daten/strategen/`), Kosten im
+  Kostenbuch, Deckel 50 $.
+
+Gemessen über 1.907 Titel (Daten bis 04.11.2026, ein breiter Ausbruchstag – 23 % mit Ausbruch des Scanners in 10
+Tagen): angenommen 43 %, Balance 26 %, abgelehnt 20 %, Test am Rand 8 %, Ende des Laufs 2,5 %, Ungleichgewicht 1,2 %.
