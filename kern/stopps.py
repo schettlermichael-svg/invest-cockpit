@@ -5,7 +5,7 @@ Einstieg und Stopp wie auf der Lagekarte (depot.plan): ein Stopp, 1,5 ATR vom Ei
 vorher Stopp A des Systems und Stopp B 1,5 × ATR nebeneinander). Stopp B bleibt nur, wenn erk keine ATR trägt.
 Nächster Widerstand über dem Einstieg (Weinstein): das nächste alte Hoch der letzten 52 Wochen, das seither nicht
 überstiegen wurde (ältere Hochs sind ausgewaschen), oder ein fallender GD150/GD200 (Short gespiegelt: altes Tief bzw.
-steigender Durchschnitt) oder der nächste Volumenknoten des 52-Wochen-Profils (Auction Market Theory: der Preis wandert
+steigender Durchschnitt) oder der nächste Volumenknoten des verankerten Profils (seit 13.11.2026: grau, Mauer seit Hoch, Stütze seit Tief – volumenprofil.verankert; Auction Market Theory: der Preis wandert
 von Wert zu Wert) – die erste Hürde, an der der Lauf stocken kann.
 CRV 1 = Abstand bis zur ersten Hürde ÷ Stoppabstand (Weinstein/AMT, bewusst vorsichtig); ohne Hürde „freie Bahn“.
 CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand (Minervini), sobald MIN_TRADES geschlossene Trades vorliegen.
@@ -51,7 +51,7 @@ def widerstand(df, seite, e, knoten=()):
             jetzt, vorher = float(gd.iloc[-1]), float(gd.iloc[-21])
             if (lang and jetzt > e * 1.01 and jetzt < vorher) or (not lang and jetzt < e * 0.99 and jetzt > vorher):
                 kand.append((jetzt, f"GD{k} {'fallend' if lang else 'steigend'}"))
-    for k0, k1 in knoten or ():                 # Volumenknoten des 52-Wochen-Profils: nächster Wert in Laufrichtung
+    for k0, k1 in knoten or ():                 # Volumenknoten des verankerten Profils: nächster Wert in Laufrichtung
         if lang and k0 > e * 1.01:
             kand.append((float(k0), f"Volumenknoten {_geld(k0)}–{_geld(k1)} $"))
         if not lang and k1 < e * 0.99:

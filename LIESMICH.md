@@ -829,3 +829,16 @@ Micky: „Unsere ganze App steckt wahrscheinlich noch voll dieser blinden Flecke
 **Stab:** Jäger mit 20 Anwärtern long und 10 short (zwei long, ein short im Wechsel), dazu jede Depotposition mit frühen Zeichen der Schwäche (muss genannt werden, sonst Wache). Die Rangfolge der Akten kennt den Kreislauf. Zahlen gibt es jetzt für jeden Titel, nicht nur für Titel mit Stufe.
 
 **Freitag (Micky 13.11.2026):** „Ein Zeichen der Stärke ist auch freitags abends keine großen Gewinnmitnahmen nach einem guten wöchentlichen Lauf.“ `zeichen.freitag`: letzte fertige Woche mindestens 2 Wochen-ATR im Plus, der letzte Handelstag schließt im oberen Drittel und nicht schwächer als −0,5 %, die Woche im oberen Viertel ihrer Spanne → Stärke (Art Nachfrage/Volumen). Spiegelbild: nach einer Woche von mindestens −2 Wochen-ATR keine Eindeckung → Schwäche. Gemessen an 1.885 Titeln: je Woche 0,4–0,9 % (Wochen 23.10. und 30.10.).
+
+## Verankerung von AVWAP und Volumenprofil (13.11.2026)
+
+Micky: „Die Verankerung ist extrem wichtig. Für das Volumenprofil und für den AVWAP. Falsch verankert machen diese beiden keinen Sinn und führen zu falschen Annahmen.“ Regel: Anker nur aus Ereignis und Struktur, nie aus dem Kalender (`kern/avwap.py`, eine Quelle für Chart, Lagekarte und Stab).
+
+- Hoch: das Hoch, von dem der laufende Fall ausging – höchstes Hoch der 52 Wochen; liegt es am Rand des Fensters, wird bis 2 Jahre zurück gesucht.
+- Tief der Bewegung: das tiefste Tief seit dem Hoch (mindestens 10 Handelstage her); steht der Titel am Hoch, das Tief, von dem der Lauf zum Hoch ausging – ebenfalls nie der Rand eines Fensters.
+- Ereignis: der jüngere von Zahlentag (Reaktion ab 3 %, `avwap.zahlentag`) und Lücke ab 4 % mit doppeltem Volumen. Der eigene Anker „Zahlentag“ entfällt.
+- Gemessen an 584 Titeln (Daten bis 04.11.): vorher lag das Tief der 6 Monate bei 95 Titeln (16 %) am Fensterrand, nachher bei 5; von 242 Zahlenreaktionen ab 3 % waren vorher 151 kein Anker, nachher alle.
+- Volumenprofil (`volumenprofil.verankert`, statt starr 52 Wochen): grau ab dem jüngeren von Beginn der Zone und Ereignis (mindestens 5 Handelstage, sonst ab dem Tief der Bewegung) mit dem akzeptierten Wert; Mauer = nächster Knoten seit dem Hoch über dem Kurs, Stütze = nächster Knoten seit dem Tief unter dem Kurs.
+- Chart: Profil als durchscheinende Balken von rechts über den Kerzen (der Chart behält seine Breite), Mauer rot und Stütze grün als Bänder mit Preis und Anker-Datum, Überschrift mit Anker und Zahl der Tage.
+- Lagekarte: die Hürde für das CRV kommt aus den Knoten des verankerten Profils.
+- Stab: die Akte trägt AVWAP (hoch, tief_der_bewegung, ereignis) und „volumen“ (akzeptierter Wert, Mauer, Stütze) mit denselben Ankern wie der Chart; der Zahlentag gilt jetzt für jede Akte, nicht nur für die Zahlen-Reaktion.

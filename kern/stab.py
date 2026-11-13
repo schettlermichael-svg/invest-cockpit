@@ -572,34 +572,48 @@ def _runden(x, n=2):
     return x
 
 
-def avwaps(df, zahlentag=None):
-    """Anchored VWAP nach Brian Shannon für die Akte des Stabs (10.11.2026), dieselben Anker wie der Wahlschalter im
-    Chart (kern/avwap.py): Hoch der letzten 52 Wochen, Tief der letzten 6 Monate, jüngster Ereignistag. Je Anker:
-    Datum, Wert, Abstand des Kurses in %, Richtung (über 5 Tage: steigt, fällt, flach); „pinch“, wenn Hoch- und
-    Tief-AVWAP weniger als 3 % auseinander liegen."""
+def avwaps(df, zahltag=None, zone_start=None):
+    """Anchored VWAP nach Brian Shannon und das verankerte Volumenprofil für die Akte des Stabs – dieselben Anker wie
+    Chart und Lagekarte (kern/avwap.py, 13.11.2026: nie aus dem Kalender): Hoch, von dem der Fall ausging; Tief, von
+    dem die Bewegung ausging; Ereignis (Zahlen ab 3 % oder Lücke ab 4 % mit Volumen ×2). Je Anker: Datum, Wert, Abstand
+    des Kurses in %, Richtung (über 5 Tage); „pinch“, wenn Hoch- und Tief-AVWAP weniger als 3 % auseinander liegen.
+    Dazu „volumen“: akzeptierter Wert seit Zone bzw. Ereignis, Mauer (Knoten seit dem Hoch über dem Kurs) und Stütze
+    (Knoten seit dem Tief unter dem Kurs)."""
+    import pandas as pd
     import avwap
-    a = avwap.anker(df)
-    if zahlentag:                                        # Reaktionstag der Zahlen-Reaktion (12.11.2026)
-        import pandas as pd
-        a["zahlentag"] = pd.Timestamp(zahlentag)
+    import volumenprofil
+    a = avwap.anker(df, zahltag)
     if not a:
         return None
     kurs = float(df["Close"].iloc[-1])
-    namen = {"hoch": "hoch_52_wochen", "tief": "tief_6_monate", "ereignis": "ereignistag", "zahlentag": "zahlentag"}
+    namen = {"hoch": "hoch", "tief": "tief_der_bewegung", "ereignis": "ereignis"}
     aus = {}
     for k, tag in a.items():
         av = avwap.reihe(df, tag)
         if len(av) < 6:                                  # Anker erst wenige Tage alt: noch keine Aussage
             aus[namen[k]] = {"ab": f"{tag:%Y-%m-%d}", "hinweis": "Anker erst wenige Tage alt – Kurs steht am "
-                             + {"hoch": "Hoch", "tief": "Tief", "ereignis": "Ereignis", "zahlentag": "Reaktionstag"}[k]}
+                             + {"hoch": "Hoch", "tief": "Tief", "ereignis": "Ereignis"}[k]}
             continue
         w, vor = float(av.iloc[-1]), float(av.iloc[-6])
         r = (w / vor - 1) * 100 if vor else 0
         aus[namen[k]] = {"ab": f"{tag:%Y-%m-%d}", "wert": _zahl(w), "kurs_abstand_pct": _zahl((kurs / w - 1) * 100, 1),
                          "richtung": "steigt" if r > 0.3 else "fällt" if r < -0.3 else "flach"}
-    h, t = aus.get("hoch_52_wochen"), aus.get("tief_6_monate")
+    h, t = aus.get("hoch"), aus.get("tief_der_bewegung")
     if h and t and h.get("wert") and t.get("wert"):
         aus["pinch"] = abs(h["wert"] / t["wert"] - 1) * 100 < avwap.PINCH_PCT
+    try:
+        vv = volumenprofil.verankert(df, zahltag, zone_start)
+    except Exception:  # noqa: BLE001
+        vv = None
+    if vv:
+        g = vv.get("grau") or {}
+        aus["volumen"] = {
+            "akzeptierter_wert": _zahl(g["profil"]["poc"]) if g.get("profil") else None,
+            "seit": f"{pd.Timestamp(g['ab']):%Y-%m-%d}" if g.get("ab") is not None else None, "anker": g.get("art"),
+            "mauer": {"von": _zahl(vv["mauer"][0]), "bis": _zahl(vv["mauer"][1]),
+                      "seit_hoch": f"{pd.Timestamp(vv['mauer'][2]):%Y-%m-%d}"} if vv.get("mauer") else None,
+            "stuetze": {"von": _zahl(vv["stuetze"][0]), "bis": _zahl(vv["stuetze"][1]),
+                        "seit_tief": f"{pd.Timestamp(vv['stuetze'][2]):%Y-%m-%d}"} if vv.get("stuetze") else None}
     return aus or None
 
 
@@ -872,7 +886,17 @@ def lagebild():
             if df is not None and len(df):
                 kurs = float(df["Close"].iloc[-1])
                 a = atr_modul.wert(df)
-                av = avwaps(df, (x.get("zr") or {}).get("tag") if x.get("reihe") == "zahlen" else None)
+                import avwap as avwap_
+                import kartentisch as kt_
+                _, gew_ = kt_._fund_gespeichert(tk)
+                zone_ = None
+                try:
+                    import vcp_zone
+                    z_ = vcp_zone.zone(df)
+                    zone_ = df.index[int(z_["start_i"])] if z_.get("zone") else None
+                except Exception:  # noqa: BLE001
+                    pass
+                av = avwaps(df, avwap_.zahlentag(df, gew_) if gew_ is not None else None, zone_)
         except Exception:  # noqa: BLE001
             pass
         ein = x.get("einstieg") or {}                   # Einstieg des Setups, im Kartentisch festgestellt (Prüf-Agent

@@ -33,8 +33,11 @@ SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trend
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
 # Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
-AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA", "zahlen": "#FFD54F"}
-AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag", "zahlen": "Zahlentag"}
+AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#FFD54F"}
+# Anker aus Ereignis und Struktur, nie aus dem Kalender (13.11.2026, kern/avwap.py): Hoch, von dem der Fall ausging;
+# Tief, von dem die Bewegung ausging; Ereignis = jüngere von Zahlenreaktion ab 3 % und Lücke ab 4 % mit Volumen ×2
+AVWAP_KURZ = {"hoch": "Hoch", "tief": "Tief der Bewegung", "ereignis": "Ereignis"}
+PROFIL_FARBE = "#8FA3BF"
 AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Zonenanker gestrichen: zu kurzfristig, Micky)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
@@ -154,6 +157,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         _zonen(zonen, zonen_ansicht, d, pos, X, Y, A, spaete, platz, ENDE, breite / N / 2)
 
     if tag_ebene:
+        _profil(marken.get("profil"), d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax)
         _kaufzone(marken, d, pos, X, Y, A, spaete, platz, ENDE)
 
     # Kerzen
@@ -198,12 +202,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                               f'{text.replace("&", "&amp;")}</text>')
     if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
         import avwap
-        anker = avwap.anker(voll)
-        import zahlen_reaktion
-        zt = [t_ for t_, p_ in (marken.get("earnings") or []) if abs(p_) >= zahlen_reaktion.REAKTION_PCT
-              and t_ >= voll.index[max(0, len(voll) - 126)]]
-        if zt:                                     # Reaktionstag der jüngsten Zahlen ab 3 % (Zahlen-Reaktion, 12.11.2026)
-            anker["zahlen"] = zt[-1]
+        anker = avwap.anker(voll, marken.get("zahltag"))   # dieselben Anker wie Lagekarte und Stab
         reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
                   if k in anker}
         if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
@@ -598,6 +597,50 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
                       f'font-weight="700" text-anchor="middle">{t_}</text>')
 
 
+def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
+    """Verankertes Volumenprofil (13.11.2026): grau ab Zone bzw. Ereignis als durchscheinende Balken von rechts mit dem
+    akzeptierten Wert, die Mauer (Knoten seit dem Hoch über dem Kurs) rot und die Stütze (Knoten seit dem Tief unter dem
+    Kurs) grün als schmale Bänder am rechten Rand. Der Chart behält seine Breite."""
+    if not vv:
+        return
+    g = vv.get("grau") or {}
+    p = g.get("profil")
+    if p:
+        vmax = float(max(p["volumen"])) or 1.0
+        for k in range(len(p["volumen"])):
+            lo_, hi_ = float(p["grenzen"][k]), float(p["grenzen"][k + 1])
+            if hi_ < pmin or lo_ > pmax:
+                continue
+            w = breite * float(p["volumen"][k]) / vmax
+            y1, y2 = Y(min(hi_, pmax)), Y(max(lo_, pmin))
+            A(f'<rect x="{ENDE - w:.1f}" y="{y1:.1f}" width="{w:.1f}" height="{max(1, y2 - y1 - 1):.1f}" '
+              f'fill="{PROFIL_FARBE}" fill-opacity="0.26"/>')
+        if pmin <= p["poc"] <= pmax:
+            y_ = Y(p["poc"])
+            A(f'<line x1="{ENDE - breite}" x2="{ENDE}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{PROFIL_FARBE}" stroke-width="1.5"/>')
+            t_ = f"akzeptierter Wert {zahl(p['poc'])} $"
+            spaete.append(f'<text x="{ENDE - breite - 4}" y="{platz(ENDE - breite - 4, y_ - 4, t_, 11, "end"):.1f}" '
+                          f'fill="{TEXT_2}" font-size="11" text-anchor="end">{t_}</text>')
+        art = {"Zone": "seit Beginn der Zone", "Ereignis": "seit dem Ereignis", "Tief": "seit dem Tief"}.get(g.get("art"), "")
+        spaete.append(f'<text x="{ENDE - 4}" y="44" fill="{TEXT_3}" font-size="12" text-anchor="end">VOLUMEN {art.upper()} '
+                      f'{pd.Timestamp(g["ab"]):%d.%m.} ({g.get("tage")} Tage)</text>')
+    for schl, farbe, wort in (("mauer", ROT, "Mauer seit Hoch"), ("stuetze", GRUEN, "Stütze seit Tief")):
+        k_ = vv.get(schl)
+        if not k_:
+            continue
+        k0, k1, ab = k_
+        if k1 < pmin or k0 > pmax:
+            continue
+        y1, y2 = Y(min(k1, pmax)), Y(max(k0, pmin))
+        hoehe = max(2, y2 - y1)
+        A(f'<rect x="{ENDE - 6}" y="{y1:.1f}" width="6" height="{hoehe:.1f}" fill="{farbe}" fill-opacity="0.85"/>'
+          f'<rect x="{X(0) - 4:.1f}" y="{y1:.1f}" width="{ENDE - X(0) + 4:.1f}" height="{hoehe:.1f}" fill="{farbe}" '
+          f'fill-opacity="0.06"/>')
+        t_ = f"{wort} {pd.Timestamp(ab):%d.%m.}: {zahl(k0)}–{zahl(k1)} $"
+        spaete.append(f'<text x="{ENDE - 10}" y="{platz(ENDE - 10, (y1 + y2) / 2 + 4, t_, 11, "end"):.1f}" fill="{farbe}" '
+                      f'font-size="11" font-weight="600" text-anchor="end">{t_}</text>')
+
+
 def _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l):
     """Die gemessenen Zeichen im Kurschart (Prüf-Agent 13.11.2026: der Chart zeigte sie nicht): Schwungpunkte (Dow,
     n = 5) als kleine Ringe, Pocket Pivot „PP“, Spring „S“ und Upthrust „U“, höheres Tief bzw. tieferes Hoch gegen den
@@ -745,8 +788,11 @@ def legende(ebene="Tag", gd_kurz=False):
                   (GRUEN, "Band: viel Volumen am Aufwärtstag (blass über dem Schnitt, kräftig ab 1,5-fach), rot am Abwärtstag")]
     if ebene == "Tag":
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
-                      (AVWAP_FARBEN["hoch"], "AVWAP ab Hoch 52 Wochen"), (AVWAP_FARBEN["tief"], "AVWAP ab Tief 6 Monate (mit Hoch: Zange)"),
-                      (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (AVWAP_FARBEN["zahlen"], "AVWAP ab Zahlentag (Reaktion ab 3 %)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
+                      (AVWAP_FARBEN["hoch"], "AVWAP ab dem Hoch, von dem der Fall ausging"),
+                      (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief, von dem die Bewegung ausging (mit Hoch: Zange)"),
+                      (AVWAP_FARBEN["ereignis"], "AVWAP ab dem Ereignis (Zahlen ab 3 % oder Lücke ab 4 % mit Volumen ×2)"),
+                      (PROFIL_FARBE, "Volumenprofil seit Zone bzw. Ereignis, Linie = akzeptierter Wert"),
+                      (ROT, "Band rechts rot: Mauer (Knoten seit dem Hoch) · grün: Stütze (Knoten seit dem Tief)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),
                       (TEXT_2, "○ Schwungpunkte (Dow) · PP = Pocket Pivot · S = Spring · U = Upthrust · ◆ = höheres Tief "
                                "(grün) bzw. tieferes Hoch (rot) gegen den Index"),

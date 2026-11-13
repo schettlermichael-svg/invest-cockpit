@@ -1,10 +1,11 @@
 """Volumenprofil nach der Auction Market Theory: wie viel Volumen bei welchem Preis gehandelt wurde.
 
 Aus Tageskerzen genähert: Das Volumen jedes Tages wird gleichmäßig über seine Tagesspanne (Tief bis Hoch) verteilt.
-Im Chart über die letzten 52 Wochen (JAHR) als Spalte rechts. Knoten (High Volume Node): zusammenhängende Preiszonen
+Seit 13.11.2026 verankert nach Ereignis und Struktur (verankert(), Anker aus avwap.profil_anker) statt starr über 52 Wochen. Knoten (High Volume Node): zusammenhängende Preiszonen
 mit mindestens 60 % des größten geglätteten Volumens – dort hat der Markt den Preis akzeptiert. Wertbereich: die 70 % des Volumens um den meistgehandelten Preis (Point of Control).
 """
 import numpy as np
+import pandas as pd
 
 FAECHER = 48
 KNOTEN, WERT = 0.60, 0.70   # Knoten: mindestens 60 % des größten (geglätteten) Volumens
@@ -59,4 +60,34 @@ def knoten(p):
             i = j + 1
         else:
             i += 1
+    return aus
+
+
+def verankert(df, zahltag=None, zone_start=None):
+    """Volumenprofil nach den Ankern aus avwap.profil_anker (Micky 13.11.2026: nie aus dem Kalender) →
+    {grau: {profil, ab, art, tage}, mauer: (unten, oben, ab) oder None, stuetze: (unten, oben, ab) oder None,
+    knoten: [(unten, oben)] – alle Knoten von grau, Hoch und Tief für die Hürde der Lagekarte} oder None.
+    Mauer: der nächste Knoten seit dem Hoch über dem Kurs (das Angebot der gefangenen Käufer). Stütze: der nächste
+    Knoten seit dem Tief unter dem Kurs (die Käufer im Gewinn)."""
+    import avwap
+    a = avwap.profil_anker(df, zahltag, zone_start)
+    if not a:
+        return None
+    kurs = float(df["Close"].iloc[-1])
+    pos = lambda t: int(df.index.searchsorted(pd.Timestamp(t)))      # noqa: E731
+    g_tag, g_art = a["grau"]
+    pg = profil(df, pos(g_tag))
+    aus = {"grau": {"profil": pg, "ab": g_tag, "art": g_art, "tage": int((df.index >= g_tag).sum())} if pg else None,
+           "mauer": None, "stuetze": None, "knoten": list(knoten(pg)) if pg else []}
+    for schl, tag in (("mauer", a["hoch"]), ("stuetze", a["tief"])):
+        p = profil(df, pos(tag))
+        if not p:
+            continue
+        kn = knoten(p)
+        aus["knoten"] += kn
+        kn = [k for k in kn if (k[0] > kurs if schl == "mauer" else k[1] < kurs)]
+        if kn:
+            k0, k1 = min(kn) if schl == "mauer" else max(kn)
+            aus[schl] = (k0, k1, tag)
+    aus["knoten"] = sorted(set(aus["knoten"]))
     return aus

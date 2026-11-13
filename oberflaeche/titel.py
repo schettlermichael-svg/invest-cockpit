@@ -1038,13 +1038,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:  # noqa: BLE001
         erk["atr"] = None
     erk["df_index"] = df.index
-    try:                                          # Volumenprofil der letzten 52 Wochen für die Spalte rechts im Chart
-        import volumenprofil
-        i_vp = max(0, len(df) - volumenprofil.JAHR)
-        p_vp = volumenprofil.profil(df, i_vp)
-        erk["profil"] = dict(p_vp, anker=i_vp, anker_art="52 Wochen", knoten=volumenprofil.knoten(p_vp)) if p_vp else None
-    except Exception:  # noqa: BLE001
-        erk["profil"] = None
     try:
         erk["rs_rang"] = rs_rang.rang(tk)
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
@@ -1084,6 +1077,15 @@ def seite_titel(ticker, laufend=False, _stand=None):
         bis = m_["ausbruch"]["vortag_i"] if m_.get("ausbruch") else len(df)   # Enge bis zum Vortag des Ausbruchs
         zonen["enge"] = vcp_zone.enge_datiert(df.iloc[:bis], m_["zone"])
     k_ = system_kullamaegi.pruefen(df, erk, gtage, ticker=tk, scan=scan)
+    try:                       # Volumenprofil, verankert nach Ereignis und Struktur (13.11.2026, vorher starr 52 Wochen)
+        import avwap
+        import volumenprofil
+        z_j = (zonen or {}).get("jetzt") or {}
+        erk["zahltag"] = avwap.zahlentag(df, gewinne) if gewinne is not None else None
+        vv = volumenprofil.verankert(df, erk["zahltag"], z_j.get("start_t") if z_j.get("zone") else None)
+        erk["profil"] = {"knoten": vv["knoten"], "verankert": vv} if vv else None
+    except Exception:  # noqa: BLE001
+        erk["profil"] = None
     reif = next(ok for n, ok, _ in m_["regeln"] if n.startswith("Reife Base"))
     erk["scanner_zone"] = m_["zone"] if m_["zone"].get("zone") else None   # Frühwarnung: Unterkante der Zone
     try:                                         # IBD-Basenzählung auf den Scanner-Zonen (Kachel Base, Nummern im Chart)
@@ -1114,6 +1116,8 @@ def seite_titel(ticker, laufend=False, _stand=None):
         gestaltung.SYSTEM, gestaltung.SYSTEM_SHORT, gestaltung.SYSTEM_JE = None, False, {}
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
     marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw, su, zr_)
+    marken["profil"] = (erk.get("profil") or {}).get("verankert")
+    marken["zahltag"] = erk.get("zahltag")
     stellung = _stellung(df, marken)
     oben = [_kopf(tk, sb, df, fd, mit_rueckgang=not reif) + _lagezeile(tk, rw, stellung) + warnung_kopf(erk)
             + hinweis_laufend, leiste, _kreislauf_box(tk, df, index, gewinne, m_)]
