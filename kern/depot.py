@@ -206,7 +206,7 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
     einer alten Base und den Stopp 247,93 $ über dem Kurs). → (Seite, Einstieg, Quelle) oder (None, None, "").
       Sprung (EP)          Hoch des Sprungtags (Pivot des EP)
       Zahlen-Reaktion      AVWAP ab dem Reaktionstag, Seite der Reaktion
-      Ermüdung, Bärenflagge  Unterkante (short)
+      Ermüdung, Bärenflagge, Bruch der Spanne  Unterkante (short)
       Base-Ausbruch        Pivot der Base (sonst Pivot des letzten Ausbruchs)
       Momentum-Ausbruch    Pivot der Konsolidierung
       Flagge, nur Muster   Pivot des Scanners (aus dem Abstand des Kartentischs)"""
@@ -216,8 +216,11 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
         return "long", float(k["ep"]["pivot"]), "Sprung (EP)"
     if r == "zahlen" and zr.get("avwap"):
         return zr.get("seite", "long"), float(zr["avwap"]), "AVWAP ab dem Reaktionstag"
-    if r in ("k_ermuedung", "k_baerenflagge") and (k.get("ermuedung") or {}).get("unten"):
-        return "short", float(k["ermuedung"]["unten"]), "Unterkante"
+    if r in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
+        import system_kullamaegi
+        em = system_kullamaegi.short_von(k, r) or {}
+        if em.get("unten"):
+            return "short", float(em["unten"]), "Unterkante"
     if r in ("m_spitze", "m_weitere"):
         e = m.get("pivot") or (m.get("ausbruch") or {}).get("pivot")
         return ("long", float(e), "Pivot der Base") if e else (None, None, "")

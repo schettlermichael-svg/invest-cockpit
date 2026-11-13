@@ -1,10 +1,10 @@
 """Kartentisch (4.11.2026; ein eigenes System seit 12.11.2026): alle Titel des Laufs einmal durchgerechnet, in Reihen
 geordnet, als Lagekarten. Die Reihen ordnen, sie filtern nicht – jeder Titel bleibt über die Titelseite erreichbar.
 
-Sieben Setups (Namen nach dem, was sie sind; die Regeln stammen von den Meistern, siehe REIHEN und setup_feststellen):
+Acht Setups (Namen nach dem, was sie sind; die Regeln stammen von den Meistern, siehe REIHEN und setup_feststellen):
   Base-Ausbruch (VCP)  ★ in der Kaufzone · weiter weg oder eine Regel fehlt · nur Muster (Regeln: Minervini)
   Flagge, Momentum-Ausbruch, Sprung (EP), Ermüdung (Short) (Regeln: Kullamägi; EP auch Bonde)
-  Zahlen-Reaktion (Drift nach den Zahlen), Bärenflagge (Short)
+  Zahlen-Reaktion (Drift nach den Zahlen), Bärenflagge (Short), Bruch der Spanne (Short, seit 13.11.2026; Weinstein)
   Watchlist: jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach dem Base-Ausbruch ★
 Ein Titel steht in genau einer Reihe (Vorrang in setup_feststellen); „auch“ nennt seine übrigen Setups.
 
@@ -36,7 +36,8 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
                                                 "fehlen (meist Trendvorlage, RS oder Zahlen) – sichtbar, geht nicht in die "
                                                 "Konferenz"),
           ("flagge", "Flagge", "Fahnenstange ab 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, auch "
-                               "in einer Base; grün, sobald der Kurs höchstens 5 % unter der Oberkante steht oder darüber (nach einem "
+                               "in einer Base, Kurs über dem steigenden GD50, Volumen in der Flagge leiser als in der "
+                               "Stange; grün, sobald der Kurs höchstens 5 % unter der Oberkante steht oder darüber (nach einem "
                                "Ausbruch: in der Kaufzone bis +5 %)"),
           ("k_breakout", "Momentum-Ausbruch", "Führer (oberste 1–2 % nach 1/3/6 Monaten) mit einer Pause von 1–3 Wochen "
                                               "nach einem Schub; gelb = Führer knapp oder Pause bis 8 Wochen"),
@@ -46,12 +47,16 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
                                                        "letzten 20 Handelstagen, Volumen über dem Schnitt, Schluss im "
                                                        "oberen (Short: unteren) Drittel, hält Tief und AVWAP des "
                                                        "Reaktionstags, Kurs über (unter) GD50; Einstieg am AVWAP"),
-          ("k_ermuedung", "Ermüdung · Short", "Ein Führer (GD200 steigt) bricht nach einer Fahnenstange ab 30 % aus seiner "
-                                              "Flagge nach unten (Schluss unter der Unterkante, letzte 5 Tage); grün bis "
-                                              "5 % darunter; Stopp 1,5 ATR über der Unterkante, das Setup erlischt schon "
+          ("k_ermuedung", "Ermüdung · Short", "Nach einer Fahnenstange ab 30 % bricht die Flagge nach unten (Schluss "
+                                              "unter der Unterkante, letzte 5 Tage) – meist ein Führer; grün bis 5 % "
+                                              "darunter; Stopp 1,5 ATR über der Unterkante, das Setup erlischt schon "
                                               "über dem Hoch des Auslösetags"),
-          ("k_baerenflagge", "Bärenflagge · Short", "Eine Erholungsrally im Abwärtstrend (GD200 fällt) bricht aus ihrer "
-                                                    "Flagge nach unten; grün bis 5 % unter der Unterkante")]
+          ("k_baerenflagge", "Bärenflagge · Short", "Steiler Fall ab 15 %, dann schwaches, leises Driften nach oben (GD50 "
+                                                    "fällt), dann Schluss unter dem Tief der letzten 5 Tage des "
+                                                    "Driftens; grün bis 5 % unter der Unterkante"),
+          ("k_bruch", "Bruch der Spanne · Short", "Eine Basis (Phase 1) oder Verteilung (Phase 3) von mindestens 6 Wochen "
+                                                  "bricht: Schluss mindestens 1 % unter ihrem Tief; grün bis 5 % "
+                                                  "darunter")]
 WATCHLISTS_NACH = "m_spitze"
 
 
@@ -109,7 +114,7 @@ def _stufe1(tk, start=None):
                 "tief52": bool(len(l) >= 252 and l[-1] <= l[-252:].min()),
                 "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
-                      "ermuedung": (k["ermuedung"] or {}).get("ampel")}}
+                      **{f_: (k.get(f_) or {}).get("ampel") for f_ in SHORTS.values()}}}
         import zahlen_reaktion
         info.update(setup_feststellen(df, m, k, zahlen_reaktion.pruefen(df, gewinne), scan))
         try:                                        # Kreislauf und Zeichen der Stärke/Schwäche (13.11.2026)
@@ -128,14 +133,15 @@ def _stufe1(tk, start=None):
 
 NAME = {"m_spitze": "Base-Ausbruch ★", "m_weitere": "Base-Ausbruch", "vcp": "Base-Ausbruch · nur Muster",
         "flagge": "Flagge", "k_breakout": "Momentum-Ausbruch", "k_ep": "Sprung (EP)", "zahlen": "Zahlen-Reaktion",
-        "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)"}
+        "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)", "k_bruch": "Bruch der Spanne (Short)"}
+from system_kullamaegi import SHORTS, short_von   # noqa: E402  Reihe → Feld in k (Ermüdung, Bärenflagge, Bruch)
 LEHRER = {"m_spitze": "M", "m_weitere": "M", "vcp": "M", "flagge": "K", "k_breakout": "K", "k_ep": "K", "zahlen": "K",
-          "k_ermuedung": "K", "k_baerenflagge": "K"}      # aus wessen Regeln die Kacheln urteilen (Meister als Lehrer)
+          "k_ermuedung": "K", "k_baerenflagge": "K", "k_bruch": "K"}      # aus wessen Regeln die Kacheln urteilen (Meister als Lehrer)
 
 
 def setup_feststellen(df, m, k, zr, scan):
     """Das eine Setup eines Titels (Micky 12.11.2026: ein eigenes System, ein Urteil je Titel) – für Kartentisch und
-    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Ermüdung/Bärenflagge → Base-Ausbruch ★
+    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★
     (Kaufzone) → Flagge → Momentum-Ausbruch → Base-Ausbruch (weiter weg oder eine Regel fehlt) → Base-Ausbruch · nur
     Muster. „auch“ nennt die übrigen Setups, die der Titel zeigt (nichts geht verloren).
     → {reihe, gruen, stern, abstand, abstand_vz, luecken, zr, zr_seite, short_art, still, scanner, ausbruch, auch}"""
@@ -152,20 +158,15 @@ def setup_feststellen(df, m, k, zr, scan):
                                             "avwap", "tief", "hoch", "halten", "text")}
     sf = {}
     if scan:
-        _scannerfeld(sf, scan, m["ausbruch"])     # Flagge oder Muster des Scanners – dieselbe Zone wie Minervini und Chart
-    em = k.get("ermuedung")
-    short_art = None
-    if em:
-        g200 = c[-200:].mean() if len(c) >= 222 else None
-        fuehrer_ = g200 is not None and g200 > c[-222:-22].mean() and h[-30:].max() > g200
-        short_art = "Ermüdung" if fuehrer_ else "Bärenflagge"
+        _scannerfeld(sf, scan, m["ausbruch"], df)     # Flagge oder Muster des Scanners – dieselbe Zone wie Minervini und Chart
     gefunden = []                                  # alle Setups, die der Titel zeigt (für „auch“)
     if k.get("ep") and k["ep"]["ampel"] != "rot":
         gefunden.append("k_ep")
     if zr and zr["ampel"] != "rot" and zr["abstand"] is not None:
         gefunden.append("zahlen")
-    if em:
-        gefunden.append("k_ermuedung" if short_art == "Ermüdung" else "k_baerenflagge")
+    for r_s in SHORTS:                             # Ermüdung → Bärenflagge → Bruch der Spanne
+        if short_von(k, r_s):
+            gefunden.append(r_s)
     if m["ampel"] == "grün" and m["abstand"] is not None and -PIVOT_NAH <= m["abstand"] <= KAUFZONE_M:
         gefunden.append("m_spitze")
     if sf.get("reihe") == "flagge":
@@ -184,13 +185,15 @@ def setup_feststellen(df, m, k, zr, scan):
         info.update(reihe="zahlen", zr_seite=zr["seite"], gruen=zr["ampel"] == "grün",
                     stern=bool(zr["ampel"] == "grün" and 0 <= e_ <= KAUFZONE_M), abstand=float(abs(zr["abstand"])),
                     abstand_vz=float(zr["abstand"]), luecken=zr["luecken"])
-    elif r_ in ("k_ermuedung", "k_baerenflagge"):
+    elif r_ in SHORTS:
+        em = short_von(k, r_)
+        short_art = em["art"]
         ab_ = float((c[-1] / em["unten"] - 1) * 100)
         # Short-Zone wie die Kaufzone gespiegelt (12.11.2026: DT stand 21,9 %, ALNY 25,2 % unter der Unterkante als
         # ★ – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
         gruen_ = em["ampel"] == "grün" and -KAUFZONE_M <= ab_ <= 0
         info.update(reihe=r_, short_art=short_art, stern=gruen_, gruen=gruen_, abstand=abs(ab_), abstand_vz=ab_,
-                    luecken=[] if gruen_ else ["Short: zurück in der Flagge"] if em["ampel"] != "grün"
+                    luecken=[] if gruen_ else ["Short: zurück über der Unterkante"] if em["ampel"] != "grün"
                     else [f"Short: schon {-ab_:.1f} % unter der Unterkante – gelaufen".replace(".", ",")])
     elif r_ == "m_spitze":
         info.update(reihe="m_spitze", stern=True)
@@ -201,7 +204,7 @@ def setup_feststellen(df, m, k, zr, scan):
         am_pivot = b.get("abstand") is not None and -PIVOT_NAH <= b["abstand"] <= KAUFZONE_M and \
             not (b.get("ausbruch") or {}).get("fehl")
         info.update(reihe="k_breakout", stern=b["ampel"] == "grün" and am_pivot, gruen=b["ampel"] == "grün",
-                    luecken=[f"Momentum-Ausbruch: {n}" for n, ok, _ in b["regeln"][:2] if not ok])
+                    luecken=[f"Momentum-Ausbruch: {n}" for n, ok, _ in b["regeln"][:3] if not ok])
     elif r_ == "m_weitere":
         info["reihe"] = "m_weitere"
     # Einstieg DES Setups (Prüf-Agent 12.11.2026): einmal hier festgestellt und gespeichert – Chart, Plan, Lagekarte
@@ -217,7 +220,7 @@ def setup_feststellen(df, m, k, zr, scan):
     info["auch"] = [NAME[x] for x in gefunden[1:] if NAME.get(x) != NAME.get(r_)]
     kb_ = (k.get("breakout") or {}).get("ausbruch")   # Ausbruchszeichen des Setups (12.11.2026: TREX im EP zeigte eine
     zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else kb_ if r_ == "k_breakout"
-                  else None if r_ in ("k_ep", "k_ermuedung", "k_baerenflagge", "zahlen")   # alte Konsolidierung)
+                  else None if r_ in ("k_ep", "zahlen", *SHORTS)   # alte Konsolidierung)
                   else m["ausbruch"] if m.get("pivot") else kb_)
     a_ = atr_.wert(df)
     if info.get("reihe") and a_ and a_ / c[-1] * 100 < STILL_PCT:
@@ -229,9 +232,12 @@ def setup_feststellen(df, m, k, zr, scan):
     if r_ == "zahlen":
         info["ausbruch"] = zr["text"]
     elif r_ == "k_ermuedung":
-        info["ausbruch"] = "▼ Ermüdung nach Überdehnung eines Führers (GD200 steigt)"
+        info["ausbruch"] = "▼ Ermüdung nach Überdehnung: die Flagge nach der Fahnenstange bricht nach unten"
     elif r_ == "k_baerenflagge":
-        info["ausbruch"] = "▼ Bärenflagge: Erholungsrally im Abwärtstrend, dann Bruch der Unterkante"
+        info["ausbruch"] = "▼ Bärenflagge: steiler Fall, schwaches Driften nach oben, dann Bruch der Unterkante"
+    elif r_ == "k_bruch":
+        info["ausbruch"] = "▼ Bruch der Spanne: Schluss unter dem Tief der " + (
+            "Basis" if "Basis" in str(short_von(k, r_)["regeln"][0][0]) else "Verteilung")
     if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch
         info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)
     if zeichen_br and (zeichen_br.get("fehl") or zeichen_br.get("ruecktest")):
@@ -248,7 +254,25 @@ PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über 
 KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
 
 
-def _scannerfeld(info, scan, br=None):
+def flagge_im_trend(df, f):
+    """Eine Flagge zählt nur im Aufwärtstrend und bei leisem Volumen (Prüf-Agent 13.11.2026: sie wurde auch in Phase 4
+    grün): Kurs über dem steigenden GD50 und Volumen in der Flagge leiser als in der Fahnenstange → (ok, Lücken)."""
+    if df is None or len(df) < 70 or not f:
+        return True, []
+    c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
+    g50 = df["Close"].rolling(50).mean().to_numpy(float)
+    luecken = []
+    if not (c[-1] > g50[-1] and g50[-1] > g50[-21]):
+        luecken.append("Flagge: kein Aufwärtstrend (Kurs unter dem GD50 oder GD50 fällt)")
+    i0, s0 = int(f.get("start_i", 0)), int((f.get("stange") or {}).get("von_i", 0))
+    if i0 > s0 and i0 < len(v):
+        flg, stg = v[i0:].mean(), v[s0:i0 + 1].mean()
+        if stg and flg >= stg:
+            luecken.append(f"Flagge: Volumen nicht leiser als in der Fahnenstange ({flg / stg:.2f}-fach)".replace(".", ","))
+    return not luecken, luecken
+
+
+def _scannerfeld(info, scan, br=None, df=None):
     """VCP · Enge grün (Zone mit grüner Enge, Kurs nah am Pivot) oder Flagge · Scanner (Flagge, auch in einer Base).
     Nach einem Ausbruch (br, bis 4 Wochen, auch Fehlausbruch) gilt die Zone vom Vortag."""
     from gestaltung import zahl
@@ -261,7 +285,8 @@ def _scannerfeld(info, scan, br=None):
                                 f'{zahl(br["pivot"])} $')
             return
         if bz.get("name") == "Flagge":
-            info.update(reihe="flagge", gruen=br["kaufzone"], stern=False, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
+            ok_, l_ = flagge_im_trend(df, bz)
+            info.update(reihe="flagge", gruen=br["kaufzone"] and ok_, stern=False, luecken=l_, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
                         pivot_scanner=float(br["pivot"]),
                         scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
                                 f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
@@ -279,7 +304,8 @@ def _scannerfeld(info, scan, br=None):
     f = z if z["name"] == "Flagge" else z.get("innen")
     if f and f["laenge"] == "ok":
         nah = f["abstand"] >= -PIVOT_NAH
-        info.update(reihe="flagge", gruen=nah, stern=False, abstand=abs(f["abstand"]), abstand_vz=f["abstand"],
+        ok_, l_ = flagge_im_trend(df, f)
+        info.update(reihe="flagge", gruen=nah and ok_, stern=False, luecken=l_, abstand=abs(f["abstand"]), abstand_vz=f["abstand"],
                     pivot_scanner=float(f["oben"]),
                     scanner=f'Flagge {zahl(f["wochen"], 1)} Wochen, {zahl(f["tiefe"], 0)} % tief · Stange '
                             f'+{zahl(f["stange"]["prozent"], 0)} % in {zahl(f["stange"]["wochen"], 1)} Wochen · '
@@ -337,6 +363,8 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
                 "barometer": {"m_gruen": sum(1 for x in stufe1 if (x.get("m") or {}).get("ampel") == "grün"),
                               "k_gruen": sum(1 for x in stufe1 if (x.get("k") or {}).get("ampel") == "grün"),
                               "k_ermuedung": sum(1 for x in stufe1 if (x.get("k") or {}).get("ermuedung") == "grün"),
+                              "k_short": sum(1 for x in stufe1 if any((x.get("k") or {}).get(f_) == "grün"
+                                                                      for f_ in SHORTS.values())),
                               "hochs": sum(x["hoch52"] for x in stufe1), "tiefs": sum(x["tief52"] for x in stufe1),
                               "titel": len(stufe1)},
                 "titel": {x["tk"]: {k: v for k, v in x.items() if k != "tk"} for x in in_reihe},
@@ -379,7 +407,8 @@ def eintrag_von(tk):
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "k_ermuedung": 4, "k_baerenflagge": 4, "flagge": 4, "k_breakout": 4,
+RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "k_ermuedung": 4, "k_baerenflagge": 4, "k_bruch": 4, "flagge": 4,
+        "k_breakout": 4,
         "m_weitere": 3, "vcp": 1, None: 0}
 
 

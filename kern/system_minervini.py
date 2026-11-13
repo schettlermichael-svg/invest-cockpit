@@ -11,7 +11,8 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      höchstens 50 % tief. Fällt die große Zone durch (zu tief, Konsolidierung nach einem Absturz), steht darin aber eine
      Flagge mit eigener Fahnenstange, gilt die Flagge als Base (Micky, 06.11.2026) – Enge, Pivot und Stopp dann aus ihr.
   5. Enge (VCP): Baustein 2 des Scanners (vcp_zone.enge) – schrumpfende Kontraktionen, letzte höchstens 10 %, Volumen
-     leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb); nicht erfüllt bei rot.
+     leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb) und mindestens 2 Kontraktionen (Micky 13.11.2026:
+     „ab zwei Kontraktionen“ – mit einer ist es noch kein VCP); nicht erfüllt bei rot.
 Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner (vorher Wertzone und Absorption) – Chart, Scanner und
 Minervini zeigen dieselbe Linie.
 Ausbruch (06.11.2026): Schloss der Kurs in den letzten 4 Wochen über dem Pivot, gelten Zone, Enge und Pivot vom
@@ -90,6 +91,7 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     reif = bool(_reif(z))
     eng = e.get("ampel", "grau") if reif else "grau"
     z_ok, z_txt = _zahlen(fund)
+    n_kontr = len(e.get("kontraktionen") or []) if reif else 0
     if reif:
         zone_txt = (f"{art} {z['wochen']:.1f} Wochen, {z['tiefe']:.0f} % tief".replace(".", ",")
                     + (f" (in einer {z['in_zone']})" if z.get("in_zone") else ""))
@@ -109,8 +111,9 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
               ("Reife Base (Scanner)", reif, zone_txt),
-              ("Enge (VCP)", eng in ("grün", "gelb"),
-               (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", ""))
+              ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= 2,
+               (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", "")
+                + ("" if n_kontr >= 2 or eng not in ("grün", "gelb") else " – erst eine Kontraktion"))
                if reif else "ohne reife Base nicht prüfbar")]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"

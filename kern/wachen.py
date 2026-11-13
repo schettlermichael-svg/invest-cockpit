@@ -21,7 +21,7 @@ DATEI = os.path.join(HIER, "..", "daten", "nachtlauf", "wachen.json")
 TOL_EINSTIEG = 0.5             # % Abweichung zwischen den Stellen
 TOL_KURS, TOL_GD50 = 0.5, 1.0  # % gegen TradingView
 STICHPROBE = 10
-SHORT_REIHEN = ("k_ermuedung", "k_baerenflagge")
+SHORT_REIHEN = ("k_ermuedung", "k_baerenflagge", "k_bruch")
 STAB_WORTE = re.compile(r"Datenfehler|Widerspruch|widersprüchlich|widerspricht|fehlerhaft|falsch berechnet|"
                         r"stimmt nicht|unplausibel|doppelt|Rechenfehler|Datenproblem", re.IGNORECASE)
 

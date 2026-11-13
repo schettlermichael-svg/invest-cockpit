@@ -333,7 +333,8 @@ def _k2_fundament(m, k, fund, ph, df, gewinne):
         mm = ("grün" if g == "grün" and u == "grün" else "rot" if "rot" in (g, u) else "gelb",
               "wachsen" if z[1] else "zu schwach")
     ep = k.get("ep")
-    kk = ((("grün", "Zahlen am Sprungtag") if ep["regeln"][2][1] else ("gelb", "Nachricht prüfen"))
+    kk = ((("grün", "Zahlen am Sprungtag" if ep["regeln"][2][2].startswith("Zahlen") else
+             "ohne Zahlen, 5-fach Volumen, Schluss oben") if ep["regeln"][2][1] else ("gelb", "Nachricht prüfen"))
           if ep else None)
     ev = _ereignis(df, gewinne, fund) if (df is not None and fund) else None
     zeile = z[2] + (f" · {ev[1]}" if ev and ev[0] != "grau" else "")
@@ -349,10 +350,10 @@ def _k2_fundament(m, k, fund, ph, df, gewinne):
 
 def _k2_setup(m, k, erk, df):
     mm = (m["ampel"], m["setup"] if m["setup"] != "keines" else "keines")
-    em = k.get("ermuedung")
+    em = system_kullamaegi.short_von(k)
     h = k.get("haupt")
     if em and (not h or h["ampel"] == "rot"):
-        kk = (em["ampel"], "Ermüdung (short)" + (f" vor {em['tage_her']} T." if em["tage_her"] else ""))
+        kk = (em["ampel"], em["art"] + " (short)" + (f" vor {em['tage_her']} T." if em["tage_her"] else ""))
     else:
         kk = ((h["ampel"], h["art"] + (f" vor {h['tage_her']} T." if h["art"] == "Episodic Pivot" and h["tage_her"] else ""))
               if h and h["ampel"] != "rot" else ("rot", "keines"))
@@ -449,7 +450,7 @@ def fehlt(m, k):
     aus = []
     if m.get("ampel") == "gelb":
         aus += [f"M {n}" for n, ok, _ in m["regeln"] if not ok]
-    for x in ((k.get("haupt") or {}), (k.get("ermuedung") or {})):
+    for x in ((k.get("haupt") or {}), (system_kullamaegi.short_von(k) or {})):
         if x.get("ampel") == "gelb":
             aus += [f"K {n}" for n, ok, _ in x.get("regeln", []) if not ok]
     return aus
@@ -468,7 +469,8 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     kurs = float(c.iloc[-1])
     su = su or {}
     r_ = su.get("reihe")
-    hk, em = k.get("haupt"), k.get("ermuedung")
+    hk = k.get("haupt")
+    em = system_kullamaegi.short_von(k, r_) if r_ in system_kullamaegi.SHORTS else system_kullamaegi.short_von(k)
 
     def st(e, short=False):
         return f" · Stopp {zahl(e + ATR_STOPP * a if short else e - ATR_STOPP * a)} $ (1,5 ATR)" if a and e else ""
@@ -486,7 +488,7 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
             regel = (f" · gescheitert bei Schluss {'über dem Hoch' if kurz_ else 'unter dem Tief'} des Reaktionstags "
                      f"{zahl((zr or {}).get('hoch') if kurz_ else (zr or {}).get('tief'))} $ oder "
                      f"{'über' if kurz_ else 'unter'} dem AVWAP")
-        elif r_ in ("k_ermuedung", "k_baerenflagge"):
+        elif r_ in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
             regel = (f" · Setup erlischt bei Kurs über dem Hoch des Auslösetags {zahl(em['stopp'])} $"
                      if (em or {}).get("stopp") else "")
         elif r_ in ("k_ep", "k_breakout", "flagge"):
@@ -499,8 +501,8 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
             name += f" ({seite})"
         zeilen.append((name, f"Einstieg {zahl(e)} $ ({quelle})" + zone(e, kurz_) + st(e, kurz_) + regel))
     # übrige Setups, die der Titel zeigt („Auch“)
-    if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge"):
-        zeilen.append(("Auch · Short (Ermüdung/Bärenflagge)", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
+    if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
+        zeilen.append((f"Auch · Short ({em['art']})", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
                        + st(em["unten"], True)))
     if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
         zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
@@ -585,7 +587,7 @@ def _lagezeile(tk, rw, stellung):
             reihe = ({k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN).get(e["reihe"], e["reihe"])
         except Exception:  # noqa: BLE001
             reihe = e["reihe"]
-    kurz_ = e.get("reihe") in ("k_ermuedung", "k_baerenflagge") or (e.get("reihe") == "zahlen" and e.get("zr_seite") == "short")
+    kurz_ = e.get("reihe") in ("k_ermuedung", "k_baerenflagge", "k_bruch") or (e.get("reihe") == "zahlen" and e.get("zr_seite") == "short")
     if drei and reihe and not kurz_:                    # Volltreffer nur mit Long-Setup (Prüf-Agent 12.11.2026)
         chips.append((GRUEN, "★ Volltreffer: dreifacher Rückenwind und Setup"))
     elif drei:
@@ -865,7 +867,7 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
         pass
     m["rs"] = rw
     if seite == "short" and e and a:
-        em = k_.get("ermuedung") or {}
+        em = system_kullamaegi.short_von(k_, r_) or {}
         m["short"] = {"tag": em.get("tag") if r_ != "zahlen" else pd.Timestamp(zr["tag"]), "einstieg": float(e),
                       "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None,
                       "art": __import__("kartentisch").NAME.get(r_, "Short").split(" (")[0]}

@@ -38,8 +38,9 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
 Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
   schaut ausbruch() bis 4 Wochen zurück: Schluss über dem Pivot der Zone vom Vortag (oder der Flagge darin). Zone, Enge
   und Pivot von damals gelten weiter – bis 4 Wochen, oder bis sich darüber eine neue fertige Zone gebildet hat. Bis +5 %
-  über dem Pivot = Kaufzone (auch beim Rücksetzer auf den Pivot), darüber ausgedehnt. Schluss wieder unter dem Pivot =
-  🔴 Fehlausbruch (Zone und Pivot bleiben; neuer Schluss darüber = neuer Ausbruch).
+  über dem Pivot = Kaufzone, darüber ausgedehnt. Schluss knapp unter dem Pivot, das Tief des Ausbruchstags hält =
+  🟡 Rücktest (keine Kaufzone, beobachten; 13.11.2026). Schluss unter dem Tief des Ausbruchstags oder mehr als 3 % unter
+  dem Pivot = 🔴 Fehlausbruch (Zone und Pivot bleiben; neuer Schluss darüber = neuer Ausbruch).
   Zeichen (kein Muss, Micky): Volumen am Ausbruchstag über dem 50-Tage-Schnitt = mit Volumen.
 
 Short – Ermüdung nach Überdehnung (Kullamägi-Stopp, 06.11.2026): die Flagge, im Ausgang gespiegelt. Die Truppe ist weit
@@ -48,6 +49,17 @@ vorgestoßen, gräbt sich ein, dann bricht die Stellung nach hinten weg.
   Flagge in einer Base) · Auslöser: Schluss unter der Unterkante (in den letzten ERM_TAGE Handelstagen) · Stopp über dem
   Hoch des Auslösetags · Zeichen (kein Muss): Volumen am Bruch über dem 50-Tage-Schnitt
   grün: Kurs schließt noch unter der Unterkante · gelb: zurück in der Flagge, Stopp nicht erreicht · weg: Stopp erreicht
+
+Short – Bärenflagge (echt, Prüf-Agent 13.11.2026; vorher hieß jede gebrochene Flagge im Abwärtstrend so): erst ein
+steiler Fall, dann ein schwaches Driften nach oben, dann der Bruch – die Truppe zieht sich zurück, sammelt sich halbherzig
+und weicht weiter.
+  Fall mindestens 15 % in höchstens 30 Handelstagen · Driften 3–25 Tage, holt höchstens die Hälfte des Falls zurück,
+  steigende Tiefs, Volumen leiser als im Fall · GD50 fällt · Auslöser: Schluss unter dem Tief der letzten 5 Tage des
+  Driftens (Unterkante) · Stopp und Ampel wie bei der Ermüdung.
+
+Short – Bruch der Spanne (Prüf-Agent 13.11.2026): eine Basis (Phase 1) oder Verteilung (Phase 3) von mindestens 6 Wochen
+und höchstens 40 % Breite bricht nach unten – Schluss mindestens 1 % unter ihrem Tief (Unterkante). Die Stellung, die lange gehalten wurde, fällt.
+  Stopp und Ampel wie bei der Ermüdung.
 """
 import numpy as np
 import pandas as pd
@@ -395,13 +407,12 @@ def ermuedung(df, tage=ERM_TAGE):
         datum = df.index[t]
         regeln = [("Fahnenstange ab 30 % in höchstens 13 Wochen", True,
                    f"+{st['prozent']:.0f} % in {st['wochen']:.0f} Wochen"),
-                  ("Flagge 1–8 Wochen, höchstens 25 % tief", True, f"{f['wochen']:.1f} Wochen, {f['tiefe']:.0f} %"),
-                  ("Schluss unter der Unterkante", True, f"{datum:%d.%m.} · {c[t]:.2f} unter {f['unten']:.2f}"),
-                  ("Kurs noch unter der Unterkante", unter, f"heute {c[-1]:.2f}"),
+                  ("Flagge 1–8 Wochen, höchstens 25 % tief", True, f"{_de(f['wochen'], '.1f')} Wochen, {f['tiefe']:.0f} %"),
+                  ("Schluss unter der Unterkante", True, f"{datum:%d.%m.} · {_de(c[t])} unter {_de(f['unten'])}"),
+                  ("Kurs noch unter der Unterkante", unter, f"heute {_de(c[-1])}"),
                   ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
-                   f"{vol:.1f}-fach" if vol else "kein Volumen")]
-        return {"art": "Ermüdung nach Überdehnung", "ampel": "grün" if unter else "gelb",
-                "regeln": [(a, ok, x.replace(".", ",")) for a, ok, x in regeln],
+                   f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
+        return {"art": "Ermüdung nach Überdehnung", "ampel": "grün" if unter else "gelb", "regeln": regeln,
                 "tag": datum, "tage_her": n - 1 - t, "oben": f["oben"], "unten": f["unten"], "stopp": float(stopp),
                 "stange": st["prozent"], "volumen": vol, "start": f["start"]}
     return None
@@ -445,3 +456,101 @@ def alles(df):
     e = enge_datiert(df, jetzt)
     return {"jetzt": datiert_(jetzt), "enge": e, "verlauf": [datiert_(b) for b in verlauf(df)],
             "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}
+
+
+BF_FALL, BF_FALL_TAGE, BF_DRIFT = 0.15, 30, (3, 25)     # Bärenflagge: Fall ab 15 % in höchstens 30 Tagen, Driften 3–25 Tage
+SPANNE_WOCHEN = 6                                      # Bruch der Spanne: Phase 1 oder 3 mindestens 6 Wochen …
+SPANNE_BREIT = 0.40                                    # … und höchstens 40 % breit (sonst ist es keine Balance)
+
+
+def _de(x, fmt=".2f"):
+    return format(x, fmt).replace(".", ",")
+
+
+def _short_dict(df, art, t, oben, unten, regeln, start):
+    """Gemeinsame Form der Shorts (wie ermuedung): grün unter der Unterkante, gelb zurück darüber, None nach dem Stopp."""
+    c, h = df["Close"].to_numpy(float), df["High"].to_numpy(float)
+    n = len(df)
+    stopp = h[t]
+    if t < n - 1 and h[t + 1:].max() > stopp:                # Stopp erreicht: Setup vorbei
+        return None
+    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
+    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
+    unter = c[-1] < unten
+    regeln = regeln + [("Schluss unter der Unterkante", True, f"{df.index[t]:%d.%m.} · {_de(c[t])} unter {_de(unten)}"),
+                       ("Kurs noch unter der Unterkante", unter, f"heute {_de(c[-1])}"),
+                       ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
+                        f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
+    return {"art": art, "ampel": "grün" if unter else "gelb", "regeln": regeln,
+            "tag": df.index[t], "tage_her": n - 1 - t, "oben": float(oben), "unten": float(unten),
+            "stopp": float(stopp), "volumen": vol, "start": start}
+
+
+def baerenflagge(df, tage=ERM_TAGE):
+    """Echte Bärenflagge (steiler Fall, schwaches Driften nach oben, Bruch) oder None."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    n = len(df)
+    if n < 120:
+        return None
+    c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
+    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
+    g50 = pd.Series(c).rolling(50).mean().to_numpy()
+    for t in range(n - tage, n):
+        if not g50[t] < g50[t - 20]:
+            continue
+        b = t - BF_DRIFT[1] + int(np.argmin(l[t - BF_DRIFT[1]:t - BF_DRIFT[0] + 1]))     # Tief des Falls
+        a = b - BF_FALL_TAGE + int(np.argmax(h[b - BF_FALL_TAGE:b]))                       # Hoch vor dem Fall
+        fall = h[a] - l[b]
+        if fall / h[a] < BF_FALL:
+            continue
+        unten = l[t - 5:t].min()
+        oben = h[b:t].max()
+        if not (unten > l[b] and oben - l[b] <= 0.5 * fall and c[t - 1] > l[b]):
+            continue
+        ruhig = np.nanmean(v[b:t]) < np.nanmean(v[a:b + 1]) if b > a else False
+        if not ruhig or c[t] >= unten or c[t - 1] < unten:
+            continue
+        regeln = [("Steiler Fall ab 15 % in höchstens 30 Tagen", True,
+                   f"−{fall / h[a] * 100:.0f} % vom {df.index[a]:%d.%m.} bis {df.index[b]:%d.%m.}"),
+                  ("Schwaches Driften nach oben, leiser", True,
+                   f"{t - b} Tage, holt {(oben - l[b]) / fall * 100:.0f} % des Falls zurück"),
+                  ("GD50 fällt", True, "")]
+        return _short_dict(df, "Bärenflagge", t, oben, unten, regeln, df.index[b])
+    return None
+
+
+def spannenbruch(df, tage=ERM_TAGE):
+    """Bruch der Spanne: Schluss mindestens 1 % unter dem Tief einer Phase 1 oder 3 von mindestens 6 Wochen, oder None."""
+    import phase as phase_mod
+    df = df.dropna(subset=["High", "Low", "Close"])
+    n = len(df)
+    if n < 300:
+        return None
+    c, l = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
+    try:
+        ph = phase_mod.phasen(df)
+    except Exception:  # noqa: BLE001
+        return None
+    for t in range(n - tage, n):
+        fertig = ph[ph.index < df.index[t]]      # nur Wochen, deren Freitag vor dem Bruchtag liegt
+        if not len(fertig) or int(fertig.iloc[-1]) not in (1, 3):
+            continue
+        p = int(fertig.iloc[-1])
+        lauf = 0
+        for x in reversed(fertig.to_numpy()):
+            if int(x) != p:
+                break
+            lauf += 1
+        if lauf < SPANNE_WOCHEN:
+            continue
+        von = fertig.index[-lauf] - pd.Timedelta(days=6)
+        maske = (df.index > von) & (df.index < df.index[t])
+        unten = float(l[maske].min())
+        oben = float(df["High"].to_numpy(float)[maske].max())
+        if not (c[t] < unten * 0.99 and c[t - 1] >= unten * 0.99) or oben / unten - 1 > SPANNE_BREIT:
+            continue
+        regeln = [(f"{'Basis' if p == 1 else 'Verteilung'} (Phase {p}) mindestens 6 Wochen, höchstens 40 % breit", True,
+                   f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)")]
+        return _short_dict(df, "Bruch der Spanne", t, oben, unten, regeln, df.index[maske][0])
+    return None

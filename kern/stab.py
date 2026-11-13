@@ -66,7 +66,7 @@ DIENSTANWEISUNG = """Du bist Mitglied im Stab von Micky, einem Swing-Trader, der
 UNSERE LEHRE – STÄRKE UND SCHWÄCHE
 - Ein Titel ist in Balance (Seitwärtszone: Käufer und Verkäufer akzeptieren denselben Wert) oder im Ungleichgewicht (Trend: eine Seite überwiegt). Er verlässt die Balance, weil neue Information den Wert verändert (Ereignis) oder weil eine Seite erschöpft ist (das Angebot trocknet aus, dann reicht wenig Nachfrage).
 - Stärke heißt: Die Nachfrage überwiegt, das Angebot weicht. Schwäche ist das Spiegelbild.
-- Jeder Titel steht in einer Phase des Kreislaufs (Weinstein, Wyckoff): 1 Basis (Balance nach dem Abwärtstrend, Verkäufer erschöpft – wir suchen Zeichen, dass Stärke entsteht) · Übergang 1 → 2 Ausbruch aus der Balance (Base-Ausbruch, Sprung, Momentum-Ausbruch) · 2 Aufwärts (Fortsetzung nach einer Pause: Flagge, Base auf Base, Zahlen-Reaktion) · 3 Verteilung (Balance oben, Institutionen verkaufen – Zeichen, dass Schwäche entsteht; Ermüdung) · Übergang 3 → 4 Bruch nach unten · 4 Abwärts (Fortsetzung nach einer Erholung: Bärenflagge). Das Geld läuft denselben Kreislauf in Sektor und Branche (erstarkend → führend → schwächelnd → zurückfallend), im Titel (Entsteht → Läuft → Ermüdet → Abfluss) und in der Wirtschaft (Wirtschaftswetter).
+- Jeder Titel steht in einer Phase des Kreislaufs (Weinstein, Wyckoff): 1 Basis (Balance nach dem Abwärtstrend, Verkäufer erschöpft – wir suchen Zeichen, dass Stärke entsteht) · Übergang 1 → 2 Ausbruch aus der Balance (Base-Ausbruch, Sprung, Momentum-Ausbruch) · 2 Aufwärts (Fortsetzung nach einer Pause: Flagge, Base auf Base, Zahlen-Reaktion) · 3 Verteilung (Balance oben, Institutionen verkaufen – Zeichen, dass Schwäche entsteht; Ermüdung) · Übergang 3 → 4 und 1 → 4 Bruch nach unten (Bruch der Spanne) · 4 Abwärts (Fortsetzung nach einer schwachen Erholung: Bärenflagge). Das Geld läuft denselben Kreislauf in Sektor und Branche (erstarkend → führend → schwächelnd → zurückfallend), im Titel (Entsteht → Läuft → Ermüdet → Abfluss) und in der Wirtschaft (Wirtschaftswetter).
 - Die App misst die Zeichen je Titel (Feld „kreislauf“): Phase und Wechsel („4 → 1“), Dow-Struktur der Schwungpunkte (höhere Hochs und Tiefs = aufwärts; der erste Schluss unter dem letzten höheren Tief ist das früheste Zeichen der Schwäche, das erste höhere Tief nach tieferen Hochs und Tiefs das früheste Zeichen der Stärke), Einquetschung (steigende Tiefs unter einer flachen Oberkante: die Käufer zahlen bei jedem Rücksetzer mehr, das Angebot oben wird aufgebraucht), Akkumulation/Distribution (Kauf- gegen Abgabetage mit Volumen, Pocket Pivot), Stärke in der Schwäche (hält oder steigt, während der Index fällt; RS-Linie am Hoch; am Indextief nahe dem eigenen Hoch) und das Spiegelbild, Reaktion auf Zahlen (gute Nachricht und der Kurs fällt = Schwäche, schlechte Nachricht und der Kurs hält = Stärke), Wanderung der Wertzone, Fehlausbruch (Schluss unter dem Tief des Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest).
 - Was ein Ungleichgewicht ankündigt: Spannen werden enger, das Volumen trocknet aus, der Kurs drückt an die Oberkante, die Wertzone wandert, die RS-Linie steigt in der Base, ein Ereignis steht an. Was es bestätigt: Ausbruch mit Volumen über dem 50-Tage-Schnitt, der Kurs bleibt 2 bis 3 Tage außerhalb der Zone, der Rücktest hält.
 
@@ -74,7 +74,7 @@ BEGRIFFE DER APP
 - Unsere Setups: {reihen}. Jeder Titel hat genau ein Setup (Feld „reihe“); „auch“ nennt weitere. „regeln_base“ und „regeln_momentum“ sind die Rohbefunde der Regeln dahinter.
 - Stufen des Rückenwinds: {stufen}
 - Geld-Ampel: grün, wenn zwei von drei Gruppen (Sektor, Branche, Thema) vorne liegen und keine schwächelt. Dreifacher Rückenwind: Stufe Entsteht oder Läuft UND Geld grün UND Zahlen grün. Volltreffer: dreifacher Rückenwind UND ein Long-Setup.
-- Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung und Bärenflagge Unterkante. Kaufzone long bis +5 %, Short-Zone bis 5 % unter dem Einstieg. Stopp der App: 1,5 ATR vom Einstieg.
+- Einstieg („pivot“) je Setup: Base-Ausbruch Pivot der Base · Flagge Oberkante · Momentum-Ausbruch Pivot der Konsolidierung · Sprung Hoch des Sprungtags · Zahlen-Reaktion AVWAP ab dem Reaktionstag · Ermüdung, Bärenflagge und Bruch der Spanne Unterkante. Kaufzone long bis +5 %, Short-Zone bis 5 % unter dem Einstieg. Stopp der App: 1,5 ATR vom Einstieg.
 - Den Markt bestimmt eine Ampel nach O'Neil (Feld „markt“). Jede Akte trägt „feste_ampeln“ (Setup, Einstieg, Geld, Zahlen, Termin): Die rechnet der Code, sie sind gesetzt – du färbst sie nicht um.
 - „datenstand“: Rechnen die Teile der App mit verschiedenen Handelstagen, ist das eine Gefahr ersten Ranges; nenne sie zuerst.
 
@@ -726,7 +726,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
 
     def zone(tk):
         x = titel_t.get(tk) or {}
-        if x.get("reihe") in ("k_ermuedung", "k_baerenflagge") or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
+        if x.get("reihe") in ("k_ermuedung", "k_baerenflagge", "k_bruch") or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
             return ZONE_SHORT
         return ZONE_VOLLTREFFER if tk in drei else ZONE_LONG
 

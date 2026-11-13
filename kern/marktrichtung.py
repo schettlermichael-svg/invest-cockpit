@@ -1,5 +1,9 @@
 """Marktrichtung nach O'Neil (CAN SLIM, „M“): Distributionstage, Erholungsversuch, Follow-Through-Day.
 
+Distributionstag: Schluss mindestens 0,2 % tiefer bei höherem Volumen als am Vortag, oder Stautag (höchstens +0,4 %
+bei höherem Volumen, Schluss in der unteren Hälfte, nahe am Hoch); er verfällt nach 25 Handelstagen oder wenn der
+Index seither 5 % gestiegen ist.
+
 Gelesen werden S&P 500 und Nasdaq Composite (Tageskerzen mit Volumen von Yahoo). Ein Index genügt
 (O'Neil): Distributionstage zählen im Index mit den meisten, der Follow-Through-Day im ersten Index,
 der ihn zeigt.
@@ -31,7 +35,10 @@ INDIZES = {"S&P 500": "^GSPC", "Nasdaq": "^IXIC"}
 ZONEN_TITEL = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # Wertzonen der Indizes über die ETFs
 DT_SCHWELLE = -0.2      # Distributionstag: Schluss mindestens 0,2 % tiefer bei höherem Volumen als am Vortag
 DT_FENSTER = 25         # er zählt 25 Handelstage (5 Wochen) …
-DT_VERFALL = 0.10       # … oder bis der Index seither um mehr als 10 % gestiegen ist
+DT_VERFALL = 0.05       # … oder bis der Index seither um mehr als 5 % gestiegen ist (O'Neil; bis 13.11.2026: 10 %)
+STAU_PLUS = 0.4         # Stautag (Stalling, O'Neil): höchstens +0,4 % bei höherem Volumen als am Vortag, Schluss in der
+STAU_HOCH = 3.0         # unteren Hälfte der Tagesspanne, Index höchstens 3 % unter dem Hoch der 60 Tage – zählt wie
+                        # ein Distributionstag (Prüf-Agent 13.11.2026: fehlte)
 DRUCK, KORREKTUR = 4, 5
 FTD_AB_TAG = 4          # Follow-Through-Day frühestens an Tag 4 des Erholungsversuchs …
 FTD_SCHWELLE = 1.7      # … mit mindestens +1,7 % bei höherem Volumen als am Vortag (Buch: früher 1 %, heute deutlich
@@ -89,6 +96,7 @@ def verlauf(daten, bruch=None):
     namen = list(daten)
     C = {n: daten[n]["Close"].to_numpy(float) for n in namen}
     L = {n: daten[n]["Low"].to_numpy(float) for n in namen}
+    H = {n: daten[n]["High"].to_numpy(float) for n in namen}
     V = {n: daten[n]["Volume"].to_numpy(float) for n in namen}
     zustand, dts, versuch, boden, ftd = "Korrektur", {n: [] for n in namen}, {n: None for n in namen}, None, None
     hoch = {n: float("inf") for n in namen}             # Hoch vor der Korrektur je Index
@@ -100,7 +108,10 @@ def verlauf(daten, bruch=None):
             c, c0, v, v0 = C[n][i], C[n][i - 1], V[n][i], V[n][i - 1]
             pct = (c / c0 - 1) * 100
             dts[n] = [(j, cj) for j, cj in dts[n] if j > i - DT_FENSTER and c <= cj * (1 + DT_VERFALL)]
-            if pct <= DT_SCHWELLE and v > v0:
+            spanne = H[n][i] - L[n][i]
+            stau = (DT_SCHWELLE < pct <= STAU_PLUS and v > v0 and spanne > 0 and (c - L[n][i]) / spanne < 0.5
+                    and c >= C[n][max(0, i - 60):i + 1].max() * (1 - STAU_HOCH / 100))
+            if (pct <= DT_SCHWELLE and v > v0) or stau:
                 dts[n].append((i, c))
             if zustand != "Korrektur":
                 continue

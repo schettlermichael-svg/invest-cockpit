@@ -24,7 +24,7 @@ def richtung(x):
     Richtung der Reaktion, sonst None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
-    if reihe in ("k_ermuedung", "k_baerenflagge"):
+    if reihe in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
         return "short"
     if reihe == "zahlen":                              # Zahlen-Reaktion: Richtung der Reaktion (12.11.2026)
         return x.get("zr_seite") or None
@@ -88,7 +88,7 @@ def _zone(erk):
     Zahlen-Reaktion und den Shorts kein Rahmen (Prüf-Agent 12.11.2026: sonst stand die Base neben dem Einstieg eines
     anderen Setups)."""
     r_ = (erk.get("setup_info") or {}).get("reihe")
-    if r_ in ("k_ep", "zahlen", "k_ermuedung", "k_baerenflagge"):
+    if r_ in ("k_ep", "zahlen", "k_ermuedung", "k_baerenflagge", "k_bruch"):
         return None
     sy = erk.get("systeme") or {}
     if r_ == "k_breakout":
@@ -223,8 +223,10 @@ def _setup_kasten(kacheln, erk):
     am = s_[0][0] if isinstance(s_[0], tuple) else s_[0]
     ak = s_[0][1] if isinstance(s_[0], tuple) else None
     kw = (k.get("haupt") or {}).get("art") if (k.get("haupt") or {}).get("ampel") not in (None, "rot") else None
-    if not kw and k.get("ermuedung"):
-        kw = "Ermüdung (short)"
+    if not kw:
+        import system_kullamaegi
+        em_ = system_kullamaegi.short_von(k)
+        kw = f'{em_["art"]} (short)' if em_ else None
     zeilen = (f'<div><span style="color:{TEXT_3};font-size:12px">M</span> '
               f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
               f'{AMPEL.get(am or "grau", GRAU)};margin:0 4px"></span>{t(m.get("setup", "–"))}</div>'

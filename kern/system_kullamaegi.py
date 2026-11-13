@@ -7,7 +7,9 @@ Breakout (Momentum Burst nach Pradeep Bonde): rein technisch. Ein Führer im Auf
   Seitwärtsphase über, vorzugsweise bei reduziertem Volumen, und bricht aus. Führer = die obersten 1–2 % nach der
   Kursentwicklung über 1, 3 oder 6 Monate (fuehrer_rang). Konsolidierung meist 1–3 Wochen. Haltedauer 3–5 Tage für den
   Hauptteil. Erfolgsquote deutlich unter 50 %.
-  grün: Führer (oberste 2 %) + Zone des VCP-Scanners 1–3 Wochen nach einem Schub (oder Kurs über GD50), auch die Flagge
+  grün: Führer (oberste 2 %) + Zone des VCP-Scanners 1–3 Wochen nach einem Schub (oder Kurs über GD50), die Pause hält
+  den GD20 (kein Schluss mehr als 1 % darunter) und der Kurs stand davor 3 Wochen über dem GD50 (Prüf-Agent 13.11.2026:
+  eine Pause, die den GD20 unterschneidet, ist keine Momentum-Pause mehr), auch die Flagge
   in einer größeren Zone; Pivot = Oberkante; nach dem Ausbruch gilt die Zone bis 4 Wochen weiter (06.11.2026, vorher
   Wertzone)
 Episodic Pivot: eine Nachricht, die den Markt zur völligen Neubewertung zwingt, eine große Kurslücke nach oben und eine
@@ -16,7 +18,8 @@ Episodic Pivot: eine Nachricht, die den Markt zur völligen Neubewertung zwingt,
   die bei hohem Volumen mindestens 10 % gestiegen sind.
   grün (in den letzten EP_TAGE Handelstagen, der Kurs hält das Tief des Sprungtags): Tagesgewinn ≥ 10 %, Eröffnung über
   dem Vortageshoch (echte Lücke), Volumen ≥ 3-fach des 50-Tage-Schnitts (Micky, 05.11.2026; 10-fach = ideal, Zeichen).
-  Nachricht: Zahlen am Sprungtag werden erkannt, sonst „Nachricht prüfen“ (gelb).
+  Nachricht: Zahlen am Sprungtag werden erkannt. Ohne Zahlen (FDA, Auftrag) grün ab 5-fach Volumen und Schluss im
+  oberen Drittel des Sprungtags – so viel Geld bewertet die Nachricht; sonst „Nachricht prüfen“ (gelb).
 Ermüdung nach Überdehnung (Short, 06.11.2026, vcp_zone.ermuedung): die Flagge des Scanners, im Ausgang gespiegelt –
   Fahnenstange ≥ 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, dann Schluss unter der Unterkante.
   Stopp über dem Hoch des Auslösetags. Zeichen: Volumen am Bruch über dem Schnitt.
@@ -35,10 +38,22 @@ EP_TAGE = 10
 EP_SPRUNG = 10.0
 EP_VOLUMEN = 3.0
 EP_VOLUMEN_IDEAL = 10.0
+EP_VOLUMEN_OHNE = 5.0        # ohne Zahlen grün ab 5-fach Volumen und Schluss im oberen Drittel (Prüf-Agent 13.11.2026)
 EP_VORLAUF_MAX = 20.0        # vernachlässigt: in den 3 Monaten vor dem Sprung höchstens +20 % (Zeichen, keine Pflicht)
 KONS_GRUEN = (1, 3)          # Wochen
 KONS_GELB = 8
 ADTR_TAGE = 20
+
+
+SHORTS = {"k_ermuedung": "ermuedung", "k_baerenflagge": "baerenflagge", "k_bruch": "spannenbruch"}  # Reihe → Feld
+
+
+def short_von(k, reihe=None):
+    """Das Short-Setup einer Short-Reihe (dict wie vcp_zone.ermuedung); ohne Reihe das erste vorhandene. Oder None."""
+    k = k or {}
+    if reihe:
+        return k.get(SHORTS.get(reihe, ""))
+    return next((k[f] for f in SHORTS.values() if k.get(f)), None)
 
 
 def adtr(df, n=ADTR_TAGE):
@@ -90,14 +105,23 @@ def breakout(df, fr, scan=None, br=None):
     v = df["Volume"].to_numpy(float)
     i0 = int(z["start_i"])
     ende = br["vortag_i"] if br else len(v)
+    g20 = df["Close"].rolling(20).mean().to_numpy(float)
+    g50 = df["Close"].rolling(50).mean().to_numpy(float)
+    pause = slice(i0, ende)
+    haelt20 = bool(ende > i0 and np.all(c[pause] >= g20[pause] * 0.99))
+    vorher50 = bool(i0 >= 65 and np.all(c[i0 - 15:i0] > g50[i0 - 15:i0]))
+    unter = int(np.sum(c[pause] < g20[pause] * 0.99)) if ende > i0 else 0
+    regeln.append(("Pause hält den GD20, davor 3 Wochen über dem GD50", haelt20 and vorher50,
+                   ("hält den GD20" if haelt20 else f"{unter} Schlüsse unter dem GD20")
+                   + (", davor über dem GD50" if vorher50 else ", davor nicht 3 Wochen über dem GD50")))
     ruhig = (v[i0:ende].mean() / v[max(0, i0 - 50):i0].mean()
              if ende > i0 and i0 >= 20 and v[max(0, i0 - 50):i0].mean() else None)
     if ruhig is not None:
         regeln.append(("Volumen in der Konsolidierung reduziert (vorzugsweise)", bool(ruhig < 1.0),
                        f"{ruhig:.2f}-fach".replace(".", ",")))
-    if f_ampel == "grün" and kons:
+    if f_ampel == "grün" and kons and haelt20 and vorher50:
         ampel = "grün"
-    elif (f_ampel == "gelb" and kons) or (f_ampel == "grün" and wochen <= KONS_GELB + 0.5):
+    elif (f_ampel in ("grün", "gelb") and kons) or (f_ampel == "grün" and wochen <= KONS_GELB + 0.5):
         ampel = "gelb"                           # Führer knapp (oberste 5 %) oder Konsolidierung bis 8 Wochen
     else:
         ampel = "rot"
@@ -125,19 +149,25 @@ def episodic_pivot(df, gewinn_tage=()):
             continue
         tag = df.index[i]
         nachricht = any(abs((tag.normalize() - z).days) <= 1 for z in zahlen)
+        oben3 = h[i] > l[i] and (c[i] - l[i]) / (h[i] - l[i]) >= 2 / 3
+        bewertet = not nachricht and vol >= EP_VOLUMEN_OHNE and oben3
         vorlauf = (c[i - 1] / c[max(0, i - 64)] - 1) * 100
         haelt = l[i:].min() >= l[i] * 0.999 if i < n - 1 else True
         regeln = [("Große Lücke (Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch)", True,
                    f"{tag:%d.%m.}: " + f"+{sprung:.1f} %, Eröffnung {(o[i] / c[i - 1] - 1) * 100:+.1f} %".replace(".", ",")),
                   ("Volumenexplosion (ab 3-fach)", True,
                    f"{vol:.1f}-fach".replace(".", ",") + (" – ideal" if vol >= EP_VOLUMEN_IDEAL else "")),
-                  ("Nachricht", nachricht, "Zahlen am Sprungtag" if nachricht else "Nachricht prüfen (keine Zahlen)"),
+                  ("Nachricht", nachricht or bewertet,
+                   "Zahlen am Sprungtag" if nachricht else
+                   (f"keine Zahlen, aber {vol:.1f}-fach Volumen und Schluss im oberen Drittel – der Markt hat die "
+                    "Nachricht bewertet (FDA, Auftrag?)").replace(".", ",", 1) if bewertet else
+                   "Nachricht prüfen (keine Zahlen; grün ab 5-fach Volumen und Schluss im oberen Drittel)"),
                   ("Vernachlässigt (davor kein starker Anstieg)", vorlauf <= EP_VORLAUF_MAX,
                    f"3 Monate davor {vorlauf:+.0f} %"),
                   ("Kurs hält das Tief des Sprungtags", haelt, f"Tief {l[i]:.2f} $".replace(".", ","))]
         if not haelt:
             ampel = "rot"
-        elif nachricht:
+        elif nachricht or bewertet:
             ampel = "grün"
         else:
             ampel = "gelb"
@@ -153,13 +183,15 @@ def pruefen(df, erk, gewinn_tage=(), ticker="", scan=None, br=False):
     b = breakout(df, fr, scan, br)
     ep = episodic_pivot(df, gewinn_tage)
     em = vcp_zone.ermuedung(df)
+    bf = vcp_zone.baerenflagge(df)
+    sb = vcp_zone.spannenbruch(df)
     setups = [x for x in (ep, b) if x]
     rang = {"grün": 0, "gelb": 1, "rot": 2}
     haupt = min(setups, key=lambda x: (rang[x["ampel"]], x["art"] != "Episodic Pivot")) if setups else None
     a = adtr(df)
     k = float(df["Close"].iloc[-1])
     return {"system": "K", "ampel": haupt["ampel"] if haupt else "rot", "haupt": haupt, "breakout": b, "ep": ep,
-            "ermuedung": em, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
+            "ermuedung": em, "baerenflagge": bf, "spannenbruch": sb, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
             "adtr_pct": a / k * 100 if a else None,
             "setup": haupt["art"] if haupt and haupt["ampel"] != "rot" else "keines",
             "ausstieg": ("Stopp am Tagestief des Einstiegstags (kein Trade, wenn weiter weg als eine Tagesspanne"
