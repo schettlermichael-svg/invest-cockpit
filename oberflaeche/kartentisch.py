@@ -33,8 +33,8 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
           ("m_weitere", "Base-Ausbruch · weiter weg oder eine Regel fehlt", "Base-Ausbruch mit allen Regeln, aber Kurs "
                                                                              "weiter vom Pivot – oder genau eine Regel fehlt"),
           ("vcp", "Base-Ausbruch · nur Muster", "Base mit grüner Enge, Kurs höchstens 5 % vom Pivot, aber mehrere Regeln "
-                                                "fehlen (meist Trendvorlage, RS oder Zahlen) – sichtbar, geht nicht in die "
-                                                "Konferenz"),
+                                                "fehlen (meist Trendvorlage, RS oder Zahlen) – sichtbar, kommt nicht auf die "
+                                                "Liste Einsatzbereit"),
           ("flagge", "Flagge", "Fahnenstange ab 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, auch "
                                "in einer Base, Kurs über dem steigenden GD50, Volumen in der Flagge leiser als in der "
                                "Stange; grün, sobald der Kurs höchstens 5 % unter der Oberkante steht oder darüber (nach einem "
@@ -148,7 +148,7 @@ def setup_feststellen(df, m, k, zr, scan):
     import atr as atr_
     import depot
     import vcp_zone
-    c, h = df["Close"].to_numpy(float), df["High"].to_numpy(float)
+    c = df["Close"].to_numpy(float)
     info = {}
     hk = k.get("haupt") or {}
     info["gruen"] = m["ampel"] == "grün" or (hk.get("ampel") == "grün")
@@ -208,7 +208,7 @@ def setup_feststellen(df, m, k, zr, scan):
     elif r_ == "m_weitere":
         info["reihe"] = "m_weitere"
     # Einstieg DES Setups (Prüf-Agent 12.11.2026): einmal hier festgestellt und gespeichert – Chart, Plan, Lagekarte
-    # und Stab lesen ihn; der Abstand gilt nur zu diesem Einstieg (vorher zuerst zur alten Pivot-Kette).
+    # und Auswahl lesen ihn; der Abstand gilt nur zu diesem Einstieg (vorher zuerst zur alten Pivot-Kette).
     seite_, e_, quelle_ = depot.einstieg_setup(info | {"reihe": r_}, m, k, zr, c[-1]) if r_ else (None, None, "")
     if e_:
         info["einstieg"] = {"seite": seite_, "wert": float(e_), "quelle": quelle_}
@@ -474,16 +474,16 @@ def _grundzeile(x):
 
 
 def stab_marke(x):
-    """Marke über jeder Karte (Seite Setups, 12.11.2026): 🎯 beim Stab oder der Grund, warum nicht."""
+    """Marke über jeder Karte (Seite Setups, 12.11.2026): 🎯 auf der Liste „Einsatzbereit“ oder der Grund, warum nicht."""
     from gestaltung import BLAU, TEXT_3, t
     st_ = (x or {}).get("stab")
     if not st_:
         return ""
     drin, grund = st_
     if drin:
-        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">🎯 beim Stab'
+        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">🎯 einsatzbereit'
                 f'<span style="font-weight:400"> · {t(grund)}</span></span>')
-    return f'<span style="font-size:13px;color:{TEXT_3}">nicht beim Stab · {t(grund)}</span>'
+    return f'<span style="font-size:13px;color:{TEXT_3}">nicht auf der Liste · {t(grund)}</span>'
 
 
 def rueckenwind_zeichen(x):
@@ -493,8 +493,8 @@ def rueckenwind_zeichen(x):
         return ""
     p = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}
     if lagekarte.richtung(x) == "short":              # Short: Kurs und Geld gespiegelt (Prüf-Agent 12.11.2026)
-        import stab
-        g = lambda a: stab._GEGEN.get(a, a)       # noqa: E731
+        import auswahl as auswahl_
+        g = lambda a: auswahl_._GEGEN.get(a, a)       # noqa: E731
         return (f'Gegenwind für long = Rückenwind für Short · Kurs {p.get(g(rw["kurs"]), "⚪")} '
                 f'Geld {p.get(g(rw["geld"]), "⚪")}' + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
     return (f'Rückenwind Kurs {p.get(rw["kurs"], "⚪")} Geld {p.get(rw["geld"], "⚪")} Zahlen {p.get(rw["zahlen"], "⚪")}'
@@ -618,15 +618,15 @@ def plan(tisch=None):
                                         **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge"
                                            and not x.get("scanner") else {}))
                                for tk, x in tisch["titel"].items()})
-    try:                                          # Auswahl für den Stab: dieselbe Funktion wie die Konferenz
+    try:                                          # Auswahl „Einsatzbereit“ (kern/auswahl.py, auch für die Wachen)
         import depot
         import rueckenwind_seite
-        import stab
+        import auswahl as auswahl_
         rw_erg = rueckenwind.laden() or {}
         drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
         pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
         wl_ = set(w[watchlists.STANDARD])
-        akten, gruende, elite = stab.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, wl_, pos, mit_rest=True)
+        akten, gruende, elite = auswahl_.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, wl_, pos, mit_rest=True)
         for tk, g in gruende.items():
             if tk in tisch["titel"]:
                 tisch["titel"][tk]["stab"] = g
@@ -690,9 +690,9 @@ def plan(tisch=None):
 
 
 def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
-    """Trichter vom Revier zum Stab und die Tabelle der Akten (Seite Setups, 12.11.2026) – so sieht man vor der
-    Konferenz, was der Stab liest, und warum."""
-    import stab
+    """Trichter vom Revier zur Liste „Einsatzbereit“ und ihre Tabelle (Seite Setups, 12.11.2026; bis 13.11.2026 „Diese
+    Titel liest der Stab“) – was einsatzbereit ist, und warum."""
+    import auswahl as auswahl_
     from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
     tt = tisch["titel"]
     n_revier = (tisch.get("barometer") or {}).get("titel") or len(tt)
@@ -700,7 +700,7 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
     gruen = [tk for tk in in_reihe if tt[tk].get("gruen")]
     bereit = [tk for tk in gruen if gruende.get(tk) and (gruende[tk][0] or gruende[tk][1].startswith("Platz voll"))]
     stufen = (("Revier", n_revier), ("in einer Reihe", len(in_reihe)), ("Setup grün", len(gruen)),
-              ("einsatzbereit", len(bereit)), ("beim Stab", len(akten)))
+              ("einsatzbereit", len(bereit)), ("auf der Liste", len(akten)))
     trichter = "".join(
         f'<div style="flex:1 1 130px;background:{KARTE};border:1px solid {BLAU if i == 4 else RAND};border-radius:10px;'
         f'padding:10px 14px"><div style="font-size:13px;color:{TEXT_3}">{n}</div>'
@@ -714,7 +714,7 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
         r = (x.get("rueckenwind") or {})
         g_ = r.get("geld")
         if g_ and lagekarte.richtung(x) == "short":       # Short: Abfluss ist Rückenwind (gespiegelt wie die Matrix)
-            g_ = stab._GEGEN.get(g_, g_)
+            g_ = auswahl_._GEGEN.get(g_, g_)
         geld = AMPEL.get(g_, GRAU)
         zeilen += (f'<tr><td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
                    f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
@@ -728,13 +728,13 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
     kopf = "".join(f'<th style="text-align:left;padding:6px 8px;font-size:13px;font-weight:500;color:{TEXT_3};'
                    f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "Kreislauf", "zum Einstieg",
                                                                          "Geld", "Warum dabei"))
-    regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(stab.ZONE_LONG[0], 0)} "
-             f"bis +{zahl(stab.ZONE_LONG[1], 0)} % zum Einstieg des Setups, Short bis {zahl(stab.ZONE_SHORT[0], 0)} % unter dem "
-             f"Einstieg, Volltreffer bis +{zahl(stab.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {stab.RANG_TEXT} · je Reihe {stab.AKTEN_JE_REIHE} Plätze vorab · höchstens {stab.AKTEN_MAX}")
+    regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(auswahl_.ZONE_LONG[0], 0)} "
+             f"bis +{zahl(auswahl_.ZONE_LONG[1], 0)} % zum Einstieg des Setups, Short bis {zahl(auswahl_.ZONE_SHORT[0], 0)} % unter dem "
+             f"Einstieg, Volltreffer bis +{zahl(auswahl_.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {auswahl_.RANG_TEXT} · je Reihe {auswahl_.AKTEN_JE_REIHE} Plätze vorab · höchstens {auswahl_.AKTEN_MAX}")
     return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
             f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'
-            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Diese {len(akten)} Titel liest der Stab'
+            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Einsatzbereit · {len(akten)} Titel auf der Liste'
             f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
             f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table>'
             + _knapp_draussen(tt, gruende, [tk for tk in elite if tk not in akten], namen) + '</div>'
@@ -755,8 +755,8 @@ def _knapp_draussen(tt, gruende, rest, namen, n=10):
 
 
 def _watchlist_kasten(tt, gruende, liste, drin, namen):
-    """◆ Deine Watchlist · einsatzbereit (Micky 12.11.2026): die Auswahl für den Stab ist neutral, die eigene Truppe
-    steht hier getrennt – dieselbe Rangfolge, je Titel 🎯 beim Stab oder der Grund. Die übrigen Watchlist-Titel zeigt
+    """◆ Deine Watchlist · einsatzbereit (Micky 12.11.2026): die Auswahl ist neutral, die eigene Truppe
+    steht hier getrennt – dieselbe Rangfolge, je Titel 🎯 auf der Liste oder der Grund. Die übrigen Watchlist-Titel zeigt
     ② Stellung vollständig."""
     from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
     zeilen = "".join(
@@ -770,9 +770,9 @@ def _watchlist_kasten(tt, gruende, liste, drin, namen):
     n_drin = sum(1 for tk in liste if tk in drin)
     return (f'<div style="margin-top:12px;background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'
             f'overflow-x:auto"><div style="font-size:16px;font-weight:600;margin-bottom:2px">◆ Deine Watchlist · '
-            f'einsatzbereit · {len(liste)}, davon {n_drin} beim Stab</div>'
+            f'einsatzbereit · {len(liste)}, davon {n_drin} auf der Liste</div>'
             f'<div style="font-size:13px;color:{TEXT_3};margin-bottom:6px">Dieselbe Rangfolge wie oben, nur deine Titel · '
-            f'🎯 = beim Stab, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
+            f'🎯 = auf der Liste, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
             f'<table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><tbody>'
             f'{zeilen or "<tr><td>zurzeit keiner deiner Titel einsatzbereit</td></tr>"}</tbody></table></div>')
 

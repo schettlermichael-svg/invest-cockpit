@@ -6,7 +6,7 @@ das Angebot weicht; Schwäche = das Spiegelbild. Wir spüren die Ineffizienzen u
 Zone brechen lassen, und erspüren starke und schwache Zeichen – auch versteckte. Kreislauf (Weinstein/Wyckoff):
 1 Basis → 2 Aufwärts → 3 Verteilung → 4 Abwärts; die Phase je Woche rechnet phase.py, die Wechselzeichen kommen von hier.
 
-Die App misst, der Stab deutet. Jedes Zeichen ist eine feste Regel und hat eine Art – Struktur (Schwungpunkte, Spring,
+Die App misst, der Stratege deutet. Jedes Zeichen ist eine feste Regel und hat eine Art – Struktur (Schwungpunkte, Spring,
 Einquetschung, Bruch), Volumen (Kauf- und Abgabetage, Pocket Pivot, Enge, Trockenheit), RS (gegen den Markt, auch die Divergenz)
 oder Ereignis (Zahlen, Wertzone). Ein Wechsel der Phase zeichnet sich erst ab, wenn ein Zeichen der Struktur UND eines
 aus Volumen oder RS auf derselben Seite stehen und die Seite klar überwiegt (Gewicht mindestens 4 und

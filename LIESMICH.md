@@ -842,3 +842,13 @@ Micky: „Die Verankerung ist extrem wichtig. Für das Volumenprofil und für de
 - Chart: Profil als durchscheinende Balken von rechts über den Kerzen (der Chart behält seine Breite), Mauer rot und Stütze grün als Bänder mit Preis und Anker-Datum, Überschrift mit Anker und Zahl der Tage.
 - Lagekarte: die Hürde für das CRV kommt aus den Knoten des verankerten Profils.
 - Stab: die Akte trägt AVWAP (hoch, tief_der_bewegung, ereignis) und „volumen“ (akzeptierter Wert, Mauer, Stütze) mit denselben Ankern wie der Chart; der Zahlentag gilt jetzt für jede Akte, nicht nur für die Zahlen-Reaktion.
+
+## Konferenzraum abgebaut (13.11.2026)
+
+Micky: „Der Konferenzraum kann weg. Den brauchen wir nicht mehr.“ Die Strategen sammelten Daten, statt zu deuten; der Edge liegt in den Messungen der App. Künftig ein Stratege auf Knopfdruck (Strategen-Call, Konzept im Konzeptdokument).
+
+- Entfernt: die acht Missionen (`kern/stab.py`), die Seite Konferenzraum (`oberflaeche/konferenz_seite.py`), die Konferenz im Frühlauf samt zweitem Anlauf und Knopf, der Tagesbefehl aufs Handy, die Nadeln der Strategen im Chart, der Satz des Stabs im Kreislaufbild, die Wachen „Stab“ und „Form des Stabs“, „Stab fragen“ und `rueckenwind.anfuehrer_verfolger` (nur vom Stab genutzt). Der alte Code liegt auf dem Mac in `_to_delete/stab_konferenzraum_2026-11-13.py` und `_to_delete/konferenz_seite_2026-11-13.py`.
+- Geblieben: die Auswahl „Einsatzbereit“ mit Zonen und Rangfolge (`kern/auswahl.py`, Seite Setups ① und Wachen) und die Verbindung zum Modell mit Schlüssel, Probe, Kostenbuch und Monatsdeckel 50 $ (`kern/modell.py`) für den künftigen Strategen-Call. Schlüssel und Kostenbuch bleiben, wo sie lagen (`einstellungen/anthropic_schluessel.txt`, `daten/konferenz/kosten.json`).
+- Seite Setups: ① heißt „Einsatzbereit“ (vorher „Auswahl für den Stab“), die Tabelle „🎯 Einsatzbereit · N Titel auf der Liste“ (vorher „Diese Titel liest der Stab“). Ganz unten „⚙ Verbindungen“: API-Schlüssel, Verbindung prüfen, Kosten des Monats, Kanal fürs Handy mit Testmeldung.
+- Handy: der Frühlauf meldet weiter „Lage steht …“ und Warnungen; was künftig aufs Handy kommt, legt Micky separat fest.
+- Alte Lesezeichen `?seite=Konferenzraum` öffnen die Seite Setups.

@@ -52,9 +52,9 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Konferenzraum"]   # Rückenwind = Lagezentrum, Setups = Aufklärung
-# und Filter, Konferenzraum = Beschlusszentrale (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind
-ALTE_SEITEN = {"Übersicht": "Rückenwind"}                       # alte Lesezeichen
+ansicht_liste = ["Rückenwind", "Setups", "Titelseite"]   # Rückenwind = Lagezentrum, Setups = Aufklärung und Filter
+# (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026 abgebaut
+ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Setups"}                       # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
 # ein Wechsel zwei Klicks.)
@@ -322,7 +322,7 @@ def _tabelle(teil, nr):
     zeilen = teil["zeilen"]
     if not zeilen:
         return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Stab": z.get("Stab", ""), "Setup": z["Setup"], "Befund": z["Befund"],
+    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Liste": z.get("Stab", ""), "Setup": z["Setup"], "Befund": z["Befund"],
                         "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
     farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
     stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
@@ -485,159 +485,55 @@ def rueckenwind_titel_zeigen():
                 st.caption("Das Logbuch beginnt mit dem ersten Nachtlauf.")
 
 
-@st.cache_data(ttl=900, show_spinner="Lagekarte wird gelegt …")
-def _lagekarte(stand, zeit):
-    """Lagekarte der jüngsten Konferenz (zwischengespeichert: bei älteren Konferenzen rechnet sie die festen Ampeln mit
-    dem heutigen Stand, das liest 40+ Kursreihen)."""
-    import stab
-    return stab.lagekarte(stab.letzte())
+ANLEITUNG_SCHLUESSEL = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
+
+1. Öffne **console.anthropic.com** und melde dich an (oder lege dort ein Konto an).
+2. Unter **Billing** Guthaben aufladen.
+3. Unter **Limits** ein Monatslimit setzen, z. B. 50 $ (zweite Sicherung neben dem Deckel der App).
+4. Unter **API Keys** → **Create Key**, Name z. B. „Invest Cockpit“. Den Schlüssel (beginnt mit `sk-ant-`) kopieren –
+   er wird nur einmal angezeigt.
+5. Hier einfügen und speichern. Er liegt dann nur auf dem Server (nicht in GitHub)."""
 
 
-def konferenz_zeigen():
-    """Seite „Konferenzraum“ (09.11.2026; Lagekarte seit 12.11.2026): Lagekarte oben, Wortlaut, Akten, Feldhandbuch und
-    Technik zugeklappt, Stab fragen."""
-    import stab
-    import konferenz_seite as ks
-    k = stab.letzte()
-    st.markdown(ks.kopf(k), unsafe_allow_html=True)
-    if not stab.schluessel():
-        with st.container(border=True):
-            st.markdown(ks.ANLEITUNG)
-            wert = st.text_input("API-Schlüssel", type="password", placeholder="sk-ant-…", key="stab_schluessel")
-            if st.button("Schlüssel speichern", key="stab_speichern"):
+def verbindungen_zeigen():
+    """⚙ Verbindungen (13.11.2026, aus dem abgebauten Konferenzraum): API-Schlüssel für den künftigen Strategen-Call,
+    Verbindungstest und Kostenbuch, Kanal fürs Handy (ntfy)."""
+    import meldung
+    import modell
+    with st.expander("⚙ Verbindungen · API-Schlüssel und Handy"):
+        probe_ = st.session_state.pop("modell_probe", None)
+        if probe_:
+            (st.success if probe_[0] else st.error)(("✓ " if probe_[0] else "⚠ Der Schlüssel geht nicht: ") + probe_[1])
+        if not modell.schluessel():
+            st.markdown(ANLEITUNG_SCHLUESSEL)
+            wert = st.text_input("API-Schlüssel", type="password", placeholder="sk-ant-…", key="modell_schluessel")
+            if st.button("Schlüssel speichern", key="modell_speichern"):
                 if wert.strip().startswith("sk-ant-"):
-                    stab.schluessel_speichern(wert)
-                    st.session_state["stab_probe"] = stab.probe()   # sofort prüfen, ob der Schlüssel wirklich geht
+                    modell.schluessel_speichern(wert)
+                    st.session_state["modell_probe"] = modell.probe()
                     st.rerun()
                 else:
                     st.error("Das sieht nicht wie ein Anthropic-Schlüssel aus (er beginnt mit sk-ant-).")
-        return
-    probe_ = st.session_state.pop("stab_probe", None)
-    if probe_:
-        (st.success if probe_[0] else st.error)(("✓ " if probe_[0] else "⚠ Der Schlüssel geht nicht: ") + probe_[1])
-    laeuft = nachtlauf.konferenz_laeuft()
-    if laeuft:
-        st.info("Der Stab tagt gerade … (Seite mit ⌘ R neu laden)")
-    if not k:
-        st.info("Noch keine Konferenz – sie läuft jeden Morgen nach dem Frühlauf, oder über „Technik“ unten.")
-    else:
-        lk = _lagekarte(k.get("stand"), k.get("zeit"))   # Lagekarte (12.11.2026): auf einen Blick
-        st.markdown(ks.lagekarte_html(lk), unsafe_allow_html=True)
-        with st.expander("Regeln der festen Ampeln (Code) und der Strategen-Spalten"):
-            st.markdown(ks.regeln_text())
-        n_stab = sum(1 for x in lk["tafel"] if x.get("beim_stab", True))
-        with st.expander(f"Alle Akten des Stabs · {n_stab} beim Stab, {len(lk['tafel']) - n_stab} nur Watchlist · warum jeder dort liegt"):
-            st.caption(f"So werden die Akten gezogen (Klasse statt Masse): immer das Depot; dazu nur einsatzbereite Setups – "
-                       f"Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Einstieg des Setups, "
-                       f"Short bis 5 % unter dem Einstieg, Volltreffer bis +10 %). Rang: {stab.RANG_TEXT}; je "
-                       f"Reihe bis {stab.AKTEN_JE_REIHE} Plätze vorab, höchstens {stab.AKTEN_MAX}. Alles andere zeigt der "
-                       f"Kartentisch; Watchlist-Titel ohne Akte stehen unten nur mit den festen Ampeln.")
-            st.markdown(ks.tafel_html(lk["tafel"]), unsafe_allow_html=True)
-        if k.get("format") == 2:                  # neuer Stab (13.11.2026)
-            with st.expander("Anhang · beobachten und verworfen (jede Akte eingeordnet)"):
-                st.markdown(ks.anhang_html(k), unsafe_allow_html=True)
-            with st.expander("Die Missionen im Wortlaut"):
-                sp = st.columns(2)
-                for i, nr in enumerate((1, 2, 3, 4, 5, 6, 7)):
-                    m = (k.get("missionen") or {}).get(str(nr))
-                    if m:
-                        with sp[i % 2]:
-                            st.markdown(ks.mission_html(nr, m), unsafe_allow_html=True)
         else:
-            with st.expander("Tagesbefehl und Einwände im Wortlaut"):
-                st.markdown(ks.befehl(k), unsafe_allow_html=True)
-            with st.expander("Meldungen der fünf Strategen im Wortlaut"):
-                sp = st.columns(2)
-                for i, nr in enumerate((2, 3, 4, 5, 6)):
-                    m = (k.get("meldungen") or {}).get(str(nr))
-                    if m:
-                        with sp[i % 2]:
-                            st.markdown(ks.meldung(nr, m), unsafe_allow_html=True)
-        with st.expander("Akten je Titel · Hinweise als Nadeln im Chart"):
-            akten = sorted(stab.akten(k).items(), key=lambda p: -len(p[1]))
-            st.caption("Nummer der Nadel = Mission: " + " · ".join(f"{nr} {n}" for nr, (n, _) in stab.MISSIONEN.items())
-                       if k.get("format") == 2 else
-                       "Nummer der Nadel = Stratege: 1 Stratege · 2 Strömung · 3 Fundament · 4 Chart · 5 Risiko · 6 Gegenspieler")
-            wahl = st.selectbox("Titel", [tk for tk, _ in akten], index=None, placeholder="Titel wählen …",
-                                key="akte_wahl", format_func=lambda tk: f"{tk} · {len(dict(akten)[tk])} Hinweise")
-            if wahl:
-                eintraege = dict(akten)[wahl]
-                st.markdown(ks.akte_text(eintraege), unsafe_allow_html=True)
-                ab = titel.abgelegt(wahl)
-                if ab:
-                    st.markdown(titel.chartkarte(ab[0]["chart"], "Tag", "6 M", nadeln=ks.nadeln(eintraege, k.get("stand"))),
-                                unsafe_allow_html=True)
-                st.link_button(f"{wahl}: Titelseite →", f"?seite=Titelseite&t={wahl}")
-        with st.expander("📖 Lehre des Stabs · Stärke und Schwäche, die Missionen und ihre Lehrstellen"):
-            st.markdown(ks.lehre())
-    st.markdown(gestaltung.seite("<h2 style='margin:0'>Stab fragen</h2>", oben=16, unten=0), unsafe_allow_html=True)
-    with st.form("stab_frage", clear_on_submit=True):
-        text = st.text_area("Frage an den Stab", placeholder="z. B. Welche Branche kippt gerade, und welche Titel "
-                                                            "hängen daran?", key="stab_text")
-        tk_ = st.text_input("Titel (optional)", max_chars=12, key="stab_tk")
-        los = st.form_submit_button("Fragen")
-    if los and text.strip():
-        with st.spinner("Der Stab berät …"):
-            try:
-                stab.frage(text.strip(), tk_.strip() or None)
-            except Exception as e:  # noqa: BLE001
-                st.error(str(e))
-    for f in stab.fragen()[:10]:
-        with st.container(border=True):
-            st.markdown(f"**{f['zeit']}{' · ' + f['titel'] if f.get('titel') else ''} — {f['frage']}**")
-            st.markdown(f["antwort"])
-            if f.get("ende") and f["ende"] != "end_turn":          # Fehlersuche: warum endete die Antwort?
-                st.caption(f'Ende der Antwort: {f["ende"]} · Blöcke: {", ".join(f.get("bloecke") or [])}')
-    with st.expander("⚙ Technik · Konferenz einberufen, Verbindung, Handy-Meldung, Protokoll"):
-        konferenz_technik(laeuft)
-
-
-def konferenz_technik(laeuft):
-    """Knöpfe und Protokoll des Stabs (seit 12.11.2026 zugeklappt unter der Lagekarte)."""
-    import stab
-    pruef_, handy_, knopf_ = st.columns([3, 5, 3])
-    with pruef_:
-        if st.button("Verbindung prüfen", key="stab_pruefen", help="Kurzer Test, ob Schlüssel und Guthaben gehen (kostet unter 1 Cent)."):
-            st.session_state["stab_probe"] = stab.probe()
-            st.rerun()
-    with handy_:
-        import meldung
-        with st.popover("📱 Meldung aufs Handy"):
-            st.markdown(
-                "Nach jeder Konferenz kommt der Tagesbefehl in Kurzfassung aufs Handy (Frühlauf: gegen 7 Uhr) – Haltung, "
-                "Markt, Pendel, Ziele und Gefahren; ein Tipp öffnet den Konferenzraum. Geht etwas schief, kommt eine "
-                "Warnung.\n\n"
-                "1. Im App Store die kostenlose App **ntfy** laden.\n"
-                "2. In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
-            st.code(meldung.kanal(), language=None)
-            st.markdown("3. Hier auf „Tagesbefehl senden“ drücken – der jüngste Tagesbefehl sollte sofort ankommen.\n\n"
-                        "Der Kanalname ist zufällig – wer ihn nicht kennt, sieht nichts.")
-            if st.button("Tagesbefehl senden", key="ntfy_test"):
-                k_ = stab.letzte()
-                titel_, text_ = (stab.kurzfassung(k_) if k_ else
-                                 ("Invest Cockpit", "Test aus dem Konferenzraum – die Leitung steht."))
-                if meldung.senden(text_, titel_, False, "Konferenzraum"):
-                    st.success("Gesendet.")
-                else:
-                    st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
-    with knopf_:
-        if st.button("↻ Konferenz jetzt einberufen", use_container_width=True, disabled=laeuft,
-                     help="Die acht Missionen lesen den Stand des letzten Frühlaufs (rund 10–15 Minuten, etwa 2–3 $). "
-                          "Läuft auf dem Server weiter, auch wenn du die Seite schließt."):
-            nachtlauf.konferenz_starten()
-            st.rerun()
-    prot, zeilen = nachtlauf.konferenz_protokoll()
-    if prot:
-        st.markdown(f"**Protokoll des Stabs** · gestartet {prot.get('start')}"
-                    + (f" · fertig {prot['ende']}" if prot.get("ende") else " · läuft noch oder abgebrochen")
-                    + (" · ⚠ Fehler" if prot.get("fehler") else ""))
-        if prot.get("fehler"):
-            st.error(prot["fehler"])
-        st.code("\n".join(zeilen) or "noch keine Ausgabe", language=None)
+            ko = modell.kosten()
+            st.caption(f"API-Schlüssel liegt auf dem Server · Kosten in diesem Monat {modell._zahl_de(ko['usd'])} $ "
+                       f"von {modell._zahl_de(modell.DECKEL_USD, 0)} $ · {ko['aufrufe']} Aufrufe")
+            if st.button("Verbindung prüfen", key="modell_pruefen", help="Kurzer Test, ob Schlüssel und Guthaben gehen "
+                                                                        "(kostet unter 1 Cent)."):
+                st.session_state["modell_probe"] = modell.probe()
+                st.rerun()
+        st.markdown("**Handy:** Der Frühlauf meldet sich über die kostenlose App **ntfy** (Stand der Lage, Warnungen). "
+                    "In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
+        st.code(meldung.kanal(), language=None)
+        if st.button("Testmeldung senden", key="ntfy_test"):
+            if meldung.senden("Test – die Leitung steht.", "Invest Cockpit", False, "Rückenwind"):
+                st.success("Gesendet.")
+            else:
+                st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
 
 
 def setups_zeigen():
-    """Seite „Setups“ (12.11.2026, Micky): Aufklärung und Filter – ① Auswahl für den Stab (Trichter, Akten), ② Stellung
+    """Seite „Setups“ (12.11.2026, Micky): Aufklärung und Filter – ① Einsatzbereit (Trichter, Liste), ② Stellung
     (grüne Setups, Reihen, Watchlist mit Marke 🎯), ③ Rückenwind je Titel, ④ Termine."""
     st.markdown(gestaltung.seite(
         '<h1 style="margin:0;font-size:32px;font-weight:600">Setups · Aufklärung und Filter</h1>'
@@ -649,6 +545,7 @@ def setups_zeigen():
     except Exception as e:  # noqa: BLE001
         _fehler(e)
     _kartentisch_zeigen(rollen={"termine"})
+    verbindungen_zeigen()
 
 
 def datenstand_zeigen():
@@ -673,21 +570,14 @@ def datenstand_zeigen():
         punkt_ = {"rot": "🔴", "gelb": "🟡"}
         with st.expander(f"{punkt_.get(w['ampel'], '⚪')} Wachen vom {w['stand'][8:10]}.{w['stand'][5:7]}. · "
                          f"{len(w['zeichen'])} Meldungen"):
-            st.caption("Jeden Morgen geprüft: Gleichlauf von Chart, Kartentisch und Stab · Plausibilität der Setups · "
-                       "Gegenprobe von 10 Titeln mit TradingView · Hinweise des Stabs auf Datenfehler · Form des Stabs. "
+            st.caption("Jeden Morgen geprüft: Gleichlauf von Chart und Kartentisch · Plausibilität der Setups · "
+                       "Gegenprobe von 10 Titeln mit TradingView. "
                        "Rot = Fehler der App, gelb = beachten, grau = stiller Hinweis (färbt nichts).")
             for a_, t_ in w["zeichen"]:
                 st.markdown(f"{punkt_.get(a_, '⚪')} {gestaltung.t(t_)}")
 
 
-if ansicht == "Konferenzraum":
-    datenstand_zeigen()
-    try:
-        _QUELLE["text"] = "Konferenz des Frühlaufs"
-        konferenz_zeigen()
-    except Exception as e:  # noqa: BLE001
-        _fehler(e)
-elif ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
+if ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
     _, k_ = st.columns([10, 2])
     with k_:
         konto_knopf()

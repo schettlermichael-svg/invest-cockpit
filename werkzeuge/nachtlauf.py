@@ -12,9 +12,9 @@ Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weit
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlist, Positionen, Gesamtmarkt) und Wechselkurse (Yahoo)
   5. samstags (nach dem Freitag) Revier-Pflege; TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login)
-  6. RS-Rang, Führer-Rang, Rückenwind, Kartentisch, Lage (Seite Rückenwind), Konferenz des Stabs, Schrank
+  6. RS-Rang, Führer-Rang, Rückenwind, Kartentisch, Lage (Seite Rückenwind), Schrank (der Konferenzraum wurde am 13.11.2026 abgebaut)
   7. Datenstand-Wache: Kurstag jedes Teils ins Protokoll (rot, wenn sie verschiedene Tage haben)
-  8. bei Bedarf zweiter Anlauf der Konferenz (30 Min später), danach Massive-Durchgänge für Lücken der
+  8. Massive-Durchgänge für Lücken der
      30-Minuten-Kerzen bis 11:30 Uhr (Erstbefüllung, neue Titel)
 Protokoll: daten/nachtlauf/protokoll.json – die Seiten zeigen daraus Statuszeile und Datenstand.
 """
@@ -178,19 +178,8 @@ def main(nur_tisch=False):
                 n += karte is not None
         return f"{n} von {len(liste)} Titelseiten abgelegt"
 
-    def konferenz_():
-        import stab
-        if not stab.schluessel():
-            return "übersprungen – kein API-Schlüssel"
-        k = stab.konferenz()
-        if stab.gescheitert(k):
-            raise RuntimeError(stab.gescheitert(k))
-        _tagesbefehl_melden(k)                    # gleich nach der Konferenz aufs Handy, vor dem Schrank (~7 Uhr)
-        ko = stab.kosten()
-        return f"{stab.ergebnis_zeile(k)} · Monat {stab._zahl_de(ko['usd'])} $ von {stab._zahl_de(stab.DECKEL_USD, 0)} $"
-
     def wachen_():
-        """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Stab, Gegenprobe)."""
+        """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Gegenprobe)."""
         import wachen
         w = wachen.pruefen()
         rot = [t for a, t in w["zeichen"] if a == "rot"]
@@ -225,9 +214,8 @@ def main(nur_tisch=False):
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
     schritt("Kartentisch", tisch)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
-    schritt("Konferenz des Stabs (MARAGA Investment)", konferenz_)
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
-    schritt("Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView, Stab", wachen_)
+    schritt("Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView", wachen_)
     p["datenstand"] = datenstand()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
@@ -235,27 +223,6 @@ def main(nur_tisch=False):
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
                 + f"{(p.get('reihen') or {}).get('m_spitze', 0)} × Base-Ausbruch ★ · {p.get('neu', 0)} Neuigkeiten")
-
-    # Zweiter Anlauf der Konferenz (10.11.2026; seit dem Frühlauf 12.11.2026 30 Minuten nach dem ersten, vor den
-    # Massive-Durchgängen): ist sie gescheitert, noch einmal
-    if any(s_["name"].startswith("Konferenz") and not s_["ok"] for s_ in p["schritte"]):
-        time.sleep(30 * 60)
-        try:
-            import stab
-            k = stab.konferenz(melden=print)
-            ok_ = not stab.gescheitert(k)
-        except Exception as e:  # noqa: BLE001
-            ok_, k = False, {"befehl": {"lage": str(e), "anrede": str(e)}}
-        p["konferenz_zweiter_anlauf"] = "geklappt" if ok_ else "gescheitert"
-        if ok_:                                  # Ampel der Übersicht: Schritt gilt dann als erledigt
-            for s_ in p["schritte"]:
-                if s_["name"].startswith("Konferenz"):
-                    s_["ok"], s_["text"] = True, "im zweiten Anlauf geklappt"
-        _schreiben(p)
-        _kopf_neu()
-        if not (ok_ and _tagesbefehl_melden(k)):
-            _mitteilung("Konferenz im zweiten Anlauf: " + ("Tagesbefehl liegt bereit." if ok_ else
-                        f"wieder gescheitert – {str((k.get('befehl') or {}).get('lage') or (k.get('befehl') or {}).get('anrede') or '')[:120]}"), not ok_)
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
     durchgang = 0
@@ -281,7 +248,7 @@ def main(nur_tisch=False):
 
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
     "Massive-Tageskurse": "Rückenwind, RS-Rang, Führer-Rang, Rudel, Breite",
-    "Yahoo-Tageskurse": "Charts, Kartentisch, Akten des Stabs",
+    "Yahoo-Tageskurse": "Charts, Kartentisch, Auswahl einsatzbereit",
     "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
     "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
     "RS-Rang": "RS-Rang (IBD-Formel) im Kartentisch",
@@ -545,78 +512,14 @@ def seiten_lauf_starten():
     return True
 
 
-KONFERENZ_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "konferenz_lauf.json")
-
-
-def konferenz_laeuft():
-    return _laeuft(KONFERENZ_PROTOKOLL, 1)[0]
-
-
-def konferenz_starten():
-    """Knopf „Konferenz jetzt einberufen“: nachtlauf.py --konferenz im Hintergrund."""
-    if konferenz_laeuft():
-        return False
-    os.makedirs(os.path.dirname(KONFERENZ_PROTOKOLL), exist_ok=True)
-    log = open(os.path.join(os.path.dirname(KONFERENZ_PROTOKOLL), "konferenz_lauf.log"), "w", encoding="utf-8")
-    subprocess.Popen([sys.executable, "-u", os.path.abspath(__file__), "--konferenz"], cwd=os.path.join(HIER, ".."),
-                     stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
-    return True
-
-
-def konferenz_protokoll():
-    """Protokoll und die letzten Zeilen der Ausgabe des Knopf-Laufs – für die Anzeige im Konferenzraum."""
-    try:
-        p = json.load(open(KONFERENZ_PROTOKOLL, encoding="utf-8"))
-    except (OSError, ValueError):
-        p = None
-    try:
-        zeilen = open(os.path.join(os.path.dirname(KONFERENZ_PROTOKOLL), "konferenz_lauf.log"),
-                      encoding="utf-8", errors="replace").read().splitlines()[-40:]
-    except OSError:
-        zeilen = []
-    return p, zeilen
-
-
-def _konferenz_lauf():
-    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid()}
-    _schreiben(p, KONFERENZ_PROTOKOLL)
-    try:
-        import stab
-        k = stab.konferenz(melden=print)
-        if stab.gescheitert(k):
-            p["fehler"] = stab.gescheitert(k)
-    except Exception as e:  # noqa: BLE001
-        p["fehler"] = f"{type(e).__name__}: {e}"
-        traceback.print_exc()
-    p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
-    _schreiben(p, KONFERENZ_PROTOKOLL)
-    if p.get("fehler") or not _tagesbefehl_melden():
-        _mitteilung(f"⚠ Konferenz gescheitert: {p['fehler'][:150]}" if p.get("fehler") else
-                    "Konferenz fertig – der Tagesbefehl liegt im Konferenzraum.", bool(p.get("fehler")))
-
-
-def _tagesbefehl_melden(k=None):
-    """Tagesbefehl in Kurzfassung aufs Handy (12.11.2026); ein Tipp öffnet den Konferenzraum."""
-    try:
-        import stab
-        titel, text = stab.kurzfassung(k or stab.letzte())
-        _mitteilung(text, titel=titel, seite="Konferenzraum")
-        return True
-    except Exception:  # noqa: BLE001 – dann bleibt die kurze Meldung
-        traceback.print_exc()
-        return False
-
-
 def laeuft_etwas():
-    """Läuft ein Knopf-Lauf (Kartentisch oder Konferenz)? Für das Update-Skript des Servers: dann kein Neustart."""
-    return _laeuft(TISCH_PROTOKOLL, 6)[0] or konferenz_laeuft()
+    """Läuft ein Knopf-Lauf (Kartentisch)? Für das Update-Skript des Servers: dann kein Neustart."""
+    return _laeuft(TISCH_PROTOKOLL, 6)[0]
 
 
 if __name__ == "__main__":
     if "--laeuft" in sys.argv:                   # Update-Skript: Exit 0 = es läuft etwas, bitte nicht neu starten
         sys.exit(0 if laeuft_etwas() else 1)
-    elif "--konferenz" in sys.argv:
-        _konferenz_lauf()
     elif "--seiten" in sys.argv:
         seiten()
     else:

@@ -458,7 +458,7 @@ def fehlt(m, k):
 
 def planzeile(m, k, df, marken=None, zr=None, su=None):
     """Plan in Zeilen unter dem Chart: zuerst DAS Setup des Titels – Einstieg aus depot.einstieg_setup, dieselbe Linie
-    wie Chart, Kartentisch und Stab (Prüf-Agent 12.11.2026: vorher nahm die erste Zeile bei Sprung + Momentum-Ausbruch
+    wie Chart, Kartentisch und Auswahl (Prüf-Agent 12.11.2026: vorher nahm die erste Zeile bei Sprung + Momentum-Ausbruch
     den Pivot des Momentum-Ausbruchs, und die Short-Zeile fehlte bei gelbem Breakout) –, darunter „Auch · …“ die
     übrigen Setups mit dem Stopp IHRES Einstiegs; ohne Pivot die Marken zur Trendvorlage."""
     import depot as depot_
@@ -469,7 +469,6 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     kurs = float(c.iloc[-1])
     su = su or {}
     r_ = su.get("reihe")
-    hk = k.get("haupt")
     em = system_kullamaegi.short_von(k, r_) if r_ in system_kullamaegi.SHORTS else system_kullamaegi.short_von(k)
 
     def st(e, short=False):
@@ -769,12 +768,10 @@ def waehrung_setzen(html, tk):
     return re.sub(r"(\d)([ \u00a0])\$", lambda m_: m_.group(1) + m_.group(2) + w, html)
 
 
-def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, nadeln=None, avwap_wahl=None):
+def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, avwap_wahl=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
     gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20, AVWAP-Anker), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
     m = z.get("marken")
-    if nadeln:                                    # Konferenzraum: Hinweise der Strategen als Nadeln
-        m = dict(m or {}, nadeln=nadeln)
     st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
     return waehrung_setzen(seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
                        f'<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:10px">{legende(ebene, gd_kurz)}</div>'
@@ -981,8 +978,8 @@ def maerkte():
 
 
 def _kreislauf_box(tk, df, index, gewinne, m_):
-    """Kreislaufbild unter den Kacheln, über dem Chart (13.11.2026): Phase, Wechsel, Zeichen – und der Satz des Stabs,
-    wenn die letzte Konferenz über den Titel gesprochen hat."""
+    """Kreislaufbild unter den Kacheln, über dem Chart (13.11.2026): Phase, Wechsel, Zeichen (bis 13.11.2026 mit dem
+    Satz des Stabs; der Konferenzraum wurde abgebaut)."""
     try:
         import kreislaufbild
         import zeichen
@@ -991,12 +988,7 @@ def _kreislauf_box(tk, df, index, gewinne, m_):
                                fehlausbruch=vcp_zone_text(br) if br and br.get("fehl") else None)
         if not k:
             return ""
-        try:
-            import stab
-            satz = stab.satz_zu(tk)
-        except Exception:  # noqa: BLE001
-            satz = None
-        return kreislaufbild.gross(k, tk, satz)
+        return kreislaufbild.gross(k, tk)
     except Exception:  # noqa: BLE001 – die Seite steht auch ohne Bild
         return ""
 

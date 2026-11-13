@@ -87,7 +87,7 @@ def feld_name(f):
 STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind = Lagezentrum (12.11.2026)
              ("wind", "②", "Rückenwind", "Wohin fließt das Geld, wo sammeln sich die Angriffe?"),
              ("truppe", "③", "Eigene Truppe", "Wie stehen meine Positionen?"))
-STATIONEN_SETUPS = (("auswahl", "①", "Auswahl für den Stab", "Was geht in die Konferenz – und warum?"),   # Seite Setups
+STATIONEN_SETUPS = (("auswahl", "①", "Einsatzbereit", "Was ist jetzt am Auslöser – und warum?"),   # Seite Setups
                     ("stellung", "②", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),
                     ("titel", "③", "Rückenwind je Titel", "Wer hat Kurs, Geld und Zahlen hinter sich?"),
                     ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"))

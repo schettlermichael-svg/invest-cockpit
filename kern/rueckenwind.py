@@ -377,7 +377,7 @@ def rechnen(netz=False):
             except Exception:  # noqa: BLE001 – dann ohne Zahlen
                 pass
         z = _zahlen(tk, tv)                      # … gelesen für alle (Prüf-Agent 13.11.2026: Short-Titel ohne Stufe
-        if z:                                    # standen ohne Zahlen im Stab)
+        if z:                                    # standen ohne Zahlen da)
             z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
         x["zahlen"] = z
         titel[tk] = x
@@ -420,13 +420,3 @@ def laden():
     return erg
 
 
-def anfuehrer_verfolger(erg, n=15):
-    """Für den Stab (Strömungs-Analyst): Anführer = höchster RS-Rang in Stufe Läuft (bei Gleichstand mehr Zufluss);
-    Verfolger = größtes Tempo mit positiver Beschleunigung im Band von Entsteht (Rang 50 bis unter 85) – ohne Untergrenze
-    stand eine Erholung aus dem Keller (Rang 5 → 30) ganz oben (12.11.2026, vorher die Schnellsuche der Seite)."""
-    t = (erg or {}).get("titel", {}).items()
-    anf = sorted(((tk, x) for tk, x in t if x.get("stufe") == "Läuft"),
-                 key=lambda p: (-p[1]["rang"], -(p[1].get("zufluss") or 0)))[:n]
-    ver = sorted(((tk, x) for tk, x in t if MITTEL[0] <= x["rang"] < MITTEL[1] and x["beschleunigung"] > 0),
-                 key=lambda p: (-p[1]["tempo"], -p[1]["beschleunigung"]))[:n]
-    return {"Anführer": [tk for tk, _ in anf], "Verfolger": [tk for tk, _ in ver]}
