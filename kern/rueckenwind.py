@@ -180,7 +180,8 @@ def _jahre(gewinne):
         return ["grau", "zu wenige Quartale für drei Jahre"]
     summe = eps.rolling(4).sum().dropna()
     j = [summe.iloc[-13], summe.iloc[-9], summe.iloc[-5], summe.iloc[-1]]
-    w = [((b / a - 1) * 100) if a > 0 else None for a, b in zip(j, j[1:])]
+    # Basis unter 5 Cent je Aktie (CRDO 13.11.2026: Rundungsrest 1e-17 → +4,6 Trillionen %) ergibt keine Rate
+    w = [((b / a - 1) * 100) if a >= 0.05 else None for a, b in zip(j, j[1:])]
     text = " / ".join("–" if x is None else f"{_p(x)} %" for x in w) + " (drei Jahre, je vier Quartale)"
     if any(b < a for a, b in zip(j, j[1:])):
         return ["rot", text]

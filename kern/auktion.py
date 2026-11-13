@@ -180,7 +180,7 @@ def kraft(df, idx, richtung, k=None):
     t, m, rs = r
     rel = (k or {}).get("relativ") or {}
     zahl = f"Titel {_z(t, '+.1f')} %, S&P 500 {_z(m, '+.1f')} %, RS-Linie {_z(rs, '+.1f')} % (20 Tage)"
-    auf = richtung != "abwärts"
+    auf = richtung == "aufwärts" if richtung else t >= 0     # ohne Laufrichtung (Balance): die Richtung des Kurses
     if (auf and rs >= EIGEN_PCT) or (not auf and rs <= -EIGEN_PCT):
         art = "eigen"
     elif (auf and t > 0 and rs <= 1) or (not auf and t < 0 and rs >= -1):
