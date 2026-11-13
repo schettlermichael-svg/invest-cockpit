@@ -9,6 +9,9 @@ Erweitert 09.11.2026 (Lagekarte des Setups): Kaufzone Pivot bis +5 %, eine Stopp
 Ausbruchstag mit Volumen-Vielfachem, Fehlausbruch, Ermüdungstag, Basennummer an der Zone, AVWAP nach Wahl (Hoch, Tief, Ereignistag), Earnings
 mit Kursreaktion und nächstem Termin, RS-Rang/Tempo und „RS-Hoch vor Kurs“ an der RS-Linie, Volumen nach Schluss zum
 Vortag gefärbt; darunter der Stundenchart der letzten 10 Handelstage (stunden()).
+Erweitert 13.11.2026 (Blinde Flecken): S&P 500 gestrichelt im Kurschart (am linken Rand auf den Kurs gelegt), die
+gemessenen Zeichen aus zeichen.py (Schwungpunkte, Pocket Pivot, Spring/Upthrust, höheres Tief bzw. tieferes Hoch gegen
+den Index), Abgabetage und verdeckte Abgabe über dem Volumen, „RS-Tief vor Kurs“ als Spiegel des RS-Hochs.
 Der frühere Chart (Market-Profile-Zonen, POC-Treppe, Pivot, Stopps, Volumenprofil, Phasenband, Zahlentermine) liegt in
 _to_delete/chart_vor_vcp_2026-11-06.py.
 """
@@ -17,6 +20,11 @@ import pandas as pd
 
 
 from gestaltung import BLAU, GELB, GRUEN, LILA, RAND, ROT, TEXT, TEXT_2, TEXT_3, zahl
+
+try:
+    from zeichen import RS_HOCH as RS_MASS       # RS-Linie „am Hoch“: ein Maßstab für die ganze App (0,99)
+except Exception:  # noqa: BLE001
+    RS_MASS = 0.99
 
 MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
 B, LINKS, RECHTS = 1344, 64, 104
@@ -29,6 +37,8 @@ AVWAP_FARBEN = {"hoch": "#FF8A65", "tief": "#4DD0E1", "ereignis": "#C792EA", "za
 AVWAP_KURZ = {"hoch": "Hoch 52 W", "tief": "Tief 6 M", "ereignis": "Ereignistag", "zahlen": "Zahlentag"}
 AVWAP_START = ["hoch", "tief"]                 # Voreinstellung: die Zange (Zonenanker gestrichen: zu kurzfristig, Micky)
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
+RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
+INDEX_SCHATTEN = "#9AA3AF"   # S&P 500 im Kurschart, gestrichelt, am linken Rand auf den Kurs gelegt
 KAUFZONE_FARBE = GRUEN
 ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
 ZONE_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup jetzt oder alle Zonen
@@ -167,6 +177,25 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         linie(linien[k], farbe, dicke)
     for k, reihe in kurz.items():
         linie(reihe, GD_KURZ[k], 1.4)
+    if index is not None:                  # S&P 500 als Schatten (13.11.2026: der Fall HWM sofort sichtbar)
+        ix_ = index["Close"] if ebene == "Tag" else index["Close"].resample("W-FRI").last()
+        ix_ = ix_.reindex(d.index, method="ffill")
+        if ix_.notna().sum() > 5:
+            erst = ix_.first_valid_index()
+            sch = ix_ * (float(d["Close"].loc[erst]) / float(ix_.loc[erst]))
+            pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(sch.to_numpy(float))
+                           if not np.isnan(x) and pmin <= x <= pmax)
+            if pkt:
+                A(f'<polyline points="{pkt}" fill="none" stroke="{INDEX_SCHATTEN}" stroke-width="1.3" '
+                  f'stroke-dasharray="6 4" opacity="0.8"><title>S&amp;P 500, am linken Rand auf den Kurs gelegt – liegt '
+                  f'der Kurs darüber, ist der Titel stärker als der Markt</title></polyline>')
+                t_k, t_i = (float(d["Close"].iloc[-1]) / float(d["Close"].loc[erst]) - 1) * 100, \
+                           (float(sch.iloc[-1]) / float(sch.loc[erst]) - 1) * 100
+                y_ = Y(min(max(float(sch.iloc[-1]), pmin), pmax))
+                text = f"S&P 500 {'+' if t_i >= 0 else '−'}{zahl(abs(t_i), 0)} % · Titel {'+' if t_k >= 0 else '−'}{zahl(abs(t_k), 0)} %"
+                y2, strich = _rechts(platz, ENDE, y_, text, nach_oben=y_ > 230)
+                spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y2:.1f}" fill="{INDEX_SCHATTEN}" font-size="12">'
+                              f'{text.replace("&", "&amp;")}</text>')
     if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
         import avwap
         anker = avwap.anker(voll)
@@ -201,8 +230,10 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe}" font-size="12" '
                               f'font-weight="600">{text}</text>')
     _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
+    tm = {}
     if tag_ebene:
         _zeichen(marken, d, pos, X, Y, A, spaete, platz, ENDE, h, l)
+        tm = _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l)
         _nadeln(marken.get("nadeln"), d, pos, X, Y, spaete, platz, h)
     for t_ in spaete:
         A(t_)
@@ -220,6 +251,17 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     v50 = voll["Volume"].rolling(50 if ebene == "Tag" else 10).mean().reindex(d.index).to_numpy(float)
     pkt = " ".join(f"{X(i):.1f},{570 - 90 * x / vmax:.1f}" for i, x in enumerate(v50) if not np.isnan(x))
     A(f'<polyline points="{pkt}" fill="none" stroke="{TEXT}" stroke-width="1.2"/>')
+    for t_ in tm.get("abgabe", []):            # Abgabetage des Titels (Distribution): roter Punkt über dem Balken
+        if t_ >= d.index[0]:
+            i = pos(t_)
+            A(f'<circle cx="{X(i):.1f}" cy="{570 - 90 * v[i] / vmax - 5:.1f}" r="2.6" fill="{ROT}"><title>{t_:%d.%m.%Y}: '
+              f'Abgabetag – Schluss tiefer, Volumen über dem Schnitt, Schluss im unteren Drittel</title></circle>')
+    for t_ in tm.get("churning", []):          # verdeckte Abgabe: im Plus, aber Schluss unten bei viel Volumen
+        if t_ >= d.index[0]:
+            i = pos(t_)
+            A(f'<circle cx="{X(i):.1f}" cy="{570 - 90 * v[i] / vmax - 5:.1f}" r="2.6" fill="none" stroke="{ROT}" '
+              f'stroke-width="1.3"><title>{t_:%d.%m.%Y}: verdeckte Abgabe (Churning) – im Plus, Volumen über dem '
+              f'Schnitt, Schluss im unteren Drittel</title></circle>')
     # Volumenband je Balken, am Schnitt gemessen: Ruhe türkis (kräftig bis 50 %, blass bis 75 %), viel Volumen in
     # Richtung des Tages (Schluss zum Vortag) grün bzw. rot (blass über dem Schnitt, kräftig ab 1,5-fach), sonst grau
     cv = voll["Close"].shift().reindex(d.index).to_numpy(float)
@@ -291,7 +333,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
               + f'" fill="none" stroke="{BLAU}" stroke-width="1.8"/>')
             if tag_ebene:                       # RS-Linie am Jahreshoch, der Kurs noch nicht (Rückenwind: 99 % / 97 %)
                 rv = voll["Close"] / index["Close"].reindex(voll.index, method="ffill")
-                hoch = rv >= 0.99 * rv.rolling(252, min_periods=252).max()
+                hoch = rv >= RS_MASS * rv.rolling(252, min_periods=252).max()
                 kurs_tief = voll["Close"] < 0.97 * voll["Close"].rolling(252, min_periods=252).max()
                 fl = (hoch & kurs_tief).reindex(d.index).fillna(False).to_numpy(bool)
                 for i in np.flatnonzero(fl):
@@ -303,6 +345,18 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                     t_ = "● RS-Hoch vor Kurs"
                     A(f'<text x="{X(i):.1f}" y="{YR(rs[i]) - 9:.1f}" fill="{RS_HOCH}" font-size="12" font-weight="600" '
                       f'text-anchor="end">{t_}</text>')
+                # Spiegelbild (13.11.2026): RS-Linie am Jahrestief, der Kurs noch nicht – Schwäche kündigt sich an
+                tief = rv <= rv.rolling(252, min_periods=252).min() / RS_MASS
+                kurs_hoch = voll["Close"] > 1.03 * voll["Close"].rolling(252, min_periods=252).min()
+                ft = (tief & kurs_hoch).reindex(d.index).fillna(False).to_numpy(bool)
+                for i in np.flatnonzero(ft):
+                    if not np.isnan(rs[i]):
+                        A(f'<circle cx="{X(i):.1f}" cy="{YR(rs[i]):.1f}" r="3.2" fill="{RS_TIEF}"><title>{d.index[i]:%d.%m.%Y}: '
+                          f'RS-Linie am Jahrestief, Kurs noch nicht – das frühe Zeichen der Schwäche</title></circle>')
+                if ft.any():
+                    i = int(np.flatnonzero(ft)[-1])
+                    A(f'<text x="{X(i):.1f}" y="{YR(rs[i]) + 16:.1f}" fill="{RS_TIEF}" font-size="12" font-weight="600" '
+                      f'text-anchor="end">● RS-Tief vor Kurs</text>')
             pfeil(rs, BLAU, "gegen S&amp;P 500")
             if rk is not None:
                 pfeil(rk, LILA, f"gegen Sektor {sektor_name}")
@@ -544,6 +598,51 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
                       f'font-weight="700" text-anchor="middle">{t_}</text>')
 
 
+def _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l):
+    """Die gemessenen Zeichen im Kurschart (Prüf-Agent 13.11.2026: der Chart zeigte sie nicht): Schwungpunkte (Dow,
+    n = 5) als kleine Ringe, Pocket Pivot „PP“, Spring „S“ und Upthrust „U“, höheres Tief bzw. tieferes Hoch gegen den
+    Index „◆“. Abgabetage kommen ins Volumen (Rückgabe). Alles nach den Regeln von zeichen.py."""
+    import zeichen
+    tm = zeichen.tagesmarken(voll)
+    hs, ts = zeichen.schwungpunkte(voll["High"], voll["Low"], 5)
+    erst = len(voll) - len(d)
+    for liste, oben in ((hs, True), (ts, False)):
+        for i_, p_ in liste:
+            if i_ >= erst:
+                i = i_ - erst
+                A(f'<circle cx="{X(i):.1f}" cy="{Y(p_) + (-6 if oben else 6):.1f}" r="2.4" fill="none" stroke="{TEXT_2}" '
+                  f'stroke-width="1"><title>{d.index[i]:%d.%m.%Y}: Schwung{"hoch" if oben else "tief"} {zahl(p_)} $ '
+                  f'(Dow-Struktur)</title></circle>')
+    for t_ in tm["pocket"]:
+        if t_ >= d.index[0]:
+            i = pos(t_)
+            spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(l[i]) + 15, "PP", 10, nach_oben=False):.1f}" '
+                          f'fill="{GRUEN}" font-size="10" font-weight="700" text-anchor="middle"><title>{t_:%d.%m.%Y}: '
+                          f'Pocket Pivot – Volumen über dem größten Abgabetag der 10 Tage davor</title>PP</text>')
+    marken = []
+    sp = zeichen.spring(voll)
+    if sp:
+        marken.append(sp)
+    if index is not None:
+        try:
+            rel = zeichen.relativ(voll, index[index.index <= voll.index[-1]]) or {}
+            marken += [z_ for z_ in rel.get("zeichen", []) if z_.get("tag")]
+        except Exception:  # noqa: BLE001
+            pass
+    for z_ in marken:
+        t_ = pd.Timestamp(z_["tag"])
+        if t_ < d.index[0]:
+            continue
+        i = pos(t_)
+        stark = z_["seite"] == "stärke"
+        wort = "S" if z_["text"].startswith("Spring") else "U" if z_["text"].startswith("Upthrust") else "◆"
+        txt = z_["text"].replace("&", "&amp;").replace("<", "&lt;")
+        y_ = platz(X(i), Y(l[i]) + 28 if stark else Y(h[i]) - 22, wort, 13, nach_oben=not stark)
+        spaete.append(f'<text x="{X(i):.1f}" y="{y_:.1f}" fill="{GRUEN if stark else ROT}" font-size="13" '
+                      f'font-weight="700" text-anchor="middle"><title>{txt}</title>{wort}</text>')
+    return tm
+
+
 NADEL_FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT}
 
 
@@ -648,7 +747,11 @@ def legende(ebene="Tag", gd_kurz=False):
         eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
                       (AVWAP_FARBEN["hoch"], "AVWAP ab Hoch 52 Wochen"), (AVWAP_FARBEN["tief"], "AVWAP ab Tief 6 Monate (mit Hoch: Zange)"),
                       (AVWAP_FARBEN["ereignis"], "AVWAP ab Ereignistag (Lücke ab 4 %, Volumen ×2)"), (AVWAP_FARBEN["zahlen"], "AVWAP ab Zahlentag (Reaktion ab 3 %)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
-                      (RS_HOCH, "● RS-Hoch vor Kurs")]
+                      (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),
+                      (TEXT_2, "○ Schwungpunkte (Dow) · PP = Pocket Pivot · S = Spring · U = Upthrust · ◆ = höheres Tief "
+                               "(grün) bzw. tieferes Hoch (rot) gegen den Index"),
+                      (ROT, "● über dem Volumen: Abgabetag · ○ verdeckte Abgabe")]
+    eintraege += [(INDEX_SCHATTEN, "S&P 500 gestrichelt, am linken Rand auf den Kurs gelegt")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'
                    f'<span style="width:18px;height:4px;border-radius:2px;background:{f}"></span>{t(n)}</span>'

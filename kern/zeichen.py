@@ -64,8 +64,12 @@ def _tage(n, wort):
     return f"{n} {wort}" + ("" if n == 1 else "e")
 
 
-def _zeichen(seite, art, text, gewicht=1):
-    return {"seite": seite, "art": art, "text": text, "gewicht": gewicht}
+def _zeichen(seite, art, text, gewicht=1, tag=None):
+    """Ein Zeichen; tag (Datum als Text JJJJ-MM-TT) markiert es im Chart."""
+    z = {"seite": seite, "art": art, "text": text, "gewicht": gewicht}
+    if tag is not None:
+        z["tag"] = f"{pd.Timestamp(tag):%Y-%m-%d}"
+    return z
 
 
 def _atr(df, n=14):
@@ -159,11 +163,11 @@ def spring(df, tage=10, vor=20):
                     return _zeichen("stärke", "struktur", f"Spring am {df.index[i]:%d.%m.}: Tief unter "
                                     f"{_z(unten, '.2f')} $, " + ("am selben Tag" if j == i else f"am {df.index[j]:%d.%m.}") +
                                     " mit Volumen zurückgekauft – "
-                                    "die Verkäufer sind erschöpft", 2)
+                                    "die Verkäufer sind erschöpft", 2, df.index[i])
         if (hi[i] > oben and hi[i] - oben <= a[i] and c[i] < oben and hi[i] > lo[i] and v[i] > v50[i]
                 and (c[i] - lo[i]) / (hi[i] - lo[i]) <= 1 / 3):
             return _zeichen("schwäche", "struktur", f"Upthrust am {df.index[i]:%d.%m.}: Hoch über {_z(oben, '.2f')} $, "
-                            "Schluss im unteren Drittel zurück in der Spanne – die Käufer sind erschöpft", 2)
+                            "Schluss im unteren Drittel zurück in der Spanne – die Käufer sind erschöpft", 2, df.index[i])
     return None
 
 
@@ -238,6 +242,33 @@ def akkumulation(df, tage=20):
     return {"kauftage": kauf, "abgabetage": abgabe, "churning": churning, "pocket_pivot": pocket,
             "bild": "Akkumulation" if saldo >= 3 and kauf >= 2 * abgabe else
             "Distribution" if saldo <= -3 and abgabe >= 2 * kauf else "ausgeglichen"}
+
+
+def tagesmarken(df, tage=260):
+    """Für den Chart (13.11.2026): Pocket Pivots, Abgabetage (Distributionstage des Titels) und verdeckte Abgabe der
+    letzten `tage` Handelstage, nach denselben Regeln wie akkumulation() → {pocket, abgabe, churning: [Datum]}."""
+    aus = {"pocket": [], "abgabe": [], "churning": []}
+    if df is None or len(df) < 70:
+        return aus
+    c, h, l, v = (df[x].to_numpy(float) for x in ("Close", "High", "Low", "Volume"))
+    s50 = pd.Series(v).rolling(50).mean().to_numpy()
+    g10 = pd.Series(c).rolling(10).mean().to_numpy()
+    g50 = pd.Series(c).rolling(50).mean().to_numpy()
+    for i in range(max(60, len(df) - tage), len(df)):
+        sp = h[i] - l[i]
+        lage = (c[i] - l[i]) / sp if sp > 0 else 0.5
+        auf, ab, laut = c[i] > c[i - 1], c[i] < c[i - 1], v[i] > s50[i]
+        if ab and laut and lage <= 1 / 3:
+            aus["abgabe"].append(df.index[i])
+        if auf and laut and lage <= 1 / 3:
+            aus["churning"].append(df.index[i])
+        if (auf and c[i] > g10[i] and c[i] > g50[i] and lage >= 0.5 and c[i] <= g10[i] * 1.04
+                and c[i - 1] / c[i - 6] - 1 <= 0.03):
+            vor = range(i - 10, i)
+            ab_vol = [v[j] for j in vor if c[j] < c[j - 1]]
+            if ab_vol and v[i] > max(ab_vol):
+                aus["pocket"].append(df.index[i])
+    return aus
 
 
 def enge_trocken(df):
@@ -321,7 +352,7 @@ def divergenz(df, idx, s, ende=None):
         return []
     return [_zeichen("stärke", "rs", f"höheres Tief gegen den Index: eigenes Tief am {d1:%d.%m.} bei "
                      f"{_z(tief1, '.2f')} $, am tieferen Indextief {t2:%d.%m.} {_z((um_t2 / tief1 - 1) * 100, '+.1f')} % "
-                     f"darüber; seitdem {_z(t_, '+.1f')} %, der S&P 500 {_z(i_, '+.1f')} %", 2) | {"auch_struktur": True}]
+                     f"darüber; seitdem {_z(t_, '+.1f')} %, der S&P 500 {_z(i_, '+.1f')} %", 2, t2) | {"auch_struktur": True}]
 
 
 def divergenz_short(df, idx):
@@ -350,7 +381,7 @@ def divergenz_short(df, idx):
         return []
     return [_zeichen("schwäche", "rs", f"tieferes Hoch gegen den Index: eigenes Hoch am {d1:%d.%m.} bei "
                      f"{_z(hoch1, '.2f')} $, am höheren Indexhoch {t2:%d.%m.} {_z((um_t2 / hoch1 - 1) * 100, '+.1f')} % "
-                     f"darunter; seitdem {_z(t_, '+.1f')} %, der S&P 500 {_z(i_, '+.1f')} %", 2) | {"auch_struktur": True}]
+                     f"darunter; seitdem {_z(t_, '+.1f')} %, der S&P 500 {_z(i_, '+.1f')} %", 2, t2) | {"auch_struktur": True}]
 
 
 def tage_gegen_markt(df, idx, tage=20):
