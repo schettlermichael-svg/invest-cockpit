@@ -751,9 +751,9 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Dow-Struktur der Schwungpunkte auf Tag (n = 5) und Woche (n = 2). Signale: Schluss unter dem letzten höheren Tief, erstes höheres Tief nach tieferen Hochs und Tiefs (und gespiegelt).
 - Einquetschung: steigende Tiefs unter flacher Oberkante, dazu das Spiegelbild.
 - Akkumulation und Distribution: 20 Tage, Saldo ±3, Pocket Pivot in 5 Tagen über GD10 und GD50.
-- Stärke in der Schwäche, gemessen ab dem Indexhoch vor O'Neils Korrektur. Zeichen: hält (+5 %), führt aus der Korrektur (+10 Punkte seit dem Indextief), nah am Hoch, RS-Linie am Hoch. Dazu das Spiegelbild.
+- Stärke in der Schwäche, gemessen ab dem Indexhoch vor O'Neils Korrektur. Zeichen: hält (mindestens +5 % und 10 Punkte vor dem Index), führt aus der Korrektur (10 Punkte vor dem Index seit dem Indextief), nah am Hoch, RS-Linie am Hoch. Dazu das Spiegelbild.
 - Reaktion auf Zahlen: Überraschung gegen Kursreaktion.
-- Wanderung der Wertzone: POC 5 gegen 5 Tage, ±3 %.
+- Wanderung der Wertzone: POC 5 gegen 5 Tage, ±3 %, nur in der Seitwärtszone (Schluss in 10 Tagen höchstens ±4 %); aus derselben Market-Profile-Analyse wie Karte und Chart (`erkennung.mp_von`, Rohdaten-Speicher auf 50 Titel begrenzt).
 - Kreislauf: die Phase nach Weinstein (phase.py), dazu der Wechsel, der sich abzeichnet („4 → 1“), ein fester Satz und 52 Wochenschlüsse mit Phase je Woche.
 
 **Fehlausbruch neu (`vcp_zone.ausbruch`):**

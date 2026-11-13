@@ -245,6 +245,8 @@ def mp_von(df):
         if len(_MP) > 500:
             _MP.clear()
         if tk not in _ROH:
+            if len(_ROH) > 50:                   # Massenlauf (Kartentisch, Kreislauf): Speicher begrenzen
+                _ROH.clear()
             _ROH[tk] = tpo_daten.lesen(tk)
         roh = _ROH[tk]
         a = None

@@ -1739,9 +1739,26 @@ def _hinweise_neu(k):
     return aus
 
 
+_GEMERKT = {}
+
+
+def _letzte_gemerkt():
+    """letzte() einmal je Datei und Änderungszeit (die Titelseiten des Schranks fragen je Titel)."""
+    if not os.path.isdir(SPEICHER):
+        return None
+    namen = sorted((f for f in os.listdir(SPEICHER) if f[:4].isdigit() and f.endswith(".json")), reverse=True)
+    if not namen:
+        return None
+    p = os.path.join(SPEICHER, namen[0])
+    schl = (p, os.path.getmtime(p))
+    if _GEMERKT.get("schl") != schl:
+        _GEMERKT.update(schl=schl, k=letzte())
+    return _GEMERKT["k"]
+
+
 def satz_zu(tk):
     """Der Satz des Stabs zu einem Titel aus der jüngsten Konferenz (für das Kreislaufbild der Titelseite) oder None."""
-    k = letzte() or {}
+    k = _letzte_gemerkt() or {}
     if k.get("format") != 2:
         return None
     tk = tk.upper()

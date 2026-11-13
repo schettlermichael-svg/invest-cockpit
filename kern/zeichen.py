@@ -23,15 +23,18 @@ Die App misst, der Stab deutet. Jede Messung ist eine feste Regel:
   Reaktion          die letzte Zahlenmeldung (höchstens 60 Handelstage her): Überraschung positiv und der Kurs fällt
                     am Reaktionstag = Schwäche; Überraschung negativ und der Kurs hält (Reaktion ≥ 0) = Stärke.
   Wertzone          Market Profile (30-Minuten-Kerzen, wenn vorhanden): POC der letzten 5 Tage gegen die 5 davor –
-                    wandert der akzeptierte Wert um mindestens 3 % nach oben bzw. unten.
+                    wandert der akzeptierte Wert um mindestens 3 % nach oben bzw. unten, während der Kurs seitwärts läuft
+                    (Schluss in 10 Tagen höchstens ±4 %).
 """
 import numpy as np
 import pandas as pd
 
 GLEICH_PCT = 1.5          # Einquetschung: Hochs innerhalb ±1,5 %
 MIN_RUECKGANG = 3.0       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
-HAELT_PCT = 5.0           # „hält in der Schwäche“: seit dem Indexhoch mindestens 5 % im Plus
+HAELT_PCT = 5.0           # „hält in der Schwäche“: seit dem Indexhoch mindestens 5 % im Plus …
+FUEHRT_PUNKTE = 10.0      # … und mindestens 10 Prozentpunkte besser als der Index (ebenso „führt aus der Korrektur“)
 KEIN = "kein"             # Startdatum schon gesucht, der Markt ist nicht schwach (statt None = noch nicht gesucht)
+SEITWAERTS_PCT = 4.0         # Seitwärtszone: Schluss in 10 Tagen höchstens ±4 %
 WERT_WANDERT_PCT = 3.0       # der akzeptierte Wert (POC) wandert in 5 Tagen um mindestens 3 %
 PHASE_NAME = {1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
 
@@ -192,7 +195,7 @@ def relativ(df, idx, start=None):
     """Stärke in der Schwäche und Schwäche in der Stärke → {staerke: [..], schwaeche: [..], seit, titel_pct, index_pct}.
     Stärke in der Schwäche (O'Neil sieht Korrektur oder Druck, oder der Index liegt mindestens 3 % unter dem Hoch der
     letzten 60 Tage – gemessen ab diesem Hoch):
-      hält      der Titel steht seit dem Indexhoch mindestens 5 % im Plus;
+      hält      der Titel steht seit dem Indexhoch mindestens 5 % im Plus und 10 Punkte vor dem Index;
       führt     seit dem Indextief mindestens 10 Prozentpunkte besser als der Index (O'Neil: die Führer brechen als
                 erste aus der Korrektur aus);
       nah       am Tag des Indextiefs näher am eigenen 52-Wochen-Hoch als der Index an seinem;
@@ -212,14 +215,14 @@ def relativ(df, idx, start=None):
         i_pct = float(i_c.iloc[-1] / i_c.loc[s] - 1) * 100
         aus.update(seit=f"{s:%d.%m.%Y}", titel_pct=round(t_pct, 1), index_pct=round(i_pct, 1))
         if i_pct < 0:                     # korrekturbeginn() liefert nur bei schwachem Markt ein Datum
-            if t_pct >= HAELT_PCT:
+            if t_pct >= HAELT_PCT and t_pct - i_pct >= FUEHRT_PUNKTE:
                 aus["staerke"].append(f"seit dem Indexhoch {s:%d.%m.} {_z(t_pct, '+.1f')} %, der S&P 500 {_z(i_pct, '+.1f')} % "
                                       "(hält in der Schwäche)")
             tief_tag = i_c.loc[s:].idxmin()
             if tief_tag < c.index[-1]:
                 t3 = float(c.iloc[-1] / c.loc[tief_tag] - 1) * 100
                 i3 = float(i_c.iloc[-1] / i_c.loc[tief_tag] - 1) * 100
-                if t3 - i3 >= 10:
+                if t3 - i3 >= FUEHRT_PUNKTE:
                     aus["staerke"].append(f"seit dem Indextief {tief_tag:%d.%m.} {_z(t3, '+.1f')} %, der S&P 500 {_z(i3, '+.1f')} % "
                                           "(führt aus der Korrektur)")
             hoch52 = float(df["High"].loc[:tief_tag].iloc[-252:].max())
@@ -275,18 +278,16 @@ def reaktion(df, gewinne, max_tage=60):
 
 
 # ── Wertzone wandert (Market Profile) ─────────────────────────────────────────────────────────────────────────────
-def wertzone(df30):
-    if df30 is None or len(df30) < 60:
+def wertzone(tage, df=None):
+    """tage: Tagesprofile des Market Profile (erkennung.mp_von(df)["tage"], chronologisch, je Tag mit poc). Nur in der
+    Seitwärtszone (Schluss in 10 Tagen höchstens ±4 %): Wandert dort der akzeptierte Wert, kündigt sich das
+    Ungleichgewicht an – im Trend sagt das nichts Neues."""
+    if not tage or len(tage) < 10:
         return None
-    try:
-        import marketprofile
-        p = marketprofile.tagesprofile(df30)
-    except Exception:  # noqa: BLE001
+    if df is not None and len(df) > 11 and abs(float(df["Close"].iloc[-1] / df["Close"].iloc[-11]) - 1) * 100 > SEITWAERTS_PCT:
         return None
-    if len(p) < 10:
-        return None
-    jetzt = np.mean([x["poc"] for x in p[-5:]])
-    vorher = np.mean([x["poc"] for x in p[-10:-5]])
+    jetzt = np.mean([x["poc"] for x in tage[-5:]])
+    vorher = np.mean([x["poc"] for x in tage[-10:-5]])
     d = (jetzt / vorher - 1) * 100
     if d >= WERT_WANDERT_PCT:
         return "stärke", f"Wert wandert nach oben (POC 5 Tage {_z(d, '+.1f')} %)"
@@ -296,7 +297,7 @@ def wertzone(df30):
 
 
 # ── Kreislauf ─────────────────────────────────────────────────────────────────────────────────────────────────────
-def kreislauf(df, idx=None, gewinne=None, df30=None, fehlausbruch=None, start=None):
+def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=None):
     """Phase, Wechsel und Zeichen eines Titels → dict mit
     phase (1–4), wort („4 → 1“, „2 · Einquetschung“), satz (fester Satz aus den Zeichen), staerke/schwaeche (Listen),
     dow_tag, dow_woche, einquetschung, akkumulation, relativ, trend, kurve (52 Wochenschlüsse), phasen (52 Phasen)."""
@@ -314,7 +315,7 @@ def kreislauf(df, idx=None, gewinne=None, df30=None, fehlausbruch=None, start=No
     ak = akkumulation(df)
     rel = relativ(df, idx, start) if idx is not None else None
     re_ = reaktion(df, gewinne) if gewinne is not None else None
-    wz = wertzone(df30)
+    wz = wertzone(tage30, df)
     st, sw = [], []
     for d_ in (dt, dw):
         if d_ and d_.get("signal"):
@@ -394,16 +395,18 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     """kreislauf() mit Index-Bezug und – wenn gespeichert – 30-Minuten-Kerzen; None bei zu kurzer Reihe."""
     if df is None or len(df) < 300 or idx is None:
         return None
-    df30 = None
-    if mit_wertzone:
+    tage30 = None
+    if mit_wertzone:                             # dieselbe Market-Profile-Analyse wie Karte und Chart (zwischengespeichert)
         try:
-            import tpo_daten
-            df30 = tpo_daten.kerzen(tk, abruf=False)
+            import erkennung
+            if not df.attrs.get("ticker"):
+                df.attrs["ticker"] = tk
+            tage30 = (erkennung.mp_von(df) or {}).get("tage")
         except Exception:  # noqa: BLE001
-            df30 = None
+            tage30 = None
     st = start if start is not None else startdatum(idx)      # einmal je Indextag, nicht je Titel
     i_ = idx[idx.index <= df.index[-1]]
-    k = kreislauf(df, i_, gewinne, df30, fehlausbruch, start=st)
+    k = kreislauf(df, i_, gewinne, tage30, fehlausbruch, start=st)
     if k:
         k["stand"] = f"{df.index[-1]:%Y-%m-%d}"
         for x in ("dow_tag", "dow_woche"):
