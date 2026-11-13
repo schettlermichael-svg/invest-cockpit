@@ -372,6 +372,14 @@ def befehl_neu_html(lk):
                     f'{_h(a.get("warum"))} <span style="color:{GELB}">Warten auf: {_h(a.get("warten_auf"))}</span>'
                     f'</div></div>' for a in anw)
         teile.append(_abschnitt("Anwärter · frühe Zeichen", z, "· der Jäger: wo Stärke oder Schwäche entsteht, bevor das Setup steht"))
+    sids = b.get("staerke_in_der_schwaeche") or []
+    if sids:                                       # Regel 8: vom Code genannt, nie wegen des Marktes verworfen
+        z = "".join(f'<div style="font-size:15px;margin:6px 0">{_tk(x.get("titel"))} '
+                    f'<span style="color:{GRUEN if x.get("genannt") else GELB}">'
+                    f'{"· vom Stab genannt" if x.get("genannt") else "· vom Stab nicht genannt"}</span><br>'
+                    f'<span style="color:{TEXT_2}">{_h(" · ".join(x.get("zeichen") or []))}</span></div>' for x in sids)
+        teile.append(_abschnitt("Stärke in der Schwäche", z, "· Regel 8: die Haltung der Lage gilt für den Markt, "
+                                                            "nicht für den Titel"))
     dep = b.get("depot") or []
     if dep:
         teile.append(_abschnitt("Depot", "".join(f'<div style="font-size:15px;margin:4px 0">{_tk(d_.get("titel"))} · '

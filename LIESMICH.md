@@ -771,7 +771,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 
 **Stab mit acht Missionen (`kern/stab.py`):**
 - Missionen: Lage, Aufklärung (Web-Suche, Depot plus 10 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
-- Gemeinsame Dienstanweisung mit unserer Lehre und 7 Regeln. Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
+- Gemeinsame Dienstanweisung mit unserer Lehre und 8 Regeln (Regel 8, 13.11.2026: die Haltung der Lage gilt für den Markt, nicht für den Titel – Stärke in der Schwäche wird nie wegen des Marktes verworfen; der Code nennt jeden solchen Titel im Befehl unter „Stärke in der Schwäche“ und meldet als Wache, wenn der Stab ihn übergeht). Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
 - Wachen im Code:
   - Ein Auftrag geht nur auf eine Akte mit grünem Setup, Einstieg nicht rot; höchstens 8 Aufträge (Micky 13.11.: an starken Tagen gibt es mehr als 5 gute Chancen).
   - Jede Akte wird eingeordnet (beobachten/verworfen).

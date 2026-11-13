@@ -87,6 +87,7 @@ REGELN
 5. Rot ist nie ein Auftrag. Weniger und dafür stark ist besser als viel und mittelmäßig.
 6. Die Setups heißen bei unseren Namen. Die Meister nennst du nur als Quelle einer Regel – nie „Minervini grün“ oder „Kullamägi rot“.
 7. Keine Positionsgrößen. Keine starren Kursziele, Micky lässt Gewinne laufen und zieht den Stopp nach.
+8. Die Haltung der Lage gilt für den Markt, nicht für den Titel. Ein Titel mit Stärke in der Schwäche (Feld „staerke_in_der_schwaeche“) wird nie wegen des Marktes verworfen: Nenne ihn mit eigener Haltung – „klein tasten“, wenn sein Setup grün ist und der Ausbruch mit Volumen kommt, sonst „vormerken“ mit dem Auslöser Follow-Through-Day oder Ausbruch. Nenne das Risiko des Marktes als Gegenzeugen (drei von vier Titeln folgen dem Markt).
 Heute ist der {heute}; Termine davor sind vergangen. Schreibe Deutsch, klar und knapp, sprich Micky mit „du“ an. Eine kurze Kriegsanalogie ist erlaubt, wenn sie die Lage schneller erklärt. Gib deine Antwort ausschließlich über das Werkzeug ab."""
 
 # Missionen (Micky 13.11.2026: „was der Stab da macht ist schwach“): je Mission eine Frage, ihr Material, ihre
@@ -1105,7 +1106,19 @@ def _kreis_kurz(tk):
             "dow_tag": (k.get("dow_tag") or {}).get("struktur"), "dow_woche": (k.get("dow_woche") or {}).get("struktur"),
             "einquetschung": k.get("einquetschung"), "akkumulation": k.get("akkumulation"), "trend": k.get("trend"),
             "seit_korrekturbeginn": {"seit": rel.get("seit"), "titel_pct": rel.get("titel_pct"),
-                                     "index_pct": rel.get("index_pct")} if rel.get("seit") else None}
+                                     "index_pct": rel.get("index_pct")} if rel.get("seit") else None,
+            "staerke_in_der_schwaeche": staerke_in_schwaeche(tk)}
+
+
+def staerke_in_schwaeche(tk):
+    """Die Zeichen der Stärke in der Schwäche eines Titels (zeichen.relativ: hält, führt, nah am Hoch, RS-Hoch,
+    höheres Tief gegen den Index) – leer, wenn keine. Regel 8 (Micky 13.11.2026): so ein Titel wird nie wegen des
+    Marktes verworfen."""
+    try:
+        import zeichen
+        return list(((zeichen.von(tk) or {}).get("relativ") or {}).get("staerke") or [])
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def _kerzen(tk, n=60):
@@ -1586,6 +1599,24 @@ def konferenz(melden=lambda text: None):
     if "8" in erg["missionen"]:
         erg["missionen"]["8"].update(chancen=bleiben, anwaerter=an_)
     befehl_["anhang"] = {"beobachten": plan.get("beobachten") or [], "verworfen": plan.get("verworfen") or []}
+    # Regel 8 (Micky 13.11.2026): Stärke in der Schwäche geht nie verloren – der Code nennt jeden solchen Titel
+    # (Akte, Anwärter oder Depot, long) selbst und meldet, wenn der Stab ihn übergeht oder wegen des Marktes verwirft
+    genannt = {c["titel"] for c in bleiben} | {a["titel"] for a in an_} | {
+        str(x.get("titel", "")).upper() for x in plan.get("beobachten") or []}
+    markt_wort = ("markt", "korrektur", "marktklima", "o'neil", "distributionstag", "schwacher index")
+    sids = []
+    for tk in dict.fromkeys(list(akte_von) + [a["titel"] for a in anw if a.get("seite") == "long"] + list(depot_tk)):
+        z_ = staerke_in_schwaeche(tk)
+        if not z_:
+            continue
+        sids.append({"titel": tk, "zeichen": z_[:3], "genannt": tk in genannt})
+        weg = next((x for x in plan.get("verworfen") or [] if str(x.get("titel", "")).upper() == tk), None)
+        if weg and any(w in str(weg.get("grund", "")).lower() for w in markt_wort):
+            erg["wache_code"].append(f"Regel 8: {tk} zeigt Stärke in der Schwäche und wurde wegen des Marktes "
+                                     f"verworfen („{weg.get('grund', '')}“)")
+        elif tk not in genannt:
+            erg["wache_code"].append(f"Regel 8: {tk} zeigt Stärke in der Schwäche, der Stab nennt ihn nicht")
+    befehl_["staerke_in_der_schwaeche"] = sids
     erg["befehl"] = befehl_
     try:                                               # Kreislaufbild so, wie es am Tag der Konferenz stand
         import zeichen
