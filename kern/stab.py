@@ -170,9 +170,12 @@ LEHRSTELLE = {
        "Überzeugung, Strömung und Markt überein, die Kraft auf die besten Ziele bündeln; ist die Lage unklar, klein "
        "bleiben.",
 }
-AUFKLAERUNG_MAX = 20                  # Micky ließ die Breite offen (13.11.2026): Titel, über die heute entschieden wird
+# Aufklärung (Micky 13.11.2026): 20 Titel, über die heute entschieden wird – 12 Plätze für Akten, 8 für Anwärter; freie
+# Plätze einer Gruppe füllt die andere. Das Depot kommt immer zusätzlich dazu.
+AUFKLAERUNG_MAX = 20
+AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 12, 8
 ANWAERTER_MAX = 20
-SUCHEN_AUFKLAERUNG = 20
+SUCHEN_AUFKLAERUNG = 20                # je Titel eine Suche; für jede Position im Depot eine mehr
 
 _TXT = lambda d: {"type": "string", "description": d}            # noqa: E731
 _HALT = {"type": "string", "enum": ["angreifen", "klein tasten", "abwarten", "verteidigen"]}
@@ -1236,6 +1239,16 @@ def _wache_auf(obj, quelle, bekannt):
         faktenwache(sammel, quelle, bekannt)
 
 
+def aufklaerung_ziele(depot_tk, akten_tk, anw_tk):
+    """Depot zusätzlich; 20 weitere Titel: bis 12 Akten und bis 8 Anwärter in Rangfolge, ein freier Platz der einen
+    Gruppe geht an die nächste der anderen."""
+    a = [t_ for t_ in dict.fromkeys(akten_tk) if t_ not in depot_tk]
+    w = [t_ for t_ in dict.fromkeys(anw_tk) if t_ not in depot_tk and t_ not in a]
+    n_a = min(len(a), max(AUFKLAERUNG_AKTEN, AUFKLAERUNG_MAX - len(w)))
+    n_w = min(len(w), AUFKLAERUNG_MAX - n_a)
+    return list(dict.fromkeys(depot_tk)) + a[:n_a] + w[:n_w]
+
+
 def konferenz(melden=lambda text: None):
     """Der neue Stab (Micky 13.11.2026): acht Missionen statt sechs Strategen nach Meistern. Reihenfolge: Lage und
     Aufklärung → Jäger und Operationsplaner → Gegenspieler → Truppenführung (nur mit Depot) und Kriegsgeschichte →
@@ -1289,10 +1302,9 @@ def konferenz(melden=lambda text: None):
                     | {"lagebuch_gestern": {a: alt_lage.get(a) for a in ("leitfrage", "szenario_a", "szenario_b")}
                        if alt_lage else None}, F_LAGE, 4000)
 
-    # 2 Aufklärung: Depot, die ersten Akten, die ersten Anwärter – höchstens AUFKLAERUNG_MAX
+    # 2 Aufklärung: das Depot immer, dazu 20 Titel – 12 Akten, 8 Anwärter, freie Plätze füllt die andere Gruppe
     depot_tk = [p["ticker"] for p in (lb["depot"].get("positionen") or [])]
-    ziele = list(dict.fromkeys(depot_tk + [c["titel"] for c in akten_][:10] + [a["titel"] for a in anw][:8]))
-    ziele = ziele[:AUFKLAERUNG_MAX]
+    ziele = aufklaerung_ziele(depot_tk, [c["titel"] for c in akten_], [a["titel"] for a in anw])
     akte_von = {c["titel"]: c for c in akten_}
     anw_von = {a["titel"]: a for a in anw}
     stoff = []
@@ -1307,7 +1319,8 @@ def konferenz(melden=lambda text: None):
             notizen = _anfrage(system, "Suche zu jedem dieser Titel, warum er sich in den letzten Wochen bewegt hat "
                                "(Zahlen, Ausblick, Aufträge, Produkte, Übernahmen, Analysten, Branche, Makro): "
                                f"{', '.join(ziele)}. Schreibe knappe Notizen je Titel mit Quelle (URL) und Datum. "
-                               "Nichts erfinden; findest du nichts, schreibe das.", 8000, SUCHEN_AUFKLAERUNG)
+                               "Nichts erfinden; findest du nichts, schreibe das.", 8000,
+                               SUCHEN_AUFKLAERUNG + len(depot_tk))
         except Deckel:
             raise
         except Exception as e:  # noqa: BLE001

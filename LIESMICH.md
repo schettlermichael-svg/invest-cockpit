@@ -770,7 +770,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Tabellen (Stufen): einfarbige Kurve (LineChartColumn) und Phasenwort mit Farbpunkt.
 
 **Stab mit acht Missionen (`kern/stab.py`):**
-- Missionen: Lage, Aufklärung (Web-Suche, höchstens 20 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
+- Missionen: Lage, Aufklärung (Web-Suche, Depot plus 20 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
 - Gemeinsame Dienstanweisung mit unserer Lehre und 7 Regeln. Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
 - Wachen im Code:
   - Ein Auftrag geht nur auf eine Akte und nie bei roter Setup-Ampel.
@@ -781,5 +781,5 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Konferenzen vor dem 13.11. werden weiter angezeigt.
 - Entfernter Code liegt in `_to_delete/stab_strategen_entfernt_2026-11-13.py`.
 - Offen gelassen von Micky:
-  - Breite der Aufklärung: Annahme 15–20 Titel.
+  - Breite der Aufklärung (Micky 13.11.): das Depot immer, dazu 20 Titel – 12 Akten und 8 Anwärter in Rangfolge; freie Plätze der einen Gruppe füllt die andere.
   - Budget: Annahme etwa wie bisher; jede Konferenz misst ihre Kosten (`kosten_usd`).
