@@ -905,3 +905,18 @@ bei LUV am 17.02., das Tief am 02.04. – beide aus einem Zyklus, der im April e
 Gemessen über 1.892 Titel: kein Anker am Rand des Datenfensters, kein Kurs unter dem Tief der Bewegung. Hoch des
 Rückgangs bei 48 % (sonst gleich dem letzten Hoch), Tief der Bewegung bei 82 % (sonst steht der Kurs am Tief). Profil
 der Balance bei 99 % aus der Wertzone, 91 % davon 10–40 Handelstage lang.
+
+## Zonen nach O'Neil und Minervini geprüft (14.11.2026)
+
+Recherchiert: O'Neil – Tasse 7–65 Wochen, 12–33 % tief (im Bärenmarkt bis 40–50 %), der Henkel liegt in der oberen
+Hälfte der Base, höchstens etwa 15 % unter dem Hoch der linken Seite; Doppelboden: das zweite Tief unterschreitet das
+erste. Minervini – Pivot im unteren Drittel = Low Cheat, im mittleren = Cheat, im oberen = O'Neils Henkel; nach einer
+gescheiterten Tasse bildet sich eine neue Base („rebase“).
+- **Gefunden:** Die Zone begann am ältesten ungebrochenen Hoch, auch wenn die Tasse danach gescheitert war (LUV: Base
+  ab 17.02., die rechte Seite kam am 26.06. bis 52,88 $, danach −29 % bis in die untere Hälfte – kein Henkel mehr).
+- **Neu (`vcp_zone.zone`):** Kam die rechte Seite bis 15 % an die Oberkante heran und fiel der Kurs danach wieder in
+  die untere Hälfte, ohne das Tief zu unterschreiten, beginnt die Zone neu am Hoch der rechten Seite. Ist dort noch
+  keine Erholung, steht die Zone offen mit dem Grund „Base … gescheitert … neue Base ab …“.
+- **Neu (Enge):** Der Pivot nennt sein Drittel: Low Cheat (unteres), Cheat (mittleres), Pivot der Base (oberes).
+- Gemessen über 1.905 Titel: 22 % haben eine andere Zone (davon 10 % jetzt „zu kurz“, 5 % offen). Pivot im oberen
+  Drittel 62 %, Cheat 5 %, Low Cheat 0,5 %.

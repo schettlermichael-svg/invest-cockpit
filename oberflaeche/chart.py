@@ -482,7 +482,9 @@ def _enge(e, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster):
           f'stroke-width="1.6"><title>Enge: {zahl(letzte["tiefe"], 1)} % · Pivot {zahl(e["pivot"])} $</title></rect>')
         A(f'<line x1="{xe:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(e["pivot"]):.1f}" y2="{Y(e["pivot"]):.1f}" stroke="{TEXT}" '
           f'stroke-width="1.4" stroke-dasharray="6 4"/>')
-        t_ = f'Pivot der Base {zahl(e["pivot"])} $'       # 12.11.2026: nicht mit dem Einstieg des Setups verwechseln
+        wort = {"Low Cheat": "Low Cheat (unteres Drittel)", "Cheat": "Cheat (mittleres Drittel)"}.get(e.get("lage"),
+                                                                                                    "Pivot der Base")
+        t_ = f'{wort} {zahl(e["pivot"])} $'       # 12.11.2026: nicht mit dem Einstieg verwechseln; Drittel 14.11.2026
         y_, strich = _rechts(platz, ENDE, Y(e["pivot"]), t_)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{TEXT}" font-size="12" font-weight="600">{t_}</text>')
     t_ = f'● Enge {e.get("ampel", "")} · {e.get("text", "")}'

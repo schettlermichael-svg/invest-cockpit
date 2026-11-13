@@ -8,6 +8,10 @@ Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14
   Erholung   = nach dem tiefsten Tief kam der Kurs wieder in die obere Hälfte der Zone
                (sonst ist das Hoch der Rand eines Absturzes, nicht einer Base → nächstjüngeres Hoch;
                erfüllt keines die Regel, läuft der Rücksetzer noch: Rahmen ab dem ältesten Hoch, Zone offen)
+  Henkel     = kam die rechte Seite bis 15 % an die Oberkante heran (O'Neil: Henkel höchstens 15 % unter dem Hoch der
+               linken Seite) und fiel der Kurs danach wieder in die untere Hälfte, ohne das Tief zu
+               unterschreiten, ist die Tasse gescheitert (O'Neil: Henkel in der oberen Hälfte) → nächstjüngeres Hoch
+               (14.11.2026; ein Unterschreiten des Tiefs ist ein Doppelboden und bleibt eine Base)
   Unterkante = tiefstes Tief seit der Oberkante
   Länge      = Oberkante bis heute, 3–65 Wochen (kürzer/länger wird gezeigt, nicht verworfen)
   Tiefe      = Oberkante bis Unterkante in % der Oberkante
@@ -29,6 +33,8 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
                 Tief zum tiefsten Tief danach (Schicht für Schicht zum rechten Rand); zählt ab 1 × ATR; Tiefe in %
   schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
   Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
+  Lage        = Drittel der Base, in dem der Pivot liegt (Minervini): unteres = Low Cheat, mittleres = Cheat,
+                oberes = Pivot (O'Neils Henkel) – 14.11.2026
   Volumen     = Ø Volumen vom Pivot bis heute (ohne Tage über dem Pivot, am 50-Tage-Schnitt gemessen) leiser als
                 in der ersten Kontraktion – das Volumen schrumpft mit den Kontraktionen
   Tiefs       = steigend als Zeichen, keine Pflicht (Shakeout erlaubt)
@@ -70,6 +76,8 @@ FEIN = 1.0
 WOCHE = 5
 MIN_WOCHEN, MAX_WOCHEN = 3, 65
 ERHOLUNG = 0.5                 # Anteil der Zonenhöhe, den der Kurs nach dem Tief zurückgewinnen muss
+HENKEL_HAELFTE = 0.5           # O'Neil: nach der rechten Seite nicht wieder in die untere Hälfte (sonst neue Base) …
+HENKEL_NAH = 0.15              # … sobald die rechte Seite bis 15 % an das Hoch der linken Seite heran kam (Henkel möglich)
 FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
 
@@ -149,19 +157,46 @@ def zone(df):
     ungebrochen = [p for p in hochs if p[0] < n - 1 and c[p[0] + 1:].max() <= p[1]]
     if not ungebrochen:
         return {"zone": False, "grund": "kein grobes Hoch ohne Schluss darüber in 65 Wochen – Kurs läuft am Hoch"}
-    for i, top, _ in sorted(ungebrochen):       # älteste zuerst
+    kand = sorted((p[0], p[1]) for p in ungebrochen)   # älteste zuerst
+    gewaehlt, gescheitert, k_ = None, None, 0
+    while k_ < len(kand):
+        i, top = kand[k_]
+        k_ += 1
         tief_i = i + int(np.argmin(l[i:]))
         boden = l[tief_i]
         hoehe = top - boden
         erholt = h[tief_i:].max() if tief_i < n else boden
-        if hoehe <= 0 or erholt >= top - ERHOLUNG * hoehe:
+        if hoehe <= 0:
+            gewaehlt = (i, top)
             break
-    else:                                       # Rücksetzer läuft: Zone noch nicht fertig, Rahmen trotzdem zeigen
-        i, top, _ = sorted(ungebrochen)[0]
+        if erholt >= top - ERHOLUNG * hoehe:
+            # O'Neil: der Henkel liegt in der oberen Hälfte der Base. Kam die rechte Seite bis 15 % an das Hoch heran
+            # und fiel der Kurs danach wieder in die untere Hälfte, ist die Tasse gescheitert – die Base beginnt neu
+            # am Hoch der rechten Seite (Minervini: „rebase following a failed cup-and-handle“; LUV 14.11.2026: Base
+            # ab 17.02. statt ab 26.06.)
+            r_i = tief_i + 1 + int(np.argmax(h[tief_i + 1:])) if tief_i < n - 1 else n - 1   # nach dem Tief
+            if (r_i < n - 1 and h[r_i] >= top * (1 - HENKEL_NAH) and
+                    l[r_i + 1:].min() < boden + HENKEL_HAELFTE * hoehe):
+                gescheitert = (i, r_i)
+                if all(x[0] != r_i for x in kand):
+                    kand = sorted(kand + [(r_i, float(h[r_i]))])
+                continue
+            gewaehlt = (i, top)
+            break
+    if gewaehlt is None:                        # Rücksetzer läuft: Zone noch nicht fertig, Rahmen trotzdem zeigen
+        if gescheitert:                         # ab der neuen linken Seite (dem Hoch der gescheiterten rechten Seite)
+            i = gescheitert[1]
+            top = float(h[i])
+            grund = (f"Base ab {df.index[gescheitert[0]]:%d.%m.%Y} gescheitert (nach der rechten Seite zurück in der "
+                     f"unteren Hälfte, O'Neil) – neue Base ab {df.index[i]:%d.%m.%Y}, Rücksetzer läuft")
+        else:
+            i, top = kand[0]
+            grund = "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Zone noch offen"
         tief_i = i + int(np.argmin(l[i:]))
-        return {"zone": False, "grund": "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Zone noch offen",
-                "offen": True, "start_i": i, "oben": top, "unten": l[tief_i], "tief_i": tief_i,
-                "wochen": (n - 1 - i) / WOCHE, "tiefe": (top - l[tief_i]) / top * 100, "abstand": (c[-1] / top - 1) * 100}
+        return {"zone": False, "grund": grund, "offen": True, "start_i": i, "oben": top, "unten": l[tief_i],
+                "tief_i": tief_i, "wochen": (n - 1 - i) / WOCHE, "tiefe": (top - l[tief_i]) / top * 100,
+                "abstand": (c[-1] / top - 1) * 100}
+    i, top = gewaehlt
     k = _rahmen(df, i, top)
     # Flagge in der Zone (Kullamägi): ein jüngeres ungebrochenes Hoch mit eigener Fahnenstange davor
     for j, top_j, _ in sorted(ungebrochen):
@@ -264,7 +299,11 @@ def enge(df, z):
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
         + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"])
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
+    hoehe_z = z["oben"] - z["unten"]
+    anteil = (pivot - z["unten"]) / hoehe_z if hoehe_z > 0 else 1.0
+    lage = ("Low Cheat" if anteil < 1 / 3 else "Cheat" if anteil < 2 / 3 else "Pivot")   # Minervini: Drittel der Base
     return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
+            "lage": lage, "lage_anteil": anteil,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
             "volumen": vol_enge, "volumen_erste": vol_erste, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
             "abstand": (c[-1] / pivot - 1) * 100,
