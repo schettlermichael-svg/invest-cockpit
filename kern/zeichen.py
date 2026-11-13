@@ -191,6 +191,33 @@ def korrekturbeginn(idx):
     return None
 
 
+def divergenz(df, idx, s):
+    """Höheres Tief gegen den Index → Liste mit einem Text (leer, wenn keine). Bedingungen: der Titel fiel seit dem
+    Indexhoch mindestens 10 % bis zu seinem Tief; dieses Tief liegt mindestens 3 Handelstage vor dem Tief des Index; der
+    Index fällt danach mindestens 0,5 % unter sein Niveau vom Tief des Titels; der Titel bleibt am Indextief mindestens
+    5 % über seinem Tief und steht seit seinem Tief mindestens 10 Prozentpunkte vor dem Index."""
+    lo, c = df["Low"].loc[s:], df["Close"]
+    i_lo = idx["Low"].reindex(df.index).ffill().loc[s:]
+    i_c = idx["Close"].reindex(df.index).ffill()
+    if len(lo) < 8 or i_lo.isna().all():
+        return []
+    d1, t2 = lo.idxmin(), i_lo.idxmin()
+    pos1, pos2 = df.index.get_loc(d1), df.index.get_loc(t2)
+    if pos2 - pos1 < 3:
+        return []
+    um_t2 = float(df["Low"].iloc[max(pos2 - 1, 0):pos2 + 2].min())
+    tief1 = float(lo.loc[d1])
+    hoch = float(df["High"].loc[s:d1].max())
+    t_ = float(c.iloc[-1] / c.loc[d1] - 1) * 100
+    i_ = float(i_c.iloc[-1] / i_c.loc[d1] - 1) * 100
+    if not (tief1 <= hoch * 0.90 and float(i_lo.loc[t2]) <= float(i_lo.loc[d1]) * 0.995
+            and um_t2 >= tief1 * 1.05 and t_ - i_ >= FUEHRT_PUNKTE):
+        return []
+    return [f"höheres Tief gegen den Index: eigenes Tief am {d1:%d.%m.} bei {_z(tief1, '.2f')} $, am tieferen "
+            f"Indextief {t2:%d.%m.} {_z((um_t2 / tief1 - 1) * 100, '+.1f')} % darüber; seitdem {_z(t_, '+.1f')} %, "
+            f"der S&P 500 {_z(i_, '+.1f')} %"]
+
+
 def relativ(df, idx, start=None):
     """Stärke in der Schwäche und Schwäche in der Stärke → {staerke: [..], schwaeche: [..], seit, titel_pct, index_pct}.
     Stärke in der Schwäche (O'Neil sieht Korrektur oder Druck, oder der Index liegt mindestens 3 % unter dem Hoch der
@@ -199,7 +226,8 @@ def relativ(df, idx, start=None):
       führt     seit dem Indextief mindestens 10 Prozentpunkte besser als der Index (O'Neil: die Führer brechen als
                 erste aus der Korrektur aus);
       nah       am Tag des Indextiefs näher am eigenen 52-Wochen-Hoch als der Index an seinem;
-      RS-Linie  in den letzten 5 Tagen am 52-Wochen-Hoch.
+      RS-Linie  in den letzten 5 Tagen am 52-Wochen-Hoch;
+      Divergenz höheres Tief des Titels, während der Index danach ein tieferes Tief macht (divergenz()).
     Schwäche in der Stärke (der Index ist seit seinem Tief mindestens 3 % gestiegen): der Titel seit dem Indextief im
     Minus, RS-Linie am 52-Wochen-Tief."""
     if df is None or idx is None or len(df) < 260:
@@ -234,6 +262,11 @@ def relativ(df, idx, start=None):
                                       f"der Index {_z(i_abst, '.0f')} %")
             if float(rs.iloc[-5:].max()) >= float(rs.iloc[-252:].max()) * 0.999:
                 aus["staerke"].append("RS-Linie am 52-Wochen-Hoch, während der Index fällt")
+            # Divergenz (Micky 13.11.2026, HWM): der Titel hat sein Tief schon hinter sich und macht ein höheres Tief,
+            # während der Index danach noch ein tieferes Tief macht – das Angebot ist im Titel erschöpft
+            div = divergenz(df, idx, s)
+            if div:
+                aus["staerke"] += div
     tief = i_c.iloc[-60:].idxmin()
     if (float(i_c.iloc[-1]) / float(i_c.loc[tief]) - 1) * 100 >= MIN_RUECKGANG:
         t2 = float(c.iloc[-1] / c.loc[tief] - 1) * 100
