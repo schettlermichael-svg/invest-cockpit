@@ -361,14 +361,17 @@ def befehl_neu_html(lk):
     teile.append(_abschnitt("Leitfrage", f'<div style="font-size:16px;color:{TEXT};margin-bottom:8px">'
                             f'{_h(b.get("leitfrage"))}</div><div style="display:flex;flex-wrap:wrap;gap:10px">{sz}</div>'))
     anw = b.get("anwaerter") or []
+    seite_von = {x.get("titel"): x.get("seite") for x in ((k.get("missionen") or {}).get("3") or {}).get("anwaerter") or []}
     if anw:
         z = "".join(f'<div style="display:flex;gap:12px;align-items:center;margin:8px 0">'
                     f'<div style="flex:none">{kreislaufbild.mini(kreis.get(a.get("titel")))}</div>'
-                    f'<div style="font-size:15px">{_tk(a.get("titel"))} · '
+                    f'<div style="font-size:15px">{_tk(a.get("titel"))} '
+                    f'<span style="font-size:13px;color:{ROT if seite_von.get(a.get("titel")) == "short" else GRUEN}">'
+                    f'{"↓ short" if seite_von.get(a.get("titel")) == "short" else "↑ long"}</span> · '
                     f'<span style="color:{TEXT_2}">{_h(kreislaufbild.wort(kreis.get(a.get("titel"))))}</span><br>'
                     f'{_h(a.get("warum"))} <span style="color:{GELB}">Warten auf: {_h(a.get("warten_auf"))}</span>'
                     f'</div></div>' for a in anw)
-        teile.append(_abschnitt("Anwärter · frühe Zeichen der Stärke", z, "· der Jäger: wo Stärke entsteht, bevor das Setup steht"))
+        teile.append(_abschnitt("Anwärter · frühe Zeichen", z, "· der Jäger: wo Stärke oder Schwäche entsteht, bevor das Setup steht"))
     dep = b.get("depot") or []
     if dep:
         teile.append(_abschnitt("Depot", "".join(f'<div style="font-size:15px;margin:4px 0">{_tk(d_.get("titel"))} · '

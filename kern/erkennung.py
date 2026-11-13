@@ -412,7 +412,8 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
     # Nur in Phase 2 teilhaben (Minervini); junge Börsengänge haben noch keinen GD40W
     phase = None
     if not jung and n >= 300:
-        phase = int(phasen(df).iloc[-1])
+        import phase as phase_mod
+        phase = phase_mod.aktuell(df)
         werte["phase"] = phase
         if phase != 2:
             hinweise.append(f"Phase {phase}")

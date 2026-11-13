@@ -4,7 +4,8 @@ Micky am 13.11.2026: „was der Stab da macht ist schwach … für das, was sie 
 arbeitet der Stab nicht mehr in Rollen nach Meistern, sondern in acht Missionen, jede mit einer einzigen Frage:
   1 Lage              Wirtschaftswetter, Markt (O'Neil), Leitfrage, Szenario A/B mit messbarem Auslöser
   2 Aufklärung        warum sich die Titel bewegen, über die heute entschieden wird (Web-Suche, Quelle mit Datum)
-  3 Jäger             frühe Zeichen der Stärke bei Titeln ohne Setup: wer führt, wenn der Markt dreht (bis 10 Anwärter)
+  3 Jäger             frühe Zeichen bei Titeln ohne Setup, beide Seiten: wer führt, wenn der Markt dreht, und wer
+                      fällt als Nächster (bis 10 Anwärter, dazu jede Depotposition mit frühen Zeichen der Schwäche)
   4 Operationsplaner  höchstens 8 Aufträge aus den Akten (0 erlaubt); jede übrige Akte: beobachten oder verworfen
   5 Gegenspieler      greift jeden Auftrag an: hält, schwächt oder kippt
   6 Truppenführung    nur mit Depot: halten, Stopp nachziehen, verkaufen – nach der Phase
@@ -93,7 +94,7 @@ Heute ist der {heute}; Termine davor sind vergangen. Schreibe Deutsch, klar und 
 MISSIONEN = {
     1: ("Lage", "Angriff oder Abwarten?"),
     2: ("Aufklärung", "Warum bewegt er sich?"),
-    3: ("Jäger", "Wo entsteht Stärke, bevor das Setup steht?"),
+    3: ("Jäger", "Wo entsteht Stärke – oder Schwäche –, bevor das Setup steht?"),
     4: ("Operationsplaner", "Was tun wir heute konkret?"),
     5: ("Gegenspieler", "Warum scheitert genau dieser Plan?"),
     6: ("Truppenführung", "Was tun wir mit den Positionen?"),
@@ -112,12 +113,15 @@ AUFTRAG_MISSION = {
        "Kurs auf die Nachricht? Gute Nachricht und der Kurs steigt und hält = Stärke. Schlechte Nachricht und der Kurs "
        "hält = noch mehr Stärke. Gute Nachricht und der Kurs fällt = Schwäche. Nenne die Quelle mit Datum. Findest du "
        "nichts, schreibe „kein Auslöser gefunden“.",
-    3: "Wo entsteht Stärke, bevor das Setup steht – wer führt, wenn der Markt dreht? Die Liste enthält Titel ohne "
-       "einsatzbereites Setup mit frühen Zeichen der Stärke (Feld „fruehe_zeichen“: Stärke in der Schwäche, Wechsel "
-       "zu Phase 1 oder 2, Einquetschung, Akkumulation, schlechte Zahlen gehalten). Wähle bis zu 10 Titel und ordne sie. Erkläre für jeden in Worten, warum er "
-       "Stärke zeigt: Wer kauft hier, und warum gerade jetzt? Nenne die Phase im Kreislauf und das Zeichen, auf das wir "
-       "warten (z. B. Ausbruch über die Oberkante mit Volumen, erstes höheres Tief, Einquetschung löst sich). Nenne, was "
-       "die These widerlegt. Bevorzuge Titel, deren Branche ebenfalls Geld anzieht.",
+    3: "Wo entsteht Stärke, bevor das Setup steht – wer führt, wenn der Markt dreht? Und wo entsteht Schwäche – wer "
+       "fällt als Nächster? Die Liste enthält Titel ohne einsatzbereites Setup mit frühen Zeichen (Feld „seite“: long = "
+       "Stärke, short = Schwäche; Feld „fruehe_zeichen“: Stärke bzw. Schwäche gegen den Markt, Wechsel der Phase, "
+       "Spring/Upthrust, Einquetschung, Akkumulation/Distribution, Reaktion auf Zahlen). Titel mit „im_depot“ sind "
+       "unsere eigenen Positionen mit frühen Zeichen der Schwäche – nenne jeden davon. Wähle sonst bis zu 10 Titel "
+       "(beide Seiten) und ordne sie. Erkläre für jeden in Worten, warum er Stärke bzw. Schwäche zeigt: Wer kauft oder "
+       "verkauft hier, und warum gerade jetzt? Nenne die Phase im Kreislauf und das Zeichen, auf das wir warten (z. B. "
+       "Ausbruch über die Oberkante mit Volumen, erstes höheres Tief, Bruch der Spanne). Nenne, was die These widerlegt. "
+       "Bevorzuge Titel, deren Branche ebenfalls Geld anzieht (Short: Geld abzieht).",
     4: "Was tun wir heute konkret? Bilde höchstens 8 Aufträge aus den Stärksten. Kein Auftrag ist erlaubt, wenn nichts "
        "taugt. Für jeden Auftrag: die These in einem Satz (warum Stärke, warum jetzt), die Phase im Kreislauf, der "
        "Auslöser (Kurs, Volumen, Kerze; beim Einstieg im Stundenchart die Kerze), Einstieg und Stopp der App (weichst du "
@@ -177,7 +181,9 @@ LEHRSTELLE = {
 # 6 Akten, 4 Anwärter; freie Plätze einer Gruppe füllt die andere.
 AUFKLAERUNG_MAX = 10
 AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 6, 4
-ANWAERTER_MAX = 30                     # Micky 13.11.2026: frühe Zeichen der Stärke, höchstens 30 an den Jäger
+ANWAERTER_MAX = 30                     # Micky 13.11.2026: frühe Zeichen, höchstens 30 an den Jäger …
+ANWAERTER_LONG, ANWAERTER_SHORT = 20, 10   # … 20 mit frühen Zeichen der Stärke, 10 mit frühen Zeichen der Schwäche
+#                                        (Prüf-Agent 13.11.2026: die Short-Seite fehlte); dazu Warnungen für das Depot
 AUFTRAEGE_MAX = 8                     # Micky 13.11.2026: an starken Tagen (Follow-Through-Day) mehr als 5 gute Chancen
 SUCHEN_AUFKLAERUNG = 10                # je Titel eine Suche; für jede Position im Depot eine mehr
 
@@ -201,11 +207,13 @@ F_AUFKL = {"type": "object", "properties": {"titel": {"type": "array", "items": 
     "quelle": _TXT("Name oder URL der Quelle, leer wenn keine"), "datum": _TXT("Datum der Quelle, leer wenn keine")},
     "required": ["titel", "ausloeser", "art", "tragfaehig", "reaktion"]}}}, "required": ["titel"]}
 F_JAEGER = {"type": "object", "properties": {"anwaerter": {"type": "array", "items": {"type": "object", "properties": {
-    "rang": {"type": "integer"}, "titel": _TXT("Ticker"), "these": _TXT("wer kauft hier und warum gerade jetzt"),
+    "rang": {"type": "integer"}, "titel": _TXT("Ticker"), "seite": {"type": "string", "enum": ["long", "short"]},
+    "these": _TXT("wer kauft (short: verkauft) hier und warum gerade jetzt"),
     "phase": _TXT("Phase im Kreislauf, z. B. „4 → 1“"), "warten_auf": _TXT("das Zeichen, auf das wir warten"),
     "widerlegt_wenn": _TXT("was die These widerlegt")},
-    "required": ["rang", "titel", "these", "phase", "warten_auf", "widerlegt_wenn"]},
-    "description": "bis zu 10, der stärkste zuerst; leer, wenn keiner"}}, "required": ["anwaerter"]}
+    "required": ["rang", "titel", "seite", "these", "phase", "warten_auf", "widerlegt_wenn"]},
+    "description": "bis zu 10 (beide Seiten), der deutlichste zuerst, dazu jeder Titel „im_depot“; leer, wenn keiner"}},
+    "required": ["anwaerter"]}
 F_PLAN = {"type": "object", "properties": {
     "auftraege": {"type": "array", "description": "höchstens 8, leer erlaubt", "items": {"type": "object", "properties": {
         "titel": _TXT("Ticker einer Akte"), "seite": {"type": "string", "enum": ["long", "short"]},
@@ -746,6 +754,21 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         g = (rw_t.get(tk) or {}).get("geld_ampel")
         return g == ("rot" if short(tk) else "grün")
 
+    try:
+        import zeichen
+        kreis_alle = zeichen.laden().get("titel") or {}
+    except Exception:  # noqa: BLE001
+        kreis_alle = {}
+
+    def kreis_mit(tk):
+        """Kreislauf in Richtung des Setups (Prüf-Agent 13.11.2026: die Rangfolge kannte ihn nicht): long Phase 2 oder
+        ein Wechsel zu 1/2, Short Phase 3/4 oder ein Wechsel zu 3/4."""
+        k = kreis_alle.get(tk) or {}
+        p, z = k.get("phase"), k.get("ziel")
+        if short(tk):
+            return (p in (3, 4) and z not in (1, 2)) or z in (3, 4)
+        return (p == 2 and z != 3 and not k.get("rueckschlag")) or z in (1, 2)
+
     def termin_tage(tk):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
         return _tage((r.get("zahlen") or {}), (x.get("kacheln") or {}).get("Nächste Zahlen"))
@@ -756,10 +779,11 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         t_ = termin_tage(tk)
         rs = r.get("rang") or 0
         import gestaltung
-        # Rang: Termin nah nach hinten, Volltreffer, ★, Geld in Setup-Richtung, RS – die Watchlist zählt nicht
+        # Rang: Termin nah nach hinten, Volltreffer, ★, Geld in Setup-Richtung, Kreislauf in Setup-Richtung, RS – die
+        # Watchlist zählt nicht
         # (Micky 12.11.2026: neutral, die Stärke entscheidet)
         return (t_ is not None and t_ <= gestaltung.TERMIN_ROT, not voll, not x.get("stern"), not geld_mit(tk),
-                rs if short(tk) else -rs)
+                not kreis_mit(tk), rs if short(tk) else -rs)
 
     pool = set(titel_t) | set(drei) | set(wl)
     elite = sorted((tk for tk in pool if bereit(tk)), key=klasse)
@@ -1133,11 +1157,11 @@ def fruehe_zeichen(k, seite="stärke"):
     return aus
 
 
-def anwaerter_liste(lb, n=ANWAERTER_MAX):
-    """Material des Jägers (Micky 13.11.2026): Titel ohne Akte (kein einsatzbereites Setup) mit frühen Zeichen der
-    Stärke – Stärke in der Schwäche, Wechsel zu Phase 1 oder 2, aufsteigende Einquetschung, Akkumulation, Pocket Pivot,
-    schlechte Zahlen gehalten, erstes höheres Tief. Rangfolge: Gewicht der Zeichen, dann Stärke- minus Schwächezeichen,
-    dann RS-Rang; höchstens n."""
+def anwaerter_liste(lb, n_long=ANWAERTER_LONG, n_short=ANWAERTER_SHORT):
+    """Material des Jägers (Micky 13.11.2026): Titel ohne Akte (kein einsatzbereites Setup) mit frühen Zeichen – bis zu
+    n_long der Stärke (seite long) und n_short der Schwäche (seite short; Prüf-Agent 13.11.2026: die Short-Seite
+    fehlte). Dazu jede Depotposition mit frühen Zeichen der Schwäche (im_depot, auch mit Akte). Rangfolge je Seite:
+    Gewicht der Zeichen, dann eigene minus Gegenzeichen, dann RS-Rang (Short: der schwächste zuerst)."""
     import rueckenwind
     try:
         import zeichen
@@ -1146,28 +1170,47 @@ def anwaerter_liste(lb, n=ANWAERTER_MAX):
         alle = {}
     rw_t = (rueckenwind.laden() or {}).get("titel") or {}
     akten_tk = {c["titel"] for c in lb.get("kandidaten") or []}
-    zeilen, fz = [], {}
+    depot_tk = {p["ticker"] for p in ((lb.get("depot") or {}).get("positionen") or [])}
+    seiten = {"long": ([], "stärke", "staerke", "schwaeche", n_long), "short": ([], "schwäche", "schwaeche", "staerke",
+                                                                               n_short)}
+    fz, warn = {}, []
     for tk, k in alle.items():
+        rang_ = (rw_t.get(tk) or {}).get("rang") or 0
+        if tk in depot_tk:
+            f_ = fruehe_zeichen(k, "schwäche")
+            if f_:
+                fz[(tk, "short")] = [t_ for _, t_ in f_]
+                warn.append(tk)
+            continue
         if tk in akten_tk:
             continue
-        f_ = fruehe_zeichen(k)
-        if f_:
-            fz[tk] = [t_ for _, t_ in f_]
-            zeilen.append((sum(g for g, _ in f_), len(k.get("staerke") or []) - len(k.get("schwaeche") or []),
-                           (rw_t.get(tk) or {}).get("rang") or 0, tk))
-    zeilen.sort(reverse=True)
-    aus = []
-    for _, _, _, tk in zeilen[:n]:
+        for seite, (zeilen, wort, eigen, gegen, _) in seiten.items():
+            f_ = fruehe_zeichen(k, wort)
+            if f_:
+                fz[(tk, seite)] = [t_ for _, t_ in f_]
+                zeilen.append((sum(g for g, _ in f_), len(k.get(eigen) or []) - len(k.get(gegen) or []),
+                               rang_ if seite == "long" else -rang_, tk))
+
+    def eintrag(tk, seite, im_depot=False):
         r = rw_t.get(tk) or {}
         z = r.get("zahlen") or {}
-        aus.append({"titel": tk, "fruehe_zeichen": fz[tk], "kreislauf": _kreis_kurz(tk), "bewegung": _bewegung(tk),
-                    "kerzen_30": _kerzen(tk, 30),
-                    "rueckenwind": {a: r.get(a) for a in ("stufe", "rang", "tempo", "rs_hoch_vor_kurs", "geld_ampel",
-                                                          "sektor", "sektor_feld", "branche", "branche_feld",
-                                                          "zufluss")} if r else None,
-                    "zahlen": {"ampel": z.get("ampel"), "termin": _termin_ok(z.get("termin")),
-                               "reaktion": z.get("reaktion")} if z else None,
-                    "nachbarn": _nachbarn(tk, rw_t)})
+        return {"titel": tk, "seite": seite, "im_depot": im_depot, "fruehe_zeichen": fz[(tk, seite)],
+                "kreislauf": _kreis_kurz(tk), "bewegung": _bewegung(tk), "kerzen_30": _kerzen(tk, 30),
+                "rueckenwind": {a: r.get(a) for a in ("stufe", "rang", "tempo", "rs_hoch_vor_kurs", "geld_ampel",
+                                                      "sektor", "sektor_feld", "branche", "branche_feld",
+                                                      "zufluss")} if r else None,
+                "zahlen": {"ampel": z.get("ampel"), "termin": _termin_ok(z.get("termin")),
+                           "reaktion": z.get("reaktion")} if z else None,
+                "nachbarn": _nachbarn(tk, rw_t)}
+    aus = [eintrag(tk, "short", True) for tk in sorted(warn)]
+    reihen = {}
+    for seite, (zeilen, _, _, _, n) in seiten.items():
+        zeilen.sort(reverse=True)
+        reihen[seite] = [eintrag(tk, seite) for _, _, _, tk in zeilen[:n]]
+    lo, sh = reihen["long"], reihen["short"]
+    while lo or sh:                              # zwei long, ein short – so bekommt auch die Aufklärung beide Seiten
+        aus += lo[:2] + sh[:1]
+        lo, sh = lo[2:], sh[1:]
     return aus
 
 
@@ -1294,7 +1337,8 @@ def konferenz(melden=lambda text: None):
         c["kerzen_60"] = _kerzen(c["titel"], 60)
     anw = anwaerter_liste(lb)
     bekannt |= {a["titel"] for a in anw}
-    melden(f"{datetime.now():%H:%M:%S} {len(akten_)} Akten, {len(anw)} Anwärter (frühe Zeichen der Stärke)")
+    melden(f"{datetime.now():%H:%M:%S} {len(akten_)} Akten, {len(anw)} Anwärter (frühe Zeichen, beide Seiten "
+           f"und Depot)")
     kurse_ = {c["titel"]: c.get("kurs") for c in akten_} | {a["titel"]: _zahl(_kurs(a["titel"])) for a in anw}
     erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "format": 2, "missionen": {},
            "dreifach": lb["dreifach"], "kurse": {k_: v for k_, v in kurse_.items() if v}, "tafel": tafel(lb),
@@ -1389,11 +1433,19 @@ def konferenz(melden=lambda text: None):
             elif a["titel"] not in erlaubt:
                 erg["wache_code"].append(f"Jäger: {a['titel']} steht nicht auf der Liste der Anwärter – entfernt")
         if not jaeger.get("fehler"):
-            jaeger["anwaerter"] = liste[:10]
+            seite_von = {a["titel"]: a["seite"] for a in anw}
+            depot_w = [a for a in liste if a["titel"] in {x["titel"] for x in anw if x.get("im_depot")}]
+            for a in liste:                            # die Seite gibt der Code vor, nicht das Modell
+                a["seite"] = seite_von.get(a["titel"], a.get("seite"))
+            jaeger["anwaerter"] = depot_w + [a for a in liste if a not in depot_w][:10]
+            for x in anw:
+                if x.get("im_depot") and x["titel"] not in {a["titel"] for a in depot_w}:
+                    erg["wache_code"].append(f"Jäger: Depotposition {x['titel']} mit frühen Zeichen der Schwäche "
+                                             "nicht genannt")
             erg["missionen"]["3"]["anwaerter"] = jaeger["anwaerter"]
     else:
         erg["missionen"]["3"] = {"name": MISSIONEN[3][0], "anwaerter": [],
-                                 "hinweis": "Kein Titel ohne Setup zeigt frühe Zeichen der Stärke."}
+                                 "hinweis": "Kein Titel ohne Setup zeigt frühe Zeichen der Stärke oder Schwäche."}
 
     # 4 Operationsplaner
     felder = ("titel", "depot", "reihe", "auch", "seite", "volltreffer", "setup_gruen", "kurs", "pivot",
@@ -1408,7 +1460,7 @@ def konferenz(melden=lambda text: None):
                                                                         "geld": (c.get("rueckenwind") or {}).get("geld_ampel"),
                                                                         "aufklaerung": aufkl_von.get(c["titel"])}
                                      for c in akten_],
-                           "anwaerter_des_jaegers": [{a: x.get(a) for a in ("titel", "these", "phase", "warten_auf")}
+                           "anwaerter_des_jaegers": [{a: x.get(a) for a in ("titel", "seite", "these", "phase", "warten_auf")}
                                                      for x in jaeger.get("anwaerter") or []]}, F_PLAN, 9000)
     # Wachen im Code (Prüf-Agent 13.11.2026): Auftrag nur auf eine Akte mit grünem Setup, Einstieg nicht rot (gelaufen),
     # Seite wie das Setup, jeder Titel einmal, höchstens AUFTRAEGE_MAX; jede Akte eingeordnet; Titel groß geschrieben

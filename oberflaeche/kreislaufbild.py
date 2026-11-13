@@ -17,7 +17,7 @@ FARBE = {0: "#6B7280", 1: "#7F93AD", 2: "#1D9E75", 3: "#B09A72", 4: "#D85A30", R
 # ersten Zeichen – 4 → 1 hellrot, 2 → 3 hellgrün, 1 → 2 und 1 → 4 hell-blaugrau, 3 → 2 und 3 → 4 hell-ambergrau
 HELL = {1: "#BCC8D8", 2: "#9FE1CB", 3: "#DCCDAE", 4: "#F0997B", RUECKSCHLAG: "#F1D29A"}
 PUNKT = {0: "◌", 1: "🔵", 2: "🟢", 3: "🟤", 4: "🔴"}
-NAME = {0: "jung", 1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
+from zeichen import PHASE_NAME as NAME   # noqa: E402  ein Name je Phase in der ganzen App
 INDEX_FARBE = "#9AA3AF"
 
 

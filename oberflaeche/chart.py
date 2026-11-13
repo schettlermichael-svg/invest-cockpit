@@ -334,7 +334,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
             if tag_ebene:                       # RS-Linie am Jahreshoch, der Kurs noch nicht (Rückenwind: 99 % / 97 %)
                 rv = voll["Close"] / index["Close"].reindex(voll.index, method="ffill")
                 hoch = rv >= RS_MASS * rv.rolling(252, min_periods=252).max()
-                kurs_tief = voll["Close"] < 0.97 * voll["Close"].rolling(252, min_periods=252).max()
+                kurs_tief = voll["Close"] < 0.97 * voll["Close"].rolling(252, min_periods=252).max()   # wie rueckenwind.KURS_NAH
                 fl = (hoch & kurs_tief).reindex(d.index).fillna(False).to_numpy(bool)
                 for i in np.flatnonzero(fl):
                     if not np.isnan(rs[i]):

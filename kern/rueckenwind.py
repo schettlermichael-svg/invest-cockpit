@@ -44,6 +44,8 @@ VORNE = ("Führend", "Erstarkend")
 STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und größter Rückschlag (8 Wochen) ≤ 8 %
 ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
 STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
+from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Maßstab für App, Chart und Zeichen (0,99)
+KURS_NAH = 0.97                         # Kurs „am Hoch“: höchstens 3 % darunter (wie der Chart)
 
 
 def _pfad(name):
@@ -343,13 +345,13 @@ def rechnen(netz=False):
         besch = tempo - vortempo
         c = C[tk].dropna()
         rs = (c / spy.reindex(c.index)).dropna()
-        rs_hoch = bool(len(rs) >= JUNG_MIN and rs.iloc[-1] >= 0.99 * rs.iloc[-252:].max())   # jung: seit Börsengang
+        rs_hoch = bool(len(rs) >= JUNG_MIN and rs.iloc[-1] >= RS_MASS * rs.iloc[-252:].max())   # jung: seit Börsengang
         # Tempo der RS-Linie selbst: Steigung in 4 Wochen und in den 4 Wochen davor (%)
         rs_tempo = float((rs.iloc[-1] / rs.iloc[-1 - WOCHEN4] - 1) * 100) if len(rs) > 2 * WOCHEN4 else None
         rs_vortempo = (float((rs.iloc[-1 - WOCHEN4] / rs.iloc[-1 - 2 * WOCHEN4] - 1) * 100)
                        if len(rs) > 2 * WOCHEN4 else None)
         zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
-        kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= 0.97 * c.iloc[-252:].max())
+        kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-252:].max())
         stufe = _stufe(r, tempo, besch, a4)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
             stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
@@ -368,17 +370,16 @@ def rechnen(netz=False):
              "watchlist": tk in wl, "jung": round(len(c) / 21) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
-        if stufe:
-            if netz:
-                try:
-                    import quellen
-                    quellen.laden(tk)
-                except Exception:  # noqa: BLE001 – dann ohne Zahlen
-                    pass
-            z = _zahlen(tk, tv)
-            if z:
-                z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
-            x["zahlen"] = z
+        if stufe and netz:                       # neue Zahlen holen nur für Titel mit Stufe …
+            try:
+                import quellen
+                quellen.laden(tk)
+            except Exception:  # noqa: BLE001 – dann ohne Zahlen
+                pass
+        z = _zahlen(tk, tv)                      # … gelesen für alle (Prüf-Agent 13.11.2026: Short-Titel ohne Stufe
+        if z:                                    # standen ohne Zahlen im Stab)
+            z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
+        x["zahlen"] = z
         titel[tk] = x
     stand = f"{C.index[-1]:%Y-%m-%d}"
     erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten,

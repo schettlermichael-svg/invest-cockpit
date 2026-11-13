@@ -30,8 +30,9 @@ doppelt so schwer wie die Gegenseite; Prüf-Agent 13.11.2026: vorher genügte da
                     die 5 Tage davor zusammen höchstens +3 %. Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit:
                     der leiseste Tag seit 50 Tagen in den letzten 10, in der unteren Hälfte der Spanne der 60 Tage.
   RS gegen Markt    siehe relativ(), divergenz(), divergenz_short(), tage_gegen_markt(), rs_linie().
-  Reaktion          letzte Zahlenmeldung (höchstens 60 Handelstage): Überraschung gegen Kursreaktion, Lücke gegen
-                    Schluss im Tag, Folgetage (zurück unter den Schluss vor den Zahlen = Reaktion gescheitert).
+  Reaktion          letzte Zahlenmeldung (höchstens 60 Handelstage; Reaktionstag und Schwelle 3 % wie
+                    zahlen_reaktion): Überraschung gegen Kursreaktion, Lücke gegen Schluss im Tag, Kurs heute unter dem
+                    Schluss vor den Zahlen nach positivem Tag 1 = Zahlen verworfen (wie die Kachel, O'Neil).
   Wertzone          POC der letzten 5 Tage gegen die 5 davor, mindestens ±3 %, nur in der Seitwärtszone.
 """
 import os
@@ -518,8 +519,8 @@ def relativ(df, idx, start=None):
 def reaktion(df, gewinne, max_tage=60):
     """Reaktion auf die letzte Zahlenmeldung → Liste von Zeichen. Überraschung gegen Reaktion (Schwäche ab −2 % trotz
     guter Zahlen, Stärke ab +1 % mit Schluss in der oberen Hälfte trotz schlechter), Lücke gegen Schluss im Tag
-    (Lücke ≥ +3 % und Schluss im unteren Drittel = verkauft; gespiegelt gekauft), Folgetage (binnen 5 Tagen zurück unter
-    bzw. über den Schluss vor den Zahlen = Reaktion gescheitert)."""
+    (Lücke ≥ +3 % und Schluss im unteren Drittel = verkauft; gespiegelt gekauft), Kurs heute (zurück unter
+    bzw. über den Schluss vor den Zahlen = Zahlen verworfen bzw. Abverkauf zurückgekauft)."""
     try:
         import zahlen_reaktion
         rt = zahlen_reaktion.reaktionstag(df, gewinne)
@@ -541,7 +542,6 @@ def reaktion(df, gewinne, max_tage=60):
     vor = float(df["Close"].iloc[pos - 1])
     luecke = (o / vor - 1) * 100
     lage = (c - l) / (h - l) if h > l else 0.5
-    nach = df["Close"].iloc[pos + 1:pos + 6]
     aus = []
     zahl = f"Zahlen am {tag:%d.%m.}" + (f" {_z(ue, '+.0f')} % {'über' if ue > 0 else 'unter'} Erwartung"
                                          if ue else "")
@@ -556,16 +556,17 @@ def reaktion(df, gewinne, max_tage=60):
             aus.append(_zeichen("schwäche", "ereignis", f"{zahl}, der Kurs fiel {_z(pct, '+.1f')} % (Käufer erschöpft)", 2))
         elif ue < 0 and pct >= 1 and lage >= 0.5:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} % (Nachfrage trägt)", 2))
-        elif ue > 0 and pct >= 3:
+        elif ue > 0 and pct >= zahlen_reaktion.REAKTION_PCT:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} %"))
-        elif ue < 0 and pct <= -3:
+        elif ue < 0 and pct <= -zahlen_reaktion.REAKTION_PCT:
             aus.append(_zeichen("schwäche", "ereignis", f"{zahl}, der Kurs fiel {_z(pct, '+.1f')} %"))
-    if pct >= 3 and len(nach) and float(nach.min()) < vor:
-        aus.append(_zeichen("schwäche", "ereignis", f"{zahl}: der Anstieg {_z(pct, '+.1f')} % ist binnen 5 Tagen "
-                            "unter den Schluss vor den Zahlen gefallen – Reaktion gescheitert", 2))
-    elif pct <= -3 and len(nach) and float(nach.max()) > vor:
-        aus.append(_zeichen("stärke", "ereignis", f"{zahl}: der Fall {_z(pct, '+.1f')} % ist binnen 5 Tagen über den "
-                            "Schluss vor den Zahlen zurückgekauft – Abverkauf gescheitert", 2))
+    jetzt = float(df["Close"].iloc[-1])
+    if pct > 0 and jetzt < vor:                  # wie die Kachel „Zahlen verworfen“ (O'Neil): eine Ablesung, ein Urteil
+        aus.append(_zeichen("schwäche", "ereignis", f"{zahl}: Tag 1 {_z(pct, '+.1f')} %, der Kurs steht jetzt unter dem "
+                            f"Schluss vor den Zahlen {_z(vor, '.2f')} $ – Zahlen verworfen", 2))
+    elif pct < 0 and jetzt > vor:
+        aus.append(_zeichen("stärke", "ereignis", f"{zahl}: Tag 1 {_z(pct, '+.1f')} %, der Kurs steht jetzt über dem "
+                            f"Schluss vor den Zahlen {_z(vor, '.2f')} $ – Abverkauf zurückgekauft", 2))
     return aus
 
 
@@ -620,8 +621,7 @@ def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=
     else:
         ph = phase_mod.phasen(df).reindex(w.index).ffill().fillna(1).astype(int)
         # wie erkennung._phase_von (Karte, Weinstein-Zeichen): die laufende Woche zählt erst ab ihrem Freitag
-        fertig = ph[ph.index <= df.index[-1]]
-        p = int(fertig.iloc[-1]) if len(fertig) else int(ph.iloc[0])
+        p = phase_mod.aktuell(df, ph)
         phl = [int(x) for x in ph]
         phl[-1] = p
     zs = []

@@ -94,3 +94,12 @@ def phasen(df):
         seit4 = seit4 + 1 if phase == 4 else 0
         aus.append(phase)
     return pd.Series(aus, index=w.index, name="phase")
+
+
+def aktuell(df, ph=None):
+    """Die Phase heute, für die ganze App gleich gelesen (Prüf-Agent 13.11.2026: Karte, Titelseite und Kreislauf lasen
+    sie verschieden): die Woche zählt erst ab ihrem Freitag – die laufende Woche noch nicht. ph: phasen(df), falls schon
+    gerechnet."""
+    ph = phasen(df) if ph is None else ph
+    fertig = ph[ph.index <= df.index[-1]]
+    return int(fertig.iloc[-1]) if len(fertig) else int(ph.iloc[0])

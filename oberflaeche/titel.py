@@ -36,7 +36,7 @@ from chart import chart, legende, reaktionen, stunden  # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, kachel2, karte,  # noqa: E402
                         seite, t, zahl)
 
-PHASENTEXT = {1: "Bodenbildung", 2: "Aufwärtstrend", 3: "Gipfelphase", 4: "Abwärtstrend"}
+from zeichen import PHASE_NAME as PHASENTEXT   # noqa: E402  Basis · Aufwärts · Verteilung · Abwärts – ein Name je Phase in der App
 def _tv_symbol(tk):
     """BÖRSE:TICKER für TradingView aus daten/tv/revier.csv; ohne Eintrag nur der Ticker (TradingView sucht dann)."""
     import watchlists
@@ -295,7 +295,7 @@ def _k2_trend(m, ph, ph_reihe, df=None):
              + _weinstein_ausbruch(m, ph, df)) if ph else ""
     return kachel2("Trend", mm, None, zeile,
                    "Base-Ausbruch – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
-                   "der Kachel „Stärke“). Sie entspricht Weinsteins Stufe 2: "
+                   "der Kachel „Stärke“). Sie entspricht Phase 2 (Aufwärts) nach Weinstein: "
                    + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in tv.items())
                    + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
                    + "\n\nPhase nach Weinstein nur noch als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
@@ -1050,7 +1050,7 @@ def seite_titel(ticker, laufend=False, _stand=None):
     except Exception:  # noqa: BLE001 – ohne Massive-Dateien bleibt das Glied leer
         erk["rs_rang"] = None
     ph_reihe = phasen_modul.phasen(df) if len(df) >= 300 else None
-    ph = int(ph_reihe.iloc[-1]) if ph_reihe is not None else None
+    ph = phasen_modul.aktuell(df, ph_reihe) if ph_reihe is not None else None   # wie Karte und Kreislauf
     try:
         fd = quellen.laden(tk)
         fund = fundament.ampeln(fd)
