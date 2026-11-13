@@ -5,7 +5,7 @@ arbeitet der Stab nicht mehr in Rollen nach Meistern, sondern in acht Missionen,
   1 Lage              Wirtschaftswetter, Markt (O'Neil), Leitfrage, Szenario A/B mit messbarem Auslöser
   2 Aufklärung        warum sich die Titel bewegen, über die heute entschieden wird (Web-Suche, Quelle mit Datum)
   3 Jäger             Stärke in der Schwäche: wer führt, wenn der Markt dreht (bis 10 Anwärter)
-  4 Operationsplaner  höchstens 5 Aufträge aus den Akten (0 erlaubt); jede übrige Akte: beobachten oder verworfen
+  4 Operationsplaner  höchstens 8 Aufträge aus den Akten (0 erlaubt); jede übrige Akte: beobachten oder verworfen
   5 Gegenspieler      greift jeden Auftrag an: hält, schwächt oder kippt
   6 Truppenführung    nur mit Depot: halten, Stopp nachziehen, verkaufen – nach der Phase
   7 Kriegsgeschichte  Ergebnisse früherer Aufträge (rechnet der Code): ein Fehler, eine Lehre
@@ -116,7 +116,7 @@ AUFTRAG_MISSION = {
        "Stärke zeigt: Wer kauft hier, und warum gerade jetzt? Nenne die Phase im Kreislauf und das Zeichen, auf das wir "
        "warten (z. B. Ausbruch über die Oberkante mit Volumen, erstes höheres Tief, Einquetschung löst sich). Nenne, was "
        "die These widerlegt. Bevorzuge Titel, deren Branche ebenfalls Geld anzieht.",
-    4: "Was tun wir heute konkret? Bilde höchstens 5 Aufträge aus den Stärksten. Kein Auftrag ist erlaubt, wenn nichts "
+    4: "Was tun wir heute konkret? Bilde höchstens 8 Aufträge aus den Stärksten. Kein Auftrag ist erlaubt, wenn nichts "
        "taugt. Für jeden Auftrag: die These in einem Satz (warum Stärke, warum jetzt), die Phase im Kreislauf, der "
        "Auslöser (Kurs, Volumen, Kerze; beim Einstieg im Stundenchart die Kerze), Einstieg und Stopp der App (weichst du "
        "ab, begründe es), in welchem Szenario der Lage er gilt, und wann er ungültig ist. Ordne dann jede übrige Akte ein: "
@@ -175,6 +175,7 @@ LEHRSTELLE = {
 AUFKLAERUNG_MAX = 20
 AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 12, 8
 ANWAERTER_MAX = 20
+AUFTRAEGE_MAX = 8                     # Micky 13.11.2026: an starken Tagen (Follow-Through-Day) mehr als 5 gute Chancen
 SUCHEN_AUFKLAERUNG = 20                # je Titel eine Suche; für jede Position im Depot eine mehr
 
 _TXT = lambda d: {"type": "string", "description": d}            # noqa: E731
@@ -203,7 +204,7 @@ F_JAEGER = {"type": "object", "properties": {"anwaerter": {"type": "array", "ite
     "required": ["rang", "titel", "these", "phase", "warten_auf", "widerlegt_wenn"]},
     "description": "bis zu 10, der stärkste zuerst; leer, wenn keiner"}}, "required": ["anwaerter"]}
 F_PLAN = {"type": "object", "properties": {
-    "auftraege": {"type": "array", "description": "höchstens 5, leer erlaubt", "items": {"type": "object", "properties": {
+    "auftraege": {"type": "array", "description": "höchstens 8, leer erlaubt", "items": {"type": "object", "properties": {
         "titel": _TXT("Ticker einer Akte"), "seite": {"type": "string", "enum": ["long", "short"]},
         "these": _TXT("ein Satz: warum Stärke (Short: Schwäche), warum jetzt"), "phase": _TXT("Phase im Kreislauf"),
         "ausloeser": _TXT("Kurs, Volumen, Kerze"), "einstieg": {"type": ["number", "null"]},
@@ -1367,7 +1368,7 @@ def konferenz(melden=lambda text: None):
                            "anwaerter_des_jaegers": [{a: x.get(a) for a in ("titel", "these", "phase", "warten_auf")}
                                                      for x in jaeger.get("anwaerter") or []]}, F_PLAN, 9000)
     # Wachen im Code (Prüf-Agent 13.11.2026): Auftrag nur auf eine Akte mit grünem Setup, Einstieg nicht rot (gelaufen),
-    # Seite wie das Setup, jeder Titel einmal, höchstens 5; jede Akte eingeordnet; Titel groß geschrieben
+    # Seite wie das Setup, jeder Titel einmal, höchstens AUFTRAEGE_MAX; jede Akte eingeordnet; Titel groß geschrieben
     fest = {c["titel"]: c.get("feste_ampeln") or {} for c in akten_}
     ok, weg, gesehen = [], [], set()
     for a in plan.get("auftraege") or []:
@@ -1387,8 +1388,8 @@ def konferenz(melden=lambda text: None):
                                               "Auftrag (Code)"})
         elif akte_von[tk].get("seite") and a.get("seite") != akte_von[tk]["seite"]:
             weg.append({"titel": tk, "grund": f"Seite {a.get('seite')} gegen das Setup ({akte_von[tk]['seite']}) (Code)"})
-        elif len(ok) >= 5:
-            weg.append({"titel": tk, "grund": "mehr als 5 Aufträge – der sechste und weitere fallen weg (Code)"})
+        elif len(ok) >= AUFTRAEGE_MAX:
+            weg.append({"titel": tk, "grund": f"mehr als {AUFTRAEGE_MAX} Aufträge – fällt weg (Code)"})
         else:
             c = akte_von[tk]
             a["einstieg_app"], a["stopp_app"] = c.get("pivot"), c.get("stopp_1_5_atr")
@@ -1801,7 +1802,7 @@ def _kurzfassung_neu(k):
     tag = str(k.get("stand") or HEUTE())[:10]
     titel = f"Tagesbefehl {tag[8:10]}.{tag[5:7]}. · {b.get('haltung') or 'ohne Haltung'}"
     zeilen = [b.get("anrede") or "Hey Micky,"]
-    for c in (b.get("chancen") or [])[:5]:
+    for c in (b.get("chancen") or [])[:AUFTRAEGE_MAX]:
         pf = "↓" if c.get("seite") == "short" else "↑"
         zeilen.append(f"🟢 {pf} {c['titel']} · {c.get('phase') or ''}: {c.get('warum') or ''}".replace(" · :", ":"))
     for a in (b.get("anwaerter") or [])[:3]:

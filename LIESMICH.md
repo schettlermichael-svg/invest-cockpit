@@ -773,7 +773,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Missionen: Lage, Aufklärung (Web-Suche, Depot plus 20 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
 - Gemeinsame Dienstanweisung mit unserer Lehre und 7 Regeln. Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
 - Wachen im Code:
-  - Ein Auftrag geht nur auf eine Akte und nie bei roter Setup-Ampel.
+  - Ein Auftrag geht nur auf eine Akte mit grünem Setup, Einstieg nicht rot; höchstens 8 Aufträge (Micky 13.11.: an starken Tagen gibt es mehr als 5 gute Chancen).
   - Jede Akte wird eingeordnet (beobachten/verworfen).
   - Eine Chance entsteht nur aus einem Auftrag, den der Gegenspieler nicht gekippt hat.
 - Die Wache „Form des Stabs“ im Frühlauf prüft dasselbe noch einmal.
