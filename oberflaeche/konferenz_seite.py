@@ -368,7 +368,7 @@ def befehl_neu_html(lk):
                     f'<span style="color:{TEXT_2}">{_h(kreislaufbild.wort(kreis.get(a.get("titel"))))}</span><br>'
                     f'{_h(a.get("warum"))} <span style="color:{GELB}">Warten auf: {_h(a.get("warten_auf"))}</span>'
                     f'</div></div>' for a in anw)
-        teile.append(_abschnitt("Anwärter · Stärke in der Schwäche", z, "· der Jäger: wer führt, wenn der Markt dreht"))
+        teile.append(_abschnitt("Anwärter · frühe Zeichen der Stärke", z, "· der Jäger: wo Stärke entsteht, bevor das Setup steht"))
     dep = b.get("depot") or []
     if dep:
         teile.append(_abschnitt("Depot", "".join(f'<div style="font-size:15px;margin:4px 0">{_tk(d_.get("titel"))} · '

@@ -4,7 +4,7 @@ Micky am 13.11.2026: „was der Stab da macht ist schwach … für das, was sie 
 arbeitet der Stab nicht mehr in Rollen nach Meistern, sondern in acht Missionen, jede mit einer einzigen Frage:
   1 Lage              Wirtschaftswetter, Markt (O'Neil), Leitfrage, Szenario A/B mit messbarem Auslöser
   2 Aufklärung        warum sich die Titel bewegen, über die heute entschieden wird (Web-Suche, Quelle mit Datum)
-  3 Jäger             Stärke in der Schwäche: wer führt, wenn der Markt dreht (bis 10 Anwärter)
+  3 Jäger             frühe Zeichen der Stärke bei Titeln ohne Setup: wer führt, wenn der Markt dreht (bis 10 Anwärter)
   4 Operationsplaner  höchstens 8 Aufträge aus den Akten (0 erlaubt); jede übrige Akte: beobachten oder verworfen
   5 Gegenspieler      greift jeden Auftrag an: hält, schwächt oder kippt
   6 Truppenführung    nur mit Depot: halten, Stopp nachziehen, verkaufen – nach der Phase
@@ -93,7 +93,7 @@ Heute ist der {heute}; Termine davor sind vergangen. Schreibe Deutsch, klar und 
 MISSIONEN = {
     1: ("Lage", "Angriff oder Abwarten?"),
     2: ("Aufklärung", "Warum bewegt er sich?"),
-    3: ("Jäger", "Wer führt, wenn der Markt dreht?"),
+    3: ("Jäger", "Wo entsteht Stärke, bevor das Setup steht?"),
     4: ("Operationsplaner", "Was tun wir heute konkret?"),
     5: ("Gegenspieler", "Warum scheitert genau dieser Plan?"),
     6: ("Truppenführung", "Was tun wir mit den Positionen?"),
@@ -112,7 +112,9 @@ AUFTRAG_MISSION = {
        "Kurs auf die Nachricht? Gute Nachricht und der Kurs steigt und hält = Stärke. Schlechte Nachricht und der Kurs "
        "hält = noch mehr Stärke. Gute Nachricht und der Kurs fällt = Schwäche. Nenne die Quelle mit Datum. Findest du "
        "nichts, schreibe „kein Auslöser gefunden“.",
-    3: "Wer führt, wenn der Markt dreht? Wähle bis zu 10 Titel und ordne sie. Erkläre für jeden in Worten, warum er "
+    3: "Wo entsteht Stärke, bevor das Setup steht – wer führt, wenn der Markt dreht? Die Liste enthält Titel ohne "
+       "einsatzbereites Setup mit frühen Zeichen der Stärke (Feld „fruehe_zeichen“: Stärke in der Schwäche, Wechsel "
+       "zu Phase 1 oder 2, Einquetschung, Akkumulation, schlechte Zahlen gehalten). Wähle bis zu 10 Titel und ordne sie. Erkläre für jeden in Worten, warum er "
        "Stärke zeigt: Wer kauft hier, und warum gerade jetzt? Nenne die Phase im Kreislauf und das Zeichen, auf das wir "
        "warten (z. B. Ausbruch über die Oberkante mit Volumen, erstes höheres Tief, Einquetschung löst sich). Nenne, was "
        "die These widerlegt. Bevorzuge Titel, deren Branche ebenfalls Geld anzieht.",
@@ -174,7 +176,7 @@ LEHRSTELLE = {
 # Plätze einer Gruppe füllt die andere. Das Depot kommt immer zusätzlich dazu.
 AUFKLAERUNG_MAX = 20
 AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 12, 8
-ANWAERTER_MAX = 20
+ANWAERTER_MAX = 30                     # Micky 13.11.2026: frühe Zeichen der Stärke, höchstens 30 an den Jäger
 AUFTRAEGE_MAX = 8                     # Micky 13.11.2026: an starken Tagen (Follow-Through-Day) mehr als 5 gute Chancen
 SUCHEN_AUFKLAERUNG = 20                # je Titel eine Suche; für jede Position im Depot eine mehr
 
@@ -1116,9 +1118,31 @@ def _nachbarn(tk, rw_t, n=5):
              "phase": ((_kreis_kurz(t_) or {}).get("wort"))} for t_, x in liste]
 
 
+def fruehe_zeichen(k):
+    """Frühe Zeichen der Stärke eines Titels (Micky 13.11.2026), aus dem Kreislauf des Frühlaufs → [(Gewicht, Text)].
+    Gewicht nur für die Rangfolge der Anwärter, nirgends angezeigt."""
+    aus = [(2, s_) for s_ in (k.get("relativ") or {}).get("staerke") or []]            # Stärke in der Schwäche
+    if k.get("ziel") in (1, 2):
+        aus.append((2, f"Wechsel zu Phase {k['ziel']} zeichnet sich ab ({k.get('wort')})"))
+    eq = k.get("einquetschung") or {}
+    if eq.get("art") == "aufsteigend":
+        aus.append((2, f"Einquetschung: steigende Tiefs unter der Oberkante {_zahl_de(eq.get('oberkante') or 0)} $"))
+    ak = k.get("akkumulation") or {}
+    if ak.get("bild") == "Akkumulation":
+        aus.append((1, f"Akkumulation: {ak.get('kauftage')} Kauftage gegen {ak.get('abgabetage')} Abgabetage mit Volumen"))
+    if ak.get("pocket_pivot"):
+        aus.append((1, f"Pocket Pivot am {ak['pocket_pivot']}"))
+    for s_ in k.get("staerke") or []:
+        if "Nachfrage trägt" in s_ or s_.startswith("erstes höheres Tief"):
+            aus.append((1, s_))
+    return aus
+
+
 def anwaerter_liste(lb, n=ANWAERTER_MAX):
-    """Material des Jägers: Titel mit Zeichen der Stärke in der Schwäche (zeichen.relativ), die meisten Zeichen zuerst,
-    dann der RS-Rang. Leer, wenn der Markt nicht schwach ist."""
+    """Material des Jägers (Micky 13.11.2026): Titel ohne Akte (kein einsatzbereites Setup) mit frühen Zeichen der
+    Stärke – Stärke in der Schwäche, Wechsel zu Phase 1 oder 2, aufsteigende Einquetschung, Akkumulation, Pocket Pivot,
+    schlechte Zahlen gehalten, erstes höheres Tief. Rangfolge: Gewicht der Zeichen, dann Stärke- minus Schwächezeichen,
+    dann RS-Rang; höchstens n."""
     import rueckenwind
     try:
         import zeichen
@@ -1126,18 +1150,23 @@ def anwaerter_liste(lb, n=ANWAERTER_MAX):
     except Exception:  # noqa: BLE001
         alle = {}
     rw_t = (rueckenwind.laden() or {}).get("titel") or {}
-    zeilen = []
+    akten_tk = {c["titel"] for c in lb.get("kandidaten") or []}
+    zeilen, fz = [], {}
     for tk, k in alle.items():
-        rel = (k.get("relativ") or {}).get("staerke") or []
-        if rel:
-            zeilen.append((len(rel), len(k.get("staerke") or []) - len(k.get("schwaeche") or []),
+        if tk in akten_tk:
+            continue
+        f_ = fruehe_zeichen(k)
+        if f_:
+            fz[tk] = [t_ for _, t_ in f_]
+            zeilen.append((sum(g for g, _ in f_), len(k.get("staerke") or []) - len(k.get("schwaeche") or []),
                            (rw_t.get(tk) or {}).get("rang") or 0, tk))
     zeilen.sort(reverse=True)
     aus = []
     for _, _, _, tk in zeilen[:n]:
         r = rw_t.get(tk) or {}
         z = r.get("zahlen") or {}
-        aus.append({"titel": tk, "kreislauf": _kreis_kurz(tk), "bewegung": _bewegung(tk), "kerzen_30": _kerzen(tk, 30),
+        aus.append({"titel": tk, "fruehe_zeichen": fz[tk], "kreislauf": _kreis_kurz(tk), "bewegung": _bewegung(tk),
+                    "kerzen_30": _kerzen(tk, 30),
                     "rueckenwind": {a: r.get(a) for a in ("stufe", "rang", "tempo", "rs_hoch_vor_kurs", "geld_ampel",
                                                           "sektor", "sektor_feld", "branche", "branche_feld",
                                                           "zufluss")} if r else None,
@@ -1270,7 +1299,7 @@ def konferenz(melden=lambda text: None):
         c["kerzen_60"] = _kerzen(c["titel"], 60)
     anw = anwaerter_liste(lb)
     bekannt |= {a["titel"] for a in anw}
-    melden(f"{datetime.now():%H:%M:%S} {len(akten_)} Akten, {len(anw)} Anwärter (Stärke in der Schwäche)")
+    melden(f"{datetime.now():%H:%M:%S} {len(akten_)} Akten, {len(anw)} Anwärter (frühe Zeichen der Stärke)")
     kurse_ = {c["titel"]: c.get("kurs") for c in akten_} | {a["titel"]: _zahl(_kurs(a["titel"])) for a in anw}
     erg = {"stand": heute, "zeit": f"{datetime.now():%d.%m.%Y %H:%M}", "modell": MODELL, "format": 2, "missionen": {},
            "dreifach": lb["dreifach"], "kurse": {k_: v for k_, v in kurse_.items() if v}, "tafel": tafel(lb),
@@ -1350,7 +1379,7 @@ def konferenz(melden=lambda text: None):
             erg["missionen"]["3"]["anwaerter"] = jaeger["anwaerter"]
     else:
         erg["missionen"]["3"] = {"name": MISSIONEN[3][0], "anwaerter": [],
-                                 "hinweis": "Der Markt ist nicht schwach – kein Titel zeigt Stärke in der Schwäche."}
+                                 "hinweis": "Kein Titel ohne Setup zeigt frühe Zeichen der Stärke."}
 
     # 4 Operationsplaner
     felder = ("titel", "depot", "reihe", "auch", "seite", "volltreffer", "setup_gruen", "kurs", "pivot",
