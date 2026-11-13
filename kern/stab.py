@@ -1314,7 +1314,8 @@ def konferenz(melden=lambda text: None):
         inhalt = (f"Mission {nr} · {name}: {frage_}\n\nAUFTRAG\n{AUFTRAG_MISSION[nr]}\n\n{LEHRSTELLE[nr]}\n\n"
                   f"MATERIAL DER APP (Stand des Frühlaufs)\n{daten_}{vorlauf}")
         melden(f"{datetime.now():%H:%M:%S} {name} …")
-        usd0 = kosten()["usd"]
+        k0 = dict(kosten())
+        usd0 = k0["usd"]
         for versuch in range(2):                       # eine Mission, die an der Schnittstelle scheitert, noch einmal
             try:
                 m = _formular(system, inhalt, "melden", schema, max_tokens)
@@ -1330,9 +1331,14 @@ def konferenz(melden=lambda text: None):
                 if versuch == 0:
                     melden(f"   {name}: {e} – zweiter Versuch in 60 s")
                     time.sleep(60)
-        m["kosten_usd"] = round(kosten()["usd"] - usd0 + (vorkosten.pop(nr, 0.0)), 3)
+        k1 = kosten()
+        m["kosten_usd"] = round(k1["usd"] - usd0 + (vorkosten.pop(nr, 0.0)), 3)
+        m["verbrauch"] = {"aufrufe": k1.get("aufrufe", 0) - k0.get("aufrufe", 0),       # wohin das Geld geht
+                          "ein_tokens": k1.get("ein", 0) - k0.get("ein", 0), "aus_tokens": k1.get("aus", 0) - k0.get("aus", 0),
+                          "material_zeichen": len(inhalt)}
         melden(f"{datetime.now():%H:%M:%S} {name}: {'Fehler – ' + m['meldung'] if m.get('fehler') else 'fertig'}"
-               f" · {_zahl_de(m['kosten_usd'])} $")
+               f" · {_zahl_de(m['kosten_usd'])} $ · {m['verbrauch']['aufrufe']} Aufruf(e), "
+               f"{m['verbrauch']['ein_tokens'] // 1000}k ein, {m['verbrauch']['aus_tokens'] // 1000}k aus")
         erg["missionen"][str(nr)] = {"name": name, **m}
         return m
 

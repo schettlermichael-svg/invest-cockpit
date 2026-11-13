@@ -423,7 +423,7 @@ def mission_html(nr, m):
     else:
         zeilen = []
         for k_, v in m.items():
-            if k_ in ("name", "roh", "wache", "fehler", "kosten_usd"):
+            if k_ in ("name", "roh", "wache", "fehler", "kosten_usd", "verbrauch"):
                 continue
             if isinstance(v, list):
                 zeilen += [f'<div style="margin:4px 0;font-size:14px">{_h(_wert(x))}{_wache(x) if isinstance(x, dict) else ""}</div>'
