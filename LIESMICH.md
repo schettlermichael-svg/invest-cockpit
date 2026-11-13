@@ -827,3 +827,5 @@ Micky: „Unsere ganze App steckt wahrscheinlich noch voll dieser blinden Flecke
 **Chart (`oberflaeche/chart.py`):** S&P 500 gestrichelt im Kurschart; Schwungpunkte, Pocket Pivot (PP), Spring (S), Upthrust (U), Divergenz (◆); Abgabetage und verdeckte Abgabe über dem Volumen; RS-Tief vor Kurs.
 
 **Stab:** Jäger mit 20 Anwärtern long und 10 short (zwei long, ein short im Wechsel), dazu jede Depotposition mit frühen Zeichen der Schwäche (muss genannt werden, sonst Wache). Die Rangfolge der Akten kennt den Kreislauf. Zahlen gibt es jetzt für jeden Titel, nicht nur für Titel mit Stufe.
+
+**Freitag (Micky 13.11.2026):** „Ein Zeichen der Stärke ist auch freitags abends keine großen Gewinnmitnahmen nach einem guten wöchentlichen Lauf.“ `zeichen.freitag`: letzte fertige Woche mindestens 2 Wochen-ATR im Plus, der letzte Handelstag schließt im oberen Drittel und nicht schwächer als −0,5 %, die Woche im oberen Viertel ihrer Spanne → Stärke (Art Nachfrage/Volumen). Spiegelbild: nach einer Woche von mindestens −2 Wochen-ATR keine Eindeckung → Schwäche. Gemessen an 1.885 Titeln: je Woche 0,4–0,9 % (Wochen 23.10. und 30.10.).

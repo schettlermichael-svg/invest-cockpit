@@ -29,6 +29,8 @@ doppelt so schwer wie die Gegenseite; Prüf-Agent 13.11.2026: vorher genügte da
                     GD10 und GD50, höchstens 4 % über dem GD10, Volumen über dem größten Abgabetag der 10 Tage davor,
                     die 5 Tage davor zusammen höchstens +3 %. Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit:
                     der leiseste Tag seit 50 Tagen in den letzten 10, in der unteren Hälfte der Spanne der 60 Tage.
+                    Freitag (Micky 13.11.2026): nach einer Woche von mindestens 2 Wochen-ATR keine Gewinnmitnahme
+                    (Schluss oben, Woche nahe am Hoch) – gespiegelt keine Eindeckung nach einer schwachen Woche.
   RS gegen Markt    siehe relativ(), divergenz(), divergenz_short(), tage_gegen_markt(), rs_linie().
   Reaktion          letzte Zahlenmeldung (höchstens 60 Handelstage; Reaktionstag und Schwelle 3 % wie
                     zahlen_reaktion): Überraschung gegen Kursreaktion, Lücke gegen Schluss im Tag, Kurs heute unter dem
@@ -270,6 +272,44 @@ def tagesmarken(df, tage=260):
             if ab_vol and v[i] > max(ab_vol):
                 aus["pocket"].append(df.index[i])
     return aus
+
+
+def freitag(df, n_atr=2.0):
+    """Keine Gewinnmitnahme am Freitag (Micky 13.11.2026): Wer nach einer starken Woche am Freitagabend nicht
+    verkauft, trägt zwei Tage Risiko ohne Handel – die Käufer trauen dem Lauf. Letzte fertige Woche: Wochenschluss
+    mindestens 2 Wochen-ATR über dem Freitag davor (ATR der 14 Wochen davor), der letzte Handelstag der Woche schließt
+    im oberen Drittel seiner Spanne und nicht schwächer als −0,5 %, die Woche im oberen Viertel ihrer Spanne.
+    Spiegelbild (Schwäche): nach einer Woche von mindestens −2 Wochen-ATR keine Eindeckung – Schluss im unteren
+    Drittel, nicht stärker als +0,5 %, Woche im unteren Viertel. → Zeichen oder None."""
+    if df is None or len(df) < 120:
+        return None
+    w = wochenkerzen(df)
+    w = w[w.index <= df.index[-1]]                # nur fertige Wochen (Freitag erreicht)
+    if len(w) < 17:
+        return None
+    tr = pd.concat([w["High"] - w["Low"], (w["High"] - w["Close"].shift()).abs(),
+                    (w["Low"] - w["Close"].shift()).abs()], axis=1).max(axis=1)
+    watr = float(tr.iloc[-15:-1].mean())
+    zug = float(w["Close"].iloc[-1] - w["Close"].iloc[-2])
+    sp_w = float(w["High"].iloc[-1] - w["Low"].iloc[-1])
+    if not watr or sp_w <= 0 or abs(zug) < n_atr * watr:
+        return None
+    lage_w = (float(w["Close"].iloc[-1]) - float(w["Low"].iloc[-1])) / sp_w
+    tag = df.index[df.index <= w.index[-1]][-1]
+    i = df.index.get_loc(tag)
+    h, l, c = (float(df[x].iloc[i]) for x in ("High", "Low", "Close"))
+    pct = (c / float(df["Close"].iloc[i - 1]) - 1) * 100
+    lage = (c - l) / (h - l) if h > l else 0.5
+    woche = (float(w["Close"].iloc[-1]) / float(w["Close"].iloc[-2]) - 1) * 100
+    if zug > 0 and lage >= 2 / 3 and pct >= -0.5 and lage_w >= 0.75:
+        return _zeichen("stärke", "volumen", f"keine Gewinnmitnahme am {tag:%d.%m.}: Woche {_z(woche, '+.1f')} % "
+                        f"({_z(zug / watr, '.1f')} Wochen-ATR), Schluss im oberen Drittel ({_z(pct, '+.1f')} %) – die "
+                        "Käufer halten über das Wochenende", 1, tag)
+    if zug < 0 and lage <= 1 / 3 and pct <= 0.5 and lage_w <= 0.25:
+        return _zeichen("schwäche", "volumen", f"keine Eindeckung am {tag:%d.%m.}: Woche {_z(woche, '+.1f')} % "
+                        f"({_z(-zug / watr, '.1f')} Wochen-ATR), Schluss im unteren Drittel ({_z(pct, '+.1f')} %) – die "
+                        "Verkäufer halten über das Wochenende", 1, tag)
+    return None
 
 
 def enge_trocken(df):
@@ -655,6 +695,9 @@ def kreislauf(df, idx=None, gewinne=None, tage30=None, fehlausbruch=None, start=
         if ak["pocket_pivot"]:
             zs.append(_zeichen("stärke", "volumen", f"Pocket Pivot am {ak['pocket_pivot']}"))
     zs += enge_trocken(df)
+    fr = freitag(df)
+    if fr:
+        zs.append(fr)
     rel = None
     if idx is not None:
         rel = relativ(df, idx, start)
