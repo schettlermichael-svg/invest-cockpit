@@ -1,0 +1,1920 @@
+ticker,name,sektor,branche,etf,quelle,boersenwert_mrd,umsatz_mio,land
+NVDA,NVIDIA Corporation,Technology,Semiconductors,XLK,Yahoo,5149.2,25612.0,United States
+MU,"Micron Technology, Inc.",Technology,Semiconductors,XLK,Yahoo,1057.1,25223.0,United States
+META,"Meta Platforms, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,1596.4,14818.0,United States
+SNDK,Sandisk Corporation,Technology,Computer Hardware,XLK,Yahoo,193.3,14693.0,United States
+TSLA,"Tesla, Inc.",Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,1594.1,14074.0,United States
+SPCX,Space Exploration Technologies Corp.,Industrials,Aerospace & Defense,XLI,Yahoo,1954.2,13922.0,United States
+AAPL,Apple Inc.,Technology,Consumer Electronics,XLK,Yahoo,5092.1,13533.0,United States
+AMD,"Advanced Micro Devices, Inc.",Technology,Semiconductors,XLK,Yahoo,924.7,11217.0,United States
+MSFT,Microsoft Corporation,Technology,Software - Infrastructure,XLK,Yahoo,3936.9,11203.0,United States
+INTC,Intel Corporation,Technology,Semiconductors,XLK,Yahoo,486.6,10726.0,United States
+GOOGL,Alphabet Inc.,Communication Services,Internet Content & Information,XLC,Yahoo,3489.3,9611.0,United States
+AMZN,"Amazon.com, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,2629.6,9442.0,United States
+AVGO,Broadcom Inc.,Technology,Semiconductors,XLK,Yahoo,1646.9,8460.0,United States
+MRVL,"Marvell Technology, Inc.",Technology,Semiconductors,XLK,Yahoo,191.5,5145.0,United States
+PLTR,Palantir Technologies Inc.,Technology,Software - Infrastructure,XLK,Yahoo,471.8,4638.0,United States
+TSM,Taiwan Semiconductor Manufacturing Company Limited,Technology,Semiconductors,XLK,Yahoo,2239.6,4571.0,Taiwan
+ORCL,Oracle Corporation,Technology,Software - Infrastructure,XLK,Yahoo,422.0,4431.0,United States
+LITE,Lumentum Holdings Inc.,Technology,Communication Equipment,XLK,Yahoo,83.3,4400.0,United States
+DELL,Dell Technologies Inc.,Technology,Computer Hardware,XLK,Yahoo,302.3,4186.0,United States
+BE,Bloom Energy Corporation,Industrials,Electrical Equipment & Parts,XLI,Yahoo,65.7,3864.0,United States
+NBIS,Nebius Group N.V.,Communication Services,Internet Content & Information,XLC,Yahoo,46.8,3705.0,Netherlands
+STX,Seagate Technology Holdings plc,Technology,Computer Hardware,XLK,Yahoo,160.2,3587.0,Ireland
+MRNA,"Moderna, Inc.",Healthcare,Biotechnology,XLV,Yahoo,88.9,3586.0,United States
+SKHY,SK hynix Inc.,Technology,Semiconductors,XLK,Yahoo,1181.4,3315.0,South Korea
+MSTR,Strategy Inc,Technology,Software - Application,XLK,Yahoo,59.8,3287.0,United States
+WDC,Western Digital Corporation,Technology,Computer Hardware,XLK,Yahoo,148.0,3286.0,United States
+AMAT,"Applied Materials, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,334.6,3024.0,United States
+CRWV,"CoreWeave, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,33.5,2927.0,United States
+LLY,Eli Lilly and Company,Healthcare,Drug Manufacturers - General,XLV,Yahoo,1293.1,2918.0,United States
+CRM,"Salesforce, Inc.",Technology,Software - Application,XLK,Yahoo,190.0,2840.0,United States
+LRCX,Lam Research Corporation,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,317.8,2705.0,United States
+NFLX,"Netflix, Inc.",Communication Services,Entertainment,XLC,Yahoo,254.8,2655.0,United States
+CRWD,"CrowdStrike Holdings, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,267.4,2495.0,United States
+WMT,Walmart Inc.,Consumer Defensive,Discount Stores,XLP,Yahoo,962.0,2495.0,United States
+JPM,JPMorgan Chase & Co.,Financial Services,Banks - Diversified,XLF,Yahoo,913.3,2481.0,United States
+V,Visa Inc.,Financial Services,Credit Services,XLF,Yahoo,733.5,2368.0,United States
+HOOD,"Robinhood Markets, Inc.",Financial Services,Capital Markets,XLF,Yahoo,82.5,2365.0,United States
+ASML,ASML Holding N.V.,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,645.8,2351.0,Netherlands
+GEV,GE Vernova Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,235.0,2308.0,United States
+BRK-B,Berkshire Hathaway Inc.,Financial Services,Insurance - Diversified,XLF,Yahoo,1195.7,2283.0,United States
+PANW,"Palo Alto Networks, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,311.5,2264.0,United States
+XOM,ExxonMobil Holdings Corporation,Energy,Oil & Gas Integrated,XLE,Yahoo,753.7,2215.0,United States
+QCOM,QUALCOMM Incorporated,Technology,Semiconductors,XLK,Yahoo,194.7,2185.0,United States
+BAC,Bank of America Corporation,Financial Services,Banks - Diversified,XLF,Yahoo,357.6,2146.0,United States
+COST,Costco Wholesale Corporation,Consumer Defensive,Discount Stores,XLP,Yahoo,441.4,2077.0,United States
+NOW,"ServiceNow, Inc.",Technology,Software - Application,XLK,Yahoo,113.8,2069.0,United States
+CAT,Caterpillar Inc.,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,297.6,2053.0,United States
+UNH,UnitedHealth Group Incorporated,Healthcare,Healthcare Plans,XLV,Yahoo,368.8,2052.0,United States
+GS,"The Goldman Sachs Group, Inc.",Financial Services,Capital Markets,XLF,Yahoo,270.1,2017.0,United States
+COHR,Coherent Corp.,Technology,Scientific & Technical Instruments,XLK,Yahoo,46.7,1898.0,United States
+JNJ,Johnson & Johnson,Healthcare,Drug Manufacturers - General,XLV,Yahoo,662.5,1845.0,United States
+CSCO,"Cisco Systems, Inc.",Technology,Communication Equipment,XLK,Yahoo,428.1,1807.0,United States
+CVX,Chevron Corporation,Energy,Oil & Gas Integrated,XLE,Yahoo,457.3,1801.0,United States
+KLAC,KLA Corporation,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,218.5,1789.0,United States
+MDT,Medtronic plc,Healthcare,Medical Devices,XLV,Yahoo,124.2,1738.0,United States
+TXN,Texas Instruments Incorporated,Technology,Semiconductors,XLK,Yahoo,286.0,1736.0,United States
+MA,Mastercard Incorporated,Financial Services,Credit Services,XLF,Yahoo,556.9,1732.0,United States
+COIN,"Coinbase Global, Inc.",Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,42.4,1681.0,United States
+IREN,IREN Limited,Financial Services,Capital Markets,XLF,Yahoo,10.6,1664.0,Australia
+BA,The Boeing Company,Industrials,Aerospace & Defense,XLI,Yahoo,136.8,1605.0,United States
+SNOW,Snowflake Inc.,Technology,Software - Application,XLK,Yahoo,116.5,1590.0,United States
+CRDO,Credo Technology Group Holding Ltd,Technology,Semiconductors,XLK,Yahoo,31.1,1553.0,United States
+MRK,"Merck & Co., Inc.",Healthcare,Drug Manufacturers - General,XLV,Yahoo,361.0,1498.0,United States
+TMO,Thermo Fisher Scientific Inc.,Healthcare,Diagnostics & Research,XLV,Yahoo,262.2,1440.0,United States
+KO,The Coca-Cola Company,Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,399.3,1439.0,United States
+GE,GE Aerospace,Industrials,Aerospace & Defense,XLI,Yahoo,323.5,1424.0,United States
+HD,"The Home Depot, Inc.",Consumer Cyclical,Home Improvement Retail,XLY,Yahoo,328.2,1413.0,United States
+SMCI,"Super Micro Computer, Inc.",Technology,Computer Hardware,XLK,Yahoo,22.6,1390.0,United States
+VRT,Vertiv Holdings Co,Industrials,Electrical Equipment & Parts,XLI,Yahoo,94.7,1380.0,United States
+MCD,McDonald's Corporation,Consumer Cyclical,Restaurants,XLY,Yahoo,182.1,1357.0,United States
+ADI,"Analog Devices, Inc.",Technology,Semiconductors,XLK,Yahoo,210.0,1356.0,United States
+CBRS,Cerebras Systems Inc.,Technology,Semiconductors,XLK,Yahoo,27.4,1354.0,United States
+APP,AppLovin Corporation,Communication Services,Advertising Agencies,XLC,Yahoo,85.3,1349.0,United States
+PG,The Procter & Gamble Company,Consumer Defensive,Household & Personal Products,XLP,Yahoo,372.2,1345.0,United States
+ARM,Arm Holdings plc,Technology,Semiconductors,XLK,Yahoo,243.4,1325.0,United Kingdom
+ACN,Accenture plc,Technology,Information Technology Services,XLK,Yahoo,165.3,1320.0,Ireland
+SHOP,Shopify Inc.,Technology,Software - Application,XLK,Yahoo,216.3,1306.0,Canada
+HPE,Hewlett Packard Enterprise Company,Technology,Communication Equipment,XLK,Yahoo,78.1,1283.0,United States
+IBM,International Business Machines Corporation,Technology,Information Technology Services,XLK,Yahoo,244.1,1281.0,United States
+NKE,"NIKE, Inc.",Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,57.1,1278.0,United States
+GLW,Corning Incorporated,Technology,Electronic Components,XLK,Yahoo,111.0,1272.0,United States
+ABBV,AbbVie Inc.,Healthcare,Drug Manufacturers - General,XLV,Yahoo,513.9,1246.0,United States
+RKLB,Rocket Lab Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,37.1,1245.0,United States
+PEP,"PepsiCo, Inc.",Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,182.3,1243.0,United States
+BKNG,Booking Holdings Inc.,Consumer Cyclical,Travel Services,XLY,Yahoo,113.0,1241.0,United States
+VLO,Valero Energy Corporation,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,107.3,1238.0,United States
+C,Citigroup Inc.,Financial Services,Banks - Diversified,XLF,Yahoo,211.0,1228.0,United States
+ADBE,Adobe Inc.,Technology,Software - Application,XLK,Yahoo,96.6,1223.0,United States
+WFC,Wells Fargo & Company,Financial Services,Banks - Diversified,XLF,Yahoo,254.6,1218.0,United States
+ALAB,"Astera Labs, Inc.",Technology,Semiconductors,XLK,Yahoo,50.4,1209.0,United States
+UBER,"Uber Technologies, Inc.",Technology,Software - Application,XLK,Yahoo,134.3,1197.0,United States
+INTU,Intuit Inc.,Technology,Software - Application,XLK,Yahoo,88.5,1186.0,United States
+AMGN,Amgen Inc.,Healthcare,Drug Manufacturers - General,XLV,Yahoo,249.1,1169.0,United States
+NU,Nu Holdings Ltd.,Financial Services,Banks - Regional,XLF,Yahoo,58.5,1152.0,Cayman Islands
+CRCL,Circle Internet Group,Financial Services,Capital Markets,XLF,Yahoo,20.3,1148.0,United States
+VZ,Verizon Communications Inc.,Communication Services,Telecom Services,XLC,Yahoo,181.4,1138.0,United States
+MS,Morgan Stanley,Financial Services,Capital Markets,XLF,Yahoo,298.4,1082.0,United States
+BABA,Alibaba Group Holding Limited,Consumer Cyclical,Internet Retail,XLY,Yahoo,241.1,1059.0,China
+TJX,"The TJX Companies, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,155.5,1057.0,United States
+T,AT&T Inc.,Communication Services,Telecom Services,XLC,Yahoo,140.9,1047.0,United States
+ANET,"Arista Networks, Inc.",Technology,Computer Hardware,XLK,Yahoo,232.3,1037.0,United States
+MPC,Marathon Petroleum Corporation,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,121.5,1037.0,United States
+MELI,"MercadoLibre, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,84.2,1027.0,Argentina
+SNPS,"Synopsys, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,93.9,1020.0,United States
+CIEN,Ciena Corporation,Technology,Communication Equipment,XLK,Yahoo,49.6,1009.0,United States
+TER,"Teradyne, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,46.3,1008.0,United States
+NET,"Cloudflare, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,110.5,994.0,United States
+LIN,Linde plc,Basic Materials,Specialty Chemicals,XLB,Yahoo,231.9,985.0,United States
+APH,Amphenol Corporation,Technology,Electronic Components,XLK,Yahoo,202.4,985.0,United States
+NEE,"NextEra Energy, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,172.3,951.0,United States
+AXP,American Express Company,Financial Services,Credit Services,XLF,Yahoo,217.1,947.0,United States
+ABT,Abbott Laboratories,Healthcare,Medical Devices,XLV,Yahoo,180.9,944.0,United States
+BMNR,"Bitmine Immersion Technologies, Inc.",Financial Services,Capital Markets,XLF,Yahoo,13.1,943.0,United States
+MPWR,"Monolithic Power Systems, Inc.",Technology,Semiconductors,XLK,Yahoo,58.9,937.0,United States
+TMUS,"T-Mobile US, Inc.",Communication Services,Telecom Services,XLC,Yahoo,156.0,931.0,United States
+CEG,Constellation Energy Corporation,Utilities,Utilities - Independent Power Producers,XLU,Yahoo,93.7,923.0,United States
+ISRG,"Intuitive Surgical, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,155.6,922.0,United States
+DHR,Danaher Corporation,Healthcare,Diagnostics & Research,XLV,Yahoo,166.7,914.0,United States
+BSX,Boston Scientific Corporation,Healthcare,Medical Devices,XLV,Yahoo,61.9,904.0,United States
+PFE,Pfizer Inc.,Healthcare,Drug Manufacturers - General,XLV,Yahoo,170.7,904.0,United States
+AAOI,"Applied Optoelectronics, Inc.",Technology,Communication Equipment,XLK,Yahoo,6.7,903.0,United States
+ETN,Eaton Corporation plc,Industrials,Specialty Industrial Machinery,XLI,Yahoo,152.9,900.0,Ireland
+GILD,"Gilead Sciences, Inc.",Healthcare,Drug Manufacturers - General,XLV,Yahoo,205.3,897.0,United States
+RTX,RTX Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,269.1,897.0,United States
+FCX,Freeport-McMoRan Inc.,Basic Materials,Copper,XLB,Yahoo,95.0,892.0,United States
+MDB,"MongoDB, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,31.0,887.0,United States
+DIS,The Walt Disney Company,Communication Services,Entertainment,XLC,Yahoo,191.5,872.0,United States
+NXPI,NXP Semiconductors N.V.,Technology,Semiconductors,XLK,Yahoo,67.0,866.0,Netherlands
+COP,ConocoPhillips,Energy,Oil & Gas E&P,XLE,Yahoo,180.2,865.0,United States
+AZO,"AutoZone, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,50.5,863.0,United States
+IONQ,"IonQ, Inc.",Technology,Computer Hardware,XLK,Yahoo,13.0,862.0,United States
+SCHW,The Charles Schwab Corporation,Financial Services,Capital Markets,XLF,Yahoo,154.7,861.0,United States
+VST,Vistra Corp.,Utilities,Utilities - Independent Power Producers,XLU,Yahoo,47.3,859.0,United States
+PM,Philip Morris International Inc.,Consumer Defensive,Tobacco,XLP,Yahoo,325.0,857.0,United States
+SPOT,Spotify Technology S.A.,Communication Services,Internet Content & Information,XLC,Yahoo,117.4,856.0,Luxembourg
+AAL,American Airlines Group Inc.,Industrials,Airlines,XLI,Yahoo,8.5,850.0,United States
+TWLO,Twilio Inc.,Technology,Software - Infrastructure,XLK,Yahoo,37.1,849.0,United States
+DE,Deere & Company,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,178.0,823.0,United States
+NEM,Newmont Corporation,Basic Materials,Gold,XLB,Yahoo,116.2,822.0,United States
+SYK,Stryker Corporation,Healthcare,Medical Devices,XLV,Yahoo,119.6,816.0,United States
+HWM,Howmet Aerospace Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,82.1,815.0,United States
+DDOG,"Datadog, Inc.",Technology,Software - Application,XLK,Yahoo,95.5,810.0,United States
+SPGI,S&P Global Inc.,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,133.5,805.0,United States
+CDNS,"Cadence Design Systems, Inc.",Technology,Software - Application,XLK,Yahoo,94.0,802.0,United States
+SOFI,"SoFi Technologies, Inc.",Financial Services,Credit Services,XLF,Yahoo,22.7,800.0,United States
+DASH,"DoorDash, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,77.6,796.0,United States
+CLS,Celestica Inc.,Technology,Electronic Components,XLK,Yahoo,35.7,786.0,Canada
+SBUX,Starbucks Corporation,Consumer Cyclical,Restaurants,XLY,Yahoo,120.3,785.0,United States
+ON,ON Semiconductor Corporation,Technology,Semiconductors,XLK,Yahoo,29.3,770.0,United States
+FTNT,"Fortinet, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,102.1,760.0,United States
+ILMN,"Illumina, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,43.8,757.0,United States
+PSX,Phillips 66,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,106.7,754.0,United States
+RDDT,"Reddit, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,24.9,754.0,United States
+MCK,McKesson Corporation,Healthcare,Medical Distribution,XLV,Yahoo,114.4,753.0,United States
+COF,Capital One Financial Corporation,Financial Services,Credit Services,XLF,Yahoo,128.1,748.0,United States
+OKTA,"Okta, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,38.8,740.0,United States
+ABNB,"Airbnb, Inc.",Consumer Cyclical,Travel Services,XLY,Yahoo,99.7,722.0,United States
+LMT,Lockheed Martin Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,148.7,718.0,United States
+ASTS,"AST SpaceMobile, Inc.",Technology,Communication Equipment,XLK,Yahoo,16.8,706.0,United States
+SLB,SLB N.V.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,79.4,704.0,France
+CVS,CVS Health Corporation,Healthcare,Healthcare Plans,XLV,Yahoo,115.5,704.0,United States
+BMY,Bristol-Myers Squibb Company,Healthcare,Drug Manufacturers - General,XLV,Yahoo,125.4,702.0,United States
+UNP,Union Pacific Corporation,Industrials,Railroads,XLI,Yahoo,179.4,699.0,United States
+CMCSA,Comcast Corporation,Communication Services,Telecom Services,XLC,Yahoo,79.1,691.0,United States
+MCHP,Microchip Technology Incorporated,Technology,Semiconductors,XLK,Yahoo,44.0,684.0,United States
+PYPL,"PayPal Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,47.3,681.0,United States
+BLK,"BlackRock, Inc.",Financial Services,Asset Management,XLF,Yahoo,182.2,675.0,United States
+RCL,Royal Caribbean Cruises Ltd.,Consumer Cyclical,Travel Services,XLY,Yahoo,83.1,671.0,United States
+PWR,"Quanta Services, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,93.6,669.0,United States
+PATH,"UiPath, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,7.2,640.0,United States
+FIX,"Comfort Systems USA, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,46.4,639.0,United States
+FICO,Fair Isaac Corporation,Technology,Software - Application,XLK,Yahoo,15.3,637.0,United States
+WELL,Welltower Inc.,Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,171.1,637.0,United States
+ZS,"Zscaler, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,40.4,636.0,United States
+CDE,"Coeur Mining, Inc.",Basic Materials,Gold,XLB,Yahoo,14.4,633.0,United States
+GM,General Motors Company,Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,72.3,633.0,United States
+LOW,"Lowe's Companies, Inc.",Consumer Cyclical,Home Improvement Retail,XLY,Yahoo,116.3,630.0,United States
+P,"Everpure, Inc.",Technology,Computer Hardware,XLK,Yahoo,45.7,621.0,United States
+SHEL,Shell plc,Energy,Oil & Gas Integrated,XLE,Yahoo,297.8,614.0,Netherlands
+TGT,Target Corporation,Consumer Defensive,Discount Stores,XLP,Yahoo,69.0,611.0,United States
+VRTX,Vertex Pharmaceuticals Incorporated,Healthcare,Biotechnology,XLV,Yahoo,136.9,604.0,United States
+PCG,PG&E Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,35.5,600.0,United States
+HON,Honeywell International Inc.,Industrials,Conglomerates,XLI,Yahoo,70.5,599.0,United States
+CMI,Cummins Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,71.3,597.0,United States
+HCA,"HCA Healthcare, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,103.5,597.0,United States
+CMG,"Chipotle Mexican Grill, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,39.6,594.0,United States
+ADP,"Automatic Data Processing, Inc.",Technology,Software - Application,XLK,Yahoo,113.4,591.0,United States
+LULU,lululemon athletica inc.,Consumer Cyclical,Apparel Retail,XLY,Yahoo,11.6,590.0,Canada
+AXTI,"AXT, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,4.0,587.0,United States
+TEAM,Atlassian Corporation,Technology,Software - Application,XLK,Yahoo,51.5,587.0,Australia
+REGN,"Regeneron Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,84.3,586.0,United States
+NTRA,"Natera, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,62.8,582.0,United States
+HL,Hecla Mining Company,Basic Materials,Other Precious Metals & Mining,XLB,Yahoo,9.7,578.0,United States
+PH,Parker-Hannifin Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,117.1,577.0,United States
+LNG,"Cheniere Energy, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,65.9,577.0,United States
+F,Ford Motor Company,Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,48.4,576.0,United States
+MO,"Altria Group, Inc.",Consumer Defensive,Tobacco,XLP,Yahoo,128.2,574.0,United States
+WMB,"The Williams Companies, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,91.6,569.0,United States
+TT,Trane Technologies plc,Industrials,Building Products & Equipment,XLI,Yahoo,94.9,565.0,Ireland
+BX,Blackstone Inc.,Financial Services,Asset Management,XLF,Yahoo,90.5,565.0,United States
+HONA,Honeywell Aerospace Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,50.7,564.0,United States
+HLT,Hilton Worldwide Holdings Inc.,Consumer Cyclical,Lodging,XLY,Yahoo,79.4,561.0,United States
+SWKS,"Skyworks Solutions, Inc.",Technology,Semiconductors,XLK,Yahoo,13.3,560.0,United States
+PBR,Petróleo Brasileiro S.A. - Petrobras,Energy,Oil & Gas Integrated,XLE,Yahoo,141.1,559.0,Brazil
+CB,Chubb Limited,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,138.4,558.0,Switzerland
+CCL,Carnival Corporation Ltd.,Consumer Cyclical,Travel Services,XLY,Yahoo,38.8,557.0,United States
+SMTC,Semtech Corporation,Technology,Semiconductors,XLK,Yahoo,13.1,557.0,United States
+SHW,The Sherwin-Williams Company,Basic Materials,Specialty Chemicals,XLB,Yahoo,79.7,555.0,United States
+CME,CME Group Inc.,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,106.1,552.0,United States
+AON,Aon plc,Financial Services,Insurance Brokers,XLF,Yahoo,68.2,551.0,United States
+EQIX,"Equinix, Inc.",Real Estate,REIT - Specialty,XLRE,Yahoo,102.6,549.0,United States
+DAL,"Delta Air Lines, Inc.",Industrials,Airlines,XLI,Yahoo,53.7,547.0,United States
+CVNA,Carvana Co.,Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,75.4,545.0,United States
+PGR,The Progressive Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,133.8,545.0,United States
+BNY,The Bank of New York Mellon Corporation,Financial Services,Banks - Diversified,XLF,Yahoo,101.3,544.0,United States
+WDAY,"Workday, Inc.",Technology,Software - Application,XLK,Yahoo,47.1,540.0,United States
+SO,The Southern Company,Utilities,Utilities - Regulated Electric,XLU,Yahoo,107.0,537.0,United States
+TTWO,"Take-Two Interactive Software, Inc.",Communication Services,Electronic Gaming & Multimedia,XLC,Yahoo,36.2,537.0,United States
+MAR,"Marriott International, Inc.",Consumer Cyclical,Lodging,XLY,Yahoo,104.2,533.0,United States
+TRV,"The Travelers Companies, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,81.6,530.0,United States
+DKS,"DICK'S Sporting Goods, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,12.6,528.0,United States
+AMT,American Tower Corporation,Real Estate,REIT - Specialty,XLRE,Yahoo,86.2,523.0,United States
+MMM,3M Company,Industrials,Conglomerates,XLI,Yahoo,91.6,522.0,United States
+EXPE,"Expedia Group, Inc.",Consumer Cyclical,Travel Services,XLY,Yahoo,32.4,522.0,United States
+URI,"United Rentals, Inc.",Industrials,Rental & Leasing Services,XLI,Yahoo,74.2,522.0,United States
+HUM,Humana Inc.,Healthcare,Healthcare Plans,XLV,Yahoo,50.1,518.0,United States
+CSX,CSX Corporation,Industrials,Railroads,XLI,Yahoo,96.3,518.0,United States
+WM,"Waste Management, Inc.",Industrials,Waste Management,XLI,Yahoo,91.8,517.0,United States
+RBLX,Roblox Corporation,Communication Services,Electronic Gaming & Multimedia,XLC,Yahoo,37.5,513.0,United States
+ORLY,"O'Reilly Automotive, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,71.2,512.0,United States
+DVN,Devon Energy Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,56.3,509.0,United States
+OXY,Occidental Petroleum Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,63.0,508.0,United States
+AKAM,"Akamai Technologies, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,14.3,506.0,United States
+ELV,"Elevance Health, Inc.",Healthcare,Healthcare Plans,XLV,Yahoo,91.2,505.0,United States
+JCI,Johnson Controls International plc,Industrials,Building Products & Equipment,XLI,Yahoo,95.9,503.0,Switzerland
+AZN,AstraZeneca PLC,Healthcare,Drug Manufacturers - General,XLV,Yahoo,270.4,499.0,United Kingdom
+NTAP,"NetApp, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,42.9,499.0,United States
+TEM,"Tempus AI, Inc.",Healthcare,Health Information Services,XLV,Yahoo,14.1,499.0,United States
+ROST,"Ross Stores, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,74.2,498.0,United States
+ICE,"Intercontinental Exchange, Inc.",Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,91.5,497.0,United States
+PDD,PDD Holdings Inc.,Consumer Cyclical,Internet Retail,XLY,Yahoo,112.8,496.0,China
+EBAY,eBay Inc.,Consumer Cyclical,Internet Retail,XLY,Yahoo,53.9,494.0,United States
+FANG,"Diamondback Energy, Inc.",Energy,Oil & Gas E&P,XLE,Yahoo,57.8,493.0,United States
+NVO,Novo Nordisk A/S,Healthcare,Drug Manufacturers - General,XLV,Yahoo,173.3,491.0,Denmark
+APLD,Applied Digital Corporation,Technology,Information Technology Services,XLK,Yahoo,5.9,490.0,United States
+PLD,"Prologis, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,121.7,490.0,United States
+WULF,TeraWulf Inc.,Financial Services,Capital Markets,XLF,Yahoo,6.4,489.0,United States
+SAP,SAP SE,Technology,Software - Application,XLK,Yahoo,287.6,487.0,Germany
+MDLZ,"Mondelez International, Inc.",Consumer Defensive,Confectioners,XLP,Yahoo,79.8,485.0,United States
+NOC,Northrop Grumman Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,79.9,481.0,United States
+PTC,PTC Inc.,Technology,Software - Application,XLK,Yahoo,21.1,479.0,United States
+ADSK,"Autodesk, Inc.",Technology,Software - Application,XLK,Yahoo,50.5,478.0,United States
+VALE,Vale S.A.,Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,47.7,475.0,Brazil
+HPQ,HP Inc.,Technology,Computer Hardware,XLK,Yahoo,28.7,474.0,United States
+MRSH,"Marsh & McLennan Companies, Inc.",Financial Services,Insurance Brokers,XLF,Yahoo,93.7,473.0,United States
+VEEV,Veeva Systems Inc.,Healthcare,Health Information Services,XLV,Yahoo,50.2,472.0,United States
+UPS,"United Parcel Service, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,91.3,471.0,United States
+SE,Sea Limited,Consumer Cyclical,Internet Retail,XLY,Yahoo,46.9,471.0,United States
+ALL,The Allstate Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,64.7,470.0,United States
+UAL,"United Airlines Holdings, Inc.",Industrials,Airlines,XLI,Yahoo,34.2,464.0,United States
+KMB,Kimberly-Clark Corporation,Consumer Defensive,Household & Personal Products,XLP,Yahoo,36.6,463.0,United States
+AEP,"American Electric Power Company, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,70.4,459.0,United States
+DUK,Duke Energy Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,98.2,457.0,United States
+USB,U.S. Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,94.5,456.0,United States
+STM,STMicroelectronics N.V.,Technology,Semiconductors,XLK,Yahoo,44.6,454.0,Switzerland
+CRH,CRH plc,Basic Materials,Building Materials,XLB,Yahoo,60.3,449.0,Ireland
+FDX,FedEx Corporation,Industrials,Integrated Freight & Logistics,XLI,Yahoo,72.1,448.0,United States
+HUT,Hut 8 Corp.,Financial Services,Capital Markets,XLF,Yahoo,8.2,444.0,United States
+CL,Colgate-Palmolive Company,Consumer Defensive,Household & Personal Products,XLP,Yahoo,74.3,443.0,United States
+AXON,"Axon Enterprise, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,35.6,442.0,United States
+EOG,"EOG Resources, Inc.",Energy,Oil & Gas E&P,XLE,Yahoo,85.1,441.0,United States
+CI,The Cigna Group,Healthcare,Healthcare Plans,XLV,Yahoo,78.9,441.0,United States
+O,Realty Income Corporation,Real Estate,REIT - Retail,XLRE,Yahoo,54.1,440.0,United States
+TSEM,Tower Semiconductor Ltd.,Technology,Semiconductors,XLK,Yahoo,21.2,436.0,Israel
+BKR,Baker Hughes Company,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,54.1,436.0,United States
+PNC,"The PNC Financial Services Group, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,92.5,436.0,United States
+GD,General Dynamics Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,100.3,435.0,United States
+KR,The Kroger Co.,Consumer Defensive,Grocery Stores,XLP,Yahoo,38.9,435.0,United States
+BP,BP p.l.c.,Energy,Oil & Gas Integrated,XLE,Yahoo,131.8,434.0,United Kingdom
+KKR,KKR & Co. Inc.,Financial Services,Asset Management,XLF,Yahoo,86.0,432.0,United States
+FLEX,Flex Ltd.,Technology,Electronic Components,XLK,Yahoo,34.4,430.0,Singapore
+EQT,EQT Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,34.1,429.0,United States
+LHX,"L3Harris Technologies, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,51.8,429.0,United States
+KHC,The Kraft Heinz Company,Consumer Defensive,Packaged Foods,XLP,Yahoo,28.3,428.0,United States
+KMI,"Kinder Morgan, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,75.7,428.0,United States
+CTVA,"Corteva, Inc.",Basic Materials,Agricultural Inputs,XLB,Yahoo,7.7,426.0,United States
+TEL,TE Connectivity plc,Technology,Electronic Components,XLK,Yahoo,64.5,423.0,Ireland
+MNST,Monster Beverage Corporation,Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,136.2,423.0,United States
+XEL,Xcel Energy Inc.,Utilities,Utilities - Regulated Electric,XLU,Yahoo,49.4,422.0,United States
+RKT,"Rocket Companies, Inc.",Financial Services,Mortgage Finance,XLF,Yahoo,33.8,421.0,United States
+SUNB,"Sunbelt Rentals Holdings, Inc.",Industrials,Rental & Leasing Services,XLI,Yahoo,34.6,420.0,United States
+TDG,TransDigm Group Incorporated,Industrials,Aerospace & Defense,XLI,Yahoo,65.0,420.0,United States
+MSI,"Motorola Solutions, Inc.",Technology,Communication Equipment,XLK,Yahoo,81.4,419.0,United States
+AEM,Agnico Eagle Mines Limited,Basic Materials,Gold,XLB,Yahoo,88.9,417.0,Canada
+KVUE,Kenvue Inc.,Consumer Defensive,Household & Personal Products,XLP,Yahoo,37.6,417.0,United States
+HBAN,Huntington Bancshares Incorporated,Financial Services,Banks - Regional,XLF,Yahoo,32.2,415.0,United States
+BURL,"Burlington Stores, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,15.2,414.0,United States
+MLM,"Martin Marietta Materials, Inc.",Basic Materials,Building Materials,XLB,Yahoo,38.0,409.0,United States
+CTSH,Cognizant Technology Solutions Corporation,Technology,Information Technology Services,XLK,Yahoo,28.2,409.0,United States
+KEYS,"Keysight Technologies, Inc.",Technology,Scientific & Technical Instruments,XLK,Yahoo,56.2,407.0,United States
+DT,"Dynatrace, Inc.",Technology,Software - Application,XLK,Yahoo,17.6,407.0,United States
+FSLR,"First Solar, Inc.",Technology,Solar,XLK,Yahoo,19.0,406.0,United States
+CAH,"Cardinal Health, Inc.",Healthcare,Medical Distribution,XLV,Yahoo,58.1,404.0,United States
+ALNY,"Alnylam Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,23.3,404.0,United States
+UTHR,United Therapeutics Corporation,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,25.5,402.0,United States
+RVMD,"Revolution Medicines, Inc.",Healthcare,Biotechnology,XLV,Yahoo,40.8,401.0,United States
+CTAS,Cintas Corporation,Industrials,Specialty Business Services,XLI,Yahoo,86.6,401.0,United States
+EMR,Emerson Electric Co.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,95.2,401.0,United States
+DHI,"D.R. Horton, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,41.0,399.0,United States
+MCO,Moody's Corporation,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,84.3,398.0,United States
+U,Unity Software Inc.,Technology,Software - Application,XLK,Yahoo,17.3,398.0,United States
+A,"Agilent Technologies, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,51.1,395.0,United States
+COR,"Cencora, Inc.",Healthcare,Medical Distribution,XLV,Yahoo,63.1,390.0,United States
+IQV,IQVIA Holdings Inc.,Healthcare,Diagnostics & Research,XLV,Yahoo,45.3,389.0,United States
+TSCO,Tractor Supply Company,Consumer Cyclical,Specialty Retail,XLY,Yahoo,17.5,388.0,United States
+TWST,Twist Bioscience Corporation,Healthcare,Biotechnology,XLV,Yahoo,11.5,387.0,United States
+MTSI,"MACOM Technology Solutions Holdings, Inc.",Technology,Semiconductors,XLK,Yahoo,19.3,387.0,United States
+ECL,Ecolab Inc.,Basic Materials,Specialty Chemicals,XLB,Yahoo,84.3,385.0,United States
+CASY,"Casey's General Stores, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,25.0,383.0,United States
+KDP,Keurig Dr Pepper Inc.,Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,48.0,381.0,United States
+JBL,Jabil Inc.,Technology,Electronic Components,XLK,Yahoo,29.6,380.0,United States
+PCAR,PACCAR Inc,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,53.9,379.0,United States
+AJG,Arthur J. Gallagher & Co.,Financial Services,Insurance Brokers,XLF,Yahoo,68.7,378.0,United States
+NVT,nVent Electric plc,Industrials,Electrical Equipment & Parts,XLI,Yahoo,22.4,375.0,United Kingdom
+DLR,"Digital Realty Trust, Inc.",Real Estate,REIT - Specialty,XLRE,Yahoo,67.7,373.0,United States
+TFC,Truist Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,59.1,373.0,United States
+LEN,Lennar Corporation,Consumer Cyclical,Residential Construction,XLY,Yahoo,20.3,372.0,United States
+FAST,Fastenal Company,Industrials,Industrial Distribution,XLI,Yahoo,60.3,369.0,United States
+RBRK,"Rubrik, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,27.7,367.0,United States
+APO,"Apollo Global Management, Inc.",Financial Services,Asset Management,XLF,Yahoo,70.0,364.0,United States
+HAL,Halliburton Company,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,29.7,364.0,United States
+IBKR,"Interactive Brokers Group, Inc.",Financial Services,Capital Markets,XLF,Yahoo,37.0,361.0,United States
+CRS,Carpenter Technology Corporation,Industrials,Metal Fabrication,XLI,Yahoo,14.8,361.0,United States
+STT,State Street Corporation,Financial Services,Asset Management,XLF,Yahoo,47.3,359.0,United States
+FN,Fabrinet,Technology,Electronic Components,XLK,Yahoo,12.5,358.0,Cayman Islands
+DXCM,"DexCom, Inc.",Healthcare,Medical Devices,XLV,Yahoo,30.2,357.0,United States
+ITW,Illinois Tool Works Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,80.0,353.0,United States
+CBOE,"Cboe Global Markets, Inc.",Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,35.1,353.0,
+RIVN,"Rivian Automotive, Inc.",Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,16.6,353.0,United States
+B,Barrick Mining Corporation,Basic Materials,Gold,XLB,Yahoo,63.6,351.0,Canada
+CARR,Carrier Global Corporation,Industrials,Building Products & Equipment,XLI,Yahoo,45.8,351.0,United States
+OKLO,Oklo Inc.,Utilities,Utilities - Independent Power Producers,XLU,Yahoo,5.0,350.0,United States
+ENTG,"Entegris, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,24.4,349.0,United States
+TPR,"Tapestry, Inc.",Consumer Cyclical,Luxury Goods,XLY,Yahoo,23.5,349.0,United States
+CHTR,"Charter Communications, Inc.",Communication Services,Telecom Services,XLC,Yahoo,12.5,349.0,United States
+GIS,"General Mills, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,17.8,345.0,United States
+ODFL,"Old Dominion Freight Line, Inc.",Industrials,Trucking,XLI,Yahoo,35.7,343.0,United States
+IR,Ingersoll Rand Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,31.0,342.0,United States
+ROP,"Roper Technologies, Inc.",Technology,Software - Application,XLK,Yahoo,44.5,342.0,United States
+CCI,Crown Castle Inc.,Real Estate,REIT - Specialty,XLRE,Yahoo,37.8,341.0,United States
+VMRK,Vivmark Residential,Real Estate,REIT - Residential,XLRE,Yahoo,48.6,340.0,United States
+AFRM,"Affirm Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,25.4,340.0,United States
+FITB,Fifth Third Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,49.4,340.0,United States
+WAT,Waters Corporation,Healthcare,Diagnostics & Research,XLV,Yahoo,47.2,338.0,United States
+ATI,ATI Inc.,Industrials,Metal Fabrication,XLI,Yahoo,23.8,338.0,United States
+EXC,Exelon Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,47.4,337.0,United States
+AIG,"American International Group, Inc.",Financial Services,Insurance - Diversified,XLF,Yahoo,42.6,337.0,United States
+AME,"AMETEK, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,57.7,336.0,United States
+PAYX,"Paychex, Inc.",Technology,Software - Application,XLK,Yahoo,38.9,336.0,United States
+XYZ,"Block, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,46.2,335.0,United States
+YUM,"Yum! Brands, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,42.2,335.0,United States
+ROKU,"Roku, Inc.",Communication Services,Entertainment,XLC,Yahoo,23.2,334.0,United States
+VIK,Viking Holdings Ltd,Consumer Cyclical,Travel Services,XLY,Yahoo,39.9,332.0,United States
+TRGP,Targa Resources Corp.,Energy,Oil & Gas Midstream,XLE,Yahoo,67.0,331.0,United States
+ECHO,EchoStar Corporation,Communication Services,Telecom Services,XLC,Yahoo,28.4,329.0,United States
+RSG,"Republic Services, Inc.",Industrials,Waste Management,XLI,Yahoo,72.4,328.0,United States
+ARGX,argenx SE,Healthcare,Biotechnology,XLV,Yahoo,55.7,327.0,Netherlands
+NUE,Nucor Corporation,Basic Materials,Steel,XLB,Yahoo,62.5,327.0,United States
+MTZ,"MasTec, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,14.3,326.0,United States
+NVS,Novartis AG,Healthcare,Drug Manufacturers - General,XLV,Yahoo,307.4,326.0,Switzerland
+EIX,Edison International,Utilities,Utilities - Regulated Electric,XLU,Yahoo,22.9,326.0,United States
+EL,The Estée Lauder Companies Inc.,Consumer Defensive,Household & Personal Products,XLP,Yahoo,39.4,326.0,United States
+TTMI,"TTM Technologies, Inc.",Technology,Electronic Components,XLK,Yahoo,9.2,325.0,United States
+ROK,"Rockwell Automation, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,50.2,325.0,United States
+MKSI,MKS Inc.,Technology,Scientific & Technical Instruments,XLK,Yahoo,14.6,322.0,United States
+KEY,KeyCorp,Financial Services,Banks - Regional,XLF,Yahoo,22.9,322.0,United States
+LYV,"Live Nation Entertainment, Inc.",Communication Services,Entertainment,XLC,Yahoo,41.9,320.0,United States
+VTR,"Ventas, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,44.3,319.0,United States
+ZTS,Zoetis Inc.,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,32.6,319.0,United States
+OTIS,Otis Worldwide Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,28.4,319.0,United States
+GWW,"W.W. Grainger, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,64.6,318.0,United States
+BBY,"Best Buy Co., Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,21.1,318.0,United States
+FOXA,Fox Corporation,Communication Services,Entertainment,XLC,Yahoo,27.2,317.0,United States
+CRL,"Charles River Laboratories International, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,18.0,317.0,United States
+HUBS,"HubSpot, Inc.",Technology,Software - Application,XLK,Yahoo,11.9,317.0,United States
+BDX,"Becton, Dickinson and Company",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,54.0,316.0,United States
+MSCI,MSCI Inc.,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,44.2,316.0,United States
+RIOT,"Riot Platforms, Inc.",Financial Services,Capital Markets,XLF,Yahoo,5.2,316.0,United States
+APD,"Air Products and Chemicals, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,69.4,314.0,United States
+OKE,"ONEOK, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,60.4,314.0,United States
+VMC,Vulcan Materials Company,Basic Materials,Building Materials,XLB,Yahoo,36.3,313.0,United States
+NDAQ,"Nasdaq, Inc.",Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,58.6,313.0,United States
+TLN,Talen Energy Corporation,Utilities,Utilities - Independent Power Producers,XLU,Yahoo,16.7,312.0,United States
+ACGL,Arch Capital Group Ltd.,Financial Services,Insurance - Diversified,XLF,Yahoo,35.5,312.0,Bermuda
+FPS,"Forgent Power Solutions, Inc.",Industrials,Electrical Equipment & Parts,XLI,Yahoo,8.6,311.0,United States
+ONON,On Holding AG,Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,19.8,311.0,
+FERG,Ferguson Enterprises Inc.,Industrials,Industrial Distribution,XLI,Yahoo,46.5,311.0,United Kingdom
+CPRT,"Copart, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,27.4,310.0,United States
+CNQ,Canadian Natural Resources Limited,Energy,Oil & Gas E&P,XLE,Yahoo,114.0,310.0,Canada
+NRG,"NRG Energy, Inc.",Utilities,Utilities - Independent Power Producers,XLU,Yahoo,20.5,310.0,United States
+ULTA,"Ulta Beauty, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,27.7,309.0,United States
+NSC,Norfolk Southern Corporation,Industrials,Railroads,XLI,Yahoo,76.9,309.0,United States
+CNC,Centene Corporation,Healthcare,Healthcare Plans,XLV,Yahoo,34.0,308.0,United States
+DG,Dollar General Corporation,Consumer Defensive,Discount Stores,XLP,Yahoo,28.7,308.0,United States
+DOCN,"DigitalOcean Holdings, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,11.8,307.0,United States
+GH,"Guardant Health, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,24.9,307.0,United States
+FISV,Fiserv Inc. Common Stock,Financial Services,Payments,XLF,GICS (Mitglied im XLF),25.8,307.0,United States
+CF,"CF Industries Holdings, Inc.",Basic Materials,Agricultural Inputs,XLB,Yahoo,17.9,307.0,United States
+INSM,Insmed Incorporated,Healthcare,Biotechnology,XLV,Yahoo,24.4,305.0,United States
+MET,"MetLife, Inc.",Financial Services,Insurance - Life,XLF,Yahoo,64.1,304.0,United States
+NCLH,Norwegian Cruise Line Holdings Ltd.,Consumer Cyclical,Travel Services,XLY,Yahoo,8.4,304.0,United States
+MTD,Mettler-Toledo International Inc.,Healthcare,Diagnostics & Research,XLV,Yahoo,34.4,300.0,Switzerland
+AMP,"Ameriprise Financial, Inc.",Financial Services,Asset Management,XLF,Yahoo,44.8,300.0,United States
+ASX,"ASE Technology Holding Co., Ltd.",Technology,Semiconductors,XLK,Yahoo,99.2,300.0,Taiwan
+EW,Edwards Lifesciences Corporation,Healthcare,Medical Devices,XLV,Yahoo,54.4,299.0,United States
+ROIV,Roivant Sciences Ltd.,Healthcare,Biotechnology,XLV,Yahoo,27.1,299.0,United Kingdom
+TYL,"Tyler Technologies, Inc.",Technology,Software - Application,XLK,Yahoo,14.9,299.0,United States
+STZ,"Constellation Brands, Inc.",Consumer Defensive,Beverages - Brewers,XLP,Yahoo,22.1,298.0,United States
+RMD,ResMed Inc.,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,35.6,298.0,United States
+DLTR,"Dollar Tree, Inc.",Consumer Defensive,Discount Stores,XLP,Yahoo,24.8,297.0,United States
+D,"Dominion Energy, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,57.3,296.0,United States
+STRL,"Sterling Infrastructure, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,11.4,296.0,United States
+EXE,Expand Energy Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,20.9,296.0,United States
+XP,XP Inc.,Financial Services,Capital Markets,XLF,Yahoo,7.8,296.0,Brazil
+SRE,Sempra,Utilities,Utilities - Diversified,XLU,Yahoo,56.2,294.0,United States
+MDLN,Medline Inc.,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,42.1,294.0,United States
+CBRE,"CBRE Group, Inc.",Real Estate,Real Estate Services,XLRE,Yahoo,37.1,293.0,United States
+EFX,Equifax Inc.,Industrials,Consulting Services,XLI,Yahoo,21.0,292.0,United States
+BTI,British American Tobacco p.l.c.,Consumer Defensive,Tobacco,XLP,Yahoo,131.9,292.0,United Kingdom
+HIMS,"Hims & Hers Health, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,6.9,291.0,United States
+FIG,"Figma, Inc.",Technology,Software - Application,XLK,Yahoo,11.9,290.0,United States
+ZM,"Zoom Communications, Inc.",Technology,Software - Application,XLK,Yahoo,28.5,288.0,United States
+CCJ,Cameco Corporation,Energy,Uranium,XLE,Yahoo,36.4,288.0,Canada
+SN,"SharkNinja, Inc.",Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,29.5,288.0,United States
+XYL,Xylem Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,20.8,287.0,United States
+EME,"EMCOR Group, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,30.4,286.0,United States
+PINS,"Pinterest, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,11.3,286.0,United States
+ETR,Entergy Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,51.3,285.0,United States
+FFIV,"F5, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,20.6,285.0,United States
+LPLA,LPL Financial Holdings Inc.,Financial Services,Capital Markets,XLF,Yahoo,22.0,285.0,United States
+SYY,Sysco Corporation,Consumer Defensive,Food Distribution,XLP,Yahoo,40.6,283.0,United States
+RVTY,"Revvity, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,18.5,283.0,United States
+FTAI,FTAI Aviation Ltd.,Industrials,Aerospace & Defense,XLI,Yahoo,20.1,280.0,United States
+WEC,"WEC Energy Group, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,37.4,280.0,United States
+SU,Suncor Energy Inc.,Energy,Oil & Gas Integrated,XLE,Yahoo,90.8,278.0,Canada
+WSM,"Williams-Sonoma, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,30.6,278.0,United States
+EAT,"Brinker International, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,9.1,278.0,United States
+DECK,Deckers Outdoor Corporation,Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,11.3,278.0,United States
+RF,Regions Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,24.6,277.0,United States
+DINO,HF Sinclair Corporation,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,19.2,277.0,United States
+CFG,"Citizens Financial Group, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,27.6,275.0,United States
+IDXX,"IDEXX Laboratories, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,45.4,273.0,United States
+DKNG,DraftKings Inc.,Consumer Cyclical,Gambling,XLY,Yahoo,10.3,273.0,United States
+ARES,Ares Management Corporation,Financial Services,Asset Management,XLF,Yahoo,42.1,273.0,United States
+ALB,Albemarle Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,11.0,272.0,United States
+CART,Maplebear Inc.,Consumer Cyclical,Internet Retail,XLY,Yahoo,13.6,272.0,United States
+ADM,Archer-Daniels-Midland Company,Consumer Defensive,Farm Products,XLP,Yahoo,36.7,271.0,United States
+TOST,"Toast, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,18.2,266.0,United States
+WPM,Wheaton Precious Metals Corp.,Basic Materials,Gold,XLB,Yahoo,56.0,264.0,Canada
+CNP,"CenterPoint Energy, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,28.0,264.0,United States
+TTD,"The Trade Desk, Inc.",Communication Services,Advertising Agencies,XLC,Yahoo,6.2,263.0,United States
+JHX,James Hardie Industries plc,Basic Materials,Building Materials,XLB,Yahoo,15.6,263.0,Ireland
+DPZ,"Domino's Pizza, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,10.3,263.0,United States
+WCN,"Waste Connections, Inc.",Industrials,Waste Management,XLI,Yahoo,45.5,263.0,Canada
+CHRW,"C.H. Robinson Worldwide, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,14.9,262.0,United States
+DOW,Dow Inc.,Basic Materials,Chemicals,XLB,Yahoo,24.3,262.0,United States
+AWK,"American Water Works Company, Inc.",Utilities,Utilities - Regulated Water,XLU,Yahoo,28.3,262.0,United States
+ETSY,"Etsy, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,7.9,260.0,United States
+SITM,SiTime Corporation,Technology,Semiconductors,XLK,Yahoo,14.7,260.0,United States
+PSA,Public Storage,Real Estate,REIT - Industrial,XLRE,Yahoo,59.2,260.0,United States
+FIVE,"Five Below, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,13.5,260.0,United States
+CLX,The Clorox Company,Consumer Defensive,Household & Personal Products,XLP,Yahoo,10.7,259.0,United States
+NVR,"NVR, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,16.0,259.0,United States
+TXG,"10x Genomics, Inc.",Healthcare,Medical Devices,XLV,Yahoo,10.6,258.0,United States
+SPG,"Simon Property Group, Inc.",Real Estate,REIT - Retail,XLRE,Yahoo,69.8,258.0,United States
+ASST,"Strive, Inc.",Financial Services,Asset Management,XLF,Yahoo,3.2,257.0,United States
+GNRC,Generac Holdings Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,12.0,257.0,United States
+CMS,CMS Energy Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,21.8,257.0,United States
+RY,Royal Bank of Canada,Financial Services,Banks - Diversified,XLF,Yahoo,285.2,256.0,Canada
+PURR,Hyperliquid Strategies Inc.,Financial Services,Capital Markets,XLF,Yahoo,3.4,255.0,United States
+PEG,Public Service Enterprise Group Incorporated,Utilities,Utilities - Regulated Electric,XLU,Yahoo,36.7,254.0,United States
+MP,MP Materials Corp.,Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,7.4,254.0,United States
+DGX,Quest Diagnostics Incorporated,Healthcare,Diagnostics & Research,XLV,Yahoo,27.8,253.0,United States
+BIIB,Biogen Inc.,Healthcare,Drug Manufacturers - General,XLV,Yahoo,36.9,253.0,United States
+AU,AngloGold Ashanti plc,Basic Materials,Gold,XLB,Yahoo,43.0,253.0,South Africa
+PBF,PBF Energy Inc.,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,9.0,253.0,United States
+HUBB,Hubbell Incorporated,Industrials,Electrical Equipment & Parts,XLI,Yahoo,23.2,252.0,United States
+WAB,Westinghouse Air Brake Technologies Corporation,Industrials,Railroads,XLI,Yahoo,47.9,250.0,United States
+ANF,Abercrombie & Fitch Co.,Consumer Cyclical,Apparel Retail,XLY,Yahoo,7.0,250.0,United States
+HSY,The Hershey Company,Consumer Defensive,Confectioners,XLP,Yahoo,32.2,250.0,United States
+UMC,United Microelectronics Corporation,Technology,Semiconductors,XLK,Yahoo,45.4,250.0,Taiwan
+VRSN,"VeriSign, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,27.4,250.0,United States
+AVAV,"AeroVironment, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,6.9,249.0,United States
+CNH,CNH Industrial N.V.,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,14.0,249.0,United Kingdom
+HALO,"Halozyme Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,14.9,248.0,United States
+APA,APA Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,18.0,248.0,United States
+LUV,Southwest Airlines Co.,Industrials,Airlines,XLI,Yahoo,21.4,248.0,United States
+JBHT,"J.B. Hunt Transport Services, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,20.7,247.0,United States
+DOV,Dover Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,28.0,247.0,United States
+STLD,"Steel Dynamics, Inc.",Basic Materials,Steel,XLB,Yahoo,36.1,245.0,United States
+LH,Labcorp Holdings Inc.,Healthcare,Diagnostics & Research,XLV,Yahoo,29.9,245.0,United States
+QBTS,D-Wave Quantum Inc.,Technology,Computer Hardware,XLK,Yahoo,4.4,244.0,United States
+GRMN,Garmin Ltd.,Technology,Scientific & Technical Instruments,XLK,Yahoo,53.9,244.0,Switzerland
+VICI,VICI Properties Inc.,Real Estate,REIT - Diversified,XLRE,Yahoo,27.0,244.0,United States
+SYF,Synchrony Financial,Financial Services,Credit Services,XLF,Yahoo,24.0,242.0,United States
+GEHC,GE HealthCare Technologies Inc.,Healthcare,Medical Devices,XLV,Yahoo,34.6,242.0,United States
+MXL,"MaxLinear, Inc.",Technology,Semiconductors,XLK,Yahoo,6.5,240.0,United States
+ONTO,Onto Innovation Inc.,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,10.9,240.0,United States
+BHP,BHP Group Limited,Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,208.0,240.0,Australia
+S,"SentinelOne, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,8.9,239.0,United States
+FDS,FactSet Research Systems Inc.,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,11.3,238.0,United States
+PPL,PPL Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,26.8,238.0,United States
+MOD,Modine Manufacturing Company,Consumer Cyclical,Auto Parts,XLY,Yahoo,7.4,237.0,United States
+CLF,Cleveland-Cliffs Inc.,Basic Materials,Steel,XLB,Yahoo,8.1,236.0,United States
+FLUT,Flutter Entertainment plc,Consumer Cyclical,Gambling,XLY,Yahoo,13.9,235.0,Ireland
+LVS,Las Vegas Sands Corp.,Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,23.2,235.0,United States
+DRI,"Darden Restaurants, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,24.9,234.0,United States
+GEN,Gen Digital Inc.,Technology,Software - Infrastructure,XLK,Yahoo,16.9,234.0,United States
+CW,Curtiss-Wright Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,18.3,234.0,United States
+ENB,Enbridge Inc.,Energy,Oil & Gas Midstream,XLE,Yahoo,107.6,234.0,Canada
+KNX,Knight-Swift Transportation Holdings Inc.,Industrials,Trucking,XLI,Yahoo,10.0,233.0,United States
+NI,NiSource Inc.,Utilities,Utilities - Regulated Gas,XLU,Yahoo,21.5,233.0,United States
+UL,Unilever PLC,Consumer Defensive,Household & Personal Products,XLP,Yahoo,138.3,232.0,United Kingdom
+IOT,Samsara Inc.,Technology,Software - Infrastructure,XLK,Yahoo,24.4,232.0,United States
+HDB,HDFC Bank Limited,Financial Services,Banks - Regional,XLF,Yahoo,111.9,232.0,India
+ED,"Consolidated Edison, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,42.7,232.0,United States
+ROL,"Rollins, Inc.",Consumer Cyclical,Personal Services,XLY,Yahoo,16.6,231.0,United States
+GWRE,"Guidewire Software, Inc.",Technology,Software - Application,XLK,Yahoo,13.1,230.0,United States
+HIG,"The Hartford Insurance Group, Inc.",Financial Services,Insurance - Diversified,XLF,Yahoo,35.3,230.0,United States
+CDW,CDW Corporation,Technology,Information Technology Services,XLK,Yahoo,20.7,229.0,United States
+GTLB,GitLab Inc.,Technology,Software - Infrastructure,XLK,Yahoo,9.4,229.0,United States
+COO,"The Cooper Companies, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,11.5,229.0,United States
+MTB,M&T Bank Corporation,Financial Services,Banks - Regional,XLF,Yahoo,32.4,229.0,United States
+RGTI,"Rigetti Computing, Inc.",Technology,Computer Hardware,XLK,Yahoo,4.0,228.0,United States
+QXO,"QXO, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,11.8,227.0,United States
+W,Wayfair Inc.,Consumer Cyclical,Internet Retail,XLY,Yahoo,16.5,227.0,United States
+SCCO,Southern Copper Corporation,Basic Materials,Copper,XLB,Yahoo,161.9,227.0,United States
+GPN,Global Payments Inc.,Industrials,Specialty Business Services,XLI,Yahoo,22.7,227.0,United States
+PODD,Insulet Corporation,Healthcare,Medical Devices,XLV,Yahoo,10.6,226.0,United States
+OMC,Omnicom Group Inc.,Communication Services,Advertising Agencies,XLC,Yahoo,22.1,225.0,United States
+WWD,"Woodward, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,18.6,225.0,United States
+QSR,Restaurant Brands International Inc.,Consumer Cyclical,Restaurants,XLY,Yahoo,33.2,225.0,Canada
+AFL,Aflac Incorporated,Financial Services,Insurance - Life,XLF,Yahoo,61.9,224.0,United States
+FIS,"Fidelity National Information Services, Inc.",Technology,Information Technology Services,XLK,Yahoo,19.2,224.0,United States
+SNX,TD SYNNEX Corporation,Technology,Electronics & Computer Distribution,XLK,Yahoo,20.3,223.0,United States
+CPNG,"Coupang, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,26.2,223.0,United States
+GME,GameStop Corp.,Consumer Cyclical,Specialty Retail,XLY,Yahoo,12.1,222.0,United States
+PR,Permian Resources Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,21.4,222.0,United States
+TD,The Toronto-Dominion Bank,Financial Services,Banks - Diversified,XLF,Yahoo,207.8,222.0,Canada
+WST,"West Pharmaceutical Services, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,29.3,222.0,United States
+VRSK,"Verisk Analytics, Inc.",Industrials,Consulting Services,XLI,Yahoo,24.8,221.0,United States
+CVE,Cenovus Energy Inc.,Energy,Oil & Gas Integrated,XLE,Yahoo,60.2,219.0,Canada
+TEVA,Teva Pharmaceutical Industries Limited,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,48.3,219.0,Israel
+RGEN,Repligen Corporation,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,10.7,219.0,United States
+INFY,Infosys Limited,Technology,Information Technology Services,XLK,Yahoo,49.5,219.0,India
+NLY,"Annaly Capital Management, Inc.",Real Estate,REIT - Mortgage,XLRE,Yahoo,14.6,218.0,United States
+GFS,GLOBALFOUNDRIES Inc.,Technology,Semiconductors,XLK,Yahoo,25.6,218.0,United States
+DOCU,"DocuSign, Inc.",Technology,Software - Application,XLK,Yahoo,15.2,218.0,United States
+VICR,Vicor Corporation,Technology,Electronic Components,XLK,Yahoo,9.5,217.0,United States
+LYB,LyondellBasell Industries N.V.,Basic Materials,Specialty Chemicals,XLB,Yahoo,21.1,215.0,Netherlands
+JAZZ,Jazz Pharmaceuticals plc,Healthcare,Biotechnology,XLV,Yahoo,13.5,215.0,Ireland
+AEHR,"Aehr Test Systems, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,2.0,215.0,United States
+RL,Ralph Lauren Corporation,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,23.9,215.0,United States
+AMKR,"Amkor Technology, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,10.2,215.0,United States
+TRU,TransUnion,Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,14.4,214.0,United States
+PHM,"PulteGroup, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,22.9,214.0,United States
+RIO,Rio Tinto Group,Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,104.6,213.0,Australia
+USFD,US Foods Holding Corp.,Consumer Defensive,Food Distribution,XLP,Yahoo,22.2,213.0,United States
+GDDY,GoDaddy Inc.,Technology,Software - Infrastructure,XLK,Yahoo,13.4,213.0,United States
+ESTC,Elastic N.V.,Technology,Software - Application,XLK,Yahoo,10.9,212.0,United States
+FWONK,Formula One Group,Communication Services,Entertainment,XLC,Yahoo,23.2,211.0,United States
+GSK,GSK plc,Healthcare,Drug Manufacturers - General,XLV,Yahoo,98.5,210.0,United Kingdom
+LII,Lennox International Inc.,Industrials,Building Products & Equipment,XLI,Yahoo,11.9,209.0,United States
+RJF,"Raymond James Financial, Inc.",Financial Services,Asset Management,XLF,Yahoo,31.0,209.0,United States
+BIDU,"Baidu, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,26.8,208.0,China
+KGC,Kinross Gold Corporation,Basic Materials,Gold,XLB,Yahoo,25.5,207.0,Canada
+WCC,"WESCO International, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,17.9,206.0,United States
+XPO,"XPO, Inc.",Industrials,Trucking,XLI,Yahoo,21.4,206.0,United States
+RMBS,Rambus Inc.,Technology,Semiconductors,XLK,Yahoo,9.7,204.0,United States
+CORZ,"Core Scientific, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,4.6,204.0,United States
+OVV,Ovintiv Inc.,Energy,Oil & Gas E&P,XLE,Yahoo,20.2,204.0,Canada
+TECH,Bio-Techne Corporation,Healthcare,Biotechnology,XLV,Yahoo,11.4,203.0,United States
+HAS,"Hasbro, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,16.9,202.0,United States
+IT,"Gartner, Inc.",Technology,Information Technology Services,XLK,Yahoo,14.2,202.0,United States
+SGI,Somnigroup International Inc.,Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,14.8,202.0,United States
+TXRH,"Texas Roadhouse, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,12.0,202.0,United States
+CSGP,"CoStar Group, Inc.",Real Estate,Real Estate Services,XLRE,Yahoo,11.3,202.0,United States
+DTE,DTE Energy Company,Utilities,Utilities - Regulated Electric,XLU,Yahoo,28.0,201.0,United States
+PNR,Pentair plc,Industrials,Specialty Industrial Machinery,XLI,Yahoo,10.5,201.0,Switzerland
+ALLE,Allegion plc,Industrials,Security & Protection Services,XLI,Yahoo,15.8,201.0,United States
+SW,Smurfit Westrock Plc,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,22.3,200.0,Ireland
+EXPD,"Expeditors International of Washington, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,25.8,200.0,United States
+SIMO,Silicon Motion Technology Corporation,Technology,Semiconductors,XLK,Yahoo,7.7,200.0,Taiwan
+WRB,W. R. Berkley Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,27.1,200.0,United States
+MOS,The Mosaic Company,Basic Materials,Agricultural Inputs,XLB,Yahoo,5.8,200.0,United States
+FE,FirstEnergy Corp.,Utilities,Utilities - Regulated Electric,XLU,Yahoo,27.1,199.0,United States
+DY,"Dycom Industries, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,7.2,199.0,United States
+FTI,TechnipFMC plc,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,26.3,199.0,
+Q,"Qnity Electronics, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,25.7,199.0,United States
+VG,"Venture Global, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,36.9,198.0,United States
+OWL,Blue Owl Capital Inc.,Financial Services,Asset Management,XLF,Yahoo,16.2,198.0,United States
+THC,Tenet Healthcare Corporation,Healthcare,Medical Care Facilities,XLV,Yahoo,21.8,198.0,United States
+LSCC,Lattice Semiconductor Corporation,Technology,Semiconductors,XLK,Yahoo,14.6,198.0,United States
+FRO,Frontline plc,Energy,Oil & Gas Midstream,XLE,Yahoo,12.6,197.0,Bermuda
+INCY,Incyte Corporation,Healthcare,Biotechnology,XLV,Yahoo,23.7,197.0,United States
+CP,Canadian Pacific Kansas City Limited,Industrials,Railroads,XLI,Yahoo,76.8,197.0,Canada
+AA,Alcoa Corporation,Basic Materials,Aluminum,XLB,Yahoo,10.5,194.0,United States
+ZBRA,Zebra Technologies Corporation,Technology,Communication Equipment,XLK,Yahoo,17.9,194.0,United States
+NTRS,Northern Trust Corporation,Financial Services,Asset Management,XLF,Yahoo,31.6,194.0,United States
+BG,Bunge Global SA,Consumer Defensive,Farm Products,XLP,Yahoo,18.4,194.0,United States
+FORM,"FormFactor, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,7.6,194.0,United States
+TKO,"TKO Group Holdings, Inc.",Communication Services,Entertainment,XLC,Yahoo,33.8,193.0,United States
+USAR,"USA Rare Earth, Inc.",Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,3.9,193.0,United States
+PAAS,Pan American Silver Corp.,Basic Materials,Gold,XLB,Yahoo,16.9,192.0,Canada
+BJ,"BJ's Wholesale Club Holdings, Inc.",Consumer Defensive,Discount Stores,XLP,Yahoo,13.3,192.0,United States
+CHD,"Church & Dwight Co., Inc.",Consumer Defensive,Household & Personal Products,XLP,Yahoo,25.1,191.0,United States
+AS,"Amer Sports, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,16.3,191.0,
+PRU,"Prudential Financial, Inc.",Financial Services,Insurance - Life,XLF,Yahoo,40.3,191.0,United States
+ZETA,Zeta Global Holdings Corp.,Technology,Software - Infrastructure,XLK,Yahoo,8.2,191.0,United States
+CELH,"Celsius Holdings, Inc.",Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,7.1,190.0,United States
+PPG,"PPG Industries, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,26.5,190.0,United States
+TECK,Teck Resources Limited,Basic Materials,Copper,XLB,Yahoo,31.3,190.0,Canada
+BN,Brookfield Corporation,Financial Services,Asset Management,XLF,Yahoo,96.8,189.0,Canada
+HNGE,"Hinge Health, Inc.",Healthcare,Health Information Services,XLV,Yahoo,9.4,189.0,United States
+PENG,"Penguin Solutions, Inc.",Technology,Information Technology Services,XLK,Yahoo,3.5,188.0,United States
+VIAV,Viavi Solutions Inc.,Technology,Communication Equipment,XLK,Yahoo,8.3,188.0,United States
+HST,"Host Hotels & Resorts, Inc.",Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,17.6,188.0,United States
+NTR,Nutrien Ltd.,Basic Materials,Agricultural Inputs,XLB,Yahoo,33.0,187.0,Canada
+RPRX,Royalty Pharma plc,Healthcare,Biotechnology,XLV,Yahoo,37.9,187.0,United States
+IP,International Paper Company,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,19.1,187.0,United States
+EXR,Extra Space Storage Inc.,Real Estate,REIT - Industrial,XLRE,Yahoo,31.7,187.0,United States
+TDY,Teledyne Technologies Incorporated,Technology,Scientific & Technical Instruments,XLK,Yahoo,31.2,186.0,United States
+FDXF,"FedEx Freight Holding Company, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,16.4,186.0,United States
+CPAY,"Corpay, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,26.1,186.0,United States
+BRZE,"Braze, Inc.",Technology,Software - Application,XLK,Yahoo,5.2,185.0,United States
+ZBH,"Zimmer Biomet Holdings, Inc.",Healthcare,Medical Devices,XLV,Yahoo,18.6,184.0,United States
+VKTX,"Viking Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.4,184.0,United States
+TROW,"T. Rowe Price Group, Inc.",Financial Services,Asset Management,XLF,Yahoo,22.7,183.0,United States
+JD,"JD.com, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,34.4,183.0,China
+CSL,Carlisle Companies Incorporated,Industrials,Building Products & Equipment,XLI,Yahoo,14.7,183.0,United States
+BBIO,"BridgeBio Pharma, Inc.",Healthcare,Biotechnology,XLV,Yahoo,13.8,183.0,United States
+CHWY,"Chewy, Inc.",Consumer Cyclical,Internet Retail,XLY,Yahoo,8.4,183.0,United States
+SBAC,SBA Communications Corporation,Real Estate,REIT - Specialty,XLRE,Yahoo,19.6,183.0,United States
+TSN,"Tyson Foods, Inc.",Consumer Defensive,Farm Products,XLP,Yahoo,19.8,182.0,United States
+GKOS,Glaukos Corporation,Healthcare,Medical Devices,XLV,Yahoo,14.4,182.0,United States
+BUD,Anheuser-Busch InBev SA/NV,Consumer Defensive,Beverages - Brewers,XLP,Yahoo,156.8,181.0,Belgium
+AEE,Ameren Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,30.5,181.0,United States
+CCEP,Coca-Cola Europacific Partners PLC,Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,50.4,181.0,United Kingdom
+KTOS,"Kratos Defense & Security Solutions, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,8.2,180.0,United States
+NBIX,"Neurocrine Biosciences, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,14.9,180.0,United States
+NTNX,"Nutanix, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,19.3,179.0,United States
+SEI,"Solaris Energy Infrastructure, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,5.3,179.0,United States
+TTAN,"ServiceTitan, Inc.",Technology,Software - Application,XLK,Yahoo,7.8,179.0,United States
+FNV,Franco-Nevada Corporation,Basic Materials,Gold,XLB,Yahoo,44.7,178.0,Canada
+NXT,Nextpower Inc.,Technology,Solar,XLK,Yahoo,12.1,178.0,United States
+RRX,Regal Rexnord Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,10.9,178.0,United States
+BLDR,"Builders FirstSource, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,6.8,178.0,United States
+BROS,Dutch Bros Inc.,Consumer Cyclical,Restaurants,XLY,Yahoo,7.7,178.0,United States
+ICLR,ICON Public Limited Company,Healthcare,Diagnostics & Research,XLV,Yahoo,16.5,177.0,Ireland
+WSO,"Watsco, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,12.6,177.0,United States
+ASND,Ascendis Pharma A/S,Healthcare,Biotechnology,XLV,Yahoo,16.7,177.0,Denmark
+ENPH,"Enphase Energy, Inc.",Technology,Solar,XLK,Yahoo,3.4,177.0,United States
+LNT,Alliant Energy Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,18.3,177.0,United States
+TENB,"Tenable Holdings, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.7,177.0,United States
+EVRG,"Evergy, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,19.7,175.0,United States
+MKC,"McCormick & Company, Incorporated",Consumer Defensive,Packaged Foods,XLP,Yahoo,12.6,175.0,United States
+PL,Planet Labs PBC,Industrials,Aerospace & Defense,XLI,Yahoo,5.2,175.0,United States
+CAVA,"CAVA Group, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,6.9,175.0,United States
+VLTO,Veralto Corporation,Industrials,Pollution & Treatment Controls,XLI,Yahoo,25.4,175.0,United States
+ES,Eversource Energy,Utilities,Utilities - Regulated Electric,XLU,Yahoo,25.6,174.0,United States
+CHYM,"Chime Financial, Inc.",Technology,Software - Application,XLK,Yahoo,10.9,174.0,United States
+BNS,The Bank of Nova Scotia,Financial Services,Banks - Diversified,XLF,Yahoo,117.0,173.0,Canada
+GMAB,Genmab A/S,Healthcare,Biotechnology,XLV,Yahoo,35.3,173.0,Denmark
+AG,First Majestic Silver Corp.,Basic Materials,Silver,XLB,Yahoo,7.6,173.0,Canada
+WYNN,"Wynn Resorts, Limited",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,7.6,173.0,United States
+TTE,TotalEnergies SE,Energy,Oil & Gas Integrated,XLE,Yahoo,205.2,173.0,France
+CAG,"Conagra Brands, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,6.7,172.0,United States
+MEDP,"Medpace Holdings, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,19.0,172.0,United States
+QGEN,Qiagen N.V.,Healthcare,Diagnostics & Research,XLV,Yahoo,10.4,171.0,Netherlands
+RRC,Range Resources Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,12.6,171.0,United States
+NYT,The New York Times Company,Communication Services,Publishing,XLC,Yahoo,11.1,170.0,United States
+BWXT,"BWX Technologies, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,12.6,169.0,United States
+IRM,Iron Mountain Incorporated,Real Estate,REIT - Specialty,XLRE,Yahoo,35.2,169.0,United States
+EQNR,Equinor ASA,Energy,Oil & Gas Integrated,XLE,Yahoo,119.0,169.0,Norway
+SFM,"Sprouts Farmers Market, Inc.",Consumer Defensive,Grocery Stores,XLP,Yahoo,4.4,169.0,United States
+APTV,Aptiv PLC,Consumer Cyclical,Auto Parts,XLY,Yahoo,9.2,169.0,United Kingdom
+CHKP,Check Point Software Technologies Ltd.,Technology,Software - Infrastructure,XLK,Yahoo,15.7,168.0,Israel
+MMED,"MiniMed Group, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,5.4,168.0,United States
+AER,AerCap Holdings N.V.,Industrials,Rental & Leasing Services,XLI,Yahoo,24.7,167.0,Netherlands
+AMRZ,Amrize Ltd,Basic Materials,Building Materials,XLB,Yahoo,22.8,166.0,Switzerland
+FROG,JFrog Ltd.,Technology,Software - Application,XLK,Yahoo,12.2,166.0,United States
+ATO,Atmos Energy Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,28.9,166.0,United States
+GGG,Graco Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,11.0,165.0,United States
+AHR,"American Healthcare REIT, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,12.3,164.0,United States
+WTW,Willis Towers Watson Public Limited Company,Financial Services,Insurance Brokers,XLF,Yahoo,29.8,164.0,United Kingdom
+IONS,"Ionis Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,7.4,164.0,United States
+KOD,Kodiak Sciences Inc.,Healthcare,Biotechnology,XLV,Yahoo,6.3,163.0,United States
+PCOR,"Procore Technologies, Inc.",Technology,Software - Application,XLK,Yahoo,9.3,163.0,United States
+TRP,TC Energy Corporation,Energy,Oil & Gas Midstream,XLE,Yahoo,64.3,163.0,Canada
+DK,"Delek US Holdings, Inc.",Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,4.4,162.0,United States
+TRI,Thomson Reuters Corporation,Industrials,Specialty Business Services,XLI,Yahoo,50.4,162.0,United States
+CPB,The Campbell's Company,Consumer Defensive,Packaged Foods,XLP,Yahoo,6.3,161.0,United States
+RBA,"RB Global, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,16.0,161.0,Canada
+ESI,Element Solutions Inc,Basic Materials,Specialty Chemicals,XLB,Yahoo,8.6,161.0,United States
+GFL,GFL Environmental Inc.,Industrials,Waste Management,XLI,Yahoo,19.6,161.0,Canada
+BR,"Broadridge Financial Solutions, Inc.",Technology,Information Technology Services,XLK,Yahoo,20.1,161.0,United States
+HSBC,HSBC Holdings plc,Financial Services,Banks - Diversified,XLF,Yahoo,297.3,160.0,United Kingdom
+IFF,International Flavors & Fragrances Inc.,Basic Materials,Specialty Chemicals,XLB,Yahoo,23.2,160.0,United States
+CACI,CACI International Inc,Technology,Information Technology Services,XLK,Yahoo,15.0,160.0,United States
+CAKE,The Cheesecake Factory Incorporated,Consumer Cyclical,Restaurants,XLY,Yahoo,5.6,160.0,United States
+SJM,The J. M. Smucker Company,Consumer Defensive,Packaged Foods,XLP,Yahoo,13.5,160.0,United States
+TRMB,Trimble Inc.,Technology,Scientific & Technical Instruments,XLK,Yahoo,15.2,159.0,United States
+RGLD,"Royal Gold, Inc.",Basic Materials,Gold,XLB,Yahoo,20.1,159.0,United States
+FSLY,"Fastly, Inc.",Technology,Software - Application,XLK,Yahoo,4.1,159.0,United States
+MAS,Masco Corporation,Industrials,Building Products & Equipment,XLI,Yahoo,15.5,159.0,United States
+RACE,Ferrari N.V.,Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,93.5,158.0,Italy
+OSCR,"Oscar Health, Inc.",Healthcare,Healthcare Plans,XLV,Yahoo,9.5,158.0,United States
+FCNCA,"First Citizens BancShares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,26.9,157.0,United States
+LYFT,"Lyft, Inc.",Technology,Software - Application,XLK,Yahoo,6.2,157.0,United States
+MANH,"Manhattan Associates, Inc.",Technology,Software - Application,XLK,Yahoo,14.0,157.0,United States
+UNM,Unum Group,Financial Services,Insurance - Life,XLF,Yahoo,14.5,157.0,United States
+AR,Antero Resources Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,12.7,157.0,United States
+ALLY,Ally Financial Inc.,Financial Services,Credit Services,XLF,Yahoo,12.1,156.0,United States
+BRO,"Brown & Brown, Inc.",Financial Services,Insurance Brokers,XLF,Yahoo,22.5,156.0,United States
+BAX,Baxter International Inc.,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,12.1,156.0,United States
+HEI,HEICO Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,45.6,156.0,United States
+TW,Tradeweb Markets Inc.,Financial Services,Capital Markets,XLF,Yahoo,27.8,155.0,United States
+KMX,"CarMax, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,8.0,155.0,United States
+DAR,Darling Ingredients Inc.,Consumer Defensive,Packaged Foods,XLP,Yahoo,8.7,154.0,United States
+IEX,IDEX Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,17.6,154.0,United States
+GAP,"The Gap, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,8.0,154.0,United States
+WY,Weyerhaeuser Company,Real Estate,REIT - Specialty,XLRE,Yahoo,14.2,154.0,United States
+PCVX,"Vaxcyte, Inc.",Healthcare,Biotechnology,XLV,Yahoo,9.9,154.0,United States
+PAYC,"Paycom Software, Inc.",Technology,Software - Application,XLK,Yahoo,11.7,154.0,United States
+CRBG,"Corebridge Financial, Inc.",Financial Services,Asset Management,XLF,Yahoo,15.7,154.0,United States
+CZR,"Caesars Entertainment, Inc.",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,5.9,153.0,United States
+BWA,BorgWarner Inc.,Consumer Cyclical,Auto Parts,XLY,Yahoo,10.9,153.0,United States
+WING,Wingstop Inc.,Consumer Cyclical,Restaurants,XLY,Yahoo,3.9,153.0,United States
+GFI,Gold Fields Limited,Basic Materials,Gold,XLB,Yahoo,31.4,153.0,South Africa
+AVY,Avery Dennison Corporation,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,13.8,152.0,United States
+SOLS,"Solstice Advanced Materials, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,9.9,152.0,United States
+ITT,ITT Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,18.1,152.0,United States
+TAP,Molson Coors Beverage Company,Consumer Defensive,Beverages - Brewers,XLP,Yahoo,7.3,152.0,Canada
+ESS,"Essex Property Trust, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,17.1,152.0,United States
+EG,"Everest Group, Ltd.",Financial Services,Insurance - Reinsurance,XLF,Yahoo,15.4,152.0,Bermuda
+PFG,"Principal Financial Group, Inc.",Financial Services,Asset Management,XLF,Yahoo,24.3,151.0,United States
+RBC,RBC Bearings Incorporated,Industrials,Tools & Accessories,XLI,Yahoo,15.7,151.0,United States
+CNI,Canadian National Railway Company,Industrials,Railroads,XLI,Yahoo,74.9,150.0,Canada
+VTRS,Viatris Inc.,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,22.1,150.0,United States
+EVR,Evercore Inc.,Financial Services,Capital Markets,XLF,Yahoo,11.4,150.0,United States
+EQH,"Equitable Holdings, Inc.",Financial Services,Asset Management,XLF,Yahoo,14.9,149.0,United States
+MOH,"Molina Healthcare, Inc.",Healthcare,Healthcare Plans,XLV,Yahoo,10.4,149.0,United States
+NVMI,Nova Ltd.,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,10.6,149.0,Israel
+IBN,ICICI Bank Limited,Financial Services,Banks - Regional,XLF,Yahoo,104.3,149.0,India
+MGM,MGM Resorts International,Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,7.3,149.0,United States
+VSXY,Victorias Secret & Co.,Consumer Cyclical,Apparel Retail,XLY,Yahoo,7.9,149.0,United States
+M,"Macy's, Inc.",Consumer Cyclical,Department Stores,XLY,Yahoo,6.5,148.0,United States
+PKG,Packaging Corporation of America,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,22.7,148.0,United States
+LQDA,Liquidia Corporation,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,4.0,147.0,United States
+OLLI,"Ollie's Bargain Outlet Holdings, Inc.",Consumer Defensive,Discount Stores,XLP,Yahoo,5.5,147.0,United States
+SWK,"Stanley Black & Decker, Inc.",Industrials,Tools & Accessories,XLI,Yahoo,15.6,147.0,United States
+MHK,"Mohawk Industries, Inc.",Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,8.8,146.0,United States
+AEIS,"Advanced Energy Industries, Inc.",Industrials,Electrical Equipment & Parts,XLI,Yahoo,9.6,146.0,United States
+STE,STERIS plc,Healthcare,Medical Devices,XLV,Yahoo,22.6,146.0,United States
+FIGR,"Figure Technology Solutions, Inc.",Financial Services,Capital Markets,XLF,Yahoo,5.3,145.0,U.S. Virgin Islands
+LDOS,"Leidos Holdings, Inc.",Technology,Information Technology Services,XLK,Yahoo,17.7,145.0,United States
+AGX,"Argan, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,5.0,145.0,United States
+VRNS,"Varonis Systems, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.6,145.0,United States
+DUOL,"Duolingo, Inc.",Technology,Software - Application,XLK,Yahoo,6.4,145.0,United States
+MTCH,"Match Group, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,9.8,144.0,United States
+JKHY,"Jack Henry & Associates, Inc.",Technology,Information Technology Services,XLK,Yahoo,11.2,144.0,United States
+EQX,Equinox Gold Corp.,Basic Materials,Gold,XLB,Yahoo,11.9,144.0,Canada
+SUI,"Sun Communities, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,13.4,144.0,United States
+HII,"Huntington Ingalls Industries, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,12.5,144.0,United States
+AVTR,"Avantor, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,11.3,144.0,United States
+INVH,Invitation Homes Inc.,Real Estate,REIT - Residential,XLRE,Yahoo,15.7,143.0,United States
+AMCR,Amcor plc,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,21.8,143.0,United Kingdom
+ALGN,"Align Technology, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,10.9,143.0,United States
+CROX,"Crocs, Inc.",Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,7.2,143.0,United States
+ELF,"e.l.f. Beauty, Inc.",Consumer Defensive,Household & Personal Products,XLP,Yahoo,6.7,143.0,United States
+BTSG,"BrightSpring Health Services, Inc.",Healthcare,Health Information Services,XLV,Yahoo,11.9,142.0,United States
+AXSM,"Axsome Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,7.5,142.0,United States
+TXT,Textron Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,15.0,142.0,United States
+POOL,Pool Corporation,Industrials,Industrial Distribution,XLI,Yahoo,7.3,142.0,United States
+UDR,"UDR, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,11.4,142.0,United States
+FTV,Fortive Corporation,Technology,Scientific & Technical Instruments,XLK,Yahoo,19.6,141.0,United States
+TOL,"Toll Brothers, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,13.3,141.0,United States
+RPM,RPM International Inc.,Basic Materials,Specialty Chemicals,XLB,Yahoo,13.0,141.0,United States
+MKTX,MarketAxess Holdings Inc.,Financial Services,Capital Markets,XLF,Yahoo,5.8,140.0,United States
+CG,The Carlyle Group Inc.,Financial Services,Asset Management,XLF,Yahoo,14.5,139.0,United States
+JLL,Jones Lang LaSalle Incorporated,Real Estate,Real Estate Services,XLRE,Yahoo,16.1,139.0,United States
+CORT,Corcept Therapeutics Incorporated,Healthcare,Biotechnology,XLV,Yahoo,9.3,137.0,United States
+VSAT,"Viasat, Inc.",Technology,Communication Equipment,XLK,Yahoo,10.7,137.0,United States
+QLYS,"Qualys, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,8.0,137.0,United States
+GLPI,"Gaming and Leisure Properties, Inc.",Real Estate,REIT - Specialty,XLRE,Yahoo,11.5,136.0,United States
+IVZ,Invesco Ltd.,Financial Services,Asset Management,XLF,Yahoo,12.8,136.0,United States
+VFC,V.F. Corporation,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,7.2,135.0,United States
+ARMK,Aramark,Industrials,Specialty Business Services,XLI,Yahoo,14.8,135.0,United States
+CAI,"Caris Life Sciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,10.2,134.0,United States
+MUSA,Murphy USA Inc.,Consumer Cyclical,Specialty Retail,XLY,Yahoo,9.9,134.0,United States
+FHN,First Horizon Corporation,Financial Services,Banks - Regional,XLF,Yahoo,11.2,134.0,United States
+ONC,BeOne Medicines AG,Healthcare,Biotechnology,XLV,Yahoo,42.2,134.0,Cayman Islands
+DBX,"Dropbox, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,8.2,133.0,United States
+PRAX,"Praxis Precision Medicines, Inc.",Healthcare,Biotechnology,XLV,Yahoo,8.1,133.0,United States
+EGO,Eldorado Gold Corporation,Basic Materials,Gold,XLB,Yahoo,8.5,133.0,Canada
+EXEL,"Exelixis, Inc.",Healthcare,Biotechnology,XLV,Yahoo,16.4,133.0,United States
+AES,The AES Corporation,Utilities,Utilities - Diversified,XLU,Yahoo,10.7,133.0,United States
+CLH,"Clean Harbors, Inc.",Industrials,Waste Management,XLI,Yahoo,16.3,132.0,United States
+H,Hyatt Hotels Corporation,Consumer Cyclical,Lodging,XLY,Yahoo,17.4,132.0,United States
+CM,Canadian Imperial Bank of Commerce,Financial Services,Banks - Diversified,XLF,Yahoo,107.9,132.0,Canada
+GPC,Genuine Parts Company,Consumer Cyclical,Auto Parts,XLY,Yahoo,16.9,132.0,United States
+FND,"Floor & Decor Holdings, Inc.",Consumer Cyclical,Home Improvement Retail,XLY,Yahoo,5.4,132.0,United States
+LTH,"Life Time Group Holdings, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,10.1,132.0,United States
+SNY,Sanofi,Healthcare,Drug Manufacturers - General,XLV,Yahoo,105.2,132.0,France
+BAH,Booz Allen Hamilton Holding Corporation,Industrials,Consulting Services,XLI,Yahoo,10.0,132.0,United States
+PFGC,Performance Food Group Company,Consumer Defensive,Food Distribution,XLP,Yahoo,15.4,131.0,United States
+DVA,DaVita Inc.,Healthcare,Medical Care Facilities,XLV,Yahoo,12.3,131.0,United States
+OC,Owens Corning,Industrials,Building Products & Equipment,XLI,Yahoo,9.6,131.0,United States
+BRKR,Bruker Corporation,Healthcare,Medical Devices,XLV,Yahoo,9.4,131.0,United States
+TCOM,Trip.com Group Limited,Consumer Cyclical,Travel Services,XLY,Yahoo,24.3,131.0,China
+DD,"DuPont de Nemours, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,19.0,131.0,United States
+BMRN,BioMarin Pharmaceutical Inc.,Healthcare,Biotechnology,XLV,Yahoo,11.1,130.0,United States
+GLXY,Galaxy Digital,Financial Services,Capital Markets,XLF,Yahoo,7.1,130.0,United States
+SAN,"Banco Santander, S.A.",Financial Services,Banks - Diversified,XLF,Yahoo,170.1,130.0,Spain
+BBWI,"Bath & Body Works, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,4.6,129.0,United States
+ARWR,"Arrowhead Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,8.5,129.0,United States
+BMO,Bank of Montreal,Financial Services,Banks - Diversified,XLF,Yahoo,122.3,129.0,Canada
+SANM,Sanmina Corporation,Technology,Electronic Components,XLK,Yahoo,9.3,128.0,United States
+BAM,Brookfield Asset Management Ltd.,Financial Services,Asset Management,XLF,Yahoo,77.6,128.0,
+BALL,Ball Corporation,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,17.1,128.0,United States
+NTSK,"Netskope, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,10.7,128.0,United States
+CYTK,"Cytokinetics, Incorporated",Healthcare,Biotechnology,XLV,Yahoo,8.8,128.0,United States
+MAA,"Mid-America Apartment Communities, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,13.7,128.0,United States
+APG,APi Group Corporation,Industrials,Engineering & Construction,XLI,Yahoo,19.5,127.0,United States
+ALK,"Alaska Air Group, Inc.",Industrials,Airlines,XLI,Yahoo,4.0,127.0,United States
+FUTU,Futu Holdings Limited,Financial Services,Capital Markets,XLF,Yahoo,14.2,127.0,Hong Kong
+OPCH,"Option Care Health, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,4.8,127.0,United States
+GRAL,"GRAIL, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,7.1,127.0,United States
+MDGL,"Madrigal Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,10.0,126.0,United States
+KIM,Kimco Realty Corporation,Real Estate,REIT - Retail,XLRE,Yahoo,16.4,126.0,United States
+Z,"Zillow Group, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,7.0,126.0,United States
+AGCO,AGCO Corporation,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,7.6,125.0,United States
+TPG,TPG Inc.,Financial Services,Asset Management,XLF,Yahoo,18.1,125.0,United States
+SAIA,"Saia, Inc.",Industrials,Trucking,XLI,Yahoo,9.2,125.0,United States
+SSNC,"SS&C Technologies Holdings, Inc.",Technology,Software - Application,XLK,Yahoo,18.9,125.0,United States
+SNA,Snap-on Incorporated,Industrials,Tools & Accessories,XLI,Yahoo,18.5,125.0,United States
+RNR,RenaissanceRe Holdings Ltd.,Financial Services,Insurance - Reinsurance,XLF,Yahoo,13.7,124.0,Bermuda
+EPAM,"EPAM Systems, Inc.",Technology,Information Technology Services,XLK,Yahoo,6.9,124.0,United States
+BCS,Barclays PLC,Financial Services,Banks - Diversified,XLF,Yahoo,77.7,124.0,United Kingdom
+MKL,Markel Group Inc.,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,22.8,124.0,United States
+FLS,Flowserve Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,10.2,124.0,United States
+KRMN,Karman Holdings Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,5.5,123.0,United States
+RNG,"RingCentral, Inc.",Technology,Software - Application,XLK,Yahoo,7.1,123.0,United States
+J,Jacobs Solutions Inc.,Industrials,Engineering & Construction,XLI,Yahoo,17.9,123.0,United States
+DTM,"DT Midstream, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,13.0,122.0,United States
+PNW,Pinnacle West Capital Corporation,Utilities,Utilities - Regulated Electric,XLU,Yahoo,12.9,122.0,United States
+UHS,"Universal Health Services, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,10.4,122.0,United States
+EHC,Encompass Health Corporation,Healthcare,Medical Care Facilities,XLV,Yahoo,13.0,122.0,United States
+EPD,Enterprise Products Partners L.P.,Energy,Oil & Gas Midstream,XLE,Yahoo,84.3,122.0,United States
+SM,SM Energy Company,Energy,Oil & Gas E&P,XLE,Yahoo,9.4,122.0,United States
+BEN,Franklin Templeton Inc.,Financial Services,Asset Management,XLF,Yahoo,16.4,122.0,United States
+AVT,"Avnet, Inc.",Technology,Electronics & Computer Distribution,XLK,Yahoo,7.6,121.0,United States
+RS,"Reliance, Inc.",Basic Materials,Steel,XLB,Yahoo,22.4,121.0,United States
+BAP,Credicorp Ltd.,Financial Services,Banks - Regional,XLF,Yahoo,28.7,121.0,Peru
+PEN,"Penumbra, Inc.",Healthcare,Medical Devices,XLV,Yahoo,12.7,120.0,United States
+NDSN,Nordson Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,18.3,119.0,United States
+AGI,Alamos Gold Inc.,Basic Materials,Gold,XLB,Yahoo,12.1,119.0,Canada
+TPL,Texas Pacific Land Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,22.6,118.0,United States
+ABVX,ABIVAX Société Anonyme,Healthcare,Biotechnology,XLV,Yahoo,7.8,118.0,France
+SYRE,"Spyre Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,10.3,117.0,United States
+ELAN,Elanco Animal Health Incorporated,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,11.6,117.0,United States
+SIRI,Sirius XM Holdings Inc.,Communication Services,Entertainment,XLC,Yahoo,9.7,116.0,United States
+HRL,Hormel Foods Corporation,Consumer Defensive,Packaged Foods,XLP,Yahoo,11.5,116.0,United States
+BZ,Kanzhun Limited,Communication Services,Internet Content & Information,XLC,Yahoo,7.7,116.0,China
+VSH,"Vishay Intertechnology, Inc.",Technology,Semiconductors,XLK,Yahoo,4.5,116.0,United States
+HBM,Hudbay Minerals Inc.,Basic Materials,Copper,XLB,Yahoo,10.4,115.0,Canada
+FLR,Fluor Corporation,Industrials,Engineering & Construction,XLI,Yahoo,6.4,115.0,United States
+NWSA,News Corporation,Communication Services,Entertainment,XLC,Yahoo,15.9,115.0,United States
+BSP,Bending Spoons S.p.A.,Technology,Software - Application,XLK,Yahoo,32.5,115.0,Italy
+LEU,Centrus Energy Corp.,Energy,Uranium,XLE,Yahoo,2.2,114.0,United States
+ONB,Old National Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,9.5,114.0,United States
+MTN,"Vail Resorts, Inc.",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,5.5,113.0,United States
+ELS,"Equity LifeStyle Properties, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,11.5,112.0,United States
+WHR,Whirlpool Corporation,Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,1.9,111.0,United States
+CRGY,Crescent Energy Company,Energy,Oil & Gas E&P,XLE,Yahoo,4.5,111.0,United States
+ARW,"Arrow Electronics, Inc.",Technology,Electronics & Computer Distribution,XLK,Yahoo,11.2,110.0,United States
+RH,RH,Consumer Cyclical,Specialty Retail,XLY,Yahoo,2.9,110.0,United States
+BNTX,BioNTech SE,Healthcare,Biotechnology,XLV,Yahoo,22.4,110.0,Germany
+EWBC,"East West Bancorp, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,18.2,110.0,United States
+LECO,"Lincoln Electric Holdings, Inc.",Industrials,Tools & Accessories,XLI,Yahoo,15.4,109.0,United States
+NEU,NewMarket Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,7.4,109.0,United States
+SYNA,Synaptics Incorporated,Technology,Semiconductors,XLK,Yahoo,4.7,109.0,United States
+SPXC,"SPX Technologies, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,8.4,108.0,United States
+JEF,Jefferies Financial Group Inc.,Financial Services,Capital Markets,XLF,Yahoo,11.3,108.0,United States
+DAVE,Dave Inc.,Technology,Software - Application,XLK,Yahoo,4.3,108.0,United States
+AMBA,"Ambarella, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,2.9,108.0,United States
+ADC,Agree Realty Corporation,Real Estate,REIT - Retail,XLRE,Yahoo,8.8,108.0,United States
+CINF,Cincinnati Financial Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,27.9,107.0,United States
+POWL,"Powell Industries, Inc.",Industrials,Electrical Equipment & Parts,XLI,Yahoo,6.1,107.0,United States
+DOC,"Healthpeak Properties, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,13.1,107.0,United States
+HRI,Herc Holdings Inc.,Industrials,Rental & Leasing Services,XLI,Yahoo,5.8,107.0,United States
+FER,Ferrovial N.V.,Industrials,Engineering & Construction,XLI,Yahoo,41.0,106.0,Netherlands
+ARE,"Alexandria Real Estate Equities, Inc.",Real Estate,REIT - Office,XLRE,Yahoo,7.1,106.0,United States
+BOX,"Box, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.9,106.0,United States
+GMED,"Globus Medical, Inc.",Healthcare,Medical Devices,XLV,Yahoo,11.1,106.0,United States
+ALC,Alcon Inc.,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,35.5,106.0,Switzerland
+FNF,"Fidelity National Financial, Inc.",Financial Services,Insurance - Specialty,XLF,Yahoo,10.8,106.0,United States
+ACI,"Albertsons Companies, Inc.",Consumer Defensive,Grocery Stores,XLP,Yahoo,6.0,106.0,United States
+WPC,W. P. Carey Inc.,Real Estate,REIT - Diversified,XLRE,Yahoo,14.9,105.0,United States
+PNFP,"Pinnacle Financial Partners, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,15.4,105.0,United States
+INIO,Innio N.V.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,13.1,105.0,Germany
+LW,"Lamb Weston Holdings, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,7.3,105.0,United States
+ACM,AECOM,Industrials,Engineering & Construction,XLI,Yahoo,8.2,105.0,United States
+PLNT,"Planet Fitness, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,4.0,104.0,United States
+JXN,Jackson Financial Inc.,Financial Services,Insurance - Life,XLF,Yahoo,9.2,104.0,United States
+WEX,WEX Inc.,Technology,Software - Infrastructure,XLK,Yahoo,6.3,104.0,United States
+HLI,"Houlihan Lokey, Inc.",Financial Services,Capital Markets,XLF,Yahoo,9.7,104.0,United States
+REXR,"Rexford Industrial Realty, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,8.1,104.0,United States
+EGP,"EastGroup Properties, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,10.7,103.0,United States
+FCFS,"FirstCash Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,8.1,103.0,United States
+SMMT,Summit Therapeutics Inc.,Healthcare,Biotechnology,XLV,Yahoo,13.0,103.0,United States
+ITGR,Integer Holdings Corporation,Healthcare,Medical Devices,XLV,Yahoo,4.3,103.0,United States
+MLI,"Mueller Industries, Inc.",Industrials,Metal Fabrication,XLI,Yahoo,12.2,103.0,United States
+AMG,"Affiliated Managers Group, Inc.",Financial Services,Asset Management,XLF,Yahoo,10.3,103.0,United States
+LNTH,"Lantheus Holdings, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,6.5,103.0,United States
+PAG,"Penske Automotive Group, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,13.9,102.0,United States
+EMBJ,Embraer S.A.,Industrials,Aerospace & Defense,XLI,Yahoo,13.7,102.0,Brazil
+AYI,Acuity Inc.,Industrials,Electrical Equipment & Parts,XLI,Yahoo,9.7,102.0,United States
+LAD,"Lithia Motors, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,6.4,102.0,United States
+UPST,"Upstart Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,2.4,102.0,United States
+CPT,Camden Property Trust,Real Estate,REIT - Residential,XLRE,Yahoo,10.1,102.0,United States
+MSM,"MSC Industrial Direct Co., Inc.",Industrials,Industrial Distribution,XLI,Yahoo,6.9,102.0,United States
+AEO,"American Eagle Outfitters, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,3.4,102.0,United States
+DHT,"DHT Holdings, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,4.0,102.0,Jersey
+AN,"AutoNation, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,5.6,102.0,United States
+CHRD,Chord Energy Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,8.4,101.0,United States
+MNDY,monday.com Ltd.,Technology,Software - Application,XLK,Yahoo,4.1,101.0,Israel
+KGS,"Kodiak Gas Services, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,4.9,101.0,United States
+COKE,"Coca-Cola Consolidated, Inc.",Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,13.9,101.0,United States
+TVTX,"Travere Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,4.8,101.0,United States
+PRIM,Primoris Services Corporation,Industrials,Engineering & Construction,XLI,Yahoo,4.1,101.0,United States
+ERIC,Telefonaktiebolaget LM Ericsson (publ),Technology,Communication Equipment,XLK,Yahoo,37.6,101.0,Sweden
+CCK,"Crown Holdings, Inc.",Consumer Cyclical,Packaging & Containers,XLY,Yahoo,12.8,101.0,United States
+KVYO,"Klaviyo, Inc.",Technology,Software - Application,XLK,Yahoo,5.8,100.0,United States
+FRT,Federal Realty Investment Trust,Real Estate,REIT - Retail,XLRE,Yahoo,9.7,100.0,United States
+LUNR,"Intuitive Machines, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,2.7,100.0,United States
+VOYA,"Voya Financial, Inc.",Financial Services,Financial Conglomerates,XLF,Yahoo,8.9,100.0,United States
+TKR,The Timken Company,Industrials,Tools & Accessories,XLI,Yahoo,8.0,99.0,United States
+BOOT,"Boot Barn Holdings, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,3.9,99.0,United States
+TGTX,"TG Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,8.9,99.0,United States
+AIZ,"Assurant, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,14.4,99.0,United States
+ALGM,"Allegro MicroSystems, Inc.",Technology,Semiconductors,XLK,Yahoo,6.2,99.0,United States
+ZION,"Zions Bancorporation, National Association",Financial Services,Banks - Regional,XLF,Yahoo,9.7,98.0,United States
+UBS,UBS Group AG,Financial Services,Banks - Diversified,XLF,Yahoo,149.4,98.0,Switzerland
+MGY,Magnolia Oil & Gas Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,7.0,98.0,United States
+CGNX,Cognex Corporation,Technology,Scientific & Technical Instruments,XLK,Yahoo,9.9,98.0,United States
+WTRG,"Essential Utilities, Inc.",Utilities,Utilities - Regulated Water,XLU,Yahoo,12.1,97.0,United States
+WOLF,"Wolfspeed, Inc.",Technology,Semiconductors,XLK,Yahoo,1.3,97.0,United States
+PTGX,"Protagonist Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,9.3,97.0,United States
+SF,Stifel Financial Corp.,Financial Services,Capital Markets,XLF,Yahoo,10.3,97.0,United States
+MAT,"Mattel, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,4.4,97.0,United States
+XE,"X-Energy, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,4.8,97.0,United States
+HSIC,"Henry Schein, Inc.",Healthcare,Medical Distribution,XLV,Yahoo,9.6,96.0,United States
+RGA,"Reinsurance Group of America, Incorporated",Financial Services,Insurance - Reinsurance,XLF,Yahoo,17.2,96.0,United States
+ENS,EnerSys,Industrials,Electrical Equipment & Parts,XLI,Yahoo,6.2,96.0,United States
+BWIN,"The Baldwin Insurance Group, Inc.",Financial Services,Insurance Brokers,XLF,Yahoo,4.4,96.0,United States
+CUBE,CubeSmart,Real Estate,REIT - Industrial,XLRE,Yahoo,9.2,96.0,United States
+CRUS,"Cirrus Logic, Inc.",Technology,Semiconductors,XLK,Yahoo,5.7,95.0,United States
+TFX,Teleflex Incorporated,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,6.0,95.0,United States
+HXL,Hexcel Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,6.0,94.0,United States
+PCTY,Paylocity Holding Corporation,Technology,Software - Application,XLK,Yahoo,8.8,94.0,United States
+SONY,Sony Group Corporation,Technology,Consumer Electronics,XLK,Yahoo,150.2,94.0,Japan
+SIG,Signet Jewelers Limited,Consumer Cyclical,Luxury Goods,XLY,Yahoo,4.6,94.0,Bermuda
+WH,"Wyndham Hotels & Resorts, Inc.",Consumer Cyclical,Lodging,XLY,Yahoo,5.6,94.0,United States
+SEDG,"SolarEdge Technologies, Inc.",Technology,Solar,XLK,Yahoo,1.9,94.0,Israel
+CHDN,Churchill Downs Incorporated,Consumer Cyclical,Gambling,XLY,Yahoo,6.2,94.0,United States
+WMS,"Advanced Drainage Systems, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,10.3,94.0,United States
+UNF,UniFirst Corporation,Industrials,Specialty Business Services,XLI,Yahoo,4.7,94.0,United States
+SPHR,Sphere Entertainment Co.,Communication Services,Entertainment,XLC,Yahoo,4.1,94.0,United States
+BIO,"Bio-Rad Laboratories, Inc.",Healthcare,Medical Devices,XLV,Yahoo,10.3,94.0,United States
+VLY,Valley National Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,7.9,94.0,United States
+CELC,Celcuity Inc.,Healthcare,Biotechnology,XLV,Yahoo,3.4,94.0,United States
+NNN,"NNN REIT, Inc.",Real Estate,REIT - Retail,XLRE,Yahoo,8.0,94.0,United States
+CNM,"Core & Main, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,8.4,94.0,United States
+CVLT,"Commvault Systems, Inc.",Technology,Software - Application,XLK,Yahoo,7.0,93.0,United States
+SAIL,"SailPoint, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,12.6,93.0,United States
+IESC,"IES Holdings, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,9.1,93.0,United States
+AIT,"Applied Industrial Technologies, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,11.0,93.0,United States
+HTFL,"Heartflow, Inc.",Healthcare,Health Information Services,XLV,Yahoo,5.3,93.0,United States
+IAG,IAMGOLD Corporation,Basic Materials,Gold,XLB,Yahoo,9.6,92.0,Canada
+ASO,"Academy Sports and Outdoors, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,3.7,92.0,United States
+SITE,"SiteOne Landscape Supply, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,4.8,92.0,United States
+REG,Regency Centers Corporation,Real Estate,REIT - Retail,XLRE,Yahoo,13.7,92.0,United States
+PTEN,"Patterson-UTI Energy, Inc.",Energy,Oil & Gas Drilling,XLE,Yahoo,4.8,92.0,United States
+STNG,Scorpio Tankers Inc.,Energy,Oil & Gas Midstream,XLE,Yahoo,4.9,92.0,Monaco
+OSK,Oshkosh Corporation,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,8.4,92.0,United States
+URBN,"Urban Outfitters, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,7.9,92.0,United States
+LOGI,Logitech International S.A.,Technology,Computer Hardware,XLK,Yahoo,14.0,92.0,United States
+KRYS,"Krystal Biotech, Inc.",Healthcare,Biotechnology,XLV,Yahoo,9.6,91.0,United States
+BCE,BCE Inc.,Communication Services,Telecom Services,XLC,Yahoo,18.7,91.0,Canada
+AOS,A. O. Smith Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,8.6,91.0,United States
+MTDR,Matador Resources Company,Energy,Oil & Gas E&P,XLE,Yahoo,7.4,91.0,United States
+L,Loews Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,22.8,91.0,United States
+PRMB,Primo Brands Corporation,Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,7.1,91.0,United States
+PEGA,Pegasystems Inc.,Technology,Software - Application,XLK,Yahoo,5.6,91.0,United States
+LKQ,LKQ Corporation,Consumer Cyclical,Auto Parts,XLY,Yahoo,4.6,90.0,United States
+LFUS,"Littelfuse, Inc.",Technology,Electronic Components,XLK,Yahoo,10.3,90.0,United States
+RAL,Ralliant Corporation,Technology,Electronic Components,XLK,Yahoo,7.8,90.0,United States
+WFRD,Weatherford International plc,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,6.5,90.0,United States
+KYMR,"Kymera Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,10.2,90.0,United States
+DEO,Diageo plc,Consumer Defensive,Beverages - Wineries & Distilleries,XLP,Yahoo,50.8,89.0,United Kingdom
+VMI,"Valmont Industries, Inc.",Industrials,Conglomerates,XLI,Yahoo,8.3,89.0,United States
+WAL,Western Alliance Bancorporation,Financial Services,Banks - Regional,XLF,Yahoo,8.5,89.0,United States
+BXP,"BXP, Inc.",Real Estate,REIT - Office,XLRE,Yahoo,10.1,89.0,United States
+MT,ArcelorMittal S.A.,Basic Materials,Steel,XLB,Yahoo,47.0,89.0,Luxembourg
+POR,Portland General Electric Company,Utilities,Utilities - Regulated Electric,XLU,Yahoo,5.2,89.0,United States
+OHI,"Omega Healthcare Investors, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,14.2,89.0,United States
+SRRK,Scholar Rock Holding Corporation,Healthcare,Biotechnology,XLV,Yahoo,5.4,89.0,United States
+INOD,Innodata Inc.,Technology,Information Technology Services,XLK,Yahoo,1.6,89.0,United States
+KSS,Kohl's Corporation,Consumer Cyclical,Department Stores,XLY,Yahoo,2.8,88.0,United States
+RYAAY,Ryanair Holdings plc,Industrials,Airlines,XLI,Yahoo,28.1,88.0,Ireland
+CTRE,"CareTrust REIT, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,8.6,87.0,United States
+ALSN,"Allison Transmission Holdings, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,9.1,87.0,United States
+VAL,Valaris Limited,Energy,Oil & Gas Drilling,XLE,Yahoo,7.1,87.0,United States
+OGE,OGE Energy Corp.,Utilities,Utilities - Regulated Electric,XLU,Yahoo,10.2,87.0,United States
+SEIC,SEI Investments Company,Financial Services,Asset Management,XLF,Yahoo,12.4,87.0,United States
+ALV,"Autoliv, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,8.4,87.0,Sweden
+BRX,Brixmor Property Group Inc.,Real Estate,REIT - Retail,XLRE,Yahoo,8.9,87.0,United States
+ARCC,Ares Capital Corporation,Financial Services,Asset Management,XLF,Yahoo,13.8,87.0,United States
+FNB,F.N.B. Corporation,Financial Services,Banks - Regional,XLF,Yahoo,6.5,87.0,United States
+MANE,"Veradermics, Incorporated",Healthcare,Biotechnology,XLV,Yahoo,6.0,87.0,United States
+AMH,American Homes 4 Rent,Real Estate,REIT - Residential,XLRE,Yahoo,11.3,86.0,United States
+UMBF,UMB Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,10.3,86.0,United States
+QNT,Quantinuum Inc.,Technology,Software - Application,XLK,Yahoo,10.0,86.0,United States
+AAON,"AAON, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,6.2,86.0,United States
+FBIN,"Fortune Brands Innovations, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,5.3,86.0,United States
+WIX,Wix.com Ltd.,Technology,Software - Infrastructure,XLK,Yahoo,3.3,86.0,Israel
+BEKE,KE Holdings Inc.,Real Estate,Real Estate Services,XLRE,Yahoo,19.7,86.0,China
+BSY,"Bentley Systems, Incorporated",Technology,Software - Application,XLK,Yahoo,12.0,86.0,United States
+SOLV,Solventum Corporation,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,14.2,85.0,United States
+TNGX,"Tango Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.8,85.0,United States
+BKH,Black Hills Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,6.2,85.0,United States
+ALKS,Alkermes plc,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,7.6,85.0,Ireland
+OUST,"Ouster, Inc.",Technology,Electronic Components,XLK,Yahoo,2.3,85.0,United States
+EMN,Eastman Chemical Company,Basic Materials,Specialty Chemicals,XLB,Yahoo,7.8,84.0,United States
+TXNM,"TXNM Energy, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,6.5,84.0,United States
+HR,Healthcare Realty Trust Incorporated,Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,6.2,84.0,United States
+SLS,"SELLAS Life Sciences Group, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.1,84.0,United States
+CRSP,CRISPR Therapeutics AG,Healthcare,Biotechnology,XLV,Yahoo,5.2,84.0,Switzerland
+HQY,"HealthEquity, Inc.",Healthcare,Health Information Services,XLV,Yahoo,8.4,84.0,United States
+CALM,"Cal-Maine Foods, Inc.",Consumer Defensive,Farm Products,XLP,Yahoo,2.9,84.0,United States
+GL,Globe Life Inc.,Financial Services,Insurance - Life,XLF,Yahoo,12.3,84.0,United States
+ORA,"Ormat Technologies, Inc.",Utilities,Utilities - Renewable,XLU,Yahoo,5.7,84.0,United States
+COLB,"Columbia Banking System, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,8.8,84.0,United States
+RHI,Robert Half Inc.,Industrials,Staffing & Employment Services,XLI,Yahoo,4.4,83.0,United States
+INSW,"International Seaways, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,5.8,83.0,United States
+EXLS,"ExlService Holdings, Inc.",Technology,Information Technology Services,XLK,Yahoo,6.2,83.0,United States
+WK,Workiva Inc.,Technology,Software - Application,XLK,Yahoo,4.5,83.0,United States
+CDNA,"CareDx, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,3.7,83.0,United States
+HRB,"H&R Block, Inc.",Consumer Cyclical,Personal Services,XLY,Yahoo,6.1,83.0,United States
+SHAK,Shake Shack Inc.,Consumer Cyclical,Restaurants,XLY,Yahoo,3.0,83.0,United States
+TEX,Terex Corporation,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,6.5,82.0,United States
+BPOP,"Popular, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,10.1,82.0,United States
+SARO,"StandardAero, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,7.9,82.0,United States
+INDV,"Indivior Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,4.2,82.0,United Kingdom
+GTX,Garrett Motion Inc.,Consumer Cyclical,Auto Parts,XLY,Yahoo,4.2,82.0,Switzerland
+FOUR,"Shift4 Payments, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,3.1,82.0,United States
+ORKA,"Oruka Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,6.4,82.0,United States
+IBP,"Installed Building Products, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,5.6,82.0,United States
+SSRM,SSR Mining Inc.,Basic Materials,Gold,XLB,Yahoo,5.8,81.0,Canada
+VNOM,"Viper Energy, Inc.",Energy,Oil & Gas Midstream,XLE,Yahoo,16.8,81.0,United States
+NAVN,"Navan, Inc.",Technology,Software - Application,XLK,Yahoo,6.9,81.0,United States
+AUGO,Aura Minerals Inc.,Basic Materials,Gold,XLB,Yahoo,6.6,81.0,United States
+CR,Crane Company,Industrials,Specialty Industrial Machinery,XLI,Yahoo,11.9,81.0,United States
+NTES,"NetEase, Inc.",Communication Services,Electronic Gaming & Multimedia,XLC,Yahoo,71.5,80.0,China
+BYD,Boyd Gaming Corporation,Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,5.1,80.0,United States
+SCI,Service Corporation International,Consumer Cyclical,Personal Services,XLY,Yahoo,10.3,80.0,United States
+DOCS,"Doximity, Inc.",Healthcare,Health Information Services,XLV,Yahoo,6.0,80.0,United States
+KLAR,Klarna Group plc,Financial Services,Credit Services,XLF,Yahoo,9.6,80.0,
+LNC,Lincoln National Corporation,Financial Services,Insurance - Life,XLF,Yahoo,7.9,80.0,United States
+RELY,"Remitly Global, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.2,80.0,United States
+DB,Deutsche Bank Aktiengesellschaft,Financial Services,Banks - Regional,XLF,Yahoo,65.7,79.0,Germany
+WTS,"Watts Water Technologies, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,11.7,79.0,United States
+RXO,"RXO, Inc.",Industrials,Trucking,XLI,Yahoo,4.6,79.0,United States
+KNSL,"Kinsale Capital Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,8.2,79.0,United States
+MYRG,MYR Group Inc.,Industrials,Engineering & Construction,XLI,Yahoo,4.4,79.0,United States
+VVV,Valvoline Inc.,Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,4.1,79.0,United States
+RELX,RELX PLC,Industrials,Specialty Business Services,XLI,Yahoo,68.4,79.0,United Kingdom
+IDA,"IDACORP, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,8.3,78.0,United States
+DFTX,"Definium Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.1,78.0,United States
+DX,"Dynex Capital, Inc.",Real Estate,REIT - Mortgage,XLRE,Yahoo,2.8,78.0,United States
+LPX,Louisiana-Pacific Corporation,Industrials,Building Products & Equipment,XLI,Yahoo,5.1,78.0,United States
+CHE,Chemed Corporation,Healthcare,Medical Care Facilities,XLV,Yahoo,7.1,78.0,United States
+UI,Ubiquiti Inc.,Technology,Communication Equipment,XLK,Yahoo,36.7,78.0,United States
+RYAN,"Ryan Specialty Holdings, Inc.",Financial Services,Insurance Brokers,XLF,Yahoo,11.1,78.0,United States
+CLMT,"Calumet, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,4.3,77.0,United States
+BILL,"BILL Holdings, Inc.",Technology,Software - Application,XLK,Yahoo,4.2,77.0,United States
+IMO,Imperial Oil Limited,Energy,Oil & Gas Integrated,XLE,Yahoo,63.3,77.0,Canada
+TIGO,Millicom International Cellular S.A.,Communication Services,Telecom Services,XLC,Yahoo,13.4,77.0,Luxembourg
+FR,"First Industrial Realty Trust, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,7.3,77.0,United States
+COCO,"The Vita Coco Company, Inc.",Consumer Defensive,Beverages - Non-Alcoholic,XLP,Yahoo,3.2,77.0,United States
+LAMR,Lamar Advertising Company,Real Estate,REIT - Specialty,XLRE,Yahoo,16.1,77.0,United States
+TTC,The Toro Company,Industrials,Tools & Accessories,XLI,Yahoo,10.2,77.0,United States
+HESM,Hess Midstream LP,Energy,Oil & Gas Midstream,XLE,Yahoo,4.1,77.0,United States
+VSEC,VSE Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,4.4,76.0,United States
+ING,ING Groep N.V.,Financial Services,Banks - Diversified,XLF,Yahoo,93.6,76.0,Netherlands
+DNTH,"Dianthus Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,4.6,76.0,United States
+EXP,Eagle Materials Inc.,Basic Materials,Building Materials,XLB,Yahoo,5.6,76.0,United States
+CNK,"Cinemark Holdings, Inc.",Communication Services,Entertainment,XLC,Yahoo,4.6,76.0,United States
+RARE,Ultragenyx Pharmaceutical Inc.,Healthcare,Biotechnology,XLV,Yahoo,1.7,76.0,United States
+APPF,"AppFolio, Inc.",Technology,Software - Application,XLK,Yahoo,7.3,76.0,United States
+CFR,"Cullen/Frost Bankers, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,9.8,75.0,United States
+MGA,Magna International Inc.,Consumer Cyclical,Auto Parts,XLY,Yahoo,17.2,75.0,Canada
+UCTT,"Ultra Clean Holdings, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,2.6,75.0,United States
+WTFC,Wintrust Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,10.4,75.0,United States
+CE,Celanese Corporation,Basic Materials,Chemicals,XLB,Yahoo,5.3,75.0,United States
+TTEK,"Tetra Tech, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,9.8,75.0,United States
+NVAX,"Novavax, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.7,75.0,United States
+ACMR,"ACM Research, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,3.4,75.0,United States
+MAC,The Macerich Company,Real Estate,REIT - Retail,XLRE,Yahoo,6.9,75.0,United States
+R,"Ryder System, Inc.",Industrials,Rental & Leasing Services,XLI,Yahoo,10.7,75.0,United States
+SSB,SouthState Bank Corporation,Financial Services,Banks - Regional,XLF,Yahoo,10.3,74.0,United States
+LBRT,Liberty Energy Inc.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,2.8,74.0,United States
+PI,"Impinj, Inc.",Technology,Semiconductors,XLK,Yahoo,5.6,74.0,United States
+ERAS,"Erasca, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.2,74.0,United States
+FRSH,Freshworks Inc.,Technology,Software - Application,XLK,Yahoo,3.9,74.0,United States
+CMC,Commercial Metals Company,Industrials,Metal Fabrication,XLI,Yahoo,7.2,74.0,United States
+MBGL,"Mobility Global, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.6,74.0,United States
+EPRT,"Essential Properties Realty Trust, Inc.",Real Estate,REIT - Retail,XLRE,Yahoo,5.9,73.0,United States
+JBS,JBS N.V.,Consumer Defensive,Packaged Foods,XLP,Yahoo,13.0,73.0,Netherlands
+RYN,Rayonier Inc.,Real Estate,REIT - Specialty,XLRE,Yahoo,5.7,73.0,United States
+AAP,"Advance Auto Parts, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,2.8,73.0,United States
+GEO,"The GEO Group, Inc.",Industrials,Security & Protection Services,XLI,Yahoo,3.8,73.0,United States
+STWD,"Starwood Property Trust, Inc.",Real Estate,REIT - Mortgage,XLRE,Yahoo,4.6,73.0,United States
+LEVI,Levi Strauss & Co.,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,8.7,72.0,United States
+VCTR,"Victory Capital Holdings, Inc.",Financial Services,Asset Management,XLF,Yahoo,7.0,72.0,United States
+GVA,Granite Construction Incorporated,Industrials,Engineering & Construction,XLI,Yahoo,5.3,72.0,United States
+ESAB,ESAB Corporation,Industrials,Metal Fabrication,XLI,Yahoo,4.6,72.0,United States
+YOU,"Clear Secure, Inc.",Technology,Software - Application,XLK,Yahoo,6.3,72.0,United States
+HAE,Haemonetics Corporation,Healthcare,Medical Devices,XLV,Yahoo,5.5,72.0,United States
+HMY,Harmony Gold Mining Company Limited,Basic Materials,Gold,XLB,Yahoo,10.0,72.0,South Africa
+CBZ,"CBIZ, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,3.0,72.0,United States
+PVH,PVH Corp.,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,4.1,72.0,United States
+CENX,Century Aluminum Company,Basic Materials,Aluminum,XLB,Yahoo,3.4,72.0,United States
+ARQT,"Arcutis Biotherapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,4.0,72.0,United States
+WRBY,Warby Parker Inc.,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,3.0,72.0,United States
+XENE,Xenon Pharmaceuticals Inc.,Healthcare,Biotechnology,XLV,Yahoo,3.6,72.0,Canada
+G,Genpact Limited,Technology,Information Technology Services,XLK,Yahoo,6.5,71.0,Bermuda
+CX,"CEMEX, S.A.B. de C.V.",Basic Materials,Building Materials,XLB,Yahoo,16.4,71.0,Mexico
+PTCT,"PTC Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.4,71.0,United States
+TREX,"Trex Company, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,5.2,71.0,United States
+PARR,"Par Pacific Holdings, Inc.",Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,3.7,71.0,United States
+OZK,Bank OZK,Financial Services,Banks - Regional,XLF,Yahoo,5.8,71.0,United States
+BIRK,Birkenstock Holding plc,Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,5.5,71.0,
+XMTR,"Xometry, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,5.8,71.0,United States
+LEA,Lear Corporation,Consumer Cyclical,Auto Parts,XLY,Yahoo,5.8,71.0,United States
+CHEF,"The Chefs' Warehouse, Inc.",Consumer Defensive,Food Distribution,XLP,Yahoo,4.4,70.0,United States
+RHP,"Ryman Hospitality Properties, Inc.",Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,9.3,70.0,United States
+NOV,NOV Inc.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,6.9,70.0,United States
+RSI,"Rush Street Interactive, Inc.",Consumer Cyclical,Gambling,XLY,Yahoo,3.2,70.0,United States
+IRON,"Disc Medicine, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.7,70.0,United States
+LGND,Ligand Pharmaceuticals Incorporated,Healthcare,Biotechnology,XLV,Yahoo,6.3,70.0,United States
+AWI,"Armstrong World Industries, Inc.",Industrials,Building Products & Equipment,XLI,Yahoo,6.9,69.0,United States
+KBH,KB Home,Consumer Cyclical,Residential Construction,XLY,Yahoo,2.9,69.0,United States
+FLG,"Flagstar Bank, National Association",Financial Services,Banks - Regional,XLF,Yahoo,4.3,69.0,United States
+NFG,National Fuel Gas Company,Energy,Oil & Gas Integrated,XLE,Yahoo,7.5,69.0,United States
+MFC,Manulife Financial Corporation,Financial Services,Insurance - Life,XLF,Yahoo,75.5,69.0,Canada
+VIRT,"Virtu Financial, Inc.",Financial Services,Capital Markets,XLF,Yahoo,8.4,69.0,United States
+GIL,Gildan Activewear Inc.,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,7.5,69.0,Canada
+GLNG,Golar LNG Limited,Energy,Oil & Gas Midstream,XLE,Yahoo,4.7,69.0,Bermuda
+PB,"Prosperity Bancshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,8.7,69.0,United States
+QURE,uniQure N.V.,Healthcare,Biotechnology,XLV,Yahoo,1.8,68.0,Netherlands
+VERA,"Vera Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,68.0,United States
+FRPT,"Freshpet, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,3.2,68.0,United States
+YUMC,"Yum China Holdings, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,15.5,68.0,United States
+HTHT,H World Group Limited,Consumer Cyclical,Lodging,XLY,Yahoo,14.4,68.0,China
+TRMD,TORM plc,Energy,Oil & Gas Midstream,XLE,Yahoo,4.4,68.0,United Kingdom
+SQM,Sociedad Química y Minera de Chile S.A.,Basic Materials,Specialty Chemicals,XLB,Yahoo,16.1,68.0,Chile
+NGG,National Grid plc,Utilities,Utilities - Regulated Electric,XLU,Yahoo,88.4,68.0,United Kingdom
+SLAB,Silicon Laboratories Inc.,Technology,Semiconductors,XLK,Yahoo,7.4,68.0,United States
+KEX,Kirby Corporation,Industrials,Marine Shipping,XLI,Yahoo,7.7,68.0,United States
+ENVA,"Enova International, Inc.",Financial Services,Credit Services,XLF,Yahoo,4.4,67.0,United States
+NWG,NatWest Group plc,Financial Services,Banks - Regional,XLF,Yahoo,67.6,67.0,United Kingdom
+NVST,Envista Holdings Corporation,Healthcare,Medical Instruments & Supplies,XLV,Yahoo,4.0,67.0,United States
+MIR,"Mirion Technologies, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,4.6,67.0,United States
+PJT,PJT Partners Inc.,Financial Services,Capital Markets,XLF,Yahoo,6.2,67.0,United States
+SYM,Symbotic Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,22.6,67.0,United States
+ELVN,"Enliven Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.3,67.0,United States
+UGI,UGI Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,8.3,66.0,United States
+NKTR,Nektar Therapeutics,Healthcare,Biotechnology,XLV,Yahoo,1.3,66.0,United States
+AXS,AXIS Capital Holdings Limited,Financial Services,Insurance - Specialty,XLF,Yahoo,7.4,66.0,Bermuda
+AXGN,"Axogen, Inc.",Healthcare,Medical Devices,XLV,Yahoo,3.0,66.0,United States
+SGRY,"Surgery Partners, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,3.0,66.0,United States
+ESE,ESCO Technologies Inc.,Technology,Scientific & Technical Instruments,XLK,Yahoo,7.6,66.0,United States
+FAF,First American Financial Corporation,Financial Services,Insurance - Specialty,XLF,Yahoo,6.5,66.0,United States
+FIVN,"Five9, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.8,66.0,United States
+CPRI,Capri Holdings Limited,Consumer Cyclical,Luxury Goods,XLY,Yahoo,1.8,66.0,Hong Kong
+LAZ,"Lazard, Inc.",Financial Services,Capital Markets,XLF,Yahoo,3.9,66.0,Bermuda
+NESR,National Energy Services Reunited Corp.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,2.2,65.0,United States
+KNTK,Kinetik Holdings Inc.,Energy,Oil & Gas Midstream,XLE,Yahoo,9.4,65.0,United States
+COGT,"Cogent Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.5,65.0,United States
+ECO,Okeanis Eco Tankers Corp.,Industrials,Marine Shipping,XLI,Yahoo,4.0,65.0,
+THG,"The Hanover Insurance Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,8.2,65.0,United States
+FCN,"FTI Consulting, Inc.",Industrials,Consulting Services,XLI,Yahoo,5.0,65.0,United States
+TARS,"Tarsus Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.7,65.0,United States
+MTG,MGIC Investment Corporation,Financial Services,Insurance - Specialty,XLF,Yahoo,5.9,65.0,United States
+MRP,"Millrose Properties, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,4.3,65.0,United States
+MATX,"Matson, Inc.",Industrials,Marine Shipping,XLI,Yahoo,6.8,65.0,United States
+INGR,Ingredion Incorporated,Consumer Defensive,Packaged Foods,XLP,Yahoo,6.0,64.0,United States
+YETI,"YETI Holdings, Inc.",Consumer Cyclical,Leisure,XLY,Yahoo,3.2,64.0,United States
+ENSG,"The Ensign Group, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,10.9,64.0,United States
+MTRN,Materion Corporation,Basic Materials,Other Industrial Metals & Mining,XLB,Yahoo,5.0,64.0,United States
+BFAM,Bright Horizons Family Solutions Inc.,Consumer Cyclical,Personal Services,XLY,Yahoo,3.3,64.0,United States
+IDCC,"InterDigital, Inc.",Technology,Software - Application,XLK,Yahoo,8.6,64.0,United States
+AXTA,Axalta Coating Systems Ltd.,Basic Materials,Specialty Chemicals,XLB,Yahoo,7.2,64.0,United States
+SLM,SLM Corporation,Financial Services,Credit Services,XLF,Yahoo,3.3,64.0,United States
+ORI,Old Republic International Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,9.3,64.0,United States
+OLED,Universal Display Corporation,Technology,Electronic Components,XLK,Yahoo,3.8,64.0,United States
+TS,Tenaris S.A.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,32.5,64.0,Luxembourg
+PLXS,Plexus Corp.,Technology,Electronic Components,XLK,Yahoo,5.8,63.0,United States
+GPI,"Group 1 Automotive, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,3.1,63.0,United States
+TMDX,"TransMedics Group, Inc.",Healthcare,Medical Devices,XLV,Yahoo,2.3,63.0,United States
+ULS,UL Solutions Inc.,Industrials,Specialty Business Services,XLI,Yahoo,15.2,63.0,United States
+MIRM,"Mirum Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.6,63.0,United States
+ARR,"ARMOUR Residential REIT, Inc.",Real Estate,REIT - Mortgage,XLRE,Yahoo,1.9,63.0,United States
+POST,"Post Holdings, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,3.6,63.0,United States
+LSTR,"Landstar System, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,4.8,63.0,United States
+CXW,"CoreCivic, Inc.",Industrials,Security & Protection Services,XLI,Yahoo,3.1,63.0,United States
+MAIR,Madison Air Solutions Corporation,Industrials,Building Products & Equipment,XLI,Yahoo,12.3,62.0,United States
+COHU,"Cohu, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,2.5,62.0,United States
+ASAN,"Asana, Inc.",Technology,Software - Application,XLK,Yahoo,2.6,62.0,United States
+CAMT,Camtek Ltd.,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,5.9,62.0,Israel
+ASB,Associated Banc-Corp,Financial Services,Banks - Regional,XLF,Yahoo,5.7,62.0,United States
+ESLT,Elbit Systems Ltd.,Industrials,Aerospace & Defense,XLI,Yahoo,37.6,62.0,Israel
+FMX,"Fomento Económico Mexicano, S.A.B. de C.V.",Consumer Defensive,Beverages - Brewers,XLP,Yahoo,42.3,62.0,Mexico
+SON,Sonoco Products Company,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,4.9,62.0,United States
+LRN,"Stride, Inc.",Consumer Defensive,Education & Training Services,XLP,Yahoo,3.4,62.0,United States
+SAIC,Science Applications International Corporation,Technology,Information Technology Services,XLK,Yahoo,6.3,62.0,United States
+CACC,Credit Acceptance Corporation,Financial Services,Credit Services,XLF,Yahoo,6.0,62.0,United States
+LXP,LXP Industrial Trust,Real Estate,REIT - Industrial,XLRE,Yahoo,3.6,62.0,United States
+CNX,CNX Resources Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,5.4,62.0,United States
+CGON,"CG Oncology, Inc.",Healthcare,Biotechnology,XLV,Yahoo,5.6,62.0,United States
+MUFG,"Mitsubishi UFJ Financial Group, Inc.",Financial Services,Banks - Diversified,XLF,Yahoo,260.4,62.0,Japan
+OLN,Olin Corporation,Basic Materials,Chemicals,XLB,Yahoo,1.8,61.0,United States
+AMRX,"Amneal Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,7.4,61.0,United States
+JMKE,Jersey Mike's Subs Inc.,Consumer Cyclical,Restaurants,XLY,Yahoo,6.0,61.0,
+RYTM,"Rhythm Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,6.4,61.0,United States
+FLY,Firefly Aerospace Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,3.3,61.0,United States
+ATRC,"AtriCure, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,3.2,61.0,United States
+SNEX,StoneX Group Inc.,Financial Services,Capital Markets,XLF,Yahoo,6.6,60.0,United States
+WT,"WisdomTree, Inc.",Financial Services,Asset Management,XLF,Yahoo,3.3,60.0,United States
+PK,Park Hotels & Resorts Inc.,Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,3.4,60.0,United States
+MIAX,"Miami International Holdings, Inc.",Financial Services,Capital Markets,XLF,Yahoo,3.1,60.0,United States
+TM,Toyota Motor Corporation,Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,256.3,60.0,Japan
+HWC,Hancock Whitney Corporation,Financial Services,Banks - Regional,XLF,Yahoo,5.8,60.0,United States
+BLLN,"BillionToOne, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,5.4,60.0,United States
+YPF,YPF Sociedad Anónima,Energy,Oil & Gas Integrated,XLE,Yahoo,18.8,60.0,Argentina
+MUR,Murphy Oil Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,6.1,60.0,United States
+GNTX,Gentex Corporation,Consumer Cyclical,Auto Parts,XLY,Yahoo,4.3,59.0,United States
+TDS,"Telephone and Data Systems, Inc.",Communication Services,Telecom Services,XLC,Yahoo,3.9,59.0,United States
+WMG,Warner Music Group Corp.,Communication Services,Entertainment,XLC,Yahoo,15.9,59.0,United States
+SDGR,"Schrödinger, Inc.",Healthcare,Health Information Services,XLV,Yahoo,2.2,59.0,United States
+ABCL,AbCellera Biologics Inc.,Healthcare,Biotechnology,XLV,Yahoo,4.2,59.0,Canada
+DOX,Amdocs Limited,Technology,Software - Infrastructure,XLK,Yahoo,6.7,59.0,Guernsey
+BTU,Peabody Energy Corporation,Energy,Thermal Coal,XLE,Yahoo,2.7,59.0,United States
+ERIE,Erie Indemnity Company,Financial Services,Insurance Brokers,XLF,Yahoo,11.6,59.0,United States
+EWTX,"Edgewise Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,4.2,59.0,United States
+SWX,"Southwest Gas Holdings, Inc.",Utilities,Utilities - Regulated Gas,XLU,Yahoo,6.7,59.0,United States
+VCYT,"Veracyte, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,4.2,59.0,United States
+STAG,"STAG Industrial, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,7.2,58.0,United States
+BFH,"Bread Financial Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,4.0,58.0,United States
+MMSI,"Merit Medical Systems, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,5.6,58.0,United States
+MIDD,The Middleby Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,5.3,58.0,United States
+THO,"THOR Industries, Inc.",Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,3.8,58.0,United States
+VOYG,"Voyager Technologies, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,1.7,58.0,United States
+VSNT,"Versant Media Group, Inc.",Communication Services,Entertainment,XLC,Yahoo,4.3,58.0,United States
+AI,"C3.ai, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.0,58.0,United States
+AIR,AAR Corp.,Industrials,Aerospace & Defense,XLI,Yahoo,4.2,57.0,United States
+CVCO,"Cavco Industries, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,4.2,57.0,United States
+AMR,"Alpha Metallurgical Resources, Inc.",Basic Materials,Coking Coal,XLB,Yahoo,2.1,57.0,United States
+ADPT,Adaptive Biotechnologies Corporation,Healthcare,Diagnostics & Research,XLV,Yahoo,4.5,57.0,United States
+WGS,GeneDx Holdings Corp.,Healthcare,Diagnostics & Research,XLV,Yahoo,2.1,57.0,United States
+BEPC,Brookfield Renewable Corporation,Utilities,Utilities - Renewable,XLU,Yahoo,10.2,57.0,United States
+BMI,"Badger Meter, Inc.",Technology,Scientific & Technical Instruments,XLK,Yahoo,4.3,57.0,United States
+CHH,"Choice Hotels International, Inc.",Consumer Cyclical,Lodging,XLY,Yahoo,5.1,57.0,United States
+ATR,"AptarGroup, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,8.3,57.0,United States
+MORN,"Morningstar, Inc.",Financial Services,Financial Data & Stock Exchanges,XLF,Yahoo,8.3,57.0,United States
+NXST,"Nexstar Media Group, Inc.",Communication Services,Broadcasting,XLC,Yahoo,5.2,57.0,United States
+ST,Sensata Technologies Holding plc,Technology,Scientific & Technical Instruments,XLK,Yahoo,6.0,57.0,Netherlands
+HCC,"Warrior Met Coal, Inc.",Basic Materials,Coking Coal,XLB,Yahoo,4.5,57.0,United States
+HHH,Howard Hughes Holdings Inc.,Real Estate,Real Estate - Development,XLRE,Yahoo,4.5,57.0,United States
+IRTC,"iRhythm Holdings, Inc.",Healthcare,Medical Devices,XLV,Yahoo,4.2,57.0,United States
+MTH,Meritage Homes Corporation,Consumer Cyclical,Residential Construction,XLY,Yahoo,4.2,57.0,United States
+FHB,"First Hawaiian, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.1,57.0,United States
+KBR,"KBR, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,4.8,56.0,United States
+WAY,Waystar Holding Corp.,Healthcare,Health Information Services,XLV,Yahoo,5.4,56.0,United States
+GSAT,"Globalstar, Inc.",Communication Services,Telecom Services,XLC,Yahoo,10.8,56.0,United States
+TAL,TAL Education Group,Consumer Defensive,Education & Training Services,XLP,Yahoo,5.6,56.0,China
+EQPT,EquipmentShare.com Inc.,Industrials,Rental & Leasing Services,XLI,Yahoo,4.6,56.0,United States
+PDI,PIMCO Dynamic Income Fund,Financial Services,Asset Management,XLF,Yahoo,3.5,56.0,United States
+SRPT,"Sarepta Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.0,56.0,United States
+CNO,"CNO Financial Group, Inc.",Financial Services,Insurance - Life,XLF,Yahoo,5.1,56.0,United States
+NTLA,"Intellia Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.9,56.0,United States
+NICE,NICE Ltd.,Technology,Software - Application,XLK,Yahoo,6.8,56.0,Israel
+VOD,Vodafone Group Public Limited Company,Communication Services,Telecom Services,XLC,Yahoo,36.0,56.0,United Kingdom
+ITRI,"Itron, Inc.",Technology,Scientific & Technical Instruments,XLK,Yahoo,4.2,56.0,United States
+LIFE,Ethos Technologies Inc.,Financial Services,Insurance Brokers,XLF,Yahoo,2.8,56.0,United States
+BETA,"BETA Technologies, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,4.8,56.0,United States
+JBTM,JBT Marel Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,5.7,56.0,United States
+DCI,"Donaldson Company, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,9.9,56.0,United States
+WLK,Westlake Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,8.4,56.0,United States
+KLIC,"Kulicke and Soffa Industries, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,4.2,56.0,Singapore
+ECG,"Everus Construction Group, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,5.5,56.0,United States
+ROAD,"Construction Partners, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,5.3,55.0,United States
+SMG,The Scotts Miracle-Gro Company,Basic Materials,Agricultural Inputs,XLB,Yahoo,3.6,55.0,United States
+HLNE,Hamilton Lane Incorporated,Financial Services,Asset Management,XLF,Yahoo,4.7,55.0,United States
+LGN,Legence Corp.,Industrials,Engineering & Construction,XLI,Yahoo,4.5,55.0,United States
+BKD,Brookdale Senior Living Inc.,Healthcare,Medical Care Facilities,XLV,Yahoo,2.5,55.0,United States
+PIPR,Piper Sandler Companies,Financial Services,Capital Markets,XLF,Yahoo,4.9,55.0,United States
+WSC,WillScot Holdings Corporation,Industrials,Rental & Leasing Services,XLI,Yahoo,3.4,55.0,United States
+CBRL,"Cracker Barrel Old Country Store, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,1.6,55.0,United States
+SEZL,Sezzle Inc.,Financial Services,Credit Services,XLF,Yahoo,4.5,55.0,United States
+NE,Noble Corporation plc,Energy,Oil & Gas Drilling,XLE,Yahoo,7.6,55.0,United States
+NOVT,Novanta Inc.,Technology,Scientific & Technical Instruments,XLK,Yahoo,5.7,55.0,United States
+RLAY,"Relay Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,4.3,55.0,United States
+AROC,"Archrock, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,5.6,55.0,United States
+CBSH,"Commerce Bancshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,8.0,55.0,United States
+SSD,"Simpson Manufacturing Co., Inc.",Basic Materials,Lumber & Wood Production,XLB,Yahoo,8.0,55.0,United States
+MC,Moelis & Company,Financial Services,Capital Markets,XLF,Yahoo,4.7,54.0,United States
+AM,Antero Midstream Corporation,Energy,Oil & Gas Midstream,XLE,Yahoo,10.2,54.0,United States
+GXO,"GXO Logistics, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,5.7,54.0,United States
+OMF,"OneMain Holdings, Inc.",Financial Services,Credit Services,XLF,Yahoo,6.8,54.0,United States
+KSPI,Joint Stock Company Kaspi.kz,Technology,Software - Infrastructure,XLK,Yahoo,17.9,54.0,Kazakhstan
+AFG,"American Financial Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,12.7,54.0,United States
+NSIT,"Insight Enterprises, Inc.",Technology,Electronics & Computer Distribution,XLK,Yahoo,5.2,54.0,United States
+GLBE,Global-E Online Ltd.,Consumer Cyclical,Internet Retail,XLY,Yahoo,7.2,54.0,Israel
+RDN,Radian Group Inc.,Financial Services,Insurance - Specialty,XLF,Yahoo,4.7,54.0,United States
+MRCY,"Mercury Systems, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,5.0,54.0,United States
+BC,Brunswick Corporation,Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,4.8,54.0,United States
+DYN,"Dyne Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.2,54.0,United States
+RAMP,"LiveRamp Holdings, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.3,54.0,United States
+FIGS,"FIGS, Inc.",Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,3.6,54.0,United States
+PSN,Parsons Corporation,Technology,Information Technology Services,XLK,Yahoo,5.2,54.0,United States
+PRI,"Primerica, Inc.",Financial Services,Insurance - Life,XLF,Yahoo,8.7,54.0,United States
+HOG,"Harley-Davidson, Inc.",Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,3.2,54.0,United States
+INSP,"Inspire Medical Systems, Inc.",Healthcare,Medical Devices,XLV,Yahoo,2.1,54.0,United States
+KNSA,"Kiniksa Pharmaceuticals International, plc",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,7.7,54.0,United States
+IRT,"Independence Realty Trust, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,3.5,53.0,United States
+LFST,"LifeStance Health Group, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,5.2,53.0,United States
+ABG,"Asbury Automotive Group, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,3.6,52.0,United States
+DSGX,The Descartes Systems Group Inc.,Technology,Software - Application,XLK,Yahoo,7.9,52.0,Canada
+CWST,"Casella Waste Systems, Inc.",Industrials,Waste Management,XLI,Yahoo,5.7,52.0,United States
+SEB,Seaboard Corporation,Industrials,Conglomerates,XLI,Yahoo,3.7,52.0,United States
+ESNT,Essent Group Ltd.,Financial Services,Insurance - Specialty,XLF,Yahoo,6.1,52.0,Bermuda
+OSIS,"OSI Systems, Inc.",Technology,Electronic Components,XLK,Yahoo,3.3,52.0,United States
+MRX,Marex Group Limited,Financial Services,Capital Markets,XLF,Yahoo,4.8,52.0,United Kingdom
+KRG,Kite Realty Group Trust,Real Estate,REIT - Retail,XLRE,Yahoo,5.0,52.0,United States
+FSS,Federal Signal Corporation,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,7.0,52.0,United States
+NPO,Enpro Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,6.0,52.0,United States
+DLB,"Dolby Laboratories, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,5.9,52.0,United States
+GDS,GDS Holdings Limited,Technology,Information Technology Services,XLK,Yahoo,4.6,52.0,China
+NOG,"Northern Oil and Gas, Inc.",Energy,Oil & Gas E&P,XLE,Yahoo,3.0,51.0,United States
+GBCI,"Glacier Bancorp, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,6.4,51.0,United States
+KNF,Knife River Corporation,Basic Materials,Building Materials,XLB,Yahoo,3.3,51.0,United States
+KRC,Kilroy Realty Corporation,Real Estate,REIT - Office,XLRE,Yahoo,4.2,51.0,United States
+TDC,Teradata Corporation,Technology,Software - Infrastructure,XLK,Yahoo,3.2,51.0,United States
+CVI,"CVR Energy, Inc.",Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,5.7,51.0,United States
+INGM,Ingram Micro Holding Corporation,Technology,Information Technology Services,XLK,Yahoo,6.6,51.0,United States
+ERO,Ero Copper Corp.,Basic Materials,Copper,XLB,Yahoo,3.2,51.0,Canada
+AMLX,"Amylyx Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,3.6,51.0,United States
+SLF,Sun Life Financial Inc.,Financial Services,Insurance - Diversified,XLF,Yahoo,45.6,51.0,Canada
+DPC,DPC Holdings PLC,Industrials,Aerospace & Defense,XLI,Yahoo,4.4,51.0,United Kingdom
+SLN,Silence Therapeutics plc,Healthcare,Biotechnology,XLV,Yahoo,1.2,50.0,United Kingdom
+KTB,"Kontoor Brands, Inc.",Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,4.1,50.0,United States
+BHVN,Biohaven Ltd.,Healthcare,Biotechnology,XLV,Yahoo,2.5,50.0,United States
+SBLK,Star Bulk Carriers Corp.,Industrials,Marine Shipping,XLI,Yahoo,3.2,50.0,Greece
+LMND,"Lemonade, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,3.6,50.0,United States
+TDW,Tidewater Inc.,Energy,Oil & Gas Equipment & Services,XLE,Yahoo,4.2,50.0,United States
+GTES,Gates Industrial Corporation Ltd.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,6.6,50.0,United Kingdom
+AUB,Atlantic Union Bankshares Corporation,Financial Services,Banks - Regional,XLF,Yahoo,5.6,50.0,United States
+RRR,"Red Rock Resorts, Inc.",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,5.2,50.0,United States
+KD,"Kyndryl Holdings, Inc.",Technology,Information Technology Services,XLK,Yahoo,3.0,50.0,United States
+IMAX,IMAX Corporation,Communication Services,Entertainment,XLC,Yahoo,2.8,50.0,Canada
+EEFT,"Euronet Worldwide, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.3,50.0,United States
+MAN,ManpowerGroup Inc.,Industrials,Staffing & Employment Services,XLI,Yahoo,2.1,49.0,United States
+NCNO,"nCino, Inc.",Technology,Software - Application,XLK,Yahoo,2.4,49.0,United States
+MGNI,"Magnite, Inc.",Communication Services,Advertising Agencies,XLC,Yahoo,3.2,49.0,United States
+EBC,"Eastern Bankshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,5.2,49.0,United States
+JAN,"Janus Living, Inc.",Real Estate,REIT - Residential,XLRE,Yahoo,8.8,49.0,United States
+SKM,"SK Telecom Co., Ltd.",Communication Services,Telecom Services,XLC,Yahoo,11.9,49.0,South Korea
+ARXS,"Arxis, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,23.7,49.0,United States
+ZTO,ZTO Express (Cayman) Inc.,Industrials,Integrated Freight & Logistics,XLI,Yahoo,15.3,49.0,China
+HP,"Helmerich & Payne, Inc.",Energy,Oil & Gas Drilling,XLE,Yahoo,4.2,49.0,United States
+BEAM,Beam Therapeutics Inc.,Healthcare,Biotechnology,XLV,Yahoo,3.0,49.0,United States
+PBA,Pembina Pipeline Corporation,Energy,Oil & Gas Midstream,XLE,Yahoo,29.6,49.0,Canada
+DXC,DXC Technology Company,Technology,Information Technology Services,XLK,Yahoo,2.4,48.0,United States
+IMVT,"Immunovant, Inc.",Healthcare,Biotechnology,XLV,Yahoo,6.1,48.0,United States
+GPOR,Gulfport Energy Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,2.9,48.0,United States
+LIVN,LivaNova PLC,Healthcare,Medical Devices,XLV,Yahoo,4.5,48.0,United Kingdom
+TALO,Talos Energy Inc.,Energy,Oil & Gas E&P,XLE,Yahoo,3.0,48.0,United States
+EPR,EPR Properties,Real Estate,REIT - Specialty,XLRE,Yahoo,4.5,48.0,United States
+TAK,Takeda Pharmaceutical Company Limited,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,63.2,48.0,Japan
+DIOD,Diodes Incorporated,Technology,Semiconductors,XLK,Yahoo,4.0,48.0,United States
+PII,Polaris Inc.,Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,3.4,48.0,United States
+VC,Visteon Corporation,Consumer Cyclical,Auto Parts,XLY,Yahoo,1.8,48.0,United States
+TNL,Travel + Leisure Co.,Consumer Cyclical,Travel Services,XLY,Yahoo,4.3,48.0,United States
+SXT,Sensient Technologies Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,5.6,48.0,United States
+BCO,The Brink's Company,Industrials,Security & Protection Services,XLI,Yahoo,4.2,48.0,United States
+COLD,"Americold Realty Trust, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,4.2,48.0,United States
+BKV,BKV Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,2.3,48.0,United States
+BILI,Bilibili Inc.,Communication Services,Internet Content & Information,XLC,Yahoo,5.4,48.0,China
+CLDX,"Celldex Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.3,48.0,United States
+PENN,"PENN Entertainment, Inc.",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,2.1,47.0,United States
+LOAR,Loar Holdings Inc.,Industrials,Aerospace & Defense,XLI,Yahoo,6.1,47.0,United States
+PATK,"Patrick Industries, Inc.",Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,2.4,47.0,United States
+NRIX,"Nurix Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.0,47.0,United States
+FTS,Fortis Inc.,Utilities,Utilities - Regulated Electric,XLU,Yahoo,29.7,47.0,United States
+FTDR,"Frontdoor, Inc.",Consumer Cyclical,Personal Services,XLY,Yahoo,6.0,47.0,United States
+THRM,Gentherm Incorporated,Consumer Cyclical,Auto Parts,XLY,Yahoo,1.7,47.0,United States
+TRNO,Terreno Realty Corporation,Real Estate,REIT - Industrial,XLRE,Yahoo,7.2,47.0,United States
+PCRX,"Pacira BioSciences, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,1.5,47.0,United States
+BAND,Bandwidth Inc.,Technology,Software - Infrastructure,XLK,Yahoo,1.7,47.0,United States
+CAR,"Avis Budget Group, Inc.",Industrials,Rental & Leasing Services,XLI,Yahoo,3.8,47.0,United States
+VNO,Vornado Realty Trust,Real Estate,REIT - Office,XLRE,Yahoo,6.6,47.0,United States
+SKY,"Champion Homes, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,4.4,47.0,United States
+RLI,RLI Corp.,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,5.9,47.0,United States
+HOMB,"Home BancShares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,6.0,47.0,United States
+BHF,"Brighthouse Financial, Inc.",Financial Services,Insurance - Life,XLF,Yahoo,2.5,46.0,United States
+RCI,Rogers Communications Inc.,Communication Services,Telecom Services,XLC,Yahoo,17.0,46.0,Canada
+HURN,Huron Consulting Group Inc.,Industrials,Consulting Services,XLI,Yahoo,3.1,46.0,United States
+RCUS,"Arcus Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.4,46.0,United States
+STEP,StepStone Group Inc.,Financial Services,Asset Management,XLF,Yahoo,5.4,46.0,United States
+CRC,California Resources Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,4.9,46.0,United States
+SLG,SL Green Realty Corp.,Real Estate,REIT - Office,XLRE,Yahoo,3.6,46.0,United States
+CRI,"Carter's, Inc.",Consumer Cyclical,Apparel Retail,XLY,Yahoo,1.2,46.0,United States
+RDNT,"RadNet, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,5.8,46.0,United States
+TNK,Teekay Tankers Ltd.,Energy,Oil & Gas Midstream,XLE,Yahoo,3.5,46.0,Bermuda
+LOPE,"Grand Canyon Education, Inc.",Consumer Defensive,Education & Training Services,XLP,Yahoo,4.0,46.0,United States
+SHOO,"Steven Madden, Ltd.",Consumer Cyclical,Footwear & Accessories,XLY,Yahoo,3.3,46.0,United States
+SLGN,Silgan Holdings Inc.,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,4.2,46.0,United States
+UBSI,"United Bankshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,6.6,46.0,United States
+CNXC,Concentrix Corporation,Technology,Information Technology Services,XLK,Yahoo,1.9,45.0,United States
+WHD,"Cactus, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,5.3,45.0,United States
+HAYW,"Hayward Holdings, Inc.",Industrials,Electrical Equipment & Parts,XLI,Yahoo,3.2,45.0,United States
+BLSH,Bullish,Technology,Software - Infrastructure,XLK,Yahoo,4.5,45.0,Cayman Islands
+NEOG,Neogen Corporation,Healthcare,Medical Devices,XLV,Yahoo,2.7,45.0,United States
+IRDM,Iridium Communications Inc.,Communication Services,Telecom Services,XLC,Yahoo,4.9,45.0,United States
+MEOH,Methanex Corporation,Basic Materials,Chemicals,XLB,Yahoo,4.9,45.0,Canada
+PEB,Pebblebrook Hotel Trust,Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,2.5,45.0,United States
+ZWS,Zurn Elkay Water Solutions Corporation,Industrials,Pollution & Treatment Controls,XLI,Yahoo,7.4,45.0,United States
+MZTI,The Marzetti Company,Consumer Defensive,Packaged Foods,XLP,Yahoo,3.0,45.0,United States
+SBRA,"Sabra Health Care REIT, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,5.0,45.0,United States
+ACHC,"Acadia Healthcare Company, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,2.7,45.0,United States
+PECO,"Phillips Edison & Company, Inc.",Real Estate,REIT - Retail,XLRE,Yahoo,5.0,44.0,United States
+SIGI,"Selective Insurance Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,5.9,44.0,United States
+BDC,Belden Inc.,Technology,Communication Equipment,XLK,Yahoo,4.2,44.0,United States
+PPLI,People Incorporated,Communication Services,Internet Content & Information,XLC,Yahoo,2.7,44.0,United States
+CNR,"Core Natural Resources, Inc.",Energy,Thermal Coal,XLE,Yahoo,4.3,44.0,United States
+VAC,Marriott Vacations Worldwide Corporation,Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,4.0,44.0,United States
+PGY,Pagaya Technologies Ltd.,Technology,Software - Infrastructure,XLK,Yahoo,1.7,44.0,United States
+CVSA,Covista Inc.,Consumer Defensive,Education & Training Services,XLP,Yahoo,4.4,44.0,United States
+IOND,Ionic Digital Inc.,Financial Services,Capital Markets,XLF,Yahoo,3.1,44.0,United States
+EDU,New Oriental Education & Technology Group Inc.,Consumer Defensive,Education & Training Services,XLP,Yahoo,7.6,44.0,China
+OGS,"ONE Gas, Inc.",Utilities,Utilities - Regulated Gas,XLU,Yahoo,4.9,44.0,United States
+WTM,"White Mountains Insurance Group, Ltd.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,5.4,44.0,United States
+OCTV,Octave Intelligence plc,Technology,Software - Application,XLK,Yahoo,5.8,44.0,United States
+OUT,OUTFRONT Media Inc.,Real Estate,REIT - Specialty,XLRE,Yahoo,5.7,44.0,United States
+OII,"Oceaneering International, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,4.1,43.0,United States
+DAN,Dana Incorporated,Consumer Cyclical,Auto Parts,XLY,Yahoo,2.7,43.0,United States
+MSA,MSA Safety Incorporated,Industrials,Security & Protection Services,XLI,Yahoo,6.9,43.0,United States
+MMYT,MakeMyTrip Limited,Consumer Cyclical,Travel Services,XLY,Yahoo,4.0,43.0,India
+BANC,"Banc of California, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,2.9,43.0,United States
+MDA,MDA Space Ltd.,Industrials,Aerospace & Defense,XLI,Yahoo,4.7,43.0,
+ACAD,Acadia Pharmaceuticals Inc.,Healthcare,Biotechnology,XLV,Yahoo,3.6,43.0,United States
+LAUR,"Laureate Education, Inc.",Consumer Defensive,Education & Training Services,XLP,Yahoo,5.0,42.0,United States
+BIPC,Brookfield Infrastructure Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,4.6,42.0,Canada
+TBBB,BBB Foods Inc.,Consumer Defensive,Discount Stores,XLP,Yahoo,6.7,42.0,Mexico
+SPSC,"SPS Commerce, Inc.",Technology,Software - Application,XLK,Yahoo,3.1,42.0,United States
+FHI,"Federated Hermes, Inc.",Financial Services,Asset Management,XLF,Yahoo,4.3,42.0,United States
+FIBK,"First Interstate BancSystem, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.6,42.0,United States
+LASR,"nLIGHT, Inc.",Technology,Semiconductors,XLK,Yahoo,2.3,42.0,United States
+BNL,"Broadstone Net Lease, Inc.",Real Estate,REIT - Diversified,XLRE,Yahoo,3.3,42.0,United States
+LTM,LATAM Airlines Group S.A.,Industrials,Airlines,XLI,Yahoo,12.6,42.0,Chile
+SNN,Smith & Nephew plc,Healthcare,Medical Devices,XLV,Yahoo,12.7,42.0,United Kingdom
+BCPC,Balchem Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,5.4,42.0,United States
+KFY,Korn Ferry,Industrials,Staffing & Employment Services,XLI,Yahoo,4.1,42.0,United States
+SR,Spire Inc.,Utilities,Utilities - Regulated Gas,XLU,Yahoo,5.1,42.0,United States
+CLBK,"Columbia Financial, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,2.9,42.0,United States
+ASH,Ashland Inc.,Basic Materials,Specialty Chemicals,XLB,Yahoo,3.4,41.0,United States
+TH,Target Hospitality Corp.,Industrials,Specialty Business Services,XLI,Yahoo,1.4,41.0,United States
+BXDC,Blackstone Digital Infrastructure Trust Inc.,Real Estate,REIT - Specialty,XLRE,Yahoo,1.6,41.0,
+APLE,"Apple Hospitality REIT, Inc.",Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,4.4,41.0,United States
+COLM,Columbia Sportswear Company,Consumer Cyclical,Apparel Manufacturing,XLY,Yahoo,3.3,41.0,United States
+VNT,Vontier Corporation,Technology,Scientific & Technical Instruments,XLK,Yahoo,4.9,41.0,United States
+KAI,Kadant Inc.,Industrials,Specialty Industrial Machinery,XLI,Yahoo,3.2,41.0,United States
+XNCR,"Xencor, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,41.0,United States
+CURB,Curbline Properties Corp.,Real Estate,REIT - Retail,XLRE,Yahoo,3.5,41.0,United States
+SG,"Sweetgreen, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,1.4,41.0,United States
+HYMC,Hycroft Mining Holding Corporation,Basic Materials,Gold,XLB,Yahoo,1.6,41.0,United States
+KMT,Kennametal Inc.,Industrials,Tools & Accessories,XLI,Yahoo,2.3,41.0,United States
+BKU,"BankUnited, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.1,41.0,United States
+PSMT,"PriceSmart, Inc.",Consumer Defensive,Discount Stores,XLP,Yahoo,5.1,41.0,United States
+QTWO,"Q2 Holdings, Inc.",Technology,Software - Application,XLK,Yahoo,4.0,41.0,United States
+PSNL,"Personalis, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,1.7,41.0,United States
+PFSI,"PennyMac Financial Services, Inc.",Financial Services,Mortgage Finance,XLF,Yahoo,3.3,40.0,United States
+RTO,Rentokil Initial plc,Industrials,Specialty Business Services,XLI,Yahoo,11.7,40.0,United States
+SAM,"The Boston Beer Company, Inc.",Consumer Defensive,Beverages - Brewers,XLP,Yahoo,2.0,40.0,United States
+BBVA,"Banco Bilbao Vizcaya Argentaria, S.A.",Financial Services,Banks - Diversified,XLF,Yahoo,138.6,40.0,Spain
+CPA,"Copa Holdings, S.A.",Industrials,Airlines,XLI,Yahoo,5.4,40.0,Panama
+KALU,Kaiser Aluminum Corporation,Basic Materials,Aluminum,XLB,Yahoo,2.0,40.0,United States
+ICHR,"Ichor Holdings, Ltd.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,1.6,40.0,United States
+AVPT,"AvePoint, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,3.7,40.0,United States
+CARG,"CarGurus, Inc.",Communication Services,Internet Content & Information,XLC,Yahoo,2.9,40.0,United States
+ZIM,ZIM Integrated Shipping Services Ltd.,Industrials,Marine Shipping,XLI,Yahoo,3.5,40.0,
+ACLS,"Axcelis Technologies, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,3.5,40.0,United States
+AAMI,Acadian Asset Management Inc.,Financial Services,Asset Management,XLF,Yahoo,3.2,40.0,United Kingdom
+GPCR,Structure Therapeutics Inc.,Healthcare,Biotechnology,XLV,Yahoo,1.6,40.0,United States
+FUL,H.B. Fuller Company,Basic Materials,Specialty Chemicals,XLB,Yahoo,2.7,40.0,United States
+HRMY,"Harmony Biosciences Holdings, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,40.0,United States
+HGV,Hilton Grand Vacations Inc.,Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,2.8,40.0,United States
+CSTM,Constellium SE,Basic Materials,Aluminum,XLB,Yahoo,3.2,40.0,Netherlands
+DRH,DiamondRock Hospitality Company,Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,3.0,40.0,United States
+FBP,First BanCorp.,Financial Services,Banks - Regional,XLF,Yahoo,4.1,40.0,Puerto Rico
+DRS,"Leonardo DRS, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,10.6,40.0,Israel
+CUZ,Cousins Properties Incorporated,Real Estate,REIT - Office,XLRE,Yahoo,4.8,40.0,United States
+SXI,Standex International Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,3.0,39.0,United States
+BGC,"BGC Group, Inc.",Financial Services,Capital Markets,XLF,Yahoo,5.3,39.0,United States
+VVX,"V2X, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,2.5,39.0,United States
+GATX,GATX Corporation,Industrials,Rental & Leasing Services,XLI,Yahoo,6.4,39.0,United States
+HASI,"HA Sustainable Infrastructure Capital, Inc.",Financial Services,Asset Management,XLF,Yahoo,4.8,39.0,United States
+HUBG,"Hub Group, Inc.",Industrials,Integrated Freight & Logistics,XLI,Yahoo,1.6,39.0,United States
+ACIW,"ACI Worldwide, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,5.6,39.0,United States
+PRGO,Perrigo Company plc,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,2.2,39.0,United States
+POWI,"Power Integrations, Inc.",Technology,Semiconductors,XLK,Yahoo,2.7,39.0,United States
+LEGN,Legend Biotech Corporation,Healthcare,Biotechnology,XLV,Yahoo,4.3,39.0,United States
+OPLN,"OPENLANE, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,4.7,39.0,United States
+APPN,Appian Corporation,Technology,Software - Infrastructure,XLK,Yahoo,3.6,39.0,United States
+OBDC,Blue Owl Capital Corporation,Financial Services,Asset Management,XLF,Yahoo,5.2,39.0,United States
+SFD,"Smithfield Foods, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,7.3,39.0,United States
+LCII,LCI Industries,Consumer Cyclical,Recreational Vehicles,XLY,Yahoo,2.4,39.0,United States
+NN,NextNav Inc.,Technology,Software - Infrastructure,XLK,Yahoo,2.0,39.0,United States
+CTRI,"Centuri Holdings, Inc.",Utilities,Utilities - Regulated Gas,XLU,Yahoo,2.2,39.0,United States
+ATRO,Astronics Corporation,Industrials,Aerospace & Defense,XLI,Yahoo,2.7,39.0,United States
+AVAH,Aveanna Healthcare Holdings Inc.,Healthcare,Medical Care Facilities,XLV,Yahoo,2.9,39.0,United States
+HZO,"MarineMax, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,1.2,39.0,United States
+RDY,Dr. Reddy's Laboratories Limited,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,11.8,38.0,India
+BELFB,Bel Fuse Inc.,Technology,Electronic Components,XLK,Yahoo,3.4,38.0,United States
+PPC,Pilgrim's Pride Corporation,Consumer Defensive,Packaged Foods,XLP,Yahoo,6.6,38.0,United States
+FULT,Fulton Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,4.5,38.0,United States
+EXPO,"Exponent, Inc.",Industrials,Engineering & Construction,XLI,Yahoo,3.7,38.0,United States
+EMA,Emera Incorporated,Utilities,Utilities - Regulated Electric,XLU,Yahoo,15.2,38.0,Canada
+CBC,"Central Bancompany, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,8.6,38.0,United States
+CRK,"Comstock Resources, Inc.",Energy,Oil & Gas E&P,XLE,Yahoo,4.3,38.0,United States
+APAM,Artisan Partners Asset Management Inc.,Financial Services,Asset Management,XLF,Yahoo,3.0,38.0,United States
+GHC,Graham Holdings Company,Industrials,Conglomerates,XLI,Yahoo,4.9,38.0,United States
+ICUI,"ICU Medical, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,4.2,38.0,United States
+CSW,"CSW Industrials, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,4.7,38.0,United States
+CON,"Concentra Group Holdings Parent, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,5.3,38.0,United States
+VIPS,Vipshop Holdings Limited,Consumer Cyclical,Internet Retail,XLY,Yahoo,6.1,38.0,China
+SHC,Sotera Health Company,Healthcare,Diagnostics & Research,XLV,Yahoo,5.3,37.0,United States
+GGAL,Grupo Financiero Galicia S.A.,Financial Services,Banks - Regional,XLF,Yahoo,5.4,37.0,Argentina
+HTO,H2O America,Utilities,Utilities - Regulated Water,XLU,Yahoo,2.8,37.0,United States
+GLOB,Globant S.A.,Technology,Information Technology Services,XLK,Yahoo,1.9,37.0,United States
+NEO,"NeoGenomics, Inc.",Healthcare,Diagnostics & Research,XLV,Yahoo,2.3,37.0,United States
+AMTM,"Amentum Holdings, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,5.4,37.0,United States
+AZTA,"Azenta, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,1.8,37.0,United States
+NWE,"NorthWestern Energy Group, Inc.",Utilities,Utilities - Regulated Electric,XLU,Yahoo,4.9,37.0,United States
+MMS,"Maximus, Inc.",Industrials,Specialty Business Services,XLI,Yahoo,3.3,37.0,United States
+UFPI,"UFP Industries, Inc.",Basic Materials,Lumber & Wood Production,XLB,Yahoo,4.5,37.0,United States
+ABCB,Ameris Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,5.6,37.0,United States
+ABSI,Absci Corporation,Healthcare,Biotechnology,XLV,Yahoo,2.1,37.0,United States
+TFII,TFI International Inc.,Industrials,Trucking,XLI,Yahoo,9.2,37.0,Canada
+VRDN,"Viridian Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.8,37.0,United States
+BVN,Compañía de Minas Buenaventura S.A.A.,Basic Materials,Other Precious Metals & Mining,XLB,Yahoo,7.0,36.0,Peru
+WKC,World Kinect Corporation,Energy,Oil & Gas Refining & Marketing,XLE,Yahoo,1.9,36.0,United States
+SFNC,Simmons First National Corporation,Financial Services,Banks - Regional,XLF,Yahoo,3.4,36.0,United States
+CALX,"Calix, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.4,36.0,United States
+REZI,"Resideo Technologies, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,2.9,36.0,United States
+ALGT,Allegiant Travel Company,Industrials,Airlines,XLI,Yahoo,2.0,36.0,United States
+CWEN,"Clearway Energy, Inc.",Utilities,Utilities - Renewable,XLU,Yahoo,5.4,36.0,United States
+NATL,NCR Atleos Corporation,Technology,Software - Application,XLK,Yahoo,3.4,36.0,United States
+TNDM,"Tandem Diabetes Care, Inc.",Healthcare,Medical Devices,XLV,Yahoo,1.4,36.0,United States
+DNOW,DNOW Inc.,Industrials,Industrial Distribution,XLI,Yahoo,3.0,36.0,United States
+AGIO,"Agios Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,36.0,United States
+TPC,Tutor Perini Corporation,Industrials,Engineering & Construction,XLI,Yahoo,4.3,35.0,United States
+BXMT,"Blackstone Mortgage Trust, Inc.",Real Estate,REIT - Mortgage,XLRE,Yahoo,1.8,35.0,United States
+NAMS,NewAmsterdam Pharma Company N.V.,Healthcare,Biotechnology,XLV,Yahoo,2.5,35.0,Netherlands
+SMFG,"Sumitomo Mitsui Financial Group, Inc.",Financial Services,Banks - Diversified,XLF,Yahoo,157.4,35.0,Japan
+HIW,"Highwoods Properties, Inc.",Real Estate,REIT - Office,XLRE,Yahoo,3.4,35.0,United States
+URGN,UroGen Pharma Ltd.,Healthcare,Biotechnology,XLV,Yahoo,1.6,35.0,Israel
+OGN,Organon & Co.,Healthcare,Drug Manufacturers - General,XLV,Yahoo,3.6,35.0,United States
+SNDX,"Syndax Pharmaceuticals, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.3,35.0,United States
+NJR,New Jersey Resources Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,5.4,35.0,United States
+MWH,"SOLV Energy, Inc.",Utilities,Utilities - Renewable,XLU,Yahoo,4.9,35.0,United States
+MSGE,Madison Square Garden Entertainment Corp.,Communication Services,Entertainment,XLC,Yahoo,3.8,35.0,United States
+DV,"DoubleVerify Holdings, Inc.",Communication Services,Advertising Agencies,XLC,Yahoo,2.1,35.0,United States
+SUPN,"Supernus Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,2.4,35.0,United States
+LINE,"Lineage, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,8.2,35.0,United States
+LION,Lionsgate Studios Corp Common Shares,Communication Services,Entertainment,XLC,TradingView,3.8,35.0,Canada
+FTRE,Fortrea Holdings Inc.,Healthcare,Biotechnology,XLV,Yahoo,2.2,35.0,United States
+MLYS,"Mineralys Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.9,35.0,United States
+EYE,"National Vision Holdings, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,1.3,35.0,United States
+MHO,"M/I Homes, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,3.2,35.0,United States
+UTI,"Universal Technical Institute, Inc.",Consumer Defensive,Education & Training Services,XLP,Yahoo,1.3,35.0,United States
+GCT,GigaCloud Technology Inc.,Technology,Software - Infrastructure,XLK,Yahoo,2.2,34.0,United States
+DCO,Ducommun Incorporated,Industrials,Aerospace & Defense,XLI,Yahoo,2.5,34.0,United States
+BOKF,BOK Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,8.0,34.0,United States
+PACS,"PACS Group, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,7.9,34.0,United States
+PAY,"Paymentus Holdings, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,4.1,34.0,United States
+PBLS,"Parabilis Medicines, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.5,34.0,United States
+LI,Li Auto Inc.,Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,10.9,34.0,China
+SLDE,"Slide Insurance Holdings, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,3.2,34.0,United States
+CMPS,COMPASS Pathways plc,Healthcare,Medical Care Facilities,XLV,Yahoo,1.7,34.0,United Kingdom
+TRAX,"First Tracks Biotherapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.9,34.0,United States
+PRM,"Perimeter Solutions, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,4.7,34.0,Luxembourg
+WSBC,"WesBanco, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.7,34.0,United States
+IPGP,IPG Photonics Corporation,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,3.2,34.0,United States
+ARX,Accelerant Holdings,Financial Services,Insurance Brokers,XLF,Yahoo,4.3,34.0,Cayman Islands
+WAFD,"WaFd, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,2.2,34.0,United States
+DNLI,Denali Therapeutics Inc.,Healthcare,Biotechnology,XLV,Yahoo,3.1,33.0,United States
+ROG,Rogers Corporation,Technology,Electronic Components,XLK,Yahoo,2.5,33.0,United States
+SGHC,Super Group (SGHC) Limited,Consumer Cyclical,Gambling,XLY,Yahoo,5.4,33.0,
+UCB,"United Community Banks, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,4.5,33.0,United States
+SKT,Tanger Inc.,Real Estate,REIT - Retail,XLRE,Yahoo,4.3,33.0,United States
+ALKT,"Alkami Technology, Inc.",Technology,Software - Application,XLK,Yahoo,1.4,33.0,United States
+AX,"Axos Financial, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,5.3,33.0,United States
+RUSHA,"Rush Enterprises, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,5.1,33.0,United States
+AZZ,AZZ Inc.,Industrials,Specialty Business Services,XLI,Yahoo,4.1,33.0,United States
+INBX,"Inhibrx Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.1,33.0,United States
+IHG,InterContinental Hotels Group PLC,Consumer Cyclical,Lodging,XLY,Yahoo,25.0,33.0,United Kingdom
+MDU,"MDU Resources Group, Inc.",Utilities,Utilities - Regulated Gas,XLU,Yahoo,4.1,33.0,United States
+GFF,Griffon Corporation,Industrials,Building Products & Equipment,XLI,Yahoo,4.7,33.0,United States
+PVLA,"Palvella Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,32.0,United States
+INDB,Independent Bank Corp.,Financial Services,Banks - Regional,XLF,Yahoo,3.9,32.0,United States
+PLAB,"Photronics, Inc.",Technology,Semiconductor Equipment & Materials,XLK,Yahoo,1.7,32.0,United States
+AGO,Assured Guaranty Ltd.,Financial Services,Insurance - Specialty,XLF,Yahoo,3.1,32.0,Bermuda
+ENOV,Enovis Corporation,Healthcare,Medical Devices,XLV,Yahoo,1.3,32.0,United States
+BLBD,Blue Bird Corporation,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,1.8,32.0,United States
+EXTR,"Extreme Networks, Inc.",Technology,Communication Equipment,XLK,Yahoo,3.1,32.0,United States
+VGNT,Versigent PLC,Consumer Cyclical,Auto Parts,XLY,Yahoo,3.0,32.0,United Kingdom
+WTTR,"Select Water Solutions, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,2.8,32.0,United States
+OTEX,Open Text Corporation,Technology,Software - Application,XLK,Yahoo,6.8,32.0,Canada
+UFPT,"UFP Technologies, Inc.",Healthcare,Medical Devices,XLV,Yahoo,2.3,32.0,United States
+REAL,"The RealReal, Inc.",Consumer Cyclical,Luxury Goods,XLY,Yahoo,1.4,32.0,United States
+REPL,"Replimune Group, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.6,32.0,United States
+OR,OR Royalties Inc.,Basic Materials,Gold,XLB,Yahoo,6.2,31.0,Canada
+REYN,Reynolds Consumer Products Inc.,Consumer Cyclical,Packaging & Containers,XLY,Yahoo,5.0,31.0,United States
+VECO,Veeco Instruments Inc.,Technology,Semiconductor Equipment & Materials,XLK,Yahoo,2.6,31.0,United States
+PAC,"Grupo Aeroportuario del Pacífico, S.A.B. de C.V.",Industrials,Airports & Air Services,XLI,Yahoo,13.5,31.0,Mexico
+KT,KT Corporation,Communication Services,Telecom Services,XLC,Yahoo,8.3,31.0,South Korea
+AVNT,Avient Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,3.9,31.0,United States
+SDRL,Seadrill Limited,Energy,Oil & Gas Drilling,XLE,Yahoo,3.2,31.0,Bermuda
+MWA,"Mueller Water Products, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,3.6,31.0,United States
+FA,First Advantage Corporation,Industrials,Specialty Business Services,XLI,Yahoo,3.6,31.0,United States
+HCI,"HCI Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,2.5,31.0,United States
+IDYA,"IDEAYA Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,3.2,31.0,United States
+NMIH,"NMI Holdings, Inc.",Financial Services,Insurance - Specialty,XLF,Yahoo,3.2,31.0,United States
+WERN,"Werner Enterprises, Inc.",Industrials,Trucking,XLI,Yahoo,1.7,31.0,United States
+ATMU,Atmus Filtration Technologies Inc.,Consumer Cyclical,Auto Parts,XLY,Yahoo,3.8,31.0,United States
+ZD,"Ziff Davis, Inc.",Communication Services,Advertising Agencies,XLC,Yahoo,1.9,31.0,United States
+MBX,"MBX Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.6,30.0,United States
+BBT,Beacon Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,2.6,30.0,United States
+PUK,Prudential plc,Financial Services,Insurance - Life,XLF,Yahoo,30.5,30.0,United Kingdom
+DLO,DLocal Limited,Technology,Software - Infrastructure,XLK,Yahoo,4.0,30.0,Uruguay
+CWK,Cushman & Wakefield Limited,Real Estate,Real Estate Services,XLRE,Yahoo,3.1,30.0,United States
+BOH,Bank of Hawaii Corporation,Financial Services,Banks - Regional,XLF,Yahoo,2.8,30.0,United States
+BLTE,"Belite Bio, Inc",Healthcare,Biotechnology,XLV,Yahoo,6.1,30.0,United States
+ARCB,ArcBest Corporation,Industrials,Trucking,XLI,Yahoo,2.8,30.0,United States
+MCY,Mercury General Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,5.7,30.0,United States
+SKYW,"SkyWest, Inc.",Industrials,Airlines,XLI,Yahoo,3.7,30.0,United States
+BHE,"Benchmark Electronics, Inc.",Technology,Electronic Components,XLK,Yahoo,2.6,30.0,United States
+PLPC,Preformed Line Products Company,Industrials,Electrical Equipment & Parts,XLI,Yahoo,1.6,30.0,United States
+AYA,Aya Gold & Silver Inc.,Basic Materials,Silver,XLB,Yahoo,3.5,30.0,Canada
+CDP,COPT Defense Properties,Real Estate,REIT - Office,XLRE,Yahoo,3.9,30.0,United States
+HAPN,"Happen, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,1.9,30.0,United States
+DORM,"Dorman Products, Inc.",Consumer Cyclical,Auto Parts,XLY,Yahoo,3.9,30.0,United States
+PLMR,"Palomar Holdings, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,3.6,30.0,United States
+CBT,Cabot Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,3.8,30.0,United States
+LPG,Dorian LPG Ltd.,Energy,Oil & Gas Midstream,XLE,Yahoo,2.3,30.0,United States
+NUTX,Nutex Health Inc.,Healthcare,Medical Care Facilities,XLV,Yahoo,1.4,30.0,United States
+ATAT,Atour Lifestyle Holdings Limited,Consumer Cyclical,Lodging,XLY,Yahoo,4.4,30.0,China
+GEF,"Greif, Inc.",Consumer Cyclical,Packaging & Containers,XLY,Yahoo,3.8,30.0,United States
+PRCH,"Porch Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,2.8,29.0,United States
+HMC,"Honda Motor Co., Ltd.",Consumer Cyclical,Auto Manufacturers,XLY,Yahoo,44.0,29.0,Japan
+ARIS,Aris Mining Corporation,Basic Materials,Gold,XLB,Yahoo,3.3,29.0,
+CATY,Cathay General Bancorp,Financial Services,Banks - Regional,XLF,Yahoo,4.4,29.0,United States
+GIB,CGI Inc.,Technology,Information Technology Services,XLK,Yahoo,18.5,29.0,Canada
+APPS,"Digital Turbine, Inc.",Technology,Software - Application,XLK,Yahoo,1.3,29.0,United States
+PBI,Pitney Bowes Inc.,Industrials,Integrated Freight & Logistics,XLI,Yahoo,2.3,29.0,United States
+PDFS,"PDF Solutions, Inc.",Technology,Software - Application,XLK,Yahoo,1.9,29.0,United States
+SONO,"Sonos, Inc.",Technology,Consumer Electronics,XLK,Yahoo,2.1,29.0,United States
+PHVS,Pharvaris N.V.,Healthcare,Biotechnology,XLV,Yahoo,2.3,29.0,Netherlands
+AGYS,"Agilysys, Inc.",Technology,Software - Application,XLK,Yahoo,3.3,29.0,United States
+CVBF,CVB Financial Corp.,Financial Services,Banks - Regional,XLF,Yahoo,4.0,29.0,United States
+TRVI,"Trevi Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.0,29.0,United States
+AMBQ,"Ambiq Micro, Inc.",Technology,Semiconductors,XLK,Yahoo,1.3,29.0,United States
+ETON,"Eton Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,1.5,29.0,United States
+FFIN,"First Financial Bankshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,4.4,29.0,United States
+STOK,"Stoke Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.7,29.0,United States
+CXT,"Crane NXT, Co.",Industrials,Business Equipment & Supplies,XLI,Yahoo,3.5,29.0,United States
+ZYME,Zymeworks Inc.,Healthcare,Biotechnology,XLV,Yahoo,2.0,29.0,United States
+ECPG,"Encore Capital Group, Inc.",Financial Services,Credit Services,XLF,Yahoo,2.2,29.0,United States
+WLTH,Wealthfront Corporation,Technology,Software - Application,XLK,Yahoo,1.6,29.0,United States
+CSQR,"Csquare, Inc.",Technology,Information Technology Services,XLK,Yahoo,2.5,29.0,
+BL,"BlackLine, Inc.",Technology,Software - Application,XLK,Yahoo,2.0,29.0,United States
+ATEN,"A10 Networks, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,1.9,29.0,United States
+ETOR,eToro Group Ltd.,Financial Services,Capital Markets,XLF,Yahoo,1.9,28.0,Israel
+ANIP,"ANI Pharmaceuticals, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,1.7,28.0,United States
+ATEC,"Alphatec Holdings, Inc.",Healthcare,Medical Devices,XLV,Yahoo,1.8,28.0,United States
+RNST,Renasant Corporation,Financial Services,Banks - Regional,XLF,Yahoo,3.7,28.0,United States
+TBBK,"The Bancorp, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,2.1,28.0,United States
+SHO,"Sunstone Hotel Investors, Inc.",Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,2.4,28.0,United States
+AMN,"AMN Healthcare Services, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,1.8,28.0,United States
+SBCF,Seacoast Banking Corporation of Florida,Financial Services,Banks - Regional,XLF,Yahoo,3.2,28.0,United States
+NTST,NETSTREIT Corp.,Real Estate,REIT - Retail,XLRE,Yahoo,2.2,28.0,United States
+LLYVK,"Liberty Live Holdings, Inc.",Communication Services,Entertainment,XLC,Yahoo,9.5,28.0,United States
+LIND,"Lindblad Expeditions Holdings, Inc.",Consumer Cyclical,Travel Services,XLY,Yahoo,2.5,28.0,United States
+PGNY,"Progyny, Inc.",Healthcare,Healthcare Plans,XLV,Yahoo,2.2,28.0,United States
+GOLF,Acushnet Holdings Corp.,Consumer Cyclical,Leisure,XLY,Yahoo,5.0,28.0,United States
+ESTA,Establishment Labs Holdings Inc.,Healthcare,Medical Devices,XLV,Yahoo,2.0,28.0,Costa Rica
+CALY,Callaway Golf Company,Consumer Cyclical,Leisure,XLY,Yahoo,2.7,28.0,United States
+ALG,Alamo Group Inc.,Industrials,Farm & Heavy Construction Machinery,XLI,Yahoo,1.8,28.0,United States
+CGAU,Centerra Gold Inc.,Basic Materials,Gold,XLB,Yahoo,4.1,28.0,Canada
+IMNM,"Immunome, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.2,28.0,United States
+UNFI,"United Natural Foods, Inc.",Consumer Defensive,Food Distribution,XLP,Yahoo,2.8,28.0,United States
+JOYY,JOYY Inc.,Communication Services,Internet Content & Information,XLC,Yahoo,4.0,28.0,Singapore
+FBK,FB Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,2.7,28.0,United States
+BJRI,"BJ's Restaurants, Inc.",Consumer Cyclical,Restaurants,XLY,Yahoo,1.3,28.0,United States
+FELE,"Franklin Electric Co., Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,4.3,28.0,United States
+FFBC,First Financial Bancorp.,Financial Services,Banks - Regional,XLF,Yahoo,3.4,28.0,United States
+EC,Ecopetrol S.A.,Energy,Oil & Gas Integrated,XLE,Yahoo,35.5,27.0,Colombia
+PTRN,Pattern Group Inc.,Consumer Cyclical,Internet Retail,XLY,Yahoo,3.0,27.0,United States
+ANAB,"AnaptysBio, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.4,27.0,United States
+AVEX,AEVEX Corp.,Industrials,Aerospace & Defense,XLI,Yahoo,1.7,27.0,United States
+EZPW,"EZCORP, Inc.",Financial Services,Credit Services,XLF,Yahoo,1.8,27.0,United States
+ADMA,"ADMA Biologics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.6,27.0,United States
+WDFC,WD-40 Company,Basic Materials,Specialty Chemicals,XLB,Yahoo,2.9,27.0,United States
+PWP,Perella Weinberg Partners,Financial Services,Capital Markets,XLF,Yahoo,1.4,27.0,United States
+GO,Grocery Outlet Holding Corp.,Consumer Defensive,Grocery Stores,XLP,Yahoo,1.3,27.0,United States
+CC,The Chemours Company,Basic Materials,Specialty Chemicals,XLB,Yahoo,2.0,27.0,United States
+ALRM,"Alarm.com Holdings, Inc.",Technology,Software - Application,XLK,Yahoo,3.3,27.0,United States
+TX,Ternium S.A.,Basic Materials,Steel,XLB,Yahoo,10.6,27.0,Luxembourg
+INTA,"Intapp, Inc.",Technology,Software - Application,XLK,Yahoo,3.0,27.0,United States
+UTZ,"Utz Brands, Inc.",Consumer Defensive,Packaged Foods,XLP,Yahoo,2.1,27.0,United States
+PLSE,"Pulse Biosciences, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,4.0,27.0,United States
+BATRK,"Atlanta Braves Holdings, Inc.",Communication Services,Entertainment,XLC,Yahoo,3.2,26.0,United States
+PD,"PagerDuty, Inc.",Technology,Software - Application,XLK,Yahoo,1.4,26.0,United States
+KN,Knowles Corporation,Technology,Electronic Components,XLK,Yahoo,3.0,26.0,United States
+SSL,Sasol Limited,Basic Materials,Specialty Chemicals,XLB,Yahoo,11.0,26.0,South Africa
+CLBT,Cellebrite DI Ltd.,Technology,Software - Infrastructure,XLK,Yahoo,3.1,26.0,Israel
+MAIN,Main Street Capital Corporation,Financial Services,Asset Management,XLF,Yahoo,5.2,26.0,United States
+AADX,"Applied Aerospace & Defense, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,2.0,26.0,
+SOBO,South Bow Corporation,Energy,Oil & Gas Midstream,XLE,Yahoo,7.5,26.0,Canada
+SPB,"Spectrum Brands Holdings, Inc.",Consumer Defensive,Household & Personal Products,XLP,Yahoo,1.9,26.0,United States
+SNDR,"Schneider National, Inc.",Industrials,Trucking,XLI,Yahoo,5.2,26.0,United States
+DGII,Digi International Inc.,Technology,Communication Equipment,XLK,Yahoo,2.9,26.0,United States
+TPB,"Turning Point Brands, Inc.",Consumer Defensive,Tobacco,XLP,Yahoo,1.4,26.0,United States
+HNI,HNI Corporation,Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,3.5,26.0,United States
+DXPE,"DXP Enterprises, Inc.",Industrials,Industrial Distribution,XLI,Yahoo,2.7,26.0,United States
+WSFS,WSFS Financial Corporation,Financial Services,Banks - Regional,XLF,Yahoo,4.1,26.0,United States
+NIC,"Nicolet Bankshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.6,26.0,United States
+HAFN,Hafnia Limited,Industrials,Marine Shipping,XLI,Yahoo,5.9,26.0,
+PBH,Prestige Consumer Healthcare Inc.,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,2.3,26.0,United States
+FSV,FirstService Corporation,Real Estate,Real Estate Services,XLRE,Yahoo,6.3,26.0,Canada
+NHC,National HealthCare Corporation,Healthcare,Medical Care Facilities,XLV,Yahoo,3.3,26.0,United States
+BCC,Boise Cascade Company,Basic Materials,Lumber & Wood Production,XLB,Yahoo,2.7,25.0,United States
+EFOR,"Everforth, Inc.",Technology,Information Technology Services,XLK,Yahoo,1.5,25.0,United States
+STC,Stewart Information Services Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,1.4,25.0,United States
+AVA,Avista Corporation,Utilities,Utilities - Diversified,XLU,Yahoo,3.1,25.0,United States
+SMA,"SmartStop Self Storage REIT, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,2.0,25.0,United States
+PRVA,"Privia Health Group, Inc.",Healthcare,Health Information Services,XLV,Yahoo,2.8,25.0,United States
+RPD,"Rapid7, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,1.2,25.0,United States
+ADEA,Adeia Inc.,Technology,Software - Application,XLK,Yahoo,2.5,25.0,United States
+NMRK,"Newmark Group, Inc.",Real Estate,Real Estate Services,XLRE,Yahoo,2.1,25.0,United States
+RAPP,"Rapport Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.2,25.0,United States
+WINA,Winmark Corporation,Consumer Cyclical,Specialty Retail,XLY,Yahoo,1.0,25.0,United States
+FCPT,"Four Corners Property Trust, Inc.",Real Estate,REIT - Retail,XLRE,Yahoo,2.5,25.0,United States
+GRBK,"Green Brick Partners, Inc.",Consumer Cyclical,Residential Construction,XLY,Yahoo,2.7,25.0,United States
+PHG,Koninklijke Philips N.V.,Healthcare,Medical Devices,XLV,Yahoo,26.7,25.0,Netherlands
+YELP,Yelp Inc.,Communication Services,Internet Content & Information,XLC,Yahoo,1.0,25.0,United States
+ANDE,"The Andersons, Inc.",Consumer Defensive,Food Distribution,XLP,Yahoo,2.1,25.0,United States
+SFBS,"ServisFirst Bancshares, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,4.4,25.0,United States
+SRAD,Sportradar Group AG,Technology,Software - Application,XLK,Yahoo,3.8,25.0,Switzerland
+LTC,"LTC Properties, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,2.4,25.0,United States
+OMER,Omeros Corporation,Healthcare,Biotechnology,XLV,Yahoo,1.4,25.0,United States
+AMPL,"Amplitude, Inc.",Technology,Software - Application,XLK,Yahoo,2.1,25.0,United States
+OMDA,"Omada Health, Inc.",Healthcare,Health Information Services,XLV,Yahoo,1.2,25.0,United States
+ALH,Alliance Laundry Holdings Inc.,Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,4.4,25.0,United States
+ADUS,Addus HomeCare Corporation,Healthcare,Medical Care Facilities,XLV,Yahoo,2.3,24.0,United States
+IPAR,"Interparfums, Inc.",Consumer Defensive,Household & Personal Products,XLP,Yahoo,3.7,24.0,United States
+KMPR,Kemper Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,1.9,24.0,United States
+GRND,Grindr Inc.,Technology,Software - Application,XLK,Yahoo,2.2,24.0,Singapore
+ATEX,Anterix Inc.,Communication Services,Telecom Services,XLC,Yahoo,1.8,24.0,United States
+GOLD,"Gold.com, Inc.",Financial Services,Capital Markets,XLF,Yahoo,1.1,24.0,United States
+LIF,"Life360, Inc.",Technology,Software - Application,XLK,Yahoo,3.7,24.0,United States
+HSAI,Hesai Group,Consumer Cyclical,Auto Parts,XLY,Yahoo,2.0,24.0,China
+ANDG,Andersen Group Inc.,Consumer Cyclical,Personal Services,XLY,Yahoo,7.4,24.0,United States
+AGM,Federal Agricultural Mortgage Corporation,Financial Services,Credit Services,XLF,Yahoo,2.2,24.0,United States
+PRKS,United Parks & Resorts Inc.,Consumer Cyclical,Leisure,XLY,Yahoo,1.4,24.0,United States
+FLYW,Flywire Corporation,Technology,Software - Infrastructure,XLK,Yahoo,2.3,24.0,United States
+STN,Stantec Inc.,Industrials,Engineering & Construction,XLI,Yahoo,8.1,24.0,Canada
+AKR,Acadia Realty Trust,Real Estate,REIT - Retail,XLRE,Yahoo,2.6,24.0,United States
+WLY,"John Wiley & Sons, Inc.",Communication Services,Publishing,XLC,Yahoo,2.6,24.0,United States
+PHIN,PHINIA Inc.,Consumer Cyclical,Auto Parts,XLY,Yahoo,2.2,24.0,United States
+DAC,Danaos Corporation,Industrials,Marine Shipping,XLI,Yahoo,2.9,23.0,Greece
+HLIO,"Helios Technologies, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,2.3,23.0,United States
+TNET,"TriNet Group, Inc.",Industrials,Staffing & Employment Services,XLI,Yahoo,2.9,23.0,United States
+ZLAB,Zai Lab Limited,Healthcare,Biotechnology,XLV,Yahoo,2.5,23.0,China
+CERT,"Certara, Inc.",Healthcare,Health Information Services,XLV,Yahoo,1.7,23.0,United States
+XERS,"Xeris Biopharma Holdings, Inc.",Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,2.0,23.0,United States
+KWR,Quaker Chemical Corporation,Basic Materials,Specialty Chemicals,XLB,Yahoo,2.7,23.0,United States
+CMBT,Cmb.Tech NV,Energy,Oil & Gas Midstream,XLE,Yahoo,5.4,23.0,
+KB,KB Financial Group Inc.,Financial Services,Banks - Regional,XLF,Yahoo,40.6,23.0,South Korea
+PRGS,Progress Software Corporation,Technology,Software - Infrastructure,XLK,Yahoo,1.8,23.0,United States
+BUSE,First Busey Corporation,Financial Services,Banks - Regional,XLF,Yahoo,2.5,23.0,United States
+CUBI,"Customers Bancorp, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,3.0,23.0,United States
+PPTA,Perpetua Resources Corp.,Basic Materials,Other Precious Metals & Mining,XLB,Yahoo,2.3,23.0,Canada
+PRCT,PROCEPT BioRobotics Corporation,Healthcare,Medical Devices,XLV,Yahoo,1.2,23.0,United States
+HTGC,"Hercules Capital, Inc.",Financial Services,Asset Management,XLF,Yahoo,3.2,22.0,United States
+NTCT,"NetScout Systems, Inc.",Technology,Software - Infrastructure,XLK,Yahoo,2.9,22.0,United States
+PRG,"PROG Holdings, Inc.",Industrials,Rental & Leasing Services,XLI,Yahoo,1.3,22.0,United States
+HAWK,"HawkEye 360, Inc.",Industrials,Aerospace & Defense,XLI,Yahoo,1.4,22.0,United States
+TEN,Tsakos Energy Navigation Limited,Energy,Oil & Gas Midstream,XLE,Yahoo,1.6,22.0,Greece
+TRLV,Trulieve Cannabis Corp.,Healthcare,Drug Manufacturers - Specialty & Generic,XLV,Yahoo,2.0,22.0,United States
+LMAT,"LeMaitre Vascular, Inc.",Healthcare,Medical Instruments & Supplies,XLV,Yahoo,2.0,22.0,United States
+GSHD,"Goosehead Insurance, Inc.",Financial Services,Insurance Brokers,XLF,Yahoo,1.7,22.0,United States
+ABM,ABM Industries Incorporated,Industrials,Specialty Business Services,XLI,Yahoo,3.2,22.0,United States
+NVCR,NovoCure Limited,Healthcare,Medical Devices,XLV,Yahoo,1.5,22.0,Jersey
+OSW,OneSpaWorld Holdings Limited,Consumer Cyclical,Leisure,XLY,Yahoo,3.1,22.0,Bahamas
+HWKN,"Hawkins, Inc.",Basic Materials,Specialty Chemicals,XLB,Yahoo,3.2,22.0,United States
+WOR,"Worthington Enterprises, Inc.",Industrials,Metal Fabrication,XLI,Yahoo,3.2,22.0,United States
+PS,Pershing Square Inc.,Financial Services,Asset Management,XLF,Yahoo,19.7,22.0,United States
+VIR,"Vir Biotechnology, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.0,22.0,United States
+GRDN,"Guardian Pharmacy Services, Inc.",Healthcare,Medical Care Facilities,XLV,Yahoo,2.6,22.0,United States
+CPK,Chesapeake Utilities Corporation,Utilities,Utilities - Regulated Gas,XLU,Yahoo,3.3,22.0,United States
+NHI,"National Health Investors, Inc.",Real Estate,REIT - Healthcare Facilities,XLRE,Yahoo,3.3,22.0,United States
+WSE,Wise Group plc,Technology,Information Technology Services,XLK,Yahoo,13.5,22.0,United Kingdom
+CNS,"Cohen & Steers, Inc.",Financial Services,Asset Management,XLF,Yahoo,3.7,22.0,United States
+STRA,"Strategic Education, Inc.",Consumer Defensive,Education & Training Services,XLP,Yahoo,1.7,22.0,United States
+VCEL,Vericel Corporation,Healthcare,Biotechnology,XLV,Yahoo,2.2,22.0,United States
+BRC,Brady Corporation,Industrials,Security & Protection Services,XLI,Yahoo,3.9,22.0,United States
+NIQ,NIQ Global Intelligence plc Ordinary Shares,Technology,Software,XLK,TradingView,6.0,22.0,United States
+ALNT,Allient Inc.,Technology,Electronic Components,XLK,Yahoo,1.6,22.0,United States
+CIGI,Colliers International Group Inc.,Real Estate,Real Estate Services,XLRE,Yahoo,4.9,22.0,Canada
+LZB,La-Z-Boy Incorporated,Consumer Cyclical,"Furnishings, Fixtures & Appliances",XLY,Yahoo,1.2,22.0,United States
+BMA,Banco Macro S.A.,Financial Services,Banks - Regional,XLF,Yahoo,3.9,22.0,Argentina
+CNA,CNA Financial Corporation,Financial Services,Insurance - Property & Casualty,XLF,Yahoo,13.2,22.0,United States
+NSP,"Insperity, Inc.",Industrials,Staffing & Employment Services,XLI,Yahoo,1.8,21.0,United States
+BLKB,"Blackbaud, Inc.",Technology,Software - Application,XLK,Yahoo,2.4,21.0,United States
+IVT,InvenTrust Properties Corp.,Real Estate,REIT - Retail,XLRE,Yahoo,2.4,21.0,United States
+MLTX,MoonLake Immunotherapeutics,Healthcare,Biotechnology,XLV,Yahoo,1.1,21.0,United States
+CWT,California Water Service Group,Utilities,Utilities - Regulated Water,XLU,Yahoo,2.9,21.0,United States
+TAC,TransAlta Corporation,Utilities,Utilities - Independent Power Producers,XLU,Yahoo,4.2,21.0,Canada
+SBH,"Sally Beauty Holdings, Inc.",Consumer Cyclical,Specialty Retail,XLY,Yahoo,1.7,21.0,United States
+FSK,FS KKR Capital Corp.,Financial Services,Asset Management,XLF,Yahoo,3.1,21.0,United States
+RLJ,RLJ Lodging Trust,Real Estate,REIT - Hotel & Motel,XLRE,Yahoo,1.9,21.0,United States
+INVX,"Innovex International, Inc.",Energy,Oil & Gas Equipment & Services,XLE,Yahoo,2.1,21.0,United States
+VIA,"Via Transportation, Inc.",Technology,Software - Application,XLK,Yahoo,2.9,21.0,United States
+AMSC,American Superconductor Corporation,Industrials,Specialty Industrial Machinery,XLI,Yahoo,1.4,21.0,United States
+SPNT,SiriusPoint Ltd.,Financial Services,Insurance - Reinsurance,XLF,Yahoo,3.0,21.0,Bermuda
+IOSP,Innospec Inc.,Basic Materials,Specialty Chemicals,XLB,Yahoo,2.5,21.0,United States
+FMS,Fresenius Medical Care AG,Healthcare,Medical Care Facilities,XLV,Yahoo,12.9,21.0,Germany
+UE,Urban Edge Properties,Real Estate,REIT - Retail,XLRE,Yahoo,2.5,21.0,United States
+GENB,"Generate Biomedicines, Inc.",Healthcare,Biotechnology,XLV,Yahoo,2.0,21.0,United States
+SKWD,"Skyward Specialty Insurance Group, Inc.",Financial Services,Insurance - Property & Casualty,XLF,Yahoo,2.6,21.0,United States
+ODD,Oddity Tech Ltd.,Consumer Defensive,Household & Personal Products,XLP,Yahoo,1.2,21.0,Israel
+MCRI,"Monarch Casino & Resort, Inc.",Consumer Cyclical,Resorts & Casinos,XLY,Yahoo,2.0,21.0,United States
+GPGI,"GPGI, Inc.",Industrials,Metal Fabrication,XLI,Yahoo,3.4,21.0,United States
+TYRA,"Tyra Biosciences, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.5,21.0,United States
+VOR,Vor Biopharma Inc.,Healthcare,Biotechnology,XLV,Yahoo,1.2,21.0,United States
+CRAI,"CRA International, Inc.",Industrials,Consulting Services,XLI,Yahoo,1.2,21.0,United States
+ESQ,"Esquire Financial Holdings, Inc.",Financial Services,Banks - Regional,XLF,Yahoo,1.5,20.0,United States
+MFP,"Midera Food Processing, Inc.",Industrials,Specialty Industrial Machinery,XLI,Yahoo,1.9,20.0,United States
+ENR,"Energizer Holdings, Inc.",Industrials,Electrical Equipment & Parts,XLI,Yahoo,1.6,20.0,United States
+SAH,"Sonic Automotive, Inc.",Consumer Cyclical,Auto & Truck Dealerships,XLY,Yahoo,2.0,20.0,United States
+ACT,"Enact Holdings, Inc.",Financial Services,Insurance - Specialty,XLF,Yahoo,6.6,20.0,United States
+IIPR,"Innovative Industrial Properties, Inc.",Real Estate,REIT - Industrial,XLRE,Yahoo,1.5,20.0,United States
+DEI,"Douglas Emmett, Inc.",Real Estate,REIT - Office,XLRE,Yahoo,1.7,20.0,United States
+MAZE,"Maze Therapeutics, Inc.",Healthcare,Biotechnology,XLV,Yahoo,1.8,20.0,United States
+E,Eni S.p.A.,Energy,Oil & Gas Integrated,XLE,Yahoo,94.7,20.0,Italy
+LB,LandBridge Corporation,Energy,Oil & Gas E&P,XLE,Yahoo,6.4,20.0,
+IDT,IDT Corporation,Communication Services,Telecom Services,XLC,Yahoo,2.0,20.0,United States
+GOOGN,Alphabet Inc. Depositary Shares representing a 1/20th Interest in a Share of Series B Mandatory Convertible Preferred Stock,,,,TradingView,3522.6,69.5,United States
+GOOGM,Alphabet Inc. Depositary Shares representing a 1/20th Interest in a Share of Series A Mandatory Convertible Preferred Stock,,,,TradingView,3522.6,60.0,United States
+GOOG,Alphabet Inc.,Communication Services,Internet Content & Information,XLC,TradingView,3481.3,6337.8,United States
+BRK-A,Berkshire Hathaway Inc.,Financial Services,Insurance - Diversified,XLF,TradingView,1221.9,184.9,United States
+ET,Energy Transfer LP,Energy,Oil & Gas Midstream,XLE,TradingView,65.1,173.4,United States
+STRC,Strategy Inc,Technology,Software - Application,XLK,TradingView,60.2,175.0,United States
+MPLX,MPLX LP,Energy,Oil & Gas Midstream,XLE,TradingView,56.6,88.3,United States
+HEI-A,HEICO Corporation,Industrials,Aerospace & Defense,XLI,TradingView,39.8,74.2,United States
+FWONA,Formula One Group,Communication Services,Entertainment,XLC,TradingView,27.3,25.2,United States
+FOX,Fox Corporation,Communication Services,Entertainment,XLC,TradingView,26.7,54.1,United States
+BIP,Brookfield Infrastructure Partners L.P.,Utilities,Utilities - Diversified,XLU,TradingView,25.6,35.8,United States
+SMCIP,"Super Micro Computer, Inc.",Technology,Computer Hardware,XLK,TradingView,19.4,32.7,United States
+PAA,"Plains All American Pipeline, L.P.",Energy,Oil & Gas Midstream,XLE,TradingView,16.9,61.4,United States
+WES,"Western Midstream Partners, LP",Energy,Oil & Gas Midstream,XLE,TradingView,16.5,57.7,United States
+NWS,News Corporation,Communication Services,Entertainment,XLC,TradingView,14.8,30.1,United States
+BF-B,Brown-Forman Corporation,Consumer Defensive,Beverages - Wineries & Distilleries,XLP,TradingView,14.2,80.6,United States
+SUN,Sunoco LP,Energy,Oil & Gas Refining & Marketing,XLE,TradingView,12.6,28.9,United States
+MOG-A,Moog Inc.,Industrials,Aerospace & Defense,XLI,TradingView,10.3,99.4,United States
+DDS,"Dillard's, Inc.",Consumer Cyclical,Department Stores,XLY,TradingView,9.4,82.0,United States
+BEP,Brookfield Renewable Partners L.P.,Utilities,Utilities - Renewable,XLU,TradingView,9.3,39.5,United States
+COMP,"Compass, Inc.",Real Estate,Real Estate Services,XLRE,TradingView,7.8,157.3,United States
+MSGK,MSG Knickerbockers Corp.,Communication Services,Entertainment,XLC,TradingView,7.5,141.8,United States
+ZG,"Zillow Group, Inc.",Communication Services,Internet Content & Information,XLC,TradingView,6.7,36.7,United States
+BXSL,Blackstone Secured Lending Fund,Financial Services,Asset Management,XLF,TradingView,5.6,41.8,United States
+PAGP,"Plains GP Holdings, L.P.",Energy,Oil & Gas Midstream,XLE,TradingView,5.1,56.0,United States
+TCBI,"Texas Capital Bancshares, Inc.",Financial Services,Banks - Regional,XLF,TradingView,4.4,60.0,United States
+IBOC,International Bancshares Corporation,Financial Services,Banks - Regional,XLF,TradingView,4.2,25.2,United States
+AWR,American States Water Company,Utilities,Utilities - Regulated Water,XLU,TradingView,3.6,21.7,United States
+TOWN,TowneBank,Financial Services,Banks - Regional,XLF,TradingView,3.4,20.1,United States
+GPK,Graphic Packaging Holding Company,Consumer Cyclical,Packaging & Containers,XLY,TradingView,3.3,96.3,United States
+SUNC,SunocoCorp LLC,Energy,Oil & Gas Midstream,XLE,TradingView,3.1,27.1,United States
+MGRC,McGrath RentCorp,Industrials,Rental & Leasing Services,XLI,TradingView,3.0,49.5,United States
+PFS,"Provident Financial Services, Inc.",Financial Services,Banks - Regional,XLF,TradingView,3.0,20.2,United States
+SATA,"Strive, Inc.",Financial Services,Asset Management,XLF,TradingView,2.9,52.1,United States
+STGW,Stagwell Inc.,Communication Services,Advertising Agencies,XLC,TradingView,2.9,23.4,United States
+VERX,"Vertex, Inc.",Technology,Software - Application,XLK,TradingView,2.8,26.1,United States
+CECO,CECO Environmental Corp.,Industrials,Pollution & Treatment Controls,XLI,TradingView,2.6,51.3,United States
