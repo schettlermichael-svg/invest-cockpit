@@ -770,7 +770,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Tabellen (Stufen): einfarbige Kurve (LineChartColumn) und Phasenwort mit Farbpunkt.
 
 **Stab mit acht Missionen (`kern/stab.py`):**
-- Missionen: Lage, Aufklärung (Web-Suche, Depot plus 20 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
+- Missionen: Lage, Aufklärung (Web-Suche, Depot plus 10 Titel), Jäger, Operationsplaner, Gegenspieler, Truppenführung (nur mit Depot), Kriegsgeschichte, Feldherr.
 - Gemeinsame Dienstanweisung mit unserer Lehre und 7 Regeln. Die Meister sind keine Rollen mehr, ihre Regeln stehen als Lehrstellen bei der Mission, die sie braucht.
 - Wachen im Code:
   - Ein Auftrag geht nur auf eine Akte mit grünem Setup, Einstieg nicht rot; höchstens 8 Aufträge (Micky 13.11.: an starken Tagen gibt es mehr als 5 gute Chancen).
@@ -781,7 +781,7 @@ Micky: „Was der Stab da macht, ist schwach.“ Das Konzept steht im Konzeptdok
 - Konferenzen vor dem 13.11. werden weiter angezeigt.
 - Entfernter Code liegt in `_to_delete/stab_strategen_entfernt_2026-11-13.py`.
 - Offen gelassen von Micky:
-  - Breite der Aufklärung (Micky 13.11.): das Depot immer, dazu 20 Titel – 12 Akten und 8 Anwärter in Rangfolge; freie Plätze der einen Gruppe füllt die andere.
+  - Breite der Aufklärung (Micky 13.11.): das Depot immer, dazu 10 Titel – 6 Akten und 4 Anwärter in Rangfolge; freie Plätze der einen Gruppe füllt die andere. (Erst 20; die Probekonferenz kostete 2,94 $, davon geschätzt rund 2,50 $ für die Web-Suchen.)
   - Budget: Annahme etwa wie bisher; jede Konferenz misst ihre Kosten (`kosten_usd`).
 - Anwärter (Micky 13.11.): Titel ohne Akte mit frühen Zeichen der Stärke – Stärke in der Schwäche, Wechsel zu Phase 1 oder 2, aufsteigende Einquetschung, Akkumulation, Pocket Pivot, schlechte Zahlen gehalten, erstes höheres Tief (`stab.fruehe_zeichen`); höchstens 30 an den Jäger, auch wenn der Markt nicht schwach ist.
 - Wache Zahlentermine (Micky 13.11.): Weichen Yahoo und TradingView mehr als 1 Tag ab, ist das nur gelb, wenn einer der beiden Termine in den nächsten 14 Tagen liegt; sonst grauer, stiller Hinweis (färbt Kopfzeile und Handy nicht).

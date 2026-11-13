@@ -172,13 +172,14 @@ LEHRSTELLE = {
        "Überzeugung, Strömung und Markt überein, die Kraft auf die besten Ziele bündeln; ist die Lage unklar, klein "
        "bleiben.",
 }
-# Aufklärung (Micky 13.11.2026): 20 Titel, über die heute entschieden wird – 12 Plätze für Akten, 8 für Anwärter; freie
-# Plätze einer Gruppe füllt die andere. Das Depot kommt immer zusätzlich dazu.
-AUFKLAERUNG_MAX = 20
-AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 12, 8
+# Aufklärung (Micky 13.11.2026): Titel, über die heute entschieden wird, plus immer das Depot. Erst 20 (12 Akten,
+# 8 Anwärter); nach der Probekonferenz (2,94 $, davon geschätzt rund 2,50 $ für die Web-Suchen) auf 10 gesenkt:
+# 6 Akten, 4 Anwärter; freie Plätze einer Gruppe füllt die andere.
+AUFKLAERUNG_MAX = 10
+AUFKLAERUNG_AKTEN, AUFKLAERUNG_ANWAERTER = 6, 4
 ANWAERTER_MAX = 30                     # Micky 13.11.2026: frühe Zeichen der Stärke, höchstens 30 an den Jäger
 AUFTRAEGE_MAX = 8                     # Micky 13.11.2026: an starken Tagen (Follow-Through-Day) mehr als 5 gute Chancen
-SUCHEN_AUFKLAERUNG = 20                # je Titel eine Suche; für jede Position im Depot eine mehr
+SUCHEN_AUFKLAERUNG = 10                # je Titel eine Suche; für jede Position im Depot eine mehr
 
 _TXT = lambda d: {"type": "string", "description": d}            # noqa: E731
 _HALT = {"type": "string", "enum": ["angreifen", "klein tasten", "abwarten", "verteidigen"]}
@@ -1271,7 +1272,7 @@ def _wache_auf(obj, quelle, bekannt):
 
 
 def aufklaerung_ziele(depot_tk, akten_tk, anw_tk):
-    """Depot zusätzlich; 20 weitere Titel: bis 12 Akten und bis 8 Anwärter in Rangfolge, ein freier Platz der einen
+    """Depot zusätzlich; AUFKLAERUNG_MAX weitere Titel: bis 6 Akten und bis 4 Anwärter in Rangfolge, ein freier Platz der einen
     Gruppe geht an die nächste der anderen."""
     a = [t_ for t_ in dict.fromkeys(akten_tk) if t_ not in depot_tk]
     w = [t_ for t_ in dict.fromkeys(anw_tk) if t_ not in depot_tk and t_ not in a]
@@ -1344,7 +1345,7 @@ def konferenz(melden=lambda text: None):
                     | {"lagebuch_gestern": {a: alt_lage.get(a) for a in ("leitfrage", "szenario_a", "szenario_b")}
                        if alt_lage else None}, F_LAGE, 4000)
 
-    # 2 Aufklärung: das Depot immer, dazu 20 Titel – 12 Akten, 8 Anwärter, freie Plätze füllt die andere Gruppe
+    # 2 Aufklärung: das Depot immer, dazu 10 Titel – 6 Akten, 4 Anwärter, freie Plätze füllt die andere Gruppe
     depot_tk = [p["ticker"] for p in (lb["depot"].get("positionen") or [])]
     ziele = aufklaerung_ziele(depot_tk, [c["titel"] for c in akten_], [a["titel"] for a in anw])
     akte_von = {c["titel"]: c for c in akten_}
