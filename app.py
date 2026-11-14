@@ -578,6 +578,25 @@ def _chartpruefer_zeigen():
         b = chartpruefer.letzter_bericht()
         if not b or not b.get("titel"):
             return
+        a = b.get("auswertung")
+        if not laeuft and not a:
+            if st.button("Bericht auswerten (Befunde über die Regeln bündeln, wenige Cent)", key="pruefer_auswerten"):
+                try:
+                    with st.spinner("Die Widersprüche werden gebündelt …"):
+                        a = chartpruefer.auswerten()
+                except Exception as x:  # noqa: BLE001
+                    st.error(f"Auswertung ging nicht: {x}")
+        if a:
+            farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
+                     "Prüfer irrt": "#8B949E"}
+            karten = "".join(
+                f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:6px 10px;margin:6px 0">'
+                f'<b>{esc(x["titel"])}</b> · {esc(x["art"])} · {esc(x["element"])} · {x["anzahl"]} Widersprüche '
+                f'({x["sicher"]} sicher) · z. B. {esc(", ".join(x["beispiele"][:5]))}<br>'
+                f'<span style="opacity:.85">{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: '
+                f'{esc(x["vorschlag"])}</span></div>' for x in a.get("befunde") or [])
+            st.markdown(f'<div style="font-size:13px"><b>Auswertung {esc(a.get("stand", ""))}</b> · '
+                        f'{esc(a.get("fazit", ""))}{karten}</div>', unsafe_allow_html=True)
         alle = [(r["tk"], r.get("gruppe", ""), w) for r in b["titel"] for w in r.get("widersprueche") or []]
         fehler = [r for r in b["titel"] if r.get("fehler")]
         je = {}

@@ -92,6 +92,12 @@ Die Regeln der Meister:
 - Dalton: Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende Balance.
   Exzess = scharfe Ablehnung am Extrem (Auktion dort beendet); flache Kante (schwaches Hoch/Tief) = Auktion unfertig.
 
+Wie die App ihre Anker setzt (damit du die Absicht kennst; prüfe trotzdem gegen die Meister): letztes Hoch = jüngstes
+Wochen-Schwunghoch (2 Wochen davor und danach tiefer, also erst nach 2 Wochen bestätigt), das der Kurs nicht
+überschritten hat; Hoch des Rückgangs = der Gipfel der ganzen Korrektur (fehlt, wenn er dasselbe ist wie das letzte
+Hoch); Tief der Bewegung = tiefstes Tief seit dem letzten Hoch, sobald der Kurs 1 ATR darüber steht. Zone der App:
+beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne Schluss darüber bricht sie nicht).
+
 Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Zustand zu den Belegen passt und ob die
 Belege am richtigen Platz der Kette stehen. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen. Jeder
 Widerspruch nennt: das Element, was falsch ist (mit Datum und Kurs), die Regel des Meisters, was richtig wäre (Datum,
@@ -232,6 +238,11 @@ def material(tk, df):
         if schl in a:
             preis = df["High"][a[schl]] if schl in ("gipfel", "hoch") else df["Low"][a[schl]]
             zeilen.append(f"AVWAP-Anker {name}: {_d(a[schl])} bei {_z(preis)} $")
+        elif schl == "gipfel" and "hoch" in a:          # gleich dem letzten Hoch – die App zeigt dann nur eine Linie
+            zeilen.append(f"AVWAP-Anker {name}: derselbe Punkt wie das letzte Hoch (nur eine Linie)")
+        elif schl == "tief":
+            zeilen.append(f"AVWAP-Anker {name}: keiner – der Kurs steht noch nicht 1 ATR über dem tiefsten Tief seit "
+                          "dem letzten Hoch (keine Bewegung begonnen)")
         else:
             zeilen.append(f"AVWAP-Anker {name}: keiner")
     if pa.get("grau"):
@@ -612,6 +623,62 @@ def einzeln(tk, stand, chart_teil=None):
     os.makedirs(os.path.join(ORDNER, "titel"), exist_ok=True)
     json_schreiben(os.path.join(ORDNER, "titel", f"{tk.upper()}_{stand}.json"), r, ensure_ascii=False)
     return r
+
+
+SYSTEM_AUSWERTUNG = """Du wertest den Bericht des Chart-Prüfers des Invest Cockpits aus. Der Prüfer hat Charts gegen die Regeln
+der Meister (O'Neil, Minervini, Kullamägi, Weinstein, Wyckoff, Shannon, Dalton) geprüft und jeden Widerspruch zur App
+gemeldet. Deine Aufgabe: Fasse die Widersprüche zu Befunden über die REGELN der App zusammen – nicht Titel für Titel.
+Ein Befund ist ein Muster, das bei mehreren Titeln auftritt und auf eine Ursache in einer Regel der App zurückgeht.
+Ordne jeden Befund ein: Regelfehler (die Regel der App widerspricht einem Meister), Darstellung/Material (die Regel
+stimmt, aber die App zeigt oder beschreibt es missverständlich), Auslegung (strittig, Micky entscheidet), Prüfer irrt
+(der Prüfer hat die Regel der App oder das Bild falsch verstanden). Nenne je Befund die Zahl der Widersprüche, wie
+viele davon sicher waren, bis zu 5 Beispieltitel, die Deutung und einen konkreten Vorschlag für die Regel. Sortiere
+nach Gewicht (Regelfehler mit vielen sicheren Widersprüchen zuerst). Einfaches Deutsch, kein Weichmacher."""
+
+SCHEMA_AUSWERTUNG = {
+    "type": "object",
+    "properties": {
+        "fazit": {"type": "string", "description": "zwei bis drei Sätze"},
+        "befunde": {"type": "array", "items": {"type": "object", "properties": {
+            "titel": {"type": "string", "description": "das Muster in wenigen Worten"},
+            "element": {"type": "string"},
+            "art": {"type": "string", "enum": ["Regelfehler", "Darstellung/Material", "Auslegung", "Prüfer irrt"]},
+            "anzahl": {"type": "integer"}, "sicher": {"type": "integer"},
+            "beispiele": {"type": "array", "items": {"type": "string"}},
+            "deutung": {"type": "string"}, "vorschlag": {"type": "string"}},
+            "required": ["titel", "element", "art", "anzahl", "sicher", "beispiele", "deutung", "vorschlag"]}},
+    },
+    "required": ["fazit", "befunde"],
+}
+
+
+def _bericht_pfad():
+    if not os.path.isdir(ORDNER):
+        return None
+    b = sorted(f for f in os.listdir(ORDNER) if f.startswith("bericht_"))
+    return os.path.join(ORDNER, b[-1]) if b else None
+
+
+def auswerten(pfad=None):
+    """Widersprüche des Berichts zu Befunden über die Regeln der App bündeln (ein Modellaufruf, wenige Cent);
+    das Ergebnis steht im Bericht unter "auswertung"."""
+    import modell
+    pfad = pfad or _bericht_pfad()
+    b = json_lesen(pfad, None)
+    if not b or not b.get("titel"):
+        return None
+    zeilen = [f"{r['tk']} [{r.get('gruppe', '')}] {w['element']} ({w['gewicht']}): {w['befund']} → richtig: "
+              f"{w['richtig']} · Regel: {w['regel']}" for r in b["titel"] for w in r.get("widersprueche") or []]
+    ohne = sum(1 for r in b["titel"] if not r.get("widersprueche") and not r.get("fehler"))
+    inhalt = (f"Bericht {b['stand']}: {len(b['titel'])} Charts, {len(zeilen)} Widersprüche, {ohne} ohne Widerspruch.\n"
+              + "\n".join(zeilen))
+    vorher = modell.kosten()["usd"]
+    a = modell._formular(SYSTEM_AUSWERTUNG, inhalt, "auswertung_melden", SCHEMA_AUSWERTUNG, 8000)
+    a["kosten"] = round(modell.kosten()["usd"] - vorher, 3)
+    a["stand"] = f"{datetime.now():%Y-%m-%d %H:%M}"
+    b["auswertung"] = a
+    json_schreiben(pfad, b, ensure_ascii=False)
+    return a
 
 
 def letzter_bericht():

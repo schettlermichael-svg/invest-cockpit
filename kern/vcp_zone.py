@@ -8,7 +8,8 @@ Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14
   Erholung   = nach dem tiefsten Tief kam der Kurs wieder in die obere Hälfte der Zone
                (sonst ist das Hoch der Rand eines Absturzes, nicht einer Base → nächstjüngeres Hoch;
                erfüllt keines die Regel, läuft der Rücksetzer noch: Rahmen ab dem ältesten Hoch, Zone offen)
-  Henkel     = kam die rechte Seite bis 15 % an die Oberkante heran (O'Neil: Henkel höchstens 15 % unter dem Hoch der
+  Henkel     = war die Tasse mindestens 7 Wochen lang (O'Neil), kam die rechte Seite bis 15 % an die Oberkante heran
+               (O'Neil: Henkel höchstens 15 % unter dem Hoch der
                linken Seite) und fiel der Kurs danach wieder in die untere Hälfte, ohne das Tief zu
                unterschreiten, ist die Tasse gescheitert (O'Neil: Henkel in der oberen Hälfte) → nächstjüngeres Hoch
                (14.11.2026; ein Unterschreiten des Tiefs ist ein Doppelboden und bleibt eine Base)
@@ -78,6 +79,8 @@ MIN_WOCHEN, MAX_WOCHEN = 3, 65
 ERHOLUNG = 0.5                 # Anteil der Zonenhöhe, den der Kurs nach dem Tief zurückgewinnen muss
 HENKEL_HAELFTE = 0.5           # O'Neil: nach der rechten Seite nicht wieder in die untere Hälfte (sonst neue Base) …
 HENKEL_NAH = 0.15              # … sobald die rechte Seite bis 15 % an das Hoch der linken Seite heran kam (Henkel möglich)
+TASSE_MIN_W = 7                # … und nur bei einer Tasse: linke Seite bis rechte Seite mindestens 7 Wochen (O'Neil) –
+                               # Chart-Prüfer 14.11.2026: sonst „scheiterten“ Pausen von Tagen und es blieben Zonen von 0,2 Wochen
 FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
 
@@ -175,7 +178,7 @@ def zone(df):
             # am Hoch der rechten Seite (Minervini: „rebase following a failed cup-and-handle“; LUV 14.11.2026: Base
             # ab 17.02. statt ab 26.06.)
             r_i = tief_i + 1 + int(np.argmax(h[tief_i + 1:])) if tief_i < n - 1 else n - 1   # nach dem Tief
-            if (r_i < n - 1 and h[r_i] >= top * (1 - HENKEL_NAH) and
+            if (r_i < n - 1 and (r_i - i) / WOCHE >= TASSE_MIN_W and h[r_i] >= top * (1 - HENKEL_NAH) and
                     l[r_i + 1:].min() < boden + HENKEL_HAELFTE * hoehe):
                 gescheitert = (i, r_i)
                 if all(x[0] != r_i for x in kand):
