@@ -46,8 +46,9 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 ORDNER = os.path.join(HIER, "..", "daten", "chartpruefer")
 PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
-STICHPROBE = 150               # davon GRUPPEN Gruppen
-KOSTEN_JE_CHART = 0.05         # $ (zwei Bilder ~3.000 Token, Zahlen und Kette ~2.500, Antwort ~800)
+STICHPROBE = 100               # davon GRUPPEN Gruppen (14.11.2026: 150 → 100, weil ein Chart gut 10 Cent kostet)
+KOSTEN_JE_CHART = 0.12         # $ gemessen: erster Lauf 14.11.2026 kostete 14,52 $ für 150 Charts (9,7 Cent, ein Bild);
+                               # mit zwei Bildern und der ganzen Kette eher 12 Cent – Schätzung vorher (3 Cent) war falsch
 
 ELEMENTE = ["Zustand", "Anlass", "Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot",
             "Drittel des Pivots", "Enge/Kontraktionen", "Einquetschung", "Test am Rand: Zeichen",
@@ -102,7 +103,8 @@ Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Z
 Belege am richtigen Platz der Kette stehen. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen. Jeder
 Widerspruch nennt: das Element, was falsch ist (mit Datum und Kurs), die Regel des Meisters, was richtig wäre (Datum,
 Kurs), und ob du sicher bist oder es strittig ist (Auslegungssache). Erfinde keine Zahl: Daten und Kurse nur aus den
-Zahlen der App oder klar am Bild ablesbar, sonst „etwa“. Kein Weichmacher, einfaches Deutsch."""
+Zahlen der App oder klar am Bild ablesbar, sonst „etwa“. Kein Weichmacher, einfaches Deutsch. Höchstens 8 Widersprüche,
+die wichtigsten zuerst; jedes Feld höchstens zwei kurze Sätze."""
 
 SYSTEM_GRUPPE = """Du bist der Chart-Prüfer des Invest Cockpits für Gruppen (Sektoren, Branchen, Themen). Unser Bild: Geld
 fließt in eine Gruppe – der Anführer bricht aus, folgen die Schwestern? Derselbe Code wie beim Titel: Balance, Test am
@@ -120,7 +122,7 @@ def _schema(elemente):
         "type": "object",
         "properties": {
             "stimmt": {"type": "string", "description": "ein Satz: was die App richtig gesetzt hat"},
-            "widersprueche": {"type": "array", "items": {"type": "object", "properties": {
+            "widersprueche": {"type": "array", "maxItems": 8, "items": {"type": "object", "properties": {
                 "element": {"type": "string", "enum": elemente},
                 "befund": {"type": "string", "description": "was falsch ist, mit Datum und Kurs"},
                 "regel": {"type": "string", "description": "Meister und Regel"},
