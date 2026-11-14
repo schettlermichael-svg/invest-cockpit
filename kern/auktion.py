@@ -517,8 +517,9 @@ def gruppe(g):
     if br is not None:
         belege.append(("folgen die Schwestern", f"Breite: {_z(br, '.0f')} % über dem GD50 (vor 4 Wochen "
                                                 f"{_z(br4, '.0f') if br4 is not None else '–'} %)"))
-    if zu:
-        belege.append(("Geldfluss", f"Zufluss {_z(zu)} (Volumen steigender ÷ fallender Tage, 50 Tage)"))
+    if zu:                                       # unter 1 fließt Geld ab (Chart-Prüfer Lauf 3: stand als „Zufluss“)
+        belege.append(("Geldfluss", f"{'Zufluss' if zu >= 1 else 'Abfluss'} {_z(zu)} (Volumen steigender ÷ fallender "
+                                    "Tage, 50 Tage)"))
     anf = g.get("anfuehrer") or []
     if anf:
         belege.append(("Anführer bricht aus", "Anführer: " + ", ".join(anf) + (f" · Verfolger: {', '.join(g['verfolger'])}"

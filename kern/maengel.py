@@ -55,6 +55,8 @@ VORGABEN = [
      "4910faf: Kontraktion ab 3 Tagen, höchstens 6 Wellen, Volumen ausgetrocknet, nicht in Phase 4 – grün 94 → 44"),
     ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "offen",
      "30-Wochen-Linie ausprobiert (35 % der Titel wechseln, Beispiele teils besser, teils schlechter) – in die Gefechtsordnung"),
+    ("chart", "2026-11-14 18:18", "Abfluss unter 1", "behoben",
+     "Beleg heißt bei einem Wert unter 1 jetzt „Abfluss“ statt „Zufluss“ (auktion.gruppe)"),
     ("chart", "2026-11-14 18:18", "Ausbruch ohne Volumen", "entschieden",
      "Micky (06.11.): Volumen ist Zeichen, keine Pflicht; über dem 50-Tage-Schnitt reicht (O'Neils 1,4-fach zu streng)"),
 ]
