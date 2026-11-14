@@ -993,3 +993,20 @@ Jede Auswertung von Chart- oder Setup-Prüfer kommt von selbst in die Liste (`au
 Auswertung). Jeder Befund hat einen Stand: offen, behoben (Notiz: Commit und Messung) oder entschieden (Notiz: Mickys
 Entscheidung). Auf der Seite Setups unter den Prüfern, Vorgabe: nur offene. Darunter der Verlauf je Prüfer:
 Widersprüche je Chart (davon sicher) je Element über alle Läufe – ein behobener Befund muss dort sinken.
+
+## Prüfer gegen die drei Bilder abgeglichen (14.11.2026)
+
+Micky: „Denke an unsere drei Bilder.“ Abgleich Kasten für Kasten:
+- **Chart-Prüfer, Titel (Bild 1 und 2):** Auftrag beschreibt jetzt jeden Kasten wie im Bild, mit der Gefechtsordnung
+  (Zone führt, Rand = Oberkante, Pivot = Auslöser, Wyckoff bei „abgelehnt“, Kullamägi bei „Ungleichgewicht“, Stopp am
+  10er/20er). Ende des Laufs nach dem Bild: Gegner antwortet (Knoten, alter Wert, AVWAP vom alten Hoch, Exzess),
+  Antrieb erlischt (Kraft ohne Weg, Klimax, Phasenwechsel, Rückschlag), Wert akzeptiert (Zeit und Volumen) – vorher
+  stand Kraft ohne Weg beim Gegner. Neue Elemente: Lauf zum anderen Rand, Ungleichgewicht, Neue Balance/Basenzählung.
+- **Chart-Prüfer, Gruppe (Bild 3):** alle 13 Kästen im Auftrag (vorher fehlten Anlass, „Gruppe folgt nicht“, „Geld
+  wandert weiter“, Neue Balance); der Quad steht im Material. Neue Elemente: Anlass, Anführer bricht aus, Schwestern
+  folgen, Gruppe folgt nicht, Ende des Laufs, Neue Balance.
+- **Markt:** wurde gar nicht geprüft – jetzt einmal je Lauf (`pruefen_markt`, O'Neil, Wertzonen, Breite, Regel 8).
+- **Setup-Prüfer:** kennt die Gefechtsordnung (jedes Setup als Weg durch den Kreislauf, zwei Einstiege, zwei Stopps,
+  Ausstieg am 10er/20er, Spring/Upthrust beschlossen) und sieht den Zustand des Titels im Kreislauf.
+- **Lücken in der App selbst** (der Prüfer meldet sie jetzt): die Gruppe nennt keinen Anlass, „Geld wandert weiter“
+  wird nicht gemessen, der Markt nennt keinen Anlass.

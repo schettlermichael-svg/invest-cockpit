@@ -73,8 +73,29 @@ Muster; „auch“ nennt die übrigen):
   Driftens), Bruch der Spanne (Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief).
   Einstieg = Unterkante; grün nur bis 5 % darunter. Stopp über dem Hoch des Auslösetags.
 - Überall: Fehlausbruch oder Rücktest → nicht grün; Kurs steht still (Tagesspanne unter 0,5 %) → nicht grün. Der Stopp
-  im Plan der App ist einheitlich 1,5 ATR vom Einstieg (Entscheidung des Nutzers vom 09.11.2026) – weicht er von der
-  Regel des Meisters ab, melde es als strittig, mit dem Stopp des Meisters.
+  im Plan der App ist heute noch einheitlich 1,5 ATR vom Einstieg (Entscheidung des Nutzers vom 09.11.2026; der
+  Struktur-Stopp kommt dazu, siehe Gefechtsordnung) – weicht er von der Regel des Meisters ab, melde es als strittig,
+  mit dem Stopp des Meisters.
+
+Die Gefechtsordnung der App (Micky 14.11.2026) – jedes Setup ist ein Weg durch den Kreislauf
+Balance → Test am Rand → abgelehnt/angenommen → Ungleichgewicht → Ende des Laufs → neue Balance:
+- Base-Ausbruch: Balance → Test am Rand → angenommen. Zwei Einstiege: früh am Rand (Low Cheat, Cheat – der Pivot liegt
+  unter der Oberkante der Zone) und am Ausbruch über den Pivot. Widerlegt bei „abgelehnt“ (Schluss zurück in der Zone).
+- Flagge und Momentum-Ausbruch: eine kleine Balance mitten im Ungleichgewicht → angenommen.
+- Sprung (EP) und Zahlen-Reaktion: der Anlass „neue Information“ springt direkt zu „angenommen“.
+- Spring/Upthrust (beschlossen, noch nicht gebaut): „abgelehnt“ → Lauf zum anderen Rand – Einstieg beim Schluss zurück in
+  der Zone, Stopp unter dem Tief bzw. über dem Hoch des Fehlausbruchs, Ziel der andere Rand. Siehst du einen, melde ihn
+  als „Übersehen“.
+- Shorts: gespiegelt.
+- Stopp: die App zeigt beide – den Struktur-Stopp (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles
+  Setup: Tagestief, höchstens eine Tagesspanne) und 1,5 ATR; der Nutzer wählt je Trade. Prüfe, ob der Struktur-Stopp
+  dort sitzt, wo der Weg widerlegt ist.
+- Ausstieg: der Stopp folgt dem 10er (schnelle Titel) bzw. 20er; Mauer, Kraft ohne Weg und Klimax ziehen ihn enger.
+- Daltons Annahme (der Wert folgt dem Kurs) ist ein Zeichen zum Halten oder Nachkaufen, keine Bedingung.
+- Markt (Regel 8): die Haltung des Marktes gilt für den Markt, nicht für den Titel – ein Setup wird nie wegen des
+  Marktes verworfen; Stärke in der Schwäche ist ein Vorteil.
+- Gruppe: die ganze Truppe misst (Gruppen-RS, Breite, Zufluss); prüfe, ob das Setup Rückenwind der Gruppe hat, und
+  melde es als Zeichen, nicht als Fehler.
 
 Die Meister:
 - Minervini: VCP mit mindestens 2 Kontraktionen, jede kleiner, Volumen trocknet aus; Kauf beim Ausbruch über den Pivot
@@ -191,6 +212,13 @@ def material(tk, df):
                      f"Plan der App: {e['seite']}, Einstieg {_z(e['wert'])} $ ({e['quelle']})")
     else:
         z.append("SETUP DER APP: keines (der Titel liegt in keiner Reihe des Kartentischs) – prüfe, ob eines übersehen ist")
+    kl = info.get("_kreislauf") or {}
+    au = kl.get("auktion")
+    if au:                                       # wo der Titel im Kreislauf steht (Weg des Setups prüfen)
+        import auktion
+        z.append(f"Zustand im Kreislauf: {auktion.wort(au)} · Phase {kl.get('phase')} · {au.get('unterzeile', '')}"
+                 + "".join(f" · Anlass: {x}" for x in au.get("anlass") or [])
+                 + "".join(f" · Ende: {x}" for x in au.get("ende") or []))
     if m:
         z.append(f"Lehrer Minervini · Base-Ausbruch: Ampel {m.get('ampel')}; {_regeln(m.get('regeln'))}"
                  + (f"; Pivot {_z(m['pivot'])} $" if m.get("pivot") else "")

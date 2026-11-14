@@ -52,10 +52,15 @@ KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,
 
 ELEMENTE = ["Zustand", "Anlass", "Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot",
             "Drittel des Pivots", "Enge/Kontraktionen", "Einquetschung", "Test am Rand: Zeichen",
-            "abgelehnt/angenommen", "Ende des Laufs", "Gegenseite (Mauer/Stütze)", "Eigen oder geliehen",
+            "abgelehnt/angenommen", "Lauf zum anderen Rand", "Ungleichgewicht", "Ende des Laufs",
+            "Neue Balance/Basenzählung", "Gegenseite (Mauer/Stütze)", "Eigen oder geliehen",
             "Kreislauf/Phase", "Short-Form", "AVWAP Hoch des Rückgangs", "AVWAP letztes Hoch",
             "AVWAP Tief der Bewegung", "AVWAP Ereignis", "Volumenprofil (Balance)", "Sonstiges"]
-ELEMENTE_GRUPPE = ["Zustand der Gruppe", "Feld (Rotation)", "Breite", "Anführer/Verfolger", "Geldfluss", "Sonstiges"]
+ELEMENTE_GRUPPE = ["Zustand der Gruppe", "Anlass", "Feld (Rotation)", "Anführer bricht aus", "Schwestern folgen/Breite",
+                   "Gruppe folgt nicht/Fehlausbruch", "Geldfluss", "Ende des Laufs", "Neue Balance", "Sonstiges"]
+ELEMENTE_MARKT = ["Zustand des Marktes", "Anlass", "Balance (Wertzonen)", "Test am Rand (Erholungsversuch)",
+                  "Follow-Through-Day/angenommen", "abgelehnt", "Distributionstage", "Folgen die Schwestern (Breite)",
+                  "Ende des Laufs", "Sonstiges"]
 GRUPPEN = 20
 
 SYSTEM = """Du bist der Chart-Prüfer des Invest Cockpits. Du erkennst nichts selbst für die App – du prüfst, ob die
@@ -64,12 +69,22 @@ je Titel ein Bild (1 Jahr Tageskerzen; eingezeichnet: Zone der App als Rahmen, P
 Enge, AVWAP-Linien ab ihren Ankern, Beginn der laufenden Balance, Mauer rot und Stütze grün als Bänder rechts, Marken
 für die Ereignisse der App, Wochen-Schwunghochs als Dreiecke) und die Zahlen der App.
 
-Unser Bild – der Code für Balance und Ungleichgewicht: Ein Anlass (Information wie Zahlen oder eine Lücke; leere
-Verteidiger; Zwang gefangener Händler) bringt die Balance an den Rand. Am Rand wird getestet. Wird der Ausbruch
-abgelehnt, läuft der Kurs zum anderen Rand. Wird er angenommen, entsteht ein Ungleichgewicht, das läuft, bis eine von
-drei Kräften es beendet: der Gegner antwortet (Mauer, Kraft ohne Weg, Exzess), der Antrieb erlischt (Klimax, Wechsel
-der Phase, Rückschlag), der Wert wird akzeptiert (neue Wertzone). Zustände: Balance, Test am Rand, abgelehnt,
-angenommen, Ungleichgewicht, Ende des Laufs.
+Unser Bild – der Code für Balance und Ungleichgewicht (genau so in der App gezeichnet):
+- Anlass (bringt die Balance an den Rand): neue Information (Wert ändert sich: Zahlen, Lücke, Nachricht), Verteidiger
+  leer (Angebot aufgebraucht: Enge, Volumen trocknet aus), Zwang (Stopps, Gefangene; geht im Spring/Upthrust auf).
+- Balance: die Ursache wird aufgebaut. Die Zone des Scanners führt (Rand, Pivot, Stopp); Daltons überlappender Wert
+  bestätigt nur. Weinsteins Stufe (1 Basis, 2 Fortsetzung, 3 Verteilung) steht als Rahmen daneben.
+- Test am Rand: Wer ist stärker am Rand? Der Rand ist die Oberkante (bzw. Unterkante) der Zone; der Pivot ist der
+  Auslöser – liegt er darunter, ist es der frühe Einstieg (Cheat), an der Oberkante der Ausbruch.
+- Abgelehnt: zurück in den Wert – Wyckoff führt: Kurs bricht über den Rand und schließt zurück in der Zone (Spring
+  unten, Upthrust oben). Danach Lauf zum anderen Rand: Gefangene treiben den Kurs.
+- Angenommen: der Wert folgt dem Kurs (Ausbruch mit Volumen über den Pivot; Dalton bestätigt, wenn der Wert folgt).
+- Ungleichgewicht: schnell durch dünnes Volumen – Kullamägi führt: der Kurs reitet am 10er bzw. 20er.
+- Ende des Laufs (drei Kräfte): Gegner antwortet (Knoten im Volumenprofil, alter Wert, AVWAP vom alten Hoch, Exzess);
+  Antrieb erlischt (Kraft ohne Weg, Klimax, Wechsel der Phase, Rückschlag); Wert akzeptiert (Zeit und Volumen, neue
+  Wertzone). Der Stopp folgt dem 10er/20er; diese Zeichen ziehen ihn enger.
+- Neue Balance: der Kreislauf beginnt neu, mit Gedächtnis (O'Neil: Basenzählung, späte Basen sind gefährlicher).
+Zustände der App: Balance, Test am Rand, abgelehnt, angenommen, Ungleichgewicht, Ende des Laufs.
 
 Die Regeln der Meister:
 - O'Neil: Tasse 7–65 Wochen, 12–33 % tief (im Bärenmarkt bis 40–50 %). Der Henkel liegt in der oberen Hälfte der
@@ -112,16 +127,39 @@ Kurs), und ob du sicher bist oder es strittig ist (Auslegungssache). Erfinde kei
 Zahlen der App oder klar am Bild ablesbar, sonst „etwa“. Kein Weichmacher, einfaches Deutsch. Höchstens 8 Widersprüche,
 die wichtigsten zuerst; jedes Feld höchstens zwei kurze Sätze."""
 
-SYSTEM_GRUPPE = """Du bist der Chart-Prüfer des Invest Cockpits für Gruppen (Sektoren, Branchen, Themen). Unser Bild: Geld
-fließt in eine Gruppe – der Anführer bricht aus, folgen die Schwestern? Derselbe Code wie beim Titel: Balance, Test am
-Rand (Feld Erstarkend), angenommen (Breite steigt, Zufluss), Ungleichgewicht (Feld Führend), Ende des Laufs (Feld
-Ermüdend, Breite wird schmal), abgelehnt (Erstarkend kippt zurück nach Abgehängt). Felder der Rotationskarte:
-RS-Stärke und Schwung je um 100 (über 100 = besser als der Markt bzw. steigend). Meister: O'Neil – die führenden
-Aktien kommen aus führenden Gruppen, eine Gruppe ist stark, wenn mehrere Mitglieder zugleich stark sind; Weinstein –
-Gruppenanalyse mit der relativen Stärke der Gruppe. Du bekommst ein Bild (gleichgewichteter Index der Mitglieder, seine
-RS-Linie zum S&P 500, die Breite = Anteil der Mitglieder über dem GD50) und die Zahlen der App. Prüfe, ob der Zustand
-und seine Belege zum Bild passen. Melde nur Widersprüche (Element, Befund mit Datum/Zahl, Regel, was richtig wäre,
-sicher/strittig); was stimmt, in einem Satz. Erfinde keine Zahl. Einfaches Deutsch."""
+SYSTEM_GRUPPE = """Du bist der Chart-Prüfer des Invest Cockpits für Gruppen (Sektoren, Branchen, Themen). Unser Bild –
+der Code für den Geldfluss der Gruppen (genau so in der App gezeichnet):
+- Anlass: neue Information (Zins, Rohstoffe, Quad im Wirtschaftswetter), Verkäufer leer (der Ausverkauf ist durch),
+  Zwang (Umschichtung, Abfluss).
+- Balance: die RS der Gruppe läuft seitwärts.
+- Anführer bricht aus: folgen die Schwestern? (App: Feld Erstarkend, Anführer genannt)
+- Gruppe folgt nicht: das Geld rotiert zurück → Fehlausbruch der Gruppe, zurück in die Mitte (App: Erstarkend kippt
+  zurück nach Abgehängt = abgelehnt).
+- Schwestern folgen: die Breite wächst, Zufluss (App: angenommen = Breite +10 Punkte in 4 Wochen und Zufluss ab 1,1).
+- Gruppe führt: das Geld fließt stetig (App: Feld Führend = Ungleichgewicht).
+- Ende (drei Wege): Geld wandert weiter (die nächste Gruppe lockt), Breite wird schmal (der Anführer läuft allein),
+  RS flacht ab (zurück zur Mitte; App: Feld Ermüdend).
+- Neue Balance: die Rotation geht weiter.
+Meister: O'Neil und Weinstein führen – die führenden Aktien kommen aus führenden Gruppen, eine Gruppe ist stark, wenn
+die ganze Truppe vorrückt (Gruppen-RS, Breite, Zufluss); Kullamägis Führer-Rang (die stärksten 2 %) benennt die
+Anführer nur als Zeichen. Felder der Rotationskarte: RS-Stärke und Schwung je um 100 (über 100 = besser als der Markt
+bzw. steigend). Du bekommst ein Bild (gleichgewichteter Index der Mitglieder, seine RS-Linie zum S&P 500, die Breite =
+Anteil der Mitglieder über dem GD50) und die Zahlen der App, dazu den Quad. Prüfe, ob der Zustand und seine Belege zum
+Bild und zum Code passen – auch, ob ein Kasten fehlt, den die Zahlen zeigen (etwa ein Anlass oder ein Ende, das die
+App nicht nennt). Melde nur Widersprüche (Element, Befund mit Datum/Zahl, Regel, was richtig wäre, sicher/strittig);
+was stimmt, in einem Satz. Erfinde keine Zahl. Einfaches Deutsch. Höchstens 8 Widersprüche."""
+
+SYSTEM_MARKT = """Du bist der Chart-Prüfer des Invest Cockpits für den Gesamtmarkt. Derselbe Code wie beim Titel:
+Anlass → Balance (Wertzonen von S&P 500 und Nasdaq) → Test am Rand (Erholungsversuch in der Korrektur) → angenommen
+(Follow-Through-Day) oder abgelehnt (Erholungsversuch gescheitert: Schluss unter dem Tief des Versuchs) →
+Ungleichgewicht (bestätigter Aufwärtstrend bzw. Korrektur ohne Erholungsversuch) → Ende des Laufs (Gegner antwortet:
+Distributionstage, Abgabe am Rand; Antrieb erlischt: Überhitzung, Topbildung, Kapitulation). Folgen die Schwestern: die
+Breite (Anteil der Titel über dem GD50). Meister: O'Neil führt (Distributionstage: fallender Schluss bei höherem Volumen
+als am Vortag, 5–6 in 4–5 Wochen = unter Druck; Follow-Through-Day ab Tag 4 des Erholungsversuchs mit deutlichem
+Plus bei höherem Volumen), Dalton (Wertzonen). Regel der App (Micky, Regel 8): die Haltung des Marktes gilt für den
+Markt, nicht für den Titel – kein Titel wird wegen des Marktes verworfen. Prüfe, ob Zustand und Belege zu den Zahlen
+und zum Code passen, auch ob ein Kasten fehlt. Melde nur Widersprüche (Element, Befund mit Zahl, Regel, was richtig
+wäre, sicher/strittig); was stimmt, in einem Satz. Erfinde keine Zahl. Einfaches Deutsch. Höchstens 8 Widersprüche."""
 
 def _schema(elemente):
     return {
@@ -142,6 +180,7 @@ def _schema(elemente):
 
 SCHEMA = _schema(ELEMENTE)
 SCHEMA_GRUPPE = _schema(ELEMENTE_GRUPPE)
+SCHEMA_MARKT = _schema(ELEMENTE_MARKT)
 
 
 def _z(x, f=".2f"):
@@ -520,10 +559,47 @@ def gruppen_material(g):
          f"Breite: {g.get('breite')} % über dem GD50 (vor 4 Wochen {g.get('breite_vor4')} %)",
          f"Anführer: {', '.join(g.get('anfuehrer') or []) or 'keine'} · Verfolger: "
          f"{', '.join(g.get('verfolger') or []) or 'keine'} · vorne: {g.get('vorne')}"]
+    z.append(_quad_text())
     if e:
         z.append(f"ZUSTAND DER APP: {auktion.wort(e)} · {e.get('unterzeile', '')}")
+        z += [f"  Anlass: {x}" for x in e.get("anlass") or []] or ["  Anlass: die App nennt keinen"]
         z += [f"  Beleg [{p}]: {x}" for p, x in e.get("belege") or []] + [f"  Ende: {x}" for x in e.get("ende") or []]
     return "\n".join(z)
+
+
+def _quad_text():
+    """Wirtschaftswetter für den Anlass „neue Information“ der Gruppen (Bild 3: Zins, Rohstoffe, Quad)."""
+    try:
+        import lage
+        q = lage.quadrant()
+        return (f"Wirtschaftswetter: Quad {q['quad']} {q['name']} (amtlich Quad {q['amtlich']}"
+                + (", Wechsel möglich" if q.get("wechsel_moeglich") else "") + f"), Wachstum {q['wachstum']['richtung']}, "
+                f"Inflation {q['inflation']['richtung']}; typische Führer des Quads: {', '.join(q.get('fuehrer') or [])}")
+    except Exception:  # noqa: BLE001
+        return "Wirtschaftswetter: nicht verfügbar"
+
+
+def markt_material():
+    """Zustand des Marktes mit Belegen, O'Neils Text, Marktzone und Quad (Bild 1/2 auf Ebene Markt)."""
+    import auktion
+    import marktklima
+    m = marktklima.markt()
+    e = m.get("auktion") or {}
+    z = [f"Marktampel (O'Neil): {m.get('wort')} seit {m.get('seit')} · {m.get('zustand')}", f"O'Neil: {m.get('text')}",
+         f"Zeichen: {m.get('zeichen')}", _quad_text()]
+    if e:
+        z.append(f"ZUSTAND DER APP: {auktion.wort(e)} · {e.get('unterzeile', '')}")
+        z += [f"  Anlass: {x}" for x in e.get("anlass") or []] or ["  Anlass: die App nennt keinen"]
+        z += [f"  Beleg [{p}]: {x}" for p, x in e.get("belege") or []] + [f"  Ende: {x}" for x in e.get("ende") or []]
+    return "\n".join(z)
+
+
+def pruefen_markt():
+    import modell
+    text = markt_material()
+    antwort = modell._formular(SYSTEM_MARKT, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_MARKT, 2500)
+    return {"tk": "Markt: S&P 500 und Nasdaq", "gruppe": "Markt", "stimmt": antwort.get("stimmt", ""),
+            "widersprueche": antwort.get("widersprueche") or [], "zahlen": text}
 
 
 def pruefen_gruppe(g):
@@ -581,7 +657,8 @@ def lauf(n=STICHPROBE):
     os.makedirs(ORDNER, exist_ok=True)
     rest = modell.DECKEL_USD - modell.kosten()["usd"]
     n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))
-    probe = [(tk, g) for tk, g in stichprobe(max(0, n - GRUPPEN))] + [(g, None) for g in gruppen_stichprobe()]
+    probe = ([(tk, g) for tk, g in stichprobe(max(0, n - GRUPPEN - 1))] + [(g, None) for g in gruppen_stichprobe()]
+             + [("Markt", "Markt")])                      # der Markt einmal je Lauf (14.11.2026: fehlte im Prüfer)
     start = datetime.now()
     vorher = modell.kosten()["usd"]
     prot = {"start": f"{start:%d.%m.%Y %H:%M}", "pid": os.getpid(), "n": len(probe), "fertig": 0, "ende": None}
@@ -590,7 +667,8 @@ def lauf(n=STICHPROBE):
     json_schreiben(PROTOKOLL, prot)
     for tk, gruppe in probe:
         try:
-            r = pruefen(tk) if gruppe is not None else pruefen_gruppe(tk)
+            r = (pruefen_markt() if gruppe == "Markt" else pruefen(tk) if gruppe is not None
+                 else pruefen_gruppe(tk))
         except modell.Deckel as x:
             bericht["abbruch"] = str(x)
             break
