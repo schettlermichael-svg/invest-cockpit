@@ -566,7 +566,7 @@ def _chartpruefer_zeigen():
     with st.expander("🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister", expanded=laeuft):
         st.caption("Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
                    f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
-                   "an und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
+                   "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
                    f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$).")
         st.button("Prüflauf starten", disabled=laeuft, on_click=_pruefer_starten, key="pruefer_start")
         if laeuft:
@@ -588,11 +588,13 @@ def _chartpruefer_zeigen():
                     + (f" · {len(fehler)} nicht prüfbar" if fehler else ""))
         for element in sorted(je, key=lambda k: -len(je[k])):
             zeilen = "".join(
-                f'<tr><td style="padding:3px 8px"><a href="?seite=Titelseite&t={esc(tk)}" target="_blank">{esc(tk)}</a>'
+                f'<tr><td style="padding:3px 8px">'
+                + (esc(tk) if ":" in tk else f'<a href="?seite=Titelseite&t={esc(tk)}" target="_blank">{esc(tk)}</a>')
+                + (
                 f'<br><span style="font-size:11px;opacity:.7">{esc(g)}</span></td>'
                 f'<td style="padding:3px 8px">{"●" if w["gewicht"] == "sicher" else "○"} {esc(w["befund"])}</td>'
                 f'<td style="padding:3px 8px">{esc(w["richtig"])}</td>'
-                f'<td style="padding:3px 8px;font-size:12px;opacity:.8">{esc(w["regel"])}</td></tr>'
+                f'<td style="padding:3px 8px;font-size:12px;opacity:.8">{esc(w["regel"])}</td></tr>')
                 for tk, g, w in je[element])
             st.markdown(f'<details><summary style="cursor:pointer"><b>{esc(element)}</b> · {len(je[element])} '
                         f'({sum(1 for *_, w in je[element] if w["gewicht"] == "sicher")} sicher)</summary>'

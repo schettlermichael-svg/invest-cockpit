@@ -3,10 +3,14 @@ denselben Kursen immer dieselbe Zone, denselben Pivot, dieselben Anker. Der Prü
 Charts mit dem Auge der Meister an und meldet, wo er unseren Regeln widerspricht. Aus den Widersprüchen werden
 Regeländerungen im Code, gemessen über alle Titel; strittige Fälle entscheidet Micky.
 
-Ablauf: Stichprobe (etwa 150 Titel, gleichmäßig über Base, Konsolidierung, Flagge, offene Zone, keine Zone und die
-Setups des Kartentischs) → je Titel ein Bild (1 Jahr Tageskerzen mit Zone, Pivot, Enge, AVWAP-Ankern, Beginn der
-Balance, Wochen-Schwunghochs) und die Zahlen dazu → Urteil über ein festes Formular → Bericht in daten/chartpruefer/.
-Kosten etwa 3 Cent je Chart, geprüft gegen den Monatsdeckel des Modells (50 $).
+Ablauf: Stichprobe (etwa 130 Titel, gleichmäßig über Base, Konsolidierung, Flagge, offene Zone, keine Zone und die
+Setups des Kartentischs, dazu 20 Gruppen über die Felder der Rotationskarte) → je Titel ein Bild (1 Jahr Tageskerzen mit
+Zone, Pivot, Enge, AVWAP-Ankern, Beginn der Balance, Mauer und Stütze, Marken für Ausbruch, Fehlausbruch, Signale des
+Market Profile, Spring, Upthrust, Kraft ohne Weg, Klimax, Exzess, Wochen-Schwunghochs) und die Zahlen der ganzen Kette
+(Kreislauf, Zeichen, Short-Formen, Zustand mit Anlass, Belegen, Ende, Gegenseite, eigen/geliehen); je Gruppe ein Bild
+(Index der Mitglieder, RS-Linie, Breite) mit Feld, Zufluss, Breite, Anführern und Zustand → Urteil über ein festes
+Formular → Bericht in daten/chartpruefer/. Etwa 4 Cent je Chart, geprüft gegen den Monatsdeckel (50 $). Erweitert am
+14.11.2026 auf die ganze Kette der drei Bilder (vorher nur Zone, Pivot, Enge, Anker).
 
 Regeln der Meister, die der Prüfer bekommt (recherchiert 14.11.2026, Quellen im Konzeptdokument):
   O'Neil   Tasse 7–65 Wochen, 12–33 % tief (Bärenmarkt bis 40–50 %); Henkel in der oberen Hälfte, höchstens etwa
@@ -39,53 +43,88 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 ORDNER = os.path.join(HIER, "..", "daten", "chartpruefer")
 PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
-STICHPROBE = 150
-KOSTEN_JE_CHART = 0.03         # $ (Bild ~1.500 Token, Zahlen ~1.500, Antwort ~600)
+STICHPROBE = 150               # davon GRUPPEN Gruppen
+KOSTEN_JE_CHART = 0.04         # $ (Bild ~1.500 Token, Zahlen und Kette ~2.500, Antwort ~800)
 
-ELEMENTE = ["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot", "Drittel des Pivots",
-            "Enge/Kontraktionen", "Einquetschung", "AVWAP Hoch des Rückgangs", "AVWAP letztes Hoch",
+ELEMENTE = ["Zustand", "Anlass", "Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot",
+            "Drittel des Pivots", "Enge/Kontraktionen", "Einquetschung", "Test am Rand: Zeichen",
+            "abgelehnt/angenommen", "Ende des Laufs", "Gegenseite (Mauer/Stütze)", "Eigen oder geliehen",
+            "Kreislauf/Phase", "Short-Form", "AVWAP Hoch des Rückgangs", "AVWAP letztes Hoch",
             "AVWAP Tief der Bewegung", "AVWAP Ereignis", "Volumenprofil (Balance)", "Sonstiges"]
+ELEMENTE_GRUPPE = ["Zustand der Gruppe", "Feld (Rotation)", "Breite", "Anführer/Verfolger", "Geldfluss", "Sonstiges"]
+GRUPPEN = 20
 
 SYSTEM = """Du bist der Chart-Prüfer des Invest Cockpits. Du erkennst nichts selbst für die App – du prüfst, ob die
-App ihre Zonen, Pivots und Anker nach den Regeln der Meister richtig gesetzt hat. Du bekommst je Titel ein Bild
-(1 Jahr Tageskerzen, eingezeichnet: Zone der App als Rahmen, Pivot als Linie, Kontraktionen der Enge, AVWAP-Linien ab
-ihren Ankern, Beginn der laufenden Balance, Wochen-Schwunghochs als Dreiecke) und die Zahlen der App.
+App ihre Zonen, Zeichen, Pivots, Anker und ihren Zustand nach den Regeln der Meister richtig gesetzt hat. Du bekommst
+je Titel ein Bild (1 Jahr Tageskerzen; eingezeichnet: Zone der App als Rahmen, Pivot als Linie, Kontraktionen der
+Enge, AVWAP-Linien ab ihren Ankern, Beginn der laufenden Balance, Mauer rot und Stütze grün als Bänder rechts, Marken
+für die Ereignisse der App, Wochen-Schwunghochs als Dreiecke) und die Zahlen der App.
+
+Unser Bild – der Code für Balance und Ungleichgewicht: Ein Anlass (Information wie Zahlen oder eine Lücke; leere
+Verteidiger; Zwang gefangener Händler) bringt die Balance an den Rand. Am Rand wird getestet. Wird der Ausbruch
+abgelehnt, läuft der Kurs zum anderen Rand. Wird er angenommen, entsteht ein Ungleichgewicht, das läuft, bis eine von
+drei Kräften es beendet: der Gegner antwortet (Mauer, Kraft ohne Weg, Exzess), der Antrieb erlischt (Klimax, Wechsel
+der Phase, Rückschlag), der Wert wird akzeptiert (neue Wertzone). Zustände: Balance, Test am Rand, abgelehnt,
+angenommen, Ungleichgewicht, Ende des Laufs.
 
 Die Regeln der Meister:
 - O'Neil: Tasse 7–65 Wochen, 12–33 % tief (im Bärenmarkt bis 40–50 %). Der Henkel liegt in der oberen Hälfte der
   Base, höchstens etwa 12–15 % tief, sein Hoch höchstens 15 % unter dem Hoch der linken Seite. Pivot = Hoch des
   Henkels, ohne Henkel das Hoch der linken Seite. Doppelboden: das zweite Tief unterschreitet das erste, Pivot = die
-  Spitze in der Mitte des W. Flache Base ab 5 Wochen, höchstens etwa 15 % tief.
+  Spitze in der Mitte des W. Flache Base ab 5 Wochen, höchstens etwa 15 % tief. Ausbruch mit Volumen über dem
+  Schnitt; Fehlausbruch: zurück unter den Pivot. Distributionstage: fallender Schluss bei höherem Volumen als am Vortag.
 - Minervini (VCP): 2–6 Kontraktionen, jede grob halb so tief wie die vorige, das Volumen trocknet aus; Pivot = Hoch
   der letzten Kontraktion. Low Cheat im unteren Drittel, Cheat im mittleren, Henkel im oberen Drittel. Nach einer
   gescheiterten Tasse bildet sich eine neue Base.
 - Kullamägi (Flagge): Fahnenstange ab 30 % in 1–3 Monaten, danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs.
+  Episodic Pivot: Lücke mit sehr hohem Volumen auf eine Nachricht.
+- Weinstein (Phasen): 1 Basis seitwärts um die flache 30-Wochen-Linie, 2 Aufwärts über der steigenden Linie,
+  3 Verteilung seitwärts, die Linie flacht ab, 4 Abwärts unter der fallenden Linie.
+- Wyckoff: Spring = Tief kurz unter der Unterkante der Spanne, schnell zurückgekauft; Upthrust = Hoch kurz über der
+  Oberkante, Schluss zurück in der Spanne. Kraft ohne Weg: viel Volumen, wenig Kursweg.
+- Morales/Kacher (Pocket Pivot): Volumen des Anstiegstags über dem höchsten Volumen der Abwärtstage der letzten 10 Tage.
 - Einquetschung: steigende Tiefs gegen eine flache Oberkante (aufsteigendes Dreieck).
 - Shannon (AVWAP): Ein Hoch wird erst durch den Rückgang danach zum Anker. Anker sind das Pivot-Tief, das einen Trend
   startete, das jüngste große Hoch, der Tag der Zahlen bzw. eine Kurslücke; mehrere übereinander.
-- Dalton (Profil): Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende
-  Balance zusammen.
+- Dalton: Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende Balance.
+  Exzess = scharfe Ablehnung am Extrem (Auktion dort beendet); flache Kante (schwaches Hoch/Tief) = Auktion unfertig.
 
-Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln. Melde nur Widersprüche – was stimmt, fasst du in einem
-Satz zusammen. Jeder Widerspruch nennt: das Element, was falsch ist (mit Datum und Kurs aus Bild oder Zahlen), die
-Regel des Meisters, was richtig wäre (Datum, Kurs), und ob du sicher bist oder es strittig ist (Auslegungssache).
-Erfinde keine Zahl: Daten und Kurse nur aus den Zahlen der App oder klar am Bild ablesbar, sonst „etwa“.
-Kein Weichmacher, einfaches Deutsch."""
+Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Zustand zu den Belegen passt und ob die
+Belege am richtigen Platz der Kette stehen. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen. Jeder
+Widerspruch nennt: das Element, was falsch ist (mit Datum und Kurs), die Regel des Meisters, was richtig wäre (Datum,
+Kurs), und ob du sicher bist oder es strittig ist (Auslegungssache). Erfinde keine Zahl: Daten und Kurse nur aus den
+Zahlen der App oder klar am Bild ablesbar, sonst „etwa“. Kein Weichmacher, einfaches Deutsch."""
 
-SCHEMA = {
-    "type": "object",
-    "properties": {
-        "stimmt": {"type": "string", "description": "ein Satz: was die App richtig gesetzt hat"},
-        "widersprueche": {"type": "array", "items": {"type": "object", "properties": {
-            "element": {"type": "string", "enum": ELEMENTE},
-            "befund": {"type": "string", "description": "was falsch ist, mit Datum und Kurs"},
-            "regel": {"type": "string", "description": "Meister und Regel"},
-            "richtig": {"type": "string", "description": "was richtig wäre, mit Datum und Kurs"},
-            "gewicht": {"type": "string", "enum": ["sicher", "strittig"]}},
-            "required": ["element", "befund", "regel", "richtig", "gewicht"]}},
-    },
-    "required": ["stimmt", "widersprueche"],
-}
+SYSTEM_GRUPPE = """Du bist der Chart-Prüfer des Invest Cockpits für Gruppen (Sektoren, Branchen, Themen). Unser Bild: Geld
+fließt in eine Gruppe – der Anführer bricht aus, folgen die Schwestern? Derselbe Code wie beim Titel: Balance, Test am
+Rand (Feld Erstarkend), angenommen (Breite steigt, Zufluss), Ungleichgewicht (Feld Führend), Ende des Laufs (Feld
+Ermüdend, Breite wird schmal), abgelehnt (Erstarkend kippt zurück nach Abgehängt). Felder der Rotationskarte:
+RS-Stärke und Schwung je um 100 (über 100 = besser als der Markt bzw. steigend). Meister: O'Neil – die führenden
+Aktien kommen aus führenden Gruppen, eine Gruppe ist stark, wenn mehrere Mitglieder zugleich stark sind; Weinstein –
+Gruppenanalyse mit der relativen Stärke der Gruppe. Du bekommst ein Bild (gleichgewichteter Index der Mitglieder, seine
+RS-Linie zum S&P 500, die Breite = Anteil der Mitglieder über dem GD50) und die Zahlen der App. Prüfe, ob der Zustand
+und seine Belege zum Bild passen. Melde nur Widersprüche (Element, Befund mit Datum/Zahl, Regel, was richtig wäre,
+sicher/strittig); was stimmt, in einem Satz. Erfinde keine Zahl. Einfaches Deutsch."""
+
+def _schema(elemente):
+    return {
+        "type": "object",
+        "properties": {
+            "stimmt": {"type": "string", "description": "ein Satz: was die App richtig gesetzt hat"},
+            "widersprueche": {"type": "array", "items": {"type": "object", "properties": {
+                "element": {"type": "string", "enum": elemente},
+                "befund": {"type": "string", "description": "was falsch ist, mit Datum und Kurs"},
+                "regel": {"type": "string", "description": "Meister und Regel"},
+                "richtig": {"type": "string", "description": "was richtig wäre, mit Datum und Kurs"},
+                "gewicht": {"type": "string", "enum": ["sicher", "strittig"]}},
+                "required": ["element", "befund", "regel", "richtig", "gewicht"]}},
+        },
+        "required": ["stimmt", "widersprueche"],
+    }
+
+
+SCHEMA = _schema(ELEMENTE)
+SCHEMA_GRUPPE = _schema(ELEMENTE_GRUPPE)
 
 
 def _z(x, f=".2f"):
@@ -200,7 +239,59 @@ def material(tk, df):
         zeilen.append(f"Einquetschung der App: {json.dumps({k: (str(v) if not isinstance(v, (int, float)) else v) for k, v in ein.items()}, ensure_ascii=False)[:300]}")
     else:
         zeilen.append("Einquetschung der App: keine")
-    marken = {"zone": z, "enge": e, "anker": a, "profil": pa, "wh": wh}
+    # Die Kette (13./14.11.2026): Kreislauf, Zeichen, Zustand mit Belegen, Short-Formen, Market Profile
+    import auktion
+    import daten
+    import volumenprofil
+    idx = daten.kurse_gespeichert(daten.INDEX)
+    br = vcp_zone.ausbruch(df, jetzt=z)
+    fa = vcp_zone.ausbruch_text(br) if br and br.get("fehl") else None
+    k = zeichen.fuer_titel(tk, df, idx, g, fehlausbruch=fa)
+    zst = auktion.fuer_titel(tk, df, k, idx, mp, br, z, g) if k else None
+    vv = volumenprofil.verankert(df, zt, z.get("start") if z.get("zone") else None, wb) or {}
+    if k:
+        zeilen.append(f"Kreislauf (Weinstein): Phase {k['phase']} {zeichen.PHASE_NAME.get(k['phase'], '')}"
+                      + (f", Wechsel zu {k['ziel']} zeichnet sich ab" if k.get("ziel") else "")
+                      + (", Rückschlag" if k.get("rueckschlag") else ""))
+        for x in k.get("zeichen") or []:
+            zeilen.append(f"Zeichen der App ({x['seite']}, {x['art']}): {x['text']}")
+    if br:
+        zeilen.append(f"Ausbruch des Scanners: {_d(br['tag'])} über {_z(br['pivot'])} $"
+                      + (f", Fehlausbruch am {_d(br['fehl_tag'])}" if br.get("fehl") else "")
+                      + (f", Volumen {_z(br['volumen'])}-fach" if br.get("volumen") else ""))
+    sig = (mp or {}).get("signale") or []
+    if sig:
+        zeilen.append("Signale des Market Profile (letzte 60 Tage): " + ", ".join(
+            f"{x['art']} {x['dir']} {_d(x['tag'])}" for x in sig if pd.Timestamp(x["tag"]) >= df.index[-60]))
+    if (mp or {}).get("zustand"):
+        zeilen.append(f"Market Profile heute: {mp['zustand'].get('wort')}")
+    for name, fn in (("Ermüdung", vcp_zone.ermuedung), ("Bärenflagge", vcp_zone.baerenflagge),
+                     ("Bruch der Spanne", vcp_zone.spannenbruch)):
+        try:
+            r = fn(df)
+        except Exception:  # noqa: BLE001
+            r = None
+        if r:
+            zeilen.append(f"Short-Form {name}: Bruch am {_d(r['tag'])}, Spanne {_z(r['unten'])}–{_z(r['oben'])} $, "
+                          f"Ampel {r['ampel']}")
+    if vv.get("mauer"):
+        zeilen.append(f"Mauer (Volumenknoten über dem Kurs): {_z(vv['mauer'][0])}–{_z(vv['mauer'][1])} $")
+    if vv.get("stuetze"):
+        zeilen.append(f"Stütze (Volumenknoten unter dem Kurs): {_z(vv['stuetze'][0])}–{_z(vv['stuetze'][1])} $")
+    if zst:
+        zeilen.append(f"ZUSTAND DER APP: {auktion.wort(zst)} · {zst.get('unterzeile', '')}")
+        for x in zst.get("anlass") or []:
+            zeilen.append(f"  Anlass: {x}")
+        for platz, x in zst.get("belege") or []:
+            zeilen.append(f"  Beleg [{platz}]: {x}")
+        for x in zst.get("ende") or []:
+            zeilen.append(f"  Ende des Laufs: {x}")
+        for x in zst.get("gegenseite") or []:
+            zeilen.append(f"  Gegenseite: {x}")
+        if zst.get("kraft"):
+            zeilen.append(f"  Eigen oder geliehen: {zst['kraft']['text']}")
+    marken = {"zone": z, "enge": e, "anker": a, "profil": pa, "wh": wh, "vv": vv, "br": br, "sig": sig,
+              "mess": (zst or {}).get("messung") or {}, "zeichen": (k or {}).get("zeichen") or []}
     return marken, "\n".join(zeilen)
 
 
@@ -247,6 +338,8 @@ def bild(tk, df, marken):
              "ereignis": "AVWAP Ereignis"}
     for k, t in a.items():
         r = avwap.reihe(df, t)
+        if r.empty:
+            continue
         r = r[r.index >= d.index[0]]
         if len(r):
             ax.plot([px(i) for i in r.index], r.values, color=farben[k], linewidth=1.4, label=f"{namen[k]} ab {_d(t)}")
@@ -257,6 +350,41 @@ def bild(tk, df, marken):
     for t, p in marken["wh"]:
         if t >= d.index[0]:
             ax.plot(px(t), p * 1.01, "v", color="#555", ms=6)
+    vv = marken.get("vv") or {}
+    for schl, farbe, wort in (("mauer", "#D32F2F", "Mauer"), ("stuetze", "#388E3C", "Stütze")):
+        if vv.get(schl):
+            u, o = vv[schl][0], vv[schl][1]
+            ax.axhspan(u, o, xmin=0.85, xmax=1.0, color=farbe, alpha=0.18)
+            ax.text(len(d) - 1, o, f"{wort} {_z(u)}–{_z(o)}", color=farbe, fontsize=8, ha="right", va="bottom")
+
+    def marke(t, text, farbe, oben=True):
+        t = pd.Timestamp(t)
+        if t < d.index[0] or t > d.index[-1]:
+            return
+        i = px(t)
+        y = d["High"].iloc[min(i, len(d) - 1)] * 1.025 if oben else d["Low"].iloc[min(i, len(d) - 1)] * 0.975
+        ax.annotate(text, (i, y), color=farbe, fontsize=8, ha="center", va="bottom" if oben else "top",
+                    fontweight="bold")
+
+    br = marken.get("br")
+    if br:
+        marke(br["tag"], "Ausbruch", "#1565C0")
+        if br.get("fehl"):
+            marke(br["fehl_tag"], "Fehlausbruch", "#B71C1C", oben=False)
+    for x in marken.get("sig") or []:                 # nur die letzten 60 Tage (wie in den Zahlen), sonst zu voll
+        if x["art"] in ("A", "U", "S", "R") and pd.Timestamp(x["tag"]) >= df.index[-60]:
+            marke(x["tag"], f"MP {x['art']}{x['dir']}", "#6A1B9A", oben=x["dir"] == "↑")
+    m = marken.get("mess") or {}
+    if m.get("kraft_ohne_weg"):
+        marke(m["kraft_ohne_weg"]["tag"], "Kraft ohne Weg", "#E65100", oben=m["kraft_ohne_weg"]["rand"] == "oben")
+    if m.get("klimax"):
+        marke(m["klimax"]["tag"], m["klimax"]["art"], "#AD1457", oben=m["klimax"]["art"] == "Kauf-Klimax")
+    for seite, x in (m.get("exzess") or {}).items():
+        marke(x["tag"], "Exzess" if x["art"] == "Exzess" else "flache Kante", "#00695C", oben=seite == "oben")
+    for z_ in marken.get("zeichen") or []:
+        for vor in ("Spring", "Upthrust"):
+            if z_["text"].startswith(vor) and z_.get("tag"):
+                marke(z_["tag"], vor, "#2E7D32" if vor == "Spring" else "#C62828", oben=vor == "Upthrust")
     ticks = list(range(0, len(d), max(1, len(d) // 12)))
     av.set_xticks(ticks)
     av.set_xticklabels([f"{d.index[i]:%d.%m.%y}" for i in ticks], fontsize=8)
@@ -269,6 +397,96 @@ def bild(tk, df, marken):
     plt.close(fig)
     return base64.b64encode(buf.getvalue()).decode()
 
+
+
+# ── Gruppen (Geldfluss in Sektoren, Branchen, Themen) ───────────────────────────────────────────────────────────
+def gruppen_stichprobe(n=GRUPPEN, seed=None):
+    """Gleichmäßig über die Felder der Rotationskarte, nur Gruppen mit mindestens 5 Mitgliedern."""
+    import rueckenwind
+    erg = rueckenwind.laden() or {}
+    rnd = random.Random(seed or f"{datetime.now():%Y-%m-%d}")
+    je = {}
+    for g in erg.get("gruppen") or []:
+        if len(g.get("mitglieder") or []) >= 5:
+            je.setdefault(g.get("feld"), []).append(g)
+    for v in je.values():
+        rnd.shuffle(v)
+    aus = []
+    while len(aus) < n and any(je.values()):
+        for f in sorted(je, key=str):
+            if je[f] and len(aus) < n:
+                aus.append(je[f].pop(0))
+    return aus
+
+
+def _gruppen_reihen(g):
+    import daten
+    kurse = {}
+    for tk in g.get("mitglieder") or []:
+        try:
+            df = daten.kurse_gespeichert(tk)
+        except Exception:  # noqa: BLE001
+            df = None
+        if df is not None and len(df) >= 60:
+            kurse[tk] = df["Close"]
+    C = pd.DataFrame(kurse).iloc[-260:]
+    norm = C / C.bfill().iloc[0]
+    index = norm.mean(axis=1)
+    spx = daten.kurse_gespeichert(daten.INDEX)["Close"].reindex(index.index).ffill()
+    rs = index / (spx / spx.iloc[0])
+    alle = pd.DataFrame(kurse)
+    breite = (alle > alle.rolling(50, min_periods=40).mean()).where(alle.notna()).mean(axis=1).reindex(index.index) * 100
+    return index, rs, breite
+
+
+def gruppen_bild(g):
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    index, rs, breite = _gruppen_reihen(g)
+    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(14, 8), dpi=100, sharex=True,
+                                     gridspec_kw={"height_ratios": [3, 1.5, 1.5]})
+    a1.plot(index.index, index.values, color="#1565C0")
+    a1.set_title(f"{g.get('art')} {g.get('name')} · gleichgewichteter Index der {len(g.get('mitglieder') or [])} "
+                 f"Mitglieder bis {_d(index.index[-1])}", fontsize=11)
+    a2.plot(rs.index, rs.values, color="#6A1B9A")
+    a2.set_ylabel("RS zum S&P 500", fontsize=8)
+    a3.plot(breite.index, breite.values, color="#2E7D32")
+    a3.axhline(50, color="#999", linewidth=0.8)
+    a3.set_ylabel("% über GD50", fontsize=8)
+    for a in (a1, a2, a3):
+        a.grid(alpha=0.25)
+    fig.tight_layout()
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png")
+    plt.close(fig)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def gruppen_material(g):
+    import auktion
+    e = auktion.gruppe(g)
+    z = [f"{g.get('art')} {g.get('name')}: {len(g.get('mitglieder') or [])} Mitglieder",
+         f"Feld {g.get('feld')} seit {g.get('seit_wochen')} Wochen (vor 4 Wochen {g.get('feld_vor4')}), RS-Stärke "
+         f"{_z(g.get('staerke', 0), '.1f')}, Schwung {_z(g.get('schwung', 0), '.1f')}, stabil: {bool(g.get('stabil'))}",
+         f"Zufluss (Volumen steigender ÷ fallender Tage, 50 Tage): {g.get('zufluss')}",
+         f"Breite: {g.get('breite')} % über dem GD50 (vor 4 Wochen {g.get('breite_vor4')} %)",
+         f"Anführer: {', '.join(g.get('anfuehrer') or []) or 'keine'} · Verfolger: "
+         f"{', '.join(g.get('verfolger') or []) or 'keine'} · vorne: {g.get('vorne')}"]
+    if e:
+        z.append(f"ZUSTAND DER APP: {auktion.wort(e)} · {e.get('unterzeile', '')}")
+        z += [f"  Beleg [{p}]: {x}" for p, x in e.get("belege") or []] + [f"  Ende: {x}" for x in e.get("ende") or []]
+    return "\n".join(z)
+
+
+def pruefen_gruppe(g):
+    import modell
+    text = gruppen_material(g)
+    png = gruppen_bild(g)
+    antwort = modell._formular(SYSTEM_GRUPPE, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_GRUPPE, 2500,
+                               bilder=[png])
+    return {"tk": f"{g.get('art')}: {g.get('name')}", "gruppe": f"Gruppe {g.get('feld')}",
+            "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [], "zahlen": text}
 
 # ── Lauf ────────────────────────────────────────────────────────────────────────────────────────────────────────
 def pruefen(tk):
@@ -289,7 +507,7 @@ def lauf(n=STICHPROBE):
     os.makedirs(ORDNER, exist_ok=True)
     rest = modell.DECKEL_USD - modell.kosten()["usd"]
     n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))
-    probe = stichprobe(n)
+    probe = [(tk, g) for tk, g in stichprobe(max(0, n - GRUPPEN))] + [(g, None) for g in gruppen_stichprobe()]
     start = datetime.now()
     vorher = modell.kosten()["usd"]
     prot = {"start": f"{start:%d.%m.%Y %H:%M}", "pid": os.getpid(), "n": len(probe), "fertig": 0, "ende": None}
@@ -298,13 +516,14 @@ def lauf(n=STICHPROBE):
     json_schreiben(PROTOKOLL, prot)
     for tk, gruppe in probe:
         try:
-            r = pruefen(tk)
+            r = pruefen(tk) if gruppe is not None else pruefen_gruppe(tk)
         except modell.Deckel as x:
             bericht["abbruch"] = str(x)
             break
         except Exception as x:  # noqa: BLE001 – ein Titel darf den Lauf nicht beenden
-            r = {"tk": tk, "fehler": f"{type(x).__name__}: {x}"[:300]}
-        r["gruppe"] = gruppe
+            r = {"tk": tk if gruppe is not None else f"{tk.get('art')}: {tk.get('name')}",
+                 "fehler": f"{type(x).__name__}: {x}"[:300]}
+        r.setdefault("gruppe", gruppe)
         bericht["titel"].append(r)
         prot["fertig"] += 1
         bericht["kosten"] = round(modell.kosten()["usd"] - vorher, 2)

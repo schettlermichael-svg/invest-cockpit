@@ -934,3 +934,10 @@ rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py`, 
 - Bericht in `daten/chartpruefer/`, auf der Seite nach Element gruppiert. Etwa 3 Cent je Chart, gegen den Monatsdeckel
   geprüft. Echte Regelfehler gehen in den Code (gemessen über alle Titel), strittige Fälle entscheidet Micky.
 - Server: `werkzeuge/server/pakete.txt` (matplotlib) wird vom Update-Skript installiert, sobald sich die Liste ändert.
+- Erweitert (14.11.2026, Micky: „checkt er alle Muster, die für unsere drei Bilder wichtig sind?“ – nein, nur den
+  Unterbau): jetzt die ganze Kette. Ins Bild kommen Mauer und Stütze sowie Marken für Ausbruch, Fehlausbruch, die Signale
+  A, U, R, S des Market Profile (letzte 60 Tage), Spring, Upthrust, Kraft ohne Weg, Klimax, Exzess bzw. flache Kante.
+  In die Zahlen kommen Kreislauf, alle Zeichen, die Short-Formen und der Zustand mit Anlass, Belegen je Platz, Ende,
+  Gegenseite, eigen/geliehen. Neue Prüfpunkte: Zustand, Anlass, Test am Rand, abgelehnt/angenommen, Ende des Laufs,
+  Gegenseite, eigen/geliehen, Kreislauf, Short-Form. Dazu 20 Gruppen (gleichgewichteter Index der Mitglieder, RS-Linie,
+  Breite; Feld, Zufluss, Anführer, Zustand). Etwa 4 Cent je Chart, rund 6 $ je Lauf.
