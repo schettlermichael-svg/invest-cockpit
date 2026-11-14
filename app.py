@@ -120,12 +120,13 @@ def chart_knoepfe(tk):
         avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
                               default=chart.AVWAP_START + (["ereignis"] if zr else []), format_func=chart.AVWAP_KURZ.get,
                               key="avwap_anker_z2" if zr else "avwap_anker2",     # neue Anker 14.11.2026
-                              help="Anker nach Brian Shannon, aus der Struktur der Wochenkerzen (nie aus dem Kalender). "
-                                   "Hoch des Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das "
-                                   "jüngste Wochen-Schwunghoch, das der Kurs nicht überschritten hat (steht er über allen: "
-                                   "der Ausbruchspunkt). Tief der Bewegung: das tiefste Tief seit dem letzten Hoch – mit ihm "
-                                   "Shannons Zange. Ereignis: der jüngere von Zahlentag (Reaktion ab 3 %) und Lücke ab 4 % "
-                                   "mit doppeltem Volumen.")
+                              help="Anker nach Brian Shannon, aus der Struktur (nie aus dem Kalender). Hoch des "
+                                   "Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das jüngste "
+                                   "Hoch, das der Kurs nicht überschritten hat – bestätigt ab 8 % Rückgang (steht er über "
+                                   "allen: der Ausbruchspunkt). Tief der Bewegung: das Tief, an dem der Trend zum letzten "
+                                   "Hoch begann – mit dem letzten Hoch Shannons Zange. Ereignis: der jüngste Zahlentag "
+                                   "(Reaktion ab 3 %), die jüngste Lücke ab 4 % oder Volumenspitze (doppelter Schnitt, "
+                                   "Bewegung ab 3 %).")
     return ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl
 
 
