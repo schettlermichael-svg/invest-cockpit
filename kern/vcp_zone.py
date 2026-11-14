@@ -32,8 +32,12 @@ Flagge in der Zone (Kullamägi): liegt in einer Base ein jüngeres ungebrochenes
   kommt sie als 'innen' dazu – Minervini sieht die Base, Kullamägi die Flagge
 
 Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
-  Kontraktion = erste vom Hoch der Zone zum tiefsten Tief danach, jede weitere vom höchsten Hoch nach dem letzten
-                Tief zum tiefsten Tief danach (Schicht für Schicht zum rechten Rand); zählt ab 1 × ATR; Tiefe in %
+  Kontraktion = die erste ist die linke Seite (Hoch der Zone bis zum tiefsten Tief der Base), danach jede Welle der
+                rechten Seite der Reihe nach: grobes Schwunghoch bis zum nächsten Schwungtief (2 × ATR); am rechten
+                Rand die letzte, enge ab 1 × ATR; Tiefe in % (14.11.2026, Chart-Prüfer: vorher vom höchsten Hoch nach
+                dem letzten Tief – Wellen der rechten Seite fielen weg)
+  Reife       = Zone kürzer als ihre Mindestdauer (Base 3 Wochen, Flagge 1 Woche) → noch im Aufbau, kein Pivot, Ampel grau
+  Tiefe       = Base über 33 % tief (O'Neil: nur im Bärenmarkt) → Ampel nicht grün, steht unter „fehlt“
   schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
   Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
   Lage        = Drittel der Base, in dem der Pivot liegt (Minervini): unteres = Low Cheat, mittleres = Cheat,
@@ -257,16 +261,22 @@ def _rahmen(df, i, top):
 
 SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie die vorige
 ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
+BASE_TIEFE_MAX = 33.0          # O'Neil: Tassen 12–33 % tief, tiefer nur im Bärenmarkt (bis 40–50 %); Minervini ähnlich –
+                               # tiefer wird gezeigt, die Ampel wird aber nicht grün (Chart-Prüfer 14.11.2026)
 
 
 def enge(df, z):
     """Baustein 2: Kontraktionen in der Zone z (aus zone()), Enge, Pivot, Volumen, Ampel.
 
-    Kontraktionen von links nach rechts: die erste vom Hoch der Zone bis zum tiefsten Tief danach; jede weitere vom
-    höchsten Hoch nach dem letzten Tief bis zum tiefsten Tief danach. So schält sich die Base Schicht für Schicht zum
-    rechten Rand hin ab. Ein Rücksetzer zählt erst ab 1 × ATR (darunter ist es Rauschen, der Kurs steht am Pivot)."""
+    Kontraktionen (Minervini): linke Seite bis zum Tief der Base, dann jede Welle der rechten Seite (ZigZag 2 × ATR);
+    am rechten Rand zählt die letzte, enge Kontraktion schon ab 1 × ATR. Zu kurze Zonen haben noch keinen Pivot."""
     if not z.get("zone"):
         return {"ampel": "grau", "text": "keine fertige Zone – keine Enge"}
+    if z.get("laenge") == "zu kurz":            # O'Neil/Minervini: eine Base braucht ihre Mindestdauer, vorher kein Pivot
+        mindest = FLAGGE_MIN_W if z.get("name") == "Flagge" else MIN_WOCHEN
+        return {"ampel": "grau", "zahl": 0, "fehlt": ["zu kurz"],
+                "text": f"{z.get('name', 'Zone')} erst {z['wochen']:.1f} Wochen (mindestens {mindest}) – noch im Aufbau, "
+                        "kein Pivot".replace(".", ",")}
     h, l, c = df["High"].to_numpy(), df["Low"].to_numpy(), df["Close"].to_numpy()
     v = df["Volume"].to_numpy(float)
     v50 = pd.Series(v).rolling(50, min_periods=20).mean().to_numpy()
@@ -277,17 +287,27 @@ def enge(df, z):
         s50 = np.nanmean(v50[i0:i1 + 1])
         return v[i0:i1 + 1].mean() / s50 * 100 if s50 else np.nan
 
-    kontr = []
-    hi = z["start_i"]
-    while hi < n - 1:
+    def kontraktion(hi, ti):
+        return {"hoch_i": hi, "hoch": h[hi], "tief_i": ti, "tief": l[ti], "tiefe": (1 - l[ti] / h[hi]) * 100,
+                "volumen": vol(hi, ti)}
+
+    # Minervini: die erste Kontraktion ist die linke Seite – vom Hoch der Zone bis zum tiefsten Tief der Base. Danach
+    # zählt jede Welle der rechten Seite der Reihe nach: grobes Schwunghoch bis zum nächsten Schwungtief (ZigZag 2 × ATR).
+    # Chart-Prüfer 14.11.2026: vorher lief jede weitere Kontraktion vom höchsten Hoch nach dem letzten Tief – Wellen der
+    # rechten Seite dazwischen fielen weg, und am Ende stand oft nur ein Zucken von 1–2 Tagen.
+    start, boden_i = z["start_i"], z["tief_i"]
+    kontr = [kontraktion(start, boden_i)] if boden_i > start else []
+    pkt = [p for p in zigzag(df, GROB) if p[0] > boden_i]
+    for p, q in zip(pkt, pkt[1:]):
+        if p[2] == "H" and q[2] == "T":
+            kontr.append(kontraktion(p[0], q[0]))
+    if not pkt and boden_i < n - 1:
+        pkt = [(boden_i + 1 + int(np.argmax(h[boden_i + 1:])), None, "H")]
+    if pkt and pkt[-1][2] == "H" and pkt[-1][0] < n - 1:  # rechter Rand: die letzte, enge Kontraktion ist oft kleiner als
+        hi = pkt[-1][0]                           # 2 × ATR – sie zählt ab 1 × ATR (darunter ist es Rauschen)
         ti = hi + 1 + int(np.argmin(l[hi + 1:]))
-        tiefe = (1 - l[ti] / h[hi]) * 100
-        if h[hi] - l[ti] < FEIN * a[hi]:          # Rauschen: kein Rücksetzer mehr, der Kurs steht oben
-            break
-        kontr.append({"hoch_i": hi, "hoch": h[hi], "tief_i": ti, "tief": l[ti], "tiefe": tiefe, "volumen": vol(hi, ti)})
-        if ti >= n - 1:
-            break
-        hi = ti + 1 + int(np.argmax(h[ti + 1:]))
+        if h[hi] - l[ti] >= FEIN * a[hi]:
+            kontr.append(kontraktion(hi, ti))
     if not kontr:
         return {"ampel": "gelb", "zahl": 0, "text": "kein Rücksetzer von 1 × ATR seit der Oberkante", "fehlt": ["keine Kontraktion"]}
     tiefen = [k["tiefe"] for k in kontr]
@@ -301,9 +321,10 @@ def enge(df, z):
     vol_erste = kontr[0]["volumen"]               # Minervini: das Volumen schrumpft mit den Kontraktionen
     ruhig = len(kontr) >= 2 and vol_enge == vol_enge and vol_erste == vol_erste and vol_enge < vol_erste
     eng = letzte["tiefe"] <= ENGE_MAX
+    flach_genug = z.get("tiefe", 0) <= BASE_TIEFE_MAX
     tiefs = [k["tief"] for k in kontr]
     steigend = len(tiefs) >= 2 and all(b > a_ for a_, b in zip(tiefs, tiefs[1:]))
-    if len(kontr) >= 2 and schrumpft and eng and ruhig:
+    if len(kontr) >= 2 and schrumpft and eng and ruhig and flach_genug:
         ampel = "grün"
     elif groesser:
         ampel = "rot"
@@ -311,7 +332,8 @@ def enge(df, z):
         ampel = "gelb"
     fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
-        + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"])
+        + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"]) \
+        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_MAX:.0f} %, nur im Bärenmarkt üblich)"])
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
     hoehe_z = z["oben"] - z["unten"]
     anteil = (pivot - z["unten"]) / hoehe_z if hoehe_z > 0 else 1.0

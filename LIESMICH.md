@@ -430,8 +430,10 @@ Eigener Scanner in `kern/vcp_zone.py`, Regeln im Kopf der Datei. Kein Buchchart,
   Konsolidierung (nach Absturz); Flagge in der Zone (Minervini sieht die Base, Kullamägi die Flagge). Zone offen,
   solange der Kurs nach dem Hoch nicht zurück in die obere Hälfte kam. Abgeschlossene Zonen (Schluss über der Oberkante)
   werden mit derselben Regel rückwärts gerechnet.
-- **Baustein 2 · Enge:** Kontraktionen Schicht für Schicht in der Zone (ab 1 × ATR), grob halbiert (jede ≤ 70 % der
-  vorigen), Enge = letzte Kontraktion ≤ 10 %, Pivot = ihr Hoch, Volumen der Enge leiser als in der ersten Kontraktion.
+- **Baustein 2 · Enge:** erste Kontraktion = linke Seite (Hoch der Zone bis Tief der Base), danach jede Welle der rechten
+  Seite der Reihe nach (ZigZag 2 × ATR, die letzte am Rand ab 1 × ATR), grob halbiert (jede ≤ 70 % der vorigen), Enge =
+  letzte Kontraktion ≤ 10 %, Pivot = ihr Hoch, Volumen der Enge leiser als in der ersten Kontraktion. Zone zu kurz → noch
+  im Aufbau, kein Pivot, Ampel grau; Base über 33 % tief → Ampel nicht grün (O'Neil). Chart-Prüfer 14.11.2026.
   Ampel grün/gelb/rot, nichts wird gefiltert.
 - **Chart (schlank):** Kerzen, GD50/150/200, GD10 · GD20 zuschaltbar, Zonen „Aktuell · Historie“, Vorgeschichte gelb,
   Fahnenstange grün, ZigZag grau, Kontraktionen mit Tiefe, Rahmen der Enge in der Ampelfarbe, Pivot; darunter Volumen
