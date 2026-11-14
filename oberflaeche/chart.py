@@ -635,7 +635,7 @@ def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
             t_ = f"akzeptierter Wert {zahl(p['poc'])} $"
             spaete.append(f'<text x="{ENDE - breite - 4}" y="{platz(ENDE - breite - 4, y_ - 4, t_, 11, "end"):.1f}" '
                           f'fill="{TEXT_2}" font-size="11" text-anchor="end">{t_}</text>')
-        art = {"Wertzone": "der Balance seit", "Zone": "seit Beginn der Zone", "Tief": "seit dem Tief",
+        art = {"Balance": "der Balance seit", "verlassene Balance": "der verlassenen Balance seit", "Zone": "seit Beginn der Zone", "Tief": "seit dem Tief",
                "Hoch": "seit dem Hoch"}.get(g.get("art"), "")
         spaete.append(f'<text x="{ENDE - 4}" y="44" fill="{TEXT_3}" font-size="12" text-anchor="end">VOLUMEN {art.upper()} '
                       f'{pd.Timestamp(g["ab"]):%d.%m.} ({g.get("tage")} Tage)</text>')
@@ -782,7 +782,7 @@ def legende(ebene="Tag", gd_kurz=False):
                       (AVWAP_FARBEN["hoch"], "AVWAP ab dem letzten Hoch (jüngstes nicht überschrittenes Wochen-Schwunghoch)"),
                       (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief der Bewegung (tiefstes Tief seit dem letzten Hoch; mit ihm: Zange)"),
                       (AVWAP_FARBEN["ereignis"], "AVWAP ab dem Ereignis (Zahlen ab 3 % oder Lücke ab 4 % mit Volumen ×2)"),
-                      (PROFIL_FARBE, "Volumenprofil der laufenden Balance (Wertzone nach Dalton), Linie = akzeptierter Wert"),
+                      (PROFIL_FARBE, "Volumenprofil der laufenden Balance (überlappende Tage nach Dalton), Linie = akzeptierter Wert"),
                       (ROT, "Band rechts rot: Mauer (Knoten seit dem Hoch des Rückgangs) · grün: Stütze (Knoten seit dem Tief der Bewegung)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),
                       (TEXT_2, "○ Schwungpunkte (Dow) · PP = Pocket Pivot · S = Spring · U = Upthrust · ◆ = höheres Tief "

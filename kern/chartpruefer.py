@@ -94,9 +94,13 @@ Die Regeln der Meister:
   Exzess = scharfe Ablehnung am Extrem (Auktion dort beendet); flache Kante (schwaches Hoch/Tief) = Auktion unfertig.
 
 Wie die App ihre Anker setzt (damit du die Absicht kennst; prüfe trotzdem gegen die Meister): letztes Hoch = jüngstes
-Wochen-Schwunghoch (2 Wochen davor und danach tiefer, also erst nach 2 Wochen bestätigt), das der Kurs nicht
-überschritten hat; Hoch des Rückgangs = der Gipfel der ganzen Korrektur (fehlt, wenn er dasselbe ist wie das letzte
-Hoch); Tief der Bewegung = tiefstes Tief seit dem letzten Hoch, sobald der Kurs 1 ATR darüber steht. Zone der App:
+Hoch, das der Kurs nicht überschritten hat und das bestätigt ist (Rückgang ab 8 % danach oder Wochen-Schwunghoch mit
+2 Wochen davor und danach tiefer); Hoch des Rückgangs = der Gipfel der ganzen Korrektur (fehlt, wenn er dasselbe ist wie
+das letzte Hoch); Tief der Bewegung = das Tief, an dem der Trend zum letzten Hoch begann (tiefstes Tief zwischen dem
+früheren, höheren Hoch und dem letzten Hoch; ist es gebrochen, das tiefste Tief seit dem letzten Hoch, sobald der Kurs
+1 ATR darüber steht); Ereignis = der
+jüngste Zahlentag, die jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem Schnitt mit Bewegung ab 3 % (6 Monate);
+Volumenprofil der Balance ab dem ersten Tag, ab dem sich die Tagesspannen überlappen (Dalton). Zone der App:
 beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne Schluss darüber bricht sie nicht).
 
 Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Zustand zu den Belegen passt und ob die
@@ -212,8 +216,7 @@ def material(tk, df):
         mp = erkennung.mp_von(df)
     except Exception:  # noqa: BLE001
         mp = None
-    wb = avwap.wert_beginn(mp)
-    pa = avwap.profil_anker(df, zt, z.get("start") if z.get("zone") else None, wb)
+    pa = avwap.profil_anker(df, zt, z.get("start") if z.get("zone") else None)
     wh = avwap._wochen_hochs(df)[-6:]
     ein = zeichen.einquetschung(df)
     c = df["Close"]
@@ -243,8 +246,8 @@ def material(tk, df):
         elif schl == "gipfel" and "hoch" in a:          # gleich dem letzten Hoch – die App zeigt dann nur eine Linie
             zeilen.append(f"AVWAP-Anker {name}: derselbe Punkt wie das letzte Hoch (nur eine Linie)")
         elif schl == "tief":
-            zeilen.append(f"AVWAP-Anker {name}: keiner – der Kurs steht noch nicht 1 ATR über dem tiefsten Tief seit "
-                          "dem letzten Hoch (keine Bewegung begonnen)")
+            zeilen.append(f"AVWAP-Anker {name}: keiner – der Kurs fiel unter den Start des Trends und steht noch "
+                          "nicht 1 ATR über dem tiefsten Tief seit dem letzten Hoch (keine Bewegung begonnen)")
         else:
             zeilen.append(f"AVWAP-Anker {name}: keiner")
     if pa.get("grau"):
@@ -264,7 +267,7 @@ def material(tk, df):
     fa = vcp_zone.ausbruch_text(br) if br and br.get("fehl") else None
     k = zeichen.fuer_titel(tk, df, idx, g, fehlausbruch=fa)
     zst = auktion.fuer_titel(tk, df, k, idx, mp, br, z, g) if k else None
-    vv = volumenprofil.verankert(df, zt, z.get("start") if z.get("zone") else None, wb) or {}
+    vv = volumenprofil.verankert(df, zt, z.get("start") if z.get("zone") else None) or {}
     if k:
         zeilen.append(f"Kreislauf (Weinstein): Phase {k['phase']} {zeichen.PHASE_NAME.get(k['phase'], '')}"
                       + (f", Wechsel zu {k['ziel']} zeichnet sich ab" if k.get("ziel") else "")

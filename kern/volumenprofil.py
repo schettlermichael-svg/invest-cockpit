@@ -63,15 +63,15 @@ def knoten(p):
     return aus
 
 
-def verankert(df, zahltag=None, zone_start=None, wert_start=None):
+def verankert(df, zahltag=None, zone_start=None):
     """Volumenprofil nach den Ankern aus avwap.profil_anker (Micky 13.11.2026: nie aus dem Kalender) →
     {grau: {profil, ab, art, tage}, mauer: (unten, oben, ab) oder None, stuetze: (unten, oben, ab) oder None,
     knoten: [(unten, oben)] – alle Knoten von grau, Hoch und Tief für die Hürde der Lagekarte} oder None.
     Mauer: der nächste Knoten über dem Kurs im Profil seit dem Hoch des Rückgangs bzw. dem letzten Hoch (das Angebot
     der gefangenen Käufer). Stütze: der nächste Knoten unter dem Kurs seit dem Tief der Bewegung (die Käufer im
-    Gewinn). wert_start: Beginn der laufenden Balance (avwap.wert_beginn, Dalton)."""
+    Gewinn). Das graue Profil beginnt mit der laufenden Balance (avwap.balance_beginn, Dalton)."""
     import avwap
-    a = avwap.profil_anker(df, zahltag, zone_start, wert_start)
+    a = avwap.profil_anker(df, zahltag, zone_start)
     if not a:
         return None
     kurs = float(df["Close"].iloc[-1])

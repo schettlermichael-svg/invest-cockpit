@@ -894,14 +894,20 @@ Tagen): angenommen 43 %, Balance 26 %, abgelehnt 20 %, Test am Rand 8 %, Ende de
 Micky (LUV): „Der AVWAP ist komplett falsch verankert und das Volumenprofil fehlt.“ Das alte Hoch der 52 Wochen hing
 bei LUV am 17.02., das Tief am 02.04. – beide aus einem Zyklus, der im April endete. Neu nach den Meistern
 (`kern/avwap.py`):
-- **Letztes Hoch:** jüngstes Schwunghoch der Wochenkerzen (n = 2, erst durch den Rückgang danach bestätigt – Shannon),
-  das der Kurs nicht überschritten hat; steht er über allen, das letzte (Ausbruchspunkt).
-- **Tief der Bewegung:** tiefstes Tief seit dem letzten Hoch, sobald der Kurs mindestens 1 ATR darüber steht.
+- **Letztes Hoch:** jüngstes Hoch, das der Kurs nicht überschritten hat und das durch den Rückgang danach bestätigt ist
+  (Shannon): ab 8 % darunter oder als Schwunghoch der Wochenkerzen (n = 2); steht er über allen, das letzte
+  (Ausbruchspunkt). 8-%-Regel: Micky 14.11.2026, sonst kam der Anker bis zu 2 Wochen zu spät.
+- **Tief der Bewegung:** das Tief, an dem der laufende Trend begann (Shannon: „the pivot low that launched the trend“;
+  Micky 14.11.2026: nur dieses) – das tiefste Tief zwischen dem früheren, höheren Hoch (ohne: 52 Wochen) und dem letzten
+  Hoch. Trend gebrochen (Kurs darunter): das tiefste Tief seit dem letzten Hoch, sobald der Kurs 1 ATR darüber steht.
 - **Hoch des Rückgangs:** höchstes nicht überschrittenes Wochen-Schwunghoch, nach dem der Kurs nie unter das tiefste
   Tief seit dem letzten Hoch fiel (der Gipfel der Korrektur). Beide Hochs werden gezeigt (Shannon legt Anker übereinander).
-- **Ereignis:** unverändert.
-- **Volumenprofil:** ab dem Beginn der laufenden Wertzone des Market Profile (Daltons überlappender Wert), bei unter
-  2 Wochen ab der vorigen; im Chart mit dem Wertbereich als Feld über dem Zeitraum der Balance. Mauer aus dem Profil
+- **Ereignis:** jüngster Zahlentag, jüngste Lücke ab 4 % oder Volumenspitze (ab doppeltem 50-Tage-Volumen mit Bewegung
+  ab 3 %), höchstens 6 Monate (Shannon: Zahlen, Lücke, große Nachricht; Micky 14.11.2026).
+- **Volumenprofil:** ab dem ersten Tag der laufenden Balance nach Dalton (überlappender Wert: von heute in Blöcken zu 5 Tagen
+  zurück, ein Block gehört dazu, wenn seine Spanne die mittlere Hälfte der typischen Preise der Balance berührt; bis
+  2 Blöcke Rotation zum Rand; gerade verlassen → die verlassene Balance davor; `avwap.balance_beginn`, Micky 14.11.2026 – vorher ab der Wertzone des Market Profile, immer montags); bei unter
+  2 Wochen ab der Zone, sonst ab dem Tief der Bewegung; im Chart mit dem Wertbereich als Feld über dem Zeitraum der Balance. Mauer aus dem Profil
   ab dem Hoch des Rückgangs, Stütze ab dem Tief der Bewegung.
 
 Gemessen über 1.892 Titel: kein Anker am Rand des Datenfensters, kein Kurs unter dem Tief der Bewegung. Hoch des
