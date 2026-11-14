@@ -101,7 +101,9 @@ früheren, höheren Hoch und dem letzten Hoch; ist es gebrochen, das tiefste Tie
 1 ATR darüber steht); Ereignis = der
 jüngste Zahlentag, die jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem Schnitt mit Bewegung ab 3 % (6 Monate);
 Volumenprofil der Balance ab dem ersten Tag, ab dem sich die Tagesspannen überlappen (Dalton). Zone der App:
-beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne Schluss darüber bricht sie nicht).
+beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne Schluss darüber bricht sie nicht – ein
+abgelehnter Vorstoß; so entschieden, nicht als Widerspruch melden). Eine Tasse ab 7 Wochen gilt als gescheitert, wenn der
+Kurs nach der rechten Seite in der unteren Hälfte schließt (Schlusskurs, nicht Tagestief).
 
 Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Zustand zu den Belegen passt und ob die
 Belege am richtigen Platz der Kette stehen. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen. Jeder

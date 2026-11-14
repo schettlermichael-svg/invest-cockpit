@@ -899,6 +899,10 @@ Tagen): angenommen 43 %, Balance 26 %, abgelehnt 20 %, Test am Rand 8 %, Ende de
 - **Ausbruch aus einer Pause tief in der Zone** (Pivot mehr als 3 % unter der Oberkante, jüngere Zone in der großen) ist
   innere Rotation mit Cheat-Drittel (Minervini), keine Annahme außerhalb der Balance (`auktion.titel`).
 - Profil der Balance heißt nicht mehr „verlassen“, solange der neue Wert nicht angenommen ist (Dalton).
+- **Gescheiterte Tasse** am Schlusskurs unter der Mitte, nicht am Tagestief (Micky; gemessen: 38 von 1.905 Zonen ändern
+  sich, alle zu gültigen Zonen). **Zonenbeginn** bleibt: Schluss entscheidet, ein Docht darüber ist ein abgelehnter
+  Vorstoß (Micky).
+- **Einquetschung**: flache Kante seit mindestens 3 Wochen, gesucht in 60 und 120 Tagen (gemessen 48 → 27 Titel).
 
 ## Anker nach Shannon und Dalton (14.11.2026)
 

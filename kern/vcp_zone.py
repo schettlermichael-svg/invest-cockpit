@@ -12,7 +12,8 @@ Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14
                → nächstjüngeres Hoch; der Absturz gehört zur Vorgeschichte (14.11.2026, Chart-Prüfer)
   Henkel     = war die Tasse mindestens 7 Wochen lang (O'Neil), kam die rechte Seite bis 15 % an die Oberkante heran
                (O'Neil: Henkel höchstens 15 % unter dem Hoch der
-               linken Seite) und fiel der Kurs danach wieder in die untere Hälfte, ohne das Tief zu
+               linken Seite) und schloss der Kurs danach wieder in der unteren Hälfte (Schlusskurs, Micky 14.11.2026 – ein
+               Docht nach unten reicht nicht), ohne das Tief zu
                unterschreiten, ist die Tasse gescheitert (O'Neil: Henkel in der oberen Hälfte) → nächstjüngeres Hoch
                (14.11.2026; ein Unterschreiten des Tiefs ist ein Doppelboden und bleibt eine Base)
   Unterkante = tiefstes Tief seit der Oberkante
@@ -188,7 +189,7 @@ def zone(df):
             # ab 17.02. statt ab 26.06.)
             r_i = tief_i + 1 + int(np.argmax(h[tief_i + 1:])) if tief_i < n - 1 else n - 1   # nach dem Tief
             if (r_i < n - 1 and (r_i - i) / WOCHE >= TASSE_MIN_W and h[r_i] >= top * (1 - HENKEL_NAH) and
-                    l[r_i + 1:].min() < boden + HENKEL_HAELFTE * hoehe):
+                    c[r_i + 1:].min() < boden + HENKEL_HAELFTE * hoehe):   # Schluss entscheidet (Micky 14.11.)
                 gescheitert = (i, r_i)
                 if all(x[0] != r_i for x in kand):
                     kand = sorted(kand + [(r_i, float(h[r_i]))])
