@@ -15,6 +15,7 @@ DATEI = os.path.join(HIER, "..", "daten", "maengel.json")
 STAENDE = ["offen", "behoben", "entschieden"]
 # Stand der Befunde, die vor der Mängelliste bearbeitet wurden (14.11.2026) – wird beim Übernehmen gesetzt, solange der
 # Befund noch keinen eigenen Stand hat: (Quelle, Lauf, Stück des Titels, Stand, Notiz)
+VORGABE_STEMPEL = "Vorgabe"
 VORGABEN = [
     ("chart", "2026-11-14 09:40", "Absturz oder Abwärtstrend", "behoben",
      "4857c58: über 50 % tief ist keine Base; bb6e3d1: Base über 33 % wird nie grün. Lauf 3: Zone: Unterkante 0,04 je Chart (Lauf 1: 0,30)"),
@@ -22,12 +23,13 @@ VORGABEN = [
      "bb6e3d1: zu kurze Zone = im Aufbau, kein Pivot, Ampel grau. Lauf 3: Zone: Name 0,17 je Chart (Lauf 1: 0,36)"),
     ("chart", "2026-11-14 09:40", "Zonenbeginn verfehlt", "entschieden",
      "Micky 14.11.: Schluss entscheidet – ein Docht über der Oberkante ist ein abgelehnter Vorstoß"),
-    ("chart", "2026-11-14 09:40", "Kontraktionen aus Absturz", "offen",
-     "bb6e3d1: rechte Seite der Reihe nach – Lauf 3 meldet weiter Abwärtstrend und 1-Tages-Rücksetzer: nachschärfen"),
+    ("chart", "2026-11-14 09:40", "Kontraktionen aus Absturz", "behoben",
+     "bb6e3d1 und 4910faf: rechte Seite der Reihe nach, Kontraktion ab 3 Tagen, höchstens 6 Wellen, Volumen ausgetrocknet, "
+     "nicht in Phase 4 – gemessen grün 94 → 44; im nächsten Lauf prüfen"),
     ("chart", "2026-11-14 09:40", "Pivot aus 1–3-Tage-Hoch", "offen",
      "bb6e3d1: zu kurze Zone ohne Pivot – Lauf 3 meldet weiter veraltete Pivots"),
-    ("chart", "2026-11-14 09:40", "Anker Hoch des Rückgangs", "offen",
-     "048ab72: Hoch ab 8 % Rückgang – Lauf 3: Hoch des Rückgangs fällt meist mit letztem Hoch zusammen"),
+    ("chart", "2026-11-14 09:40", "Anker Hoch des Rückgangs", "behoben",
+     "4910faf: höchstes nicht überschrittenes Hoch der letzten 2 Jahre – eigener Anker bei 1.434 statt 1.053 Titeln"),
     ("chart", "2026-11-14 09:40", "Anker letztes Hoch", "offen",
      "048ab72: 8-%-Regel (Micky) – Lauf 3 meldet überschrittene oder unbestätigte Hochs"),
     ("chart", "2026-11-14 09:40", "Anker Tief der Bewegung", "behoben",
@@ -47,6 +49,12 @@ VORGABEN = [
     ("chart", "2026-11-14 09:40", "Henkel und Cheat", "offen", "Drittel nur in gültigen Basen – noch prüfen"),
     ("chart", "2026-11-14 09:40", "Übernahmefall", "behoben",
      "Regel seit 12.11.: Kurs steht still (Tagesspanne unter 0,5 %) – nicht grün, Hinweis „Übernahme?“"),
+    ("chart", "2026-11-14 18:18", "Hoch des Rückgangs fällt", "behoben",
+     "4910faf: höchstes nicht überschrittenes Hoch der letzten 2 Jahre – eigener Anker bei 1.434 statt 1.053 Titeln"),
+    ("chart", "2026-11-14 18:18", "Abwärtstrend und Ein-Tages", "behoben",
+     "4910faf: Kontraktion ab 3 Tagen, höchstens 6 Wellen, Volumen ausgetrocknet, nicht in Phase 4 – grün 94 → 44"),
+    ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "offen",
+     "30-Wochen-Linie ausprobiert (35 % der Titel wechseln, Beispiele teils besser, teils schlechter) – in die Gefechtsordnung"),
     ("chart", "2026-11-14 18:18", "Ausbruch ohne Volumen", "entschieden",
      "Micky (06.11.): Volumen ist Zeichen, keine Pflicht; über dem 50-Tage-Schnitt reicht (O'Neils 1,4-fach zu streng)"),
 ]
@@ -76,11 +84,12 @@ def aus_berichten():
     import importlib
     m = laden()
     neu = 0
-    for x in m["befunde"]:
-        if x["stand"] == "offen" and not x.get("notiz"):
+    for x in m["befunde"]:                         # Vorgaben gelten, solange niemand den Befund selbst gesetzt hat
+        if (x["stand"] == "offen" and not x.get("notiz")) or x.get("geaendert") == VORGABE_STEMPEL:
             for vq, vl, stueck, vs, vn in VORGABEN:
-                if vq == x["quelle"] and vl == x["lauf"] and stueck in x.get("titel", ""):
-                    x.update(stand=vs, notiz=vn, geaendert="14.11.2026")
+                if (vq == x["quelle"] and vl == x["lauf"] and stueck in x.get("titel", "")
+                        and (x["stand"], x.get("notiz")) != (vs, vn)):
+                    x.update(stand=vs, notiz=vn, geaendert=VORGABE_STEMPEL)
                     neu += 1
     for q, (_, modname) in QUELLEN.items():
         try:
@@ -102,7 +111,7 @@ def aus_berichten():
                     "stand": "offen", "notiz": "", "geaendert": None})
                 for vq, vl, stueck, vs, vn in VORGABEN:
                     if vq == q and vl == b["stand"] and stueck in x.get("titel", ""):
-                        m["befunde"][-1].update(stand=vs, notiz=vn, geaendert="14.11.2026")
+                        m["befunde"][-1].update(stand=vs, notiz=vn, geaendert=VORGABE_STEMPEL)
                 neu += 1
             m["uebernommen"].append(schluessel)
     if neu:
