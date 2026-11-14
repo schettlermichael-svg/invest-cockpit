@@ -1,111 +1,112 @@
 {
- "start": "13.11.2026 06:05",
- "ende": "13.11.2026 08:31",
+ "start": "14.11.2026 06:29",
+ "ende": "14.11.2026 08:21",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
-   "text": "bis 12.11.2026",
-   "sekunden": 13
+   "text": "bis 13.11.2026",
+   "sekunden": 5
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
-   "text": "Stand 12.11.2026",
-   "sekunden": 98
+   "text": "Stand 13.11.2026",
+   "sekunden": 0
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
-   "text": "1926 von 1934 Titeln ergänzt",
-   "sekunden": 527
+   "text": "0 von 1934 Titeln ergänzt",
+   "sekunden": 528
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
-   "text": "1935 Titel",
-   "sekunden": 313
+   "text": "1972 Titel",
+   "sekunden": 303
+  },
+  {
+   "name": "Revier-Pflege",
+   "ok": true,
+   "text": "0 Zugänge · Abgänge gemeldet: KVUE, INDV, CBZ, LXP, RAMP",
+   "sekunden": 6
   },
   {
    "name": "TradingView-Kennzahlen",
    "ok": true,
-   "text": "1924 Titel (99%)",
-   "sekunden": 2
+   "text": "1961 Titel (99%)",
+   "sekunden": 1
   },
   {
    "name": "RS-Rang, Führer-Rang (Kullamägi)",
    "ok": true,
-   "text": "RS-Rang 1847, Führer-Rang 1911 Titel (Stand 2026-11-12)",
-   "sekunden": 11
+   "text": "RS-Rang 1877, Führer-Rang 1947 Titel (Stand 2026-11-13)",
+   "sekunden": 0
   },
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "13 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 79
+   "text": "0 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 61
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
-   "text": "Stand 2026-11-12: Entsteht 208, Läuft 257, Ermüdet 21, Abfluss 127",
-   "sekunden": 1198
+   "text": "Stand 2026-11-13: Entsteht 188, Läuft 264, Ermüdet 28, Abfluss 135",
+   "sekunden": 276
   },
   {
    "name": "Kartentisch",
    "ok": true,
-   "text": "1202 Titel auf dem Tisch, 662 Neuigkeiten",
-   "sekunden": 5720
+   "text": "1068 Titel auf dem Tisch, 304 Neuigkeiten",
+   "sekunden": 5175
   },
   {
    "name": "Lage (Wetter, Pendel, Breite, Front, Marktrichtung)",
    "ok": true,
    "text": "Übersicht gebaut",
-   "sekunden": 21
-  },
-  {
-   "name": "Konferenz des Stabs (MARAGA Investment)",
-   "ok": true,
-   "text": "60 Hinweise · Monat 13.14 $ von 50 $",
-   "sekunden": 479
+   "sekunden": 8
   },
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "130 von 130 Titelseiten abgelegt",
-   "sekunden": 333
+   "text": "125 von 125 Titelseiten abgelegt",
+   "sekunden": 367
   },
   {
-   "name": "Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView, Stab",
+   "name": "Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView",
    "ok": true,
-   "text": "30 Akten geprüft · 9 Hinweise",
+   "text": "30 Akten geprüft · alles im Gleichlauf",
    "sekunden": 2
   }
  ],
- "pid": 222641,
- "neu": 662,
+ "pid": 248275,
+ "neu": 304,
  "reihen": {
-  "m_spitze": 45,
-  "m_weitere": 106,
-  "k_breakout": 17,
-  "k_ep": 31,
-  "zahlen": 469,
-  "k_ermuedung": 6,
-  "k_baerenflagge": 7,
-  "vcp": 253,
-  "flagge": 191
+  "m_spitze": 14,
+  "m_weitere": 70,
+  "k_breakout": 18,
+  "k_ep": 35,
+  "zahlen": 483,
+  "k_ermuedung": 12,
+  "k_baerenflagge": 15,
+  "k_bruch": 3,
+  "vcp": 149,
+  "flagge": 164
  },
  "wachen": {
-  "ampel": "gelb",
+  "ampel": "grün",
   "rot": 0,
-  "gelb": 9
+  "gelb": 0
  },
  "datenstand": {
-  "Massive-Tageskurse": "2026-11-12",
-  "Yahoo-Tageskurse": "2026-11-12",
-  "Marktdaten (Indizes)": "2026-11-12",
-  "Rückenwind": "2026-11-12",
-  "RS-Rang": "2026-11-12",
-  "Führer-Rang": "2026-11-12"
+  "Massive-Tageskurse": "2026-11-13",
+  "Yahoo-Tageskurse": "2026-11-13",
+  "Marktdaten (Indizes)": "2026-11-13",
+  "Rückenwind": "2026-11-13",
+  "RS-Rang": "2026-11-13",
+  "Führer-Rang": "2026-11-13"
  },
- "massive_durchgaenge": 1
+ "massive_durchgaenge": 4
 }
