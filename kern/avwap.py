@@ -23,8 +23,8 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
   gipfel    Hoch des Rückgangs: das höchste bestätigte Hoch der letzten 2 Jahre, das der Kurs seitdem nicht
             überschritten hat – der Gipfel, von dem die ganze Korrektur ausging (14.11.2026, vorher schied es aus, wenn der
             Kurs danach tiefer fiel als seit dem letzten Hoch). Nur, wenn es nicht das letzte Hoch ist.
-  ereignis  die Neubewertung (Shannon: Zahlen, Lücke, große Nachricht): der jüngste von Zahlentag (Reaktion ab 3 %,
-            zahlen_reaktion), Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
+  ereignis  die Neubewertung (Shannon: Zahlen, Lücke, große Nachricht): der jüngste von Zahlentag (jeder, gleich wie stark
+            die Reaktion – 14.11.2026, vorher ab 3 %), Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
             ab 3 % – ein Tag mit viel Volumen und ohne Bewegung, etwa eine Indexanpassung, ist kein Ereignis), höchstens
             6 Monate zurück (Micky 14.11.2026; vorher nur Lücken mit doppeltem Volumen).
 Letztes Hoch und Tief zusammen sind Shannons Zange („Pinch“).
@@ -68,13 +68,15 @@ def _echt(reihe, art, fenster, bis=None):
 
 
 def zahlentag(df, gewinne):
-    """Reaktionstag der jüngsten Zahlen ab 3 % (zahlen_reaktion.REAKTION_PCT) als Datum oder None."""
+    """Reaktionstag der jüngsten Zahlen als Datum oder None – jeder Zahlentag, gleich wie stark die Reaktion (Shannon,
+    Micky 14.11.2026, Chart-Prüfer Lauf 3: vorher erst ab 3 %, sonst saß der Anker auf einem älteren Ereignis; die
+    Schwelle von 3 % gilt weiter für das Setup Zahlen-Reaktion)."""
     try:
         import zahlen_reaktion
         rt = zahlen_reaktion.reaktionstag(df, gewinne)
     except Exception:  # noqa: BLE001
         return None
-    if rt and abs(rt[1]) >= zahlen_reaktion.REAKTION_PCT:
+    if rt:
         return df.index[rt[0]]
     return None
 

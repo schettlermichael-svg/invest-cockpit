@@ -36,8 +36,9 @@ VORGABEN = [
      "048ab72: nur das Trendstart-Tief (Micky); Lauf 3: 0,17 je Chart (Lauf 1: 0,26), nur 4 sicher"),
     ("chart", "2026-11-14 09:40", "festen Montagen", "behoben",
      "048ab72: Profil ab überlappenden Tagen (Dalton, Micky); Lauf 3: 4 sicher (Lauf 1: 10)"),
-    ("chart", "2026-11-14 09:40", "Ereignis-Anker fehlt", "offen",
-     "048ab72: Lücken und Volumenspitzen (Micky) – Lauf 3: Anker nicht am jüngsten Zahlentag"),
+    ("chart", "2026-11-14 09:40", "Ereignis-Anker fehlt", "behoben",
+     "048ab72: Lücken und Volumenspitzen (Micky); Ereignis jetzt an jedem jüngsten Zahlentag – Anker bei 1.342 statt 1.255 "
+     "von 1.343 Titeln mit Zahlen"),
     ("chart", "2026-11-14 09:40", "Schub der Vorgeschichte", "behoben",
      "e02bc42: Vorgeschichte und Fahnenstange im Material getrennt, mit Zeitraum"),
     ("chart", "2026-11-14 09:40", "Ausgebrochene Base", "behoben",
@@ -54,7 +55,14 @@ VORGABEN = [
     ("chart", "2026-11-14 18:18", "Abwärtstrend und Ein-Tages", "behoben",
      "4910faf: Kontraktion ab 3 Tagen, höchstens 6 Wellen, Volumen ausgetrocknet, nicht in Phase 4 – grün 94 → 44"),
     ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "offen",
-     "30-Wochen-Linie ausprobiert (35 % der Titel wechseln, Beispiele teils besser, teils schlechter) – in die Gefechtsordnung"),
+     "30-Wochen-Linie ausprobiert (35 % der Titel wechseln, Beispiele teils besser, teils schlechter) – Micky 14.11.: "
+     "Schritt 8 der Gefechtsordnung (Phasen als Rahmen)"),
+    ("chart", "2026-11-14 18:18", "Ereignis", "behoben",
+     "Micky 14.11.: Ereignis-Anker an jedem jüngsten Zahlentag (Shannon), die 3 % gelten nur fürs Setup Zahlen-Reaktion – "
+     "269 von 1.343 Titeln mit Zahlen ankern anders"),
+    ("chart", "2026-11-14 18:18", "Flagge", "behoben",
+     "Micky 14.11.: grün nur mit steigenden Tiefs (Tief der zweiten Hälfte höchstens 0,5 ATR unter dem der ersten) – "
+     "Flaggen im Trend 44 → 26 von 108"),
     ("chart", "2026-11-14 18:18", "Abfluss unter 1", "behoben",
      "Beleg heißt bei einem Wert unter 1 jetzt „Abfluss“ statt „Zufluss“ (auktion.gruppe)"),
     ("chart", "2026-11-14 18:18", "Ausbruch ohne Volumen", "entschieden",
