@@ -17,7 +17,7 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
             Ausbruchspunkt). Ohne Schwunghoch: das höchste Hoch (bis 2 Jahre, nicht am Rand).
   tief      Tief der Bewegung = das Tief, an dem der Trend begann, der zum letzten Hoch führte (Shannon: „the pivot low
             that launched the trend“; Micky 14.11.2026: nur dieses, kein Rücksetzer-Tief): das tiefste Tief zwischen dem
-            früheren, höheren Hoch (dem Gipfel davor; ohne ihn höchstens 52 Wochen zurück) und dem letzten Hoch. Fiel der
+            früheren, höheren Hoch (dem Gipfel davor; ohne ihn 52 Wochen zurück, liegt das Tief am Rand des Fensters, bis 2 Jahre) und dem letzten Hoch. Fiel der
             Kurs seitdem darunter, ist der Trend gebrochen: dann das tiefste Tief seit dem letzten Hoch, wenn der Kurs
             mindestens 1 ATR darüber steht und es nicht von heute ist (sonst hat keine Bewegung begonnen).
   gipfel    Hoch des Rückgangs: das höchste nicht überschrittene Schwunghoch der Wochenkerzen, nach dem der Kurs nie
@@ -148,9 +148,12 @@ def _trendstart(df, hoch):
     h, l = df["High"], df["Low"]
     hp = float(h[hoch])
     vorher = h[(h.index < hoch) & (h > hp)]                    # das frühere, höhere Hoch (der Gipfel davor)
-    ab = vorher.index[-1] if len(vorher) else df.index[max(0, df.index.get_loc(hoch) - TREND_FENSTER)]
-    lauf = l[(l.index >= ab) & (l.index <= hoch)]
-    start = lauf.idxmin() if len(lauf) else None
+    if len(vorher):
+        lauf = l[(l.index >= vorher.index[-1]) & (l.index <= hoch)]
+        start = lauf.idxmin() if len(lauf) else None
+    else:                                                      # ohne: 52 Wochen, liegt das Tief am Rand, weiter zurück
+        i = _echt(l.to_numpy(float), "min", TREND_FENSTER, bis=df.index.get_loc(hoch) + 1)
+        start = df.index[i] if i is not None else None
     if start is not None and not (l[l.index > start] < float(l[start])).any():
         return start                                           # der Trend steht noch über seinem Start
     seit = l[l.index >= hoch]                                  # Trend gebrochen: die neue Bewegung seit dem Hoch
