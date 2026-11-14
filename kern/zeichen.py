@@ -43,6 +43,8 @@ import numpy as np
 import pandas as pd
 
 GLEICH_PCT = 1.5          # Einquetschung: Hochs innerhalb ±1,5 %
+EINQ_MIN_TAGE = 15        # … die flache Kante steht seit mindestens 3 Wochen (Chart-Prüfer 14.11.2026)
+EINQ_FENSTER = (60, 120)  # … gesucht in den letzten 60, dann 120 Handelstagen
 MIN_RUECKGANG = 3.0       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
 HAELT_PUNKTE = 15.0      # „hält“: am Indextief mindestens 15 Punkte vor dem Index (Messung 13.11.: mit 10 Punkten
                           # schlug jeder zweite Titel den S&P 500 – der Rückgang war eng von wenigen Riesen getragen)
@@ -185,8 +187,18 @@ def _ohne_spring(t_, d):
     return aus
 
 
-def einquetschung(df, fenster=60):
-    """Aufsteigendes Dreieck (gespiegelt absteigend) → {art, oberkante|unterkante, beruehrungen, tiefs|hochs} oder None."""
+def einquetschung(df, fenster=None):
+    """Aufsteigendes Dreieck (gespiegelt absteigend) → {art, oberkante|unterkante, beruehrungen, tiefs|hochs, tage} oder
+    None. Ohne Fenster: erst die letzten 60, dann die letzten 120 Handelstage (Chart-Prüfer 14.11.2026: Einquetschungen
+    über Monate fehlten). Die flache Kante muss seit mindestens EINQ_MIN_TAGE stehen – ihre erste Berührung liegt so weit
+    zurück (sonst war es ein Dreieck von einer Woche oder ein steigender Kanal, dessen letzte zwei Hochs zufällig gleich
+    hoch waren)."""
+    if fenster is None:
+        for f_ in EINQ_FENSTER:
+            e_ = einquetschung(df, f_)
+            if e_:
+                return e_
+        return None
     if df is None or len(df) < fenster + 50:
         return None
     d = df.iloc[-fenster:]
@@ -203,17 +215,19 @@ def einquetschung(df, fenster=60):
     h_ = [(i, p) for i, p in hochs if i > i0]
     if len(t_) >= 3 and len(h_) >= 2 and all(b_[1] > a_[1] for a_, b_ in zip(t_, t_[1:])):
         top = max(p for _, p in h_)
-        an = [p for _, p in h_ if abs(p / top - 1) * 100 <= GLEICH_PCT]
-        if len(an) >= 2 and kurs <= top * 1.05:
-            return {"art": "aufsteigend", "oberkante": round(top, 2), "beruehrungen": len(an), "tiefs": len(t_)}
+        an = [(i, p) for i, p in h_ if abs(p / top - 1) * 100 <= GLEICH_PCT]
+        if len(an) >= 2 and kurs <= top * 1.05 and len(d) - 1 - an[0][0] >= EINQ_MIN_TAGE:
+            return {"art": "aufsteigend", "oberkante": round(top, 2), "beruehrungen": len(an), "tiefs": len(t_),
+                    "tage": len(d) - 1 - an[0][0]}
     j0 = int(hi.argmax())
     h2 = [(j0, hi[j0])] + [(i, p) for i, p in hochs if i > j0]
     t2 = [(i, p) for i, p in tiefs if i > j0]
     if len(h2) >= 3 and len(t2) >= 2 and all(b_[1] < a_[1] for a_, b_ in zip(h2, h2[1:])):
         boden = min(p for _, p in t2)
-        am = [p for _, p in t2 if abs(p / boden - 1) * 100 <= GLEICH_PCT]
-        if len(am) >= 2 and kurs >= boden * 0.95:
-            return {"art": "absteigend", "unterkante": round(boden, 2), "beruehrungen": len(am), "hochs": len(h2)}
+        am = [(i, p) for i, p in t2 if abs(p / boden - 1) * 100 <= GLEICH_PCT]
+        if len(am) >= 2 and kurs >= boden * 0.95 and len(d) - 1 - am[0][0] >= EINQ_MIN_TAGE:
+            return {"art": "absteigend", "unterkante": round(boden, 2), "beruehrungen": len(am), "hochs": len(h2),
+                    "tage": len(d) - 1 - am[0][0]}
     return None
 
 
@@ -668,9 +682,9 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     eq = einquetschung(df)
     if eq:
         zs.append(_zeichen("stärke", "struktur", f"Einquetschung: steigende Tiefs unter der Oberkante "
-                           f"{_z(eq['oberkante'], '.2f')} $", 2) if eq["art"] == "aufsteigend" else
+                           f"{_z(eq['oberkante'], '.2f')} $ (seit {eq['tage']} Tagen)", 2) if eq["art"] == "aufsteigend" else
                   _zeichen("schwäche", "struktur", f"Einquetschung: fallende Hochs über der Unterkante "
-                           f"{_z(eq['unterkante'], '.2f')} $", 2))
+                           f"{_z(eq['unterkante'], '.2f')} $ (seit {eq['tage']} Tagen)", 2))
     ak = akkumulation(df)
     if ak:
         if ak["bild"] == "Akkumulation":
