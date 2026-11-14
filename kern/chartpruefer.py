@@ -225,8 +225,12 @@ def material(tk, df):
     if z.get("zone"):
         zeilen.append(f"Zone der App: {z['name']} ab {_d(z['start'])}, Oberkante {_z(z['oben'])} $, Unterkante "
                       f"{_z(z['unten'])} $ am {_d(z['tief_datum'])}, {_z(z['wochen'], '.1f')} Wochen, "
-                      f"{_z(z['tiefe'], '.1f')} % tief, Länge {z['laenge']}, Vorgeschichte "
-                      f"{z['vorgeschichte']['art']} {_z(z['vorgeschichte']['prozent'], '+.0f')} %")
+                      f"{_z(z['tiefe'], '.1f')} % tief, Länge {z['laenge']}. Vorgeschichte (der Lauf vor der Base, "
+                      f"O'Neils vorheriger Aufwärtstrend – nicht die Fahnenstange): {z['vorgeschichte']['art']} "
+                      f"{_z(z['vorgeschichte']['prozent'], '+.0f')} % in {_z(z['vorgeschichte']['wochen'], '.0f')} "
+                      f"Wochen vom {_d(df.index[z['vorgeschichte']['von_i']])} ({_z(z['vorgeschichte']['von'])} $). "
+                      f"Fahnenstange (Kullamägi, höchstens 13 Wochen): {_z(z['stange']['prozent'], '+.0f')} % in "
+                      f"{_z(z['stange']['wochen'], '.1f')} Wochen")
         if z.get("innen"):
             f = z["innen"]
             zeilen.append(f"Darin Flagge ab {_d(f['start'])}, Oberkante {_z(f['oben'])} $, {_z(f['tiefe'], '.1f')} % tief")
@@ -278,6 +282,16 @@ def material(tk, df):
         zeilen.append(f"Ausbruch des Scanners: {_d(br['tag'])} über {_z(br['pivot'])} $"
                       + (f", Fehlausbruch am {_d(br['fehl_tag'])}" if br.get("fehl") else "")
                       + (f", Volumen {_z(br['volumen'])}-fach" if br.get("volumen") else ""))
+    elif not z.get("zone"):                    # Kurs am Hoch: die zuletzt verlassene Zone (im Chart als blasser Rahmen)
+        fertig = vcp_zone.verlauf(df, tage=130)
+        if fertig:
+            b = fertig[-1]
+            e_b = vcp_zone.enge(df.iloc[:b["ende_i"]], b)
+            piv = e_b.get("pivot") or b["oben"]
+            zeilen.append(f"Zuletzt verlassene Zone der App (im Chart blass): {b['name']} ab {_d(b['start'])}, "
+                          f"Oberkante {_z(b['oben'])} $, Pivot {_z(piv)} $, Ausbruch am {_d(b['ende'])}; Kurs heute "
+                          f"{_z((df['Close'].iloc[-1] / piv - 1) * 100, '.1f')} % über dem Pivot. Der Ausbruch gilt "
+                          "4 Wochen (Kaufzone bis 5 % über dem Pivot), danach zeigt die App nur noch den blassen Rahmen")
     sig = (mp or {}).get("signale") or []
     if sig:
         zeilen.append("Signale des Market Profile (letzte 60 Tage): " + ", ".join(
