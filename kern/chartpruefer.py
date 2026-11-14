@@ -212,6 +212,18 @@ def material(tk, df):
     df.attrs["ticker"] = tk
     z = vcp_zone.zone(df)
     e = vcp_zone.enge(df, z) if z.get("zone") else {}
+    # Dieselbe Enge wie der Chart der Titelseite (Chart-Prüfer 14.11.2026, NCNO/BR: Bild und Zahlen nannten verschiedene
+    # Kontraktionen): fällt die große Zone durch und ist die Flagge darin reif, zeigt der Chart deren Enge; nach einem
+    # frischen Ausbruch die Enge der Zone vom Vortag
+    reif = lambda b: (b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok"   # noqa: E731
+                      and b.get("tiefe", 99) <= 50)
+    enge_von = "Zone der App"
+    if z.get("zone") and not reif(z) and z.get("innen") and reif(z["innen"]):
+        e, enge_von = vcp_zone.enge(df, z["innen"]), "Flagge in der Zone (die große Zone ist keine reife Base)"
+    br0 = vcp_zone.ausbruch(df, jetzt=z)
+    if br0 and br0.get("zone"):
+        e = vcp_zone.enge(df.iloc[:br0["vortag_i"]], br0["zone"])
+        enge_von = f"Zone vom Vortag des Ausbruchs am {_d(br0['tag'])}"
     zt = avwap.zahlentag(df, g)
     a = avwap.anker(df, zt)
     try:
@@ -242,7 +254,7 @@ def material(tk, df):
     if e.get("kontraktionen"):
         k = "; ".join(f"{_d(df.index[x['hoch_i']])} {_z(x['hoch'])} $ → {_d(df.index[x['tief_i']])} {_z(x['tief'])} $ "
                       f"(−{_z(x['tiefe'], '.1f')} %)" for x in e["kontraktionen"])
-        zeilen.append(f"Enge: {e['zahl']} Kontraktionen: {k}. Pivot {_z(e['pivot'])} $ ({e.get('lage')}), Ampel "
+        zeilen.append(f"Enge ({enge_von}, wie im Chart): {e['zahl']} Kontraktionen: {k}. Pivot {_z(e['pivot'])} $ ({e.get('lage')}), Ampel "
                       f"{e['ampel']}" + (f", fehlt: {', '.join(e['fehlt'])}" if e.get("fehlt") else ""))
     for schl, name in (("gipfel", "Hoch des Rückgangs"), ("hoch", "letztes Hoch"), ("tief", "Tief der Bewegung"),
                        ("ereignis", "Ereignis")):
