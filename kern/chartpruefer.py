@@ -47,7 +47,7 @@ ORDNER = os.path.join(HIER, "..", "daten", "chartpruefer")
 PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
 STICHPROBE = 100               # davon GRUPPEN Gruppen (14.11.2026: 150 → 100, weil ein Chart gut 10 Cent kostet)
-KOSTEN_JE_CHART = 0.12         # $ gemessen: erster Lauf 14.11.2026 kostete 14,52 $ für 150 Charts (9,7 Cent, ein Bild);
+KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,87 $ für 72 Charts (Bild, ganze Kette)
                                # mit zwei Bildern und der ganzen Kette eher 12 Cent – Schätzung vorher (3 Cent) war falsch
 
 ELEMENTE = ["Zustand", "Anlass", "Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot",

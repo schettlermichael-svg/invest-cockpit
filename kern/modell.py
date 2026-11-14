@@ -27,7 +27,7 @@ MODELL = "claude-opus-5-5"                                             # alle St
 PREIS_EIN, PREIS_AUS, PREIS_SUCHE = 4.0 / 1e6, 20.0 / 1e6, 0.01       # $ je Token bzw. je Suche
 
 
-DECKEL_USD = 50.0                                                      # Monatsdeckel (Micky 11.11.2026: alle Strategen auf Opus, gemessen ~2,10 $ je Konferenz)
+DECKEL_USD = 100.0                                                     # Monatsdeckel (Micky 14.11.2026: 100 $ – so viel API-Guthaben enthält sein Max-Abo im Monat; vorher 50 $)
 
 
 def schluessel():

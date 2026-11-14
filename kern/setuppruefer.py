@@ -39,7 +39,7 @@ PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
 STICHPROBE = 100               # davon OHNE Titel ohne Setup
 OHNE = 20
-KOSTEN_JE_CHART = 0.13         # $ wie der Chart-Prüfer (ein Bild statt zwei, dafür mehr Regeln im Text)
+KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,87 $ für 72 Charts (Bild, ganze Kette)
 
 ELEMENTE = ["Urteil: grün zu Unrecht", "Urteil: zu streng (Regeln erfüllt, nicht grün)", "Regel falsch gemessen",
             "Wahl des Setups", "Einstieg/Pivot", "Kaufzone/Abstand", "Stopp", "Übersehen (kein Setup, aber eins da)",

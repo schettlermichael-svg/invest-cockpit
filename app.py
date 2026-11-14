@@ -573,12 +573,13 @@ def _chartpruefer_zeigen():
     """Chart-Prüfer (14.11.2026): Prüfstand, kein Erkenner – eine Stichprobe von Charts gegen die Regeln der Meister;
     gemeldet wird nur, wo der Prüfer der App widerspricht."""
     import chartpruefer
+    import modell
     _pruefer_kasten(chartpruefer, "🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister",
                     "Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
                     f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
                     "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und "
                     "meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
-                    f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$). "
+                    f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel {modell.DECKEL_USD:.0f} \\$). "
                     "Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
                     "pruefer", _pruefer_starten)
 
@@ -586,6 +587,7 @@ def _chartpruefer_zeigen():
 def _setuppruefer_zeigen():
     """Setup-Prüfer (Micky 14.11.2026): eigener Prüfstand nur für die Setups – Urteil, Wahl, Einstieg, Kaufzone, Stopp,
     übersehene Setups gegen die Regeln der Meister."""
+    import modell
     import setuppruefer
     _pruefer_kasten(setuppruefer, "🎯 Setup-Prüfer · Urteil, Einstieg und Stopp gegen die Regeln der Meister",
                     "Die Urteile bleiben Code. Der Prüfer schaut sich etwa "
@@ -593,7 +595,7 @@ def _setuppruefer_zeigen():
                     f"{setuppruefer.OHNE} Titel ohne Setup – und prüft mit dem Auge von Minervini, O'Neil, Kullamägi "
                     "und Weinstein: Ist das Grün verdient? Sitzen Einstieg, Kaufzone und Stopp richtig? Ist ein Setup "
                     f"übersehen? Etwa {setuppruefer.STICHPROBE * setuppruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf "
-                    "(Monatsdeckel 50 \\$). Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
+                    f"(Monatsdeckel {modell.DECKEL_USD:.0f} \\$). Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
                     "setuppruefer", _setuppruefer_starten)
 
 
