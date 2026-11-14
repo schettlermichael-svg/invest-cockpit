@@ -549,42 +549,75 @@ def setups_zeigen():
         _fehler(e)
     _kartentisch_zeigen(rollen={"termine"})
     chartpruefer_zeigen()
+    setuppruefer_zeigen()
     verbindungen_zeigen()
 
 
 def _pruefer_starten():
     import chartpruefer
     if chartpruefer.starten():
-        st.toast("Chart-Prüfer läuft – etwa 150 Charts, die Seite zeigt den Fortschritt")
+        st.toast("Chart-Prüfer läuft – die Seite zeigt den Fortschritt")
+    else:
+        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
+
+
+def _setuppruefer_starten():
+    import setuppruefer
+    if setuppruefer.starten():
+        st.toast("Setup-Prüfer läuft – die Seite zeigt den Fortschritt")
+    else:
+        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
 
 
 def _chartpruefer_zeigen():
     """Chart-Prüfer (14.11.2026): Prüfstand, kein Erkenner – eine Stichprobe von Charts gegen die Regeln der Meister;
     gemeldet wird nur, wo der Prüfer der App widerspricht."""
     import chartpruefer
+    _pruefer_kasten(chartpruefer, "🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister",
+                    "Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
+                    f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
+                    "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und "
+                    "meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
+                    f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$). "
+                    "Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
+                    "pruefer", _pruefer_starten)
+
+
+def _setuppruefer_zeigen():
+    """Setup-Prüfer (Micky 14.11.2026): eigener Prüfstand nur für die Setups – Urteil, Wahl, Einstieg, Kaufzone, Stopp,
+    übersehene Setups gegen die Regeln der Meister."""
+    import setuppruefer
+    _pruefer_kasten(setuppruefer, "🎯 Setup-Prüfer · Urteil, Einstieg und Stopp gegen die Regeln der Meister",
+                    "Die Urteile bleiben Code. Der Prüfer schaut sich etwa "
+                    f"{setuppruefer.STICHPROBE} Titel an – jede Reihe des Kartentischs, grün und nicht grün, dazu "
+                    f"{setuppruefer.OHNE} Titel ohne Setup – und prüft mit dem Auge von Minervini, O'Neil, Kullamägi "
+                    "und Weinstein: Ist das Grün verdient? Sitzen Einstieg, Kaufzone und Stopp richtig? Ist ein Setup "
+                    f"übersehen? Etwa {setuppruefer.STICHPROBE * setuppruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf "
+                    "(Monatsdeckel 50 \\$). Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
+                    "setuppruefer", _setuppruefer_starten)
+
+
+def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten):
+    """Kasten eines Prüfers auf der Seite Setups: Start, Fortschritt, Auswertung, Bericht nach Element."""
     from html import escape as esc
-    laeuft, p = chartpruefer.stand()
-    with st.expander("🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister", expanded=laeuft):
-        st.caption("Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
-                   f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
-                   "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
-                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$). "
-                   "Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.")
-        st.button("Prüflauf starten", disabled=laeuft, on_click=_pruefer_starten, key="pruefer_start")
+    laeuft, p = mod.stand()
+    with st.expander(ueberschrift, expanded=laeuft):
+        st.caption(beschreibung)
+        st.button("Prüflauf starten", disabled=laeuft, on_click=starten, key=f"{key}_start")
         if laeuft:
-            st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} Charts geprüft")
+            st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} geprüft")
         elif p and p.get("ende"):
-            st.caption(f"Letzter Lauf {p['start']}–{p['ende'][-5:]} · {p.get('fertig')} Charts · "
+            st.caption(f"Letzter Lauf {p['start']}–{p['ende'][-5:]} · {p.get('fertig')} geprüft · "
                        f"{str(p.get('kosten', '')).replace('.', ',')} \\$")
-        b = chartpruefer.letzter_bericht()
+        b = mod.letzter_bericht()
         if not b or not b.get("titel"):
             return
         a = b.get("auswertung")
         if not laeuft and not a:
-            if st.button("Bericht auswerten (Befunde über die Regeln bündeln, wenige Cent)", key="pruefer_auswerten"):
+            if st.button("Bericht auswerten (Befunde über die Regeln bündeln, wenige Cent)", key=f"{key}_auswerten"):
                 try:
                     with st.spinner("Die Widersprüche werden gebündelt …"):
-                        a = chartpruefer.auswerten()
+                        a = mod.auswerten()
                 except Exception as x:  # noqa: BLE001
                     st.error(f"Auswertung ging nicht: {x}")
         if a:
@@ -625,6 +658,7 @@ def _chartpruefer_zeigen():
 
 
 chartpruefer_zeigen = _FRAGMENT(run_every=30)(_chartpruefer_zeigen) if _FRAGMENT else _chartpruefer_zeigen
+setuppruefer_zeigen = _FRAGMENT(run_every=30)(_setuppruefer_zeigen) if _FRAGMENT else _setuppruefer_zeigen
 
 
 def chart_pruefen(tk, teile):
@@ -650,6 +684,31 @@ def chart_pruefen(tk, teile):
             st.error(f"Chart-Prüfer ging nicht: {x}")
             return
     st.markdown(zustandsbild.pruef_karte(r), unsafe_allow_html=True)
+
+
+def setup_pruefen(tk, teile):
+    """Knopf „🎯 Setup prüfen lassen“ unter dem Chart (Micky 14.11.2026): der Setup-Prüfer urteilt über das Setup dieses
+    Titels – Urteil, Wahl, Einstieg, Kaufzone, Stopp, übersehen; einmal je Titel und Kurstag, danach aus dem Speicher."""
+    import setuppruefer
+    import zustandsbild
+    df = (teile.get("chart") or {}).get("df")
+    if df is None:
+        return
+    stand = f"{df.index[-1]:%Y-%m-%d}"
+    r = setuppruefer.einzeln_gespeichert(tk, stand)
+    if r is None:
+        if not st.button("🎯 Setup prüfen lassen", key=f"setup_pruefen_{tk}",
+                         help="Der Setup-Prüfer prüft das Setup dieses Titels mit dem Auge von Minervini, O'Neil, "
+                              "Kullamägi und Weinstein: Ist das Grün verdient, sitzen Einstieg, Kaufzone und Stopp, ist "
+                              "ein Setup übersehen? Etwa 13 Cent, einmal je Titel und Kurstag."):
+            return
+        try:
+            with st.spinner("Der Setup-Prüfer schaut hin …"):
+                r = setuppruefer.einzeln(tk, stand, teile.get("chart"))
+        except Exception as x:  # noqa: BLE001
+            st.error(f"Setup-Prüfer ging nicht: {x}")
+            return
+    st.markdown(zustandsbild.pruef_karte(r, "🎯 Setup-Prüfer"), unsafe_allow_html=True)
 
 
 def strategen_call(tk, teile):
@@ -756,6 +815,7 @@ elif ticker:
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
                     unsafe_allow_html=True)
         chart_pruefen(ticker, teile)
+        setup_pruefen(ticker, teile)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)

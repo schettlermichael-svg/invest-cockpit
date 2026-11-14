@@ -74,7 +74,7 @@ def _fund_gespeichert(tk):
         return None, None
 
 
-def _stufe1(tk, start=None):
+def _stufe1(tk, start=None, regeln=False):
     """VCP-Scanner, beide Systeme und die Auktion (Market Profile, nur Zeichen) eines Titels aus dem Speicher; Reihe
     oder None. Seit 06.11.2026 entscheidet die Wertzone nirgends mehr mit; ein Titel ohne 30-Minuten-Kerzen wird trotzdem
     gerechnet."""
@@ -116,7 +116,10 @@ def _stufe1(tk, start=None):
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
                       **{f_: (k.get(f_) or {}).get("ampel") for f_ in SHORTS.values()}}}
         import zahlen_reaktion
-        info.update(setup_feststellen(df, m, k, zahlen_reaktion.pruefen(df, gewinne), scan))
+        zr_ = zahlen_reaktion.pruefen(df, gewinne)
+        info.update(setup_feststellen(df, m, k, zr_, scan))
+        if regeln:                                  # für den Setup-Prüfer: die Urteile beider Lehrer mit allen Regeln
+            info["_regeln"] = {"m": m, "k": k, "zr": zr_}
         try:                                        # Kreislauf und Zeichen der Stärke/Schwäche (13.11.2026)
             import zeichen
             fa = info.get("ausbruch") if str(info.get("ausbruch") or "").startswith("🔴 Fehlausbruch") else None

@@ -598,9 +598,9 @@ def lauf(n=STICHPROBE):
     return pfad
 
 
-def stand():
-    """(läuft, Protokoll)."""
-    p = json_lesen(PROTOKOLL, None)
+def stand(protokoll=None):
+    """(läuft, Protokoll) – auch für den Setup-Prüfer (eigenes Protokoll)."""
+    p = json_lesen(protokoll or PROTOKOLL, None)
     if not p:
         return False, None
     if p.get("ende"):
@@ -616,8 +616,10 @@ def stand():
 
 
 def starten():
-    """Startet werkzeuge/pruefer_lauf.py als eigenen Prozess (die App wartet nicht)."""
-    if stand()[0]:
+    """Startet werkzeuge/pruefer_lauf.py als eigenen Prozess (die App wartet nicht); nie zugleich mit dem
+    Setup-Prüfer (Monatsdeckel)."""
+    import setuppruefer
+    if stand()[0] or setuppruefer.stand()[0]:
         return False
     os.makedirs(ORDNER, exist_ok=True)
     log = open(LOG, "w", encoding="utf-8")
@@ -673,18 +675,19 @@ SCHEMA_AUSWERTUNG = {
 }
 
 
-def _bericht_pfad():
-    if not os.path.isdir(ORDNER):
+def _bericht_pfad(ordner=None):
+    ordner = ordner or ORDNER
+    if not os.path.isdir(ordner):
         return None
-    b = sorted(f for f in os.listdir(ORDNER) if f.startswith("bericht_"))
-    return os.path.join(ORDNER, b[-1]) if b else None
+    b = sorted(f for f in os.listdir(ordner) if f.startswith("bericht_"))
+    return os.path.join(ordner, b[-1]) if b else None
 
 
-def auswerten(pfad=None):
+def auswerten(pfad=None, system=None, ordner=None):
     """Widersprüche des Berichts zu Befunden über die Regeln der App bündeln (ein Modellaufruf, wenige Cent);
-    das Ergebnis steht im Bericht unter "auswertung"."""
+    das Ergebnis steht im Bericht unter "auswertung". system/ordner: für den Setup-Prüfer."""
     import modell
-    pfad = pfad or _bericht_pfad()
+    pfad = pfad or _bericht_pfad(ordner)
     b = json_lesen(pfad, None)
     if not b or not b.get("titel"):
         return None
@@ -694,7 +697,7 @@ def auswerten(pfad=None):
     inhalt = (f"Bericht {b['stand']}: {len(b['titel'])} Charts, {len(zeilen)} Widersprüche, {ohne} ohne Widerspruch.\n"
               + "\n".join(zeilen))
     vorher = modell.kosten()["usd"]
-    a = modell._formular(SYSTEM_AUSWERTUNG, inhalt, "auswertung_melden", SCHEMA_AUSWERTUNG, 8000)
+    a = modell._formular(system or SYSTEM_AUSWERTUNG, inhalt, "auswertung_melden", SCHEMA_AUSWERTUNG, 8000)
     a["kosten"] = round(modell.kosten()["usd"] - vorher, 3)
     a["stand"] = f"{datetime.now():%Y-%m-%d %H:%M}"
     b["auswertung"] = a
@@ -702,8 +705,6 @@ def auswerten(pfad=None):
     return a
 
 
-def letzter_bericht():
-    if not os.path.isdir(ORDNER):
-        return None
-    b = sorted(f for f in os.listdir(ORDNER) if f.startswith("bericht_"))
-    return json_lesen(os.path.join(ORDNER, b[-1]), None) if b else None
+def letzter_bericht(ordner=None):
+    pfad = _bericht_pfad(ordner)
+    return json_lesen(pfad, None) if pfad else None

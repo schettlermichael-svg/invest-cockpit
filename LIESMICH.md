@@ -970,3 +970,18 @@ rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py` (
   Server: libcairo2 und cairosvg installiert das Update-Skript. Etwa 5 Cent je Chart.
 - Knopf je Titel: „🔎 Chart prüfen lassen“ unter dem Chart der Titelseite; Urteil als Karte darunter, gespeichert je
   Titel und Kurstag in `daten/chartpruefer/titel/`.
+
+
+## Setup-Prüfer (14.11.2026)
+
+Micky: eigener Prüfer nur für die Setups, der Chart-Prüfer bleibt bei Zone, Zeichen, Zustand und Ankern
+(`kern/setuppruefer.py`, Lauf `werkzeuge/setup_lauf.py`, Bericht in `daten/setuppruefer/`). Er prüft den Angriffsbefehl:
+grün zu Unrecht, zu streng, Regel falsch gemessen, Wahl des Setups, Einstieg/Pivot, Kaufzone, Stopp, übersehene Setups
+und Shorts. Stichprobe: 80 Titel gleichmäßig über die Reihen des Kartentischs (grün und nicht grün getrennt) und 20 ohne
+Setup. Material: Urteil der App mit allen Regeln beider Lehrer (`kartentisch._stufe1(tk, regeln=True)`), Plan (Einstieg,
+1,5-ATR-Stopp), die Zahlen des Charts und die letzten 10 Tage; Bild: der Chart der Titelseite. Regeln der Meister
+(Minervini, O'Neil, Kullamägi, Weinstein) und die Setups der App stehen im Auftrag. Der 1,5-ATR-Stopp ist Mickys
+Entscheidung (09.11.2026) – Abweichungen meldet der Prüfer als strittig. Etwa 13 Cent je Titel, ein Lauf etwa 13 $; Chart-
+und Setup-Prüfer laufen nie gleichzeitig (Monatsdeckel). Knopf „🎯 Setup prüfen lassen“ unter dem Chart der Titelseite;
+Kasten auf der Seite Setups unter dem Chart-Prüfer. Auswertung wie beim Chart-Prüfer (`chartpruefer.auswerten` mit
+eigenem Auftrag).
