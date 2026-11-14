@@ -567,13 +567,13 @@ def _chartpruefer_zeigen():
         st.caption("Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
                    f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
                    "an und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
-                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} $ je Lauf (Monatsdeckel 50 $).")
+                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$).")
         st.button("Prüflauf starten", disabled=laeuft, on_click=_pruefer_starten, key="pruefer_start")
         if laeuft:
             st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} Charts geprüft")
         elif p and p.get("ende"):
             st.caption(f"Letzter Lauf {p['start']}–{p['ende'][-5:]} · {p.get('fertig')} Charts · "
-                       f"{str(p.get('kosten', '')).replace('.', ',')} $")
+                       f"{str(p.get('kosten', '')).replace('.', ',')} \\$")
         b = chartpruefer.letzter_bericht()
         if not b or not b.get("titel"):
             return
