@@ -119,7 +119,7 @@ def chart_knoepfe(tk):
         zr = (kartentisch.eintrag_von(tk) or {}).get("reihe") == "zahlen"   # Zahlen-Reaktion: Zahlentag vorgewählt
         avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
                               default=chart.AVWAP_START + (["ereignis"] if zr else []), format_func=chart.AVWAP_KURZ.get,
-                              key="avwap_anker_z2" if zr else "avwap_anker2",     # neue Anker 14.11.2026
+                              key="avwap_anker_z3" if zr else "avwap_anker3",     # Voreinstellung Zange 14.11.2026
                               help="Anker nach Brian Shannon, aus der Struktur (nie aus dem Kalender). Hoch des "
                                    "Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das jüngste "
                                    "Hoch, das der Kurs nicht überschritten hat – bestätigt ab 8 % Rückgang (steht er über "

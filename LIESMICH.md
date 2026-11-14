@@ -901,7 +901,7 @@ bei LUV am 17.02., das Tief am 02.04. – beide aus einem Zyklus, der im April e
   Micky 14.11.2026: nur dieses) – das tiefste Tief zwischen dem früheren, höheren Hoch (ohne: 52 Wochen) und dem letzten
   Hoch. Trend gebrochen (Kurs darunter): das tiefste Tief seit dem letzten Hoch, sobald der Kurs 1 ATR darüber steht.
 - **Hoch des Rückgangs:** höchstes nicht überschrittenes Wochen-Schwunghoch, nach dem der Kurs nie unter das tiefste
-  Tief seit dem letzten Hoch fiel (der Gipfel der Korrektur). Beide Hochs werden gezeigt (Shannon legt Anker übereinander).
+  Tief seit dem letzten Hoch fiel (der Gipfel der Korrektur). Voreinstellung im Chart: nur die Zange (letztes Hoch und Tief), Hoch des Rückgangs und Ereignis per Schalter (Micky 14.11.2026).
 - **Ereignis:** jüngster Zahlentag, jüngste Lücke ab 4 % oder Volumenspitze (ab doppeltem 50-Tage-Volumen mit Bewegung
   ab 3 %), höchstens 6 Monate (Shannon: Zahlen, Lücke, große Nachricht; Micky 14.11.2026).
 - **Volumenprofil:** ab dem ersten Tag der laufenden Balance nach Dalton (überlappender Wert: von heute in Blöcken zu 5 Tagen
