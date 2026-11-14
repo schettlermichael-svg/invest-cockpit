@@ -282,7 +282,21 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     # 1./2. abgelehnt oder angenommen: das jüngste Ereignis am Rand der letzten 20 Tage entscheidet, die älteren
     # bleiben als Beleg (MSFT 04.11.: Spring am 02.11., zwei Tage später Ausbruch – angenommen, mit dem Spring als Beleg)
     ereignisse = []                              # (Tag, Zustand, Richtung, Beleg)
-    if br and br.get("fehl"):
+    nachher = []                                 # Belege, die keinen Zustand setzen (Rücktest, Fortsetzung)
+    # Ausbruch aus einer Pause tief in der großen Zone (Minervini: Cheat im unteren oder mittleren Drittel der Base) ist
+    # ein Einstieg, aber keine Annahme außerhalb der großen Balance – die Zone gilt weiter (Chart-Prüfer 14.11.2026, LUV:
+    # „Ausbruch“ über 42,08 $ mitten in der Zone 37,40–52,88 $ neben dem Zustand Balance)
+    innen_br = None
+    if br and zone and zone.get("zone") and zone.get("oben") and zone.get("unten") is not None:
+        z_br = br.get("zone") or {}
+        if (br["pivot"] < zone["oben"] * (1 - RAND_PCT / 100) and z_br.get("start_i", -1) > zone.get("start_i", -1)):
+            anteil = (br["pivot"] - zone["unten"]) / (zone["oben"] - zone["unten"])
+            innen_br = "Low Cheat (unteres Drittel)" if anteil < 1 / 3 else "Cheat (mittleres Drittel)"
+    if innen_br:
+        nachher.append(("Balance", f"innere Rotation: {'Fehlausbruch' if br.get('fehl') else 'Ausbruch'} am "
+                                   f"{_d(br['tag'])} über {_z(br['pivot'])} $ aus einer Pause in der Zone – "
+                                   f"{innen_br} der Base, Minervini"))
+    elif br and br.get("fehl"):
         ereignisse.append((br["fehl_tag"], "abgelehnt", "aufwärts",
                            f"Fehlausbruch: Ausbruch am {_d(br['tag'])} über den Pivot {_z(br['pivot'])} $, am "
                            f"{_d(br['fehl_tag'])} zurück in der Zone"))
@@ -292,7 +306,6 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
                            + (f" mit Volumen {_z(br['volumen'])}-fach" if br.get("volumen") else "")
                            + (", Rücktest läuft" if br.get("ruecktest") else "")))
     aktiv = (mp or {}).get("aktiv")
-    nachher = []                                 # Belege, die keinen Zustand setzen (Rücktest, Fortsetzung)
     scanner = bool(zone and zone.get("zone"))
 
     def am_rand(preis, d):

@@ -889,6 +889,17 @@ Profile, Feld, O'Neil, Marktzone) stehen als Unterzeile.
 Gemessen über 1.907 Titel (Daten bis 04.11.2026, ein breiter Ausbruchstag – 23 % mit Ausbruch des Scanners in 10
 Tagen): angenommen 43 %, Balance 26 %, abgelehnt 20 %, Test am Rand 8 %, Ende des Laufs 2,5 %, Ungleichgewicht 1,2 %.
 
+## Befunde des Chart-Prüfers an LUV (14.11.2026)
+
+- **Phase 3 → 4** erst, wenn die 40-Wochen-Linie wirklich fällt (mehr als 0,5 % in 4 Wochen, Weinstein). Vorher reichten
+  −0,1 %; LUV stand in Phase 4 bei flacher Linie und Kurs darüber. Gemessen über 1.892 Titel: 62 Titel ändern die Phase
+  heute (meist 4 → 3 und 1 → 3), 1,6 % aller Wochen.
+- **Knoten im Volumenprofil** sind jetzt alle Gipfel des Profils (ab 30 % des größten Volumens und mindestens 10 % über
+  dem höheren Tal daneben), nicht nur Zonen ab 60 %. LUV: das Angebot bei 47–49 $ (42 %) fehlte als Mauer.
+- **Ausbruch aus einer Pause tief in der Zone** (Pivot mehr als 3 % unter der Oberkante, jüngere Zone in der großen) ist
+  innere Rotation mit Cheat-Drittel (Minervini), keine Annahme außerhalb der Balance (`auktion.titel`).
+- Profil der Balance heißt nicht mehr „verlassen“, solange der neue Wert nicht angenommen ist (Dalton).
+
 ## Anker nach Shannon und Dalton (14.11.2026)
 
 Micky (LUV): „Der AVWAP ist komplett falsch verankert und das Volumenprofil fehlt.“ Das alte Hoch der 52 Wochen hing
@@ -906,7 +917,7 @@ bei LUV am 17.02., das Tief am 02.04. – beide aus einem Zyklus, der im April e
   ab 3 %), höchstens 6 Monate (Shannon: Zahlen, Lücke, große Nachricht; Micky 14.11.2026).
 - **Volumenprofil:** ab dem ersten Tag der laufenden Balance nach Dalton (überlappender Wert: von heute in Blöcken zu 5 Tagen
   zurück, ein Block gehört dazu, wenn seine Spanne die mittlere Hälfte der typischen Preise der Balance berührt; bis
-  2 Blöcke Rotation zum Rand; gerade verlassen → die verlassene Balance davor; `avwap.balance_beginn`, Micky 14.11.2026 – vorher ab der Wertzone des Market Profile, immer montags); bei unter
+  2 Blöcke Rotation zum Rand; Wert wandert seit wenigen Tagen → die Balance davor; `avwap.balance_beginn`, Micky 14.11.2026 – vorher ab der Wertzone des Market Profile, immer montags); bei unter
   2 Wochen ab der Zone, sonst ab dem Tief der Bewegung; im Chart mit dem Wertbereich als Feld über dem Zeitraum der Balance. Mauer aus dem Profil
   ab dem Hoch des Rückgangs, Stütze ab dem Tief der Bewegung.
 

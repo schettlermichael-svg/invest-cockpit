@@ -635,7 +635,7 @@ def _profil(vv, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, breite=150):
             t_ = f"akzeptierter Wert {zahl(p['poc'])} $"
             spaete.append(f'<text x="{ENDE - breite - 4}" y="{platz(ENDE - breite - 4, y_ - 4, t_, 11, "end"):.1f}" '
                           f'fill="{TEXT_2}" font-size="11" text-anchor="end">{t_}</text>')
-        art = {"Balance": "der Balance seit", "verlassene Balance": "der verlassenen Balance seit", "Zone": "seit Beginn der Zone", "Tief": "seit dem Tief",
+        art = {"Balance": "der Balance seit", "Balance, Wert wandert": "der Balance seit", "Zone": "seit Beginn der Zone", "Tief": "seit dem Tief",
                "Hoch": "seit dem Hoch"}.get(g.get("art"), "")
         spaete.append(f'<text x="{ENDE - 4}" y="44" fill="{TEXT_3}" font-size="12" text-anchor="end">VOLUMEN {art.upper()} '
                       f'{pd.Timestamp(g["ab"]):%d.%m.} ({g.get("tage")} Tage)</text>')

@@ -30,8 +30,8 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
 Letztes Hoch und Tief zusammen sind Shannons Zange („Pinch“).
 Volumenprofil (profil_anker): grau ab dem Beginn der laufenden Balance nach Dalton – dem ersten Tag, ab dem sich die
 Tagesspannen überlappen (balance_beginn; Micky 14.11.2026, vorher ab der Wertzone des Market Profile, also immer an einem
-Montag, mit Trendtagen und Lücken im Profil). Ist die laufende Balance kürzer als 2 Wochen (der Kurs hat sie gerade
-verlassen), ab dem Beginn der verlassenen Balance davor; gibt es keine, ab der Zone des Scanners, sonst ab dem Tief der
+Montag, mit Trendtagen und Lücken im Profil). Ist die laufende Balance kürzer als 2 Wochen (der Wert wandert seit
+wenigen Tagen), ab dem Beginn der Balance davor; gibt es keine, ab der Zone des Scanners, sonst ab dem Tief der
 Bewegung. Mauer: Knoten über dem Kurs im Profil ab dem Gipfel (sonst ab dem letzten
 Hoch); Stütze: Knoten unter dem Kurs im Profil ab dem Tief der Bewegung.
 Bis 14.11.2026: Hoch = höchstes Hoch der 52 Wochen, grau = der jüngere von Zone und Ereignis."""
@@ -206,8 +206,9 @@ def profil_anker(df, zahltag=None, zone_start=None):
     vor = balance_beginn(df, bb - 1) if bb is not None and n - bb < PROFIL_MIN_TAGE and bb > 0 else None
     if bb is not None and n - bb >= PROFIL_MIN_TAGE:
         grau = (df.index[bb], "Balance")
-    elif vor is not None and bb - vor >= PROFIL_MIN_TAGE:   # gerade ausgebrochen: die verlassene Balance (Dalton)
-        grau = (df.index[vor], "verlassene Balance")
+    elif vor is not None and bb - vor >= PROFIL_MIN_TAGE:   # Wert wandert seit wenigen Tagen: die Balance davor (Dalton:
+        #                                                   verlassen erst, wenn der neue Wert angenommen ist)
+        grau = (df.index[vor], "Balance, Wert wandert")
     elif lang(zone_start):
         grau = (pd.Timestamp(zone_start), "Zone")
     else:

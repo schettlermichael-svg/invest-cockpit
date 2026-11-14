@@ -1,14 +1,18 @@
 """Volumenprofil nach der Auction Market Theory: wie viel Volumen bei welchem Preis gehandelt wurde.
 
 Aus Tageskerzen genähert: Das Volumen jedes Tages wird gleichmäßig über seine Tagesspanne (Tief bis Hoch) verteilt.
-Seit 13.11.2026 verankert nach Ereignis und Struktur, seit 14.11.2026 nach Dalton (Balance) und Shannon (verankert(), Anker aus avwap.profil_anker) statt starr über 52 Wochen. Knoten (High Volume Node): zusammenhängende Preiszonen
-mit mindestens 60 % des größten geglätteten Volumens – dort hat der Markt den Preis akzeptiert. Wertbereich: die 70 % des Volumens um den meistgehandelten Preis (Point of Control).
+Seit 13.11.2026 verankert nach Ereignis und Struktur, seit 14.11.2026 nach Dalton (Balance) und Shannon (verankert(), Anker aus avwap.profil_anker) statt starr über 52 Wochen. Knoten (High Volume Node): jeder Gipfel des
+geglätteten Profils, der sich klar aus den Tälern (Low Volume Nodes) links und rechts erhebt – dort hat der Markt den
+Preis akzeptiert. Seit 14.11.2026 auch Nebengipfel (Chart-Prüfer, LUV: das Angebot bei 47–49,50 $ lag bei 42 % des
+größten Volumens und fehlte, solange nur Zonen ab 60 % zählten). Wertbereich: die 70 % des Volumens um den meistgehandelten Preis (Point of Control).
 """
 import numpy as np
 import pandas as pd
 
 FAECHER = 48
-KNOTEN, WERT = 0.60, 0.70   # Knoten: mindestens 60 % des größten (geglätteten) Volumens
+WERT = 0.70                 # Wertbereich: 70 % des Volumens
+GIPFEL_MIN = 0.30           # Knoten: Gipfel mit mindestens 30 % des größten Volumens …
+GIPFEL_UEBER = 0.10         # … der mindestens 10 % (des größten) über dem höheren der beiden Täler daneben liegt
 JAHR = 252
 
 
@@ -48,18 +52,36 @@ def profil(df, start, ende=None):
 
 
 def knoten(p):
-    """Knoten als Preiszonen [(unten, oben)] aus dem geglätteten Profil."""
+    """Knoten als Preiszonen [(unten, oben)]: jeder Gipfel des geglätteten Profils ab GIPFEL_MIN, der sich mindestens
+    GIPFEL_UEBER über das höhere der beiden Täler daneben erhebt; die Zone reicht so weit, wie das Volumen über der
+    halben Höhe zwischen Tal und Gipfel bleibt."""
     v = np.convolve(p["volumen"], np.ones(3) / 3, mode="same")
-    g, maske, aus, i = p["grenzen"], v >= KNOTEN * v.max(), [], 0
-    while i < len(maske):
-        if maske[i]:
-            j = i
-            while j + 1 < len(maske) and maske[j + 1]:
-                j += 1
-            aus.append((float(g[i]), float(g[j + 1])))
-            i = j + 1
-        else:
-            i += 1
+    g, n = p["grenzen"], len(v)
+    if not n or v.max() <= 0:
+        return []
+    v = v / v.max()
+    aus = []
+    for i in range(n):
+        if v[i] < GIPFEL_MIN or (i > 0 and v[i - 1] > v[i]) or (i < n - 1 and v[i + 1] > v[i]):
+            continue
+        if i > 0 and v[i - 1] == v[i]:                  # Plateau: nur einmal zählen
+            continue
+        a_ = i
+        while a_ > 0 and v[a_ - 1] <= v[a_]:
+            a_ -= 1
+        b_ = i
+        while b_ < n - 1 and v[b_ + 1] <= v[b_]:
+            b_ += 1
+        tal = max(v[a_] if a_ > 0 else 0.0, v[b_] if b_ < n - 1 else 0.0)
+        if v[i] - tal < GIPFEL_UEBER:
+            continue
+        halb = tal + (v[i] - tal) / 2
+        lo, hi = i, i
+        while lo > a_ and v[lo - 1] >= halb:
+            lo -= 1
+        while hi < b_ and v[hi + 1] >= halb:
+            hi += 1
+        aus.append((float(g[lo]), float(g[hi + 1])))
     return aus
 
 

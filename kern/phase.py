@@ -84,8 +84,10 @@ def phasen(df):
         elif phase == 2 and b != 2 and (z.Close < z.gd40 or vorher != 2):
             phase = 3                                       # unter GD40W oder Phase-2-Bild verloren
         elif (phase == 3 and z.Close < z.gd40 and w.iloc[i - 1].Close < w.iloc[i - 1].gd40
-              and z.steig40 < 0 and not ist_seitwaerts(z)):
-            phase = 4                                       # zwei Wochen unter fallendem GD40W
+              and z.steig40 < FAELLT and not ist_seitwaerts(z)):
+            phase = 4                                       # zwei Wochen unter fallendem GD40W (Weinstein: die Linie
+            #                                                 fällt – flach ist sie bei weniger als 0,5 % in 4 Wochen;
+            #                                                 Chart-Prüfer 14.11.2026, LUV: −0,1 % galt als fallend)
         elif phase == 4 and seit4 >= 8 and b != 4 and vorher != 4 and z.steig40 >= FAELLT:
             phase = 1                                       # Abwärtsbild weg, GD40W fällt nicht mehr
             basis_hoch = None
