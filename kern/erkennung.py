@@ -334,7 +334,7 @@ def _erkenne_mp(df, woche=False, index=None):
         basis["muster"] = []
         return basis
     werte["pivot"] = hoch                        # Pivot long: Oberkante des Rahmens (A: Schluss darüber)
-    r = _abschluss(df, woche, index, h, l, c, v, n, art, [], werte, start, dauer, tiefe, tief_idx, hoch, bl, None, None)
+    r = _abschluss(df, woche, index, h, l, c, v, n, art, [], werte, start, dauer, tiefe, tief_idx, hoch, bl)
     r.update({"mp": a, "seite": seite, "zonen": a["zonen"]})
     if art == "Umkehr":
         r["hinweise"].append("Umkehr ↑ nach gescheitertem Bruch nach unten (Dalton) – gegen die Phase, Regeln der "
@@ -356,8 +356,7 @@ def erkenne(df, woche=False, index=None, _vor_hoch=False):
     Wertzone, Minervini); Flagge: Hoch der Flagge. Formnamen gibt es nicht mehr."""
     return _erkenne_mp(df, woche, index)
 
-def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dauer, tiefe, tief_idx, hoch, bl, db,
-               hinweis_db):
+def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dauer, tiefe, tief_idx, hoch, bl):
     """Gemeinsamer Abschluss: Base auf Base, Primärbasis, Zeichen, Basenzahl, Phase, Klimax, Kaufsetup, Datenampel."""
     vor = vorige_base(h, l, start) if start > BASE_MIN_TAGE else None
     if vor is not None and dauer >= 15 and bl.min() >= vor[1] * 0.95 and hoch <= vor[1] * 1.35:
@@ -372,11 +371,7 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
         gefunden.append("Primärbasis")            # junger Börsengang, erste Base
 
     # ── Zeichen zum Muster (deuten, filtern nie) ──
-    hinweise = []
-    if db is not None and hinweis_db:
-        hinweise.append(hinweis_db)
-    if muster == "Tasse ohne Henkel":
-        hinweise.append("ohne Henkel: etwas höhere Ausfallquote (gelb)")
+    hinweise = []                               # (Reste der alten Formerkennung – Tasse, Doppelboden – am 14.11.2026 entfernt)
     markt = korrektur_markt(df, index, werte["start_index"])
     zu_tief_zum_markt = False
     if markt is not None:
@@ -388,7 +383,7 @@ def _abschluss(df, woche, index, h, l, c, v, n, muster, oneil, werte, start, dau
         if muster:
             hinweise.append(f"Korrektur {faktor:.1f}-fach so tief wie der Markt".replace(".", ",") + f" ({ampel})")
         zu_tief_zum_markt = faktor > 3
-    if muster in ("Flat Base", "Base", "Cup+Handle", "Doppelboden", "Tasse ohne Henkel"):
+    if muster == "Base":
         hinweise.append("Tiefe " + ("grün" if tiefe <= 35 else "gelb" if tiefe <= 50 else "rot"))
     if dauer - tief_idx <= 5 and tiefe >= 15 and c[-1] >= hoch * 0.85:
         # V-Erholung: vom Tief in wenigen Tagen zurück nach oben (steht der Kurs noch am Tief, ist es keine Erholung)
