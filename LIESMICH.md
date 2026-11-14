@@ -1022,3 +1022,10 @@ Micky: „Denke an unsere drei Bilder.“ Abgleich Kasten für Kasten:
 - **Phase an der 30-Wochen-Linie** ausprobiert und verworfen: 35 % der Titel wechselten die Phase, die Beispiele des Prüfers
   wurden nur teils besser (BAX, KBH), teils schlechter (COKE, LUV – die 8-Wochen-Sperre nach Phase 4). Gehört in die
   Gefechtsordnung (Weinsteins Stufen als Rahmen), nicht als Einzelflick.
+- **Ereignis-Anker an jedem jüngsten Zahlentag** (Micky, Shannon; `avwap.zahlentag`): vorher erst ab 3 % Reaktion, sonst
+  saß der Anker auf einem älteren Ereignis (EXPO, DRH). Die 3 % gelten weiter für das Setup Zahlen-Reaktion. Gemessen:
+  Ereignis-Anker bei 1.342 statt 1.255 von 1.343 Titeln mit Zahlen, 269 ankern anders.
+- **Flagge grün nur mit steigenden Tiefs** (Micky, Kullamägi; `kartentisch.flagge_im_trend`): das tiefste Tief der zweiten
+  Hälfte der Flagge darf höchstens 0,5 ATR unter dem der ersten liegen (gleiche Tiefs oder ein kurzes Unterschneiden
+  halten das Gelände). Sonst steht „Tiefs fallen – die Truppe weicht“ unter „fehlt“. Gemessen: Flaggen im Trend 44 → 26
+  von 108 (ohne Spielraum wären es 13 gewesen – auch exakt gleiche Tiefs fielen raus).
