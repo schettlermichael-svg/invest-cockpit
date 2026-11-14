@@ -547,7 +547,61 @@ def setups_zeigen():
     except Exception as e:  # noqa: BLE001
         _fehler(e)
     _kartentisch_zeigen(rollen={"termine"})
+    chartpruefer_zeigen()
     verbindungen_zeigen()
+
+
+def _pruefer_starten():
+    import chartpruefer
+    if chartpruefer.starten():
+        st.toast("Chart-Prüfer läuft – etwa 150 Charts, die Seite zeigt den Fortschritt")
+
+
+def _chartpruefer_zeigen():
+    """Chart-Prüfer (14.11.2026): Prüfstand, kein Erkenner – eine Stichprobe von Charts gegen die Regeln der Meister;
+    gemeldet wird nur, wo der Prüfer der App widerspricht."""
+    import chartpruefer
+    from html import escape as esc
+    laeuft, p = chartpruefer.stand()
+    with st.expander("🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister", expanded=laeuft):
+        st.caption("Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
+                   f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
+                   "an und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
+                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} $ je Lauf (Monatsdeckel 50 $).")
+        st.button("Prüflauf starten", disabled=laeuft, on_click=_pruefer_starten, key="pruefer_start")
+        if laeuft:
+            st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} Charts geprüft")
+        elif p and p.get("ende"):
+            st.caption(f"Letzter Lauf {p['start']}–{p['ende'][-5:]} · {p.get('fertig')} Charts · "
+                       f"{str(p.get('kosten', '')).replace('.', ',')} $")
+        b = chartpruefer.letzter_bericht()
+        if not b or not b.get("titel"):
+            return
+        alle = [(r["tk"], r.get("gruppe", ""), w) for r in b["titel"] for w in r.get("widersprueche") or []]
+        fehler = [r for r in b["titel"] if r.get("fehler")]
+        je = {}
+        for tk, g, w in alle:
+            je.setdefault(w["element"], []).append((tk, g, w))
+        st.markdown(f"**Bericht {b['stand']}** · {len(b['titel'])} Charts · {len(alle)} Widersprüche "
+                    f"({sum(1 for *_, w in alle if w['gewicht'] == 'sicher')} sicher) · ohne Widerspruch: "
+                    f"{sum(1 for r in b['titel'] if not r.get('widersprueche') and not r.get('fehler'))}"
+                    + (f" · {len(fehler)} nicht prüfbar" if fehler else ""))
+        for element in sorted(je, key=lambda k: -len(je[k])):
+            zeilen = "".join(
+                f'<tr><td style="padding:3px 8px"><a href="?seite=Titelseite&t={esc(tk)}" target="_blank">{esc(tk)}</a>'
+                f'<br><span style="font-size:11px;opacity:.7">{esc(g)}</span></td>'
+                f'<td style="padding:3px 8px">{"●" if w["gewicht"] == "sicher" else "○"} {esc(w["befund"])}</td>'
+                f'<td style="padding:3px 8px">{esc(w["richtig"])}</td>'
+                f'<td style="padding:3px 8px;font-size:12px;opacity:.8">{esc(w["regel"])}</td></tr>'
+                for tk, g, w in je[element])
+            st.markdown(f'<details><summary style="cursor:pointer"><b>{esc(element)}</b> · {len(je[element])} '
+                        f'({sum(1 for *_, w in je[element] if w["gewicht"] == "sicher")} sicher)</summary>'
+                        f'<table style="font-size:13px;border-collapse:collapse"><tr><th>Titel</th><th>Befund</th>'
+                        f'<th>Richtig wäre</th><th>Regel</th></tr>{zeilen}</table></details>',
+                        unsafe_allow_html=True)
+
+
+chartpruefer_zeigen = _FRAGMENT(run_every=30)(_chartpruefer_zeigen) if _FRAGMENT else _chartpruefer_zeigen
 
 
 def strategen_call(tk, teile):

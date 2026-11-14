@@ -157,7 +157,7 @@ def _gueltig(obj, schema):
     return True
 
 
-def _formular(system, inhalt, name, schema, max_tokens=8000):
+def _formular(system, inhalt, name, schema, max_tokens=8000, bilder=None):
     """Antwort über ein festes Formular (Werkzeug der Schnittstelle): die Schnittstelle gibt ein fertiges Objekt zurück,
     kein JSON-Text, der an Anführungszeichen zerbrechen kann. Opus 5.5 erlaubt kein erzwungenes Werkzeug
     (tool_choice „tool“/„any“ → Fehler 400, Nachtlauf 11.11.2026) – deshalb „auto“ mit klarer Anweisung; schreibt das
@@ -170,7 +170,10 @@ def _formular(system, inhalt, name, schema, max_tokens=8000):
                "alle Pflichtfelder ausgefüllt, Listen als echte Listen, kein Text davor oder danach.")
     roh = ""
     for versuch in range(2):
-        bloecke = _rufen(system, [{"role": "user", "content": auftrag}], max_tokens, werkzeug, {"type": "auto"})
+        inhalt_ = auftrag if not bilder else (                 # Bilder (PNG, base64) vor dem Text – Chart-Prüfer
+            [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b}} for b in bilder]
+            + [{"type": "text", "text": auftrag}])
+        bloecke = _rufen(system, [{"role": "user", "content": inhalt_}], max_tokens, werkzeug, {"type": "auto"})
         kandidaten = [b["input"] for b in bloecke if b.get("type") == "tool_use" and isinstance(b.get("input"), dict)]
         text = "".join(b.get("text", "") for b in bloecke if b.get("type") == "text")
         a, e = text.find("{"), text.rfind("}")

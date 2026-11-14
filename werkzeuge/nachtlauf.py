@@ -514,6 +514,13 @@ def seiten_lauf_starten():
 
 def laeuft_etwas():
     """Läuft ein Knopf-Lauf (Kartentisch)? Für das Update-Skript des Servers: dann kein Neustart."""
+    try:                                          # auch der Chart-Prüfer (14.11.2026)
+        sys.path.insert(0, os.path.join(HIER, "..", "kern"))
+        import chartpruefer
+        if chartpruefer.stand()[0]:
+            return True
+    except Exception:  # noqa: BLE001
+        pass
     return _laeuft(TISCH_PROTOKOLL, 6)[0]
 
 

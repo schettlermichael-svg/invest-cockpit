@@ -920,3 +920,17 @@ gescheiterten Tasse bildet sich eine neue Base („rebase“).
 - **Neu (Enge):** Der Pivot nennt sein Drittel: Low Cheat (unteres), Cheat (mittleres), Pivot der Base (oberes).
 - Gemessen über 1.905 Titel: 22 % haben eine andere Zone (davon 10 % jetzt „zu kurz“, 5 % offen). Pivot im oberen
   Drittel 62 %, Cheat 5 %, Low Cheat 0,5 %.
+
+## Chart-Prüfer (14.11.2026)
+
+Micky wollte einen „Strategen für Chartmuster“. Entschieden: ein Prüfstand, kein Erkenner – die Erkennung bleibt Code
+(nur feste Regeln geben bei denselben Kursen immer dieselbe Zone; ein Modell jede Nacht über 1.900 Charts kostete
+rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py`, Knopf auf der Seite Setups:
+- Stichprobe von etwa 150 Titeln, gleichmäßig über Base, Konsolidierung, Flagge, offene Zone, keine Zone und die grünen
+  Setups des Kartentischs.
+- Je Titel ein Bild (matplotlib: 1 Jahr Tageskerzen mit Zone, Pivot, Kontraktionen, AVWAP-Ankern, Beginn der Balance,
+  Wochen-Schwunghochs) und die Zahlen der App; das Modell prüft gegen die recherchierten Regeln von O'Neil, Minervini,
+  Kullamägi, Shannon und Dalton und meldet nur Widersprüche (Element, Befund, Regel, was richtig wäre, sicher/strittig).
+- Bericht in `daten/chartpruefer/`, auf der Seite nach Element gruppiert. Etwa 3 Cent je Chart, gegen den Monatsdeckel
+  geprüft. Echte Regelfehler gehen in den Code (gemessen über alle Titel), strittige Fälle entscheidet Micky.
+- Server: `werkzeuge/server/pakete.txt` (matplotlib) wird vom Update-Skript installiert, sobald sich die Liste ändert.
