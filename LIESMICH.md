@@ -985,3 +985,11 @@ Entscheidung (09.11.2026) – Abweichungen meldet der Prüfer als strittig. Etwa
 und Setup-Prüfer laufen nie gleichzeitig (Monatsdeckel). Knopf „🎯 Setup prüfen lassen“ unter dem Chart der Titelseite;
 Kasten auf der Seite Setups unter dem Chart-Prüfer. Auswertung wie beim Chart-Prüfer (`chartpruefer.auswerten` mit
 eigenem Auftrag).
+
+## Mängelliste (14.11.2026)
+
+Micky: Befunde der Prüfer dürfen zwischen zwei Chats nicht verloren gehen (`kern/maengel.py`, `daten/maengel.json`).
+Jede Auswertung von Chart- oder Setup-Prüfer kommt von selbst in die Liste (`aus_berichten`, auch alte Berichte mit
+Auswertung). Jeder Befund hat einen Stand: offen, behoben (Notiz: Commit und Messung) oder entschieden (Notiz: Mickys
+Entscheidung). Auf der Seite Setups unter den Prüfern, Vorgabe: nur offene. Darunter der Verlauf je Prüfer:
+Widersprüche je Chart (davon sicher) je Element über alle Läufe – ein behobener Befund muss dort sinken.

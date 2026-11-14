@@ -550,6 +550,7 @@ def setups_zeigen():
     _kartentisch_zeigen(rollen={"termine"})
     chartpruefer_zeigen()
     setuppruefer_zeigen()
+    maengel_zeigen()
     verbindungen_zeigen()
 
 
@@ -620,6 +621,8 @@ def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten):
                 try:
                     with st.spinner("Die Widersprüche werden gebündelt …"):
                         a = mod.auswerten()
+                    import maengel
+                    maengel.aus_berichten()                # die Befunde kommen gleich in die Mängelliste
                 except Exception as x:  # noqa: BLE001
                     st.error(f"Auswertung ging nicht: {x}")
         if a:
@@ -686,6 +689,64 @@ def chart_pruefen(tk, teile):
             st.error(f"Chart-Prüfer ging nicht: {x}")
             return
     st.markdown(zustandsbild.pruef_karte(r), unsafe_allow_html=True)
+
+
+def maengel_zeigen():
+    """Mängelliste (Micky 14.11.2026): jeder Befund der Prüfer mit Stand (offen, behoben, entschieden) und der Verlauf
+    der Widersprüche je Chart über alle Läufe – ein behobener Befund muss dort sinken."""
+    import maengel
+    from html import escape as esc
+    try:
+        maengel.aus_berichten()
+    except Exception as x:  # noqa: BLE001
+        st.caption(f"Mängelliste: Berichte nicht lesbar ({x})")
+    m = maengel.laden()
+    alle = m["befunde"]
+    zahl = {s_: sum(1 for x in alle if x["stand"] == s_) for s_ in maengel.STAENDE}
+    with st.expander(f"📋 Mängelliste · {zahl['offen']} offen · {zahl['behoben']} behoben · "
+                     f"{zahl['entschieden']} entschieden", expanded=False):
+        st.caption("Jeder Befund aus den Auswertungen von Chart- und Setup-Prüfer, mit Stand. Behoben = Regel im Code "
+                   "geändert (Notiz: Commit und Messung), entschieden = du hast entschieden (Notiz: wie). Der Verlauf "
+                   "unten zeigt, ob ein behobener Befund im nächsten Lauf wirklich seltener wird.")
+        zeige = st.pills("Stand", maengel.STAENDE, selection_mode="multi", default=["offen"], key="maengel_stand")
+        farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
+                 "Prüfer irrt": "#8B949E"}
+        for x in alle:
+            if x["stand"] not in (zeige or []):
+                continue
+            st.markdown(
+                f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:4px 10px;margin:8px 0 2px;'
+                f'font-size:13px"><b>{esc(x["titel"])}</b> · {esc(maengel.QUELLEN[x["quelle"]][0])} · {esc(x["art"])} · '
+                f'{esc(x["element"])} · {x["anzahl"]} Widersprüche ({x["sicher"]} sicher) in {x["charts"]} Charts · '
+                f'Lauf {esc(x["lauf"])} · z. B. {esc(", ".join(x["beispiele"]))}<br><span style="opacity:.85">'
+                f'{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: {esc(x["vorschlag"])}</span>'
+                + (f'<br><span style="opacity:.7">Notiz ({esc(x["geaendert"] or "")}): {esc(x["notiz"])}</span>'
+                   if x.get("notiz") else "") + '</div>', unsafe_allow_html=True)
+            c1, c2, c3 = st.columns([2, 6, 1])
+            stand = c1.selectbox("Stand", maengel.STAENDE, index=maengel.STAENDE.index(x["stand"]),
+                                 key=f"mg_s_{x['id']}", label_visibility="collapsed")
+            notiz = c2.text_input("Notiz", value=x.get("notiz", ""), key=f"mg_n_{x['id']}",
+                                  label_visibility="collapsed", placeholder="Commit und Messung bzw. deine Entscheidung")
+            if c3.button("Sichern", key=f"mg_b_{x['id']}"):
+                maengel.setzen(x["id"], stand, notiz)
+                st.rerun()
+        for q, (name, _) in maengel.QUELLEN.items():
+            try:
+                laeufe, tafel = maengel.verlauf(q)
+            except Exception:  # noqa: BLE001
+                continue
+            if not laeufe:
+                continue
+            kopf = "".join(f'<th style="padding:3px 8px">{esc(s_[:16])}<br>{n} Charts</th>' for s_, n in laeufe)
+            zeilen = "".join(
+                f'<tr><td style="padding:3px 8px">{esc(e)}</td>' + "".join(
+                    f'<td style="padding:3px 8px;text-align:right">'
+                    + (f'{w[0]:.2f} ({w[1]:.2f})'.replace(".", ",") if w else "–") + "</td>" for w in werte) + "</tr>"
+                for e, werte in sorted(tafel.items(), key=lambda kv: -(kv[1][-1] or (0, 0))[0]))
+            st.markdown(f'<details><summary style="cursor:pointer"><b>Verlauf {esc(name)}</b> · Widersprüche je Chart '
+                        f'(davon sicher) je Lauf</summary><table style="font-size:13px;border-collapse:collapse">'
+                        f'<tr><th style="padding:3px 8px">Element</th>{kopf}</tr>{zeilen}</table></details>',
+                        unsafe_allow_html=True)
 
 
 def setup_pruefen(tk, teile):
