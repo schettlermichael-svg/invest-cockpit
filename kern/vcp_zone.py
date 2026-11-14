@@ -39,6 +39,8 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
                 dem letzten Tief – Wellen der rechten Seite fielen weg)
   Reife       = Zone kürzer als ihre Mindestdauer (Base 3 Wochen, Flagge 1 Woche) → noch im Aufbau, kein Pivot, Ampel grau
   Tiefe       = Base über 33 % tief (O'Neil: nur im Bärenmarkt) → Ampel nicht grün, steht unter „fehlt“
+  Schärfe     = (14.11.2026, Chart-Prüfer Lauf 3) jede Kontraktion mindestens 3 Handelstage; mehr als 6 Wellen ist kein VCP;
+                grün nur, wenn das Volumen der Enge unter dem 50-Tage-Schnitt liegt (ausgetrocknet) und nicht in Phase 4
   schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
   Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
   Lage        = Drittel der Base, in dem der Pivot liegt (Minervini): unteres = Low Cheat, mittleres = Cheat,
@@ -262,6 +264,8 @@ def _rahmen(df, i, top):
 
 SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie die vorige
 ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
+KONTR_MIN_TAGE = 3             # eine Kontraktion dauert mindestens 3 Handelstage (Chart-Prüfer 14.11.2026: 1-Tages-Zucken)
+KONTR_MAX = 6                  # Minervini: 2–6 Kontraktionen; mehr Wellen sind Seitwärtsrauschen, kein VCP
 BASE_TIEFE_MAX = 33.0          # O'Neil: Tassen 12–33 % tief, tiefer nur im Bärenmarkt (bis 40–50 %); Minervini ähnlich –
                                # tiefer wird gezeigt, die Ampel wird aber nicht grün (Chart-Prüfer 14.11.2026)
 
@@ -300,14 +304,14 @@ def enge(df, z):
     kontr = [kontraktion(start, boden_i)] if boden_i > start else []
     pkt = [p for p in zigzag(df, GROB) if p[0] > boden_i]
     for p, q in zip(pkt, pkt[1:]):
-        if p[2] == "H" and q[2] == "T":
+        if p[2] == "H" and q[2] == "T" and q[0] - p[0] >= KONTR_MIN_TAGE:   # Zucken von 1–2 Tagen zählt nicht
             kontr.append(kontraktion(p[0], q[0]))
     if not pkt and boden_i < n - 1:
         pkt = [(boden_i + 1 + int(np.argmax(h[boden_i + 1:])), None, "H")]
     if pkt and pkt[-1][2] == "H" and pkt[-1][0] < n - 1:  # rechter Rand: die letzte, enge Kontraktion ist oft kleiner als
         hi = pkt[-1][0]                           # 2 × ATR – sie zählt ab 1 × ATR (darunter ist es Rauschen)
         ti = hi + 1 + int(np.argmin(l[hi + 1:]))
-        if h[hi] - l[ti] >= FEIN * a[hi]:
+        if h[hi] - l[ti] >= FEIN * a[hi] and ti - hi >= KONTR_MIN_TAGE:
             kontr.append(kontraktion(hi, ti))
     if not kontr:
         return {"ampel": "gelb", "zahl": 0, "text": "kein Rücksetzer von 1 × ATR seit der Oberkante", "fehlt": ["keine Kontraktion"]}
@@ -323,9 +327,16 @@ def enge(df, z):
     ruhig = len(kontr) >= 2 and vol_enge == vol_enge and vol_erste == vol_erste and vol_enge < vol_erste
     eng = letzte["tiefe"] <= ENGE_MAX
     flach_genug = z.get("tiefe", 0) <= BASE_TIEFE_MAX
+    wenige = len(kontr) <= KONTR_MAX
+    trocken = vol_enge == vol_enge and vol_enge < 100          # Minervini: das Volumen trocknet unter den Schnitt aus
+    try:
+        import phase
+        ph = phase.aktuell(df)
+    except Exception:  # noqa: BLE001
+        ph = None
     tiefs = [k["tief"] for k in kontr]
     steigend = len(tiefs) >= 2 and all(b > a_ for a_, b in zip(tiefs, tiefs[1:]))
-    if len(kontr) >= 2 and schrumpft and eng and ruhig and flach_genug:
+    if len(kontr) >= 2 and schrumpft and eng and ruhig and flach_genug and wenige and trocken and ph != 4:
         ampel = "grün"
     elif groesser:
         ampel = "rot"
@@ -334,7 +345,10 @@ def enge(df, z):
     fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
         + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"]) \
-        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_MAX:.0f} %, nur im Bärenmarkt üblich)"])
+        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_MAX:.0f} %, nur im Bärenmarkt üblich)"]) \
+        + ([] if wenige else [f"{len(kontr)} Wellen (Minervini: 2–{KONTR_MAX})"]) \
+        + ([] if trocken or vol_enge != vol_enge else [f"Volumen der Enge {vol_enge:.0f} % des Schnitts (nicht ausgetrocknet)"]) \
+        + ([] if ph != 4 else ["Phase 4 – im Abwärtstrend kein VCP"])
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
     hoehe_z = z["oben"] - z["unten"]
     anteil = (pivot - z["unten"]) / hoehe_z if hoehe_z > 0 else 1.0

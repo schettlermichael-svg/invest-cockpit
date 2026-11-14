@@ -1010,3 +1010,15 @@ Micky: „Denke an unsere drei Bilder.“ Abgleich Kasten für Kasten:
   Ausstieg am 10er/20er, Spring/Upthrust beschlossen) und sieht den Zustand des Titels im Kreislauf.
 - **Lücken in der App selbst** (der Prüfer meldet sie jetzt): die Gruppe nennt keinen Anlass, „Geld wandert weiter“
   wird nicht gemessen, der Markt nennt keinen Anlass.
+
+## Befunde aus Lauf 3 (14.11.2026, 100 Charts) – klare Fehler
+
+- **Hoch des Rückgangs** = das höchste bestätigte, nicht überschrittene Hoch der letzten 2 Jahre (`avwap.anker`).
+  Vorher schied jedes Hoch aus, nach dem der Kurs tiefer fiel als seit dem letzten Hoch – lag das letzte Hoch nach dem
+  Tief (KBH, BAX, ORA), blieb nur das letzte Hoch selbst. Gemessen: eigener Anker bei 1.434 statt 1.053 von 1.865 Titeln.
+- **Enge geschärft** (`vcp_zone.enge`): jede Kontraktion mindestens 3 Handelstage, mehr als 6 Wellen ist kein VCP, grün nur
+  mit ausgetrocknetem Volumen (unter dem 50-Tage-Schnitt) und nicht in Phase 4. Gemessen: grün 94 → 44, rot 114 → 81,
+  90 % der Zonen haben höchstens 4 statt 5 Kontraktionen.
+- **Phase an der 30-Wochen-Linie** ausprobiert und verworfen: 35 % der Titel wechselten die Phase, die Beispiele des Prüfers
+  wurden nur teils besser (BAX, KBH), teils schlechter (COKE, LUV – die 8-Wochen-Sperre nach Phase 4). Gehört in die
+  Gefechtsordnung (Weinsteins Stufen als Rahmen), nicht als Einzelflick.

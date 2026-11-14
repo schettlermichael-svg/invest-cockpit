@@ -20,9 +20,9 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
             früheren, höheren Hoch (dem Gipfel davor; ohne ihn 52 Wochen zurück, liegt das Tief am Rand des Fensters, bis 2 Jahre) und dem letzten Hoch. Fiel der
             Kurs seitdem darunter, ist der Trend gebrochen: dann das tiefste Tief seit dem letzten Hoch, wenn der Kurs
             mindestens 1 ATR darüber steht und es nicht von heute ist (sonst hat keine Bewegung begonnen).
-  gipfel    Hoch des Rückgangs: das höchste nicht überschrittene Schwunghoch der Wochenkerzen, nach dem der Kurs nie
-            unter das tiefste Tief seit dem letzten Hoch fiel – der Gipfel, von dem die ganze Korrektur ausging. Nur, wenn es nicht das
-            letzte Hoch ist.
+  gipfel    Hoch des Rückgangs: das höchste bestätigte Hoch der letzten 2 Jahre, das der Kurs seitdem nicht
+            überschritten hat – der Gipfel, von dem die ganze Korrektur ausging (14.11.2026, vorher schied es aus, wenn der
+            Kurs danach tiefer fiel als seit dem letzten Hoch). Nur, wenn es nicht das letzte Hoch ist.
   ereignis  die Neubewertung (Shannon: Zahlen, Lücke, große Nachricht): der jüngste von Zahlentag (Reaktion ab 3 %,
             zahlen_reaktion), Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
             ab 3 % – ein Tag mit viel Volumen und ohne Bewegung, etwa eine Indexanpassung, ist kein Ereignis), höchstens
@@ -122,8 +122,10 @@ def anker(df, zahltag=None):
     t_ = _trendstart(df, hoch)
     if t_ is not None:
         aus["tief"] = t_
-    boden = float(l[l.index >= hoch].min())
-    kand = [(p, d) for d, p in offen if d <= hoch and not (l[l.index > d] < boden).any()]
+    # Hoch des Rückgangs = der Gipfel, von dem die ganze Korrektur ausging: das höchste bestätigte Hoch, das der Kurs
+    # seitdem nicht überschritten hat (Chart-Prüfer 14.11.2026, KBH/BAX/ORA: vorher schied jedes Hoch aus, nach dem der
+    # Kurs tiefer fiel als seit dem letzten Hoch – lag das letzte Hoch nach dem Tief, blieb nur das letzte Hoch selbst)
+    kand = [(p, d) for d, p in offen if d >= df.index[max(0, n - 504)]]
     if kand:
         g = max(kand)[1]
         if g != hoch:
