@@ -118,7 +118,9 @@ jüngste Zahlentag, die jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem S
 Volumenprofil der Balance ab dem ersten Tag, ab dem sich die Tagesspannen überlappen (Dalton). Zone der App:
 beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne Schluss darüber bricht sie nicht – ein
 abgelehnter Vorstoß; so entschieden, nicht als Widerspruch melden). Eine Tasse ab 7 Wochen gilt als gescheitert, wenn der
-Kurs nach der rechten Seite in der unteren Hälfte schließt (Schlusskurs, nicht Tagestief).
+Kurs nach der rechten Seite in der unteren Hälfte schließt (Schlusskurs, nicht Tagestief). Ausbruchsvolumen ist bei der App ein
+Zeichen, keine Pflicht – über dem 50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils 1,4-fach ist ihm zu streng);
+ein Ausbruch mit wenig Volumen ist kein Widerspruch, höchstens ein schwaches Zeichen.
 
 Dein Auftrag: Prüfe jedes Element der App gegen diese Regeln – auch, ob der Zustand zu den Belegen passt und ob die
 Belege am richtigen Platz der Kette stehen. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen. Jeder

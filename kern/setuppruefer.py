@@ -72,6 +72,8 @@ Muster; „auch“ nennt die übrigen):
   Driften 3–25 Tage mit steigenden Tiefs, holt höchstens die Hälfte zurück, GD50 fällt, Bruch unter das Tief des
   Driftens), Bruch der Spanne (Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief).
   Einstieg = Unterkante; grün nur bis 5 % darunter. Stopp über dem Hoch des Auslösetags.
+- Ausbruchsvolumen ist ein Zeichen, keine Pflicht – über dem 50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils
+  1,4-fach ist ihm zu streng); wenig Volumen ist kein Widerspruch, höchstens ein schwaches Zeichen.
 - Überall: Fehlausbruch oder Rücktest → nicht grün; Kurs steht still (Tagesspanne unter 0,5 %) → nicht grün. Der Stopp
   im Plan der App ist heute noch einheitlich 1,5 ATR vom Einstieg (Entscheidung des Nutzers vom 09.11.2026; der
   Struktur-Stopp kommt dazu, siehe Gefechtsordnung) – weicht er von der Regel des Meisters ab, melde es als strittig,
