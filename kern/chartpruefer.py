@@ -9,8 +9,11 @@ Zone, Pivot, Enge, AVWAP-Ankern, Beginn der Balance, Mauer und Stütze, Marken f
 Market Profile, Spring, Upthrust, Kraft ohne Weg, Klimax, Exzess, Wochen-Schwunghochs) und die Zahlen der ganzen Kette
 (Kreislauf, Zeichen, Short-Formen, Zustand mit Anlass, Belegen, Ende, Gegenseite, eigen/geliehen); je Gruppe ein Bild
 (Index der Mitglieder, RS-Linie, Breite) mit Feld, Zufluss, Breite, Anführern und Zustand → Urteil über ein festes
-Formular → Bericht in daten/chartpruefer/. Etwa 4 Cent je Chart, geprüft gegen den Monatsdeckel (50 $). Erweitert am
-14.11.2026 auf die ganze Kette der drei Bilder (vorher nur Zone, Pivot, Enge, Anker).
+Formular → Bericht in daten/chartpruefer/. Etwa 5 Cent je Chart, geprüft gegen den Monatsdeckel (50 $). Erweitert am
+14.11.2026 auf die ganze Kette der drei Bilder (vorher nur Zone, Pivot, Enge, Anker), dann auf den echten Chart der
+Titelseite als erstes Bild (SVG → PNG mit cairosvg, ohne Browser); das eigene Bild bleibt als Hilfsbild für die Marken
+der Ereignisse, die der Chart nicht zeigt (Spring, Klimax, Exzess, Signale des Market Profile). Dazu die Prüfung eines
+einzelnen Titels per Knopf auf der Titelseite (daten/chartpruefer/titel/, einmal je Titel und Kurstag).
 
 Regeln der Meister, die der Prüfer bekommt (recherchiert 14.11.2026, Quellen im Konzeptdokument):
   O'Neil   Tasse 7–65 Wochen, 12–33 % tief (Bärenmarkt bis 40–50 %); Henkel in der oberen Hälfte, höchstens etwa
@@ -44,7 +47,7 @@ ORDNER = os.path.join(HIER, "..", "daten", "chartpruefer")
 PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
 STICHPROBE = 150               # davon GRUPPEN Gruppen
-KOSTEN_JE_CHART = 0.04         # $ (Bild ~1.500 Token, Zahlen und Kette ~2.500, Antwort ~800)
+KOSTEN_JE_CHART = 0.05         # $ (zwei Bilder ~3.000 Token, Zahlen und Kette ~2.500, Antwort ~800)
 
 ELEMENTE = ["Zustand", "Anlass", "Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot",
             "Drittel des Pivots", "Enge/Kontraktionen", "Einquetschung", "Test am Rand: Zeichen",
@@ -488,15 +491,42 @@ def pruefen_gruppe(g):
     return {"tk": f"{g.get('art')}: {g.get('name')}", "gruppe": f"Gruppe {g.get('feld')}",
             "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [], "zahlen": text}
 
+def app_bild(tk, chart_teil=None):
+    """Der Chart der Titelseite, so wie Micky ihn sieht (Tageskerzen, 1 Jahr, Voreinstellung der Knöpfe), als PNG
+    (base64). Die Grafik ist SVG; cairosvg wandelt sie ohne Browser um. Der Schriftsaum (paint-order) kann cairosvg nicht
+    – ohne ihn bleibt die Schrift lesbar. chart_teil: teile["chart"] der Titelseite, sonst wird die Seite gebaut."""
+    import re
+    import cairosvg
+    import titel
+    if chart_teil is None:
+        chart_teil = titel.seite_titel(tk)["chart"]
+    h = titel.chartkarte(chart_teil, "Tag", "1 J")
+    svg = re.search(r"<svg.*?</svg>", h, flags=re.S).group(0)
+    svg = re.sub(r"<style>text\{[^}]*\}</style>", "", svg, count=1)
+    svg = re.sub(r'viewBox="0 0 (\d+) (\d+)"', lambda m: f'viewBox="0 0 {int(m.group(1)) + 140} {m.group(2)}"', svg,
+                 count=1)                                    # Platz für die Beschriftungen rechts
+    png = cairosvg.svg2png(bytestring=svg.encode("utf-8"), output_width=1600, background_color="#161C24")
+    return base64.b64encode(png).decode()
+
+
 # ── Lauf ────────────────────────────────────────────────────────────────────────────────────────────────────────
-def pruefen(tk):
-    """Ein Titel → {tk, stimmt, widersprueche} oder {tk, fehler}."""
+def pruefen(tk, chart_teil=None):
+    """Ein Titel → {tk, stimmt, widersprueche} oder {tk, fehler}. Zwei Bilder: der Chart der Titelseite (so wie Micky
+    ihn sieht) und das Hilfsbild mit den Marken der Ereignisse, die der Chart nicht zeigt."""
     import daten
     import modell
     df = daten.kurse_gespeichert(tk)
     marken, text = material(tk, df)
-    png = bild(tk, df, marken)
-    antwort = modell._formular(SYSTEM, f"Zahlen der App zu {tk}:\n{text}", "pruefung_melden", SCHEMA, 3000, bilder=[png])
+    bilder = []
+    try:
+        bilder.append(app_bild(tk, chart_teil))
+    except Exception:  # noqa: BLE001 – ohne cairosvg bzw. ohne Seite: nur das Hilfsbild
+        pass
+    bilder.append(bild(tk, df, marken))
+    hinweis = ("Bild 1 ist der Chart der App, so wie der Nutzer ihn sieht; Bild 2 ist ein Hilfsbild mit den Marken der "
+               "Ereignisse. " if len(bilder) == 2 else "")
+    antwort = modell._formular(SYSTEM, f"{hinweis}Zahlen der App zu {tk}:\n{text}", "pruefung_melden", SCHEMA, 3000,
+                               bilder=bilder)
     return {"tk": tk, "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [],
             "zahlen": text}
 
@@ -554,15 +584,34 @@ def stand():
 
 
 def starten():
-    """Startet werkzeuge/chartpruefer.py als eigenen Prozess (die App wartet nicht)."""
+    """Startet werkzeuge/pruefer_lauf.py als eigenen Prozess (die App wartet nicht)."""
     if stand()[0]:
         return False
     os.makedirs(ORDNER, exist_ok=True)
     log = open(LOG, "w", encoding="utf-8")
-    skript = os.path.join(HIER, "..", "werkzeuge", "chartpruefer.py")
+    skript = os.path.join(HIER, "..", "werkzeuge", "pruefer_lauf.py")
     subprocess.Popen([sys.executable, "-u", os.path.abspath(skript)], cwd=os.path.join(HIER, ".."), stdout=log,
                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
     return True
+
+
+def einzeln_gespeichert(tk, stand):
+    return json_lesen(os.path.join(ORDNER, "titel", f"{tk.upper()}_{stand}.json"), None)
+
+
+def einzeln(tk, stand, chart_teil=None):
+    """Prüfung eines einzelnen Titels (Knopf auf der Titelseite), einmal je Titel und Kurstag gespeichert."""
+    import modell
+    alt = einzeln_gespeichert(tk, stand)
+    if alt:
+        return alt
+    vorher = modell.kosten()["usd"]
+    r = pruefen(tk, chart_teil)
+    r["stand"] = stand
+    r["kosten"] = round(modell.kosten()["usd"] - vorher, 3)
+    os.makedirs(os.path.join(ORDNER, "titel"), exist_ok=True)
+    json_schreiben(os.path.join(ORDNER, "titel", f"{tk.upper()}_{stand}.json"), r, ensure_ascii=False)
+    return r
 
 
 def letzter_bericht():

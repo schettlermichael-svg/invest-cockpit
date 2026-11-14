@@ -567,7 +567,8 @@ def _chartpruefer_zeigen():
         st.caption("Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
                    f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
                    "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
-                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$).")
+                   f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel 50 \\$). "
+                   "Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.")
         st.button("Prüflauf starten", disabled=laeuft, on_click=_pruefer_starten, key="pruefer_start")
         if laeuft:
             st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} Charts geprüft")
@@ -604,6 +605,31 @@ def _chartpruefer_zeigen():
 
 
 chartpruefer_zeigen = _FRAGMENT(run_every=30)(_chartpruefer_zeigen) if _FRAGMENT else _chartpruefer_zeigen
+
+
+def chart_pruefen(tk, teile):
+    """Knopf „🔎 Chart prüfen lassen“ unter dem Chart (14.11.2026): der Chart-Prüfer urteilt über diesen einen Titel –
+    Zone, Zeichen, Zustand, Anker nach den Regeln der Meister; einmal je Titel und Kurstag, danach aus dem Speicher."""
+    import chartpruefer
+    import zustandsbild
+    df = (teile.get("chart") or {}).get("df")
+    if df is None:
+        return
+    stand = f"{df.index[-1]:%Y-%m-%d}"
+    r = chartpruefer.einzeln_gespeichert(tk, stand)
+    if r is None:
+        if not st.button("🔎 Chart prüfen lassen", key=f"pruefen_{tk}",
+                         help="Der Chart-Prüfer schaut sich diesen Chart mit dem Auge der Meister an (O'Neil, Minervini, "
+                              "Kullamägi, Weinstein, Wyckoff, Shannon, Dalton) und meldet, wo er Zone, Zeichen, "
+                              "Zustand oder Anker der App widerspricht. Etwa 5 Cent, einmal je Titel und Kurstag."):
+            return
+        try:
+            with st.spinner("Der Chart-Prüfer schaut hin …"):
+                r = chartpruefer.einzeln(tk, stand, teile.get("chart"))
+        except Exception as x:  # noqa: BLE001
+            st.error(f"Chart-Prüfer ging nicht: {x}")
+            return
+    st.markdown(zustandsbild.pruef_karte(r), unsafe_allow_html=True)
 
 
 def strategen_call(tk, teile):
@@ -709,6 +735,7 @@ elif ticker:
         ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl = chart_knoepfe(ticker)
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
                     unsafe_allow_html=True)
+        chart_pruefen(ticker, teile)
         st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)

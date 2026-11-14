@@ -19,8 +19,10 @@ if [ -n "$NEU_SICHERUNG" ]; then
   systemctl daemon-reload && systemctl enable -q --now sicherung.timer
   echo "$(date '+%d.%m.%Y %H:%M') Sicherung eingerichtet: $(grep OnCalendar werkzeuge/server/sicherung.timer)" >> /var/log/invest-cockpit-update.log
 fi
-# Zusätzliche Python-Pakete (14.11.2026: matplotlib für die Bilder des Chart-Prüfers), sobald die Liste sich ändert
+# Zusätzliche Python-Pakete (14.11.2026: matplotlib und cairosvg für die Bilder des Chart-Prüfers), sobald die Liste sich ändert
 if [ -f werkzeuge/server/pakete.txt ] && ! cmp -s werkzeuge/server/pakete.txt .venv/pakete.txt; then
+  # cairosvg braucht die Systembibliothek Cairo (Chart der Titelseite als Bild für den Chart-Prüfer)
+  dpkg -s libcairo2 >/dev/null 2>&1 || apt-get install -y -qq libcairo2 >/dev/null 2>&1
   .venv/bin/pip install -q -r werkzeuge/server/pakete.txt && cp werkzeuge/server/pakete.txt .venv/pakete.txt \
     && chown -R cockpit:cockpit .venv
   echo "$(date '+%d.%m.%Y %H:%M') Pakete installiert: $(tr '\n' ' ' < werkzeuge/server/pakete.txt)" >> /var/log/invest-cockpit-update.log

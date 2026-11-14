@@ -925,7 +925,7 @@ gescheiterten Tasse bildet sich eine neue Base („rebase“).
 
 Micky wollte einen „Strategen für Chartmuster“. Entschieden: ein Prüfstand, kein Erkenner – die Erkennung bleibt Code
 (nur feste Regeln geben bei denselben Kursen immer dieselbe Zone; ein Modell jede Nacht über 1.900 Charts kostete
-rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py`, Knopf auf der Seite Setups:
+rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py` (Lauf: `werkzeuge/pruefer_lauf.py`), Knopf auf der Seite Setups:
 - Stichprobe von etwa 150 Titeln, gleichmäßig über Base, Konsolidierung, Flagge, offene Zone, keine Zone und die grünen
   Setups des Kartentischs.
 - Je Titel ein Bild (matplotlib: 1 Jahr Tageskerzen mit Zone, Pivot, Kontraktionen, AVWAP-Ankern, Beginn der Balance,
@@ -941,3 +941,9 @@ rund 35 $ am Tag und urteilte von Lauf zu Lauf anders). `kern/chartpruefer.py`, 
   Gegenseite, eigen/geliehen. Neue Prüfpunkte: Zustand, Anlass, Test am Rand, abgelehnt/angenommen, Ende des Laufs,
   Gegenseite, eigen/geliehen, Kreislauf, Short-Form. Dazu 20 Gruppen (gleichgewichteter Index der Mitglieder, RS-Linie,
   Breite; Feld, Zufluss, Anführer, Zustand). Etwa 4 Cent je Chart, rund 6 $ je Lauf.
+- Echter Chart (14.11.2026, Micky: „warum geht der Prüfer nicht echte Chartbilder durch?“): erstes Bild ist jetzt der
+  Chart der Titelseite (Tageskerzen, 1 Jahr, Voreinstellung), als SVG mit cairosvg in ein Bild gewandelt (ohne Browser;
+  der Schriftsaum fällt weg, sonst unlesbar). Das eigene Bild bleibt als Hilfsbild für Marken, die der Chart nicht zeigt.
+  Server: libcairo2 und cairosvg installiert das Update-Skript. Etwa 5 Cent je Chart.
+- Knopf je Titel: „🔎 Chart prüfen lassen“ unter dem Chart der Titelseite; Urteil als Karte darunter, gespeichert je
+  Titel und Kurstag in `daten/chartpruefer/titel/`.

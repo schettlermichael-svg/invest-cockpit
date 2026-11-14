@@ -120,3 +120,25 @@ def kopfzeile(e):
     return (f'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 2px">'
             f'<span style="font-size:12px;color:{TEXT_3}">Zustand</span>{pille(e)}'
             f'<span style="font-size:13px;color:{TEXT_3}">{t(e.get("unterzeile") or "")}</span></div>')
+
+
+def pruef_karte(r):
+    """Urteil des Chart-Prüfers für einen Titel (Knopf auf der Titelseite)."""
+    if not r:
+        return ""
+    if r.get("fehler"):
+        return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:12px 14px;'
+                f'margin:8px 0;color:{TEXT_2}">Chart-Prüfer: {t(r["fehler"])}</div>')
+    w = r.get("widersprueche") or []
+    f = "#3FB950" if not w else "#D29922"
+    kopf = (f'<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font-size:12px;'
+            f'color:{TEXT_3}">🔎 Chart-Prüfer · Kurstag {t(r.get("stand", ""))}</span><span style="font-size:16px;'
+            f'font-weight:600;color:{f}">{"kein Widerspruch" if not w else f"{len(w)} Widerspruch" + ("e" if len(w) > 1 else "")}'
+            f'</span></div><div style="margin-top:6px;color:{TEXT_2};font-size:13px">✓ {t(r.get("stimmt", ""))}</div>')
+    zeilen = "".join(
+        f'<li style="margin:4px 0"><b>{t(x["element"])}</b> {"●" if x["gewicht"] == "sicher" else "○ strittig"} – '
+        f'{t(x["befund"])}<br><span style="color:{TEXT_3}">Richtig wäre: {t(x["richtig"])} · {t(x["regel"])}</span></li>'
+        for x in w)
+    liste = f'<ul style="margin:8px 0 0 18px;padding:0;color:{TEXT_2};font-size:13px">{zeilen}</ul>' if zeilen else ""
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:3px solid {f};border-radius:10px;'
+            f'padding:12px 14px;margin:8px 0">{kopf}{liste}</div>')
