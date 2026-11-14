@@ -8,6 +8,8 @@ Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14
   Erholung   = nach dem tiefsten Tief kam der Kurs wieder in die obere Hälfte der Zone
                (sonst ist das Hoch der Rand eines Absturzes, nicht einer Base → nächstjüngeres Hoch;
                erfüllt keines die Regel, läuft der Rücksetzer noch: Rahmen ab dem ältesten Hoch, Zone offen)
+  Absturz    = ist die Zone eines Hochs über 50 % tief, ist sie keine Base (O'Neil: im schweren Bärenmarkt bis 40–50 %)
+               → nächstjüngeres Hoch; der Absturz gehört zur Vorgeschichte (14.11.2026, Chart-Prüfer)
   Henkel     = war die Tasse mindestens 7 Wochen lang (O'Neil), kam die rechte Seite bis 15 % an die Oberkante heran
                (O'Neil: Henkel höchstens 15 % unter dem Hoch der
                linken Seite) und fiel der Kurs danach wieder in die untere Hälfte, ohne das Tief zu
@@ -81,6 +83,7 @@ HENKEL_HAELFTE = 0.5           # O'Neil: nach der rechten Seite nicht wieder in 
 HENKEL_NAH = 0.15              # … sobald die rechte Seite bis 15 % an das Hoch der linken Seite heran kam (Henkel möglich)
 TASSE_MIN_W = 7                # … und nur bei einer Tasse: linke Seite bis rechte Seite mindestens 7 Wochen (O'Neil) –
                                # Chart-Prüfer 14.11.2026: sonst „scheiterten“ Pausen von Tagen und es blieben Zonen von 0,2 Wochen
+ABSTURZ_TIEFE = 0.50           # Chart-Prüfer 14.11.2026: Zonen von 51–73 % Tiefe (WIX, CNXC, RH …) fassten den Absturz mit ein
 FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
 
@@ -172,6 +175,8 @@ def zone(df):
         if hoehe <= 0:
             gewaehlt = (i, top)
             break
+        if hoehe / top > ABSTURZ_TIEFE:          # O'Neil: über 50 % tief ist keine Base mehr, sondern ein Absturz – er
+            continue                             # gehört zur Vorgeschichte, die Zone beginnt am nächstjüngeren Hoch
         if erholt >= top - ERHOLUNG * hoehe:
             # O'Neil: der Henkel liegt in der oberen Hälfte der Base. Kam die rechte Seite bis 15 % an das Hoch heran
             # und fiel der Kurs danach wieder in die untere Hälfte, ist die Tasse gescheitert – die Base beginnt neu
@@ -193,8 +198,14 @@ def zone(df):
             grund = (f"Base ab {df.index[gescheitert[0]]:%d.%m.%Y} gescheitert (nach der rechten Seite zurück in der "
                      f"unteren Hälfte, O'Neil) – neue Base ab {df.index[i]:%d.%m.%Y}, Rücksetzer läuft")
         else:
-            i, top = kand[0]
-            grund = "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Zone noch offen"
+            flach = [(i_, t_) for i_, t_ in kand if (t_ - l[i_:].min()) / t_ <= ABSTURZ_TIEFE]
+            if flach:                           # das jüngste Hoch, dessen Rücksetzer noch eine Base werden kann
+                i, top = flach[-1]
+                grund = "Rücksetzer läuft – seit dem Hoch nicht zurück in der oberen Hälfte, Zone noch offen"
+            else:
+                i, top = kand[0]
+                grund = (f"Absturz über {ABSTURZ_TIEFE * 100:.0f} % seit {df.index[i]:%d.%m.%Y} – keine Base "
+                         "(O'Neil), es hat sich noch keine neue Zone gebildet")
         tief_i = i + int(np.argmin(l[i:]))
         return {"zone": False, "grund": grund, "offen": True, "start_i": i, "oben": top, "unten": l[tief_i],
                 "tief_i": tief_i, "wochen": (n - 1 - i) / WOCHE, "tiefe": (top - l[tief_i]) / top * 100,
