@@ -24,11 +24,12 @@ def richtung(x):
     Richtung der Reaktion, sonst None (Richtung offen)."""
     x = x or {}
     reihe = x.get("reihe")
-    if reihe in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
+    import system_kullamaegi
+    if reihe in system_kullamaegi.SHORT_REIHEN:
         return "short"
     if reihe == "zahlen":                              # Zahlen-Reaktion: Richtung der Reaktion (12.11.2026)
         return x.get("zr_seite") or None
-    if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "vcp", "flagge"):
+    if reihe in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "vcp", "flagge", "w_spring"):
         return "long"
     return None
 
@@ -88,9 +89,12 @@ def _zone(erk):
     Zahlen-Reaktion und den Shorts kein Rahmen (Prüf-Agent 12.11.2026: sonst stand die Base neben dem Einstieg eines
     anderen Setups)."""
     r_ = (erk.get("setup_info") or {}).get("reihe")
-    if r_ in ("k_ep", "zahlen", "k_ermuedung", "k_baerenflagge", "k_bruch"):
-        return None
+    import system_kullamaegi
     sy = erk.get("systeme") or {}
+    if r_ in ("w_spring", "w_upthrust"):                # Spring/Upthrust: die Zone, an deren Rand er geschah
+        return ((sy.get("k") or {}).get("spring" if r_ == "w_spring" else "upthrust") or {}).get("zone")
+    if r_ in ("k_ep", "zahlen", *system_kullamaegi.SHORT_REIHEN):
+        return None
     if r_ == "k_breakout":
         return ((sy.get("k") or {}).get("breakout") or {}).get("zone")
     if r_ in ("flagge", "vcp"):                        # Flagge in einer Base: Rahmen nur, wenn seine Oberkante der

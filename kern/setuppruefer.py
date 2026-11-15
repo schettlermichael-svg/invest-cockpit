@@ -195,8 +195,16 @@ def material(tk, df):
         s_ = system_kullamaegi.short_von(k, r_s)
         if s_:
             z.append(f"Short · {kartentisch.NAME.get(r_s, r_s)}: Ampel {s_.get('ampel')}; {_regeln(s_.get('regeln'))}; "
-                     f"Unterkante {_z(s_['unten'])} $, Stopp {_z(s_['stopp'])} $ (Hoch des Auslösetags "
-                     f"{s_['tag']:%d.%m.})")
+                     f"Einstieg {_z(s_['einstieg'])} $, Stopp {_z(s_['stopp'])} $ ("
+                     + ("Hoch der letzten Gegenbewegung, vor dem Bruch; Einstiege "
+                        + ", ".join(f"{x['quelle']} {_z(x['wert'])} $" for x in s_.get("einstiege") or [])
+                        if s_.get("vor_bruch") else
+                        f"Hoch des {'Fehlausbruchs' if r_s == 'w_upthrust' else 'Auslösetags'} {s_['tag']:%d.%m.}") + ")"
+                     + (f", Ziel {_z(s_['ziel'])} $" if s_.get("ziel") else ""))
+    sp_ = k.get("spring")
+    if sp_:
+        z.append(f"Spring (Wyckoff): Ampel {sp_.get('ampel')}; {_regeln(sp_.get('regeln'))}; Einstieg {_z(sp_['einstieg'])} $, "
+                 f"Stopp {_z(sp_['stopp'])} $ (Tief des Fehlausbruchs {sp_['tag']:%d.%m.}), Ziel {_z(sp_['ziel'])} $")
     if zr:
         z.append(f"Zahlen-Reaktion: Ampel {zr.get('ampel')} ({zr.get('seite')}, {zr.get('pct')} % am {zr.get('tag')}); "
                  f"{_regeln(zr.get('regeln'))}" + (f"; AVWAP ab dem Reaktionstag {_z(zr['avwap'])} $" if zr.get("avwap")

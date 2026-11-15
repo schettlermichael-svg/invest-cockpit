@@ -121,6 +121,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         return min(int(d.index.searchsorted(pd.Timestamp(tag))), N - 1)
 
     grenzen = [x for x in (marken.get("kz_oben"), marken.get("stopp"), (marken.get("short") or {}).get("stopp"),
+                           *(w_["wert"] for w_ in (marken.get("short") or {}).get("weitere") or []),
                            (marken.get("struktur") or {}).get("stopp"),
                            ((marken.get("short") or {}).get("struktur") or {}).get("stopp"))
                + tuple(w_["wert"] for w_ in marken.get("weitere") or []) if x and tag_ebene]
@@ -570,6 +571,12 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
         t_ = f'Stopp Short 1,5 ATR {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
         y_, strich = _rechts(platz, ENDE, Y(sh["stopp"]), t_)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')
+        for w_ in sh.get("weitere") or []:         # zweiter Short-Einstieg (früher Short bzw. Bruch), gestrichelt
+            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(w_["wert"]):.1f}" y2="{Y(w_["wert"]):.1f}" stroke="{ROT}" '
+              f'stroke-width="1.4" stroke-dasharray="6 4"><title>{w_["quelle"]} {zahl(w_["wert"])} $</title></line>')
+            t_ = f'{w_["quelle"].split(":")[0]} {zahl(w_["wert"])} $'
+            y_, strich = _rechts(platz, ENDE, Y(w_["wert"]), t_, nach_oben=False)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')
         sx = sh.get("struktur") or {}
         if sx.get("stopp"):                        # Struktur-Stopp (Schritt 3) durchgezogen
             A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(sx["stopp"]):.1f}" y2="{Y(sx["stopp"]):.1f}" stroke="{ROT}" '
@@ -623,7 +630,7 @@ def _zeichen(m, d, pos, X, Y, A, spaete, platz, ENDE, h, l):
         spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(l[i]) + 18, t_, 12, nach_oben=False):.1f}" fill="{ROT}" '
                       f'font-size="12" font-weight="700" text-anchor="middle">{t_}</text>')
     sh = m.get("short") or {}
-    if sh.get("tag") is not None and pd.Timestamp(sh["tag"]) >= d.index[0]:
+    if sh.get("tag") is not None and not sh.get("vor_bruch") and pd.Timestamp(sh["tag"]) >= d.index[0]:
         i = pos(sh["tag"])
         v_ = sh.get("volumen")
         t_ = "↓ " + sh.get("art", "Ermüdung") + (f' {zahl(v_, 1)}×' if v_ else "")

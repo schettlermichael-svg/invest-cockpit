@@ -46,7 +46,9 @@ KONS_GELB = 8
 ADTR_TAGE = 20
 
 
-SHORTS = {"k_ermuedung": "ermuedung", "k_baerenflagge": "baerenflagge", "k_bruch": "spannenbruch"}  # Reihe → Feld
+SHORTS = {"w_upthrust": "upthrust", "k_ermuedung": "ermuedung", "k_baerenflagge": "baerenflagge",
+          "k_bruch": "spannenbruch"}  # Reihe → Feld; Reihenfolge = Vorrang (Upthrust zuerst, Micky 15.11.2026)
+SHORT_REIHEN = tuple(SHORTS)   # die eine Liste der Short-Reihen (vorher an 8 Stellen von Hand)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -199,13 +201,16 @@ def pruefen(df, erk, gewinn_tage=(), ticker="", scan=None, br=False):
     em = vcp_zone.ermuedung(df)
     bf = vcp_zone.baerenflagge(df)
     sb = vcp_zone.spannenbruch(df)
+    su = vcp_zone.spring_upthrust(df)               # Wyckoff (Gefechtsordnung Schritt 4): als Setup nur, solange es gilt
+    su = su if su and su["gueltig"] else None
     setups = [x for x in (ep, b) if x]
     rang = {"grün": 0, "gelb": 1, "rot": 2}
     haupt = min(setups, key=lambda x: (rang[x["ampel"]], x["art"] != "Episodic Pivot")) if setups else None
     a = adtr(df)
     k = float(df["Close"].iloc[-1])
     return {"system": "K", "ampel": haupt["ampel"] if haupt else "rot", "haupt": haupt, "breakout": b, "ep": ep,
-            "ermuedung": em, "baerenflagge": bf, "spannenbruch": sb, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
+            "ermuedung": em, "baerenflagge": bf, "spannenbruch": sb,
+            "spring": su if su and su["art"] == "Spring" else None, "upthrust": su if su and su["art"] == "Upthrust" else None, "fuehrer": fr, "fuehrer_ampel": fuehrer_rang.ampel(fr), "adtr": a,
             "adtr_pct": a / k * 100 if a else None,
             "setup": haupt["art"] if haupt and haupt["ampel"] != "rot" else "keines",
             "ausstieg": ("Stopp am Tagestief des Einstiegstags (kein Trade, wenn weiter weg als eine Tagesspanne"

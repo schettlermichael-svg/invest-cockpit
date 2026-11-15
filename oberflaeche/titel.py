@@ -518,8 +518,14 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
             regel = (f" · gescheitert bei Schluss {'über dem Hoch' if kurz_ else 'unter dem Tief'} des Reaktionstags "
                      f"{zahl((zr or {}).get('hoch') if kurz_ else (zr or {}).get('tief'))} $ oder "
                      f"{'über' if kurz_ else 'unter'} dem AVWAP")
-        elif r_ in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
-            regel = (f" · Setup erlischt bei Kurs über dem Hoch des Auslösetags {zahl(em['stopp'])} $"
+        elif r_ in ("w_spring", "w_upthrust"):              # Wyckoff: Ziel ist der andere Rand
+            su_ = k.get("spring" if r_ == "w_spring" else "upthrust") or {}
+            regel = (f" · Ziel der andere Rand {zahl(su_.get('ziel'))} $ · widerlegt bei Kurs "
+                     f"{'unter dem Tief' if r_ == 'w_spring' else 'über dem Hoch'} des Fehlausbruchs {zahl(su_.get('stopp'))} $"
+                     if su_ else "")
+        elif r_ in system_kullamaegi.SHORT_REIHEN:
+            regel = ("" if (em or {}).get("vor_bruch") else
+                     f" · Setup erlischt bei Kurs über dem Hoch des Auslösetags {zahl(em['stopp'])} $"
                      if (em or {}).get("stopp") else "")
         elif r_ in ("k_ep", "k_breakout", "flagge"):
             regel = f" · Ausstieg: {k_aus}" if k_aus else ""
@@ -532,17 +538,23 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
         alle_ = depot_.einstiege(su, m, k, zr, kurs)
         if len(alle_) > 1:                               # zwei Einstiege (Gefechtsordnung Schritt 2): früh und am Ausbruch
             for j, (s_, e_, q_, gilt) in enumerate(alle_):
-                zeilen.append((f"{name} · {'früh' if j == 0 else 'Ausbruch'}" + (" ← gilt jetzt" if gilt else ""),
-                               f"Einstieg {zahl(e_)} $ ({q_})" + zone(e_) + st(e_) + _heute_ueber(df, e_)
+                k_s = s_ == "short"
+                zeilen.append((f"{name} · {'früh' if j == 0 else 'Bruch' if k_s else 'Ausbruch'}" + (" ← gilt jetzt" if gilt else ""),
+                               f"Einstieg {zahl(e_)} $ ({q_})" + zone(e_, k_s) + st(e_, k_s) + _heute_ueber(df, e_, k_s)
                                + (regel if j == len(alle_) - 1 else "")))
         else:
             zeilen.append((name, f"Einstieg {zahl(e)} $ ({quelle})" + zone(e, kurz_) + st(e, kurz_)
                            + _heute_ueber(df, e, kurz_) + regel))
     # übrige Setups, die der Titel zeigt („Auch“)
-    if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
-        zeilen.append((f"Auch · Short ({em['art']})", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
-                       + st(em["unten"], True, next((r_s for r_s in system_kullamaegi.SHORTS
-                                                     if system_kullamaegi.short_von(k, r_s) is em), None))))
+    if em and em.get("ampel") in ("grün", "gelb") and r_ not in system_kullamaegi.SHORT_REIHEN:
+        wo_ = "unter der Oberkante" if em.get("art") == "Upthrust" else "unter der Unterkante"
+        zeilen.append((f"Auch · Short ({em['art']})", f"Einstieg {wo_} {zahl(em['einstieg'])} $"
+                       + st(em["einstieg"], True, next((r_s for r_s in system_kullamaegi.SHORTS
+                                                        if system_kullamaegi.short_von(k, r_s) is em), None))))
+    if k.get("spring") and r_ != "w_spring":
+        sp_ = k["spring"]
+        zeilen.append(("Auch · Spring", f"Einstieg über der Unterkante {zahl(sp_['einstieg'])} $ · Ziel {zahl(sp_['ziel'])} $"
+                       + st(sp_["einstieg"], reihe="w_spring")))
     if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
         ein_ = m.get("einstiege") or []
         if len(ein_) > 1:                                # zwei Einstiege (Gefechtsordnung Schritt 2)
@@ -633,7 +645,7 @@ def _lagezeile(tk, rw, stellung):
             reihe = ({k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN).get(e["reihe"], e["reihe"])
         except Exception:  # noqa: BLE001
             reihe = e["reihe"]
-    kurz_ = e.get("reihe") in ("k_ermuedung", "k_baerenflagge", "k_bruch") or (e.get("reihe") == "zahlen" and e.get("zr_seite") == "short")
+    kurz_ = lagekarte.richtung(e) == "short"
     if drei and reihe and not kurz_:                    # Volltreffer nur mit Long-Setup (Prüf-Agent 12.11.2026)
         chips.append((GRUEN, "★ Volltreffer: dreifacher Rückenwind und Setup"))
     elif drei:
@@ -892,8 +904,9 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
     r_ = (su or {}).get("reihe")
     seite, e, quelle = depot.einstieg_setup(su, m_, k_, zr, float(df["Close"].iloc[-1]))
     lang = seite == "long" and e
+    su_w = k_.get("spring" if r_ == "w_spring" else "upthrust") if r_ in ("w_spring", "w_upthrust") else None
     ab = (pd.Timestamp((zr or {})["tag"]) if r_ == "zahlen" and (zr or {}).get("tag") else
-          ep.get("tag") if r_ == "k_ep" else (br or {}).get("erster_tag") or enge_ab)
+          ep.get("tag") if r_ == "k_ep" else su_w["tag"] if su_w else (br or {}).get("erster_tag") or enge_ab)
     m = {"einstieg": float(e) if lang else None, "quelle": quelle, "atr": a,
          "kz_oben": float(e) * (1 + vcp_zone.KAUFZONE / 100) if lang else None,
          "stopp": float(e) - ATR_STOPP * a if lang and a else None,
@@ -918,7 +931,10 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
     m["rs"] = rw
     if seite == "short" and e and a:
         em = system_kullamaegi.short_von(k_, r_) or {}
-        m["short"] = {"tag": em.get("tag") if r_ != "zahlen" else pd.Timestamp(zr["tag"]), "einstieg": float(e),
+        m["short"] = {"tag": (em.get("tag") or em.get("ab")) if r_ != "zahlen" else pd.Timestamp(zr["tag"]),
+                      "vor_bruch": bool(em.get("vor_bruch")), "einstieg": float(e),
+                      "weitere": [{"wert": float(e_), "quelle": q_} for s_, e_, q_, g_ in
+                                  depot.einstiege(su, m_, k_, zr, float(df["Close"].iloc[-1])) if not g_],
                       "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None,
                       "struktur": depot.struktur_stopp(su, m_, k_, zr, df, "short", float(e)),
                       "art": __import__("kartentisch").NAME.get(r_, "Short").split(" (")[0]}
@@ -1161,6 +1177,10 @@ def seite_titel(ticker, laufend=False, _stand=None):
     su = kartentisch.setup_feststellen(df, m_, k_, zr_, scan)       # das eine Setup (12.11.2026), wie im Kartentisch
     erk["setup_info"] = su
     erk["zahlen_reaktion"] = zr_
+    if zonen and su.get("reihe") in ("w_spring", "w_upthrust"):   # Spring/Upthrust: der Chart zeigt die Zone, an deren
+        su_w = k_.get("spring" if su["reihe"] == "w_spring" else "upthrust") or {}   # Rand er geschah (wie am Vortag)
+        if su_w.get("zone"):
+            zonen["jetzt"] = vcp_zone.datiert(df, su_w["zone"])
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
     gestaltung.SYSTEM = kartentisch.LEHRER.get(su.get("reihe"), "M")
     gestaltung.SYSTEM_SHORT = lagekarte.richtung(su) == "short"

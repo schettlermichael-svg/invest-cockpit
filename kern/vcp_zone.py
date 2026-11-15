@@ -460,14 +460,14 @@ def einstiege(z, e, cheat=True):
     return aus
 
 
-def naechster(liste, kurs, kaufzone=None):
+def naechster(liste, kurs, kaufzone=None, seite="long"):
     """Der Einstieg, der jetzt gilt: der unterste, über dem der Kurs noch nicht hinaus ist – noch nicht ausgelöst oder
     in seiner Kaufzone (bis kaufzone % darüber); über allen der oberste (ausgedehnt). → Stelle in liste oder None."""
     if not liste:
         return None
     kaufzone = KAUFZONE if kaufzone is None else kaufzone
-    for i, x in enumerate(liste):
-        if kurs <= x["wert"] * (1 + kaufzone / 100):
+    for i, x in enumerate(liste):                  # long aufsteigend, short absteigend (der früheste zuerst)
+        if (kurs <= x["wert"] * (1 + kaufzone / 100)) if seite == "long" else (kurs >= x["wert"] * (1 - kaufzone / 100)):
             return i
     return len(liste) - 1
 
@@ -623,6 +623,68 @@ def ausbruch_text(a):
 ERM_TAGE = 5                   # Bruch höchstens 5 Handelstage her
 
 
+SU_TAGE = 10                 # Spring/Upthrust gilt bis 10 Handelstage nach dem Schluss zurück (Micky 15.11.2026)
+SU_ZURUECK = 3               # … Schluss zurück in der Zone am Tag selbst oder in den 2 Tagen danach
+SU_TIEFE_ATR = 1.0           # … das Tagesextrem höchstens 1 ATR jenseits des Randes (Wyckoff: flacher Spring)
+
+
+def spring_upthrust(df, tage=SU_TAGE):
+    """Spring (long) bzw. Upthrust (short) an der Zone des Scanners – die eine Regel für Zeichen, Zustand und Setup
+    (Gefechtsordnung Schritt 4, Micky 14./15.11.2026; Wyckoff). Die Zone gilt, wie sie am Vortag stand: das Tief des Tages
+    liegt unter ihrer Unterkante (Upthrust: das Hoch über der Oberkante), höchstens 1 ATR, und ein Schluss am selben Tag
+    oder in den 2 Tagen danach liegt wieder in der Zone (ein Fehlausbruch – Schluss jenseits, dann zurück – zählt auch).
+    Einstieg beim Schluss zurück in der Zone (Auslöser: der Rand), Stopp am Tief bzw. Hoch des Fehlausbruchs, Ziel der
+    andere Rand. Gilt bis `tage` Handelstage nach dem Schluss zurück, solange der Stopp hält und der andere Rand nicht
+    erreicht ist (sonst gelb: Zeichen, aber kein Setup mehr). Volumen und Phase sind Zeichen.
+    → {art, seite, tag, zurueck_tag, tage_her, einstieg, stopp, ziel, zone, volumen, ampel, regeln, gueltig} oder None."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    n = len(df)
+    if n < MIN_DATEN:
+        return None
+    lo, hi, c = (df[x].to_numpy(float) for x in ("Low", "High", "Close"))
+    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
+    a = atr(df).to_numpy(float)
+    for i in range(n - 1, max(NEUES_HOCH_TAGE, n - tage - SU_ZURUECK) - 1, -1):     # jüngstes Ereignis zuerst
+        neu_tief, neu_hoch = lo[i] < lo[i - NEUES_HOCH_TAGE:i].min(), hi[i] > hi[i - NEUES_HOCH_TAGE:i].max()
+        if not (neu_tief or neu_hoch):                       # Vorprüfung: ohne neues Tief bzw. Hoch kein Bruch des Randes
+            continue
+        z = zone(df.iloc[:i])
+        if not (z.get("zone") and z.get("laenge") == "ok"):
+            continue
+        o, u = float(z["oben"]), float(z["unten"])
+        for art, jenseits, tiefe in (("Spring", lo[i] < u, u - lo[i]), ("Upthrust", hi[i] > o, hi[i] - o)):
+            if not jenseits or not (a[i] == a[i]) or tiefe > SU_TIEFE_ATR * a[i]:
+                continue
+            lang = art == "Spring"
+            j = next((j for j in range(i, min(i + SU_ZURUECK, n)) if (u < c[j] < o)), None)
+            if j is None:
+                continue
+            stopp = float(lo[i:j + 1].min() if lang else hi[i:j + 1].max())
+            einstieg, ziel = (u, o) if lang else (o, u)
+            nach_lo, nach_hi = lo[j + 1:], hi[j + 1:]
+            gerissen = bool(len(nach_lo) and (nach_lo.min() < stopp if lang else nach_hi.max() > stopp))
+            erreicht = bool(len(nach_lo) and (nach_hi.max() >= ziel if lang else nach_lo.min() <= ziel))
+            her = n - 1 - j
+            gueltig = her <= tage and not gerissen and not erreicht
+            vol = v[j] / v50[j] if v50[j] == v50[j] and v50[j] else None
+            regeln = [(f"Tief unter der Unterkante {u:.2f}".replace(".", ",") if lang else
+                       f"Hoch über der Oberkante {o:.2f}".replace(".", ","), True,
+                       f"{df.index[i]:%d.%m.} · {tiefe / a[i]:.1f} ATR jenseits".replace(".", ",")),
+                      ("Schluss zurück in der Zone binnen 3 Tagen", True, f"{df.index[j]:%d.%m.} · {c[j]:.2f}".replace(".", ",")),
+                      ("Stopp hält", not gerissen, f"{'Tief' if lang else 'Hoch'} des Fehlausbruchs {stopp:.2f}".replace(".", ",")),
+                      ("Anderer Rand noch nicht erreicht", not erreicht, f"Ziel {ziel:.2f}".replace(".", ",")),
+                      (f"seit dem Schluss zurück höchstens {tage} Tage", her <= tage, f"{her} Tage"),
+                      ("Volumen am Schluss zurück über dem Schnitt (Zeichen)", bool(vol and vol > 1),
+                       f"{vol:.1f}-fach".replace(".", ",") if vol else "kein Volumen")]
+            return {"art": art, "seite": "long" if lang else "short", "tag": df.index[i], "zurueck_tag": df.index[j],
+                    "tage_her": her, "einstieg": einstieg, "stopp": stopp, "ziel": ziel, "zone": z, "volumen": vol,
+                    "oben": o, "unten": u, "start": z.get("start"),
+                    "ampel": "grün" if gueltig else "gelb", "gueltig": gueltig, "regeln": regeln,
+                    "tiefe_atr": float(tiefe / a[i])}
+    return None
+
+
 def ermuedung(df, tage=ERM_TAGE):
     """Short-Setup Ermüdung nach Überdehnung oder None. Zone und Flagge so, wie sie am Vortag des Bruchs standen."""
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -654,7 +716,8 @@ def ermuedung(df, tage=ERM_TAGE):
                   ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
                    f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
         return {"art": "Ermüdung nach Überdehnung", "ampel": "grün" if unter else "gelb", "regeln": regeln,
-                "tag": datum, "tage_her": n - 1 - t, "oben": f["oben"], "unten": f["unten"], "stopp": float(stopp),
+                "tag": datum, "tage_her": n - 1 - t, "oben": f["oben"], "unten": f["unten"], "einstieg": float(f["unten"]),
+                "stopp": float(stopp),
                 "stange": st["prozent"], "volumen": vol, "start": f["start"]}
     return None
 
@@ -724,7 +787,7 @@ def _short_dict(df, art, t, oben, unten, regeln, start):
                        ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
                         f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
     return {"art": art, "ampel": "grün" if unter else "gelb", "regeln": regeln,
-            "tag": df.index[t], "tage_her": n - 1 - t, "oben": float(oben), "unten": float(unten),
+            "tag": df.index[t], "tage_her": n - 1 - t, "oben": float(oben), "unten": float(unten), "einstieg": float(unten),
             "stopp": float(stopp), "volumen": vol, "start": start}
 
 
@@ -794,4 +857,52 @@ def spannenbruch(df, tage=ERM_TAGE):
         regeln = [(f"{'Basis' if p == 1 else 'Verteilung'} (Phase {p}) mindestens 6 Wochen, höchstens 40 % breit", True,
                    f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)")]
         return _short_dict(df, "Bruch der Spanne", t, oben, unten, regeln, df.index[maske][0])
-    return None
+    return _vor_dem_bruch(df, ph)
+
+
+def _vor_dem_bruch(df, ph):
+    """Bruch der Spanne VOR dem Bruch (Gefechtsordnung Schritt 2 gespiegelt, Micky 15.11.2026): eine Verteilung (Phase 3)
+    von mindestens 6 Wochen, höchstens 40 % breit, die noch nicht gebrochen ist – wie der Base-Ausbruch vor dem Ausbruch.
+    Einstieg an der Unterkante; liegt das Tief der letzten Gegenbewegung (Schwungtief vor dem letzten Anstieg in der
+    Spanne) mehr als RAND_PCT über der Unterkante, ist ein Schluss darunter der frühe Short. Struktur-Stopp über dem Hoch
+    der letzten Gegenbewegung (ohne Gegenbewegung: Oberkante der Spanne)."""
+    n = len(df)
+    c = df["Close"].to_numpy(float)
+    fertig = ph[ph.index < df.index[-1]]
+    if not len(fertig) or int(fertig.iloc[-1]) != PHASE_VERTEILUNG:
+        return None
+    lauf = 0
+    for x in reversed(fertig.to_numpy()):
+        if int(x) != PHASE_VERTEILUNG:
+            break
+        lauf += 1
+    if lauf < SPANNE_WOCHEN:
+        return None
+    von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
+    maske = df.index > von
+    unten = float(df["Low"].to_numpy(float)[maske].min())
+    oben = float(df["High"].to_numpy(float)[maske].max())
+    if oben / unten - 1 > SPANNE_BREIT or c[-1] < unten * SPANNE_BRUCH:
+        return None
+    i0 = int(np.argmax(maske))
+    pkt = [q for q in zigzag(df, GROB) if q[0] >= i0]
+    paar = next(((t_, h_) for t_, h_ in zip(pkt[-2::-1], pkt[::-1]) if t_[2] == "T" and h_[2] == "H" and t_[0] < h_[0]),
+                None)                                  # jüngste Gegenbewegung: Schwungtief → Schwunghoch
+    tief_g, hoch_g = (float(paar[0][1]), float(paar[1][1])) if paar else (None, None)
+    stopp = hoch_g if hoch_g else oben
+    frueh = tief_g is not None and tief_g > unten * (1 + RAND_PCT / 100)
+    einst = ([{"art": "cheat", "wort": "früher Short", "wert": tief_g, "struktur": stopp,
+               "quelle": "früher Short: Schluss unter dem Tief der letzten Gegenbewegung"}] if frueh else []) + \
+        [{"art": "ausbruch", "wort": "Bruch", "wert": unten, "struktur": stopp, "quelle": "Bruch der Unterkante"}]
+    ab = (c[-1] / unten - 1) * 100
+    regeln = [("Verteilung (Phase 3) mindestens 6 Wochen, höchstens 40 % breit", True,
+               f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)"),
+              ("Bruch der Unterkante (Schluss 1 % darunter)", False, f"noch {_de(ab, '.1f')} % darüber")]
+    ausgeloest = frueh and c[-1] < tief_g             # früher Short ausgelöst: Schluss unter dem Tief der Gegenbewegung
+    if frueh:
+        regeln.append(("Früher Short: Schluss unter dem Tief der letzten Gegenbewegung", bool(ausgeloest),
+                       f"Tief {_de(tief_g)} $, Hoch {_de(hoch_g)} $"))
+    return {"art": "Bruch der Spanne", "vor_bruch": True, "ampel": "grün" if ausgeloest else "gelb", "regeln": regeln,
+            "tag": None,
+            "ab": df.index[paar[0][0]] if paar else df.index[i0], "tage_her": None, "oben": oben, "unten": unten,
+            "einstieg": unten, "stopp": float(stopp), "volumen": None, "start": df.index[i0], "einstiege": einst}

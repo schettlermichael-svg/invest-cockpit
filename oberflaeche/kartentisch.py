@@ -47,6 +47,14 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
                                                        "letzten 20 Handelstagen, Volumen über dem Schnitt, Schluss im "
                                                        "oberen (Short: unteren) Drittel, hält Tief und AVWAP des "
                                                        "Reaktionstags, Kurs über (unter) GD50; Einstieg am AVWAP"),
+          ("w_spring", "Spring", "Wyckoff: Tief höchstens 1 ATR unter der Unterkante der Zone (wie sie am Vortag "
+                                 "stand), Schluss binnen 3 Tagen zurück in der Zone; gilt 10 Tage, solange das Tief des "
+                                 "Fehlausbruchs hält und die Oberkante nicht erreicht ist; Einstieg an der Unterkante, Ziel "
+                                 "die Oberkante; ★ bis 5 % darüber"),
+          ("w_upthrust", "Upthrust · Short", "Wyckoff: Hoch höchstens 1 ATR über der Oberkante der Zone, Schluss binnen 3 "
+                                             "Tagen zurück in der Zone; gilt 10 Tage, solange das Hoch des Fehlausbruchs "
+                                             "hält und die Unterkante nicht erreicht ist; Einstieg an der Oberkante, Ziel die "
+                                             "Unterkante; ★ bis 5 % darunter"),
           ("k_ermuedung", "Ermüdung · Short", "Nach einer Fahnenstange ab 30 % bricht die Flagge nach unten (Schluss "
                                               "unter der Unterkante, letzte 5 Tage) – meist ein Führer; grün bis 5 % "
                                               "darunter; Stopp 1,5 ATR über der Unterkante, das Setup erlischt schon "
@@ -119,7 +127,7 @@ def _stufe1(tk, start=None, regeln=False):
                 "tief52": bool(len(l) >= 252 and l[-1] <= l[-JAHR:].min()),
                 "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
-                      **{f_: (k.get(f_) or {}).get("ampel") for f_ in SHORTS.values()}}}
+                      **{f_: (k.get(f_) or {}).get("ampel") for f_ in (*SHORTS.values(), "spring")}}}
         import zahlen_reaktion
         zr_ = zahlen_reaktion.pruefen(df, gewinne)
         info.update(setup_feststellen(df, m, k, zr_, scan))
@@ -145,15 +153,16 @@ def _stufe1(tk, start=None, regeln=False):
 
 NAME = {"m_spitze": "Base-Ausbruch ★", "m_weitere": "Base-Ausbruch", "vcp": "Base-Ausbruch · nur Muster",
         "flagge": "Flagge", "k_breakout": "Momentum-Ausbruch", "k_ep": "Sprung (EP)", "zahlen": "Zahlen-Reaktion",
-        "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)", "k_bruch": "Bruch der Spanne (Short)"}
+        "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)", "k_bruch": "Bruch der Spanne (Short)",
+        "w_spring": "Spring", "w_upthrust": "Upthrust (Short)"}
 from system_kullamaegi import SHORTS, short_von   # noqa: E402  Reihe → Feld in k (Ermüdung, Bärenflagge, Bruch)
 LEHRER = {"m_spitze": "M", "m_weitere": "M", "vcp": "M", "flagge": "K", "k_breakout": "K", "k_ep": "K", "zahlen": "K",
-          "k_ermuedung": "K", "k_baerenflagge": "K", "k_bruch": "K"}      # aus wessen Regeln die Kacheln urteilen (Meister als Lehrer)
+          "k_ermuedung": "K", "k_baerenflagge": "K", "k_bruch": "K", "w_spring": "M", "w_upthrust": "K"}      # aus wessen Regeln die Kacheln urteilen (Meister als Lehrer)
 
 
 def setup_feststellen(df, m, k, zr, scan):
     """Das eine Setup eines Titels (Micky 12.11.2026: ein eigenes System, ein Urteil je Titel) – für Kartentisch und
-    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★
+    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Spring → Upthrust/Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★
     (Kaufzone) → Flagge → Momentum-Ausbruch → Base-Ausbruch (weiter weg oder eine Regel fehlt) → Base-Ausbruch · nur
     Muster. „auch“ nennt die übrigen Setups, die der Titel zeigt (nichts geht verloren).
     → {reihe, gruen, stern, abstand, abstand_vz, luecken, zr, zr_seite, short_art, still, scanner, ausbruch, auch}"""
@@ -176,8 +185,11 @@ def setup_feststellen(df, m, k, zr, scan):
         gefunden.append("k_ep")
     if zr and zr["ampel"] != "rot" and zr["abstand"] is not None:
         gefunden.append("zahlen")
-    for r_s in SHORTS:                             # Ermüdung → Bärenflagge → Bruch der Spanne
-        if short_von(k, r_s):
+    if k.get("spring"):                            # Spring (Wyckoff) nach Sprung und Zahlen-Reaktion (Micky 15.11.2026)
+        gefunden.append("w_spring")
+    for r_s in SHORTS:                             # Upthrust → Ermüdung → Bärenflagge → Bruch der Spanne
+        x_ = short_von(k, r_s)
+        if x_ and not (x_.get("vor_bruch") and x_.get("ampel") != "grün"):
             gefunden.append(r_s)
     if m["ampel"] == "grün" and m["abstand"] is not None and -PIVOT_NAH <= m["abstand"] <= KAUFZONE_M:
         gefunden.append("m_spitze")
@@ -189,6 +201,9 @@ def setup_feststellen(df, m, k, zr, scan):
         gefunden.append("m_weitere")
     if sf.get("reihe") == "vcp":
         gefunden.append("vcp")
+    vb_ = short_von(k, "k_bruch")                  # Verteilung vor dem Bruch (noch nicht ausgelöst) steht wie der
+    if vb_ and vb_.get("vor_bruch") and vb_.get("ampel") != "grün":   # Base-Ausbruch „weiter weg“ hinten an
+        gefunden.append("k_bruch")
     r_ = gefunden[0] if gefunden else None
     if r_ == "k_ep":
         info.update(reihe="k_ep", stern=k["ep"]["ampel"] == "grün", gruen=k["ep"]["ampel"] == "grün")
@@ -197,16 +212,26 @@ def setup_feststellen(df, m, k, zr, scan):
         info.update(reihe="zahlen", zr_seite=zr["seite"], gruen=zr["ampel"] == "grün",
                     stern=bool(zr["ampel"] == "grün" and 0 <= e_ <= KAUFZONE_M), abstand=float(abs(zr["abstand"])),
                     abstand_vz=float(zr["abstand"]), luecken=zr["luecken"])
+    elif r_ == "w_spring":
+        sp_ = k["spring"]
+        ab_ = float((c[-1] / sp_["einstieg"] - 1) * 100)
+        info.update(reihe="w_spring", gruen=True, stern=bool(0 <= ab_ <= KAUFZONE_M), abstand=abs(ab_), abstand_vz=ab_,
+                    luecken=[] if ab_ <= KAUFZONE_M else [f"Spring: schon {ab_:.1f} % über der Unterkante".replace(".", ",")])
     elif r_ in SHORTS:
         em = short_von(k, r_)
         short_art = em["art"]
-        ab_ = float((c[-1] / em["unten"] - 1) * 100)
+        ein_s = em.get("einstiege") or []
+        e_s = ein_s[vcp_zone.naechster(ein_s, float(c[-1]), seite="short")]["wert"] if len(ein_s) > 1 else em["einstieg"]
+        ab_ = float((c[-1] / e_s - 1) * 100)
         # Short-Zone wie die Kaufzone gespiegelt (12.11.2026: DT stand 21,9 %, ALNY 25,2 % unter der Unterkante als
         # ★ – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
         gruen_ = em["ampel"] == "grün" and -KAUFZONE_M <= ab_ <= 0
         info.update(reihe=r_, short_art=short_art, stern=gruen_, gruen=gruen_, abstand=abs(ab_), abstand_vz=ab_,
-                    luecken=[] if gruen_ else ["Short: zurück über der Unterkante"] if em["ampel"] != "grün"
-                    else [f"Short: schon {-ab_:.1f} % unter der Unterkante – gelaufen".replace(".", ",")])
+                    luecken=[] if gruen_ else [f"Short: vor dem Bruch, noch {ab_:.1f} % über dem Auslöser".replace(".", ",")]
+                    if em.get("vor_bruch") and em["ampel"] != "grün"
+                    else [f"Short: zurück über {'der Oberkante' if r_ == 'w_upthrust' else 'der Unterkante'}"]
+                    if em["ampel"] != "grün"
+                    else [f"Short: schon {-ab_:.1f} % unter {'der Oberkante' if r_ == 'w_upthrust' else 'der Unterkante'} – gelaufen".replace(".", ",")])
     elif r_ == "m_spitze":
         info.update(reihe="m_spitze", stern=True)
     elif r_ in ("flagge", "vcp"):
@@ -232,7 +257,7 @@ def setup_feststellen(df, m, k, zr, scan):
     info["auch"] = [NAME[x] for x in gefunden[1:] if NAME.get(x) != NAME.get(r_)]
     kb_ = (k.get("breakout") or {}).get("ausbruch")   # Ausbruchszeichen des Setups (12.11.2026: TREX im EP zeigte eine
     zeichen_br = (m["ausbruch"] if r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else kb_ if r_ == "k_breakout"
-                  else None if r_ in ("k_ep", "zahlen", *SHORTS)   # alte Konsolidierung)
+                  else None if r_ in ("k_ep", "zahlen", "w_spring", *SHORTS)   # alte Konsolidierung)
                   else m["ausbruch"] if m.get("pivot") else kb_)
     a_ = atr_.wert(df)
     if info.get("reihe") and a_ and a_ / c[-1] * 100 < STILL_PCT:
@@ -243,10 +268,19 @@ def setup_feststellen(df, m, k, zr, scan):
                                                            f"Übernahme?".replace(".", ",")])
     if r_ == "zahlen":
         info["ausbruch"] = zr["text"]
+    elif r_ in ("w_spring", "w_upthrust"):
+        su_ = k["spring" if r_ == "w_spring" else "upthrust"]
+        info["ausbruch"] = (f"{'▲ Spring' if r_ == 'w_spring' else '▼ Upthrust'} am {su_['tag']:%d.%m.}: "
+                            f"{'Tief unter der Unterkante' if r_ == 'w_spring' else 'Hoch über der Oberkante'}, "
+                            f"am {su_['zurueck_tag']:%d.%m.} zurück in der Zone – Ziel der andere Rand "
+                            f"{su_['ziel']:.2f} $".replace(f"{su_['ziel']:.2f}", f"{su_['ziel']:.2f}".replace(".", ",")))
     elif r_ == "k_ermuedung":
         info["ausbruch"] = "▼ Ermüdung nach Überdehnung: die Flagge nach der Fahnenstange bricht nach unten"
     elif r_ == "k_baerenflagge":
         info["ausbruch"] = "▼ Bärenflagge: steiler Fall, schwaches Driften nach oben, dann Bruch der Unterkante"
+    elif r_ == "k_bruch" and short_von(k, r_).get("vor_bruch"):
+        info["ausbruch"] = ("▽ Bruch der Spanne: Verteilung, noch nicht gebrochen – Auslöser Unterkante"
+                            + (" (früher Short am Tief der letzten Gegenbewegung)" if len(short_von(k, r_).get("einstiege") or []) > 1 else ""))
     elif r_ == "k_bruch":
         info["ausbruch"] = "▼ Bruch der Spanne: Schluss unter dem Tief der " + (
             "Basis" if "Basis" in str(short_von(k, r_)["regeln"][0][0]) else "Verteilung")
@@ -429,7 +463,7 @@ def eintrag_von(tk):
     return _REIHEN_CACHE[schluessel].get(tk)
 
 
-RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "k_ermuedung": 4, "k_baerenflagge": 4, "k_bruch": 4, "flagge": 4,
+RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "w_spring": 5, "w_upthrust": 5, "k_ermuedung": 4, "k_baerenflagge": 4, "k_bruch": 4, "flagge": 4,
         "k_breakout": 4,
         "m_weitere": 3, "vcp": 1, None: 0}
 

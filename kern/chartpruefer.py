@@ -300,9 +300,21 @@ def material(tk, df):
             r = fn(df)
         except Exception:  # noqa: BLE001
             r = None
-        if r:
+        if r and r.get("vor_bruch"):            # Verteilung vor dem Bruch (Schritt 2 gespiegelt)
+            zeilen.append(f"Short-Form {name}: vor dem Bruch, Spanne {_z(r['unten'])}–{_z(r['oben'])} $, Einstiege "
+                          + ", ".join(f"{x['quelle']} {_z(x['wert'])} $" for x in r.get("einstiege") or [])
+                          + f", Stopp {_z(r['stopp'])} $, Ampel {r['ampel']}")
+        elif r:
             zeilen.append(f"Short-Form {name}: Bruch am {_d(r['tag'])}, Spanne {_z(r['unten'])}–{_z(r['oben'])} $, "
                           f"Ampel {r['ampel']}")
+    try:
+        su_ = vcp_zone.spring_upthrust(df)
+    except Exception:  # noqa: BLE001
+        su_ = None
+    if su_:                                      # Wyckoff an der Zone des Vortags (Gefechtsordnung Schritt 4)
+        zeilen.append(f"{su_['art']} der App am {_d(su_['tag'])}: Zone {_z(su_['unten'])}–{_z(su_['oben'])} $ (wie am Vortag), "
+                      f"am {_d(su_['zurueck_tag'])} zurück in der Zone; Einstieg {_z(su_['einstieg'])} $, Stopp "
+                      f"{_z(su_['stopp'])} $, Ziel {_z(su_['ziel'])} $; {'gilt' if su_['gueltig'] else 'gilt nicht mehr'}")
     if vv.get("mauer"):
         zeilen.append(f"Mauer (Volumenknoten über dem Kurs): {_z(vv['mauer'][0])}–{_z(vv['mauer'][1])} $")
     if vv.get("stuetze"):

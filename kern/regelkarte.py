@@ -302,11 +302,11 @@ ZEICHEN = [
                "(gespiegelt: erstes tieferes Hoch, Kurs darunter).",
          messung=["zeichen.dow", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen", "Kreislauf/Phase"]),
     dict(name="Spring/Upthrust", art="Struktur", meister="Wyckoff; O'Neil („undercut and rally“)",
-         regel="In den letzten 10 Tagen: Tief höchstens 1 ATR unter dem Tief der 20 Tage davor (Spanne höchstens 15 % "
-               "breit), Schluss innerhalb von 3 Tagen wieder darüber mit Volumen über dem Schnitt = Spring. Upthrust: "
-               "Hoch über der Oberkante mit Volumen über dem Schnitt, Schluss im unteren Drittel des Tages und wieder in "
-               "der Spanne.",
-         messung=["zeichen.spring"], pruefer=["Test am Rand: Zeichen", "abgelehnt/angenommen"]),
+         regel="An der Zone des Scanners, wie sie am Vortag stand (dieselbe Regel wie das Setup): Tief höchstens 1 ATR "
+               "unter der Unterkante und ein Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach = Spring; "
+               "Hoch höchstens 1 ATR über der Oberkante und Schluss zurück = Upthrust; ein Fehlausbruch zählt auch. Zeichen "
+               "in den letzten 10 Tagen; Volumen am Schluss zurück steht dabei (Zeichen, keine Bedingung).",
+         messung=["zeichen.spring", "vcp_zone.spring_upthrust"], pruefer=["Test am Rand: Zeichen", "abgelehnt/angenommen"]),
     dict(name="Einquetschung", art="Struktur", meister="Micky (aufsteigendes Dreieck)",
          regel="Steigende Tiefs gegen eine flache Oberkante: in 60, sonst 120 Tagen mindestens 2 Schwunghochs innerhalb "
                "±1,5 % der Oberkante, die flache Kante seit mindestens 3 Wochen, mindestens 3 steigende Tiefs (ein Spring "
@@ -441,15 +441,26 @@ SETUPS = [
          einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück im Driften", abweichung="", messung=["vcp_zone.baerenflagge"], stand="gemessen"),
     dict(name="Bruch der Spanne (Short)", reihen=["k_bruch"], lehrer="Weinstein", weg="gespiegelt: Balance → angenommen abwärts",
-         regel="Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief.",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
-         widerlegt="Schluss zurück in der Spanne", abweichung="", messung=["vcp_zone.spannenbruch"], stand="gemessen"),
-    dict(name="Spring / Upthrust", reihen=[], lehrer="Wyckoff", weg="abgelehnt → Lauf zum anderen Rand",
-         regel="Kurs bricht über den Rand und schließt zurück in der Zone (Spring unten = long, Upthrust oben = short); "
-               "Ziel der andere Rand.",
-         einstieg="beim Schluss zurück in der Zone", stopp="unter dem Tief bzw. über dem Hoch des Fehlausbruchs",
-         widerlegt="neuer Schluss jenseits des Randes", abweichung="", messung=[], stand="fehlt",
-         luecke="beschlossen (Micky 14.11.2026), Bau in Schritt 4 – siehst du einen, melde ihn als „Übersehen“"),
+         regel="Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Eine Verteilung "
+               "(Phase 3) steht schon vor dem Bruch in der Reihe, wie der Base-Ausbruch vor dem Ausbruch (gelb, im "
+               "Vorrang hinten wie „weiter weg“; mit ausgelöstem frühen Short grün bei den Shorts; Micky 15.11.2026).",
+         einstieg="Unterkante; grün nur bis 5 % darunter. Vor dem Bruch zwei Einstiege, wenn das Tief der letzten "
+                  "Gegenbewegung mehr als 3 % über der Unterkante liegt: früh beim Schluss darunter (früher Short, grün), "
+                  "sonst der Bruch der Unterkante. Es gilt der oberste, unter den der Kurs noch nicht hinaus ist.",
+         stopp="Struktur: über dem Hoch des Auslösetags; vor dem Bruch über dem Hoch der letzten Gegenbewegung; daneben 1,5 ATR",
+         widerlegt="Schluss zurück in der Spanne", abweichung="",
+         messung=["vcp_zone.spannenbruch", "vcp_zone._vor_dem_bruch", "vcp_zone.naechster"], stand="gemessen"),
+    dict(name="Spring / Upthrust", reihen=["w_spring", "w_upthrust"], lehrer="Wyckoff", weg="abgelehnt → Lauf zum anderen Rand",
+         regel="An der Zone des Scanners, wie sie am Vortag stand: Tief höchstens 1 ATR unter der Unterkante (Upthrust: Hoch "
+               "höchstens 1 ATR über der Oberkante), Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach "
+               "(ein Fehlausbruch zählt auch). Gilt bis 10 Handelstage nach dem Schluss zurück, solange der Stopp hält und "
+               "der andere Rand nicht erreicht ist; ★ bis 5 % jenseits des Einstiegs. Volumen und Phase sind Zeichen. "
+               "Vorrang: nach Sprung und Zahlen-Reaktion, vor den Shorts und dem Base-Ausbruch.",
+         einstieg="beim Schluss zurück in der Zone (Auslöser: Unterkante bzw. Oberkante)",
+         stopp="Struktur: unter dem Tief bzw. über dem Hoch des Fehlausbruchs; daneben 1,5 ATR",
+         widerlegt="Kurs jenseits des Stopps", abweichung="Ziel der andere Rand (kein fester Gewinn, Stopp nachziehen)",
+         messung=["vcp_zone.spring_upthrust", "system_kullamaegi.pruefen", "kartentisch.setup_feststellen",
+                  "depot.struktur_stopp"], stand="gemessen"),
 ]
 
 # Für alle Setups (Gefechtsordnung, Micky 14.11.2026)
@@ -469,8 +480,8 @@ SETUP_GRUNDSATZ = [
     "Gruppe: die ganze Truppe misst (Gruppen-RS, Breite, Zufluss); prüfe, ob das Setup Rückenwind der Gruppe hat, und "
     "melde es als Zeichen, nicht als Fehler.",
 ]
-VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★ (Kaufzone) → "
-           "Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster; „auch“ nennt die übrigen")
+VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Spring/Upthrust → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★ (Kaufzone) → "
+           "Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster → Bruch der Spanne vor dem Bruch; „auch“ nennt die übrigen")
 
 # ── Weitere Bereiche der App (Generalinventur 15.11.2026) ────────────────────────────────────────────────────────
 # Regeln außerhalb der drei Bilder und der Setups: Rückenwind, Depot und Risiko, Fundament, Stopps, Kartentisch,

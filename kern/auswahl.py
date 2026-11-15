@@ -72,11 +72,12 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
     """Welche Titel eine Akte bekommen (eine Funktion für Seite Setups und Wachen). → (Liste in Rangfolge, {Ticker: (beim Stab?, Grund)}) für jeden Titel mit Reihe, auf der Watchlist oder
     im Depot."""
     import kartentisch
+    import lagekarte
     rang = kartentisch.RANG
 
     def zone(tk):
         x = titel_t.get(tk) or {}
-        if x.get("reihe") in ("k_ermuedung", "k_baerenflagge", "k_bruch") or (x.get("reihe") == "zahlen" and x.get("zr_seite") == "short"):
+        if lagekarte.richtung(x) == "short":       # die eine Regel für die Seite einer Reihe
             return ZONE_SHORT
         return ZONE_VOLLTREFFER if tk in drei else ZONE_LONG
 

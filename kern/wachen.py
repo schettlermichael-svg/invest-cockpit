@@ -20,7 +20,6 @@ DATEI = os.path.join(HIER, "..", "daten", "nachtlauf", "wachen.json")
 TOL_EINSTIEG = 0.5             # % Abweichung zwischen den Stellen
 TOL_KURS, TOL_GD50 = 0.5, 1.0  # % gegen TradingView
 STICHPROBE = 10
-SHORT_REIHEN = ("k_ermuedung", "k_baerenflagge", "k_bruch")
 
 
 def _pct(a, b):
@@ -28,10 +27,9 @@ def _pct(a, b):
 
 
 def _seite_aus_reihe(x):
-    r = x.get("reihe")
-    if r in SHORT_REIHEN or (r == "zahlen" and x.get("zr_seite") == "short"):
-        return "short"
-    return "long" if r else None
+    """Seite einer Reihe – die eine Regel (lagekarte.richtung)."""
+    import lagekarte
+    return lagekarte.richtung(x)
 
 
 def _abgelegte_marken(tk):

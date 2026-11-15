@@ -219,6 +219,7 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
     einer alten Base und den Stopp 247,93 $ über dem Kurs). → (Seite, Einstieg, Quelle) oder (None, None, "").
       Sprung (EP)          Hoch des Sprungtags (Pivot des EP)
       Zahlen-Reaktion      AVWAP ab dem Reaktionstag, Seite der Reaktion
+      Spring / Upthrust    Unterkante (long) bzw. Oberkante (short) der Zone – der Schluss zurück löst aus
       Ermüdung, Bärenflagge, Bruch der Spanne  Unterkante (short)
       Base-Ausbruch        Pivot der Base (sonst Pivot des letzten Ausbruchs)
       Momentum-Ausbruch    Pivot der Konsolidierung
@@ -229,11 +230,19 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
         return "long", float(k["ep"]["pivot"]), "Sprung (EP)"
     if r == "zahlen" and zr.get("avwap"):
         return zr.get("seite", "long"), float(zr["avwap"]), "AVWAP ab dem Reaktionstag"
-    if r in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
-        import system_kullamaegi
+    import system_kullamaegi
+    if r == "w_spring" and (k.get("spring") or {}).get("einstieg"):
+        return "long", float(k["spring"]["einstieg"]), "Spring: Schluss zurück über der Unterkante"
+    if r in system_kullamaegi.SHORT_REIHEN:
         em = system_kullamaegi.short_von(k, r) or {}
-        if em.get("unten"):
-            return "short", float(em["unten"]), "Unterkante"
+        ein_ = em.get("einstiege") or []
+        if len(ein_) > 1 and kurs:                 # Bruch der Spanne vor dem Bruch: der Einstieg, der jetzt gilt
+            import vcp_zone
+            x = ein_[vcp_zone.naechster(ein_, float(kurs), seite="short")]
+            return "short", float(x["wert"]), x["quelle"]
+        if em.get("einstieg"):
+            return "short", float(em["einstieg"]), ("Upthrust: Schluss zurück unter der Oberkante" if r == "w_upthrust"
+                                                    else "Unterkante")
     if r in ("m_spitze", "m_weitere"):
         e = m.get("pivot") or (m.get("ausbruch") or {}).get("pivot")
         ein_ = m.get("einstiege") or []
@@ -256,11 +265,14 @@ def einstiege(su, m, k, zr=None, kurs=None):
     gilt = der Einstieg, der jetzt gilt (vcp_zone.naechster: noch nicht ausgelöst oder in seiner Kaufzone)."""
     su, m = su or {}, m or {}
     r = su.get("reihe")
-    liste = (m.get("einstiege") if r in ("m_spitze", "m_weitere") else su.get("einstiege") if r == "vcp" else None) or []
-    if len(liste) > 1 and kurs:
+    import system_kullamaegi
+    kurz = r in system_kullamaegi.SHORT_REIHEN
+    liste = (m.get("einstiege") if r in ("m_spitze", "m_weitere") else su.get("einstiege") if r == "vcp"
+             else (system_kullamaegi.short_von(k, r) or {}).get("einstiege") if kurz else None) or []
+    if len(liste) > 1 and kurs:                    # long aufsteigend; short (Bruch der Spanne vor dem Bruch) absteigend
         import vcp_zone
-        i_ = vcp_zone.naechster(liste, float(kurs))
-        return [("long", x["wert"], x["quelle"], j == i_) for j, x in enumerate(liste)]
+        i_ = vcp_zone.naechster(liste, float(kurs), seite="short" if kurz else "long")
+        return [("short" if kurz else "long", x["wert"], x["quelle"], j == i_) for j, x in enumerate(liste)]
     seite, e, quelle = einstieg_setup(su, m, k, zr, kurs)
     return [(seite, e, quelle, True)] if e else []
 
@@ -293,6 +305,7 @@ def _struktur(su, m, k, zr, df, seite, e):
                            Tagesspanne = rot (Kullamägi nimmt ihn nicht)
       Sprung (EP)          Tief des Sprungtags (Gefechtsordnung: ohne Grenze der Tagesspanne)
       Zahlen-Reaktion      Tief (short: Hoch) des Reaktionstags
+      Spring / Upthrust    Tief bzw. Hoch des Fehlausbruchs (Wyckoff)
       Shorts               Hoch des Auslösetags
     → {stopp, regel, zu_weit, grenze} oder None. Nie gekappt: der Stopp steht an der Struktur, die Ampel sagt, ob er zu
     weit ist."""
@@ -331,14 +344,21 @@ def _struktur(su, m, k, zr, df, seite, e):
     if r == "k_ep" and (k.get("ep") or {}).get("stopp"):
         s_ = float(k["ep"]["stopp"])
         return {"stopp": s_, "regel": "Tief des Sprungtags", "zu_weit": False, "grenze": "eine Tagesspanne"}
+    if r == "w_spring" and (k.get("spring") or {}).get("stopp"):
+        return {"stopp": float(k["spring"]["stopp"]), "regel": "Tief des Fehlausbruchs", "zu_weit": False, "grenze": ""}
     if r == "zahlen" and zr.get("tief") is not None:
         s_ = float(zr["tief"] if lang else zr["hoch"])
         return {"stopp": s_, "regel": "Tief des Reaktionstags" if lang else "Hoch des Reaktionstags", "zu_weit": False,
                 "grenze": ""}
     import system_kullamaegi
     em = system_kullamaegi.short_von(k, r) if r in system_kullamaegi.SHORTS else None
+    if em and em.get("vor_bruch"):                    # Bruch der Spanne vor dem Bruch: über dem Hoch der Gegenbewegung
+        x = next((x for x in em.get("einstiege") or [] if x["wert"] == e), None)
+        return {"stopp": float((x or {}).get("struktur") or em["stopp"]), "regel": "Hoch der letzten Gegenbewegung",
+                "zu_weit": False, "grenze": ""}
     if em and em.get("stopp"):
-        return {"stopp": float(em["stopp"]), "regel": "Hoch des Auslösetags", "zu_weit": False, "grenze": ""}
+        return {"stopp": float(em["stopp"]), "regel": "Hoch des Fehlausbruchs" if r == "w_upthrust" else "Hoch des Auslösetags",
+                "zu_weit": False, "grenze": ""}
     return None
 
 

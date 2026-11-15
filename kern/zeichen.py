@@ -65,8 +65,6 @@ DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem le
 DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
 STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
 SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
-SPRING_VOR = 20             # … gegen das Tief bzw. Hoch der 20 Tage davor
-SPRING_SPANNE_MAX = 0.15    # … die Spanne davor höchstens 15 % breit
 SPRING_ZURUECK = 4          # … Schluss innerhalb von 3 Tagen wieder in der Spanne (Tag selbst + 3)
 EINQ_VERGLEICH_TAGE = 10    # Einquetschung: Spanne und Volumen der letzten 10 Tage gegen die ersten 10 bzw. den Schnitt davor
 EINQ_VOL_FENSTER = 60       # … Volumen gegen die 60 Tage davor
@@ -215,30 +213,24 @@ def trendqualitaet(df):
 
 
 # ── Spring und Upthrust ───────────────────────────────────────────────────────────────────────────────────────────
-def spring(df, tage=SPRING_TAGE, vor=SPRING_VOR):
-    """Spring (Stärke) bzw. Upthrust (Schwäche) in den letzten `tage` Tagen → Zeichen oder None."""
-    if df is None or len(df) < vor + tage + 50:
+def spring(df, tage=SPRING_TAGE):
+    """Spring (Stärke) bzw. Upthrust (Schwäche) an der Zone des Scanners in den letzten `tage` Tagen → Zeichen oder None.
+    Eine Regel mit Zustand und Setup: vcp_zone.spring_upthrust (Gefechtsordnung Schritt 4, Micky 15.11.2026 – bis dahin
+    eine eigene Spanne der letzten 20 Tage)."""
+    if df is None:
         return None
-    lo, hi, c, v = (df[x].to_numpy(float) for x in ("Low", "High", "Close", "Volume"))
-    v50 = df["Volume"].rolling(50).mean().to_numpy(float)
-    a = _atr(df).to_numpy(float)
-    n = len(df)
-    for i in range(n - 1, n - tage - 1, -1):
-        unten, oben = lo[i - vor:i].min(), hi[i - vor:i].max()
-        if not unten > 0 or oben / unten - 1 > SPRING_SPANNE_MAX:
-            continue
-        if lo[i] < unten and unten - lo[i] <= a[i]:
-            for j in range(i, min(i + SPRING_ZURUECK, n)):
-                if c[j] > unten and v[j] > v50[j]:
-                    return _zeichen("stärke", "struktur", f"Spring am {df.index[i]:%d.%m.}: Tief unter "
-                                    f"{_z(unten, '.2f')} $, " + ("am selben Tag" if j == i else f"am {df.index[j]:%d.%m.}") +
-                                    " mit Volumen zurückgekauft – "
-                                    "die Verkäufer sind erschöpft", 2, df.index[i])
-        if (hi[i] > oben and hi[i] - oben <= a[i] and c[i] < oben and hi[i] > lo[i] and v[i] > v50[i]
-                and (c[i] - lo[i]) / (hi[i] - lo[i]) <= 1 / 3):
-            return _zeichen("schwäche", "struktur", f"Upthrust am {df.index[i]:%d.%m.}: Hoch über {_z(oben, '.2f')} $, "
-                            "Schluss im unteren Drittel zurück in der Spanne – die Käufer sind erschöpft", 2, df.index[i])
-    return None
+    import vcp_zone
+    su = vcp_zone.spring_upthrust(df, tage)
+    if not su:
+        return None
+    zur = ("am selben Tag" if su["zurueck_tag"] == su["tag"] else f"am {su['zurueck_tag']:%d.%m.}")
+    vol = f" (Volumen {_z(su['volumen'], '.1f')}-fach)" if su.get("volumen") else ""
+    if su["art"] == "Spring":
+        return _zeichen("stärke", "struktur", f"Spring am {su['tag']:%d.%m.}: Tief unter der Unterkante der Zone "
+                        f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Zone{vol} – die Verkäufer sind erschöpft",
+                        2, su["tag"])
+    return _zeichen("schwäche", "struktur", f"Upthrust am {su['tag']:%d.%m.}: Hoch über der Oberkante der Zone "
+                    f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Zone{vol} – die Käufer sind erschöpft", 2, su["tag"])
 
 
 # ── Einquetschung ─────────────────────────────────────────────────────────────────────────────────────────────────
