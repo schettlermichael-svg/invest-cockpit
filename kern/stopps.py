@@ -1,8 +1,9 @@
 """Stopps und CRV vor dem Kauf (grüne Null, 05.11.2026) – Gewinne laufen lassen, Stopp nachziehen; das CRV ist ein Maß,
 ob sich der Einsatz lohnt, kein Ausstieg.
 
-Einstieg und Stopp wie auf der Lagekarte (depot.plan): ein Stopp, 1,5 ATR vom Einstieg wie im Chart (10.11.2026;
-vorher Stopp A des Systems und Stopp B 1,5 × ATR nebeneinander). Stopp B bleibt nur, wenn erk keine ATR trägt.
+Einstieg wie auf der Lagekarte (depot.plan). Zwei Stopps nebeneinander (Gefechtsordnung Schritt 3, 15.11.2026): Stopp A
+an der Struktur (depot.struktur_stopp, nie gekappt – weiter als die Grenze des Meisters = rot), Stopp B 1,5 ATR vom
+Einstieg wie im Chart; Micky wählt je Trade.
 Nächster Widerstand über dem Einstieg (Weinstein): das nächste alte Hoch der letzten 52 Wochen, das seither nicht
 überstiegen wurde (ältere Hochs sind ausgewaschen), oder ein fallender GD150/GD200 (Short gespiegelt: altes Tief bzw.
 steigender Durchschnitt) oder der nächste Volumenknoten des verankerten Profils (seit 13.11.2026: grau, Mauer seit Hoch, Stütze seit Tief – volumenprofil.verankert; Auction Market Theory: der Preis wandert
@@ -78,14 +79,18 @@ def linien(erk, atr_wert, df=None):
     pl = depot.plan(erk)
     if not pl:
         return None
-    seite, e, s_a, _ = pl
+    seite, e, s_atr, _ = pl
+    sy = erk.get("systeme") or {}
+    st_ = depot.struktur_stopp(erk.get("setup_info"), sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"), df, seite, e)
+    s_a = st_["stopp"] if st_ else s_atr          # Stopp A = Struktur (Schritt 3), Stopp B = 1,5 ATR daneben
     r_a = abs(e - s_a)
     if r_a <= 0:
         return None
-    r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert - RUNDUNG * atr_wert else None   # Rundung: kein B gleich A
+    r_b = abs(e - s_atr) if st_ and abs(abs(e - s_atr) - r_a) > RUNDUNG * e else None    # Rundung: kein B gleich A
     w = widerstand(df, seite, e, ((erk.get("profil") or {}).get("knoten")))
-    erg = {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a,
-           "stopp_b": (e - r_b if seite == "long" else e + r_b) if r_b else None, "risiko_b": r_b, "widerstand": w}
+    erg = {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a, "regel_a": st_["regel"] if st_ else "1,5 × ATR",
+           "zu_weit": bool(st_ and st_["zu_weit"]), "grenze": st_["grenze"] if st_ else "",
+           "stopp_b": s_atr if r_b else None, "risiko_b": r_b, "widerstand": w}
     if w:
         chance = abs(w[0] - e)
         erg["crv_a"], erg["crv_b"] = chance / r_a, (chance / r_b if r_b else None)
@@ -103,15 +108,16 @@ def zeichen(erk, df, atr_wert):
         return []
     lang = li["seite"] == "long"
     e = li["einstieg"]
-    aus = [("grau", f"Stopp {_geld(li['stopp_a'])} $ ({_z(li['risiko_a'] / e * 100)} % vom Einstieg"
-                    + (", 1,5 × ATR" if not li["stopp_b"] else "")
-                    + (f") · Stopp B {_geld(li['stopp_b'])} $ ({_z(li['risiko_b'] / e * 100)} %, 1,5 × ATR"
-                       if li["stopp_b"] else "") + ") – danach nachziehen")]
+    aus = [("rot" if li["zu_weit"] else "grau",
+            f"Stopp Struktur {_geld(li['stopp_a'])} $ ({li['regel_a']}, {_z(li['risiko_a'] / e * 100)} % vom Einstieg"
+            + (f", weiter als {li['grenze']} – die Meister nehmen den Trade so nicht" if li["zu_weit"] else "")
+            + (f") · Stopp 1,5 × ATR {_geld(li['stopp_b'])} $ ({_z(li['risiko_b'] / e * 100)} %"
+               if li["stopp_b"] else "") + ") – du wählst je Trade, danach nachziehen")]
     w = li["widerstand"]
     if w:
         aus.append((_ampel(li["crv_a"]),
                     f"CRV bis zur ersten Hürde {_z(li['crv_a'])} : 1"
-                    + (f" (mit Stopp B {_z(li['crv_b'])} : 1)" if li.get("crv_b") else "")
+                    + (f" (mit 1,5 × ATR {_z(li['crv_b'])} : 1)" if li.get("crv_b") else "")
                     + f" · Hürde {_geld(w[0])} $ ({w[1]}), {_z(abs(w[0] / e - 1) * 100)} % "
                     f"{'über' if lang else 'unter'} dem Einstieg"))
     else:

@@ -152,6 +152,11 @@ def material(tk, df):
                  + (f" · auch: {', '.join(info['auch'])}" if info.get("auch") else ""))
         e = info.get("einstieg")
         if e:
+            sx = depot.struktur_stopp(info, m, k, zr, df, e["seite"], e["wert"])
+            if sx:                                   # Struktur-Stopp (Schritt 3) neben 1,5 ATR
+                z.append(f"Stopp Struktur der App: {_z(sx['stopp'])} $ ({sx['regel']}, "
+                         f"{_z(abs(sx['stopp'] / e['wert'] - 1) * 100, '.1f')} % vom Einstieg"
+                         + (f"; weiter als {sx['grenze']} – Ampel rot" if sx["zu_weit"] else "") + ")")
             stopp = e["wert"] + depot.ATR_STOPP * a if e["seite"] == "short" else e["wert"] - depot.ATR_STOPP * a
             z.append(f"Plan der App: {e['seite']}, Einstieg {_z(e['wert'])} $ ({e['quelle']}), Kurs "
                      f"{_z(info.get('abstand_vz', 0), '+.1f')} % dazu; Stopp {_z(stopp)} $ (1,5 ATR, "
@@ -169,7 +174,7 @@ def material(tk, df):
     if m:
         z.append(f"Lehrer Minervini · Base-Ausbruch: Ampel {m.get('ampel')}; {_regeln(m.get('regeln'))}"
                  + (f"; Pivot {_z(m['pivot'])} $" if m.get("pivot") else "")
-                 + (f", Stopp {_z(m['stopp'])} $ (unter dem Tief der letzten Kontraktion)" if m.get("stopp") else "")
+                 + (f", Stopp {_z(m['stopp'])} $ (unter dem Tief der letzten Kontraktion, nicht gekappt)" if m.get("stopp") else "")
                  + ("; zwei Einstiege: " + ", ".join(f"{x['quelle']} {_z(x['wert'])} $ (Stopp {_z(x['stopp'])} $)"
                                                     + (" – gilt jetzt" if j == m.get("einstieg_nr") else "")
                                                     for j, x in enumerate(m["einstiege"]))

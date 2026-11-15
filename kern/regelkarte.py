@@ -391,54 +391,58 @@ SETUPS = [
                   "einer, der Pivot. Es gilt der unterste, über den der Kurs noch nicht hinaus ist (noch nicht ausgelöst "
                   "oder in seiner Kaufzone bis 5 %). Am laufenden Tag zeigt der Plan aus den 30-Minuten-Kerzen, seit wann "
                   "der Kurs über dem Auslöser steht – vorläufig, es zählt der Schluss. Flagge und schnelle Setups: ein Einstieg.",
-         stopp="unter der letzten Kontraktion, höchstens 8 %", widerlegt="„abgelehnt“ (Schluss zurück in der Zone)",
+         stopp="Struktur: unter dem Tief der letzten Kontraktion (je Einstieg); weiter als 8 % = rot, nicht gekappt. "
+               "Daneben 1,5 ATR", widerlegt="„abgelehnt“ (Schluss zurück in der Zone)",
          abweichung="Base bis 50 % tief zählt als reif, grün nur bis 33 % (Micky: tiefe Korrekturen sind Konsolidierung)",
          messung=["system_minervini.pruefen", "vcp_zone.enge", "vcp_zone.einstiege", "vcp_zone.naechster", "depot.einstiege",
-                  "depot.plaene", "titel._heute_ueber"], stand="teilweise",
-         luecke="Struktur-Stopp (Schritt 3) fehlt im Plan; früher Short gespiegelt kommt mit Schritt 4"),
+                  "depot.plaene", "depot.struktur_stopp", "titel._heute_ueber"], stand="gemessen"),
     dict(name="Flagge", reihen=["flagge"], lehrer="Kullamägi", weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
          regel="Fahnenstange ab 30 % in höchstens 13 Wochen direkt davor (nach einem Rücksetzer über 25 % beginnt sie erst an "
                "dessen Tief), Flagge 1–8 Wochen, höchstens 25 % tief, im Aufwärtstrend "
                "(Kurs über steigendem GD50), Volumen in der Flagge leiser als in der Stange, steigende Tiefs (das Tief der "
                "zweiten Hälfte höchstens 0,5 ATR unter dem der ersten – sonst heißt die Zone nicht Flagge); Pivot = Oberkante.",
-         einstieg="Ausbruch über die Oberkante", stopp="Tagestief, höchstens eine Tagesspanne",
+         einstieg="Ausbruch über die Oberkante", stopp="Struktur: Tief des Ausbruchstags; bis dahin Einstieg − 1 "
+                                                     "Tagesspanne (ADR 20 Tage); weiter als eine Tagesspanne = rot. Daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Flagge", abweichung="",
-         messung=["vcp_zone.zone", "vcp_zone.tiefs_fallen", "kartentisch.flagge_im_trend"], stand="teilweise",
-         luecke="Struktur-Stopp (Schritt 3) fehlt im Plan"),
+         messung=["vcp_zone.zone", "vcp_zone.tiefs_fallen", "kartentisch.flagge_im_trend", "depot.struktur_stopp"],
+         stand="gemessen"),
     dict(name="Momentum-Ausbruch", reihen=["k_breakout"], lehrer="Kullamägi",
          weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
          regel="Führer (oberste 2 % nach 1, 3 oder 6 Monaten), Pause 1–3 Wochen nach einem Schub, hält den GD20, Kurs "
                "davor 3 Wochen über dem GD50; Pivot = Oberkante der Pause.",
-         einstieg="Ausbruch über die Oberkante der Pause", stopp="Tagestief, höchstens eine Tagesspanne",
+         einstieg="Ausbruch über die Oberkante der Pause", stopp="Struktur: Tief des Ausbruchstags; bis dahin Einstieg − 1 "
+                                                              "Tagesspanne; weiter als eine Tagesspanne = rot. Daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Pause", abweichung="",
-         messung=["system_kullamaegi.breakout"], stand="teilweise", luecke="Struktur-Stopp (Schritt 3) fehlt im Plan"),
+         messung=["system_kullamaegi.breakout", "depot.struktur_stopp"], stand="gemessen"),
     dict(name="Sprung (EP)", reihen=["k_ep"], lehrer="Kullamägi", weg="Anlass „neue Information“ → direkt angenommen",
          regel="Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch, Volumen ab 3-fach (10-fach ideal), in den letzten "
                "10 Tagen, Kurs hält das Tief des Sprungtags; Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und "
                "Schluss im oberen Drittel.",
-         einstieg="Hoch des Sprungtags", stopp="unter dem Tief des Sprungtags", widerlegt="Schluss unter dem Tief des Sprungtags",
+         einstieg="Hoch des Sprungtags", stopp="Struktur: unter dem Tief des Sprungtags (ohne Grenze der Tagesspanne); "
+                                              "daneben 1,5 ATR", widerlegt="Schluss unter dem Tief des Sprungtags",
          abweichung="", messung=["system_kullamaegi.episodic_pivot"], stand="gemessen"),
     dict(name="Zahlen-Reaktion", reihen=["zahlen"], lehrer="Micky (Drift nach den Zahlen, Shannons Anker am Ereignistag)",
          weg="Anlass „neue Information“ → direkt angenommen",
          regel="Reaktion ab 3 % in den letzten 20 Tagen, Volumen über dem Schnitt, Schluss im oberen Drittel (short: "
                "unteren), seitdem kein Schluss unter dem Tief und dem AVWAP ab dem Reaktionstag, Kurs über dem GD50 (short "
                "gespiegelt).",
-         einstieg="AVWAP ab dem Reaktionstag, Zone bis 5 % darüber", stopp="unter dem Tief des Reaktionstags",
+         einstieg="AVWAP ab dem Reaktionstag, Zone bis 5 % darüber", stopp="Struktur: unter dem Tief (short: über dem Hoch) des "
+                                                                           "Reaktionstags; daneben 1,5 ATR",
          widerlegt="Schluss unter dem Tief bzw. dem AVWAP ab dem Reaktionstag", abweichung="",
          messung=["zahlen_reaktion.pruefen"], stand="gemessen"),
     dict(name="Ermüdung (Short)", reihen=["k_ermuedung"], lehrer="Kullamägi", weg="gespiegelt: Ende des Laufs → abgelehnt",
          regel="Flagge nach Stange ab 30 % bricht nach unten (Schluss unter der Unterkante, letzte 5 Tage).",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="über dem Hoch des Auslösetags",
+         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Flagge", abweichung="", messung=["vcp_zone.ermuedung"], stand="gemessen"),
     dict(name="Bärenflagge (Short)", reihen=["k_baerenflagge"], lehrer="Kullamägi",
          weg="gespiegelt: kleine Balance im Ungleichgewicht abwärts → angenommen abwärts",
          regel="Fall ab 15 % in höchstens 30 Tagen, Driften 3–25 Tage mit steigenden Tiefs, holt höchstens die Hälfte "
                "zurück, GD50 fällt, Bruch unter das Tief des Driftens.",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="über dem Hoch des Auslösetags",
+         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück im Driften", abweichung="", messung=["vcp_zone.baerenflagge"], stand="gemessen"),
     dict(name="Bruch der Spanne (Short)", reihen=["k_bruch"], lehrer="Weinstein", weg="gespiegelt: Balance → angenommen abwärts",
          regel="Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief.",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="über dem Hoch des Auslösetags",
+         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Spanne", abweichung="", messung=["vcp_zone.spannenbruch"], stand="gemessen"),
     dict(name="Spring / Upthrust", reihen=[], lehrer="Wyckoff", weg="abgelehnt → Lauf zum anderen Rand",
          regel="Kurs bricht über den Rand und schließt zurück in der Zone (Spring unten = long, Upthrust oben = short); "
@@ -450,11 +454,11 @@ SETUPS = [
 
 # Für alle Setups (Gefechtsordnung, Micky 14.11.2026)
 SETUP_GRUNDSATZ = [
-    "Stopp: die App zeigt beide – den Struktur-Stopp (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles "
-    "Setup: Tagestief, höchstens eine Tagesspanne) und 1,5 ATR; der Nutzer wählt je Trade. Heute steht im Plan noch "
-    "einheitlich 1,5 ATR vom Einstieg (Entscheidung des Nutzers vom 09.11.2026; der Struktur-Stopp kommt mit Schritt 3) – "
-    "weicht er von der Regel des Meisters ab, melde es als strittig, mit dem Stopp des Meisters. Prüfe, ob der "
-    "Struktur-Stopp dort sitzt, wo der Weg widerlegt ist.",
+    "Stopp: die App zeigt beide – den Struktur-Stopp (Base: unter der letzten Kontraktion; schnelles Setup: Tief des "
+    "Ausbruchstags, bis dahin Einstieg − 1 Tagesspanne; Sprung: Tief des Sprungtags; Zahlen-Reaktion: Tief bzw. Hoch des "
+    "Reaktionstags; Shorts: Hoch des Auslösetags) und 1,5 ATR; der Nutzer wählt je Trade (Gefechtsordnung Schritt 3). Der "
+    "Struktur-Stopp wird nie gekappt: liegt er weiter weg als die Grenze des Meisters (Base 8 %, schnelles Setup eine "
+    "Tagesspanne), zeigt die App ihn mit Ampel rot. Prüfe, ob der Struktur-Stopp dort sitzt, wo der Weg widerlegt ist.",
     "Ausstieg: der Stopp folgt dem 10er (schnelle Titel) bzw. 20er; Mauer, Kraft ohne Weg und Klimax ziehen ihn enger.",
     "Daltons Annahme (der Wert folgt dem Kurs) ist ein Zeichen zum Halten oder Nachkaufen, keine Bedingung.",
     "Ausbruchsvolumen ist ein Zeichen, keine Pflicht – über dem 50-Tage-Schnitt reicht (Entscheidung des Nutzers, "
@@ -482,13 +486,16 @@ BEREICHE = [
          regel="Die Seite eines Titels folgt der aktiven Wertzone des Market Profile (↑ long, ↓ short), ohne sie der Phase "
                "(Short beim Bruch aus Phase 3 und in Phase 4). Warnungen im Kopf: Daten gestört, Klimax, Übernahme.",
          messung=["erkennung.erkenne"], pruefer=["Short"]),
-    dict(name="Einstieg, Stopp und CRV", quelle="Micky 09.11.2026 (1,5 ATR), Weinstein/AMT (Hürde), Minervini (CRV)",
-         regel="Stopp 1,5 ATR vom Einstieg (eine Linie für alle Setups); Stopp unter 1 ATR = im Tagesrauschen (rot), bis "
+    dict(name="Einstieg, Stopp und CRV", quelle="Micky 09.11.2026 (1,5 ATR), 14./15.11.2026 (Struktur daneben), "
+                                                "Weinstein/AMT (Hürde), Minervini (CRV)",
+         regel="Zwei Stopps nebeneinander, Stückzahl je Stopp: Struktur des Setups (depot.struktur_stopp, nie gekappt, "
+               "weiter als die Grenze des Meisters = rot) und 1,5 ATR vom Einstieg; im Chart Struktur durchgezogen, 1,5 ATR "
+               "gestrichelt. Stopp unter 1 ATR = im Tagesrauschen (rot), bis "
                "1,5 gelb. CRV 1 = Weg bis zur ersten Hürde (altes Hoch der 52 Wochen, fallender GD150/200 oder "
                "Volumenknoten) ÷ Stoppabstand, CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand ab 5 Trades; Ampel "
                "grün ab 3 : 1, gelb ab 2 : 1. Zu weit gelaufen: über 2 ATR jenseits des Pivots rot (nicht nachjagen). "
                "Kullamägi: Stopp nie weiter als eine Tagesspanne (ADR, 20 Tage).",
-         messung=["depot.plan", "stopps.linien", "stopps.widerstand", "stopps.zeichen", "atr.stopp", "atr.nachjagen", "atr.enge",
+         messung=["depot.plan", "depot.plaene", "depot.struktur_stopp", "stopps.linien", "stopps.widerstand", "stopps.zeichen", "atr.stopp", "atr.nachjagen", "atr.enge",
                   "atr.ueberdehnung", "system_kullamaegi.adtr"],
          pruefer=["Stopp", "Einstieg/Pivot", "Kaufzone/Abstand"]),
     dict(name="Nach dem Kauf und Depot", quelle="O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",

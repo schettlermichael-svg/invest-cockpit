@@ -265,15 +265,101 @@ def einstiege(su, m, k, zr=None, kurs=None):
     return [(seite, e, quelle, True)] if e else []
 
 
-def plaene(erk):
-    """Plan je Einstieg: [(Seite, Einstieg, Stopp, Stopp-Regel, Quelle, gilt)] – Stopp 1,5 ATR vom jeweiligen Einstieg."""
+SCHNELL = ("flagge", "k_breakout")       # schnelle Setups (Kullamägi): Stopp am Tagestief des Einstiegstags
+
+
+def struktur_stopp(su, m, k, zr, df, seite, e):
+    """Struktur-Stopp mit Prüfung der Seite: liegt die Struktur nicht jenseits des Einstiegs (der Kurs ist mit einer Lücke
+    über den Auslöser gesprungen bzw. darunter gefallen – Tief des Ausbruchstags über, Hoch des Auslösetags unter dem
+    Einstieg), gilt der weiteste erlaubte Stopp: Einstieg ∓ eine Tagesspanne (ADR 20 Tage)."""
+    x = _struktur(su, m, k, zr, df, seite, e)
+    if not x:
+        return None
+    lang = seite != "short"
+    if (x["stopp"] >= e) if lang else (x["stopp"] <= e):
+        adr = (k or {}).get("adtr")
+        if not adr:
+            return None
+        return {"stopp": e - adr if lang else e + adr, "zu_weit": False, "grenze": x["grenze"],
+                "regel": f"{x['regel']} liegt {'über' if lang else 'unter'} dem Einstieg (Lücke) – Einstieg "
+                         f"{'−' if lang else '+'} 1 Tagesspanne"}
+    return x
+
+
+def _struktur(su, m, k, zr, df, seite, e):
+    """Struktur-Stopp DES Setups (Gefechtsordnung Schritt 3, Micky 14./15.11.2026): der Kurs, an dem der Weg widerlegt ist.
+      Base-Ausbruch, VCP   unter dem Tief der letzten Kontraktion – weiter als 8 % = rot (Minervini nimmt ihn nicht)
+      Flagge, Momentum     Tief des Ausbruchstags; bis dahin Einstieg − 1 Tagesspanne (ADR 20 Tage) – weiter als eine
+                           Tagesspanne = rot (Kullamägi nimmt ihn nicht)
+      Sprung (EP)          Tief des Sprungtags (Gefechtsordnung: ohne Grenze der Tagesspanne)
+      Zahlen-Reaktion      Tief (short: Hoch) des Reaktionstags
+      Shorts               Hoch des Auslösetags
+    → {stopp, regel, zu_weit, grenze} oder None. Nie gekappt: der Stopp steht an der Struktur, die Ampel sagt, ob er zu
+    weit ist."""
+    su, m, k, zr = su or {}, m or {}, k or {}, zr or {}
+    r = su.get("reihe")
+    if not (r and e):
+        return None
+    import system_minervini
+    adr = k.get("adtr")
+    lang = seite != "short"
+    if r in ("m_spitze", "m_weitere", "vcp"):
+        liste = (m.get("einstiege") if r != "vcp" else su.get("einstiege")) or m.get("einstiege") or []
+        x = next((x for x in liste if x["wert"] == e), None)
+        s_ = (x or {}).get("struktur")
+        grenze = e * (1 - system_minervini.MAX_STOPP)
+        if s_ is None:
+            return {"stopp": grenze, "regel": "8 % unter dem Einstieg (keine Kontraktion)", "zu_weit": False,
+                    "grenze": "8 %"}
+        return {"stopp": s_, "regel": "unter dem Tief der letzten Kontraktion", "zu_weit": s_ < grenze, "grenze": "8 %"}
+    if r in SCHNELL and adr:
+        tag = None
+        if df is not None and len(df) > 1:
+            import vcp_zone
+            c, lo = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
+            for i in range(len(c) - 1, max(0, len(c) - 1 - vcp_zone.AUSBRUCH_TAGE), -1):
+                if c[i] > e >= c[i - 1]:
+                    tag = i
+                    break
+        if tag is not None:
+            s_ = float(df["Low"].iloc[tag])
+            regel = f"Tief des Ausbruchstags {df.index[tag]:%d.%m.}"
+        else:
+            s_ = e - adr
+            regel = "Einstieg − 1 Tagesspanne (bis zum Ausbruchstag, dann dessen Tief)"
+        return {"stopp": s_, "regel": regel, "zu_weit": e - s_ > adr, "grenze": "eine Tagesspanne"}
+    if r == "k_ep" and (k.get("ep") or {}).get("stopp"):
+        s_ = float(k["ep"]["stopp"])
+        return {"stopp": s_, "regel": "Tief des Sprungtags", "zu_weit": False, "grenze": "eine Tagesspanne"}
+    if r == "zahlen" and zr.get("tief") is not None:
+        s_ = float(zr["tief"] if lang else zr["hoch"])
+        return {"stopp": s_, "regel": "Tief des Reaktionstags" if lang else "Hoch des Reaktionstags", "zu_weit": False,
+                "grenze": ""}
+    import system_kullamaegi
+    em = system_kullamaegi.short_von(k, r) if r in system_kullamaegi.SHORTS else None
+    if em and em.get("stopp"):
+        return {"stopp": float(em["stopp"]), "regel": "Hoch des Auslösetags", "zu_weit": False, "grenze": ""}
+    return None
+
+
+def plaene(erk, df=None):
+    """Plan je Einstieg mit beiden Stopps (Schritt 3: Struktur und 1,5 ATR nebeneinander, Micky wählt je Trade):
+    [{seite, einstieg, quelle, gilt, stopps: [{art, stopp, regel, zu_weit}]}]."""
     sy = erk.get("systeme") or {}
+    su = erk.get("setup_info")
     a = erk.get("atr")
-    if not a:
-        return []
-    return [(s_, e, (e + ATR_STOPP * a if s_ == "short" else e - ATR_STOPP * a), f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart",
-             q, g) for s_, e, q, g in einstiege(erk.get("setup_info"), sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"),
-                                                erk.get("kurs"))]
+    aus = []
+    for s_, e, q, g in einstiege(su, sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"), erk.get("kurs")):
+        stopps = []
+        st_ = struktur_stopp(su, sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"), df, s_, e)
+        if st_:
+            stopps.append({"art": "Struktur", **st_})
+        if a:
+            stopps.append({"art": f"{zahl_kurz(ATR_STOPP)} ATR", "stopp": e + ATR_STOPP * a if s_ == "short" else e - ATR_STOPP * a,
+                           "regel": f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart", "zu_weit": False, "grenze": ""})
+        if stopps:
+            aus.append({"seite": s_, "einstieg": e, "quelle": q, "gilt": g, "stopps": stopps})
+    return aus
 
 
 def plan(erk):

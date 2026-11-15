@@ -164,29 +164,38 @@ def _abstand(erk, kurs):
     e = -ab if seite == "short" else ab                 # positiv = in Richtung des Setups
     anteil = min(1.0, max(0.0, 1 + e / 10)) if e <= 0 else 1.0
     wert = "±0,0" if round(abs(ab), 1) == 0 else f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)}"
-    return f"Abstand zum Einstieg ({seite})", f"{wert} %", anteil, (GRUEN if 0 <= e <= 5 else ROT if e > 10 else BLAU)
+    import vcp_zone
+    return f"Abstand zum Einstieg ({seite})", f"{wert} %", anteil, (GRUEN if 0 <= e <= vcp_zone.KAUFZONE else ROT if e > 10 else BLAU)
 
 
-def _stopp(erk):
+def _plan_gilt(erk, df):
+    """Plan des Einstiegs, der jetzt gilt, mit beiden Stopps (depot.plaene)."""
     import depot
-    pl = depot.plan(erk)
+    pl = depot.plaene(erk, df)
+    return next((x for x in pl if x["gilt"]), pl[0] if pl else None)
+
+
+def _stopp(erk, df=None):
+    pl = _plan_gilt(erk, df)
     if not pl:
         return "kein Einstieg"
-    return f"Stopp {zahl(pl[2])} $ · {pl[3]}"
+    return " · ".join(f"Stopp {x['art']} {zahl(x['stopp'])} $" + (" (zu weit)" if x.get("zu_weit") else "")
+                      for x in pl["stopps"])
 
 
-def _groesse(tk, erk):
-    """Stückzahl und Risiko für das Setup (Schritt 9) – nur mit eingetragenem Konto."""
+def _groesse(tk, erk, df=None):
+    """Stückzahl und Risiko für das Setup je Stopp (Struktur und 1,5 ATR) – nur mit eingetragenem Konto."""
     import depot
-    pl = depot.plan(erk)
+    pl = _plan_gilt(erk, df)
     if not pl:
         return ""
-    sz = depot.stueckzahl(tk, pl[1], pl[2])
-    if not sz:
-        return ""
-    anteil = f" · {zahl(sz['anteil'], 0)} % des Kontos" if sz.get("anteil") else ""
-    return (f'<div style="font-size:13px;color:{TEXT_2}">Stück {sz["stueck"]} · Risiko {zahl(sz["risiko"], 0)} €'
-            f'{anteil}</div>')
+    teile = []
+    for x in pl["stopps"]:
+        sz = depot.stueckzahl(tk, pl["einstieg"], x["stopp"])
+        if sz:
+            anteil = f" · {zahl(sz['anteil'], 0)} % des Kontos" if sz.get("anteil") else ""
+            teile.append(f'{x["art"]}: Stück {sz["stueck"]} · Risiko {zahl(sz["risiko"], 0)} €{anteil}')
+    return f'<div style="font-size:13px;color:{TEXT_2}">{" · ".join(teile)}</div>' if teile else ""
 
 
 def _atr_zeilen(erk, df, kurs):
@@ -198,8 +207,9 @@ def _atr_zeilen(erk, df, kurs):
     if not a:
         return ""
     pl = depot.plan(erk)
+    pg = _plan_gilt(erk, df)                        # der Struktur-Stopp im Rauschen? (1,5 ATR liegt immer außerhalb)
     import stopps
-    z = stopps.zeichen(erk, df, a) + [atr.stopp(pl[1], pl[2], a) if pl else None,
+    z = stopps.zeichen(erk, df, a) + [atr.stopp(pg["einstieg"], pg["stopps"][0]["stopp"], a) if pg else None,
          atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
          atr.enge(df), atr.ueberdehnung(df, a)]
     zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'
@@ -294,5 +304,5 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         f'<div style="height:6px;background:#0F141B;border-radius:3px"><div style="width:{anteil * 100:.0f}%;height:6px;'
         f'background:{farbe_};border-radius:3px"></div></div>'
         f'<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;color:{TEXT_2};'
-        f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{t(_stopp(erk))}</span>'
-        f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk)}{_atr_zeilen(erk, df, kurs)}</article>')
+        f'border-top:1px solid {RAND};padding-top:8px;margin-top:4px"><span>{t(_stopp(erk, df))}</span>'
+        f'<span>{t(zahlen_text)}</span></div>{_groesse(tk, erk, df)}{_atr_zeilen(erk, df, kurs)}</article>')

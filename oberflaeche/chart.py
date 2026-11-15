@@ -120,7 +120,9 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         """Index des Balkens, der den Tag enthält (Woche: Freitag danach)."""
         return min(int(d.index.searchsorted(pd.Timestamp(tag))), N - 1)
 
-    grenzen = [x for x in (marken.get("kz_oben"), marken.get("stopp"), (marken.get("short") or {}).get("stopp"))
+    grenzen = [x for x in (marken.get("kz_oben"), marken.get("stopp"), (marken.get("short") or {}).get("stopp"),
+                           (marken.get("struktur") or {}).get("stopp"),
+                           ((marken.get("short") or {}).get("struktur") or {}).get("stopp"))
                + tuple(w_["wert"] for w_ in marken.get("weitere") or []) if x and tag_ebene]
     pmax, pmin = max([h.max()] + grenzen) * 1.04, min([l.min()] + grenzen) * 0.97
 
@@ -532,11 +534,21 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
             y_, strich = _rechts(platz, ENDE, Y(e), t_, nach_oben=False)
             spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{KAUFZONE_FARBE}" font-size="12" '
                           f'font-weight="600"><title>{m.get("quelle", "")}</title>{t_}</text>')
-        if st:
-            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(st):.1f}" y2="{Y(st):.1f}" stroke="{ROT}" stroke-width="1.8">'
-              f'<title>Stopp 1,5 ATR unter dem Einstieg {zahl(e)} $ (ATR {zahl(m.get("atr"))} $)</title></line>')
-            t_ = f'Stopp {zahl(st)} $ · −{zahl((1 - st / e) * 100, 1)} %'
+        if st:                                     # 1,5 ATR gestrichelt (Schritt 3: neben dem Struktur-Stopp)
+            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(st):.1f}" y2="{Y(st):.1f}" stroke="{ROT}" stroke-width="1.6" '
+              f'stroke-dasharray="7 4"><title>Stopp 1,5 ATR unter dem Einstieg {zahl(e)} $ (ATR {zahl(m.get("atr"))} $)</title></line>')
+            t_ = f'Stopp 1,5 ATR {zahl(st)} $ · −{zahl((1 - st / e) * 100, 1)} %'
             y_, strich = _rechts(platz, ENDE, Y(st), t_, False)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')
+        sx = m.get("struktur") or {}
+        if sx.get("stopp"):                        # Struktur-Stopp durchgezogen
+            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(sx["stopp"]):.1f}" y2="{Y(sx["stopp"]):.1f}" stroke="{ROT}" '
+              f'stroke-width="2"><title>Stopp Struktur: {sx["regel"]}'
+              + (f' – weiter als {sx["grenze"]}, die Meister nehmen den Trade so nicht' if sx.get("zu_weit") else "")
+              + '</title></line>')
+            t_ = (f'Stopp Struktur {zahl(sx["stopp"])} $ · −{zahl((1 - sx["stopp"] / e) * 100, 1)} %'
+                  + (" · zu weit" if sx.get("zu_weit") else ""))
+            y_, strich = _rechts(platz, ENDE, Y(sx["stopp"]), t_, False)
             spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
     for w_ in m.get("weitere") or []:            # zweiter Einstieg (Cheat bzw. Ausbruch), gestrichelt, ohne eigene Kaufzone
         x0 = _x0(m, d, pos, X)
@@ -555,9 +567,16 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
         t_ = f'Einstieg Short {zahl(sh["einstieg"])} $'      # 12.11.2026: Einstieg des Short-Setups beschriftet
         y_, strich = _rechts(platz, ENDE, Y(sh["einstieg"]), t_, nach_oben=False)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
-        t_ = f'Stopp Short {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
+        t_ = f'Stopp Short 1,5 ATR {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
         y_, strich = _rechts(platz, ENDE, Y(sh["stopp"]), t_)
-        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
+        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')
+        sx = sh.get("struktur") or {}
+        if sx.get("stopp"):                        # Struktur-Stopp (Schritt 3) durchgezogen
+            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(sx["stopp"]):.1f}" y2="{Y(sx["stopp"]):.1f}" stroke="{ROT}" '
+              f'stroke-width="2"><title>Short-Stopp Struktur: {sx["regel"]}</title></line>')
+            t_ = f'Stopp Short Struktur {zahl(sx["stopp"])} $ · +{zahl((sx["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
+            y_, strich = _rechts(platz, ENDE, Y(sx["stopp"]), t_)
+            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')
 
 
 def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
@@ -727,7 +746,8 @@ def stunden(dh, m=None, hohl=False):
     breite = B - LINKS - RECHTS - ETIKETT
     ENDE = LINKS + breite
     X = lambda i: LINKS + breite * (i + 0.5) / N                                      # noqa: E731
-    lv = [x for x in (m.get("einstieg"), m.get("kz_oben"), m.get("stopp"), *(w_["wert"] for w_ in m.get("weitere") or []))
+    lv = [x for x in (m.get("einstieg"), m.get("kz_oben"), m.get("stopp"), (m.get("struktur") or {}).get("stopp"),
+                      *(w_["wert"] for w_ in m.get("weitere") or []))
           if x]
     lv_nah = [x for x in lv if l.min() * 0.92 <= x <= h.max() * 1.08]            # weiter als 8 %: nur als Hinweis am Rand
     pmax, pmin = max([h.max()] + lv_nah) * 1.01, min([l.min()] + lv_nah) * 0.99
@@ -752,7 +772,8 @@ def stunden(dh, m=None, hohl=False):
     if e and m.get("kz_oben") and pmin <= e <= pmax:
         A(f'<rect x="{LINKS}" y="{Y(min(m["kz_oben"], pmax)):.1f}" width="{breite:.1f}" '
           f'height="{Y(e) - Y(min(m["kz_oben"], pmax)):.1f}" fill="{KAUFZONE_FARBE}" fill-opacity="0.14"/>')
-    for wert_, farbe, name, strich in ((e, TEXT, "Pivot", "6 4"), (m.get("stopp"), ROT, "Stopp", ""),
+    for wert_, farbe, name, strich in ((e, TEXT, "Pivot", "6 4"), (m.get("stopp"), ROT, "Stopp 1,5 ATR", "7 4"),
+                                       ((m.get("struktur") or {}).get("stopp"), ROT, "Stopp Struktur", ""),
                                        *((w_["wert"], KAUFZONE_FARBE, w_["quelle"].split(":")[0].replace(
                                            "Ausbruch über die Oberkante", "Ausbruch"), "3 3")
                                          for w_ in m.get("weitere") or [])):

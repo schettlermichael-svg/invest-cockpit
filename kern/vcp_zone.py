@@ -433,18 +433,31 @@ def drittel(z, pivot):
             else "Cheat (oberes Drittel)")
 
 
-def einstiege(z, e):
+def rand(z, e):
+    """Der Auslöser des Ausbruchs (Entscheidung 6): das Hoch der Enge, wenn es höchstens RAND_PCT unter der Oberkante
+    liegt, sonst die Oberkante – dieselbe Regel wie ausbruch()."""
+    p = (e or {}).get("pivot")
+    return float(z["oben"] if drittel(z, p) else (p or z["oben"]))
+
+
+def einstiege(z, e, cheat=True):
     """Die Einstiege einer Base (Gefechtsordnung Schritt 2, Micky 14./15.11.2026): liegt das Hoch der letzten Enge mehr
     als RAND_PCT unter der Oberkante, gibt es zwei – früh beim Schluss über der Enge (Cheat) und am Ausbruch über die
-    Oberkante; sonst einen, den Pivot der Base. → [{art: "cheat"|"ausbruch", wort, wert, quelle}], aufsteigend."""
+    Oberkante; sonst einen am Rand (rand()). cheat=False (Flagge, keine Base): nur der eine am Rand. Struktur-Stopp je
+    Einstieg (Schritt 3): Tief der letzten Kontraktion. → [{art, wort, wert, quelle, struktur}], aufsteigend."""
     if not (z and z.get("zone")):
         return []
     p = (e or {}).get("pivot")
-    w = drittel(z, p)
+    w = drittel(z, p) if cheat else None
     if w:
-        return [{"art": "cheat", "wort": w, "wert": float(p), "quelle": f"{w}: Schluss über dem Hoch der letzten Enge"},
-                {"art": "ausbruch", "wort": "Ausbruch", "wert": float(z["oben"]), "quelle": "Ausbruch über die Oberkante"}]
-    return [{"art": "ausbruch", "wort": "Ausbruch", "wert": float(p or z["oben"]), "quelle": "Pivot der Base"}]
+        aus = [{"art": "cheat", "wort": w, "wert": float(p), "quelle": f"{w}: Schluss über dem Hoch der letzten Enge"},
+               {"art": "ausbruch", "wort": "Ausbruch", "wert": float(z["oben"]), "quelle": "Ausbruch über die Oberkante"}]
+    else:
+        aus = [{"art": "ausbruch", "wort": "Ausbruch", "wert": rand(z, e), "quelle": "Pivot der Base"}]
+    kontr = (e or {}).get("kontraktionen") or []
+    for x in aus:                                  # Struktur-Stopp (Schritt 3): unter dem Tief der letzten Kontraktion
+        x["struktur"] = min(float(kontr[-1]["tief"]), x["wert"]) if kontr else None
+    return aus
 
 
 def naechster(liste, kurs, kaufzone=None):
@@ -547,7 +560,7 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
             # RAND_PCT unter der Oberkante liegt, sonst an der Oberkante; ein Schluss über einem tieferen Hoch der Enge ist
             # der frühe Einstieg (Cheat, Drittel der Zone)
             w_enge = drittel(b, e.get("pivot"))
-            pivot = float(e["pivot"]) if (cheats and w_enge) else float(b["oben"] if w_enge else (e.get("pivot") or b["oben"]))
+            pivot = float(e["pivot"]) if (cheats and w_enge) else rand(b, e)
             if c[t] <= pivot:
                 continue
             jz = jetzt if jetzt is not None else zone(df)

@@ -111,7 +111,7 @@ def titelkarte(tk, df, erk):
                                f"Rauschen")
         return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df, erk)),
                      "Position und Risiko · nach dem Kauf")
-    plaene = depot.plaene(erk)
+    plaene = depot.plaene(erk, df)
     if not d.get("konto"):
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Rückenwind oben, „⚙ Konto und '
                      f'Risiko“) – dann steht hier die Stückzahl für das Setup.</div>', "Position und Risiko")
@@ -119,12 +119,17 @@ def titelkarte(tk, df, erk):
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Setup mit Einstieg und Stopp – keine Stückzahl. '
                      f'Risiko je Trade {zahl(depot.risiko_euro(d), 0)} €.</div>', "Position und Risiko")
     teile = []
-    for seite_, e, s, regel, quelle_, gilt_ in plaene:   # je Einstieg eine Stückzahl (Gefechtsordnung Schritt 2)
-        teil = _stueck(tk, d, df, w, seite_, e, s, regel)
+    for pl in plaene:                    # je Einstieg (Schritt 2) und je Stopp (Schritt 3: Struktur und 1,5 ATR) eine Stückzahl
         if len(plaene) > 1:
-            teil = (f'<div style="font-size:14px;font-weight:600;margin:10px 0 2px">{t(quelle_)}'
-                    + (" ← gilt jetzt" if gilt_ else "") + "</div>" + teil)
-        teile.append(teil)
+            teile.append(f'<div style="font-size:14px;font-weight:600;margin:10px 0 2px">{t(pl["quelle"])}'
+                         + (" ← gilt jetzt" if pl["gilt"] else "") + "</div>")
+        for st_ in pl["stopps"]:
+            teil = _stueck(tk, d, df, w, pl["seite"], pl["einstieg"], st_["stopp"], st_["regel"])
+            if st_.get("zu_weit"):
+                teil += ampelzeile(f'Stopp weiter als {st_["grenze"]} – die Meister nehmen den Trade so nicht', "rot",
+                                   "Der Stopp steht an der Struktur, wo der Weg widerlegt ist; liegt sie weiter weg als die "
+                                   "Grenze des Meisters, ist das Setup zu locker")
+            teile.append(f'<div style="font-size:13px;color:{TEXT_2};margin-top:6px">Stopp {t(st_["art"])}</div>' + teil)
     return karte("".join(teile), "Position und Risiko · Stückzahl für das Setup")
 
 

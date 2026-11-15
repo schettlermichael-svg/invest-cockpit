@@ -29,6 +29,7 @@ import tv_kennzahlen                                  # noqa: E402
 import lagekarte                                      # noqa: E402
 import marktklima                                     # noqa: E402
 import system_minervini                               # noqa: E402
+import vcp_zone  # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
 import gestaltung                                     # noqa: E402
@@ -491,11 +492,21 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     r_ = su.get("reihe")
     em = system_kullamaegi.short_von(k, r_) if r_ in system_kullamaegi.SHORTS else system_kullamaegi.short_von(k)
 
-    def st(e, short=False):
-        return f" · Stopp {zahl(e + ATR_STOPP * a if short else e - ATR_STOPP * a)} $ (1,5 ATR)" if a and e else ""
+    def st(e, short=False, reihe=None):
+        """Beide Stopps (Gefechtsordnung Schritt 3): Struktur des Setups und 1,5 ATR – du wählst je Trade."""
+        if not e:
+            return ""
+        aus = ""
+        x = depot_.struktur_stopp(dict(su, reihe=reihe or r_), m, k, zr, df, "short" if short else "long", e)
+        if x:
+            aus += (f" · Stopp Struktur {zahl(x['stopp'])} $ ({x['regel']}, {zahl(abs(x['stopp'] / e - 1) * 100, 1)} %"
+                    + (f" – weiter als {x['grenze']}, die Meister nehmen den Trade so nicht" if x["zu_weit"] else "") + ")")
+        if a:
+            aus += f" · Stopp 1,5 ATR {zahl(e + ATR_STOPP * a if short else e - ATR_STOPP * a)} $"
+        return aus
 
     def zone(e, short=False):
-        return (f" · Short-Zone bis {zahl(e * 0.95)} $" if short else f" · Kaufzone bis {zahl(e * 1.05)} $") if e else ""
+        return (f" · Short-Zone bis {zahl(e * (1 - vcp_zone.KAUFZONE / 100))} $" if short else f" · Kaufzone bis {zahl(e * (1 + vcp_zone.KAUFZONE / 100))} $") if e else ""
 
     zeilen = []
     seite, e, quelle = depot_.einstieg_setup(su, m, k, zr, kurs)
@@ -530,21 +541,23 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
     # übrige Setups, die der Titel zeigt („Auch“)
     if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
         zeilen.append((f"Auch · Short ({em['art']})", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
-                       + st(em["unten"], True)))
+                       + st(em["unten"], True, next((r_s for r_s in system_kullamaegi.SHORTS
+                                                     if system_kullamaegi.short_von(k, r_s) is em), None))))
     if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
         ein_ = m.get("einstiege") or []
         if len(ein_) > 1:                                # zwei Einstiege (Gefechtsordnung Schritt 2)
             zeilen.append(("Auch · Base-Ausbruch", " · ".join(
                 f"{x['quelle'].split(':')[0]} {zahl(x['wert'])} $" + (" (gilt jetzt)" if j == m.get("einstieg_nr") else "")
-                for j, x in enumerate(ein_)) + zone(m["pivot"]) + st(m["pivot"])))
+                for j, x in enumerate(ein_)) + zone(m["pivot"]) + st(m["pivot"], reihe="m_weitere")))
         else:
-            zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
+            zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"])
+                           + st(m["pivot"], reihe="m_weitere")))
     elif not m.get("pivot") and len(c) >= 260 and r_ not in ("m_spitze", "m_weitere"):
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
         tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
         marken_ = [(p_, x) for p_, x, f in ((max(g150, g200), "GD150/200", kurs < max(g150, g200)),
-                                            (1.30 * tief52, "+30 % über dem Tief", kurs < 1.30 * tief52),
-                                            (0.75 * hoch52, "−25 % unter dem Hoch", kurs < 0.75 * hoch52),
+                                            (system_minervini.UEBER_TIEF * tief52, "+30 % über dem Tief", kurs < system_minervini.UEBER_TIEF * tief52),
+                                            (system_minervini.UNTER_HOCH * hoch52, "−25 % unter dem Hoch", kurs < system_minervini.UNTER_HOCH * hoch52),
                                             (g50, "GD50", kurs < g50)) if f]
         if marken_:
             zeilen.append(("Auch · Base-Ausbruch", "Marken zur Trendvorlage: " + " · ".join(
@@ -554,11 +567,11 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
         if x_ and x_.get("ampel") != "rot" and x_.get("pivot") and r_ != schluessel:
             zeilen.append(("Auch · " + kartentisch.NAME[schluessel],
                            (f"Hoch des Sprungtags {zahl(x_['pivot'])} $" if art else f"Pivot der Konsolidierung "
-                            f"{zahl(x_['pivot'])} $") + st(x_["pivot"])))
+                            f"{zahl(x_['pivot'])} $") + st(x_["pivot"], reihe=schluessel)))
     if zr and zr.get("ampel") != "rot" and zr.get("avwap") and r_ != "zahlen":
         kurz_ = zr["seite"] == "short"
         zeilen.append((f"Auch · Zahlen-Reaktion ({zr['seite']})", f"AVWAP vom Zahlentag {zahl(zr['avwap'])} $"
-                       + st(zr["avwap"], kurz_)))
+                       + st(zr["avwap"], kurz_, "zahlen")))
     if not zeilen:
         return ""
     return ('<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;'
@@ -882,13 +895,15 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
     ab = (pd.Timestamp((zr or {})["tag"]) if r_ == "zahlen" and (zr or {}).get("tag") else
           ep.get("tag") if r_ == "k_ep" else (br or {}).get("erster_tag") or enge_ab)
     m = {"einstieg": float(e) if lang else None, "quelle": quelle, "atr": a,
-         "kz_oben": float(e) * 1.05 if lang else None,
+         "kz_oben": float(e) * (1 + vcp_zone.KAUFZONE / 100) if lang else None,
          "stopp": float(e) - ATR_STOPP * a if lang and a else None,
          "ab": ab,
          "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag"),
                       "rueck_tag": br.get("rueck_tag")}
          if br and r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else None,
          "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None,
+         # Struktur-Stopp (Schritt 3) neben 1,5 ATR: durchgezogen, 1,5 ATR gestrichelt
+         "struktur": depot.struktur_stopp(su, m_, k_, zr, df, "long", float(e)) if lang else None,
          # der zweite Einstieg (Gefechtsordnung Schritt 2): früh am Cheat bzw. am Ausbruch – der, der gerade nicht gilt
          "weitere": [{"wert": float(e_), "quelle": q_, "stopp": float(e_) - ATR_STOPP * a if a else None}
                      for s_, e_, q_, g_ in depot.einstiege(su, m_, k_, zr, float(df["Close"].iloc[-1])) if not g_]
@@ -905,6 +920,7 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
         em = system_kullamaegi.short_von(k_, r_) or {}
         m["short"] = {"tag": em.get("tag") if r_ != "zahlen" else pd.Timestamp(zr["tag"]), "einstieg": float(e),
                       "stopp": float(e) + ATR_STOPP * a, "volumen": em.get("volumen") if r_ != "zahlen" else None,
+                      "struktur": depot.struktur_stopp(su, m_, k_, zr, df, "short", float(e)),
                       "art": __import__("kartentisch").NAME.get(r_, "Short").split(" (")[0]}
     return m
 

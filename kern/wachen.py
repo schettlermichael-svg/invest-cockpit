@@ -53,12 +53,12 @@ def _abgelegte_marken(tk):
     mk, erk = ch.get("marken") or {}, ch.get("erk") or {}
     sh = mk.get("short") or {}
     if sh.get("einstieg"):
-        seite, e, s = "short", sh["einstieg"], sh.get("stopp")
+        seite, e, s, sx = "short", sh["einstieg"], sh.get("stopp"), (sh.get("struktur") or {}).get("stopp")
     elif mk.get("einstieg"):
-        seite, e, s = "long", mk["einstieg"], mk.get("stopp")
+        seite, e, s, sx = "long", mk["einstieg"], mk.get("stopp"), (mk.get("struktur") or {}).get("stopp")
     else:
-        seite, e, s = None, None, None
-    return {"reihe": (erk.get("setup_info") or {}).get("reihe"), "seite": seite, "einstieg": e, "stopp": s}
+        seite, e, s, sx = None, None, None, None
+    return {"reihe": (erk.get("setup_info") or {}).get("reihe"), "seite": seite, "einstieg": e, "stopp": s, "struktur": sx}
 
 
 def gleichlauf(tisch, akten):
@@ -85,11 +85,12 @@ def gleichlauf(tisch, akten):
                 aus.append(("rot", f"{tk}: Chart zeichnet {mk['seite']}, das Setup ist {seite}"))
             if mk["einstieg"] and _pct(mk["einstieg"], e_tisch) > TOL_EINSTIEG:
                 aus.append(("rot", f"{tk}: Einstieg im Chart {mk['einstieg']:.2f} $, im Kartentisch {e_tisch:.2f} $"))
-            if mk["einstieg"] and mk["stopp"]:
-                falsch = mk["stopp"] >= mk["einstieg"] if mk["seite"] == "long" else mk["stopp"] <= mk["einstieg"]
-                if falsch:
-                    aus.append(("rot", f"{tk}: Stopp {mk['stopp']:.2f} $ auf der falschen Seite des Einstiegs "
-                                       f"{mk['einstieg']:.2f} $ ({mk['seite']})"))
+            for art_, s_ in (("1,5 ATR", mk["stopp"]), ("Struktur", mk.get("struktur"))):   # beide Stopps (Schritt 3)
+                if mk["einstieg"] and s_:
+                    falsch = s_ >= mk["einstieg"] if mk["seite"] == "long" else s_ <= mk["einstieg"]
+                    if falsch:
+                        aus.append(("rot", f"{tk}: Stopp {art_} {s_:.2f} $ auf der falschen Seite des Einstiegs "
+                                           f"{mk['einstieg']:.2f} $ ({mk['seite']})"))
     return aus
 
 

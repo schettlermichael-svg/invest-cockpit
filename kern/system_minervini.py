@@ -130,16 +130,14 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"
     # Einstiege (Gefechtsordnung Schritt 2): in einer Base früh am Cheat und am Ausbruch über die Oberkante; Flagge einer
-    if not reif:
-        einst = []
-    elif art == "Base":
-        einst = vcp_zone.einstiege(z, e)
-    else:
-        einst = [{"art": "ausbruch", "wort": "Ausbruch", "wert": float(e.get("pivot") or z["oben"]), "quelle": "Pivot der Base"}]
+    einst = vcp_zone.einstiege(z, e, cheat=art == "Base") if reif else []
     kontr = e.get("kontraktionen") or []
-    for x in einst:                                # Minervini: unter dem Tief der letzten Kontraktion, höchstens 8 %
-        w_ = x["wert"]
-        x["stopp"] = max(min(float(kontr[-1]["tief"]), w_) if kontr else w_ * (1 - MAX_STOPP), w_ * (1 - MAX_STOPP))
+    for x in einst:                                # Minervini: unter dem Tief der letzten Kontraktion (Schritt 3, Micky
+        w_ = x["wert"]                             # 15.11.2026: an der Struktur, weiter als 8 % = Ampel rot, nicht gekappt)
+        if x.get("struktur") is None:
+            x["struktur"] = min(float(kontr[-1]["tief"]), w_) if kontr else None
+        x["stopp"] = x["struktur"] if x["struktur"] is not None else w_ * (1 - MAX_STOPP)
+        x["zu_weit"] = x["stopp"] < w_ * (1 - MAX_STOPP)
     i_ = vcp_zone.naechster(einst, c[-1])
     pivot = einst[i_]["wert"] if einst else None
     stopp, lage = None, ""
