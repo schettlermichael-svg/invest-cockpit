@@ -1103,3 +1103,20 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Historie 16.757 → 14.939, davon 2.865 Cheats. LUV: 21.10.–26.11.25 und 22.09.–27.10.26 Cheat, 10.03./17.04.26 eine Zone.
 - **Noch nicht inventarisiert**: Zahlen direkt im Code (386 in den Rechenmodulen, ohne 0/1/2/3/4/5/10/20/50/100) –
   die zweite Stufe.
+
+## Generalinventur Stufe 2 abgeschlossen (15.11.2026)
+
+- **Jede feste Zahl in einer Regel-Funktion hat einen Namen.** 386 Zahlen ohne Namen in 312 Funktionen → 0. Frei bleiben nur
+  Rechenzahlen (0, 1, 2, −1, 100), Mindestlängen der Daten, Rundung/Format, die GD-Längen in `rolling(50)`, Phasen 1–4 als
+  Kennzahl und kurze Textausschnitte. 26 Vergleiche mit 1 oder 2 waren echte Regeln (2 Kontraktionen, 2R, 1 bzw. 2 × ATR,
+  ±2 Punkte RS-Linie …) und haben ebenfalls Namen.
+- **Geteilte Maße an einer Stelle:** `kern/masse.py` (Woche, Monat, Jahr = 252 Tage, Quartale, GD50/150/200, ATR 14,
+  Volumen-Schnitt 50, Phase 3/4, Datumslänge …). Die IBD-Gewichte des RS-Rangs stehen nur in `rs_rang`. Vorher standen
+  24 Namen doppelt; die Erkennung rechnete das Jahr mit 250 statt 252 Tagen.
+- **Erkennung entschlackt:** die alte eigene Base mit zweiter Trendvorlage, Muster und Kaufsetup hatte 0 Nutzer und ist
+  entfernt (alter Stand in `_to_delete/uebergabe_2026-11-12/erkennung_alt_2026-11-15.py`). Klimax-Verdacht und
+  Datenampel gelten jetzt für jeden Titel (gemessen an 468 Titeln: 3 Warnungen neu sichtbar, Seite und Wertzone gleich).
+- **Wachposten:** die Inventur liest jede Regel-Funktion und meldet rot jede neue Zahl ohne Namen (Datenquellen
+  massive, quellen, daten, marktdaten, tpo_daten ausgenommen). Die Regelkarte zeigt die Zahl in ihrer Inventur-Zeile.
+- **Beweis:** Syntaxbaum bis auf Namen gleich in 28 von 28 umbenannten Modulen; Gleichlauf an 468 Titeln: Material des
+  Chart-Prüfers und Setup Zeichen für Zeichen gleich.

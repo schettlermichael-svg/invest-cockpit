@@ -148,7 +148,9 @@ PLAN = [
      "standen fälschlich offen (alte Stempel) und sind jetzt behoben; jede Auswertung zeigt den Stand neben dem Vorschlag"),
     (2, "Wachposten prüft die Mängelliste: Stand, Commit und Messung, behoben muss im nächsten Lauf sinken", "Checkliste",
      "behoben", "5a61824: auf dem Server sofort 2 Einträge „behoben ohne Messung“ gefunden und nachgetragen"),
-    (3, "Zweite Stufe der Inventur: die 386 Zahlen ohne Namen bekommen Namen und kommen auf die Karte", "Inventur", "offen", ""),
+    (3, "Zweite Stufe der Inventur: die 386 Zahlen ohne Namen bekommen Namen und kommen auf die Karte", "Inventur", "behoben",
+     "1a0379d und 847ce4d: 0 Zahlen ohne Namen in 312 Regel-Funktionen (vorher 386), 480 feste Regeln, 460 auf der Karte, 20 Technik, "
+     "0 doppelt; der Wachposten meldet jede neue Zahl ohne Namen"),
     (4, "Schritt 2: zwei Einstiege – Cheat (früh am Rand) und Ausbruch", "Gefechtsordnung", "offen", ""),
     (5, "Schritt 3: Struktur-Stopp neben 1,5 ATR (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles Setup: "
         "Tagestief, höchstens eine Tagesspanne)", "Gefechtsordnung", "offen", ""),
