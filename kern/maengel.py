@@ -151,7 +151,9 @@ PLAN = [
     (3, "Zweite Stufe der Inventur: die 386 Zahlen ohne Namen bekommen Namen und kommen auf die Karte", "Inventur", "behoben",
      "1a0379d und 847ce4d: 0 Zahlen ohne Namen in 312 Regel-Funktionen (vorher 386), 480 feste Regeln, 460 auf der Karte, 20 Technik, "
      "0 doppelt; der Wachposten meldet jede neue Zahl ohne Namen"),
-    (4, "Schritt 2: zwei Einstiege – Cheat (früh am Rand) und Ausbruch", "Gefechtsordnung", "offen", ""),
+    (4, "Schritt 2: zwei Einstiege – Cheat (früh am Rand) und Ausbruch", "Gefechtsordnung", "behoben",
+     "96f5ace: Base long mit zwei Einstiegen in Plan, Chart, Stückzahl, Kartentisch und Prüfern; 112 von 262 Zonen mit Pivot "
+     "haben einen Cheat; 68 von 468 Ausbrüchen waren Cheats und zählen nicht mehr als Ausbruch. Der Short-Spiegel steht in Plan 21"),
     (5, "Schritt 3: Struktur-Stopp neben 1,5 ATR (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles Setup: "
         "Tagestief, höchstens eine Tagesspanne)", "Gefechtsordnung", "offen", ""),
     (6, "Schritt 4: Spring und Upthrust als eigene Setups (long und short)", "Gefechtsordnung", "offen", ""),
@@ -172,6 +174,10 @@ PLAN = [
     (18, "Gegenseite und Abstände: anderer Rand, Abstand zu Mauer und Stütze (Lauf 3/4)", "Befunde", "offen", ""),
     (19, "Prüfer irrt: Ersatzregeln der App im Material erklären (Lauf 3)", "Prüfer", "offen", ""),
     (20, "Auslegung für Micky: AVWAP Tief der Bewegung und Ereignis-Anker „zu alt“ (Lauf 4)", "Entscheidung", "offen", ""),
+    (21, "Schritt 2 gespiegelt für Shorts (Micky 15.11.: ja): früh unter dem Tief einer Enge, Bruch an der Unterkante. Die "
+         "App kennt Shorts heute erst nach dem Bruch (Bärenflagge, Bruch der Spanne) – sie braucht dafür die Zone von der "
+         "Short-Seite vor dem Bruch; gebaut mit Schritt 4 (Spring/Upthrust braucht dieselben beiden Ränder)",
+     "Gefechtsordnung", "offen", ""),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“

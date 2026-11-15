@@ -1120,3 +1120,21 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   massive, quellen, daten, marktdaten, tpo_daten ausgenommen). Die Regelkarte zeigt die Zahl in ihrer Inventur-Zeile.
 - **Beweis:** Syntaxbaum bis auf Namen gleich in 28 von 28 umbenannten Modulen; Gleichlauf an 468 Titeln: Material des
   Chart-Prüfers und Setup Zeichen für Zeichen gleich.
+
+## Gefechtsordnung Schritt 2: zwei Einstiege (15.11.2026)
+
+- **Eine Cheat-Regel** (`vcp_zone.drittel`): liegt das Hoch der letzten Enge mehr als 3 % unter der Oberkante der Base,
+  ist ein Schluss darüber der frühe Einstieg – Low Cheat, Cheat (mittleres oder oberes Drittel). Der Ausbruch ist dann
+  der Schluss über der Oberkante. Liegt das Hoch der Enge bis 3 % unter der Oberkante, gibt es einen Einstieg, den Pivot
+  am Rand. Dieselbe Regel gilt in Enge, Cheat, Ausbruch, Historie, Chart, Plan und Prüfern.
+- **Welcher gilt:** der unterste Einstieg, über den der Kurs noch nicht hinaus ist (nicht ausgelöst oder in seiner
+  Kaufzone bis 5 %); darüber der Ausbruch. Der Kartentisch misst den Abstand zu diesem.
+- **Plan und Chart:** beide Einstiege mit Kaufzone und Stopp (1,5 ATR bis Schritt 3), der geltende mit „← gilt jetzt“;
+  der zweite als gestrichelte Linie im Tages- und Stundenchart. Stückzahl je Einstieg.
+- **Laufender Börsentag:** der Plan zeigt aus den 30-Minuten-Kerzen, seit wann der Kurs über dem Auslöser steht und ob
+  er hält – vorläufig, es zählt der Schluss.
+- **Geltung:** Base long (Base-Ausbruch und VCP). Flagge und schnelle Setups behalten einen Einstieg. Der Spiegel für
+  Shorts kommt mit Schritt 4 (Plan 21): die App kennt Shorts heute erst nach dem Bruch.
+- **Gemessen an 468 Titeln:** 112 von 262 Zonen mit Pivot haben einen Cheat (68 mittleres Drittel, 25 oberes, 19 Low
+  Cheat). 68 Ausbrüche waren Schlüsse über einem Cheat und zählen nicht mehr als Ausbruch, 14 haben einen anderen Tag
+  oder Pivot. Einstieg bei 14 Titeln anders, Setup-Reihe bei 7.
