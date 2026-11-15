@@ -169,7 +169,11 @@ def material(tk, df):
     if m:
         z.append(f"Lehrer Minervini · Base-Ausbruch: Ampel {m.get('ampel')}; {_regeln(m.get('regeln'))}"
                  + (f"; Pivot {_z(m['pivot'])} $" if m.get("pivot") else "")
-                 + (f", Stopp {_z(m['stopp'])} $ (unter dem Tief der letzten Kontraktion)" if m.get("stopp") else ""))
+                 + (f", Stopp {_z(m['stopp'])} $ (unter dem Tief der letzten Kontraktion)" if m.get("stopp") else "")
+                 + ("; zwei Einstiege: " + ", ".join(f"{x['quelle']} {_z(x['wert'])} $ (Stopp {_z(x['stopp'])} $)"
+                                                    + (" – gilt jetzt" if j == m.get("einstieg_nr") else "")
+                                                    for j, x in enumerate(m["einstiege"]))
+                    if len(m.get("einstiege") or []) > 1 else ""))
     b = k.get("breakout") or {}
     if b:
         z.append(f"Lehrer Kullamägi · Momentum-Ausbruch: Ampel {b.get('ampel')}; {_regeln(b.get('regeln'))}"

@@ -456,6 +456,26 @@ def fehlt(m, k):
     return aus
 
 
+def _heute_ueber(df, ausloeser, short=False):
+    """Zeichen am laufenden Börsentag (Gefechtsordnung Schritt 2, „Ausbruchstag, Stundenchart“): seit wann der Kurs
+    heute über (short: unter) dem Auslöser steht, aus den 30-Minuten-Kerzen – vorläufig, es zählt der Schluss."""
+    if not (ausloeser and df is not None and df.attrs.get("laufend")):
+        return ""
+    tk = df.attrs.get("ticker")
+    roh = erkennung._ROH.get(tk) if tk else None
+    if roh is None or not len(roh):
+        return ""
+    heute = roh[roh.index.normalize() == df.index[-1]]
+    treffer = heute[heute["Low"] < ausloeser] if short else heute[heute["High"] > ausloeser]
+    if not len(treffer):
+        return ""
+    wo = "unter" if short else "über"
+    jetzt = float(df["Close"].iloc[-1])
+    haelt = jetzt < ausloeser if short else jetzt > ausloeser
+    return (f" · heute ab {treffer.index[0]:%H:%M} Uhr New York {wo} dem Auslöser, "
+            + ("hält" if haelt else "wieder zurück") + " (vorläufig, es zählt der Schluss)")
+
+
 def planzeile(m, k, df, marken=None, zr=None, su=None):
     """Plan in Zeilen unter dem Chart: zuerst DAS Setup des Titels – Einstieg aus depot.einstieg_setup, dieselbe Linie
     wie Chart, Kartentisch und Auswahl (Prüf-Agent 12.11.2026: vorher nahm die erste Zeile bei Sprung + Momentum-Ausbruch
@@ -498,13 +518,27 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
         name = kartentisch.NAME.get(r_, r_).replace(" ★", "")
         if r_ == "zahlen":
             name += f" ({seite})"
-        zeilen.append((name, f"Einstieg {zahl(e)} $ ({quelle})" + zone(e, kurz_) + st(e, kurz_) + regel))
+        alle_ = depot_.einstiege(su, m, k, zr, kurs)
+        if len(alle_) > 1:                               # zwei Einstiege (Gefechtsordnung Schritt 2): früh und am Ausbruch
+            for j, (s_, e_, q_, gilt) in enumerate(alle_):
+                zeilen.append((f"{name} · {'früh' if j == 0 else 'Ausbruch'}" + (" ← gilt jetzt" if gilt else ""),
+                               f"Einstieg {zahl(e_)} $ ({q_})" + zone(e_) + st(e_) + _heute_ueber(df, e_)
+                               + (regel if j == len(alle_) - 1 else "")))
+        else:
+            zeilen.append((name, f"Einstieg {zahl(e)} $ ({quelle})" + zone(e, kurz_) + st(e, kurz_)
+                           + _heute_ueber(df, e, kurz_) + regel))
     # übrige Setups, die der Titel zeigt („Auch“)
     if em and em.get("ampel") in ("grün", "gelb") and r_ not in ("k_ermuedung", "k_baerenflagge", "k_bruch"):
         zeilen.append((f"Auch · Short ({em['art']})", f"Einstieg unter der Unterkante {zahl(em['unten'])} $"
                        + st(em["unten"], True)))
     if m.get("pivot") and r_ not in ("m_spitze", "m_weitere"):
-        zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
+        ein_ = m.get("einstiege") or []
+        if len(ein_) > 1:                                # zwei Einstiege (Gefechtsordnung Schritt 2)
+            zeilen.append(("Auch · Base-Ausbruch", " · ".join(
+                f"{x['quelle'].split(':')[0]} {zahl(x['wert'])} $" + (" (gilt jetzt)" if j == m.get("einstieg_nr") else "")
+                for j, x in enumerate(ein_)) + zone(m["pivot"]) + st(m["pivot"])))
+        else:
+            zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"]) + st(m["pivot"])))
     elif not m.get("pivot") and len(c) >= 260 and r_ not in ("m_spitze", "m_weitere"):
         g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
         tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
@@ -854,7 +888,11 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
          "ausbruch": {"tag": br["tag"], "volumen": br.get("volumen"), "fehl_tag": br.get("fehl_tag"),
                       "rueck_tag": br.get("rueck_tag")}
          if br and r_ in ("m_spitze", "m_weitere", "vcp", "flagge") else None,
-         "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None}
+         "earnings": reaktionen(df, gewinne) if gewinne is not None else [], "termin": None, "rs": None, "short": None,
+         # der zweite Einstieg (Gefechtsordnung Schritt 2): früh am Cheat bzw. am Ausbruch – der, der gerade nicht gilt
+         "weitere": [{"wert": float(e_), "quelle": q_, "stopp": float(e_) - ATR_STOPP * a if a else None}
+                     for s_, e_, q_, g_ in depot.einstiege(su, m_, k_, zr, float(df["Close"].iloc[-1])) if not g_]
+         if lang else []}
     try:
         termin = (fd or {}).get("termin")
         if termin is not None and len(termin) and termin["datum"].iloc[0]:

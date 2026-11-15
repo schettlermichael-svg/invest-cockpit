@@ -309,11 +309,17 @@ def _scannerfeld(info, scan, br=None, df=None):
     z, e = scan
     if not z.get("zone"):
         return
-    if e.get("ampel") == "grün" and -PIVOT_NAH <= e["abstand"] <= PIVOT_NAH:
-        info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(e["abstand"]), abstand_vz=e["abstand"],
-                    pivot_scanner=float(e["pivot"]),
-                    scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · Pivot {zahl(e["pivot"])} $ '
-                            f'({"+" if e["abstand"] >= 0 else "−"}{zahl(abs(e["abstand"]), 1)} %)')
+    import vcp_zone
+    einst = vcp_zone.einstiege(z, e) if z.get("name") == "Base" and e.get("pivot") else []
+    i_ = vcp_zone.naechster(einst, float(df["Close"].iloc[-1])) if einst and df is not None else None
+    piv = einst[i_]["wert"] if i_ is not None else e.get("pivot")
+    ab_ = (float(df["Close"].iloc[-1]) / piv - 1) * 100 if i_ is not None else e.get("abstand")
+    if e.get("ampel") == "grün" and ab_ is not None and -PIVOT_NAH <= ab_ <= PIVOT_NAH:
+        wort = f'{einst[i_]["wort"]} ' if len(einst) > 1 else ""
+        info.update(reihe="vcp", gruen=True, stern=False, abstand=abs(ab_), abstand_vz=ab_,
+                    pivot_scanner=float(piv), **({"einstiege": einst} if len(einst) > 1 else {}),
+                    scanner=f'{z["name"]} {zahl(z["wochen"], 1)} Wochen · Enge {e["folge"]} % · {wort or "Pivot "}{zahl(piv)} $ '
+                            f'({"+" if ab_ >= 0 else "−"}{zahl(abs(ab_), 1)} %)')
         return
     f = z if z["name"] == "Flagge" else z.get("innen")
     if f and f["laenge"] == "ok":

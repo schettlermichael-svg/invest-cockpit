@@ -392,7 +392,7 @@ def enge(df, z):
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
     hoehe_z = z["oben"] - z["unten"]
     anteil = (pivot - z["unten"]) / hoehe_z if hoehe_z > 0 else 1.0
-    lage = ("Low Cheat" if anteil < 1 / 3 else "Cheat" if anteil < 2 / 3 else "Pivot")   # Minervini: Drittel der Base
+    lage = drittel(z, pivot) or "Pivot am Rand"   # eine Cheat-Regel (Drittel der Base, mehr als RAND_PCT unter der Oberkante)
     return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
             "lage": lage, "lage_anteil": anteil,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
@@ -415,13 +415,48 @@ def cheat(gross, b, pivot):
     ihn nicht), auktion (innere Rotation)."""
     if not (gross and gross.get("zone") and b and gross.get("oben") and gross.get("unten") is not None):
         return None
-    if b.get("start_i", -1) <= gross.get("start_i", -1) or pivot >= gross["oben"] * (1 - RAND_PCT / 100):
+    if b.get("start_i", -1) <= gross.get("start_i", -1):
         return None
-    if pivot <= gross["unten"]:
+    return drittel(gross, pivot)
+
+
+def drittel(z, pivot):
+    """Lage eines Pivots in der Zone z: mehr als RAND_PCT unter der Oberkante und über der Unterkante ist es ein Cheat
+    (Minervini: Drittel der Base) → „Low Cheat (unteres Drittel)“ / „Cheat (mittleres Drittel)“ / „Cheat (oberes
+    Drittel)“; am Rand (bis RAND_PCT unter der Oberkante) oder außerhalb None."""
+    if not (z and z.get("oben") and z.get("unten") is not None and pivot):
         return None
-    anteil = (pivot - gross["unten"]) / (gross["oben"] - gross["unten"])
+    if pivot >= z["oben"] * (1 - RAND_PCT / 100) or pivot <= z["unten"]:
+        return None
+    anteil = (pivot - z["unten"]) / (z["oben"] - z["unten"])
     return ("Low Cheat (unteres Drittel)" if anteil < 1 / 3 else "Cheat (mittleres Drittel)" if anteil < 2 / 3
             else "Cheat (oberes Drittel)")
+
+
+def einstiege(z, e):
+    """Die Einstiege einer Base (Gefechtsordnung Schritt 2, Micky 14./15.11.2026): liegt das Hoch der letzten Enge mehr
+    als RAND_PCT unter der Oberkante, gibt es zwei – früh beim Schluss über der Enge (Cheat) und am Ausbruch über die
+    Oberkante; sonst einen, den Pivot der Base. → [{art: "cheat"|"ausbruch", wort, wert, quelle}], aufsteigend."""
+    if not (z and z.get("zone")):
+        return []
+    p = (e or {}).get("pivot")
+    w = drittel(z, p)
+    if w:
+        return [{"art": "cheat", "wort": w, "wert": float(p), "quelle": f"{w}: Schluss über dem Hoch der letzten Enge"},
+                {"art": "ausbruch", "wort": "Ausbruch", "wert": float(z["oben"]), "quelle": "Ausbruch über die Oberkante"}]
+    return [{"art": "ausbruch", "wort": "Ausbruch", "wert": float(p or z["oben"]), "quelle": "Pivot der Base"}]
+
+
+def naechster(liste, kurs, kaufzone=None):
+    """Der Einstieg, der jetzt gilt: der unterste, über dem der Kurs noch nicht hinaus ist – noch nicht ausgelöst oder
+    in seiner Kaufzone (bis kaufzone % darüber); über allen der oberste (ausgedehnt). → Stelle in liste oder None."""
+    if not liste:
+        return None
+    kaufzone = KAUFZONE if kaufzone is None else kaufzone
+    for i, x in enumerate(liste):
+        if kurs <= x["wert"] * (1 + kaufzone / 100):
+            return i
+    return len(liste) - 1
 
 
 def _einordnen(fertig, jetzt):
@@ -486,8 +521,10 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
     (jetzt = zone(df), sonst gerechnet), übernimmt sie: None. passt(zone) → bool: nur Zonen, die das System als Base
     gelten lässt (Minervini, 12.11.2026: NIQ brach über eine 61 % tiefe Base aus, gerechnet wurde mit der Flagge darin –
     Text +9,0 %, Abstand +2,9 % zu zwei verschiedenen Pivots).
-    Ein Ausbruch aus einer Pause innerhalb der noch laufenden größeren Zone ist ein Cheat (cheat()) und zählt nicht;
-    mit cheats=True liefert die Funktion genau diesen Cheat (mit „cheat“: Drittel) – für Zustand und frühen Einstieg."""
+    Ein Ausbruch aus einer Pause innerhalb der noch laufenden größeren Zone ist ein Cheat (cheat()) und zählt nicht,
+    ebenso ein Schluss über einem Hoch der Enge, das mehr als RAND_PCT unter der Oberkante liegt (drittel()) – der
+    Ausbruch ist dann der Schluss über der Oberkante; mit cheats=True liefert die Funktion genau diesen Cheat (mit
+    „cheat“: Drittel) – für Zustand und frühen Einstieg."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
     if n < MIN_DATEN:
@@ -506,13 +543,19 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
             if b.get("laenge") != "ok" or (passt and not passt(b)):
                 continue
             e = enge(vor, b)
-            pivot = float(e.get("pivot") or b["oben"])
+            # Gefechtsordnung Schritt 2 / Entscheidung 6: der Ausbruch geschieht am Rand – am Hoch der Enge, wenn es höchstens
+            # RAND_PCT unter der Oberkante liegt, sonst an der Oberkante; ein Schluss über einem tieferen Hoch der Enge ist
+            # der frühe Einstieg (Cheat, Drittel der Zone)
+            w_enge = drittel(b, e.get("pivot"))
+            pivot = float(e["pivot"]) if (cheats and w_enge) else float(b["oben"] if w_enge else (e.get("pivot") or b["oben"]))
             if c[t] <= pivot:
                 continue
             jz = jetzt if jetzt is not None else zone(df)
             if jz.get("zone") and jz.get("laenge") == "ok" and jz["start_i"] > t:
                 return None                                # neue fertige Zone über dem Ausbruch
             ch = cheat(jz, b, pivot) if jz.get("start_i", n) < t else None
+            if cheats and not ch and w_enge:
+                ch = w_enge                                # Schluss über einem Hoch der Enge unter dem Rand
             if bool(ch) != cheats:
                 continue                                   # Cheat in der laufenden Zone: kein Ausbruch (bzw. umgekehrt)
             # Verlauf seit dem Ausbruch (Micky 13.11.2026): Fehlausbruch erst bei Schluss unter dem Tief des

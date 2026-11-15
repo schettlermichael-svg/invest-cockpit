@@ -221,16 +221,21 @@ WERKZEUGE = {
         dict(name="Enge und Pivot", regel="Kontraktionen: die linke Seite bis zum Tief der Base, dann jede Welle der "
                                           "rechten Seite (jede mindestens 3 Handelstage, höchstens 6 Wellen); Pivot = Hoch "
                                           "der letzten Kontraktion; grün nur mit ausgetrocknetem Volumen und nicht in "
-                                          "Phase 4. Drittel der Base: Low Cheat unten, Cheat Mitte, Pivot oben.",
-             messung=["vcp_zone.enge"], stand="gemessen",
+                                          "Phase 4. Liegt der Pivot mehr als 3 % unter der Oberkante, ist er ein Cheat (Drittel der "
+                                          "Base: Low Cheat unten, Cheat Mitte, Cheat oben); bis 3 % unter der Oberkante ist er "
+                                          "der Pivot am Rand.",
+             messung=["vcp_zone.enge", "vcp_zone.drittel"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
                                                "Zone, mit Pivot mehr als 3 % unter deren Oberkante, ist ein früher "
-                                               "Einstieg (Low Cheat, Cheat) und kein Ausbruch: er zählt nicht als "
+                                               "Einstieg (Low Cheat, Cheat) und kein Ausbruch – ebenso ein Schluss über dem "
+                                               "Hoch der letzten Enge, das mehr als 3 % unter der Oberkante liegt; der Ausbruch "
+                                               "ist dann der Schluss über der Oberkante. Ein Cheat zählt nicht als "
                                                "Ausbruch, nicht als eigene Base und steht im Zustand als innere Rotation. "
                                                "In der Historie zeigt die App dieselbe Schlacht nur einmal (überlappende "
                                                "Zonen, die innerhalb von 5 Tagen ausbrechen: die größere).",
-             messung=["vcp_zone.cheat", "vcp_zone.ausbruch", "vcp_zone.verlauf", "basen.zaehlen", "auktion.titel"],
+             messung=["vcp_zone.cheat", "vcp_zone.drittel", "vcp_zone.ausbruch", "vcp_zone.verlauf", "basen.zaehlen",
+                      "auktion.titel"],
              stand="gemessen", pruefer=["Zone: Name", "abgelehnt/angenommen", "Neue Balance/Basenzählung"]),
         dict(name="ATR (eine Rechnung)", regel="Die ATR ist das Mittel der True Range der letzten 14 Tage (Lücken zum Vortag "
                                                 "eingeschlossen) – eine Rechnung für Stopp, Zonen, Anker, Zeichen und Zustand.",
@@ -381,12 +386,16 @@ SETUPS = [
                "höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser). ★ = grün und Kurs bis 5 % unter bzw. "
                "über dem Pivot. Pivot = Hoch der letzten Kontraktion. Nach einem Ausbruch gilt das Setup 4 Wochen weiter. "
                "Nur Muster: die Zone hat eine grüne Enge, aber die Systemregeln (Trendvorlage, Zahlen) fehlen.",
-         einstieg="Zwei Einstiege: früh am Rand (Low Cheat, Cheat – der Pivot liegt unter der Oberkante der Zone) und am "
-                  "Ausbruch über den Pivot.",
+         einstieg="Zwei Einstiege, wenn das Hoch der letzten Enge mehr als 3 % unter der Oberkante liegt: früh beim Schluss "
+                  "über dem Hoch der Enge (Low Cheat, Cheat – Drittel der Base) und am Ausbruch über die Oberkante; sonst "
+                  "einer, der Pivot. Es gilt der unterste, über den der Kurs noch nicht hinaus ist (noch nicht ausgelöst "
+                  "oder in seiner Kaufzone bis 5 %). Am laufenden Tag zeigt der Plan aus den 30-Minuten-Kerzen, seit wann "
+                  "der Kurs über dem Auslöser steht – vorläufig, es zählt der Schluss. Flagge und schnelle Setups: ein Einstieg.",
          stopp="unter der letzten Kontraktion, höchstens 8 %", widerlegt="„abgelehnt“ (Schluss zurück in der Zone)",
          abweichung="Base bis 50 % tief zählt als reif, grün nur bis 33 % (Micky: tiefe Korrekturen sind Konsolidierung)",
-         messung=["system_minervini.pruefen", "vcp_zone.enge"], stand="teilweise",
-         luecke="früher Einstieg am Rand (Schritt 2) und Struktur-Stopp (Schritt 3) fehlen im Plan"),
+         messung=["system_minervini.pruefen", "vcp_zone.enge", "vcp_zone.einstiege", "vcp_zone.naechster", "depot.einstiege",
+                  "depot.plaene", "titel._heute_ueber"], stand="teilweise",
+         luecke="Struktur-Stopp (Schritt 3) fehlt im Plan; früher Short gespiegelt kommt mit Schritt 4"),
     dict(name="Flagge", reihen=["flagge"], lehrer="Kullamägi", weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
          regel="Fahnenstange ab 30 % in höchstens 13 Wochen direkt davor (nach einem Rücksetzer über 25 % beginnt sie erst an "
                "dessen Tief), Flagge 1–8 Wochen, höchstens 25 % tief, im Aufwärtstrend "

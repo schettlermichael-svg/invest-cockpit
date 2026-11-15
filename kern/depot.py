@@ -236,14 +236,44 @@ def einstieg_setup(su, m, k, zr=None, kurs=None):
             return "short", float(em["unten"]), "Unterkante"
     if r in ("m_spitze", "m_weitere"):
         e = m.get("pivot") or (m.get("ausbruch") or {}).get("pivot")
-        return ("long", float(e), "Pivot der Base") if e else (None, None, "")
+        ein_ = m.get("einstiege") or []
+        q_ = ein_[m["einstieg_nr"]]["quelle"] if len(ein_) > 1 and m.get("einstieg_nr") is not None else "Pivot der Base"
+        return ("long", float(e), q_) if e else (None, None, "")
     if r == "k_breakout" and (k.get("breakout") or {}).get("pivot"):
         return "long", float(k["breakout"]["pivot"]), "Pivot der Konsolidierung"
     if r in ("flagge", "vcp") and su.get("pivot_scanner"):
-        return "long", float(su["pivot_scanner"]), "Pivot des Scanners"
+        q_ = next((x["quelle"] for x in su.get("einstiege") or [] if x["wert"] == su["pivot_scanner"]),
+                  "Pivot des Scanners")
+        return "long", float(su["pivot_scanner"]), q_
     if r in ("flagge", "vcp") and su.get("abstand_vz") is not None and kurs:   # Tische vor dem 13.11.2026
         return "long", float(kurs) / (1 + float(su["abstand_vz"]) / 100), "Pivot des Scanners"
     return None, None, ""
+
+
+def einstiege(su, m, k, zr=None, kurs=None):
+    """Alle Einstiege DES Setups (Gefechtsordnung Schritt 2): Base-Ausbruch und VCP mit Cheat früh am Cheat und am
+    Ausbruch über die Oberkante, sonst der eine aus einstieg_setup. → [(Seite, Einstieg, Quelle, gilt)] aufsteigend;
+    gilt = der Einstieg, der jetzt gilt (vcp_zone.naechster: noch nicht ausgelöst oder in seiner Kaufzone)."""
+    su, m = su or {}, m or {}
+    r = su.get("reihe")
+    liste = (m.get("einstiege") if r in ("m_spitze", "m_weitere") else su.get("einstiege") if r == "vcp" else None) or []
+    if len(liste) > 1 and kurs:
+        import vcp_zone
+        i_ = vcp_zone.naechster(liste, float(kurs))
+        return [("long", x["wert"], x["quelle"], j == i_) for j, x in enumerate(liste)]
+    seite, e, quelle = einstieg_setup(su, m, k, zr, kurs)
+    return [(seite, e, quelle, True)] if e else []
+
+
+def plaene(erk):
+    """Plan je Einstieg: [(Seite, Einstieg, Stopp, Stopp-Regel, Quelle, gilt)] – Stopp 1,5 ATR vom jeweiligen Einstieg."""
+    sy = erk.get("systeme") or {}
+    a = erk.get("atr")
+    if not a:
+        return []
+    return [(s_, e, (e + ATR_STOPP * a if s_ == "short" else e - ATR_STOPP * a), f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart",
+             q, g) for s_, e, q, g in einstiege(erk.get("setup_info"), sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"),
+                                                erk.get("kurs"))]
 
 
 def plan(erk):

@@ -194,12 +194,12 @@ def material(tk, df):
     # frischen Ausbruch die Enge der Zone vom Vortag
     reif = lambda b: (b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok"   # noqa: E731
                       and b.get("tiefe", 99) <= 50)
-    enge_von = "Zone der App"
+    enge_von, z_e = "Zone der App", z
     if z.get("zone") and not reif(z) and z.get("innen") and reif(z["innen"]):
-        e, enge_von = vcp_zone.enge(df, z["innen"]), "Flagge in der Zone (die große Zone ist keine reife Base)"
+        e, enge_von, z_e = vcp_zone.enge(df, z["innen"]), "Flagge in der Zone (die große Zone ist keine reife Base)", z["innen"]
     br0 = vcp_zone.ausbruch(df, jetzt=z)
     if br0 and br0.get("zone"):
-        e = vcp_zone.enge(df.iloc[:br0["vortag_i"]], br0["zone"])
+        e, z_e = vcp_zone.enge(df.iloc[:br0["vortag_i"]], br0["zone"]), br0["zone"]
         enge_von = f"Zone vom Vortag des Ausbruchs am {_d(br0['tag'])}"
     zt = avwap.zahlentag(df, g)
     a = avwap.anker(df, zt)
@@ -233,6 +233,9 @@ def material(tk, df):
                       f"(−{_z(x['tiefe'], '.1f')} %)" for x in e["kontraktionen"])
         zeilen.append(f"Enge ({enge_von}, wie im Chart): {e['zahl']} Kontraktionen: {k}. Pivot {_z(e['pivot'])} $ ({e.get('lage')}), Ampel "
                       f"{e['ampel']}" + (f", fehlt: {', '.join(e['fehlt'])}" if e.get("fehlt") else ""))
+        if "Cheat" in str(e.get("lage")) and z_e.get("zone"):
+            zeilen.append(f"Zwei Einstiege (Gefechtsordnung): früh beim Schluss über dem Hoch der Enge {_z(e['pivot'])} $ "
+                          f"({e['lage']}) und am Ausbruch über die Oberkante {_z(z_e['oben'])} $")
     for schl, name in (("gipfel", "Hoch des Rückgangs"), ("hoch", "letztes Hoch"), ("tief", "Tief der Bewegung"),
                        ("ereignis", "Ereignis")):
         if schl in a:

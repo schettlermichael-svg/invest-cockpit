@@ -129,20 +129,32 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
                if reif else "ohne reife Base nicht prüfbar")]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"
-    pivot = float(e.get("pivot") or z["oben"]) if reif else None
+    # Einstiege (Gefechtsordnung Schritt 2): in einer Base früh am Cheat und am Ausbruch über die Oberkante; Flagge einer
+    if not reif:
+        einst = []
+    elif art == "Base":
+        einst = vcp_zone.einstiege(z, e)
+    else:
+        einst = [{"art": "ausbruch", "wort": "Ausbruch", "wert": float(e.get("pivot") or z["oben"]), "quelle": "Pivot der Base"}]
+    kontr = e.get("kontraktionen") or []
+    for x in einst:                                # Minervini: unter dem Tief der letzten Kontraktion, höchstens 8 %
+        w_ = x["wert"]
+        x["stopp"] = max(min(float(kontr[-1]["tief"]), w_) if kontr else w_ * (1 - MAX_STOPP), w_ * (1 - MAX_STOPP))
+    i_ = vcp_zone.naechster(einst, c[-1])
+    pivot = einst[i_]["wert"] if einst else None
     stopp, lage = None, ""
     if pivot:
-        kontr = e.get("kontraktionen") or []
-        unten = min(float(kontr[-1]["tief"]), pivot) if kontr else pivot * (1 - MAX_STOPP)
-        stopp = max(unten, pivot * (1 - MAX_STOPP))
+        stopp = einst[i_]["stopp"]
         ab = (c[-1] / pivot - 1) * 100
         lage = ("in der Kaufzone" if 0 <= ab <= KAUFZONE else f"{ab:.1f} % über dem Pivot, ausgedehnt" if ab > KAUFZONE
                 else f"{-ab:.1f} % unter dem Pivot").replace(".", ",")
         if br:                                     # das Zeichen sagt die Lage schon (Kaufzone/ausgedehnt)
             lage = vcp_zone.ausbruch_text(br)
+        if len(einst) > 1:                         # zwei Einstiege: welcher gilt
+            lage = f"{einst[i_]['wort']} · {lage}"
     setup = f"{art} {z['wochen']:.0f} W." if reif else "keines"
     return {"system": "M", "ampel": ampel, "setup": setup, "regeln": regeln, "fehlt": fehlt,
-            "pivot": pivot, "stopp": stopp, "lage": lage, "trendvorlage": tv, "zone": z, "enge": e, "ausbruch": br,
+            "pivot": pivot, "stopp": stopp, "lage": lage, "einstiege": einst, "einstieg_nr": i_, "trendvorlage": tv, "zone": z, "enge": e, "ausbruch": br,
             "abstand": (c[-1] / pivot - 1) * 100 if pivot else None,
             "ausstieg": ("Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. Stopp auf Einstand, "
                          "sobald der Gewinn ein Mehrfaches des Risikos erreicht; in die Stärke teilweise verkaufen, den "

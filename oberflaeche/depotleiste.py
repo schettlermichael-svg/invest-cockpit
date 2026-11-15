@@ -111,19 +111,29 @@ def titelkarte(tk, df, erk):
                                f"Rauschen")
         return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df, erk)),
                      "Position und Risiko · nach dem Kauf")
-    pl = depot.plan(erk)
+    plaene = depot.plaene(erk)
     if not d.get("konto"):
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Rückenwind oben, „⚙ Konto und '
                      f'Risiko“) – dann steht hier die Stückzahl für das Setup.</div>', "Position und Risiko")
-    if not pl:
+    if not plaene:
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Setup mit Einstieg und Stopp – keine Stückzahl. '
                      f'Risiko je Trade {zahl(depot.risiko_euro(d), 0)} €.</div>', "Position und Risiko")
-    seite_, e, s, regel = pl
+    teile = []
+    for seite_, e, s, regel, quelle_, gilt_ in plaene:   # je Einstieg eine Stückzahl (Gefechtsordnung Schritt 2)
+        teil = _stueck(tk, d, df, w, seite_, e, s, regel)
+        if len(plaene) > 1:
+            teil = (f'<div style="font-size:14px;font-weight:600;margin:10px 0 2px">{t(quelle_)}'
+                    + (" ← gilt jetzt" if gilt_ else "") + "</div>" + teil)
+        teile.append(teil)
+    return karte("".join(teile), "Position und Risiko · Stückzahl für das Setup")
+
+
+def _stueck(tk, d, df, w, seite_, e, s, regel):
+    """Stückzahl, Knock-out und Depot-Hitze für einen Einstieg."""
     a = depot.stueckzahl(tk, e, s)
     ko = depot.stueckzahl(tk, e, s, bezug=KO_BEZUG)
     if not a:
-        return karte(f'<div style="color:{TEXT_2}">Kein Wechselkurs für {depot.waehrung(tk)} – Stückzahl offen.</div>',
-                     "Position und Risiko")
+        return f'<div style="color:{TEXT_2}">Kein Wechselkurs für {depot.waehrung(tk)} – Stückzahl offen.</div>'
     schwelle = s * (KO_UNTER if seite_ == "long" else KO_UEBER)
     text = (f'<p style="margin:0;font-size:16px;line-height:1.65">{seite_.capitalize()} bei {zahl(e)} {w}, Stopp '
             f'{zahl(s)} {w} ({t(regel)}, {zahl(abs(s / e - 1) * 100, 1)} %). Risiko je Trade '
@@ -144,4 +154,4 @@ def titelkarte(tk, df, erk):
         nachher = h["pct"] + a["risiko"] / d["konto"] * 100
         zeilen += ampelzeile(f'Depot-Hitze danach {zahl(nachher, 1)} %', "grün" if nachher <= h["max"] else "rot",
                              f'heute {zahl(h["pct"], 1)} %, Grenze {zahl(h["max"], 0)} %')
-    return karte(text + zeilen, "Position und Risiko · Stückzahl für das Setup")
+    return text + zeilen
