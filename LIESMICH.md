@@ -1154,3 +1154,22 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   1 ATR), 71 enger als 1,5 ATR; 27 weiter als die Grenze des Meisters; 7 mit Lücke. Setups und Einstiege unverändert.
 - **Blinder Fleck gefunden:** Kaufzone (1,05) und Marken der Trendvorlage (1,30/0,75) standen in Plan und Chart als
   Kopien – jetzt aus der einen Quelle. Die Inventur sah die Anzeige-Module nicht; rund 40 Regel-Zahlen dort sind Plan 22.
+
+## Gefechtsordnung Schritt 4: Spring/Upthrust und früher Short (15.11.2026)
+
+- **Eine Regel** (`vcp_zone.spring_upthrust`) für Zeichen, Zustand „abgelehnt“ und Setup, an der Zone des Scanners, wie
+  sie am Vortag stand: Tief höchstens 1 ATR unter der Unterkante (Upthrust: Hoch über der Oberkante), Schluss zurück in der
+  Zone am selben Tag oder in den 2 Tagen danach; ein Fehlausbruch zählt auch. Vorher rechnete das Zeichen mit einer eigenen
+  Spanne der letzten 20 Tage.
+- **Setups Spring (long) und Upthrust (short):** Einstieg am Rand beim Schluss zurück, Struktur-Stopp am Tief bzw. Hoch des
+  Fehlausbruchs, Ziel der andere Rand. Gilt 10 Handelstage, solange der Stopp hält und der andere Rand nicht erreicht ist;
+  ★ bis 5 % jenseits des Einstiegs. Volumen und Phase sind Zeichen. Vorrang nach Sprung und Zahlen-Reaktion. Der Chart
+  zeigt die Zone, an deren Rand es geschah.
+- **Bruch der Spanne vor dem Bruch:** eine Verteilung (Phase 3, mindestens 6 Wochen, höchstens 40 % breit) steht wie der
+  Base-Ausbruch schon vor dem Bruch in der Reihe (gelb, im Vorrang hinten). Liegt das Tief der letzten Gegenbewegung mehr
+  als 3 % über der Unterkante, ist der Schluss darunter der frühe Short (dann grün); Struktur-Stopp über dem Hoch der
+  Gegenbewegung.
+- **Eine Liste der Short-Reihen** (`system_kullamaegi.SHORT_REIHEN`, Seite einer Reihe über `lagekarte.richtung`) statt an
+  8 Stellen von Hand; die Shorts tragen ihren Einstieg als eigenes Feld.
+- **Gemessen an 468 Titeln:** Setup Spring 11, Upthrust 23 (14 grün); Bruch der Spanne vor dem Bruch 65, davon 18 mit
+  frühem Short. Zeichen: Spring 47 → 36, Upthrust 41 → 76. 4 Base-Ausbrüche stehen jetzt hinter einem Upthrust (unter „auch“).

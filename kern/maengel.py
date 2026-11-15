@@ -158,7 +158,9 @@ PLAN = [
         "Tagestief, höchstens eine Tagesspanne)", "Gefechtsordnung", "behoben",
      "0cba440: beide Stopps in Plan, Chart, Lagekarte, CRV, Stückzahl und Prüfer; 143 Setups gemessen: Struktur im Schnitt "
      "7,1 % vom Einstieg, 27 weiter als die Grenze des Meisters (rot), 50 im Tagesrauschen, 7 mit Lücke"),
-    (6, "Schritt 4: Spring und Upthrust als eigene Setups (long und short)", "Gefechtsordnung", "offen", ""),
+    (6, "Schritt 4: Spring und Upthrust als eigene Setups (long und short)", "Gefechtsordnung", "behoben",
+     "dd133cd: eine Regel an der Zone des Scanners für Zeichen, Zustand und Setup; 468 Titel: Spring 11, Upthrust 23 "
+     "(14 grün) als Setup; Zeichen Spring 47 → 36, Upthrust 41 → 76 (vorher eigene 20-Tage-Spanne)"),
     (7, "Schritt 5: Stopp am 10er/20er, Mauer, Kraft ohne Weg und Klimax ziehen ihn enger", "Gefechtsordnung", "offen", ""),
     (8, "Schritt 8: Phasen nach Weinstein als Rahmen (30 oder 40 Wochen, Sperre nach Phase 4)", "Gefechtsordnung", "offen", ""),
     (9, "Lauf 4: Pivot verbraucht oder zu früh, Drittel falsch (28); grün trotz nicht ausgetrocknetem Volumen (7)",
@@ -179,7 +181,9 @@ PLAN = [
     (21, "Schritt 2 gespiegelt für Shorts (Micky 15.11.: ja): früh unter dem Tief einer Enge, Bruch an der Unterkante. Die "
          "App kennt Shorts heute erst nach dem Bruch (Bärenflagge, Bruch der Spanne) – sie braucht dafür die Zone von der "
          "Short-Seite vor dem Bruch; gebaut mit Schritt 4 (Spring/Upthrust braucht dieselben beiden Ränder)",
-     "Gefechtsordnung", "offen", ""),
+     "Gefechtsordnung", "behoben",
+     "dd133cd: Bruch der Spanne steht schon vor dem Bruch (Verteilung Phase 3), früher Short am Tief der letzten "
+     "Gegenbewegung; 468 Titel: 65 vor dem Bruch, davon 18 mit frühem Short"),
     (22, "Inventur Stufe 3: Regeln in den Anzeige-Modulen – die Inventur sah nur Funktionen der Karte; in Titelseite, "
          "Lagekarte und Kartentisch stehen noch rund 40 Regel-Zahlen ohne Namen (Kacheln: Base Nr. 1–2 grün, RS ab 70/60, "
          "Trendvorlage 7/5, Reaktion ±3 %, Absturz 15 %, Termin 14 Tage, Abstand 10 %), im Chart 189 Zahlen (meist Layout). "
