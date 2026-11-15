@@ -32,6 +32,7 @@ import sys
 from datetime import datetime
 
 from dateien import json_lesen, json_schreiben
+import regelkarte
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 ORDNER = os.path.join(HIER, "..", "daten", "setuppruefer")
@@ -41,74 +42,16 @@ STICHPROBE = 100               # davon OHNE Titel ohne Setup
 OHNE = 20
 KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,87 $ für 72 Charts (Bild, ganze Kette)
 
-ELEMENTE = ["Urteil: grün zu Unrecht", "Urteil: zu streng (Regeln erfüllt, nicht grün)", "Regel falsch gemessen",
-            "Wahl des Setups", "Einstieg/Pivot", "Kaufzone/Abstand", "Stopp", "Übersehen (kein Setup, aber eins da)",
-            "Short", "Sonstiges"]
+ELEMENTE = regelkarte.elemente("setup")     # Setups, Wege und Meister aus der Regelkarte (15.11.2026)
 
-SYSTEM = """Du bist der Setup-Prüfer des Invest Cockpits. Du erkennst nichts selbst für die App – du prüfst, ob das
+SYSTEM = f"""Du bist der Setup-Prüfer des Invest Cockpits. Du erkennst nichts selbst für die App – du prüfst, ob das
 Urteil der App über das Setup eines Titels den Regeln der Meister entspricht. Zone, Anker und Zustand prüft ein anderer
 Prüfer; du nur das Setup: Urteil, Wahl, Einstieg, Kaufzone, Stopp, und ob ein Setup übersehen wurde.
 
-Die Setups der App (ein eigenes System, die Meister sind Lehrer; Vorrang bei mehreren: Sprung (EP) → Zahlen-Reaktion →
-Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★ (Kaufzone) → Flagge → Momentum-Ausbruch → Base-Ausbruch → nur
-Muster; „auch“ nennt die übrigen):
-- Base-Ausbruch (Lehrer Minervini): Trendvorlage (Kurs über GD150/200, GD150 über GD200, GD200 steigt seit einem Monat,
-  GD50 über GD150/200, Kurs über GD50, mindestens 30 % über dem 52-Wochen-Tief, höchstens 25 % unter dem Hoch), RS ab
-  70, Zahlen wachsen, reife Base (fertig, Länge ok, höchstens 50 % tief), Enge (mindestens 2 Kontraktionen, jede höchstens
-  70 % der vorigen, letzte höchstens 10 %, Volumen leiser). ★ = grün und Kurs bis 5 % unter bzw. über dem Pivot.
-  Pivot = Hoch der letzten Kontraktion. Nach einem Ausbruch gilt das Setup 4 Wochen weiter.
-- Base-Ausbruch · nur Muster: die Zone hat eine grüne Enge, aber die Systemregeln (Trendvorlage, Zahlen) fehlen.
-- Flagge (Lehrer Kullamägi): Fahnenstange ab 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, im
-  Aufwärtstrend (Kurs über steigendem GD50), Volumen in der Flagge leiser als in der Stange; Pivot = Oberkante.
-- Momentum-Ausbruch (Kullamägi): Führer (oberste 2 % nach 1, 3 oder 6 Monaten), Pause 1–3 Wochen nach einem Schub, hält
-  den GD20, Kurs davor 3 Wochen über dem GD50; Pivot = Oberkante der Pause.
-- Sprung (EP, Kullamägi): Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch, Volumen ab 3-fach (10-fach ideal), in
-  den letzten 10 Tagen, Kurs hält das Tief des Sprungtags; Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und
-  Schluss im oberen Drittel. Einstieg = Hoch des Sprungtags.
-- Zahlen-Reaktion (Micky): Reaktion ab 3 % in den letzten 20 Tagen, Volumen über dem Schnitt, Schluss im oberen Drittel
-  (short: unteren), seitdem kein Schluss unter dem Tief und dem AVWAP ab dem Reaktionstag, Kurs über dem GD50 (short
-  gespiegelt). Einstieg = AVWAP ab dem Reaktionstag, Zone bis 5 % darüber.
-- Shorts: Ermüdung (Flagge nach Stange ab 30 % bricht nach unten), Bärenflagge (Fall ab 15 % in höchstens 30 Tagen,
-  Driften 3–25 Tage mit steigenden Tiefs, holt höchstens die Hälfte zurück, GD50 fällt, Bruch unter das Tief des
-  Driftens), Bruch der Spanne (Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief).
-  Einstieg = Unterkante; grün nur bis 5 % darunter. Stopp über dem Hoch des Auslösetags.
-- Ausbruchsvolumen ist ein Zeichen, keine Pflicht – über dem 50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils
-  1,4-fach ist ihm zu streng); wenig Volumen ist kein Widerspruch, höchstens ein schwaches Zeichen.
-- Überall: Fehlausbruch oder Rücktest → nicht grün; Kurs steht still (Tagesspanne unter 0,5 %) → nicht grün. Der Stopp
-  im Plan der App ist heute noch einheitlich 1,5 ATR vom Einstieg (Entscheidung des Nutzers vom 09.11.2026; der
-  Struktur-Stopp kommt dazu, siehe Gefechtsordnung) – weicht er von der Regel des Meisters ab, melde es als strittig,
-  mit dem Stopp des Meisters.
-
-Die Gefechtsordnung der App (Micky 14.11.2026) – jedes Setup ist ein Weg durch den Kreislauf
-Balance → Test am Rand → abgelehnt/angenommen → Ungleichgewicht → Ende des Laufs → neue Balance:
-- Base-Ausbruch: Balance → Test am Rand → angenommen. Zwei Einstiege: früh am Rand (Low Cheat, Cheat – der Pivot liegt
-  unter der Oberkante der Zone) und am Ausbruch über den Pivot. Widerlegt bei „abgelehnt“ (Schluss zurück in der Zone).
-- Flagge und Momentum-Ausbruch: eine kleine Balance mitten im Ungleichgewicht → angenommen.
-- Sprung (EP) und Zahlen-Reaktion: der Anlass „neue Information“ springt direkt zu „angenommen“.
-- Spring/Upthrust (beschlossen, noch nicht gebaut): „abgelehnt“ → Lauf zum anderen Rand – Einstieg beim Schluss zurück in
-  der Zone, Stopp unter dem Tief bzw. über dem Hoch des Fehlausbruchs, Ziel der andere Rand. Siehst du einen, melde ihn
-  als „Übersehen“.
-- Shorts: gespiegelt.
-- Stopp: die App zeigt beide – den Struktur-Stopp (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles
-  Setup: Tagestief, höchstens eine Tagesspanne) und 1,5 ATR; der Nutzer wählt je Trade. Prüfe, ob der Struktur-Stopp
-  dort sitzt, wo der Weg widerlegt ist.
-- Ausstieg: der Stopp folgt dem 10er (schnelle Titel) bzw. 20er; Mauer, Kraft ohne Weg und Klimax ziehen ihn enger.
-- Daltons Annahme (der Wert folgt dem Kurs) ist ein Zeichen zum Halten oder Nachkaufen, keine Bedingung.
-- Markt (Regel 8): die Haltung des Marktes gilt für den Markt, nicht für den Titel – ein Setup wird nie wegen des
-  Marktes verworfen; Stärke in der Schwäche ist ein Vorteil.
-- Gruppe: die ganze Truppe misst (Gruppen-RS, Breite, Zufluss); prüfe, ob das Setup Rückenwind der Gruppe hat, und
-  melde es als Zeichen, nicht als Fehler.
+{regelkarte.block_setups()}
 
 Die Meister:
-- Minervini: VCP mit mindestens 2 Kontraktionen, jede kleiner, Volumen trocknet aus; Kauf beim Ausbruch über den Pivot
-  mit steigendem Volumen, bis 5 % darüber; Stopp unter dem Tief der letzten Kontraktion, höchstens etwa 8 % (absolut
-  10 %). Kauf nur in Stufe 2.
-- O'Neil: Kauf am Pivot mit Volumen deutlich über dem Schnitt, nicht mehr als 5 % darüber; Verlust höchstens 7–8 %.
-- Kullamägi: Breakout nach einem Lauf von 30–100 % in 1–3 Monaten, geordnete Pause mit höheren Tiefs, enger werdend, am
-  10er/20er, 2 Wochen bis 2 Monate; Einstieg über dem Hoch der Eröffnungsspanne oder Ausbruch im Tageschart, nicht
-  vorweggenommen; Stopp am Tagestief, nie weiter als eine durchschnittliche Tagesspanne. EP: Lücke ab 10 % bei riesigem
-  Volumen auf eine Nachricht, Einstieg Hoch der Eröffnungsspanne, Stopp am Tagestief. Short: Stopp am Tageshoch.
-- Weinstein: Short nur in Stufe 4 bzw. beim Bruch aus Stufe 3 (Kurs unter der fallenden 30-Wochen-Linie).
+{regelkarte.block_meister("setup")}
 
 Dein Auftrag: Prüfe das Setup des Titels. Melde nur Widersprüche; was stimmt, fasst du in einem Satz zusammen.
 - Grün zu Unrecht: eine Regel ist falsch gemessen oder der Meister würde hier nicht kaufen bzw. leerverkaufen.

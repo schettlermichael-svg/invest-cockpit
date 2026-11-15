@@ -1029,3 +1029,21 @@ Micky: „Denke an unsere drei Bilder.“ Abgleich Kasten für Kasten:
   Hälfte der Flagge darf höchstens 0,5 ATR unter dem der ersten liegen (gleiche Tiefs oder ein kurzes Unterschneiden
   halten das Gelände). Sonst steht „Tiefs fallen – die Truppe weicht“ unter „fehlt“. Gemessen: Flaggen im Trend 44 → 26
   von 108 (ohne Spielraum wären es 13 gewesen – auch exakt gleiche Tiefs fielen raus).
+
+## Regelkarte und Wachposten (15.11.2026, Gefechtsordnung Schritt 1)
+
+`kern/regelkarte.py` ist die eine Quelle für die Regeln: jeder Kasten der drei Bilder (Titel 14, Gruppe 12, Markt 9),
+die Werkzeuge, die sie messen (Zone, Enge, Anker, Profil, Phase …), alle Setups als Wege durch den Kreislauf und die
+Regeln der Meister. Jeder Eintrag nennt Regel, führenden Meister, Messung im Code (Modul.Funktion), Stand (gemessen,
+teilweise, fehlt – mit der Lücke und dem Schritt, in dem sie geschlossen wird) und das Prüf-Element.
+
+- Chart-Prüfer (`SYSTEM`, `SYSTEM_GRUPPE`, `SYSTEM_MARKT`, `ELEMENTE…`) und Setup-Prüfer (`SYSTEM`, `ELEMENTE`) bauen
+  ihre Anleitung aus der Karte; dort steht nur noch, was der Prüfer tut.
+- `regelkarte.wachposten()` prüft Karte gegen Code: Messfunktion fehlt, Prüf-Element fehlt, Anleitung ohne Kasten,
+  Zustand der App ohne Kasten, Reihe des Kartentischs nicht auf der Karte → 🚨 Alarm. Bekannte Lücken stehen 🟡/🔴.
+- Seite Setups: Kasten „🛡️ Regelkarte · Wachposten“ über den Prüfern; bei Alarm offen und rot.
+- Neue Regel = erst in die Karte, dann bauen.
+- Abgleich mit den alten Anleitungen: jeder Satz übernommen (wörtlich oder in einen Kasten umgeformt); zwei fehlten im
+  ersten Entwurf und sind nachgetragen („bringt die Balance an den Rand“, Spring/Upthrust „Ziel der andere Rand“).
+  Bewusst aktualisiert: „angenommen“ ohne Volumen-Pflicht, Ereignis-Anker an jedem Zahlentag, Hoch des Rückgangs
+  2 Jahre. Die Anleitung des Chart-Prüfers ist etwa 3.700 Zeichen länger (rund 1.000 Token, unter 1 Cent je Chart).

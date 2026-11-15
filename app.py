@@ -548,6 +548,7 @@ def setups_zeigen():
     except Exception as e:  # noqa: BLE001
         _fehler(e)
     _kartentisch_zeigen(rollen={"termine"})
+    regelkarte_zeigen()
     chartpruefer_zeigen()
     setuppruefer_zeigen()
     maengel_zeigen()
@@ -689,6 +690,55 @@ def chart_pruefen(tk, teile):
             st.error(f"Chart-Prüfer ging nicht: {x}")
             return
     st.markdown(zustandsbild.pruef_karte(r), unsafe_allow_html=True)
+
+
+def regelkarte_zeigen():
+    """Regelkarte und Wachposten (Gefechtsordnung Schritt 1, 15.11.2026): jeder Kasten der drei Bilder und jedes Setup
+    mit Regel, führendem Meister, Messung im Code und Prüf-Element – die eine Quelle, aus der beide Prüfer ihre
+    Anleitung bekommen. Der Wachposten meldet Alarm, wenn Karte und Code nicht zusammenpassen."""
+    import regelkarte
+    from html import escape as esc
+    try:
+        m = regelkarte.wachposten()
+    except Exception as x:  # noqa: BLE001
+        st.error(f"🛡️ Wachposten nicht lesbar: {x}")
+        return
+    alarm = [x for x in m if x.get("alarm")]
+    z = regelkarte.zaehlen(m)
+    kurz = " · ".join(f"{n} {g - r - y}🟢 {y}🟡 {r}🔴" for n, (g, r, y) in
+                      (("Titel", z["titel"]), ("Gruppe", z["gruppe"]), ("Markt", z["markt"]), ("Setups", z["setup"])))
+    with st.expander(("🚨" if alarm else "🛡️") + f" Regelkarte · Wachposten · {kurz}", expanded=bool(alarm)):
+        st.caption("Die eine Dienstvorschrift für Code und Prüfer: jeder Kasten der drei Bilder (Titel, Gruppe, Markt) "
+                   "und jedes Setup mit seiner Regel, dem führenden Meister, der Messung im Code und dem Element, unter "
+                   "dem der Prüfer ihn prüft. Beide Prüfer bekommen ihre Anleitung aus dieser Karte. 🟢 gemessen · "
+                   "🟡 erst teilweise · 🔴 noch nicht gemessen bzw. gebaut (geplant, mit Schritt). Alarm 🚨 heißt: "
+                   "Karte und Code passen nicht zusammen – etwas wurde vergessen.")
+        for x in alarm:
+            st.error(f"🚨 {x['art']} {x['name']} ({x['bild']}): {x['text']}")
+        ampel = {"gemessen": "🟢", "teilweise": "🟡", "fehlt": "🔴"}
+        zelle = 'style="padding:3px 8px;vertical-align:top"'
+        for bild, titel_ in (("titel", "Titel · Kreislauf und Code Balance/Ungleichgewicht"),
+                             ("gruppe", "Gruppe · Geldfluss"), ("markt", "Markt")):
+            zeilen = "".join(
+                f'<tr><td {zelle}>{ampel[x["stand"]]}</td><td {zelle}><b>{esc(x["name"])}</b>'
+                + ('<br><span style="opacity:.6">Werkzeug</span>' if "fuehrt" not in x else "")
+                + f'</td><td {zelle}>{esc(x["regel"])}</td><td {zelle}>{esc(x.get("fuehrt", "–"))}</td>'
+                f'<td {zelle}>{esc(", ".join(x["messung"]) or "–")}</td><td {zelle}>{esc(", ".join(x["pruefer"]))}</td>'
+                f'<td {zelle}>{esc(x.get("luecke", ""))}</td></tr>'
+                for x in regelkarte.KAESTEN[bild] + regelkarte.WERKZEUGE[bild])
+            st.markdown(f'<details><summary style="cursor:pointer"><b>{esc(titel_)}</b></summary>'
+                        f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Kasten</th>'
+                        f'<th {zelle}>Regel</th><th {zelle}>führt</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th>'
+                        f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
+        zeilen = "".join(
+            f'<tr><td {zelle}>{ampel[s_["stand"]]}</td><td {zelle}><b>{esc(s_["name"])}</b><br>'
+            f'<span style="opacity:.6">{esc(s_["lehrer"])}</span></td><td {zelle}>{esc(s_["weg"])}</td>'
+            f'<td {zelle}>{esc(s_["einstieg"])}</td><td {zelle}>{esc(s_["stopp"])}</td><td {zelle}>{esc(s_["widerlegt"])}</td>'
+            f'<td {zelle}>{esc(s_.get("luecke", ""))}</td></tr>' for s_ in regelkarte.SETUPS)
+        st.markdown(f'<details><summary style="cursor:pointer"><b>Setups · Wege durch den Kreislauf</b></summary>'
+                    f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Setup</th>'
+                    f'<th {zelle}>Weg</th><th {zelle}>Einstieg</th><th {zelle}>Stopp</th><th {zelle}>widerlegt</th>'
+                    f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
 
 
 def maengel_zeigen():
