@@ -641,12 +641,23 @@ def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten, klein=None):
         if a:
             farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
                      "Prüfer irrt": "#8B949E"}
+            import maengel
+
+            def stand_(i_):                       # Stand aus der Mängelliste neben jedem Vorschlag (Gesamtplan 15.11.2026)
+                try:
+                    y = maengel.zu_lauf(key.replace("pruefer", ""), b["stand"], i_)
+                except Exception:  # noqa: BLE001
+                    y = None
+                if not y:
+                    return '<br><span style="color:#F85149">⚠ nicht in der Mängelliste</span>'
+                zeichen_ = {"behoben": "✅ behoben", "entschieden": "☑️ entschieden", "offen": "⏳ offen"}[y["stand"]]
+                return f'<br><b>{zeichen_}</b>' + (f' · {esc(y["notiz"])}' if y.get("notiz") else "")
             karten = "".join(
                 f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:6px 10px;margin:6px 0">'
                 f'<b>{esc(x["titel"])}</b> · {esc(x["art"])} · {esc(x["element"])} · {x["anzahl"]} Widersprüche '
                 f'({x["sicher"]} sicher) · z. B. {esc(", ".join(x["beispiele"][:5]))}<br>'
                 f'<span style="opacity:.85">{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: '
-                f'{esc(x["vorschlag"])}</span></div>' for x in a.get("befunde") or [])
+                f'{esc(x["vorschlag"])}</span>{stand_(i_)}</div>' for i_, x in enumerate(a.get("befunde") or []))
             st.markdown(f'<div style="font-size:13px"><b>Auswertung {esc(a.get("stand", ""))}</b> · '
                         f'{esc(a.get("fazit", ""))}{karten}</div>', unsafe_allow_html=True)
         alle = [(r["tk"], r.get("gruppe", ""), w) for r in b["titel"] for w in r.get("widersprueche") or []]
@@ -790,19 +801,26 @@ def maengel_zeigen():
         maengel.aus_berichten()
     except Exception as x:  # noqa: BLE001
         st.caption(f"Mängelliste: Berichte nicht lesbar ({x})")
-    m = maengel.laden()
-    alle = m["befunde"]
+    alle = maengel.alle()
     zahl = {s_: sum(1 for x in alle if x["stand"] == s_) for s_ in maengel.STAENDE}
     with st.expander(f"📋 Mängelliste · {zahl['offen']} offen · {zahl['behoben']} behoben · "
                      f"{zahl['entschieden']} entschieden", expanded=False):
-        st.caption("Jeder Befund aus den Auswertungen von Chart- und Setup-Prüfer, mit Stand. Behoben = Regel im Code "
-                   "geändert (Notiz: Commit und Messung), entschieden = du hast entschieden (Notiz: wie). Der Verlauf "
-                   "unten zeigt, ob ein behobener Befund im nächsten Lauf wirklich seltener wird.")
+        st.caption("Die eine Liste aller offenen Punkte: jeder Befund aus den Auswertungen von Chart- und Setup-Prüfer "
+                   "und jeder Punkt des Gesamtplans (🗺️), mit Stand. Behoben = Regel im Code geändert (Notiz: Commit und "
+                   "Messung), entschieden = du hast entschieden (Notiz: wie). Jeder offene Befund nennt seinen Punkt im "
+                   "Gesamtplan (→ Plan N). Der Wachposten meldet, was dagegen verstößt; der Verlauf unten zeigt, ob ein "
+                   "behobener Befund im nächsten Lauf wirklich seltener wird.")
         zeige = st.pills("Stand", maengel.STAENDE, selection_mode="multi", default=["offen"], key="maengel_stand")
         farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
                  "Prüfer irrt": "#8B949E"}
         for x in alle:
             if x["stand"] not in (zeige or []):
+                continue
+            if x["quelle"] == "plan":
+                st.markdown(f'<div style="border-left:3px solid #58A6FF;padding:4px 10px;margin:8px 0 2px;font-size:13px">'
+                            f'<b>{esc(x["titel"])}</b> · 🗺️ Gesamtplan · {esc(x["element"])}'
+                            + (f'<br><span style="opacity:.7">{esc(x["notiz"])}</span>' if x.get("notiz") else "")
+                            + '</div>', unsafe_allow_html=True)
                 continue
             st.markdown(
                 f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:4px 10px;margin:8px 0 2px;'
@@ -812,6 +830,8 @@ def maengel_zeigen():
                 f'{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: {esc(x["vorschlag"])}</span>'
                 + (f'<br><span style="opacity:.7">Notiz ({esc(x["geaendert"] or "")}): {esc(x["notiz"])}</span>'
                    if x.get("notiz") else "") + '</div>', unsafe_allow_html=True)
+            if x["quelle"] == "plan":                # Stand des Gesamtplans steht im Code (maengel.PLAN), mit Commit
+                continue
             c1, c2, c3 = st.columns([2, 6, 1])
             stand = c1.selectbox("Stand", maengel.STAENDE, index=maengel.STAENDE.index(x["stand"]),
                                  key=f"mg_s_{x['id']}", label_visibility="collapsed")

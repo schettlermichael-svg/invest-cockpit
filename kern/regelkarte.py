@@ -845,6 +845,13 @@ def wachposten():
         if not b.get("pruefer"):
             melde("gelb", "Bereich", "bereich", b["name"], "kein Prüfer sieht diesen Bereich" +
                   (f" – {b['luecke']}" if b.get("luecke") else ""), alarm=False)
+    # Mängelliste: jeder Punkt mit Stand, behoben mit Commit und Messung, jeder offene Befund im Gesamtplan
+    try:
+        import maengel
+        for amp, name, text in maengel.pruefen():
+            melde(amp, "Mängelliste", "maengel", name, text, alarm=(amp == "rot"))
+    except Exception as e:  # noqa: BLE001
+        melde("rot", "Mängelliste", "maengel", "maengel", f"nicht lesbar: {e}")
     # Inventur: jede feste Regel des Codes gehört der Karte, keine Regel steht doppelt
     try:
         inv = inventur()
