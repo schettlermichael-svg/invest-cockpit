@@ -727,6 +727,14 @@ def regelkarte_zeigen():
                    "Karte und Code passen nicht zusammen – etwas wurde vergessen.")
         for x in alarm:
             st.error(f"🚨 {x['art']} {x['name']} ({x['bild']}): {x['text']}")
+        try:
+            inv = regelkarte.inventur()
+            n_k = len(inv["konstanten"])
+            n_t = sum(1 for k in regelkarte.TECHNIK if tuple(k.split(".")) in inv["konstanten"])
+            st.caption(f"Inventur des Codes: {n_k} feste Regeln · {len(inv['abgedeckt'])} auf der Karte · {n_t} Technik "
+                       f"(Layout, Kosten, Datenpflege) · {len(inv['frei'])} blinde Flecken · {len(inv['kopien'])} doppelt")
+        except Exception as x_:  # noqa: BLE001
+            st.error(f"🚨 Inventur nicht lesbar: {x_}")
         ampel = {"gemessen": "🟢", "teilweise": "🟡", "fehlt": "🔴"}
         zelle = 'style="padding:3px 8px;vertical-align:top"'
         for bild, titel_ in (("titel", "Titel · Kreislauf und Code Balance/Ungleichgewicht"),
@@ -742,6 +750,16 @@ def regelkarte_zeigen():
                         f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Kasten</th>'
                         f'<th {zelle}>Regel</th><th {zelle}>führt</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th>'
                         f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
+        zeilen = "".join(
+            f'<tr><td {zelle}>{"🟢" if b_["pruefer"] else "🟡"}</td><td {zelle}><b>{esc(b_["name"])}</b><br>'
+            f'<span style="opacity:.6">{esc(b_["quelle"])}</span></td><td {zelle}>{esc(b_["regel"])}</td>'
+            f'<td {zelle}>{esc(", ".join(b_["messung"]))}</td><td {zelle}>{esc(", ".join(b_["pruefer"]) or b_.get("luecke", ""))}</td></tr>'
+            for b_ in regelkarte.BEREICHE)
+        st.markdown(f'<details><summary style="cursor:pointer"><b>Weitere Bereiche · Setup-Wahl, Stopp, Depot, Rückenwind, '
+                    f'Zahlen …</b></summary><table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th>'
+                    f'<th {zelle}>Bereich</th><th {zelle}>Regel</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th></tr>'
+                    f'{zeilen}</table><span style="font-size:12px;opacity:.7">🟡 = kein Prüfer sieht diesen Bereich</span>'
+                    f'</details>', unsafe_allow_html=True)
         zeilen = "".join(
             f'<tr><td {zelle}>🟢</td><td {zelle}><b>{esc(z_["name"])}</b><br><span style="opacity:.6">{esc(z_["art"])}'
             f'</span></td><td {zelle}>{esc(z_["regel"])}</td><td {zelle}>{esc(z_["meister"])}</td>'

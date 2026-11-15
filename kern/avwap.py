@@ -165,7 +165,8 @@ def _trendstart(df, hoch):
         return start                                           # der Trend steht noch über seinem Start
     seit = l[l.index >= hoch]                                  # Trend gebrochen: die neue Bewegung seit dem Hoch
     tag = seit.idxmin()
-    atr = float((h - l).iloc[-14:].mean())
+    import atr as atr_
+    atr = atr_.wert(df) or float((h - l).iloc[-14:].mean())      # die eine ATR der App
     if tag != df.index[-1] and float(df["Close"].iloc[-1]) >= float(seit.min()) + TIEF_ATR * atr:
         return tag
     return None

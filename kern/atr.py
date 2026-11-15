@@ -22,6 +22,14 @@ def _tr(df):
     return tr
 
 
+def reihe(df, n=TAGE):
+    """ATR als Reihe (pandas Series, Index wie df): Mittel der True Range der letzten n Tage – die eine ATR der App
+    (Generalinventur 15.11.2026: vorher fünf Rechnungen – Wilder-Glättung in vcp_zone, Spanne ohne Lücken in avwap,
+    einfaches Mittel hier, in zeichen und auktion; Stopp, Zonen und Anker maßen dasselbe Rauschen verschieden)."""
+    import pandas as pd
+    return pd.Series(_tr(df), index=df.index).rolling(n).mean()
+
+
 def wert(df, bis=None):
     """ATR der 14 Tage bis einschließlich Index bis (Standard: letzter Tag)."""
     tr = _tr(df)

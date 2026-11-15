@@ -33,7 +33,7 @@ FARBE = {"Balance": "#8B949E", "Test am Rand": "#8B949E", "abgelehnt": "#3FB950"
 KRAEFTE = ("Gegner antwortet", "Antrieb erlischt", "Wert akzeptiert")
 
 FRISCH = 10            # abgelehnt/angenommen: höchstens 10 Handelstage her (danach Ungleichgewicht bzw. zurück in der Balance)
-RAND_PCT = 3.0         # Test am Rand: Kurs höchstens 3 % vom Rand
+from vcp_zone import RAND_PCT   # noqa: E402  Test am Rand: Kurs höchstens 3 % vom Rand – eine Quelle (vcp_zone)
 KOW_VOL, KOW_SPANNE, KOW_TAGE = 1.5, 0.7, 10
 EXZESS_ATR, FLACH_PCT = 0.15, 0.1    # Exzess: äußerste Kerze mindestens 15 % der Tagesschwankung (ATR) vor der nächsten
 KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
@@ -75,9 +75,9 @@ def farbe(e):
 
 # ── Messungen ───────────────────────────────────────────────────────────────────────────────────────────────────
 def _atr(df, n=14):
-    h, l, c = (df[x].to_numpy(float) for x in ("High", "Low", "Close"))
-    tr = np.maximum(h[1:] - l[1:], np.maximum(abs(h[1:] - c[:-1]), abs(l[1:] - c[:-1])))
-    return pd.Series(np.r_[np.nan, tr]).rolling(n).mean().to_numpy()
+    """Die eine ATR der App (atr.reihe) als Array."""
+    import atr as atr_
+    return atr_.reihe(df, n).to_numpy(float)
 
 
 def kraft_ohne_weg(df, oben, unten):
@@ -298,17 +298,21 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     # Ausbruch aus einer Pause tief in der großen Zone (Minervini: Cheat im unteren oder mittleren Drittel der Base) ist
     # ein Einstieg, aber keine Annahme außerhalb der großen Balance – die Zone gilt weiter (Chart-Prüfer 14.11.2026, LUV:
     # „Ausbruch“ über 42,08 $ mitten in der Zone 37,40–52,88 $ neben dem Zustand Balance)
-    innen_br = None
-    if br and zone and zone.get("zone") and zone.get("oben") and zone.get("unten") is not None:
-        z_br = br.get("zone") or {}
-        if (br["pivot"] < zone["oben"] * (1 - RAND_PCT / 100) and z_br.get("start_i", -1) > zone.get("start_i", -1)):
-            anteil = (br["pivot"] - zone["unten"]) / (zone["oben"] - zone["unten"])
-            innen_br = "Low Cheat (unteres Drittel)" if anteil < 1 / 3 else "Cheat (mittleres Drittel)"
-    if innen_br:
-        nachher.append(("Balance", f"innere Rotation: {'Fehlausbruch' if br.get('fehl') else 'Ausbruch'} am "
-                                   f"{_d(br['tag'])} über {_z(br['pivot'])} $ aus einer Pause in der Zone – "
-                                   f"{innen_br} der Base, Minervini"))
-    elif br and br.get("fehl"):
+    # die eine Cheat-Regel (vcp_zone.cheat): ausbruch() zählt solche Ausbrüche nicht, hier stehen sie als innere Rotation
+    ch_br = None
+    if zone and zone.get("zone"):
+        try:
+            import vcp_zone
+            ch_br = vcp_zone.ausbruch(df, jetzt=zone, cheats=True)
+        except Exception:  # noqa: BLE001
+            ch_br = None
+    if ch_br:
+        nachher.append(("Balance", f"innere Rotation: {'Fehlausbruch' if ch_br.get('fehl') else 'Ausbruch'} am "
+                                   f"{_d(ch_br['tag'])} über {_z(ch_br['pivot'])} $ aus einer Pause in der Zone – "
+                                   f"{ch_br['cheat']} der Base, Minervini"))
+    if br and br.get("cheat"):
+        br = None
+    if br and br.get("fehl"):
         ereignisse.append((br["fehl_tag"], "abgelehnt", "aufwärts",
                            f"Fehlausbruch: Ausbruch am {_d(br['tag'])} über den Pivot {_z(br['pivot'])} $, am "
                            f"{_d(br['fehl_tag'])} zurück in der Zone"))

@@ -76,9 +76,9 @@ def _zeichen(seite, art, text, gewicht=1, tag=None):
 
 
 def _atr(df, n=14):
-    h, l, c = df["High"], df["Low"], df["Close"]
-    tr = pd.concat([h - l, (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
-    return tr.rolling(n).mean()
+    """Die eine ATR der App (atr.reihe)."""
+    import atr as atr_
+    return atr_.reihe(df, n)
 
 
 def lage_ok(df, i):

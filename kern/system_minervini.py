@@ -27,7 +27,7 @@ import vcp_zone
 
 RS_MIN = 70
 MAX_STOPP = 0.08
-KAUFZONE = 5.0
+KAUFZONE = vcp_zone.KAUFZONE   # eine Quelle: Minervinis Kaufzone bis 5 % über dem Pivot (vcp_zone)
 
 
 def trendvorlage(df):

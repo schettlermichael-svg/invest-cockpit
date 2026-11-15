@@ -224,6 +224,17 @@ WERKZEUGE = {
                                           "Phase 4. Drittel der Base: Low Cheat unten, Cheat Mitte, Pivot oben.",
              messung=["vcp_zone.enge"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
+        dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
+                                               "Zone, mit Pivot mehr als 3 % unter deren Oberkante, ist ein früher "
+                                               "Einstieg (Low Cheat, Cheat) und kein Ausbruch: er zählt nicht als "
+                                               "Ausbruch, nicht als eigene Base und steht im Zustand als innere Rotation. "
+                                               "In der Historie zeigt die App dieselbe Schlacht nur einmal (überlappende "
+                                               "Zonen, die innerhalb von 5 Tagen ausbrechen: die größere).",
+             messung=["vcp_zone.cheat", "vcp_zone.ausbruch", "vcp_zone.verlauf", "basen.zaehlen", "auktion.titel"],
+             stand="gemessen", pruefer=["Zone: Name", "abgelehnt/angenommen", "Neue Balance/Basenzählung"]),
+        dict(name="ATR (eine Rechnung)", regel="Die ATR ist das Mittel der True Range der letzten 14 Tage (Lücken zum Vortag "
+                                                "eingeschlossen) – eine Rechnung für Stopp, Zonen, Anker, Zeichen und Zustand.",
+             messung=["atr.reihe", "atr.wert"], stand="gemessen", pruefer=["Sonstiges"]),
         dict(name="Ausbruchsvolumen", regel="Ausbruchsvolumen ist bei der App ein Zeichen, keine Pflicht – über dem "
                                             "50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils 1,4-fach ist ihm zu "
                                             "streng); ein Ausbruch mit wenig Volumen ist kein Widerspruch, höchstens ein "
@@ -448,6 +459,69 @@ SETUP_GRUNDSATZ = [
 VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★ (Kaufzone) → "
            "Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster; „auch“ nennt die übrigen")
 
+# ── Weitere Bereiche der App (Generalinventur 15.11.2026) ────────────────────────────────────────────────────────
+# Regeln außerhalb der drei Bilder und der Setups: Rückenwind, Depot und Risiko, Fundament, Stopps, Kartentisch,
+# Erkennung, Rudel. pruefer leer = noch kein Prüfer sieht den Bereich (gelb, Micky entscheidet).
+BEREICHE = [
+    dict(name="Wahl des Setups", quelle="Micky 12.11.2026 (ein System, ein Urteil je Titel)",
+         regel=f"Vorrang: {VORRANG}. Kurs steht still (ATR unter 0,5 % des Kurses) → kein handelbares Setup; "
+               "VCP-Reihe nur bis 5 % unter bzw. über dem Pivot; ★ = Minervinis Kaufzone (bis 5 % unter bis 5 % über "
+               "dem Pivot).",
+         messung=["kartentisch.setup_feststellen", "kartentisch._scannerfeld"], pruefer=["Wahl des Setups", "Kaufzone/Abstand"]),
+    dict(name="Seite long/short und Warnungen", quelle="Weinstein (Short in Phase 3 und 4), Market Profile",
+         regel="Die Seite eines Titels folgt der aktiven Wertzone des Market Profile (↑ long, ↓ short), ohne sie der Phase "
+               "(Short beim Bruch aus Phase 3 und in Phase 4). Warnungen im Kopf: Daten gestört, Klimax, Übernahme.",
+         messung=["erkennung.erkenne"], pruefer=["Short"]),
+    dict(name="Einstieg, Stopp und CRV", quelle="Micky 09.11.2026 (1,5 ATR), Weinstein/AMT (Hürde), Minervini (CRV)",
+         regel="Stopp 1,5 ATR vom Einstieg (eine Linie für alle Setups); Stopp unter 1 ATR = im Tagesrauschen (rot), bis "
+               "1,5 gelb. CRV 1 = Weg bis zur ersten Hürde (altes Hoch der 52 Wochen, fallender GD150/200 oder "
+               "Volumenknoten) ÷ Stoppabstand, CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand ab 5 Trades; Ampel "
+               "grün ab 3 : 1, gelb ab 2 : 1. Zu weit gelaufen: über 2 ATR jenseits des Pivots rot (nicht nachjagen). "
+               "Kullamägi: Stopp nie weiter als eine Tagesspanne (ADR, 20 Tage).",
+         messung=["depot.plan", "stopps.linien", "stopps.widerstand", "atr.stopp", "atr.nachjagen", "atr.enge",
+                  "atr.ueberdehnung", "system_kullamaegi.adtr"],
+         pruefer=["Stopp", "Einstieg/Pivot", "Kaufzone/Abstand"]),
+    dict(name="Nach dem Kauf und Depot", quelle="O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
+         regel="Verlustgrenze 8 % vom Einstieg ohne Ausnahme; ab 2R Gewinn Stopp mindestens auf Einstand; Positionswert "
+               "über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = Zeichen, das Risiko je Trade zu "
+               "halbieren; Depot-Hitze höchstens 6 % des Kontos.",
+         messung=["depot._nach_dem_kauf", "depot.verlustbremse", "depotleiste.titelkarte"], pruefer=[],
+         luecke="kein Prüfer – die Regeln sind fest, gemessen wird am eigenen Depot"),
+    dict(name="Rückenwind: Stufen der Titel", quelle="O'Neil/IBD (RS-Rang), Micky 09.11.2026 (Stufen)",
+         regel="RS-Rang 1–99 wie IBD (letztes Quartal 40 %, die drei davor je 20 %). Läuft: Rang ab 85 und Tempo nicht "
+               "schlechter als −5 in 4 Wochen; Entsteht: Rang 50 bis unter 85, mindestens +15 in 4 Wochen und "
+               "positive Beschleunigung; Ermüdet: Rang ab 80 und Tempo −10 oder schlechter – oder Beschleunigung −15 "
+               "und Tempo höchstens +5; Abfluss: vor 4 Wochen ab 70, seitdem 20 Punkte verloren. Zufluss ab 1,1, "
+               "Abfluss unter 0,9 (Volumen steigender ÷ fallender Tage, 50 Tage); Gruppe stabil: führt seit 8 Wochen, "
+               "Rückschlag höchstens 8 %; Kurs am Hoch: höchstens 3 % darunter. Qualität: Eigenkapitalrendite ab 17 %, "
+               "Jahresgewinn ab 25 %; Reaktion auf Zahlen: Lücke mit 1,5-fachem Volumen, Abverkauf ab −3 %.",
+         messung=["rueckenwind.rechnen", "rueckenwind_seite.wetterkarte", "rueckenwind_seite.gruppen",
+                  "rueckenwind_seite._zufluss"], pruefer=[],
+         luecke="kein Prüfer sieht die Rückenwind-Seite (der Gruppen-Prüfer sieht nur Geldfluss und Feld der Gruppen)"),
+    dict(name="Fundament (Zahlen)", quelle="Minervini (Regelkatalog Kap. 7–8), O'Neil",
+         regel="Gewinn je Quartal und Beschleunigung, Umsatz kräftig ab 15 % (Rate muss um mindestens 1 Punkt steigen), "
+               "Überraschung deutlich ab 3 %, Marge, Gewinnqualität – als Ampeln.",
+         messung=["fundament.umsatz", "fundament.ueberraschung", "fundament.beschleunigung", "fundament.quartalsgewinn"],
+         pruefer=[], luecke="kein Prüfer – die Zahlen kommen aus den Quellen, gerechnet wird nur"),
+    dict(name="Termine der Zahlen", quelle="Micky (Zahlen nicht im Trade überraschen lassen)",
+         regel="Nächste Zahlen in höchstens 7 Tagen rot, 8–14 Tage gelb, später grün; in der Auswahl rücken Titel mit "
+               "Zahlen in höchstens 7 Tagen nach hinten.",
+         messung=["gestaltung.termin_ampel", "auswahl.auswahl"], pruefer=[],
+         luecke="kein Prüfer – eine Kalenderregel"),
+    dict(name="Auswahl der Akten", quelle="Micky 12.11.2026 (Klasse statt Masse)",
+         regel="Depot immer; dazu Setups grün und am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, short bis 5 % "
+               "unter der Unterkante, Volltreffer bis 10 % darüber), je Reihe bis 2 Plätze vorab, höchstens 30.",
+         messung=["auswahl.auswahl"], pruefer=[], luecke="kein Prüfer – eine Sortierregel"),
+    dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",
+         regel="Pfeil = Bewegung der letzten 5 Wochen; unter 0,5 Punkten gilt eine Achse als unverändert.",
+         messung=["frontkarte.richtung"], pruefer=["Feld (Rotation)"]),
+    dict(name="Rudel und Kursverwandte", quelle="eigene Messung (Gleichlauf nach Abzug des Marktes)",
+         regel="Kursverwandte: die 5 Titel mit dem engsten Gleichlauf – eng ab 0,50, mittel ab 0,35; Themen-Gruppen ab "
+               "0,40 und 5 Titeln.",
+         messung=["rudel.kursverwandte", "rudel._rechnen"], pruefer=[],
+         luecke="kein Prüfer – Zeichen am Rand, kein Urteil"),
+]
+
 # ── Meister (recherchiert 14.11.2026) ───────────────────────────────────────────────────────────────────────────
 MEISTER = [
     ("O'Neil",
@@ -547,6 +621,112 @@ def elemente(bild):
         if e not in aus:
             aus.append(e)
     return aus + ["Sonstiges"]
+
+
+# ── Inventur: jede feste Regel im Code gehört einem Eintrag der Karte (Generalinventur, Micky 15.11.2026) ──────────
+# Eine feste Regel = eine Konstante auf Modulebene mit einer Zahl (Schwelle, Fenster, Faktor). Sie gilt als auf der
+# Karte, wenn eine Messfunktion der Karte sie benutzt – direkt oder über Funktionen, die sie aufruft. Was keiner gehört,
+# ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
+TECHNIK = {
+    "chart.ETIKETT": "Layout", "chart.LINKS": "Layout", "chart.RECHTS": "Layout",
+    "kartentisch.SICHTBAR": "Anzeige (wie viele Karten offen)", "kartentisch.TOP": "Anzeige",
+    "chartpruefer.GRUPPEN": "Stichprobe des Prüfers", "chartpruefer.STICHPROBE": "Stichprobe des Prüfers",
+    "chartpruefer.KOSTEN_JE_CHART": "Kostenschätzung", "setuppruefer.STICHPROBE": "Stichprobe des Prüfers",
+    "setuppruefer.OHNE": "Stichprobe des Prüfers", "setuppruefer.KLEIN": "Stichprobe des Prüfers",
+    "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "quellen.GUELTIG_STUNDEN": "Datenpflege",
+    "revier_pflege.HOECHSTENS": "Datenpflege", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
+    "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
+    "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
+    "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
+}
+VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE"}   # gleicher Name, verschiedene Begriffe
+
+
+def _quellen():
+    import os
+    hier = os.path.dirname(os.path.abspath(__file__))
+    aus = {}
+    for d in ("", os.path.join("..", "oberflaeche")):
+        ordner = os.path.normpath(os.path.join(hier, d))
+        for f in sorted(os.listdir(ordner)):
+            if f.endswith(".py"):
+                aus[f[:-3]] = os.path.join(ordner, f)
+    return aus
+
+
+def inventur():
+    """→ {konstanten: {(modul, NAME): Wert}, abgedeckt: set, frei: [modul.NAME], kopien: [(NAME, [modul…])]}."""
+    import ast
+    konst, fdefs, alias = {}, {}, {}
+    for m, pfad in _quellen().items():
+        baum = ast.parse(open(pfad, encoding="utf-8").read())
+        for n in baum.body:
+            if isinstance(n, ast.ImportFrom) and n.module:     # from modul import NAME (as X): dieselbe Regel
+                for a_ in n.names:
+                    alias[(m, a_.asname or a_.name)] = (n.module, a_.name)
+            if isinstance(n, ast.Assign):
+                for tg in n.targets:
+                    for nm in ([tg] if isinstance(tg, ast.Name) else getattr(tg, "elts", [])):
+                        if isinstance(nm, ast.Name) and nm.id.isupper() and len(nm.id) > 2:
+                            try:
+                                v = ast.literal_eval(n.value)
+                            except Exception:  # noqa: BLE001
+                                continue
+                            if isinstance(v, bool):
+                                continue
+                            if isinstance(v, (int, float)) or (isinstance(v, tuple) and v
+                                                               and all(isinstance(e, (int, float)) for e in v)):
+                                konst[(m, nm.id)] = v
+            elif isinstance(n, ast.FunctionDef):
+                fdefs[(m, n.name)] = n
+
+    def nachbarn(f):
+        aus_k, aus_f = set(), set()
+        m = f[0]
+        for n in ast.walk(fdefs[f]):
+            if isinstance(n, ast.Name):
+                if (m, n.id) in konst:
+                    aus_k.add((m, n.id))
+                if alias.get((m, n.id)) in konst:
+                    aus_k.add(alias[(m, n.id)])
+                if alias.get((m, n.id)) in fdefs:
+                    aus_f.add(alias[(m, n.id)])
+                if (m, n.id) in fdefs:
+                    aus_f.add((m, n.id))
+            elif isinstance(n, ast.Attribute) and isinstance(n.value, ast.Name):
+                if (n.value.id, n.attr) in konst:
+                    aus_k.add((n.value.id, n.attr))
+                if (n.value.id, n.attr) in fdefs:
+                    aus_f.add((n.value.id, n.attr))
+        return aus_k, aus_f
+
+    start = {tuple(m.rsplit(".", 1)) for m in alle_messungen()}
+    stapel, gesehen, abgedeckt = [f for f in start if f in fdefs], set(), set()
+    while stapel:
+        f = stapel.pop()
+        if f in gesehen:
+            continue
+        gesehen.add(f)
+        k_, f_ = nachbarn(f)
+        abgedeckt |= k_
+        stapel += list(f_)
+    frei = sorted(f"{m}.{k}" for (m, k) in konst if (m, k) not in abgedeckt and f"{m}.{k}" not in TECHNIK)
+    namen = {}
+    for (m, k), v in konst.items():
+        namen.setdefault(k, []).append((m, v))
+    kopien = [(k, sorted(m for m, _ in v)) for k, v in sorted(namen.items())
+              if len({m for m, _ in v}) > 1 and k not in VERSCHIEDEN]
+    return {"konstanten": konst, "abgedeckt": abgedeckt, "frei": frei, "kopien": kopien}
+
+
+def alle_messungen():
+    aus = set()
+    for b in list(KAESTEN.values()) + list(WERKZEUGE.values()):
+        for x in b:
+            aus.update(x["messung"])
+    for x in ZEICHEN + SETUPS + BEREICHE:
+        aus.update(x["messung"])
+    return aus
 
 
 # ── Wachposten ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -658,6 +838,24 @@ def wachposten():
         elif s["stand"] == "teilweise":
             melde("gelb", "Setup", "setup", s["name"], "erst teilweise" + (f" – {s['luecke']}" if s.get("luecke") else ""),
                   alarm=False)
+    for b in BEREICHE:
+        for m in b["messung"]:
+            if not _gibt_es(m):
+                melde("rot", "Bereich", "bereich", b["name"], f"Messfunktion {m} fehlt im Code")
+        if not b.get("pruefer"):
+            melde("gelb", "Bereich", "bereich", b["name"], "kein Prüfer sieht diesen Bereich" +
+                  (f" – {b['luecke']}" if b.get("luecke") else ""), alarm=False)
+    # Inventur: jede feste Regel des Codes gehört der Karte, keine Regel steht doppelt
+    try:
+        inv = inventur()
+        for k in inv["frei"]:
+            melde("rot", "Regel", "inventur", k, f"feste Regel {k} = {inv['konstanten'][tuple(k.split('.'))]} gehört "
+                                                 "keinem Eintrag der Karte – blinder Fleck")
+        for k, ms in inv["kopien"]:
+            melde("rot", "Regel", "inventur", k, f"{k} steht doppelt im Code ({', '.join(ms)}) – eine Quelle, sonst "
+                                                 "laufen die Kopien auseinander")
+    except Exception as e:  # noqa: BLE001
+        melde("rot", "Regel", "inventur", "Code", f"Inventur nicht lesbar: {e}")
     return aus
 
 

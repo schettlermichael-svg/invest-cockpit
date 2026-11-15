@@ -97,9 +97,9 @@ FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 AT
 
 
 def atr(df, n=ATR_TAGE):
-    h, l, c = df["High"], df["Low"], df["Close"]
-    tr = pd.concat([h - l, (h - c.shift()).abs(), (l - c.shift()).abs()], axis=1).max(axis=1)
-    return tr.ewm(alpha=1 / n, adjust=False).mean()
+    """Die eine ATR der App (atr.reihe)."""
+    import atr as atr_
+    return atr_.reihe(df, n)
 
 
 def zigzag(df, faktor):
@@ -385,6 +385,56 @@ def enge(df, z):
                     + (f" · fehlt: {', '.join(fehlt)}" if fehlt else "")}
 
 
+RAND_PCT = 3.0              # Rand einer Zone: bis 3 % von der Oberkante (Test am Rand, Cheat-Grenze) – eine Quelle
+DOPPELT_TAGE = 5            # zwei Zonen, die innerhalb von 5 Tagen ausbrechen und sich überlappen: dieselbe Schlacht
+
+
+def cheat(gross, b, pivot):
+    """Die eine Cheat-Regel der App (Gefechtsordnung, Micky 14./15.11.2026): ein Ausbruch über `pivot` aus der Zone b
+    ist ein früher Einstieg (Cheat) und kein Ausbruch, wenn b jünger ist als die größere Zone `gross`, die noch läuft,
+    und der Pivot mehr als RAND_PCT unter deren Oberkante liegt – der Kurs bricht aus einer Pause in der Balance, nicht
+    aus der Balance. → „Low Cheat (unteres Drittel)“ / „Cheat (mittleres Drittel)“ / „Cheat (oberes Drittel)“ oder None.
+    Benutzt von: ausbruch (zählt ihn nicht als Ausbruch), verlauf (Historie: Cheat statt eigener Zone), basen (zählt
+    ihn nicht), auktion (innere Rotation)."""
+    if not (gross and gross.get("zone") and b and gross.get("oben") and gross.get("unten") is not None):
+        return None
+    if b.get("start_i", -1) <= gross.get("start_i", -1) or pivot >= gross["oben"] * (1 - RAND_PCT / 100):
+        return None
+    if pivot <= gross["unten"]:
+        return None
+    anteil = (pivot - gross["unten"]) / (gross["oben"] - gross["unten"])
+    return ("Low Cheat (unteres Drittel)" if anteil < 1 / 3 else "Cheat (mittleres Drittel)" if anteil < 2 / 3
+            else "Cheat (oberes Drittel)")
+
+
+def _einordnen(fertig, jetzt):
+    """Historie nach der Gefechtsordnung: dieselbe Schlacht nur einmal (überlappende Zonen, die innerhalb von
+    DOPPELT_TAGE ausbrechen: die größere bleibt), ein Ausbruch innerhalb einer größeren Zone ist ein Cheat
+    (b["cheat"] = Drittel) – innerhalb einer später ausbrechenden Zone der Historie oder der laufenden Zone."""
+    fertig = sorted(fertig, key=lambda b: (b["ende_i"], b["start_i"]))
+    raus = set()
+    for i, a in enumerate(fertig):
+        for j, b in enumerate(fertig):
+            if i == j or i in raus or j in raus:
+                continue
+            ueberlapp = a["start_i"] <= b["start_i"] <= a["ende_i"] or b["start_i"] <= a["start_i"] <= b["ende_i"]
+            if ueberlapp and abs(a["ende_i"] - b["ende_i"]) <= DOPPELT_TAGE:
+                klein = j if (b["oben"] - b["unten"]) * (b["ende_i"] - b["start_i"]) <= \
+                    (a["oben"] - a["unten"]) * (a["ende_i"] - a["start_i"]) else i
+                raus.add(klein)
+    aus = [b for k, b in enumerate(fertig) if k not in raus]
+    for b in aus:
+        groessere = [g for g in aus if g is not b and g["start_i"] < b["start_i"] and g["ende_i"] > b["ende_i"]]
+        if jetzt and jetzt.get("zone") and jetzt["start_i"] < b["start_i"]:
+            groessere.append(jetzt)
+        for g in groessere:
+            ch = cheat(dict(g, zone=True), b, b["oben"])
+            if ch:
+                b["cheat"] = ch
+                break
+    return aus
+
+
 def verlauf(df, tage=600):
     """Abgeschlossene Zonen der letzten `tage` Handelstage – dieselbe Regel wie live: eine Zone ist fertig, wenn
     der Kurs über seiner Oberkante schließt (Flagge in der Zone ebenso). Gerechnet wird nur an Tagen mit Schluss über
@@ -402,7 +452,7 @@ def verlauf(df, tage=600):
         for b in [k] + ([k["innen"]] if k.get("innen") else []):
             if b["laenge"] == "ok" and c[t] > b["oben"]:
                 fertig.append(dict(b, ende_i=t, ende=df.index[t]))
-    return fertig
+    return _einordnen(fertig, zone(df))
 
 
 AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter dem Pivot (Micky, 06.11.2026)
@@ -410,7 +460,7 @@ KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
 FEHL_PCT = 3.0                 # Fehlausbruch: Schluss mehr als 3 % unter dem Pivot (oder unter dem Tief des Ausbruchstags)
 
 
-def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
+def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
     """Ausbruch über den Pivot in den letzten `tage` Handelstagen oder None:
     {tag, tage_her, erster_tag, pivot, zone, enge, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, innen, eltern}.
     Zone und Enge so, wie sie am Vortag des ersten Ausbruchs standen (Indizes passen zu df). Schließt der Kurs danach
@@ -418,7 +468,9 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
     neuer Ausbruch (tag, volumen von diesem Tag). Hat sich über dem Ausbruch schon eine neue fertige Zone gebildet
     (jetzt = zone(df), sonst gerechnet), übernimmt sie: None. passt(zone) → bool: nur Zonen, die das System als Base
     gelten lässt (Minervini, 12.11.2026: NIQ brach über eine 61 % tiefe Base aus, gerechnet wurde mit der Flagge darin –
-    Text +9,0 %, Abstand +2,9 % zu zwei verschiedenen Pivots)."""
+    Text +9,0 %, Abstand +2,9 % zu zwei verschiedenen Pivots).
+    Ein Ausbruch aus einer Pause innerhalb der noch laufenden größeren Zone ist ein Cheat (cheat()) und zählt nicht;
+    mit cheats=True liefert die Funktion genau diesen Cheat (mit „cheat“: Drittel) – für Zustand und frühen Einstieg."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
     if n < 80:
@@ -443,6 +495,9 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
             jz = jetzt if jetzt is not None else zone(df)
             if jz.get("zone") and jz.get("laenge") == "ok" and jz["start_i"] > t:
                 return None                                # neue fertige Zone über dem Ausbruch
+            ch = cheat(jz, b, pivot) if jz.get("start_i", n) < t else None
+            if bool(ch) != cheats:
+                continue                                   # Cheat in der laufenden Zone: kein Ausbruch (bzw. umgekehrt)
             # Verlauf seit dem Ausbruch (Micky 13.11.2026): Fehlausbruch erst bei Schluss unter dem Tief des
             # Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest. Ein Schluss
             # über dem Pivot nach einem Fehlausbruch ist ein neuer Ausbruch (Tag und Volumen von dort).
@@ -466,7 +521,7 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None):
                     "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None,
                     "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
                     "tief_ausbruchstag": float(lo[letzter]), "innen": b is not z,
-                    "eltern": z["name"]}
+                    "eltern": z["name"], "cheat": ch}
     return None
 
 

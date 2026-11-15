@@ -1078,3 +1078,28 @@ Gemessen über 1.865 Titel, alter gegen neuen Code (Mac-Daten bis 04.11.):
 
 Offen aus Lauf 4: Pivot verbraucht/Drittel,
 Volumenprofil der Balance, Basenzählung, Kette (Gefechtsordnung), Phase (Schritt 8), Gruppen und Markt.
+
+## Generalinventur (15.11.2026)
+
+Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht mehr zufällig auffallen.“
+
+- **Inventur im Wachposten** (`regelkarte.inventur`): liest den Code selbst. Jede feste Regel (Konstante mit Zahl auf
+  Modulebene, auch über `from … import`) muss einer Messfunktion der Karte gehören, sonst 🚨 „blinder Fleck“; Technik
+  (Layout, Kosten, Stichproben, Datenpflege) steht mit Grund in `TECHNIK`. Gleicher Name in zwei Modulen = 🚨 Kopie
+  (Ausnahmen mit verschiedenem Begriff in `VERSCHIEDEN`). Stand: 190 feste Regeln, 171 auf der Karte, 19 Technik,
+  0 blinde Flecken, 0 Kopien (vorher 80 bzw. 6).
+- **Weitere Bereiche** auf der Karte (`BEREICHE`): Wahl des Setups, Seite long/short, Einstieg/Stopp/CRV, Nach dem
+  Kauf und Depot, Rückenwind-Stufen, Fundament, Termine, Auswahl, Rotationskarte, Rudel. Ohne Prüfer (🟡): Depot,
+  Rückenwind, Fundament, Termine, Auswahl, Rudel.
+- **Kopien zusammengelegt**: Stopp 1,5 ATR (depot), Kaufzone 5 % (vcp_zone), Sprung-Schwellen (system_kullamaegi),
+  Rückschlag (zeichen), Zufluss (rueckenwind), Kosten je Chart (chartpruefer), Wertbereich 70 % (marketprofile),
+  Rand 3 % (vcp_zone). `volumenprofil.JAHR` war tot und ist weg.
+- **Eine ATR** (`atr.reihe`): vorher fünf Rechnungen (Wilder-Glättung in vcp_zone, Spanne ohne Lücken in avwap,
+  einfaches Mittel in atr, zeichen, auktion). Gemessen: 93 von 1.823 Zonen ändern sich (5 %), Enge kaum.
+- **Eine Cheat-Regel** (`vcp_zone.cheat`), benutzt von Ausbruch, Historie, Basenzählung und Zustand: ein Ausbruch aus
+  einer jüngeren Pause mit Pivot mehr als 3 % unter der Oberkante der noch laufenden größeren Zone ist ein Cheat.
+  Historie: dieselbe Schlacht nur einmal (überlappend, Ausbruch innerhalb von 5 Tagen: die größere bleibt), Cheats
+  dünn gestrichelt ohne Nummer. Gemessen: Ausbrüche 745 → 604 (151 waren Cheats in der laufenden Zone), Zonen der
+  Historie 16.757 → 14.939, davon 2.865 Cheats. LUV: 21.10.–26.11.25 und 22.09.–27.10.26 Cheat, 10.03./17.04.26 eine Zone.
+- **Noch nicht inventarisiert**: Zahlen direkt im Code (386 in den Rechenmodulen, ohne 0/1/2/3/4/5/10/20/50/100) –
+  die zweite Stufe.

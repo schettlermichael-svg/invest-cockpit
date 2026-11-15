@@ -258,7 +258,7 @@ def setup_feststellen(df, m, k, zr, scan):
 
 STILL_PCT = 0.5               # ATR unter 0,5 % des Kurses: der Kurs steht still (Übernahme), kein handelbares Setup
 PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
-KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
+from vcp_zone import KAUFZONE as KAUFZONE_M  # noqa: E402  ★: höchstens 5 % unter bis 5 % über dem Pivot (Minervini, eine Quelle)
 
 
 def flagge_im_trend(df, f):

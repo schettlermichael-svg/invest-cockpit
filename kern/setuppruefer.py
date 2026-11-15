@@ -41,7 +41,7 @@ LOG = os.path.join(ORDNER, "lauf.log")
 STICHPROBE = 100               # davon OHNE Titel ohne Setup
 OHNE = 20
 KLEIN = 60                     # kleiner Lauf (Micky 15.11.2026: Guthaben reicht nach Lauf 4 nicht für 100), OHNE anteilig
-KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,87 $ für 72 Charts (Bild, ganze Kette)
+from chartpruefer import KOSTEN_JE_CHART  # noqa: E402  eine Quelle (chartpruefer)
 
 ELEMENTE = regelkarte.elemente("setup")     # Setups, Wege und Meister aus der Regelkarte (15.11.2026)
 

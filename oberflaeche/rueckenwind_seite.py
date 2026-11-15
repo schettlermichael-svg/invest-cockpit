@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 import kreislaufbild  # noqa: E402
 
-ZUFLUSS = (1.1, 0.9)
+from rueckenwind import ZUFLUSS  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 def _fn(f):
     return FELD_TEXT[f].split(" · ")[0] if f in FELD_TEXT else f

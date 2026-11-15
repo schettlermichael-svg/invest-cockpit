@@ -411,6 +411,12 @@ def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
     if ansicht == "Historie":
         stangen_ende = []
         for b in ka.get("verlauf") or []:
+            if b.get("cheat"):                   # Cheat in einer größeren Zone: dünn gestrichelt, ohne Nummer (Gefechtsordnung)
+                x0 = rahmen(b, X(pos(b["ende_t"])), 0.8, 0.0, "3 3")
+                if x0 is not None:
+                    spaete.append(f'<text x="{X(pos(b["ende_t"])):.1f}" y="{Y(b["oben"]) - 4:.1f}" fill="{TEXT_2}" '
+                                  f'font-size="12" text-anchor="middle">Cheat</text>')
+                continue
             x0 = rahmen(b, X(pos(b["ende_t"])), 1.2, 0.07)
             if x0 is None:
                 continue

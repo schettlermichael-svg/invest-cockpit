@@ -10,10 +10,9 @@ import numpy as np
 import pandas as pd
 
 FAECHER = 48
-WERT = 0.70                 # Wertbereich: 70 % des Volumens
+from marketprofile import WERT  # noqa: E402  Wertbereich 70 % des Volumens (Dalton) – eine Quelle
 GIPFEL_MIN = 0.30           # Knoten: Gipfel mit mindestens 30 % des größten Volumens …
 GIPFEL_UEBER = 0.10         # … der mindestens 10 % (des größten) über dem höheren der beiden Täler daneben liegt
-JAHR = 252
 
 
 def profil(df, start, ende=None):

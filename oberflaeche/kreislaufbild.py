@@ -10,7 +10,7 @@ punkt_wort(k)                    Phase in einem Wort mit farbigem Punkt für Tab
 """
 from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
 
-RUECKSCHLAG = 21
+from zeichen import RUECKSCHLAG  # noqa: E402  eine Quelle (zeichen)
 # Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag amber, jung neutral
 FARBE = {0: "#6B7280", 1: "#7F93AD", 2: "#1D9E75", 3: "#B09A72", 4: "#D85A30", RUECKSCHLAG: "#E0A33A"}
 # Wechsel zeichnet sich ab (Micky 13.11.2026: „Hell = laufende Phase verblasst“): die laufende Phase hell ab dem

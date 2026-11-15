@@ -780,7 +780,7 @@ def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz
                        f'{z.get("rs_lesart", "")}{z.get("plan", "")}</div>' + st_), oben=0, unten=0), z["df"].attrs.get("ticker", ""))
 
 
-ATR_STOPP = 1.5                                  # Stopp 1,5 ATR vom Einstieg, eine Linie für alle Systeme (Micky, 09.11.2026)
+from depot import ATR_STOPP  # noqa: E402  Stopp 1,5 ATR vom Einstieg – eine Quelle (depot), Micky 09.11.2026
 
 
 def _rueckenwind(tk):

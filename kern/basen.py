@@ -59,6 +59,9 @@ def zaehlen(df, index, verlauf, jetzt=None):
         s50 = np.nanmean(v[max(0, i - 50):i]) if i > 0 else np.nan
         b["volumen"] = float(v[i] / s50) if s50 == s50 and s50 else None
         b["ausgang"] = _ausgang(df, i, b["oben"])
+        if b.get("cheat"):                       # Ausbruch aus einer Pause in einer größeren Zone: keine eigene Base
+            b["nummer"] = None                   # (die eine Cheat-Regel, vcp_zone.cheat)
+            continue
         if t0 is None or df.index[b["start_i"]] < t0:
             b["nummer"] = None                   # vor dem Beginn der Zählung
             continue
@@ -72,7 +75,8 @@ def zaehlen(df, index, verlauf, jetzt=None):
             lauf = schon["nummer"]
         else:
             lauf = zahl + 1 if letzter is None or jetzt["oben"] >= letzter * (1 + STUFE) else max(zahl, 1)
-    zaehl = {a: sum(1 for b in liste if b["ausgang"] == a) for a in ("gelungen", "gescheitert", "offen")}
+    zaehl = {a: sum(1 for b in liste if b["ausgang"] == a and not b.get("cheat"))
+             for a in ("gelungen", "gescheitert", "offen")}
     return {"zahl": lauf, "liste": liste, "beginn": t0, "bilanz": zaehl}
 
 

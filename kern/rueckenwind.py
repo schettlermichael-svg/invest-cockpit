@@ -166,7 +166,7 @@ def _geld_ampel(sek, bra, th=None):
 
 ROE_MIN = 17.0                 # Eigenkapitalrendite ab 17 % (O'Neil)
 JAHR_MIN = 25.0                # Jahresgewinne: drei Jahre je ab +25 %
-EP_SPRUNG, EP_VOLUMEN = 10.0, 3.0   # Episodic Pivot wie im System Kullamägi
+from system_kullamaegi import EP_SPRUNG, EP_VOLUMEN  # noqa: E402  Episodic Pivot – eine Quelle (System Kullamägi)
 LUECKE_VOLUMEN = 1.5           # Lücke nach oben mit Volumen
 ABVERKAUF = -3.0               # Abverkauf nach den Zahlen ab −3 %
 
