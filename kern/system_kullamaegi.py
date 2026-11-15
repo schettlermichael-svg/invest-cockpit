@@ -33,6 +33,7 @@ import numpy as np
 
 import fuehrer_rang
 import vcp_zone
+from masse import GD50_TAGE, VOL_MIN_TAGE  # noqa: E402
 
 EP_TAGE = 10
 EP_SPRUNG = 10.0
@@ -50,16 +51,15 @@ SHORTS = {"k_ermuedung": "ermuedung", "k_baerenflagge": "baerenflagge", "k_bruch
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 WOCHEN_SPIEL = 0.5    # Dauer der Pause: bis eine halbe Woche Spielraum (Rundung der Wochen)
-GD50_TAGE = 50        # GD50
 GD20_PUFFER = 0.99    # Pause hält den GD20: höchstens 1 % darunter
 VORHER_MIN = 65       # davor 3 Wochen über dem GD50: ab Tag 65 (GD50 + 15)
 VORHER_TAGE = 15      # … die 15 Tage vor der Pause über dem GD50
-VOL_MIN_TAGE = 20     # Volumen-Vergleich ab 20 Tagen Daten
 VOL_SCHNITT = 50      # Volumen-Schnitt der 50 Tage
 EP_MIN_DATEN = 120    # Episodic Pivot ab 120 Handelstagen Daten
 EP_START = 60         # … gesucht ab Tag 60
 EP_VORLAUF_TAGE = 64  # … Vorlauf: Kurs der 64 Tage davor (ein Quartal)
 EP_HAELT = 0.999      # … Kurs hält das Tief des Sprungtags (Rundung 0,1 %)
+NACHRICHT_TAGE = 1  # Episodic Pivot: Zahlen höchstens 1 Tag neben dem Sprung
 
 
 def short_von(k, reihe=None):
@@ -162,7 +162,7 @@ def episodic_pivot(df, gewinn_tage=()):
         if sprung < EP_SPRUNG or vol < EP_VOLUMEN or not luecke:
             continue
         tag = df.index[i]
-        nachricht = any(abs((tag.normalize() - z).days) <= 1 for z in zahlen)
+        nachricht = any(abs((tag.normalize() - z).days) <= NACHRICHT_TAGE for z in zahlen)
         oben3 = h[i] > l[i] and (c[i] - l[i]) / (h[i] - l[i]) >= 2 / 3
         bewertet = not nachricht and vol >= EP_VOLUMEN_OHNE and oben3
         vorlauf = (c[i - 1] / c[max(0, i - EP_VORLAUF_TAGE)] - 1) * 100

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 
 import marktdaten as md
+from masse import GD200_TAGE, JAHR_TAGE, JAHR_WOCHEN, QUARTALE_JAHR  # noqa: E402
 
 # ── Dalio-Quadrant ──────────────────────────────────────────────────────────
 QUADS = {1: "Goldilocks", 2: "Reflation", 3: "Stagflation", 4: "Deflation"}
@@ -17,6 +18,41 @@ FUEHRER = {1: "Technologie, zyklischer Konsum, Kommunikation",
            4: "Versorger, Basiskonsum, Gesundheit, Staatsanleihen"}
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+QUARTAL_WOCHEN = 13         # Richtung: gegenüber vor 13 Wochen
+MONATE_JAHR = 12            # Inflation zum Vorjahr: 12 Monate zurück
+RANG_JAHRE = 10             # Rang in der eigenen Geschichte der letzten 10 Jahre
+JAHR_KALENDERTAGE = 365     # Kalendertage je Jahr
+RANG_MITTE = 50.0           # ohne Geschichte: Rang in der Mitte
+DREI_MONATE = 60            # 60 Handelstage (Mindestdaten Kredit; Hoch der Breite)
+VIER_WOCHEN = 21            # 4 Wochen in Handelstagen
+SECHS_MONATE = 120          # Tief der Breite in 120 Handelstagen
+LEVY_TAGE = 130             # Levy-Stärke: Kurs zum Schnitt von 130 Tagen (26 Wochen)
+NAH_HOCH = 0.97             # S&P 500 nah am Hoch: höchstens 3 % darunter
+PENDEL_WOCHEN = 4           # Pendel: Zone heute gegen vor 4 Wochen
+PENDEL_SCHRITT = 3          # bis 3 Zonen weiter im Kreis = vorwärts (↗)
+SCHWELLE_PUNKTE = 0.25      # Weekly Economic Index und GDPNow: Richtung erst ab 0,25 Punkten Änderung in 13 Wochen
+ICSA_WOCHEN = 4             # Erstanträge: Schnitt über 4 Wochen
+SCHWELLE_BREAKEVEN = 0.05   # Breakeven-Inflation: Richtung ab 0,05 Punkten
+CPI_ZURUECK = 4             # Inflation steigt/fällt: heute gegen den 4. Monatswert zurück (vor 3 Monaten)
+KAPITULATION_VIX = 90       # Kapitulation: VIX-Rang ab 90 …
+KAPITULATION_BREITE = 20    # … und Breite höchstens 20 %
+BESCHLEUNIGUNG_VIX = 80     # Abwärtsbeschleunigung: VIX-Rang ab 80 …
+BESCHLEUNIGUNG_BREITE = 15  # … und Breite in 4 Wochen mindestens 15 Punkte gefallen (oder Kredit −2)
+ERHOLUNG_BREITE_PLUS = 10   # Frühe Erholung: Breite in 4 Wochen mindestens +10 Punkte …
+ERHOLUNG_BREITE_TIEF = 25   # … nach einem Tief der Breite bis 25 % …
+ERHOLUNG_VIX = 60           # … bei VIX-Rang ab 60 …
+ERHOLUNG_KREDIT = 40        # … oder Kredit-Rang höchstens 40
+BODEN_BREITE = 40           # Bodenbildung: unter dem GD200 und Breite höchstens 40 %
+HITZE_VIX = 15              # Überhitzung: VIX-Rang höchstens 15 …
+HITZE_KREDIT = 85           # … Kredit-Rang ab 85 …
+HITZE_LEVY = 1.10           # … und Levy-Stärke ab 1,10
+TOP_BREITE_RUECK = 10       # Topbildung: nah am Hoch, Breite mindestens 10 Punkte unter ihrem Hoch, Kredit weitet sich
+GESUND_BREITE = 50          # Gesunder Aufwärtstrend: über dem GD200 und Breite ab 50 %
+BESCHLEUNIGUNG_KREDIT = 2  # … oder Kreditabstand in 4 Wochen mindestens 2 Punkte weiter
+SCHWELLE_RATE = 2          # Jahresraten: Richtung erst ab 2 Prozentpunkten Änderung in 13 Wochen
+
+
 def _bis(s, bis):
     return s[s.index <= pd.Timestamp(bis)] if bis else s
 
@@ -24,7 +60,7 @@ def _bis(s, bis):
 def _jahresrate(s):
     """Veränderung zum Vorjahr in Prozent (auf Wochenbasis)."""
     w = s.resample("W-FRI").last().dropna()
-    return (w / w.shift(52) - 1) * 100
+    return (w / w.shift(JAHR_WOCHEN) - 1) * 100
 
 
 def _richtung(rate, schwelle, umgekehrt=False):
@@ -33,7 +69,7 @@ def _richtung(rate, schwelle, umgekehrt=False):
     r = rate.dropna()
     if len(r) < 2:
         return "unklar", np.nan, np.nan, np.nan
-    alt = r[r.index <= r.index[-1] - pd.Timedelta(weeks=13)]
+    alt = r[r.index <= r.index[-1] - pd.Timedelta(weeks=QUARTAL_WOCHEN)]
     if alt.empty:
         return "unklar", np.nan, np.nan, np.nan
     d = r.iloc[-1] - alt.iloc[-1]
@@ -47,16 +83,16 @@ def _instrumente(bis):
     hg, gc = md.yahoo("HG=F"), md.yahoo("GC=F")
     xly, xlp = md.yahoo("XLY"), md.yahoo("XLP")
     wachstum = {
-        "Kupfer/Gold": _richtung(_jahresrate(_bis(hg / gc.reindex(hg.index, method="ffill"), bis)), 2),
-        "Zyklischer gegen Basiskonsum": _richtung(_jahresrate(_bis(xly / xlp.reindex(xly.index, method="ffill"), bis)), 2),
-        "Weekly Economic Index": _richtung(_bis(md.fred("WEI"), bis).resample("W-FRI").last(), 0.25),
-        "Erstanträge Arbeitslosenhilfe": _richtung(_jahresrate(_bis(md.fred("ICSA"), bis).rolling(4).mean()), 2, umgekehrt=True),
-        "GDPNow": _richtung(_bis(md.fred("GDPNOW"), bis).resample("W-FRI").last().ffill(), 0.25),
+        "Kupfer/Gold": _richtung(_jahresrate(_bis(hg / gc.reindex(hg.index, method="ffill"), bis)), SCHWELLE_RATE),
+        "Zyklischer gegen Basiskonsum": _richtung(_jahresrate(_bis(xly / xlp.reindex(xly.index, method="ffill"), bis)), SCHWELLE_RATE),
+        "Weekly Economic Index": _richtung(_bis(md.fred("WEI"), bis).resample("W-FRI").last(), SCHWELLE_PUNKTE),
+        "Erstanträge Arbeitslosenhilfe": _richtung(_jahresrate(_bis(md.fred("ICSA"), bis).rolling(ICSA_WOCHEN).mean()), SCHWELLE_RATE, umgekehrt=True),
+        "GDPNow": _richtung(_bis(md.fred("GDPNOW"), bis).resample("W-FRI").last().ffill(), SCHWELLE_PUNKTE),
     }
     inflation = {
-        "Rohstoffkorb (DBC)": _richtung(_jahresrate(_bis(md.yahoo("DBC"), bis)), 2),
-        "Öl": _richtung(_jahresrate(_bis(md.yahoo("CL=F"), bis)), 2),
-        "Breakeven-Inflation 5 Jahre": _richtung(_bis(md.fred("T5YIE"), bis).resample("W-FRI").last(), 0.05),
+        "Rohstoffkorb (DBC)": _richtung(_jahresrate(_bis(md.yahoo("DBC"), bis)), SCHWELLE_RATE),
+        "Öl": _richtung(_jahresrate(_bis(md.yahoo("CL=F"), bis)), SCHWELLE_RATE),
+        "Breakeven-Inflation 5 Jahre": _richtung(_bis(md.fred("T5YIE"), bis).resample("W-FRI").last(), SCHWELLE_BREAKEVEN),
     }
     return wachstum, inflation
 
@@ -64,10 +100,10 @@ def _instrumente(bis):
 def _amtlich(bis):
     bip = _bis(md.fred("GDPC1"), bis)
     cpi = _bis(md.fred("CPIAUCSL"), bis)
-    bip_rate = (bip / bip.shift(4) - 1) * 100
-    cpi_rate = (cpi / cpi.shift(12) - 1) * 100
+    bip_rate = (bip / bip.shift(QUARTALE_JAHR) - 1) * 100
+    cpi_rate = (cpi / cpi.shift(MONATE_JAHR) - 1) * 100
     w = "steigt" if bip_rate.iloc[-1] > bip_rate.iloc[-2] else "fällt"
-    i = "steigt" if cpi_rate.iloc[-1] > cpi_rate.iloc[-4] else "fällt"
+    i = "steigt" if cpi_rate.iloc[-1] > cpi_rate.iloc[-CPI_ZURUECK] else "fällt"
     return w, i, float(bip_rate.iloc[-1]), float(cpi_rate.iloc[-1])
 
 
@@ -103,10 +139,10 @@ ZONEN_AMPEL = {"Frühe Erholung": "grün", "Gesunder Aufwärtstrend": "grün", "
                "Topbildung": "gelb", "Abwärtsbeschleunigung": "rot", "Kapitulation": "rot", "Bodenbildung": "gelb"}
 
 
-def _rang(s, wert, jahre=10):
+def _rang(s, wert, jahre=RANG_JAHRE):
     """Perzentil des Wertes in der eigenen Geschichte der letzten zehn Jahre (0–100)."""
-    teil = s[s.index > s.index[-1] - pd.Timedelta(days=365 * jahre)].dropna()
-    return float((teil <= wert).mean() * 100) if len(teil) else 50.0
+    teil = s[s.index > s.index[-1] - pd.Timedelta(days=JAHR_KALENDERTAGE * jahre)].dropna()
+    return float((teil <= wert).mean() * 100) if len(teil) else RANG_MITTE
 
 
 def _messwerte(bis):
@@ -115,39 +151,39 @@ def _messwerte(bis):
     verh = (hyg / ief.reindex(hyg.index, method="ffill")).dropna()
     # Das Verhältnis steigt über die Jahre schon durch die höheren Zinsen der Hochzinsanleihen.
     # Gemessen wird deshalb der Abstand zum eigenen 52-Wochen-Hoch: 0 = ruhig, stark negativ = Stress.
-    kredit = _bis(verh / verh.rolling(252, min_periods=60).max() - 1, bis).dropna() * 100
+    kredit = _bis(verh / verh.rolling(JAHR_TAGE, min_periods=DREI_MONATE).max() - 1, bis).dropna() * 100
     br = _bis(md.breite(), bis)
     spx = _bis(md.yahoo("^GSPC"), bis)
     return {
         "vix_rang": _rang(vix, vix.iloc[-1]), "vix": float(vix.iloc[-1]),
         "kredit_rang": _rang(kredit, kredit.iloc[-1]),                        # hoch = Gier
-        "kredit_4w": float(kredit.iloc[-1] - kredit.iloc[-21]),              # negativ = Aufschlag weitet sich
-        "breite": float(br.iloc[-1]), "breite_4w": float(br.iloc[-1] - br.iloc[-21]),
-        "breite_max60": float(br.iloc[-60:].max()),
-        "breite_min120": float(br.iloc[-120:].min()),
-        "levy": float(spx.iloc[-1] / spx.iloc[-130:].mean()),
-        "nah_hoch": bool(spx.iloc[-1] >= spx.iloc[-252:].max() * 0.97),
-        "ueber_gd200": bool(spx.iloc[-1] > spx.iloc[-200:].mean()),
+        "kredit_4w": float(kredit.iloc[-1] - kredit.iloc[-VIER_WOCHEN]),              # negativ = Aufschlag weitet sich
+        "breite": float(br.iloc[-1]), "breite_4w": float(br.iloc[-1] - br.iloc[-VIER_WOCHEN]),
+        "breite_max60": float(br.iloc[-DREI_MONATE:].max()),
+        "breite_min120": float(br.iloc[-SECHS_MONATE:].min()),
+        "levy": float(spx.iloc[-1] / spx.iloc[-LEVY_TAGE:].mean()),
+        "nah_hoch": bool(spx.iloc[-1] >= spx.iloc[-JAHR_TAGE:].max() * NAH_HOCH),
+        "ueber_gd200": bool(spx.iloc[-1] > spx.iloc[-GD200_TAGE:].mean()),
     }
 
 
 def _zone(m):
     """Einordnung in die sieben Zonen; Reihenfolge der Prüfung = Vorrang."""
-    if m["vix_rang"] >= 90 and m["breite"] <= 20:
+    if m["vix_rang"] >= KAPITULATION_VIX and m["breite"] <= KAPITULATION_BREITE:
         return "Kapitulation"
-    if m["vix_rang"] >= 80 and (m["breite_4w"] <= -15 or m["kredit_4w"] <= -2):
+    if m["vix_rang"] >= BESCHLEUNIGUNG_VIX and (m["breite_4w"] <= -BESCHLEUNIGUNG_BREITE or m["kredit_4w"] <= -BESCHLEUNIGUNG_KREDIT):
         return "Abwärtsbeschleunigung"
     # Frühe Erholung: Breite dreht kräftig nach oben, kurz nach einem Tief der Breite,
     # während VIX oder Kreditstress noch erhöht sind
-    if m["breite_4w"] >= 10 and m["breite_min120"] <= 25 and (m["vix_rang"] >= 60 or m["kredit_rang"] <= 40):
+    if m["breite_4w"] >= ERHOLUNG_BREITE_PLUS and m["breite_min120"] <= ERHOLUNG_BREITE_TIEF and (m["vix_rang"] >= ERHOLUNG_VIX or m["kredit_rang"] <= ERHOLUNG_KREDIT):
         return "Frühe Erholung"
-    if not m["ueber_gd200"] and m["breite"] <= 40:
+    if not m["ueber_gd200"] and m["breite"] <= BODEN_BREITE:
         return "Bodenbildung"
-    if m["vix_rang"] <= 15 and m["kredit_rang"] >= 85 and m["levy"] >= 1.10:
+    if m["vix_rang"] <= HITZE_VIX and m["kredit_rang"] >= HITZE_KREDIT and m["levy"] >= HITZE_LEVY:
         return "Überhitzung"
-    if m["nah_hoch"] and m["breite"] <= m["breite_max60"] - 10 and m["kredit_4w"] < 0:
+    if m["nah_hoch"] and m["breite"] <= m["breite_max60"] - TOP_BREITE_RUECK and m["kredit_4w"] < 0:
         return "Topbildung"
-    if m["ueber_gd200"] and m["breite"] >= 50:
+    if m["ueber_gd200"] and m["breite"] >= GESUND_BREITE:
         return "Gesunder Aufwärtstrend"
     return "Bodenbildung" if not m["ueber_gd200"] else "Topbildung"
 
@@ -156,7 +192,7 @@ def pendel(bis=None):
     heute = pd.Timestamp(bis) if bis else pd.Timestamp.today().normalize()
     m = _messwerte(heute)
     zone = _zone(m)
-    vorher = _zone(_messwerte(heute - pd.Timedelta(weeks=4)))
+    vorher = _zone(_messwerte(heute - pd.Timedelta(weeks=PENDEL_WOCHEN)))
     schritt = (ZONEN.index(zone) - ZONEN.index(vorher)) % len(ZONEN)
-    pfeil = "→" if schritt == 0 else "↗" if schritt <= 3 else "↘"
+    pfeil = "→" if schritt == 0 else "↗" if schritt <= PENDEL_SCHRITT else "↘"
     return {"zone": zone, "ampel": ZONEN_AMPEL[zone], "vor_4_wochen": vorher, "pfeil": pfeil, "messwerte": m}

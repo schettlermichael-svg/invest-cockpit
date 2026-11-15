@@ -14,14 +14,13 @@ lag; gescheitert = der Schluss 8 % darunter kam zuerst; sonst offen. Volumen am 
 import numpy as np
 
 import erkennung
+from masse import P_ABWAERTS, VOL_TAGE  # noqa: E402
 
 STUFE = 0.20                  # neue Base erst 20 % über der Oberkante der zuletzt gezählten
 ERFOLG, VERLUST = 0.20, 0.08  # Ausgang nach O'Neil
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-P_ABWAERTS = 4  # Phase 4 (Abwärts) – die Zählung beginnt nach Phase 1 oder 4
-VOL_TAGE = 50   # Volumen am Ausbruch gegen den Schnitt der 50 Tage
 
 
 def beginn(df, index=None):

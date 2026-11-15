@@ -10,6 +10,7 @@ des Titels statt in festen Prozent. Alles hier sind Zeichen, keine Filter.
 Die Schwellen sind unsere Setzung, nicht aus den Büchern.
 """
 import numpy as np
+from masse import GD50_TAGE  # noqa: E402
 
 TAGE = 14
 
@@ -20,9 +21,11 @@ ENGE_TAGE = 5        # Enge: Spannen der letzten 5 Tage …
 ENGE_TAGE_HEUTE = 4  # … (die 4 jüngsten nach dem Bezugstag)
 ENGE_GRUEN = 0.6     # … unter 0,6 ATR grün (eng)
 ENGE_GELB = 0.9      # … bis 0,9 gelb
-GD50_TAGE = 50       # GD50
 UEBERDEHNT_ROT = 6   # Überdehnung: ab 6 ATR vom GD50 rot
 UEBERDEHNT_GELB = 4  # … ab 4 gelb
+STOPP_ROT = 1       # Stopp unter 1 × ATR vom Einstieg: im Tagesrauschen (rot)
+NACH_NAH = 1        # nachjagen: bis 1 × ATR über dem Pivot nah am Einstieg (grün) …
+NACH_UNTERWEGS = 2  # … bis 2 × ATR schon unterwegs (gelb), darüber zu weit
 
 
 def _tr(df):
@@ -59,7 +62,7 @@ def stopp(einstieg, stopp_, a):
     if not (a and einstieg and stopp_):
         return None
     x = abs(einstieg - stopp_) / a
-    if x < 1:
+    if x < STOPP_ROT:
         return "rot", f"Stopp {_z(x)} × ATR vom Einstieg → im Tagesrauschen, wird leicht ausgelöst"
     if x < STOPP_GELB:
         return "gelb", f"Stopp {_z(x)} × ATR vom Einstieg → knapp über dem Tagesrauschen"
@@ -74,9 +77,9 @@ def nachjagen(kurs, pivot, a, seite="long"):
     if x < 0:
         return None
     wo = "über dem Pivot" if seite == "long" else "unter dem Auslöser"
-    if x <= 1:
+    if x <= NACH_NAH:
         return "grün", f"{_z(x)} × ATR {wo} → nah am Einstieg"
-    if x <= 2:
+    if x <= NACH_UNTERWEGS:
         return "gelb", f"{_z(x)} × ATR {wo} → schon unterwegs"
     return "rot", f"{_z(x)} × ATR {wo} → zu weit gelaufen, nicht nachjagen"
 

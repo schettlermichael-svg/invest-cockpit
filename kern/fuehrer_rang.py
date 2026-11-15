@@ -9,6 +9,7 @@ import os
 import pandas as pd
 
 import massive
+from masse import DATUM, JAHR_ZIFFERN  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "daten", "fuehrer_rang.csv")
@@ -19,6 +20,10 @@ NAH = 95.0                   # gelb: oberste 5 %
 
 
 _CACHE = {}
+
+
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+KOMMA_AB = 90     # ab 90 % mit einer Nachkommastelle zeigen
 
 
 def _zahl(x):
@@ -36,7 +41,7 @@ def raenge():
             return _CACHE["daten"]
         alt = pd.read_csv(DATEI, keep_default_na=False)
         stand = alt["stand"].iloc[0] if len(alt) else ""
-        tage = sorted(f[:10] for f in os.listdir(massive.SPEICHER) if f[:4].isdigit() and f.endswith(".csv"))
+        tage = sorted(f[:DATUM] for f in os.listdir(massive.SPEICHER) if f[:JAHR_ZIFFERN].isdigit() and f.endswith(".csv"))
         if tage and stand == tage[-1]:
             d = {r["ticker"]: {z: _zahl(r[z]) for z in ZEITRAEUME} for r in alt.to_dict("records")}, stand
             _CACHE.update(zeit=zeit, daten=d)
@@ -79,5 +84,5 @@ def text(p):
     if not p:
         return "keine Daten"
     def zahl(v):
-        return (f"{v:.1f}" if v >= 90 else f"{v:.0f}").replace(".", ",")
+        return (f"{v:.1f}" if v >= KOMMA_AB else f"{v:.0f}").replace(".", ",")
     return " · ".join(f"{z} besser als {zahl(v)} %" for z, v in p.items() if v == v)

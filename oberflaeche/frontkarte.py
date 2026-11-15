@@ -24,9 +24,14 @@ PFEILE = {"↖": "Abwärtsdruck lässt nach", "↑": "Wende kündigt sich an", "
 SCHWELLE = 0.5            # Punkte in 5 Wochen, darunter gilt eine Achse als unverändert
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+ALT_VON = 7  # Vergleich: Mittel der Wochen 6 bis 4 zurück (Stellen −7 bis −4)
+ALT_BIS = 4  # 
+
+
 def richtung(r):
     """Bewegung der letzten 5 Wochen (Mittel der Wochen 4–6 zurück → heute): (waagrecht, senkrecht) je −1, 0, +1."""
-    alt = r["schweif"][-7:-4]
+    alt = r["schweif"][-ALT_VON:-ALT_BIS]
     ds = r["staerke"] - sum(a for a, _ in alt) / len(alt)
     dm = r["schwung"] - sum(b for _, b in alt) / len(alt)
     return (1 if ds > SCHWELLE else -1 if ds < -SCHWELLE else 0), (1 if dm > SCHWELLE else -1 if dm < -SCHWELLE else 0)

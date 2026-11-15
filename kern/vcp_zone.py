@@ -79,11 +79,11 @@ und höchstens 40 % Breite bricht nach unten – Schluss mindestens 1 % unter ih
 """
 import numpy as np
 import pandas as pd
+from masse import PHASE_VERTEILUNG, VOL_MIN_TAGE, WOCHE  # noqa: E402
 
 ATR_TAGE = 14
 GROB = 2.0
 FEIN = 1.0
-WOCHE = 5
 MIN_WOCHEN, MAX_WOCHEN = 3, 65
 ERHOLUNG = 0.5                 # Anteil der Zonenhöhe, den der Kurs nach dem Tief zurückgewinnen muss
 HENKEL_HAELFTE = 0.5           # O'Neil: nach der rechten Seite nicht wieder in die untere Hälfte (sonst neue Base) …
@@ -100,7 +100,6 @@ FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 AT
 VOR_WOCHEN = 52         # Vorgeschichte: Anstieg in den 52 Wochen vor der Oberkante
 VOR_TIEF_WOCHEN = 26    # … Tief der 26 Wochen davor
 FLAGGE_MIN_TAGE = 4     # Tiefs der Flagge erst ab 4 Tagen vergleichbar
-VOL_MIN_TAGE = 20       # Volumen-Schnitt der 50 Tage ab 20 Tagen Daten
 VERLAUF_TAGE = 600      # Historie: die letzten 600 Handelstage
 VERLAUF_START = 120     # … frühestens ab Tag 120 (Zonen brauchen Vorlauf)
 NEUES_HOCH_TAGE = 5     # Ausbruch nur an einem Tag mit Schluss über den 5 Schlüssen davor
@@ -110,7 +109,6 @@ BF_GD50_TAGE = 20       # Bärenflagge: GD50 fällt (gegen 20 Tage vorher)
 BF_DRIFT_TIEF_TAGE = 5  # Bärenflagge: Tief des Driftens der letzten 5 Tage
 BF_RUECKHOL = 0.5       # Bärenflagge: holt höchstens die Hälfte des Falls zurück
 MIN_DATEN_PHASE = 300   # Bruch der Spanne ab 300 Handelstagen (Phase braucht sie)
-PHASE_VERTEILUNG = 3    # Basis (1) oder Verteilung (3)
 WOCHE_RAND_TAGE = 6     # Beginn der Phase: Wochenbeginn (6 Kalendertage vor dem Wochenschluss)
 SPANNE_BRUCH = 0.99     # Bruch der Spanne: Schluss 1 % unter ihrem Tief
 
@@ -308,7 +306,7 @@ SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie di
 ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
 KONTR_MIN_TAGE = 3             # eine Kontraktion dauert mindestens 3 Handelstage (Chart-Prüfer 14.11.2026: 1-Tages-Zucken)
 KONTR_MAX = 6                  # Minervini: 2–6 Kontraktionen; mehr Wellen sind Seitwärtsrauschen, kein VCP
-BASE_TIEFE_MAX = 33.0          # O'Neil: Tassen 12–33 % tief, tiefer nur im Bärenmarkt (bis 40–50 %); Minervini ähnlich –
+BASE_TIEFE_UEBLICH = 33.0          # O'Neil: Tassen 12–33 % tief, tiefer nur im Bärenmarkt (bis 40–50 %); Minervini ähnlich –
                                # tiefer wird gezeigt, die Ampel wird aber nicht grün (Chart-Prüfer 14.11.2026)
 
 
@@ -368,7 +366,7 @@ def enge(df, z):
     vol_erste = kontr[0]["volumen"]               # Minervini: das Volumen schrumpft mit den Kontraktionen
     ruhig = len(kontr) >= 2 and vol_enge == vol_enge and vol_erste == vol_erste and vol_enge < vol_erste
     eng = letzte["tiefe"] <= ENGE_MAX
-    flach_genug = z.get("tiefe", 0) <= BASE_TIEFE_MAX
+    flach_genug = z.get("tiefe", 0) <= BASE_TIEFE_UEBLICH
     wenige = len(kontr) <= KONTR_MAX
     trocken = vol_enge == vol_enge and vol_enge < 100          # Minervini: das Volumen trocknet unter den Schnitt aus
     try:
@@ -387,7 +385,7 @@ def enge(df, z):
     fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
         + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"]) \
-        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_MAX:.0f} %, nur im Bärenmarkt üblich)"]) \
+        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_UEBLICH:.0f} %, nur im Bärenmarkt üblich)"]) \
         + ([] if wenige else [f"{len(kontr)} Wellen (Minervini: 2–{KONTR_MAX})"]) \
         + ([] if trocken or vol_enge != vol_enge else [f"Volumen der Enge {vol_enge:.0f} % des Schnitts (nicht ausgetrocknet)"]) \
         + ([] if ph != 4 else ["Phase 4 – im Abwärtstrend kein VCP"])

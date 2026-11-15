@@ -30,7 +30,6 @@ SPEICHER = os.path.join(HIER, "..", "daten", "rueckenwind")
 MARKT = "SPY"
 TAGE = 320                     # 12 Monate RS-Rang + 8 Wochen zurück
 WOCHEN4 = 20                   # Handelstage in 4 Wochen
-VOL_TAGE = 50
 # Schwellen der Stufen (Probelauf 09.11.2026, siehe LIESMICH)
 STARK = 85                     # Läuft: Rang ab 85
 MITTEL = (50, 85)              # Entsteht: Rang 50 bis unter 85 …
@@ -45,7 +44,25 @@ STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und 
 ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
 STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
 from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Maßstab für App, Chart und Zeichen (0,99)
+from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPANNE  # noqa: E402
+from masse import DATUM, JAHR_TAGE, MONAT_TAGE, QUARTALE_JAHR, VOL_TAGE, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 KURS_NAH = 0.97                         # Kurs „am Hoch“: höchstens 3 % darunter (wie der Chart)
+
+
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+GD50_MIN_TAGE = 40       # GD50 der Mitglieder ab 40 Tagen Daten
+VOR_4_WOCHEN_W = 5       # Wochenreihe: der 5. Wert zurück = vor 4 Wochen
+BREITE_MIN_TITEL = 5     # Breite der Gruppe ab 5 Mitgliedern mit Daten
+SCHWEIF_WOCHEN = 5       # Weg im Rotationsbild: die letzten 5 Wochen
+DREI_JAHRE_ZURUECK = 13  # vor drei Jahren: der 13. Quartalswert zurück
+EPS_MIN_BASIS = 0.05     # Jahresrate erst ab 5 Cent Gewinn je Aktie im Basisjahr (sonst keine Rate)
+ROT_PUNKTE = 4           # Fundament rot ab 4 roten Prüfpunkten
+THEMA_TITEL = 4          # Themenname: die 4 stärksten Titel
+ANFUEHRER_ZAHL = 3       # Anführer einer Gruppe: die 3 stärksten
+LOGBUCH_EINTRAEGE = 12   # Logbuch: die letzten 12 Einträge je Titel
+VORNE_GRUEN = 2  # Geldfluss grün: mindestens 2 Gruppen vorne und kein Abfluss
+ROT_ERLAUBT = 1  # Fundament grün: höchstens 1 roter Prüfpunkt
+LUECKE_PCT = 2   # Lücke nach oben ab 2 % mit Volumen
 
 
 def _pfad(name):
@@ -53,7 +70,6 @@ def _pfad(name):
     return os.path.join(SPEICHER, name)
 
 
-QUARTAL = 63
 JUNG_MIN = QUARTAL + 2 * 20      # junge Titel ab einem Quartal plus 8 Wochen Rückblick (Micky, 09.11.2026)
 
 
@@ -62,7 +78,7 @@ def _wert(C):
     sie haben, Gewichte darauf verteilt. Bei voller Historie genau rs_rang.wert."""
     letzt = C.iloc[-1]
     summe, gewicht = 0 * letzt.fillna(0), 0 * letzt.fillna(0)
-    for k, w in ((1, 0.4), (2, 0.2), (3, 0.2), (4, 0.2)):
+    for k, w in ((1, GEWICHT_LETZTES), (2, GEWICHT_FRUEHER), (Q3, GEWICHT_FRUEHER), (Q4, GEWICHT_FRUEHER)):
         if len(C) <= QUARTAL * k:
             break
         q = letzt / C.iloc[-1 - QUARTAL * k] - 1
@@ -73,7 +89,7 @@ def _wert(C):
 
 def _rang(C):
     w = _wert(C).dropna()
-    return (w.rank(pct=True) * 98 + 1).round()
+    return (w.rank(pct=True) * RANG_SPANNE + 1).round()
 
 
 def _zusatz(rv):
@@ -131,17 +147,17 @@ def _gruppe(art, name, mitglieder, C, V):
         return None
     s, w = rot["staerke"], rot["schwung"]
     feld = sektoren.feld(s.iloc[-1], w.iloc[-1])
-    vorher = sektoren.feld(s.iloc[-5], w.iloc[-5])
+    vorher = sektoren.feld(s.iloc[-VOR_4_WOCHEN_W], w.iloc[-VOR_4_WOCHEN_W])
     seit = 1
     while seit < len(s) and sektoren.feld(s.iloc[-1 - seit], w.iloc[-1 - seit]) == feld:
         seit += 1
     ud = _ud(kurs, vol)
     # Breite in der Gruppe (Auktion, 13.11.2026): Anteil der Mitglieder über dem GD50, heute und vor 4 Wochen
     x = C[g]
-    g50 = x.rolling(50, min_periods=40).mean()
+    g50 = x.rolling(50, min_periods=GD50_MIN_TAGE).mean()
     def _br(i):
         ok = g50.iloc[i].notna() & x.iloc[i].notna()
-        return round(float((x.iloc[i][ok] > g50.iloc[i][ok]).mean() * 100), 0) if ok.sum() >= 5 else None
+        return round(float((x.iloc[i][ok] > g50.iloc[i][ok]).mean() * 100), 0) if ok.sum() >= BREITE_MIN_TITEL else None
     breite, breite_vor4 = _br(-1), _br(-1 - WOCHEN4)
     k8 = kurs.iloc[-2 * WOCHEN4:]
     rueck = float((1 - k8 / k8.cummax()).max() * 100)
@@ -149,7 +165,7 @@ def _gruppe(art, name, mitglieder, C, V):
             "rueckschlag": round(rueck, 1),
             "stabil": feld == "Führend" and seit >= STABIL_WOCHEN and rueck <= STABIL_RUECKSCHLAG,
             "staerke": round(float(s.iloc[-1]), 1), "schwung": round(float(w.iloc[-1]), 1),
-            "weg": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(s.iloc[-5:], w.iloc[-5:])],
+            "weg": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(s.iloc[-SCHWEIF_WOCHEN:], w.iloc[-SCHWEIF_WOCHEN:])],
             "zufluss": round(ud, 2) if ud else None, "breite": breite, "breite_vor4": breite_vor4,
             "mitglieder": g}
 
@@ -161,7 +177,7 @@ def _geld_ampel(sek, bra, th=None):
     stimmen = [x for x in (sek, bra, th) if x]
     vorne = sum(1 for x in stimmen if x["feld"] in VORNE)
     abfluss = any(x["feld"] == "Ermüdend" for x in stimmen)
-    return "grün" if vorne >= 2 and not abfluss else "gelb" if vorne else "rot"
+    return "grün" if vorne >= VORNE_GRUEN and not abfluss else "gelb" if vorne else "rot"
 
 
 ROE_MIN = 17.0                 # Eigenkapitalrendite ab 17 % (O'Neil)
@@ -178,10 +194,10 @@ def _jahre(gewinne):
     eps = gewinne["eps"].dropna()
     if len(eps) < 16:
         return ["grau", "zu wenige Quartale für drei Jahre"]
-    summe = eps.rolling(4).sum().dropna()
-    j = [summe.iloc[-13], summe.iloc[-9], summe.iloc[-5], summe.iloc[-1]]
+    summe = eps.rolling(QUARTALE_JAHR).sum().dropna()
+    j = [summe.iloc[-DREI_JAHRE_ZURUECK], summe.iloc[-ZWEI_JAHRE_ZURUECK], summe.iloc[-VORJAHR_ZURUECK], summe.iloc[-1]]
     # Basis unter 5 Cent je Aktie (CRDO 13.11.2026: Rundungsrest 1e-17 → +4,6 Trillionen %) ergibt keine Rate
-    w = [((b / a - 1) * 100) if a >= 0.05 else None for a, b in zip(j, j[1:])]
+    w = [((b / a - 1) * 100) if a >= EPS_MIN_BASIS else None for a, b in zip(j, j[1:])]
     text = " / ".join("–" if x is None else f"{_p(x)} %" for x in w) + " (drei Jahre, je vier Quartale)"
     if any(b < a for a, b in zip(j, j[1:])):
         return ["rot", text]
@@ -232,9 +248,9 @@ def _zahlen(tk, tv):
     q, bes, ums = (pk.get(k, ("grau", ""))[0] for k in ("Quartalsgewinn zum Vorjahr", "Beschleunigung Gewinn", "Umsatz"))
     if q == "grau" and ums == "grau":
         ampel = "grau"
-    elif q == "grün" and "grün" in (bes, ums) and rot <= 1:
+    elif q == "grün" and "grün" in (bes, ums) and rot <= ROT_ERLAUBT:
         ampel = "grün"
-    elif q == "rot" and ums == "rot" or rot >= 4:
+    elif q == "rot" and ums == "rot" or rot >= ROT_PUNKTE:
         ampel = "rot"
     else:
         ampel = "gelb"
@@ -251,7 +267,7 @@ def _zahlen(tk, tv):
     letzte = None
     if gew is not None and len(gew):
         u = gew["ueberraschung_pct"].iloc[-1]
-        letzte = {"tag": str(gew.index[-1])[:10], "nach_schluss": int(gew["nach_schluss"].iloc[-1]),
+        letzte = {"tag": str(gew.index[-1])[:DATUM], "nach_schluss": int(gew["nach_schluss"].iloc[-1]),
                   "ueberraschung": float(u) if u == u else None}
     return {"ampel": ampel, "punkte": pk, "zeichen": f["zeichen"], "termin": termin, "letzte": letzte}
 
@@ -272,7 +288,7 @@ def _reaktion(tk, letzte, M):
     i = c.index.get_loc(nach[0])
     d, d0 = c.index[i], c.index[i - 1]
     v = V[tk].reindex(c.index)
-    s50 = v.iloc[max(0, i - 50):i].mean()
+    s50 = v.iloc[max(0, i - VOL_TAGE):i].mean()
     vol = float(v.iloc[i] / s50) if s50 == s50 and s50 else None
     kurs = float((c.iloc[i] / c.iloc[i - 1] - 1) * 100)
     eroeff = O[tk].get(d)
@@ -280,7 +296,7 @@ def _reaktion(tk, letzte, M):
     ueber = letzte.get("ueberraschung")
     if kurs >= EP_SPRUNG and (vol or 0) >= EP_VOLUMEN and eroeff and eroeff > H[tk].get(d0, np.inf):
         art = ("grün", "Episodic Pivot")
-    elif luecke is not None and luecke >= 2 and kurs > 0 and (vol or 0) >= LUECKE_VOLUMEN:
+    elif luecke is not None and luecke >= LUECKE_PCT and kurs > 0 and (vol or 0) >= LUECKE_VOLUMEN:
         art = ("grün", "Lücke nach oben mit Volumen")
     elif kurs <= ABVERKAUF and ueber is not None and ueber > 0:
         art = ("rot", "Abverkauf trotz Überraschung")
@@ -294,7 +310,7 @@ def _reaktion(tk, letzte, M):
 
 
 def _themenname(g, rang):
-    top = sorted(g["mitglieder"], key=lambda t: -rang.get(t, 0))[:4]
+    top = sorted(g["mitglieder"], key=lambda t: -rang.get(t, 0))[:THEMA_TITEL]
     return ", ".join(top) + " · " + ", ".join(b for b, _ in g.get("branchen", [])[:3])
 
 
@@ -354,13 +370,13 @@ def rechnen(netz=False):
         besch = tempo - vortempo
         c = C[tk].dropna()
         rs = (c / spy.reindex(c.index)).dropna()
-        rs_hoch = bool(len(rs) >= JUNG_MIN and rs.iloc[-1] >= RS_MASS * rs.iloc[-252:].max())   # jung: seit Börsengang
+        rs_hoch = bool(len(rs) >= JUNG_MIN and rs.iloc[-1] >= RS_MASS * rs.iloc[-JAHR_TAGE:].max())   # jung: seit Börsengang
         # Tempo der RS-Linie selbst: Steigung in 4 Wochen und in den 4 Wochen davor (%)
         rs_tempo = float((rs.iloc[-1] / rs.iloc[-1 - WOCHEN4] - 1) * 100) if len(rs) > 2 * WOCHEN4 else None
         rs_vortempo = (float((rs.iloc[-1 - WOCHEN4] / rs.iloc[-1 - 2 * WOCHEN4] - 1) * 100)
                        if len(rs) > 2 * WOCHEN4 else None)
         zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
-        kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-252:].max())
+        kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-JAHR_TAGE:].max())
         stufe = _stufe(r, tempo, besch, a4)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
             stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
@@ -376,7 +392,7 @@ def rechnen(netz=False):
              "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else (zusatz[tk]["branche"] if tk in zusatz else rv.loc[tk, "branche"]),
              "branche_feld": bra["feld"] if bra else None,
-             "watchlist": tk in wl, "jung": round(len(c) / 21) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
+             "watchlist": tk in wl, "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
         if stufe and netz:                       # neue Zahlen holen nur für Titel mit Stufe …
@@ -401,7 +417,7 @@ def rechnen(netz=False):
     return erg
 
 
-def anfuehrer_verfolger(g, titel, n=3):
+def anfuehrer_verfolger(g, titel, n=ANFUEHRER_ZAHL):
     """Anführer = höchster RS-Rang in Stufe Läuft (bei Gleichstand mehr Zufluss); Verfolger = Stufe Entsteht, größtes
     Tempo zuerst. Je Gruppe (13.11.2026; bis 13.11.2026 über alle Titel für den Stab). Zählt auch, wie viele der
     Mitglieder vorne sind (Entsteht oder Läuft)."""
@@ -431,7 +447,7 @@ def _logbuch(erg):
         if jetzt:
             e.append({"stufe": jetzt, "seit": erg["stand"], "kurs_seit": x["kurs"]})
         if e:
-            lb[tk] = e[-12:]
+            lb[tk] = e[-LOGBUCH_EINTRAEGE:]
     json_schreiben(pfad, lb, ensure_ascii=False)
 
 

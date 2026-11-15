@@ -41,6 +41,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from masse import ATR_N, JAHR_TAGE, JAHR_WOCHEN, LAGE_MITTE  # noqa: E402
 
 GLEICH_PCT = 1.5          # Einquetschung: Hochs innerhalb ±1,5 %
 EINQ_MIN_TAGE = 15        # … die flache Kante steht seit mindestens 3 Wochen (Chart-Prüfer 14.11.2026)
@@ -59,7 +60,6 @@ RUECKSCHLAG = 21          # Phase 2 · Rückschlag (Wochenschluss unter GD10W un
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-ATR_N = 14                  # ATR über 14 Tage (die eine ATR: atr.reihe)
 DOW_N_TAG = 5               # Dow-Struktur im Tageschart: Schwungpunkt mit 5 Tagen davor und danach (Woche: 2)
 DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief (bzw. über dem tieferen Hoch)
 DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
@@ -74,7 +74,6 @@ EINQ_NAH_OBEN = 1.05        # … Kurs höchstens 5 % über der flachen Oberkant
 EINQ_NAH_UNTEN = 0.95       # … gespiegelt: höchstens 5 % unter der flachen Unterkante
 VOLUMEN_TAGE = 20           # Kauf- und Abgabetage: die letzten 20 Tage
 PP_TAGE = 5                 # Pocket Pivot in den letzten 5 Tagen
-LAGE_MITTE = 0.5            # Schluss in der oberen Hälfte des Tages (Lage ab 0,5); ohne Spanne gilt die Mitte
 PP_GD10_MAX = 1.04          # Pocket Pivot: höchstens 4 % über dem GD10 (Morales/Kacher)
 PP_RUECK = 6                # … Vorlauf: Schluss vor 6 Tagen gegen gestern (die 5 Tage davor)
 PP_VORLAUF_MAX = 0.03       # … die 5 Tage davor zusammen höchstens +3 %
@@ -107,7 +106,6 @@ GEGEN_MIN_TAGE = 4          # … an mindestens 4 solchen Tagen …
 GEGEN_ANTEIL = 0.6          # … und an mindestens 60 % davon im Plus geschlossen
 RS_LINIE_FENSTER = 60       # RS-Linie in der Base: Schwungpunkte der 60 Tage
 RS_LINIE_N = 3              # … mit 3 Tagen davor und danach
-JAHR_TAGE = 252             # 52 Wochen in Handelstagen
 NAH_ANTEIL = 0.5            # „nah“: höchstens halb so weit vom eigenen Hoch wie der Index
 RS_HOCH_TAGE = 5            # RS-Linie am 52-Wochen-Hoch bzw. -Tief: in den letzten 5 Tagen
 INDEX_TIEF_FENSTER = 60     # Schwäche in der Stärke: Tief des Index in den letzten 60 Tagen
@@ -119,10 +117,12 @@ PHASE_MIN_WOCHEN = 4        # Bruch der Phase 1/3: die Phase läuft mindestens 4
 BRUCH_PUFFER = 0.99         # … Schluss mindestens 1 % unter ihrem Tief
 RS_GD_TAGE = 50             # … Ausbruch aus Phase 3 mit RS-Linie über ihrem GD50
 GEWICHT_MIN = 4             # Wechsel der Phase: Gewicht der Seite mindestens 4 (und doppelt so schwer wie die Gegenseite)
-JAHR_WOCHEN = 52            # 52 Wochen
 JAHR_WOCHEN_MIN = 10        # … 52-Wochen-Hoch ab 10 Wochen Daten
 ABLAGE_BEHALTEN = 10        # Technik: so viele gespeicherte Stände bleiben liegen
 RUECKSCHLAG_TIEFE = 0.85    # Rückschlag in Phase 2: Wochenschluss unter GD10W und mindestens 15 % unter dem 52-Wochen-Hoch
+RS_SCHRITT = 2      # RS-Linie: mindestens 2 Punkte gegen den Kurs (führt / hinkt)
+REAKTION_ROT = 2    # Reaktion: Kurs fällt trotz Überraschung um mindestens 2 % …
+REAKTION_GRUEN = 1  # … steigt trotz Enttäuschung um mindestens 1 %
 
 
 def _z(x, fmt):
@@ -527,10 +527,10 @@ def rs_linie(df, idx):
     if len(rs) < 70 or len(c) < 70:
         return aus
     d_rs, d_k = float(rs.iloc[-1] / rs.iloc[-STEIGUNG_TAGE] - 1) * 100, float(c.iloc[-1] / c.iloc[-STEIGUNG_TAGE] - 1) * 100
-    if d_rs >= 2 and d_k <= 0:
+    if d_rs >= RS_SCHRITT and d_k <= 0:
         aus.append(_zeichen("stärke", "rs", f"RS-Linie steigt in 20 Tagen {_z(d_rs, '+.1f')} %, während der Kurs "
                             f"{_z(d_k, '+.1f')} % nachgibt"))
-    elif d_rs <= -2 and d_k >= 0:
+    elif d_rs <= -RS_SCHRITT and d_k >= 0:
         aus.append(_zeichen("schwäche", "rs", f"RS-Linie fällt in 20 Tagen {_z(d_rs, '+.1f')} %, während der Kurs "
                             f"{_z(d_k, '+.1f')} % steigt"))
     d = df.iloc[-RS_LINIE_FENSTER:]
@@ -665,9 +665,9 @@ def reaktion(df, gewinne, max_tage=REAKTION_MAX_TAGE):
         aus.append(_zeichen("stärke", "ereignis", f"{zahl}: Lücke {_z(luecke, '+.1f')} % gekauft, Schluss im "
                             "oberen Drittel des Tages", 2))
     if ue is not None:
-        if ue > 0 and pct <= -2:
+        if ue > 0 and pct <= -REAKTION_ROT:
             aus.append(_zeichen("schwäche", "ereignis", f"{zahl}, der Kurs fiel {_z(pct, '+.1f')} % (Käufer erschöpft)", 2))
-        elif ue < 0 and pct >= 1 and lage >= LAGE_MITTE:
+        elif ue < 0 and pct >= REAKTION_GRUEN and lage >= LAGE_MITTE:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} % (Nachfrage trägt)", 2))
         elif ue > 0 and pct >= zahlen_reaktion.REAKTION_PCT:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} %"))

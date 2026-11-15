@@ -23,6 +23,15 @@ FAKTOREN = (2, 3, 4, 5, 10, 1.5)
 GENAU = 0.02
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+LUECKE_TAGE = 5          # Lücke: mehr als 5 Handelstage ohne Kurs
+SPLIT_SPANNE = 1.4       # Sprung ab Faktor 1,4: Split prüfen
+NULL_TAGE = 3            # Volumen null an mindestens 3 Tagen
+FLACH_TAGE = 5           # Kurs unverändert an mindestens 5 Tagen
+GEGEN_ABWEICHUNG = 0.01  # Gegenprobe: Schlusskurse weichen mehr als 1 % ab
+RUECKSTAND_TAGE = 2  # Daten veraltet: mehr als 2 Handelstage Rückstand
+
+
 def _split_faktor(q):
     for f in FAKTOREN:
         for z in (f, 1 / f):
@@ -46,28 +55,28 @@ def pruefen(df, index=None, gegenprobe=None):
             # längste zusammenhängende Lücke
             gruppen = (~fehlt).cumsum()
             laengen = pd.Series(fehlt.astype(int)).groupby(gruppen).sum()
-            if laengen.max() > 5:
+            if laengen.max() > LUECKE_TAGE:
                 g = laengen.idxmax()
                 tag = ix[(gruppen == g) & fehlt][0]
                 zeichen.append(("rot", tag, f"Lücke: {int(laengen.max())} Handelstage fehlen ab {tag:%d.%m.%Y}"))
         rueckstand = int((index.index > d.index[-1]).sum())
-        if rueckstand > 2:
+        if rueckstand > RUECKSTAND_TAGE:
             zeichen.append(("rot", d.index[-1], f"veraltet: {rueckstand} Handelstage hinter dem Index"))
 
     c, o = d["Close"].to_numpy(float), d["Open"].to_numpy(float)
     for i in range(1, len(d)):
         q_schluss, q_offen = c[i] / c[i - 1], o[i] / c[i - 1]
-        if abs(np.log(q_schluss)) < np.log(1.4):
+        if abs(np.log(q_schluss)) < np.log(SPLIT_SPANNE):
             continue
         f = _split_faktor(q_offen)
         if f and _split_faktor(q_schluss) == f:
             zeichen.append(("gelb", d.index[i], f"Split-Verdacht: Sprung um Faktor {f:g} am {d.index[i]:%d.%m.%Y}"))
 
     null = d["Volume"] <= 0
-    if null.sum() >= 3:
+    if null.sum() >= NULL_TAGE:
         zeichen.append(("gelb", null[null].index[-1], f"Volumen null an {int(null.sum())} Tagen"))
     flach = d["High"] == d["Low"]
-    if flach.sum() >= 5:
+    if flach.sum() >= FLACH_TAGE:
         zeichen.append(("gelb", flach[flach].index[-1], f"{int(flach.sum())} Tage ohne Kursspanne"))
 
     if gegenprobe is not None and len(gegenprobe):
@@ -75,7 +84,7 @@ def pruefen(df, index=None, gegenprobe=None):
         if len(gemeinsam):
             t = gemeinsam.max()
             a_, b_ = float(d.loc[t, "Close"]), float(gegenprobe.loc[t])
-            if b_ > 0 and abs(a_ / b_ - 1) > 0.01:
+            if b_ > 0 and abs(a_ / b_ - 1) > GEGEN_ABWEICHUNG:
                 de = lambda x: f"{x:.2f}".replace(".", ",")      # noqa: E731
                 zeichen.append(("gelb", t, f"Kursquellen weichen ab: Yahoo {de(a_)} gegen Massive {de(b_)} "
                                            f"am {t:%d.%m.%Y}"))

@@ -31,6 +31,12 @@ VERLAUF = 26                                   # so weit zurück wird „seit �
 SCHWEIF = 11                                   # heute und die 10 Wochen davor
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+RS_SCHNITT_WOCHEN = 26  # Stärke: RS gegen ihren Schnitt von 26 Wochen …
+GLAETTEN_WOCHEN = 4     # … geglättet über 4 Wochen
+SCHWUNG_WOCHEN = 6      # Schwung: Änderung der Stärke in 6 Wochen
+
+
 def feld(staerke, schwung):
     if staerke >= 100:
         return "Führend" if schwung >= 100 else "Ermüdend"
@@ -42,8 +48,8 @@ def reihen(etf, markt=None):
     markt = marktdaten.yahoo(MARKT) if markt is None else markt
     kurs = marktdaten.yahoo(etf) if isinstance(etf, str) else etf
     rs = (kurs / markt.reindex(kurs.index, method="ffill")).resample("W-FRI").last().dropna()
-    staerke = (100 * rs / rs.rolling(26).mean()).ewm(span=4).mean()
-    schwung = 100 + staerke.diff(6)
+    staerke = (100 * rs / rs.rolling(RS_SCHNITT_WOCHEN).mean()).ewm(span=GLAETTEN_WOCHEN).mean()
+    schwung = 100 + staerke.diff(SCHWUNG_WOCHEN)
     return pd.DataFrame({"staerke": staerke, "schwung": schwung}).dropna()
 
 

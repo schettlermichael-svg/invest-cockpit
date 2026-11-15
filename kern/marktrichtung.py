@@ -49,6 +49,14 @@ VORLAUF = 520           # der Zustand hängt an der Vorgeschichte: so viele Tage
 AMPEL = {"Bestätigter Aufwärtstrend": "grün", "Aufwärtstrend unter Druck": "gelb", "Korrektur": "rot"}
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+STAU_SCHLUSS = 0.5            # Stau (Distribution ohne Minus): Schluss in der unteren Hälfte der Spanne …
+STAU_HOCH_TAGE = 60           # … nah am Hoch der letzten 60 Tage
+FTD_TAG3 = 3                  # Follow-Through am Tag 3: im Schnitt der 3 Tage gerechnet
+VOLUMEN_UNVOLLSTAENDIG = 0.4  # letzter Tag unvollständig: Volumen unter 40 % des 50-Tage-Schnitts
+VOL_SCHNITT_RAND = 51         # 50-Tage-Schnitt ohne den letzten Tag (51 Tage zurück)
+
+
 def _angleichen(daten):
     tage = sorted(set.intersection(*(set(d.index) for d in daten.values())))
     return pd.DatetimeIndex(tage), {n: d.loc[tage] for n, d in daten.items()}
@@ -110,8 +118,8 @@ def verlauf(daten, bruch=None):
             pct = (c / c0 - 1) * 100
             dts[n] = [(j, cj) for j, cj in dts[n] if j > i - DT_FENSTER and c <= cj * (1 + DT_VERFALL)]
             spanne = H[n][i] - L[n][i]
-            stau = (DT_SCHWELLE < pct <= STAU_PLUS and v > v0 and spanne > 0 and (c - L[n][i]) / spanne < 0.5
-                    and c >= C[n][max(0, i - 60):i + 1].max() * (1 - STAU_HOCH / 100))
+            stau = (DT_SCHWELLE < pct <= STAU_PLUS and v > v0 and spanne > 0 and (c - L[n][i]) / spanne < STAU_SCHLUSS
+                    and c >= C[n][max(0, i - STAU_HOCH_TAGE):i + 1].max() * (1 - STAU_HOCH / 100))
             if (pct <= DT_SCHWELLE and v > v0) or stau:
                 dts[n].append((i, c))
             if zustand != "Korrektur":
@@ -126,7 +134,7 @@ def verlauf(daten, bruch=None):
                     w["tag1"] = i
             elif neuer_ftd is None and pct >= FTD_SCHWELLE and v > v0:
                 nr = i - w["tag1"] + 1
-                tag3 = nr == 3 and (C[n][i] / C[n][w["tag1"] - 1] - 1) * 100 / 3 >= TAG3_SCHNITT
+                tag3 = nr == FTD_TAG3 and (C[n][i] / C[n][w["tag1"] - 1] - 1) * 100 / 3 >= TAG3_SCHNITT
                 if nr >= FTD_AB_TAG or tag3:
                     neuer_ftd = {"tag": tage[i], "index": n, "tag_nr": nr, "plus": round(pct, 1)}
                     boden = (n, w["tief_low"])
@@ -156,7 +164,7 @@ def verlauf(daten, bruch=None):
 
 def _vollstaendig(df):
     """Ein letzter Tag mit auffällig wenig Volumen (unter 40 % des 50-Tage-Schnitts) gilt als unvollständig."""
-    if len(df) > 51 and df["Volume"].iloc[-1] < 0.4 * df["Volume"].iloc[-51:-1].mean():
+    if len(df) > 51 and df["Volume"].iloc[-1] < VOLUMEN_UNVOLLSTAENDIG * df["Volume"].iloc[-VOL_SCHNITT_RAND:-1].mean():
         return df.iloc[:-1], True
     return df, False
 

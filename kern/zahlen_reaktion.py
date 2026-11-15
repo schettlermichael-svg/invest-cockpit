@@ -15,15 +15,13 @@ Einstieg: der ruhige Rücksetzer an den AVWAP ab dem Reaktionstag – „pivot�
 darüber (Short: darunter). Stopp im Chart wie überall 1,5 ATR; zusätzlich das Tief (Short: Hoch) des Reaktionstags.
 Ohne Gewinndaten (Termin unbekannt) kein Setup – erfunden wird nichts."""
 import pandas as pd
+from masse import GD50_TAGE, LAGE_MITTE, VOL_MIN_TAGE  # noqa: E402
 
 REAKTION_PCT = 3.0            # Micky 12.11.2026
 FENSTER = 20                  # Handelstage nach dem Reaktionstag (Micky 12.11.2026)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-VOL_MIN_TAGE = 20  # Volumen-Schnitt ab 20 Tagen Daten
-LAGE_MITTE = 0.5   # ohne Tagesspanne gilt die Mitte
-GD50_TAGE = 50     # GD50
 
 
 def reaktionstag(df, gewinne):

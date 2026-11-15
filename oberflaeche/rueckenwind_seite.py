@@ -17,6 +17,14 @@ import kreislaufbild  # noqa: E402
 
 from rueckenwind import ZUFLUSS  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
+KOPF_ABSTAND = 8         # Abstand der Kopfzeile
+KARTE_RAND = 8           # Rand der Wetterkarte
+TERMIN_TAGE_ZEIGEN = 60  # „in n T.“ zeigen bis 60 Tage
+THEMA_ZEICHEN = 40       # Thema in der Tabelle: höchstens 40 Zeichen
+
+
 def _fn(f):
     return FELD_TEXT[f].split(" · ")[0] if f in FELD_TEXT else f
 
@@ -70,7 +78,7 @@ def kopf(erg, titel=True):
                                   ("Läuft", n.get("Läuft", 0), GRUEN), ("Ermüdet", n.get("Ermüdet", 0), GELB),
                                   ("Abfluss", n.get("Abfluss", 0), ROT)))
         + f'</div><p style="color:{TEXT_3};font-size:13px;margin:10px 0 0">Branchen: '
-        + " · ".join(f"{FELD_TEXT[k].split(' · ')[0]} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=12, unten=8)
+        + " · ".join(f"{FELD_TEXT[k].split(' · ')[0]} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=KOPF_SCHRIFT, unten=KOPF_ABSTAND)
 
 
 def _name(g):
@@ -203,7 +211,7 @@ def wetterkarte(erg, art):
                  + f'<div style="color:{TEXT_3};font-size:13px;margin-top:8px">{legende_} · je Kästchen eine Woche · '
                    f'Geld = Volumen an Kauf- gegen Abgabetagen der letzten 50 Handelstage (Up/Down-Volumen nach O’Neil) · Zahl hinter dem Namen = Titel im Revier, '
                    f'Klick auf die Zeile zeigt sie · Zahlen beim Darüberfahren</div>'
-                 + "</div>", oben=8, unten=8)
+                 + "</div>", oben=KARTE_RAND, unten=KARTE_RAND)
 
 
 def gruppen(erg, art):
@@ -256,7 +264,7 @@ def _termin(x, stand):
         return "", False
     import gestaltung
     amp = gestaltung.termin_ampel(tage)             # eine Regel für die App: bis 7 Tage rot, bis 14 gelb
-    return f'{d:%d.%m.}' + (f" (in {tage} T.)" if 0 <= tage <= 60 else ""), (amp if amp in ("rot", "gelb") else False)
+    return f'{d:%d.%m.}' + (f" (in {tage} T.)" if 0 <= tage <= TERMIN_TAGE_ZEIGEN else ""), (amp if amp in ("rot", "gelb") else False)
 
 
 def _reaktion(x):
@@ -359,7 +367,7 @@ def _zeile(tk, x, stand):
             "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
             "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
-            "Thema": (x["thema"] or "").split(" · ")[0][:40],
+            "Thema": (x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN],
             "Zahlen am": ("🔴 " if warn == "rot" else "⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
             "Zahlen im Einzelnen": _punkte_text(x)}
 

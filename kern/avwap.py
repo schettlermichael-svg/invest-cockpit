@@ -37,6 +37,7 @@ Hoch); Stütze: Knoten unter dem Kurs im Profil ab dem Tief der Bewegung.
 Bis 14.11.2026: Hoch = höchstes Hoch der 52 Wochen, grau = der jüngere von Zone und Ereignis."""
 import numpy as np
 import pandas as pd
+from masse import ATR_N  # noqa: E402
 
 LUECKE, VOLUMEN_FACH = 0.04, 2.0
 RAND = 5                      # ein Extrem in den ersten 5 Tagen des Fensters ist kein Anker, sondern der Rand
@@ -57,7 +58,6 @@ HALBJAHR = 126          # ein halbes Jahr in Handelstagen (Ereignis-Anker höchs
 JAHR = 252              # 52 Wochen in Handelstagen
 ZWEI_JAHRE = 504        # 2 Jahre in Handelstagen (Hoch des Rückgangs, Fenster des Tiefs)
 WOCHE_KALENDERTAGE = 7  # eine Woche
-ATR_N = 14              # Ersatz, wenn keine ATR: Spanne der letzten 14 Tage
 KERN_UNTEN = 25         # Kern der Balance: mittlere Hälfte der typischen Preise (25. …
 KERN_OBEN = 75          # … bis 75. Perzentil)
 

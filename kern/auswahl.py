@@ -2,6 +2,7 @@
 oder in der Kaufzone, in Rangfolge. Übrig vom Stab, als der Konferenzraum am 13.11.2026 abgebaut wurde; die Auswahl,
 ihre Zonen und die Termin-Regel gelten weiter."""
 from datetime import datetime
+from masse import DATUM  # noqa: E402
 
 
 # Akten des Stabs (Micky 12.11.2026: „Klasse statt Masse – nur das Beste vom Besten im Konferenzraum“): immer das
@@ -26,6 +27,14 @@ ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
 HEUTE = lambda: datetime.now().strftime("%Y-%m-%d")                    # noqa: E731
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+KACHEL_TEXT = 3      # Kachel: Wert und Text (Stellen 1 und 2)
+TEIL_3 = 3           # Datum TT.MM.JJJJ: Jahr
+TERMIN_NAH_TAGE = 7  # Zahlen in höchstens 7 Tagen: in der Auswahl melden
+P3 = 3               # Phase 3 (Weinstein, Kreislauf-Ziel)
+P4 = 4               # Phase 4 (Weinstein, Kreislauf-Ziel)
+
+
 def termin_datum(zahlen, kachel, heute=None):
     """Nächster Zahlentermin als ISO-Datum oder None: aus den Zahlen des Rückenwinds, sonst aus der Kachel „Nächste
     Zahlen“ (deren Wert lautet „in n Tagen“ vom Tag der Kartentisch-Rechnung – das Datum steht im Text, „Do 13.11.2026“).
@@ -33,16 +42,16 @@ def termin_datum(zahlen, kachel, heute=None):
     import re
     heute = heute or HEUTE()
     t_ = (zahlen or {}).get("termin")
-    if t_ and str(t_)[:10] < heute:                 # Rückenwind behält auch den gestrigen Termin: dann die Kachel
+    if t_ and str(t_)[:DATUM] < heute:                 # Rückenwind behält auch den gestrigen Termin: dann die Kachel
         t_ = None                                   # (Prüf-Agent 12.11.2026)
     if not t_ and kachel:
-        teile = [kachel.get("wert"), kachel.get("text")] if isinstance(kachel, dict) else list(kachel)[1:3]
+        teile = [kachel.get("wert"), kachel.get("text")] if isinstance(kachel, dict) else list(kachel)[1:KACHEL_TEXT]
         for teil in teile:
             m_ = re.search(r"(\d{2})\.(\d{2})\.(\d{4})", str(teil or ""))
             if m_:
-                t_ = f"{m_.group(3)}-{m_.group(2)}-{m_.group(1)}"
+                t_ = f"{m_.group(TEIL_3)}-{m_.group(2)}-{m_.group(1)}"
                 break
-    d = str(t_)[:10] if t_ and re.match(r"\d{4}-\d{2}-\d{2}", str(t_)) else None
+    d = str(t_)[:DATUM] if t_ and re.match(r"\d{4}-\d{2}-\d{2}", str(t_)) else None
     return d if d and d >= heute else None                       # vergangene Termine zählen nicht
 
 
@@ -99,8 +108,8 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         k = kreis_alle.get(tk) or {}
         p, z = k.get("phase"), k.get("ziel")
         if short(tk):
-            return (p in (3, 4) and z not in (1, 2)) or z in (3, 4)
-        return (p == 2 and z != 3 and not k.get("rueckschlag")) or z in (1, 2)
+            return (p in (3, 4) and z not in (1, 2)) or z in (P3, P4)
+        return (p == 2 and z != P3 and not k.get("rueckschlag")) or z in (1, 2)
 
     def termin_tage(tk):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
@@ -138,7 +147,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") and not short(tk) else []) + ([("★ Short-Zone" if short(tk) else "★ Kaufzone")] if x.get("stern") else [])
                     + ([("Geld fließt ab" if short(tk) else "Geld grün")] if geld_mit(tk) else [])
                     + (["Watchlist"] if tk in wl else []) + ([f'RS {r["rang"]}'] if r.get("rang") else [])
-                    + ([f"Zahlen in {termin_tage(tk)} Tagen"] if (termin_tage(tk) is not None and termin_tage(tk) <= 7)
+                    + ([f"Zahlen in {termin_tage(tk)} Tagen"] if (termin_tage(tk) is not None and termin_tage(tk) <= TERMIN_NAH_TAGE)
                        else []))
         if tk in drin:
             g = "Depot" if tk in pos else (" · ".join(merkmale) or "einsatzbereit")

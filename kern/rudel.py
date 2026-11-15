@@ -26,6 +26,7 @@ import pandas as pd
 import massive
 import sektoren
 from dateien import json_lesen, json_schreiben  # noqa: E402
+from masse import DATUM, GD200_TAGE, JAHR_TAGE, JAHR_ZIFFERN, MONAT_TAGE  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "rudel")
@@ -37,6 +38,14 @@ ENG, MITTEL = 0.50, 0.35
 THEMA_SCHWELLE, THEMA_MIN, RUDEL_MIN = 0.40, 5, 5
 NAHE_HOCH = 0.85
 WOLF_ANTEIL = 1 / 3
+
+
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+BRANCHEN_ZAHL = 3         # Rudel: die 3 häufigsten Branchen
+GD200_STEIGT_TAGE = 20    # GD200 steigt: höher als vor 20 Tagen
+VERWANDTE_ZAHL = 5        # Kursverwandte: die 5 ähnlichsten Titel
+DREI_MONATE_ZURUECK = 64  # Platz im Rudel: Kurs gegen vor 63 Handelstagen (64. Wert zurück)
+RUDEL_GRUEN = 0.6         # Rudel grün: mindestens 60 % der Mitglieder im Trend
 
 
 def revier():
@@ -51,11 +60,11 @@ def _pfad(name):
 def mansfield(kurs, markt):
     """Mansfield-RS heute, Veränderung in 4 Wochen und Ampel; None bei weniger als 200 Tagen."""
     rs = (kurs / markt.reindex(kurs.index).ffill()).dropna()
-    m = (rs / rs.rolling(252, min_periods=200).mean() - 1) * 100
+    m = (rs / rs.rolling(JAHR_TAGE, min_periods=GD200_TAGE).mean() - 1) * 100
     m = m.dropna()
     if len(m) < 21:
         return None
-    wert, richtung = float(m.iloc[-1]), float(m.iloc[-1] - m.iloc[-21])
+    wert, richtung = float(m.iloc[-1]), float(m.iloc[-1] - m.iloc[-MONAT_TAGE])
     ampel = "grün" if wert > 0 and richtung > 0 else "rot" if wert < 0 and richtung < 0 else "gelb"
     return {"wert": round(wert, 1), "richtung": round(richtung, 1), "ampel": ampel}
 
@@ -113,7 +122,7 @@ def _rechnen():
         mittel = float(np.nanmean(innen[~np.eye(len(g), dtype=bool)]))
         br = rv.reindex(namen)["branche"].dropna().value_counts()
         gruppen.append({"mitglieder": namen, "gleichlauf": round(mittel, 2),
-                        "branchen": [[b, int(c)] for b, c in br.head(3).items()]})
+                        "branchen": [[b, int(c)] for b, c in br.head(BRANCHEN_ZAHL).items()]})
     gruppen.sort(key=lambda x: -len(x["mitglieder"]))
     for nr, g in enumerate(gruppen, 1):
         g["nr"] = nr
@@ -126,9 +135,9 @@ def _rechnen():
             g["schweif"] = [[round(float(a), 2), round(float(b), 2)]
                             for a, b in rot[["staerke", "schwung"]].iloc[-sektoren.SCHWEIF:].to_numpy()]
     # Lage je Titel für die Rudel-Breite
-    gd200 = C.rolling(200, min_periods=200).mean()
-    trend = (C > gd200) & (gd200 > gd200.shift(20))
-    hoch = C.rolling(252, min_periods=200).max()
+    gd200 = C.rolling(200, min_periods=GD200_TAGE).mean()
+    trend = (C > gd200) & (gd200 > gd200.shift(GD200_STEIGT_TAGE))
+    hoch = C.rolling(JAHR_TAGE, min_periods=GD200_TAGE).max()
     lage = pd.DataFrame({"trend": trend.iloc[-1], "nahe_hoch": C.iloc[-1] >= NAHE_HOCH * hoch.iloc[-1],
                          "historie": C.notna().sum()}).drop(index=MARKT)
     lage.to_csv(_pfad("lage.csv"))
@@ -153,7 +162,7 @@ _cache = {}
 
 def _laden():
     """Gespeicherte Ergebnisse; neu gerechnet, sobald Massive einen neueren Handelstag hat."""
-    letzter = max(d[:10] for d in os.listdir(massive.SPEICHER) if d[:4].isdigit() and d.endswith(".csv"))
+    letzter = max(d[:DATUM] for d in os.listdir(massive.SPEICHER) if d[:JAHR_ZIFFERN].isdigit() and d.endswith(".csv"))
     pfad = _pfad("themen.json")
     if (json_lesen(pfad) or {}).get("stand", "") < letzter:
         _rechnen()
@@ -170,7 +179,7 @@ def stand():
     return pd.Timestamp(_laden()["meta"]["stand"])
 
 
-def kursverwandte(tk, n=5):
+def kursverwandte(tk, n=VERWANDTE_ZAHL):
     """Die n engsten Kursverwandten: Liste von Dicts (ticker, name, branche, wert, grad). None = zu kurze Historie."""
     c = _laden()
     if tk not in c["idx"]:
@@ -197,7 +206,7 @@ def themen():
 def breite(mitglieder):
     """Wie viele Mitglieder im Aufwärtstrend (über steigendem GD200) und nahe am 52-Wochen-Hoch stehen."""
     l = _laden()["lage"].reindex(mitglieder).dropna()
-    l = l[l["historie"] >= 200]
+    l = l[l["historie"] >= GD200_TAGE]
     return {"anzahl": len(l), "im_trend": int(l["trend"].astype(bool).sum()),
             "nahe_hoch": int(l["nahe_hoch"].astype(bool).sum())}
 
@@ -224,7 +233,7 @@ def rudel(tk):
     if len(mitglieder) < RUDEL_MIN:
         mitglieder, art, name = rv.index[rv["etf"] == etf], "Sektor", sektor
     l = lage.reindex(mitglieder).dropna()
-    l = l[l["historie"] >= 200]
+    l = l[l["historie"] >= GD200_TAGE]
     im_trend, nahe = int(l["trend"].astype(bool).sum()), int(l["nahe_hoch"].astype(bool).sum())
     selbst = lage.loc[tk] if tk in lage.index else None
     stark = bool(selbst is not None and selbst["trend"] and selbst["nahe_hoch"])
@@ -232,13 +241,13 @@ def rudel(tk):
     # eigener Platz im Rudel: Kursentwicklung der letzten 3 Monate (63 Handelstage), 1 = stärkster
     C = kurse()
     g = [m for m in list(l.index) + ([tk] if tk not in l.index else []) if m in C.columns]
-    perf = (C[g].iloc[-1] / C[g].iloc[-64] - 1).dropna().sort_values(ascending=False)
+    perf = (C[g].iloc[-1] / C[g].iloc[-DREI_MONATE_ZURUECK] - 1).dropna().sort_values(ascending=False)
     platz = int(list(perf.index).index(tk)) + 1 if tk in perf.index else None
     return {"art": art, "name": name, "anzahl": len(l), "im_trend": im_trend, "nahe_hoch": nahe,
             "selbst_trend": bool(selbst is not None and selbst["trend"]),
             "selbst_nahe_hoch": bool(selbst is not None and selbst["nahe_hoch"]),
             "platz": platz, "platz_von": len(perf),
-            "ampel": "grün" if anteil >= 0.6 else "gelb" if anteil >= WOLF_ANTEIL else "rot",
+            "ampel": "grün" if anteil >= RUDEL_GRUEN else "gelb" if anteil >= WOLF_ANTEIL else "rot",
             "einsamer_wolf": stark and anteil < WOLF_ANTEIL, "mitglieder": list(l.index)}
 
 

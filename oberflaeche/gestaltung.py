@@ -4,6 +4,7 @@ Alle sichtbaren Bausteine entstehen hier als HTML/SVG – keine Streamlit-Diagra
 Werte aus dem Konzept (Abschnitt „Gestaltung: verbindlich wie die Designvorlage“).
 """
 from html import escape
+from masse import ZEILENUMBRUCH  # noqa: E402
 
 SEITE = "#0E1217"
 KARTE = "#161C24"
@@ -33,6 +34,13 @@ KOPF = (
 )
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+PUNKT = 18          # Ampelpunkt: Größe in Pixeln
+PUNKT_KLEIN = 14    # Ampelpunkt in einer Ampelzeile
+SEITE_OBEN = 32           # Seitenrand oben
+SEITE_UNTEN = 48          # Seitenrand unten
+
+
 def t(text):
     """Text sicher für HTML."""
     return escape(str(text))
@@ -44,7 +52,7 @@ def zahl(x, stellen=2):
     return s.replace(",", "X").replace(".", ",").replace("X", ".").replace("-", "−")
 
 
-def punkt(farbe, groesse=18):
+def punkt(farbe, groesse=PUNKT):
     f = AMPEL.get(farbe, farbe)
     return (f'<span style="display:inline-block;width:{groesse}px;height:{groesse}px;'
             f'border-radius:50%;background:{f};flex-shrink:0"></span>')
@@ -57,7 +65,7 @@ def punkt2(m, k, groesse=18):
             f'background:linear-gradient(90deg,{fm} 50%,{fk} 50%);box-shadow:inset 0 0 0 1px #0E1217"></span>')
 
 
-def seite(inhalt, oben=32, unten=48):
+def seite(inhalt, oben=SEITE_OBEN, unten=SEITE_UNTEN):
     """Äußerer Rahmen: Seitenhintergrund, Schrift, maximale Breite 1392 px. oben/unten: Innenabstand (die Titelseite
     besteht aus drei Blöcken mit den Chart-Knöpfen von Streamlit dazwischen)."""
     return (f'{KOPF}<div class="ic" style="background:{SEITE};color:{TEXT};font-family:{SCHRIFT};'
@@ -191,10 +199,10 @@ def kachel2(beschriftung, m, k, zeile="", hilfe=""):
 def ampelzeile(name, ampel, text="", hilfe=""):
     """hilfe: Erklärung als Hinweis am kleinen ⓘ hinter dem Namen (Maus darauf)."""
     unter = f'<span style="font-size:14px;color:{TEXT_2}">{t(text)}</span>' if text else ""
-    i_ = (f' <span title="{t(hilfe).replace(chr(10), "&#10;")}" style="color:{TEXT_3};cursor:help;font-weight:400">ⓘ</span>'
+    i_ = (f' <span title="{t(hilfe).replace(chr(ZEILENUMBRUCH), "&#10;")}" style="color:{TEXT_3};cursor:help;font-weight:400">ⓘ</span>'
           if hilfe else "")
     return (f'<div style="display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid {RAND}">'
-            f'<span style="margin-top:3px;display:flex">{punkt(ampel, 14)}</span>'
+            f'<span style="margin-top:3px;display:flex">{punkt(ampel, PUNKT_KLEIN)}</span>'
             f'<div style="display:flex;flex-direction:column;gap:2px">'
             f'<span style="font-size:15px;font-weight:500">{t(name)}{i_}</span>{unter}</div></div>')
 

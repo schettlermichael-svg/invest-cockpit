@@ -743,7 +743,9 @@ def regelkarte_zeigen():
             n_k = len(inv["konstanten"])
             n_t = sum(1 for k in regelkarte.TECHNIK if tuple(k.split(".")) in inv["konstanten"])
             st.caption(f"Inventur des Codes: {n_k} feste Regeln · {len(inv['abgedeckt'])} auf der Karte · {n_t} Technik "
-                       f"(Layout, Kosten, Datenpflege) · {len(inv['frei'])} blinde Flecken · {len(inv['kopien'])} doppelt")
+                       f"(Layout, Kosten, Datenpflege) · {len(inv['frei'])} blinde Flecken · {len(inv['kopien'])} doppelt · "
+                       f"{len(inv['ohne_namen'])} Zahlen ohne Namen in {inv['funktionen']} Regel-Funktionen "
+                       f"(Datenquellen ausgenommen: {', '.join(regelkarte.TECHNIK_MODULE)})")
         except Exception as x_:  # noqa: BLE001
             st.error(f"🚨 Inventur nicht lesbar: {x_}")
         ampel = {"gemessen": "🟢", "teilweise": "🟡", "fehlt": "🔴"}

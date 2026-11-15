@@ -6,6 +6,7 @@ sind gesetzt, nicht aus dem Buch (dort nur in Worten) – sie stehen hier als Ko
 """
 import numpy as np
 import pandas as pd
+from masse import QUARTALE_JAHR, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 
 GRUEN, GELB, ROT, GRAU = "grün", "gelb", "rot", "grau"
 UMSATZ_KRAEFTIG = 15.0
@@ -13,13 +14,31 @@ UEBERRASCHUNG_DEUTLICH = 3.0
 BESCHLEUNIGT_AB = 1.0       # Umsatzrate muss um mindestens 1 Prozentpunkt steigen (sonst Rauschen)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+LETZTE_QUARTALE = 3      # die letzten 3 Quartale (Anzeige, Beschleunigung, Code 33)
+GEWINN_GRUEN = 25        # Quartalsgewinn grün: alle letzten Quartale mindestens +25 % (Minervini)
+GEWINN_STARK = 40        # … stark ab +40 %
+GEWINN_GELB = 20         # … gelb ab +20 %
+BREMST_HAELFTE = 0.5     # Bremsen: Wachstum fällt unter die Hälfte von vor zwei Quartalen
+UMSATZ_MIN_QUARTALE = 6  # Umsatz bewerten ab 6 Quartalen Daten
+SCHAETZUNG_DEUTLICH = 5  # Schätzungen: rot ab −5 %, stark ab +5 %
+JAHRESGEWINN_GRUEN = 20  # Jahresgewinn grün: neues Hoch und mindestens +20 % (O'Neil A)
+GAAP_HAELFTE = 0.5       # Gewinnqualität schwach: GAAP-Gewinn unter der Hälfte des bereinigten
+INSTITUTE_MIN = 20       # Institutionen grün: 20 bis 90 % Anteil und die Großen stocken auf …
+INSTITUTE_MAX = 90       # … über 90 % überbesetzt (gelb)
+MIO = 1e6                # eine Million (Anzeige)
+UMSATZ_SCHWACH = 2     # Umsatz rot: letztes Wachstum höchstens 2 %
+QUALITAET_SCHWACH = 2  # Gewinnqualität schwach: mindestens 2 der letzten 4 Quartale
+ABBAU_ROT = 2          # Institutionen rot: die Großen bauen mehr als 2 % ab
+
+
 def _wachstum(reihe):
     """Wachstum zum Vorjahresquartal in Prozent (vier Werte zurück); bei Verlust im Vorjahr NaN."""
     v = reihe.to_numpy(float)
     g = np.full(len(v), np.nan)
-    for i in range(4, len(v)):
-        if v[i - 4] > 0:
-            g[i] = (v[i] / v[i - 4] - 1) * 100
+    for i in range(QUARTALE_JAHR, len(v)):
+        if v[i - QUARTALE_JAHR] > 0:
+            g[i] = (v[i] / v[i - QUARTALE_JAHR] - 1) * 100
     return pd.Series(g, index=reihe.index)
 
 
@@ -42,10 +61,10 @@ def quartalsgewinn(gewinne):
     if len(g) < 2:
         return GRAU, "zu wenige Quartale"
     letzte = g.iloc[-2:]
-    text = " / ".join(f"{_p(x)} %" for x in g.iloc[-3:])
-    if letzte.min() >= 25:
-        return GRUEN, text + (" (stark)" if letzte.min() >= 40 else "")
-    if letzte.min() >= 20:
+    text = " / ".join(f"{_p(x)} %" for x in g.iloc[-LETZTE_QUARTALE:])
+    if letzte.min() >= GEWINN_GRUEN:
+        return GRUEN, text + (" (stark)" if letzte.min() >= GEWINN_STARK else "")
+    if letzte.min() >= GEWINN_GELB:
         return GELB, text
     return ROT, text
 
@@ -55,23 +74,23 @@ def beschleunigung(gewinne):
     s = g.rolling(2).mean().dropna()                      # Zwei-Quartals-Schnitt
     if len(s) < 3:
         return GRAU, "zu wenige Quartale"
-    a, b, c = s.iloc[-3], s.iloc[-2], s.iloc[-1]
+    a, b, c = s.iloc[-LETZTE_QUARTALE], s.iloc[-2], s.iloc[-1]
     text = f"Schnitt {_p(a)} → {_p(b)} → {_p(c)} %"
     if c > b > a:
         return GRUEN, text
-    if a > 0 and c < 0.5 * a:
+    if a > 0 and c < BREMST_HAELFTE * a:
         return ROT, text + " (Rate mehr als halbiert)"
     return GELB, text
 
 
 def umsatz(sec):
-    if sec is None or sec.empty or sec["umsatz"].dropna().shape[0] < 6:
+    if sec is None or sec.empty or sec["umsatz"].dropna().shape[0] < UMSATZ_MIN_QUARTALE:
         return GRAU, "keine Umsatzreihe"
     g = _wachstum(sec["umsatz"].dropna()).dropna()
     if len(g) < 2:
         return GRAU, "zu wenige Quartale"
-    text = " / ".join(f"{_p(x)} %" for x in g.iloc[-3:])
-    if g.iloc[-1] <= 2:
+    text = " / ".join(f"{_p(x)} %" for x in g.iloc[-LETZTE_QUARTALE:])
+    if g.iloc[-1] <= UMSATZ_SCHWACH:
         return ROT, text
     if g.iloc[-1] >= UMSATZ_KRAEFTIG and g.iloc[-1] >= g.iloc[-2] + BESCHLEUNIGT_AB:
         return GRUEN, text + " (beschleunigt)"
@@ -90,8 +109,8 @@ def marge(sec):
     m = _marge(sec)
     if len(m) < 6:
         return GRAU, "zu wenige Quartale"
-    zum_vorjahr = (m - m.shift(4)).dropna()               # gleiches Quartal im Vorjahr (Saison)
-    text = f"Nettomarge {_p(m.iloc[-1], 1, False)} % (Vorjahr {_p(m.iloc[-5], 1, False)} %)" if len(m) >= 5 else ""
+    zum_vorjahr = (m - m.shift(QUARTALE_JAHR)).dropna()               # gleiches Quartal im Vorjahr (Saison)
+    text = f"Nettomarge {_p(m.iloc[-1], 1, False)} % (Vorjahr {_p(m.iloc[-VORJAHR_ZURUECK], 1, False)} %)" if len(m) >= 5 else ""
     if len(zum_vorjahr) < 2:
         return GRAU, text
     if (zum_vorjahr.iloc[-2:] > 0).all():
@@ -105,7 +124,7 @@ def ueberraschung(gewinne):
     u = gewinne["ueberraschung_pct"].dropna()
     if len(u) < 2:
         return GRAU, "keine Schätzungen"
-    text = " / ".join(f"{_p(x, 1)} %" for x in u.iloc[-3:])
+    text = " / ".join(f"{_p(x, 1)} %" for x in u.iloc[-LETZTE_QUARTALE:])
     if u.iloc[-1] < 0:
         return ROT, text
     if (u.iloc[-2:] >= UEBERRASCHUNG_DEUTLICH).all():
@@ -125,10 +144,10 @@ def schaetzungen(trend):
     if not aend:
         return GRAU, "kein Schätzungstrend"
     text = ", ".join(teile) + " in 30 Tagen"
-    if min(aend) <= -5:
+    if min(aend) <= -SCHAETZUNG_DEUTLICH:
         return ROT, text
     if all(d > 0 for d in aend):
-        return GRUEN, text + (" (stark)" if min(aend) >= 5 else "")
+        return GRUEN, text + (" (stark)" if min(aend) >= SCHAETZUNG_DEUTLICH else "")
     return GELB, text
 
 
@@ -137,14 +156,14 @@ def jahresgewinn(gewinne):
     eps = gewinne["eps"].dropna()
     if len(eps) < 12:
         return GRAU, "zu wenige Quartale"
-    summe = eps.rolling(4).sum().dropna()
-    j = [summe.iloc[-9], summe.iloc[-5], summe.iloc[-1]]
+    summe = eps.rolling(QUARTALE_JAHR).sum().dropna()
+    j = [summe.iloc[-ZWEI_JAHRE_ZURUECK], summe.iloc[-VORJAHR_ZURUECK], summe.iloc[-1]]
     text = " → ".join(f"{_p(x, 2, False)} $" for x in j) + " (je vier Quartale)"
     if j[2] < j[1]:
         return ROT, text + ", fällt"
     neu_hoch = j[2] >= summe.max()
     wachstum = (j[2] / j[1] - 1) * 100 if j[1] > 0 else np.nan
-    if neu_hoch and wachstum >= 20:
+    if neu_hoch and wachstum >= JAHRESGEWINN_GRUEN:
         return GRUEN, text + f", {_p(wachstum)} %, Mehrjahreshoch"
     return GELB, text
 
@@ -156,7 +175,7 @@ def code33(gewinne, sec):
     g_eps = _wachstum(gewinne["eps"]).to_numpy()
     g_ums = _wachstum(sec["umsatz"].dropna()).to_numpy()
     m = _marge(sec).to_numpy()
-    return _steigt(g_eps, 3) and _steigt(g_ums, 3) and _steigt(m, 3)
+    return _steigt(g_eps, LETZTE_QUARTALE) and _steigt(g_ums, LETZTE_QUARTALE) and _steigt(m, LETZTE_QUARTALE)
 
 
 def gewinnqualitaet(qualitaet):
@@ -164,8 +183,8 @@ def gewinnqualitaet(qualitaet):
     q = qualitaet.dropna() if qualitaet is not None else pd.DataFrame()
     if q.empty:
         return None
-    schwach = int(((q["bereinigt"] > 0) & (q["gaap"] < 0.5 * q["bereinigt"])).tail(4).sum())
-    return schwach >= 2
+    schwach = int(((q["bereinigt"] > 0) & (q["gaap"] < GAAP_HAELFTE * q["bereinigt"])).tail(QUARTALE_JAHR).sum())
+    return schwach >= QUALITAET_SCHWACH
 
 
 def ampeln(daten):
@@ -200,7 +219,7 @@ def angebot(tv):
         return ("grau", "keine Daten")
     teile = []
     if ges:
-        teile.append(f"{ges / 1e6:,.0f} Mio. Aktien".replace(",", "."))
+        teile.append(f"{ges / MIO:,.0f} Mio. Aktien".replace(",", "."))
     if ges and frei:
         teile.append(f"frei handelbar {frei / ges * 100:.0f} %")
     if rk is None:
@@ -228,11 +247,11 @@ def institutionen(df):
         teile.append(f"die 10 größten {'stocken auf' if aend > 0 else 'bauen ab'} ({aend:+.1f} % im Quartal)".replace(".", ","))
     if anteil is None:
         ampel = "grau"
-    elif aend is not None and aend < -2:
+    elif aend is not None and aend < -ABBAU_ROT:
         ampel = "rot"
-    elif anteil > 90:
+    elif anteil > INSTITUTE_MAX:
         ampel, teile[0] = "gelb", teile[0] + " – überbesetzt"
-    elif 20 <= anteil <= 90 and (aend is None or aend > 0):
+    elif INSTITUTE_MIN <= anteil <= INSTITUTE_MAX and (aend is None or aend > 0):
         ampel = "grün"
     else:
         ampel = "gelb"

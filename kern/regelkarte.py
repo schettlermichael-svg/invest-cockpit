@@ -467,7 +467,8 @@ BEREICHE = [
          regel=f"Vorrang: {VORRANG}. Kurs steht still (ATR unter 0,5 % des Kurses) → kein handelbares Setup; "
                "VCP-Reihe nur bis 5 % unter bzw. über dem Pivot; ★ = Minervinis Kaufzone (bis 5 % unter bis 5 % über "
                "dem Pivot).",
-         messung=["kartentisch.setup_feststellen", "kartentisch._scannerfeld"], pruefer=["Wahl des Setups", "Kaufzone/Abstand"]),
+         messung=["kartentisch.setup_feststellen", "kartentisch._scannerfeld", "kartentisch._stufe1"],
+         pruefer=["Wahl des Setups", "Kaufzone/Abstand"]),
     dict(name="Seite long/short und Warnungen", quelle="Weinstein (Short in Phase 3 und 4), Market Profile",
          regel="Die Seite eines Titels folgt der aktiven Wertzone des Market Profile (↑ long, ↓ short), ohne sie der Phase "
                "(Short beim Bruch aus Phase 3 und in Phase 4). Warnungen im Kopf: Daten gestört, Klimax, Übernahme.",
@@ -478,7 +479,7 @@ BEREICHE = [
                "Volumenknoten) ÷ Stoppabstand, CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand ab 5 Trades; Ampel "
                "grün ab 3 : 1, gelb ab 2 : 1. Zu weit gelaufen: über 2 ATR jenseits des Pivots rot (nicht nachjagen). "
                "Kullamägi: Stopp nie weiter als eine Tagesspanne (ADR, 20 Tage).",
-         messung=["depot.plan", "stopps.linien", "stopps.widerstand", "atr.stopp", "atr.nachjagen", "atr.enge",
+         messung=["depot.plan", "stopps.linien", "stopps.widerstand", "stopps.zeichen", "atr.stopp", "atr.nachjagen", "atr.enge",
                   "atr.ueberdehnung", "system_kullamaegi.adtr"],
          pruefer=["Stopp", "Einstieg/Pivot", "Kaufzone/Abstand"]),
     dict(name="Nach dem Kauf und Depot", quelle="O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
@@ -501,7 +502,8 @@ BEREICHE = [
     dict(name="Fundament (Zahlen)", quelle="Minervini (Regelkatalog Kap. 7–8), O'Neil",
          regel="Gewinn je Quartal und Beschleunigung, Umsatz kräftig ab 15 % (Rate muss um mindestens 1 Punkt steigen), "
                "Überraschung deutlich ab 3 %, Marge, Gewinnqualität – als Ampeln.",
-         messung=["fundament.umsatz", "fundament.ueberraschung", "fundament.beschleunigung", "fundament.quartalsgewinn"],
+         messung=["fundament.umsatz", "fundament.ueberraschung", "fundament.beschleunigung", "fundament.quartalsgewinn",
+                  "fundament.ampeln", "fundament.angebot", "fundament.institutionen"],
          pruefer=[], luecke="kein Prüfer – die Zahlen kommen aus den Quellen, gerechnet wird nur"),
     dict(name="Termine der Zahlen", quelle="Micky (Zahlen nicht im Trade überraschen lassen)",
          regel="Nächste Zahlen in höchstens 7 Tagen rot, 8–14 Tage gelb, später grün; in der Auswahl rücken Titel mit "
@@ -518,7 +520,7 @@ BEREICHE = [
     dict(name="Rudel und Kursverwandte", quelle="eigene Messung (Gleichlauf nach Abzug des Marktes)",
          regel="Kursverwandte: die 5 Titel mit dem engsten Gleichlauf – eng ab 0,50, mittel ab 0,35; Themen-Gruppen ab "
                "0,40 und 5 Titeln.",
-         messung=["rudel.kursverwandte", "rudel._rechnen"], pruefer=[],
+         messung=["rudel.kursverwandte", "rudel._rechnen", "rudel.rudel", "rudel.mansfield"], pruefer=[],
          luecke="kein Prüfer – Zeichen am Rand, kein Urteil"),
 ]
 
@@ -638,6 +640,7 @@ TECHNIK = {
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
     "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
     "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
+    "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
 }
 VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE"}   # gleicher Name, verschiedene Begriffe
 
@@ -711,12 +714,84 @@ def inventur():
         abgedeckt |= k_
         stapel += list(f_)
     frei = sorted(f"{m}.{k}" for (m, k) in konst if (m, k) not in abgedeckt and f"{m}.{k}" not in TECHNIK)
+    ohne = [(m, f[1], z, wert, text) for f in sorted(gesehen) if (m := f[0]) not in TECHNIK_MODULE
+            for z, wert, text in _zahlen_ohne_namen(fdefs[f], _quellen()[m])]
     namen = {}
     for (m, k), v in konst.items():
         namen.setdefault(k, []).append((m, v))
     kopien = [(k, sorted(m for m, _ in v)) for k, v in sorted(namen.items())
               if len({m for m, _ in v}) > 1 and k not in VERSCHIEDEN]
-    return {"konstanten": konst, "abgedeckt": abgedeckt, "frei": frei, "kopien": kopien}
+    return {"konstanten": konst, "abgedeckt": abgedeckt, "frei": frei, "kopien": kopien, "ohne_namen": ohne,
+            "funktionen": len(gesehen)}
+
+
+# Zahlen ohne Namen: jede feste Zahl in einer Regel-Funktion ist eine benannte Konstante. Frei bleiben Rechenzahlen
+# (0, 1, 2, −1, 100), Mindestlängen der Daten (len(df) < 30), Rundung und Format, die Namen der GD (rolling(50)),
+# Phasen 1–4 als Kennzahl, Stellen in einer benannten Konstante (ERMUEDET[3]) und kurze Ausschnitte für Texte (liste[:3]).
+RECHENZAHLEN = {0, 1, 2, -1, 100}
+GD_LAENGEN = {10, 20, 30, 40, 50, 150, 200}
+PHASE_NAMEN = {"p", "ph", "phase", "ziel", "p_", "pa", "pn", "phl", "phasen", "alt", "neu"}
+TECHNIK_MODULE = {"massive": "Datenquelle", "quellen": "Datenquelle", "daten": "Datenquelle", "marktdaten": "Datenquelle",
+                  "tpo_daten": "Datenquelle"}      # Abrufe, Wartezeiten, Börsenzeiten – keine Regel
+
+
+def _zahlen_ohne_namen(funktion, pfad):
+    """Zahlen ohne Namen in einer Funktion → [(Zeile, Wert, Code)]."""
+    import ast
+    zeilen = _zeilen(pfad)
+    for n in ast.walk(funktion):
+        for c in ast.iter_child_nodes(n):
+            c._eltern = n
+    aus = []
+    for n in ast.walk(funktion):
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool) \
+                and n.value not in RECHENZAHLEN and not _frei(n, ast):
+            aus.append((n.lineno, n.value, zeilen[n.lineno - 1].strip()[:100]))
+    return aus
+
+
+def _zeilen(pfad, _cache={}):  # noqa: B006
+    if pfad not in _cache:
+        _cache[pfad] = open(pfad, encoding="utf-8").read().split("\n")
+    return _cache[pfad]
+
+
+def _frei(n, ast):
+    p, v = getattr(n, "_eltern", None), n.value
+
+    def namen(x):
+        return {y.id for y in ast.walk(x) if isinstance(y, ast.Name)} | {y.attr for y in ast.walk(x) if isinstance(y, ast.Attribute)}
+    q = p
+    for _ in range(4):                       # Mindestlänge der Daten: len(df) < 4 * n + 4
+        if isinstance(q, ast.Compare) and any(isinstance(x, ast.Call) and getattr(x.func, "id", None) == "len"
+                                              for x in [q.left] + q.comparators):
+            return True
+        if not isinstance(q, (ast.BinOp, ast.UnaryOp, ast.Compare)):
+            break
+        q = getattr(q, "_eltern", None)
+    if isinstance(p, ast.Call) and getattr(p.func, "id", None) == "round" and n is not p.args[0]:
+        return True
+    if isinstance(p, ast.FormattedValue):
+        return True
+    if v in (7, 3) and isinstance(p, ast.BinOp) and isinstance(p.op, ast.Div):
+        return True
+    if isinstance(p, ast.Call) and isinstance(p.func, ast.Attribute) and p.func.attr == "rolling" and v in GD_LAENGEN:
+        return True
+    if v in (1, 2, 3, 4):
+        q = p
+        if isinstance(q, ast.Tuple):
+            q = getattr(q, "_eltern", None)
+        if isinstance(q, ast.Compare) and (namen(q) & PHASE_NAMEN):
+            return True
+        if isinstance(q, ast.Assign) and any(isinstance(t, ast.Name) and t.id in PHASE_NAMEN for t in q.targets):
+            return True
+        if isinstance(q, ast.Dict):
+            return True
+    if isinstance(p, ast.Subscript) and p.slice is n and isinstance(p.value, ast.Name) and p.value.id.isupper():
+        return True
+    if isinstance(p, ast.Slice) and isinstance(getattr(p, "_eltern", None), ast.Subscript) and p.lower is None and v in (3, 5):
+        return True
+    return False
 
 
 def alle_messungen():
@@ -861,6 +936,9 @@ def wachposten():
         for k, ms in inv["kopien"]:
             melde("rot", "Regel", "inventur", k, f"{k} steht doppelt im Code ({', '.join(ms)}) – eine Quelle, sonst "
                                                  "laufen die Kopien auseinander")
+        for m, f, z, wert, text in inv["ohne_namen"]:
+            melde("rot", "Regel", "inventur", f"{m}.{f}", f"Zahl {wert} ohne Namen (Zeile {z}: {text}) – jede feste Regel "
+                                                         "braucht einen Namen und einen Eintrag der Karte")
     except Exception as e:  # noqa: BLE001
         melde("rot", "Regel", "inventur", "Code", f"Inventur nicht lesbar: {e}")
     return aus

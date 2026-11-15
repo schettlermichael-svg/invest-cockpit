@@ -24,6 +24,7 @@ verkaufen, den Rest mit nachgezogenem Stopp laufen lassen.
 Der Markt (marktklima.py, O'Neil, seit 12.11.2026) ist eine eigene Ampel und gehört nicht zu „grün“ – kein Filter.
 """
 import vcp_zone
+from masse import GD150_TAGE, GD200_TAGE, GD50_TAGE  # noqa: E402
 
 RS_MIN = 70
 MAX_STOPP = 0.08
@@ -31,9 +32,6 @@ KAUFZONE = vcp_zone.KAUFZONE   # eine Quelle: Minervinis Kaufzone bis 5 % über 
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-GD50_TAGE = 50        # GD50
-GD150_TAGE = 150      # GD150
-GD200_TAGE = 200      # GD200
 GD200_VOR_ENDE = 222  # GD200 vor einem Monat: Tage 222 bis 22 zurück …
 GD200_VOR_START = 22  # … (der GD200 steigt seit einem Monat)
 UEBER_TIEF = 1.30     # Trendvorlage: mindestens 30 % über dem 52-Wochen-Tief
@@ -41,6 +39,7 @@ JAHR = 252            # 52 Wochen in Handelstagen
 UNTER_HOCH = 0.75     # Trendvorlage: höchstens 25 % unter dem 52-Wochen-Hoch
 TIEFE_UNBEKANNT = 99  # Tiefe unbekannt = zu tief
 BASE_TIEFE_MAX = 50   # reife Base höchstens 50 % tief (über 50 % keine Base, O'Neil)
+KONTR_MIN = 2  # Enge (VCP): mindestens 2 Kontraktionen (Minervini: 2 bis 6)
 
 
 def trendvorlage(df):
@@ -124,9 +123,9 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
               ("Reife Base (Scanner)", reif, zone_txt),
-              ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= 2,
+              ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= KONTR_MIN,
                (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", "")
-                + ("" if n_kontr >= 2 or eng not in ("grün", "gelb") else " – erst eine Kontraktion"))
+                + ("" if n_kontr >= KONTR_MIN or eng not in ("grün", "gelb") else " – erst eine Kontraktion"))
                if reif else "ohne reife Base nicht prüfbar")]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"

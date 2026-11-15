@@ -35,7 +35,7 @@ ZEICHEN = {"hoch": "▲", "ueber": "△", "gleich": "▬", "unter": "▽", "tief
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 STUFE_MITTE = 0.5      # Technik: Preis in der Mitte der Stufe
-RUNDUNG = 1e-9         # Technik: nicht durch null teilen
+NICHT_NULL = 1e-9         # Technik: nicht durch null teilen
 GESCHEITERT_TAGE = 10  # ein gescheiterter Ausbruch zählt 10 Tage
 
 
@@ -251,7 +251,7 @@ def _zustand(tage, stand, aktiv, gescheitert, signale):
         tag = n - aktiv["seit"] + 1
         name = "Umkehr" if aktiv.get("art") == "U" else "Ausbruch"
         return {"wort": f"{name} {d} (Tag {tag})", "dir": d, "ampel": "grün", "belege": belege}
-    lage = (p["schluss"] - ref["val"]) / max(ref["vah"] - ref["val"], RUNDUNG)
+    lage = (p["schluss"] - ref["val"]) / max(ref["vah"] - ref["val"], NICHT_NULL)
     lage_text = ("über dem Wertbereich" if lage > 1 else "im oberen Drittel des Wertbereichs" if lage >= 2 / 3 else
                  "in der Mitte des Wertbereichs" if lage > 1 / 3 else "im unteren Drittel des Wertbereichs" if lage >= 0
                  else "unter dem Wertbereich")

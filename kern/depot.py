@@ -28,6 +28,19 @@ VERLUSTGRENZE = 0.08
 KLUMPEN = 25.0               # Positionswert über 25 % des Kontos: Klumpen (Minervini: höchstens 20–25 % je Titel)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+GD10 = 10               # 10-Tage-Durchschnitt (Kullamägi)
+GD20 = 20               # 20-Tage-Durchschnitt (Kullamägi)
+TEILGEWINN_AB_TAG = 3   # Kullamägi: Teilgewinn am Tag 3 …
+TEILGEWINN_BIS_TAG = 5  # … bis Tag 5 nach dem Kauf
+SQUAT_DRITTEL = 0.33    # Squat: Schluss im unteren Drittel der Tagesspanne
+TENNIS_RUECK = 0.97     # Tennisball: Rücksetzer mindestens 3 % unter den Einstieg …
+TENNIS_TAGE = 5         # … und in höchstens 5 Tagen auf neues Hoch
+RESET_NAH = 0.98        # Reset: Einstieg höchstens 2 % unter dem Pivot
+FUEHRER_PLUS = 20       # Führer: +20 % in höchstens 3 Wochen (O'Neil)
+NACHZIEHEN_R = 2  # Stopp nachziehen ab 2R Gewinn (Minervini)
+
+
 def laden():
     try:
         d = json.load(open(DATEI, encoding="utf-8"))
@@ -276,8 +289,8 @@ def _nach_dem_kauf(p, df, erk=None):
         aus.append(("rot", "kein Stopp gesetzt – jede Position braucht einen Stopp vor dem Kauf (Minervini)"))
     if p.get("system") == "K":
         tage = len(seit) - 1
-        g10, g20 = float(c[-10:].mean()), float(c[-20:].mean())
-        if 3 <= tage <= 5 and g > 0 and s and ((s < e) if lang else (s > e)):
+        g10, g20 = float(c[-GD10:].mean()), float(c[-GD20:].mean())
+        if TEILGEWINN_AB_TAG <= tage <= TEILGEWINN_BIS_TAG and g > 0 and s and ((s < e) if lang else (s > e)):
             aus.append(("gelb", f"Tag {tage} nach dem Kauf, {g:+.1f} %: Teilgewinn nehmen und den Stopp für den Rest auf "
                                 f"Einstand {e:.2f} ziehen (Kullamägi)"))
         if tage >= 1 and lang:
@@ -293,7 +306,7 @@ def _nach_dem_kauf(p, df, erk=None):
         return aus
     if g <= -VERLUSTGRENZE * 100:
         aus.append(("rot", f"Verlustgrenze: {g:.1f} % – höchstens 8 % Verlust, ohne Ausnahme (Minervini, O'Neil)"))
-    if s and r_mult is not None and r_mult >= 2 and ((s < e) if lang else (s > e)):
+    if s and r_mult is not None and r_mult >= NACHZIEHEN_R and ((s < e) if lang else (s > e)):
         aus.append(("gelb", f"Stopp nachziehen: {r_mult:.1f}R Gewinn – Stopp mindestens auf Einstand {e:.2f} (Minervini)"))
     w = (erk or {}).get("werte") or {}
     if erk and erk.get("mp") and "start_index" in w and s:
@@ -306,21 +319,21 @@ def _nach_dem_kauf(p, df, erk=None):
     if len(seit) >= 1 and len(seit) <= 4 and lang:
         t = seit.iloc[0]
         spanne = float(t["High"] - t["Low"]) or 1
-        if (float(t["Close"]) - float(t["Low"])) / spanne < 0.33:
+        if (float(t["Close"]) - float(t["Low"])) / spanne < SQUAT_DRITTEL:
             aus.append(("gelb", "Squat am Kauftag (Schluss im unteren Drittel) – O'Neil: oft Erholung in 1–3 Tagen; "
                                 "der Stopp gilt"))
     if len(seit) >= 3 and lang:
         lo = seit["Low"].to_numpy(float)
         hi = seit["High"].to_numpy(float)
         i = int(lo.argmin())
-        if i < len(lo) - 1 and lo[i] < e * 0.97 and k > hi[:i + 1].max() and len(lo) - 1 - i <= 5:
+        if i < len(lo) - 1 and lo[i] < e * TENNIS_RUECK and k > hi[:i + 1].max() and len(lo) - 1 - i <= TENNIS_TAGE:
             aus.append(("grün", "Tennisball: nach dem Rücksetzer schnell auf neues Hoch – Zeichen von Stärke (Minervini)"))
     pl_ = plan(erk) if erk else None                 # Einstieg des Setups (Prüf-Agent 12.11.2026)
     piv = pl_[1] if pl_ and pl_[0] == "long" else None
-    if lang and piv and e >= piv * 0.98 and k < piv and (not s or k > s):
+    if lang and piv and e >= piv * RESET_NAH and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))
-    if g >= 20 and len(seit) <= 15:
+    if g >= FUEHRER_PLUS and len(seit) <= 15:
         aus.append(("grün", f"+{g:.0f} % in höchstens 3 Wochen – Zeichen eines Führers; laufen lassen, Stopp nachziehen"))
     if not aus:
         aus.append(("grün", f"läuft nach Plan: {g:+.1f} %" + (f", {r_mult:.1f}R" if r_mult is not None else "")))

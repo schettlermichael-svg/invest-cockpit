@@ -14,6 +14,7 @@ Minervini-Abgleich: der Stopp soll höchstens die Hälfte, besser ein Drittel de
 aus den geschlossenen Trades im Depot (depot.bilanz), sobald mindestens MIN_TRADES vorliegen.
 """
 from depot import ATR_STOPP as B_ATR  # noqa: E402  eine Quelle für den Stopp (depot)
+from masse import GD150_TAGE, GD200_TAGE  # noqa: E402
 MIN_TRADES = 5
 FENSTER, JAHR = 10, 252       # Wendepunkt: höchstes Hoch ±10 Tage; Suche über 52 Wochen
 
@@ -22,8 +23,6 @@ FENSTER, JAHR = 10, 252       # Wendepunkt: höchstes Hoch ±10 Tage; Suche übe
 CRV_GRUEN = 3          # CRV grün ab 3 : 1 (gelb ab 2 : 1)
 UEBER_EINSTIEG = 1.01  # Hürde mindestens 1 % über dem Einstieg
 UNTER_EINSTIEG = 0.99  # short: Hürde mindestens 1 % unter dem Einstieg
-GD150_TAGE = 150       # fallender GD150 …
-GD200_TAGE = 200       # … bzw. GD200 als Hürde
 GD_STEIG_MIN = 20      # Steigung des GD ab 20 Tagen Vorlauf
 GD_STEIG_TAGE = 21     # … gegen den Wert vor 20 Tagen
 RUNDUNG = 1e-6         # Technik: Rundung (Stopp B nicht gleich A)

@@ -34,6 +34,7 @@ KRAEFTE = ("Gegner antwortet", "Antrieb erlischt", "Wert akzeptiert")
 
 FRISCH = 10            # abgelehnt/angenommen: höchstens 10 Handelstage her (danach Ungleichgewicht bzw. zurück in der Balance)
 from vcp_zone import RAND_PCT   # noqa: E402  Test am Rand: Kurs höchstens 3 % vom Rand – eine Quelle (vcp_zone)
+from masse import ATR_N, LAGE_MITTE, PHASE_VERTEILUNG, VOL_MIN_TAGE  # noqa: E402
 KOW_VOL, KOW_SPANNE, KOW_TAGE = 1.5, 0.7, 10
 EXZESS_ATR, FLACH_PCT = 0.15, 0.1    # Exzess: äußerste Kerze mindestens 15 % der Tagesschwankung (ATR) vor der nächsten
 KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
@@ -43,10 +44,7 @@ PFEIL = {"aufwärts": "↑", "abwärts": "↓", None: ""}
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-ATR_N = 14             # ATR über 14 Tage (die eine ATR: atr.reihe)
-VOL_MIN_TAGE = 20      # Volumen-Schnitt der 50 Tage ab 20 Tagen Daten
-KLIMAX_FENSTER = 59    # Klimax: Tief bzw. Hoch der letzten 60 Tage (Tag selbst + 59)
-LAGE_MITTE = 0.5       # Klimax: Schluss in der oberen (bzw. unteren) Hälfte des Tages
+KLIMAX_EXTREM_TAGE = 59    # Klimax: Tief bzw. Hoch der letzten 60 Tage (Tag selbst + 59)
 EXZESS_TAGE = 20       # Exzess: am Hoch bzw. Tief der letzten 20 Tage
 URSACHE_VOR_TAGE = 50  # Ursache: Volumen der Balance gegen die 50 Tage davor
 RS_TAGE = 21           # Eigen oder geliehen: RS-Linie über 20 Tage (Wert vor 21 Handelstagen)
@@ -55,12 +53,15 @@ WEIT_HOCH = 6          # Technik: Exponent zu WEIT_BASIS
 TEXT_KURZ = 40         # Anzeige: Kurzname des Entscheids höchstens 40 Zeichen
 BELEGE_JUENGSTE = 3    # die drei jüngsten Ereignisse am Rand bleiben als Beleg
 ZONE_PUFFER = 1.005    # Kurs in der Zone: bis 0,5 % über der Oberkante
-PHASE_VERTEILUNG = 3   # Antrieb erlischt: Wechsel zu Phase 3 (aufwärts) bzw. 1 (abwärts) zeichnet sich ab
 WERT_WOCHEN = 3        # Wert akzeptiert: neue Wertzone seit mindestens 3 Wochen
 BREITE_PUNKTE = 10     # Gruppe: Breite steigt bzw. fällt um 10 Punkte in 4 Wochen
 ZUFLUSS_AB = 1.1       # Gruppe angenommen: Zufluss ab 1,1 (wie rueckenwind.ZUFLUSS)
 FTD_TAG = 4            # Markt: Follow-Through-Day ab Tag 4 des Erholungsversuchs (O'Neil)
 FTD_FRISCH_TAGE = 14   # Markt: Follow-Through-Day gilt als frisch bis 14 Tage
+RS_GLEICH = 1      # Kraft: RS-Änderung höchstens 1 Punkt = mit dem Markt
+MIT_MEHR = 1       # … mehr Kraft mit als gegen: über 1
+FELD_NEUTRAL = 1   # Gruppe neutral: Stärke und Schwung höchstens 1 Punkt neben 100
+MARKT_NEUTRAL = 1  # Markt neutral: Distributionstage höchstens 1
 
 
 def _z(x, f=".2f"):
@@ -131,9 +132,9 @@ def klimax_tag(df):
         if not (v50[i] > 0 and a[i] > 0 and sp > 0) or v[i] < KLIMAX_VOL * v50[i] or sp < KLIMAX_SPANNE * a[i]:
             continue
         lage = (c[i] - l[i]) / sp
-        if l[i] <= l[i - KLIMAX_FENSTER:i + 1].min() and lage >= LAGE_MITTE:
+        if l[i] <= l[i - KLIMAX_EXTREM_TAGE:i + 1].min() and lage >= LAGE_MITTE:
             return {"tag": df.index[i], "art": "Verkaufs-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
-        if h[i] >= h[i - KLIMAX_FENSTER:i + 1].max() and lage <= LAGE_MITTE:
+        if h[i] >= h[i - KLIMAX_EXTREM_TAGE:i + 1].max() and lage <= LAGE_MITTE:
             return {"tag": df.index[i], "art": "Kauf-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
     return None
 
@@ -213,9 +214,9 @@ def kraft(df, idx, richtung, k=None):
     mit = rs if auf else -rs                                  # RS-Änderung in Laufrichtung
     if mit >= EIGEN_PCT:
         art = "eigen"
-    elif abs(rs) <= 1:
+    elif abs(rs) <= RS_GLEICH:
         art = "geliehen"
-    elif mit > 1:
+    elif mit > MIT_MEHR:
         art = "gemischt"
     else:
         art = "gegen"
@@ -621,7 +622,7 @@ def gruppe(g):
         z, richtung = "Ungleichgewicht", "abwärts"
     else:
         z = "Balance"
-    if abs(g.get("staerke", 100) - 100) <= 1 and abs(g.get("schwung", 100) - 100) <= 1 and z != "abgelehnt":
+    if abs(g.get("staerke", 100) - 100) <= FELD_NEUTRAL and abs(g.get("schwung", 100) - 100) <= FELD_NEUTRAL and z != "abgelehnt":
         z, richtung = "Balance", None
     e = _ergebnis("gruppe", z, richtung, belege=belege, ende=ende,
                   unterzeile=f"Feld {f}" + (" · stabil" if g.get("stabil") else ""))
@@ -642,7 +643,7 @@ def markt(r, p=None):
     if zst == "Korrektur":
         v = r.get("versuch")
         g = r.get("gescheitert")
-        if g and (not v or v[0] <= 1):
+        if g and (not v or v[0] <= MARKT_NEUTRAL):
             z, ri = "abgelehnt", "aufwärts"
             belege.append(("abgelehnt", f"Erholungsversuch am {_d(g)} gescheitert: Schluss unter dem Tief des Versuchs"))
         elif v:

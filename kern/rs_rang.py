@@ -9,16 +9,27 @@ import os
 import pandas as pd
 
 import massive
+from masse import DATUM, JAHR_ZIFFERN  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "daten", "rs_rang.csv")
 REVIER = os.path.join(HIER, "..", "einstellungen", "revier.csv")
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+QUARTAL = 63           # ein Quartal in Handelstagen
+Q3 = 3                 # drittes Quartal zurück
+Q4 = 4                 # viertes Quartal zurück
+GEWICHT_LETZTES = 0.4  # RS-Wert (IBD): letztes Quartal zählt 40 % …
+GEWICHT_FRUEHER = 0.2  # … die drei davor je 20 %
+KURS_TAGE = 260        # Kurse der letzten 260 Tage (vier Quartale und Rand)
+RANG_SPANNE = 98       # RS-Rang 1 bis 99 (IBD)
+
+
 def wert(schluss):
     """Gewichtete 12-Monats-Entwicklung je Titel aus einer Matrix von Schlusskursen (Zeilen Tage, Spalten Titel)."""
-    q = [schluss.iloc[-1] / schluss.iloc[-1 - 63 * k] - 1 for k in (1, 2, 3, 4)]
-    return 0.4 * q[0] + 0.2 * q[1] + 0.2 * q[2] + 0.2 * q[3]
+    q = [schluss.iloc[-1] / schluss.iloc[-1 - QUARTAL * k] - 1 for k in (1, 2, Q3, Q4)]
+    return GEWICHT_LETZTES * q[0] + GEWICHT_FRUEHER * q[1] + GEWICHT_FRUEHER * q[2] + GEWICHT_FRUEHER * q[Q3]
 
 
 def raenge():
@@ -26,13 +37,13 @@ def raenge():
     if os.path.exists(DATEI):
         alt = pd.read_csv(DATEI, keep_default_na=False)
         stand = alt["stand"].iloc[0] if len(alt) else ""
-        tage = sorted(f[:10] for f in os.listdir(massive.SPEICHER) if f[:4].isdigit() and f.endswith(".csv"))
+        tage = sorted(f[:DATUM] for f in os.listdir(massive.SPEICHER) if f[:JAHR_ZIFFERN].isdigit() and f.endswith(".csv"))
         if tage and stand == tage[-1]:            # neuester gespeicherter Handelstag: Rang ist aktuell
             return dict(zip(alt["ticker"], alt["rang"])), stand
     rv = pd.read_csv(REVIER, keep_default_na=False)
-    m = massive.kursmatrix(list(rv["ticker"]), 260, "Close")
+    m = massive.kursmatrix(list(rv["ticker"]), KURS_TAGE, "Close")
     w = wert(m).dropna()
-    rang = (w.rank(pct=True) * 98 + 1).round().astype(int)
+    rang = (w.rank(pct=True) * RANG_SPANNE + 1).round().astype(int)
     stand = str(m.index[-1].date())
     pd.DataFrame({"ticker": rang.index, "rang": rang.values, "stand": stand}).to_csv(DATEI, index=False)
     return rang.to_dict(), stand

@@ -19,6 +19,7 @@ der letzten 26 Wochen schließt (Ausbruch aus der Spanne der Bodenphase, erstes 
 """
 import numpy as np
 import pandas as pd
+from masse import P_ABWAERTS  # noqa: E402
 
 STEIGT = 0.005        # GD40W über 4 Wochen um mehr als 0,5 % gestiegen
 FAELLT = -0.005
@@ -34,12 +35,13 @@ JAHR_W = 52              # 52 Wochen
 MIN_WOCHEN_TIEF = 20     # Tief der 52 Wochen ab 20 Wochen Daten
 SEITWAERTS_STEIG = 0.03  # seitwärts: mindestens 2 Kreuzungen in 26 Wochen und die Linie fällt höchstens 3 %
 TREPPE_ROC = 0.05        # Treppe abwärts: 13 Wochen mindestens 5 % tiefer
-P_ABWAERTS = 4           # Phase 4 (Abwärts)
 NAH_TIEF = 1.25          # Basis: Kurs höchstens 25 % über dem 52-Wochen-Tief
 SPANNE_GLAETTEN = 0.9    # geglättete Wochenspanne: 90 % alt …
 SPANNE_NEU = 0.1         # … 10 % neu
 SPANNE_SPRUNG = 1.8      # Wochenspanne 1,8-fach der geglätteten: Ausbruchswoche
 SPERRE_WOCHEN = 8        # nach Phase 4 frühestens nach 8 Wochen zurück in Phase 1
+SEITWAERTS_KREUZ = 2   # seitwärts: mindestens 2 Kreuzungen der 30-Wochen-Linie in 26 Wochen
+BESTAETIGT_WOCHEN = 2  # Phase 2 hält: 2 Wochen in Folge Bild 2
 
 
 def wochen(df):
@@ -60,7 +62,7 @@ def wochen(df):
 
 def ist_seitwaerts(z):
     """Kurs pendelt um einen flachen oder nur leicht fallenden GD40W."""
-    return z.kreuz26 >= 2 and z.steig40 > -SEITWAERTS_STEIG
+    return z.kreuz26 >= SEITWAERTS_KREUZ and z.steig40 > -SEITWAERTS_STEIG
 
 
 def bild(z):
@@ -86,7 +88,7 @@ def phasen(df):
         vorher = roh[i - 1] if i else 0
         z = w.iloc[i]
         serie2 = serie2 + 1 if b == 2 else 0
-        if b == 2 and (serie2 >= 2 if phase == 2 else serie2 >= NEUSTART_WOCHEN):
+        if b == 2 and (serie2 >= BESTAETIGT_WOCHEN if phase == 2 else serie2 >= NEUSTART_WOCHEN):
             ueber = z.Close <= (basis_hoch if phase == 1 and basis_hoch is not None else z.hoch26_vor)
             if phase in (1, 4) and (z.Close < NAH_TIEF * z.tief52 or ueber):
                 aus.append(phase)                           # noch keine Rallye vom Tief bzw. kein

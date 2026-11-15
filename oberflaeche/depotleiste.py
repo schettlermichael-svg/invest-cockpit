@@ -9,6 +9,14 @@ import depot  # noqa: E402
 from gestaltung import GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, ampelzeile, karte, punkt, t, zahl  # noqa: E402
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+BEZUG_STELLEN = 3  # Bezugsverhältnis mit 3 Stellen zeigen
+KO_PUFFER = 3      # Abstand Stopp → Knock-out mindestens 3 % (grün)
+KO_BEZUG = 0.1     # Knock-out: Bezugsverhältnis 0,1
+KO_UNTER = 0.97    # Knock-out-Schwelle long 3 % unter dem Stopp …
+KO_UEBER = 1.03    # … short 3 % über dem Stopp
+
+
 def _datum(x):
     import pandas as pd
     try:
@@ -86,13 +94,13 @@ def titelkarte(tk, df, erk):
         ko = p.get("ko") or {}
         r = depot.offenes_risiko(p)
         kopf = (f'<p style="margin:0;font-size:16px">{"Long" if lang else "Short"} {p["stueck"]} Stück'
-                + (f' Knock-out (Schwelle {zahl(ko.get("schwelle"))} {w}, Bezug {zahl(ko.get("bezug"), 3)})' if ko else "")
+                + (f' Knock-out (Schwelle {zahl(ko.get("schwelle"))} {w}, Bezug {zahl(ko.get("bezug"), BEZUG_STELLEN)})' if ko else "")
                 + f' · Einstieg {zahl(p["einstieg"])} {w} am {t(_datum(p.get("datum")))} · Stopp '
                 + (f'{zahl(p["stopp"])} {w}' if p.get("stopp") else "fehlt")
                 + (f' · offenes Risiko {zahl(r, 0)} €' if r is not None else "") + '</p>')
         if ko and p.get("stopp") and ko.get("schwelle"):
             puffer = abs(p["stopp"] / ko["schwelle"] - 1) * 100
-            kopf += ampelzeile(f'Abstand Stopp → Knock-out {zahl(puffer, 1)} %', "grün" if puffer >= 3 else "rot",
+            kopf += ampelzeile(f'Abstand Stopp → Knock-out {zahl(puffer, 1)} %', "grün" if puffer >= KO_PUFFER else "rot",
                                "der eigene Stopp muss vor der Knock-out-Schwelle liegen, mit Puffer für Lücken (ab 3 %)")
         import atr
         a_ = atr.wert(df)
@@ -112,11 +120,11 @@ def titelkarte(tk, df, erk):
                      f'Risiko je Trade {zahl(depot.risiko_euro(d), 0)} €.</div>', "Position und Risiko")
     seite_, e, s, regel = pl
     a = depot.stueckzahl(tk, e, s)
-    ko = depot.stueckzahl(tk, e, s, bezug=0.1)
+    ko = depot.stueckzahl(tk, e, s, bezug=KO_BEZUG)
     if not a:
         return karte(f'<div style="color:{TEXT_2}">Kein Wechselkurs für {depot.waehrung(tk)} – Stückzahl offen.</div>',
                      "Position und Risiko")
-    schwelle = s * (0.97 if seite_ == "long" else 1.03)
+    schwelle = s * (KO_UNTER if seite_ == "long" else KO_UEBER)
     text = (f'<p style="margin:0;font-size:16px;line-height:1.65">{seite_.capitalize()} bei {zahl(e)} {w}, Stopp '
             f'{zahl(s)} {w} ({t(regel)}, {zahl(abs(s / e - 1) * 100, 1)} %). Risiko je Trade '
             f'{zahl(depot.risiko_euro(d), 0)} € ({zahl(d["risiko_pct"], 2)} %).</p>')

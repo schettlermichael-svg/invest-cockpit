@@ -5,10 +5,14 @@ from html import escape as t
 
 import auktion
 from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3
+from masse import ZEILENUMBRUCH  # noqa: E402
 
 KETTE = ("Anlass", "Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewicht", "Ende des Laufs")
 PLATZ_REIHE = ("Anlass", "Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewicht", "Abgabe am Rand",
                "Anführer bricht aus", "folgen die Schwestern", "Geldfluss", "Ende des Laufs")
+
+
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 
 
 def pille(e, klein=False, mit_belegen=False):
@@ -20,7 +24,7 @@ def pille(e, klein=False, mit_belegen=False):
     titel = ""
     if mit_belegen:
         z = [f"{p}: {x}" for p, x in e.get("belege") or []] + list(e.get("ende") or [])
-        titel = f' title="{t(chr(10).join(z))}"'
+        titel = f' title="{t(chr(ZEILENUMBRUCH).join(z))}"'
     return (f'<span{titel} style="display:inline-block;border:1px solid {f};color:{f};border-radius:999px;padding:1px 9px;'
             f'font-size:{gr};white-space:nowrap">{t(auktion.wort(e))}</span>')
 
