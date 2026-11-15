@@ -1042,6 +1042,13 @@ teilweise, fehlt – mit der Lücke und dem Schritt, in dem sie geschlossen wird
 - `regelkarte.wachposten()` prüft Karte gegen Code: Messfunktion fehlt, Prüf-Element fehlt, Anleitung ohne Kasten,
   Zustand der App ohne Kasten, Reihe des Kartentischs nicht auf der Karte → 🚨 Alarm. Bekannte Lücken stehen 🟡/🔴.
 - Seite Setups: Kasten „🛡️ Regelkarte · Wachposten“ über den Prüfern; bei Alarm offen und rot.
+- Zeichen (15.11.2026, Micky: „du hast diesmal alles berücksichtigt?“): alle 15 Zeichen der Stärke und Schwäche aus
+  `zeichen.py` stehen mit Regel, Meister, Messung und Prüf-Element auf der Karte (Dow-Struktur, Spring/Upthrust,
+  Einquetschung, Bruch der Phase, Akkumulation/Distribution, Pocket Pivot, 3 Wochen eng/Trockenheit, Freitag ohne
+  Gewinnmitnahme, Stärke in der Schwäche, höheres Tief gegen den Index, Tage gegen den Markt, RS-Linie in der Base,
+  Reaktion auf die Zahlen, Market Profile an der Schwelle, Trendqualität) samt der Gewichtung. Der Wachposten liest
+  `zeichen.py` und meldet Alarm für jede Funktion, die ein Zeichen setzt und nicht auf der Karte steht (getestet: Freitag
+  von der Karte genommen → Alarm).
 - Neue Regel = erst in die Karte, dann bauen.
 - Abgleich mit den alten Anleitungen: jeder Satz übernommen (wörtlich oder in einen Kasten umgeformt); zwei fehlten im
   ersten Entwurf und sind nachgetragen („bringt die Balance an den Rand“, Spring/Upthrust „Ziel der andere Rand“).

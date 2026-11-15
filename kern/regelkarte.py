@@ -7,6 +7,8 @@ fehlten am 14.11. Kästen der drei Bilder in den Prüfern, ohne dass es auffiel.
              Markt) – mit Regel nach der Gefechtsordnung, führendem Meister, Zeichen-Meistern, der Messung im Code
              (Modul.Funktion), dem Stand der Messung (gemessen, teilweise, fehlt – mit der Lücke) und dem Element, unter
              dem der Prüfer ihn prüft
+  Zeichen    jedes Zeichen der Stärke und Schwäche aus zeichen.py mit Regel, Meister, Messung und Prüf-Element (der
+             Wachposten liest zeichen.py und meldet jede Funktion, die ein Zeichen setzt und nicht auf der Karte steht)
   Werkzeug   was die Kästen misst (Zone, Enge, Pivot, Anker, Profil, Phase …) – mit der Regel der App, die der Prüfer
              kennen muss
   Setup      jedes Setup als Weg durch den Kreislauf (Gefechtsordnung): Weg, Lehrer, Regel, Einstieg, Stopp, widerlegt,
@@ -268,6 +270,91 @@ WERKZEUGE = {
     "markt": [],
 }
 
+# ── Zeichen (Stärke und Schwäche – gewogen, wer am Rand stärker ist; zeichen.py) ────────────────────────────────────
+# Jede Funktion in zeichen.py, die ein Zeichen setzt, muss hier (oder bei einem Kasten/Werkzeug) als Messung stehen –
+# der Wachposten liest zeichen.py und schlägt Alarm, wenn ein Zeichen fehlt (Micky 15.11.2026).
+ZEICHEN = [
+    dict(name="Dow-Struktur", art="Struktur", meister="Dow",
+         regel="Schwungpunkte (Tag n = 5, Woche n = 2); höhere Hochs und Tiefs = aufwärts, tiefere = abwärts. Schwäche: "
+               "Schluss mindestens 0,5 ATR unter dem letzten höheren Tief. Stärke: Schluss mindestens 0,5 ATR über dem "
+               "letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber steht "
+               "(gespiegelt: erstes tieferes Hoch, Kurs darunter).",
+         messung=["zeichen.dow", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen", "Kreislauf/Phase"]),
+    dict(name="Spring/Upthrust", art="Struktur", meister="Wyckoff; O'Neil („undercut and rally“)",
+         regel="In den letzten 10 Tagen: Tief höchstens 1 ATR unter dem Tief der 20 Tage davor (Spanne höchstens 15 % "
+               "breit), Schluss innerhalb von 3 Tagen wieder darüber mit Volumen über dem Schnitt = Spring. Upthrust: "
+               "Hoch über der Oberkante mit Volumen über dem Schnitt, Schluss im unteren Drittel des Tages und wieder in "
+               "der Spanne.",
+         messung=["zeichen.spring"], pruefer=["Test am Rand: Zeichen", "abgelehnt/angenommen"]),
+    dict(name="Einquetschung", art="Struktur", meister="Micky (aufsteigendes Dreieck)",
+         regel="Steigende Tiefs gegen eine flache Oberkante: in 60, sonst 120 Tagen mindestens 2 Schwunghochs innerhalb "
+               "±1,5 % der Oberkante, die flache Kante seit mindestens 3 Wochen, mindestens 3 steigende Tiefs (ein Spring "
+               "bricht die Reihe nicht), Spanne und Volumen werden kleiner. Gespiegelt.",
+         messung=["zeichen.einquetschung", "zeichen.kreislauf"], pruefer=["Einquetschung"]),
+    dict(name="Bruch der Phase", art="Struktur", meister="Weinstein",
+         regel="Schluss unter dem Tief der Basis bzw. über dem Hoch der Verteilung.",
+         messung=["zeichen.kreislauf"], pruefer=["Kreislauf/Phase", "abgelehnt/angenommen"]),
+    dict(name="Akkumulation und Distribution", art="Volumen", meister="O'Neil",
+         regel="20 Tage: Kauftag = Schluss über dem Vortag, Volumen über dem 50-Tage-Schnitt, Schluss im oberen Drittel; "
+               "Abgabetag = Schluss unter dem Vortag, Volumen über dem Schnitt, Schluss im unteren Drittel; Saldo ≥ 3 und "
+               "doppelt so viele = Akkumulation, gespiegelt Distribution. Verdeckte Abgabe (Churning): mindestens 3 Tage "
+               "im Plus mit Volumen, die im unteren Drittel schließen.",
+         messung=["zeichen.akkumulation", "zeichen.tagesmarken"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Pocket Pivot", art="Volumen", meister="Morales/Kacher",
+         regel="In den letzten 5 Tagen: Tag im Plus über GD10 und GD50, höchstens 4 % über dem GD10, Volumen über dem "
+               "größten Abgabetag der 10 Tage davor, die 5 Tage davor zusammen höchstens +3 %.",
+         messung=["zeichen.akkumulation", "zeichen.tagesmarken"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="3 Wochen eng, Volumen trocknet aus", art="Volumen", meister="O'Neil (3 Wochen eng), Minervini",
+         regel="Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit: der leiseste Tag seit 50 Tagen in den letzten 10, in "
+               "der unteren Hälfte der Spanne der 60 Tage.",
+         messung=["zeichen.enge_trocken"], pruefer=["Anlass", "Test am Rand: Zeichen"]),
+    dict(name="Freitag ohne Gewinnmitnahme", art="Volumen", meister="Micky (13.11.2026)",
+         regel="Nach einer Woche von mindestens 2 Wochen-ATR keine Gewinnmitnahme: der letzte Handelstag der Woche "
+               "schließt im oberen Drittel seiner Spanne und nicht schwächer als −0,5 %, die Woche im oberen Viertel – die "
+               "Käufer trauen dem Lauf. Gespiegelt keine Eindeckung nach einer schwachen Woche.",
+         messung=["zeichen.freitag"], pruefer=["Test am Rand: Zeichen", "Ungleichgewicht"]),
+    dict(name="Stärke in der Schwäche", art="RS", meister="Micky, Minervini, O'Neil",
+         regel="Im Fenster der Korrektur (bis 45 Handelstage nach ihrem Tief): hält = der Index fiel mindestens 3 %, der "
+               "Titel steht am Indextief mindestens so weit im Plus wie der Index im Minus und mindestens 15 Punkte vor "
+               "ihm; führt = seit dem Indextief mindestens 10 Punkte vor dem Index, Kurs höchstens 15 % unter dem "
+               "52-Wochen-Hoch; nah = am Indextief höchstens halb so weit vom eigenen Hoch wie der Index und höchstens "
+               "15 %; RS-Linie am 52-Wochen-Hoch, während der Index fällt. Gespiegelt Schwäche in der Stärke (Index ≥ 3 % "
+               "über dem Tief der 60 Tage): Titel seit dem Indextief im Minus, RS-Linie am 52-Wochen-Tief.",
+         messung=["zeichen.relativ"], pruefer=["Test am Rand: Zeichen", "Eigen oder geliehen"]),
+    dict(name="Höheres Tief gegen den Index", art="RS", meister="O'Neil, Minervini (Divergenz)",
+         regel="Der Titel fiel seit dem Indexhoch bis zu seinem Tief um mindestens max(5 %, 3 ATR, den Rückgang des "
+               "Index); dieses Tief liegt mindestens 3 Handelstage vor dem Tief des Index, der Index fällt danach "
+               "mindestens 0,5 % tiefer, der Titel bleibt 5 % über seinem Tief und liegt seit seinem Tief mindestens 10 "
+               "Punkte vor dem Index. Gespiegelt (Verteilung eines Führers): tieferes Hoch gegen den Index nach einem "
+               "Anstieg ab 10 % in 60 Tagen.",
+         messung=["zeichen.divergenz", "zeichen.divergenz_short"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Tage gegen den Markt", art="RS", meister="O'Neil (versteckte Stärke)",
+         regel="An mindestens 4 (und 60 %) der Indextage mit −1 % oder weniger im Plus geschlossen (20 Tage); gespiegelt "
+               "Schwäche: an mindestens 3 Indextagen mit +1 % oder mehr im Minus.",
+         messung=["zeichen.tage_gegen_markt"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="RS-Linie in der Base", art="RS", meister="O'Neil, Minervini",
+         regel="Die RS-Linie steigt in 20 Tagen um mindestens 2 %, während der Kurs nachgibt; höheres Tief der RS-Linie bei "
+               "tieferem Kurstief (60 Tage). Gespiegelt für die Schwäche.",
+         messung=["zeichen.rs_linie"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Reaktion auf die Zahlen", art="Ereignis", meister="O'Neil, Micky",
+         regel="Letzte Zahlenmeldung (höchstens 60 Handelstage): Überraschung gegen Reaktion (Schwäche ab −2 % trotz guter "
+               "Zahlen, Stärke ab +1 % mit Schluss in der oberen Hälfte trotz schlechter), Lücke gegen Schluss im Tag "
+               "(Lücke ≥ +3 % und Schluss im unteren Drittel = verkauft; gespiegelt gekauft), Kurs heute zurück unter bzw. "
+               "über dem Schluss vor den Zahlen = Zahlen verworfen bzw. Abverkauf zurückgekauft.",
+         messung=["zeichen.reaktion"], pruefer=["Anlass"]),
+    dict(name="Market Profile an der Schwelle", art="Ereignis", meister="Dalton",
+         regel="Tageswerte der letzten 5 Tage überwiegend höher bzw. tiefer, POC steigt bzw. fällt, Kurs im oberen bzw. "
+               "unteren Drittel der Wertzone.",
+         messung=["zeichen.wertzone"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Trendqualität", art="Struktur", meister="Minervini (Trendvorlage)",
+         regel="Steigung des GD50 über 20 Tage und Abstand des Kurses zum GD50, in % – als Zahl neben der Phase.",
+         messung=["zeichen.trendqualitaet"], pruefer=["Kreislauf/Phase"]),
+]
+ZEICHEN_GEWICHT = ("Die Zeichen werden gewogen: Struktur, Volumen, RS und Ereignis. Wer am Rand stärker ist, zeigt das "
+                   "Gewicht beider Seiten. Ein Wechsel der Phase zeichnet sich erst ab, wenn ein Zeichen der Struktur UND "
+                   "eines aus Volumen oder RS auf derselben Seite stehen und die Seite klar überwiegt (Gewicht mindestens 4 "
+                   "und doppelt so schwer wie die Gegenseite).")
+
 # ── Setups als Wege durch den Kreislauf ─────────────────────────────────────────────────────────────────────────
 SETUPS = [
     dict(name="Base-Ausbruch", reihen=["m_spitze", "m_weitere", "vcp"], lehrer="Minervini",
@@ -415,6 +502,9 @@ def block_kaesten(bild):
             "zeigen, melde ihn):"] + zeilen + [GRUNDSATZ[bild]]
     if w:
         teil += ["", "Wie die App misst (damit du die Absicht kennst; prüfe trotzdem gegen die Meister):"] + w
+    if bild == "titel":
+        teil += ["", "Die Zeichen der App (Stärke und Schwäche, je mit Spiegelbild):"] \
+            + [f"- {z['name']} ({z['art']}, {z['meister']}): {z['regel']}" for z in ZEICHEN] + [ZEICHEN_GEWICHT]
     return "\n".join(teil)
 
 
@@ -446,7 +536,8 @@ def elemente(bild):
                 "Short", "Sonstiges"]
     aus = []
     erst = {"titel": ["Zustand", "Anlass"], "gruppe": ["Zustand der Gruppe", "Anlass"], "markt": ["Zustand des Marktes", "Anlass"]}[bild]
-    for e in erst + [p for x in KAESTEN[bild] + WERKZEUGE[bild] for p in x["pruefer"]]:
+    for e in erst + [p for x in KAESTEN[bild] + WERKZEUGE[bild] + (ZEICHEN if bild == "titel" else [])
+                     for p in x["pruefer"]]:
         if e not in aus:
             aus.append(e)
     return aus + ["Sonstiges"]
@@ -488,6 +579,27 @@ def wachposten():
                     melde("rot", art, bild, x["name"], "als gemessen eingetragen, aber ohne Messfunktion")
                 if not x.get("pruefer"):
                     melde("rot", art, bild, x["name"], "kein Prüf-Element – der Prüfer sieht den Kasten nicht")
+    for z in ZEICHEN:
+        for m in z["messung"]:
+            if not _gibt_es(m):
+                melde("rot", "Zeichen", "titel", z["name"], f"Messfunktion {m} fehlt im Code")
+        if not z.get("pruefer"):
+            melde("rot", "Zeichen", "titel", z["name"], "kein Prüf-Element – der Prüfer sieht das Zeichen nicht")
+    # Jede Funktion in zeichen.py, die ein Zeichen setzt, steht auf der Karte (sonst wurde ein Zeichen vergessen)
+    try:
+        import ast
+        import inspect
+        import zeichen as zmod
+        baum = ast.parse(inspect.getsource(zmod))
+        auf_karte = {m for x in ZEICHEN + [y for b in KAESTEN.values() for y in b] + [y for b in WERKZEUGE.values() for y in b]
+                     for m in x["messung"]}
+        for f in baum.body:
+            if isinstance(f, ast.FunctionDef) and f.name != "_zeichen" and any(
+                    isinstance(n, ast.Call) and getattr(n.func, "id", None) == "_zeichen" for n in ast.walk(f)):
+                if f"zeichen.{f.name}" not in auf_karte:
+                    melde("rot", "Zeichen", "titel", f.name, f"zeichen.{f.name} setzt Zeichen, steht aber nicht auf der Karte")
+    except Exception as e:  # noqa: BLE001
+        melde("rot", "Zeichen", "titel", "zeichen.py", f"nicht lesbar: {e}")
     # Jeder Zustand der App hat einen Kasten
     try:
         import auktion
@@ -512,7 +624,8 @@ def wachposten():
                 bild = {"SYSTEM": "titel", "SYSTEM_GRUPPE": "gruppe", "SYSTEM_MARKT": "markt"}[name] \
                     if mod_name == "chartpruefer" else "setup"
                 text = getattr(mod, name)
-                namen = [s["name"] for s in SETUPS] if bild == "setup" else [k["name"] for k in KAESTEN[bild]]
+                namen = [s["name"] for s in SETUPS] if bild == "setup" else [k["name"] for k in KAESTEN[bild]] \
+                    + ([z["name"] for z in ZEICHEN] if bild == "titel" else [])
                 for n in namen:
                     if f"- {n}" not in text:
                         melde("rot", "Prüfer", bild, n, f"fehlt in der Anleitung {mod_name}.{name}")
@@ -547,7 +660,7 @@ def zaehlen(meldungen=None):
     m = wachposten() if meldungen is None else meldungen
     aus = {}
     for bild in ("titel", "gruppe", "markt"):
-        namen = [x["name"] for x in KAESTEN[bild] + WERKZEUGE[bild]]
+        namen = [x["name"] for x in KAESTEN[bild] + WERKZEUGE[bild] + (ZEICHEN if bild == "titel" else [])]
         rot = {x["name"] for x in m if x["bild"] == bild and x["ampel"] == "rot"}
         gelb = {x["name"] for x in m if x["bild"] == bild and x["ampel"] == "gelb"} - rot
         aus[bild] = (len(namen), len(rot), len(gelb))

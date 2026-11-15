@@ -708,8 +708,8 @@ def regelkarte_zeigen():
     kurz = " · ".join(f"{n} {g - r - y}🟢 {y}🟡 {r}🔴" for n, (g, r, y) in
                       (("Titel", z["titel"]), ("Gruppe", z["gruppe"]), ("Markt", z["markt"]), ("Setups", z["setup"])))
     with st.expander(("🚨" if alarm else "🛡️") + f" Regelkarte · Wachposten · {kurz}", expanded=bool(alarm)):
-        st.caption("Die eine Dienstvorschrift für Code und Prüfer: jeder Kasten der drei Bilder (Titel, Gruppe, Markt) "
-                   "und jedes Setup mit seiner Regel, dem führenden Meister, der Messung im Code und dem Element, unter "
+        st.caption("Die eine Dienstvorschrift für Code und Prüfer: jeder Kasten der drei Bilder (Titel, Gruppe, Markt), "
+                   "jedes Zeichen der Stärke und Schwäche und jedes Setup mit seiner Regel, dem führenden Meister, der Messung im Code und dem Element, unter "
                    "dem der Prüfer ihn prüft. Beide Prüfer bekommen ihre Anleitung aus dieser Karte. 🟢 gemessen · "
                    "🟡 erst teilweise · 🔴 noch nicht gemessen bzw. gebaut (geplant, mit Schritt). Alarm 🚨 heißt: "
                    "Karte und Code passen nicht zusammen – etwas wurde vergessen.")
@@ -730,6 +730,16 @@ def regelkarte_zeigen():
                         f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Kasten</th>'
                         f'<th {zelle}>Regel</th><th {zelle}>führt</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th>'
                         f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
+        zeilen = "".join(
+            f'<tr><td {zelle}>🟢</td><td {zelle}><b>{esc(z_["name"])}</b><br><span style="opacity:.6">{esc(z_["art"])}'
+            f'</span></td><td {zelle}>{esc(z_["regel"])}</td><td {zelle}>{esc(z_["meister"])}</td>'
+            f'<td {zelle}>{esc(", ".join(z_["messung"]))}</td><td {zelle}>{esc(", ".join(z_["pruefer"]))}</td></tr>'
+            for z_ in regelkarte.ZEICHEN)
+        st.markdown(f'<details><summary style="cursor:pointer"><b>Zeichen · Stärke und Schwäche (Titel)</b></summary>'
+                    f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Zeichen</th>'
+                    f'<th {zelle}>Regel</th><th {zelle}>Meister</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th></tr>'
+                    f'{zeilen}</table><span style="font-size:12px;opacity:.7">{esc(regelkarte.ZEICHEN_GEWICHT)}</span>'
+                    f'</details>', unsafe_allow_html=True)
         zeilen = "".join(
             f'<tr><td {zelle}>{ampel[s_["stand"]]}</td><td {zelle}><b>{esc(s_["name"])}</b><br>'
             f'<span style="opacity:.6">{esc(s_["lehrer"])}</span></td><td {zelle}>{esc(s_["weg"])}</td>'
