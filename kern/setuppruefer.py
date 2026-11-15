@@ -40,6 +40,7 @@ PROTOKOLL = os.path.join(ORDNER, "lauf.json")
 LOG = os.path.join(ORDNER, "lauf.log")
 STICHPROBE = 100               # davon OHNE Titel ohne Setup
 OHNE = 20
+KLEIN = 60                     # kleiner Lauf (Micky 15.11.2026: Guthaben reicht nach Lauf 4 nicht für 100), OHNE anteilig
 KOSTEN_JE_CHART = 0.19         # $ gemessen: zweiter Lauf 14.11.2026 kostete 13,87 $ für 72 Charts (Bild, ganze Kette)
 
 ELEMENTE = regelkarte.elemente("setup")     # Setups, Wege und Meister aus der Regelkarte (15.11.2026)
@@ -106,9 +107,10 @@ def stichprobe(n=STICHPROBE, seed=None):
     for v in list(gruppen.values()) + [ohne]:
         rnd.shuffle(v)
     aus = []
-    while len(aus) < n - OHNE and any(gruppen.values()):
+    ohne_n = round(n * OHNE / STICHPROBE)            # Titel ohne Setup anteilig (100 → 20, 60 → 12)
+    while len(aus) < n - ohne_n and any(gruppen.values()):
         for g in sorted(gruppen):
-            if gruppen[g] and len(aus) < n - OHNE:
+            if gruppen[g] and len(aus) < n - ohne_n:
                 aus.append((gruppen[g].pop(0), g))
     aus += [(tk, "ohne Setup") for tk in ohne[:n - len(aus)]]
     return aus
@@ -256,15 +258,16 @@ def stand():
     return chartpruefer.stand(PROTOKOLL)
 
 
-def starten():
-    """Startet werkzeuge/setup_lauf.py als eigenen Prozess; nie zugleich mit dem Chart-Prüfer (Monatsdeckel)."""
+def starten(n=None):
+    """Startet werkzeuge/setup_lauf.py als eigenen Prozess (n Titel, sonst STICHPROBE); nie zugleich mit dem
+    Chart-Prüfer (Monatsdeckel)."""
     import chartpruefer
     if stand()[0] or chartpruefer.stand()[0]:
         return False
     os.makedirs(ORDNER, exist_ok=True)
     log = open(LOG, "w", encoding="utf-8")
     skript = os.path.join(HIER, "..", "werkzeuge", "setup_lauf.py")
-    subprocess.Popen([sys.executable, "-u", os.path.abspath(skript)], cwd=os.path.join(HIER, ".."), stdout=log,
+    subprocess.Popen([sys.executable, "-u", os.path.abspath(skript)] + ([str(int(n))] if n else []), cwd=os.path.join(HIER, ".."), stdout=log,
                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
     return True
 

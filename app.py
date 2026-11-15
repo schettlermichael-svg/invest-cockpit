@@ -571,6 +571,14 @@ def _setuppruefer_starten():
         st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
 
 
+def _setuppruefer_klein():
+    import setuppruefer
+    if setuppruefer.starten(setuppruefer.KLEIN):
+        st.toast(f"Setup-Prüfer läuft mit {setuppruefer.KLEIN} Titeln – die Seite zeigt den Fortschritt")
+    else:
+        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
+
+
 def _chartpruefer_zeigen():
     """Chart-Prüfer (14.11.2026): Prüfstand, kein Erkenner – eine Stichprobe von Charts gegen die Regeln der Meister;
     gemeldet wird nur, wo der Prüfer der App widerspricht."""
@@ -598,16 +606,20 @@ def _setuppruefer_zeigen():
                     "und Weinstein: Ist das Grün verdient? Sitzen Einstieg, Kaufzone und Stopp richtig? Ist ein Setup "
                     f"übersehen? Etwa {setuppruefer.STICHPROBE * setuppruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf "
                     f"(Monatsdeckel {modell.DECKEL_USD:.0f} \\$). Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
-                    "setuppruefer", _setuppruefer_starten)
+                    "setuppruefer", _setuppruefer_starten,
+                    klein=(f"Kleiner Lauf ({setuppruefer.KLEIN} Titel, etwa "
+                           f"{setuppruefer.KLEIN * setuppruefer.KOSTEN_JE_CHART:.0f} \\$)", _setuppruefer_klein))
 
 
-def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten):
+def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten, klein=None):
     """Kasten eines Prüfers auf der Seite Setups: Start, Fortschritt, Auswertung, Bericht nach Element."""
     from html import escape as esc
     laeuft, p = mod.stand()
     with st.expander(ueberschrift, expanded=laeuft):
         st.caption(beschreibung)
         st.button("Prüflauf starten", disabled=laeuft, on_click=starten, key=f"{key}_start")
+        if klein:                                # (Text, Funktion) – kleiner Lauf, wenn das Guthaben knapp ist
+            st.button(klein[0], disabled=laeuft, on_click=klein[1], key=f"{key}_klein")
         if laeuft:
             st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} geprüft")
         elif p and p.get("ende"):
