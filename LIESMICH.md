@@ -1138,3 +1138,19 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - **Gemessen an 468 Titeln:** 112 von 262 Zonen mit Pivot haben einen Cheat (68 mittleres Drittel, 25 oberes, 19 Low
   Cheat). 68 Ausbrüche waren Schlüsse über einem Cheat und zählen nicht mehr als Ausbruch, 14 haben einen anderen Tag
   oder Pivot. Einstieg bei 14 Titeln anders, Setup-Reihe bei 7.
+
+## Gefechtsordnung Schritt 3: Struktur-Stopp neben 1,5 ATR (15.11.2026)
+
+- **Eine Quelle:** `depot.struktur_stopp` – der Kurs, an dem der Weg des Setups widerlegt ist:
+  Base und VCP unter dem Tief der letzten Kontraktion (je Einstieg); Flagge und Momentum-Ausbruch das Tief des
+  Ausbruchstags, bis dahin Einstieg − 1 Tagesspanne (ADR 20 Tage); Sprung (EP) das Tief des Sprungtags; Zahlen-Reaktion
+  Tief bzw. Hoch des Reaktionstags; Shorts das Hoch des Auslösetags. Liegt die Struktur durch eine Lücke nicht jenseits
+  des Einstiegs, gilt Einstieg ∓ 1 Tagesspanne.
+- **Nie gekappt:** weiter als die Grenze des Meisters (Base 8 %, schnelles Setup eine Tagesspanne) = Ampel rot „die
+  Meister nehmen den Trade so nicht“. Bis 15.11. kappte die App die Base auf 8 %.
+- **Überall beide:** Plan, Chart (Struktur durchgezogen, 1,5 ATR gestrichelt; auch Stundenchart und Short), Lagekarte,
+  CRV (Stopp A Struktur, B 1,5 ATR), Stückzahl je Einstieg und je Stopp, Setup-Prüfer, Gleichlauf-Wache (falsche Seite).
+- **Gemessen an 143 Setups (468 Titel):** Struktur im Schnitt 7,1 % vom Einstieg; 50 liegen im Tagesrauschen (unter
+  1 ATR), 71 enger als 1,5 ATR; 27 weiter als die Grenze des Meisters; 7 mit Lücke. Setups und Einstiege unverändert.
+- **Blinder Fleck gefunden:** Kaufzone (1,05) und Marken der Trendvorlage (1,30/0,75) standen in Plan und Chart als
+  Kopien – jetzt aus der einen Quelle. Die Inventur sah die Anzeige-Module nicht; rund 40 Regel-Zahlen dort sind Plan 22.

@@ -155,7 +155,9 @@ PLAN = [
      "96f5ace: Base long mit zwei Einstiegen in Plan, Chart, Stückzahl, Kartentisch und Prüfern; 112 von 262 Zonen mit Pivot "
      "haben einen Cheat; 68 von 468 Ausbrüchen waren Cheats und zählen nicht mehr als Ausbruch. Der Short-Spiegel steht in Plan 21"),
     (5, "Schritt 3: Struktur-Stopp neben 1,5 ATR (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles Setup: "
-        "Tagestief, höchstens eine Tagesspanne)", "Gefechtsordnung", "offen", ""),
+        "Tagestief, höchstens eine Tagesspanne)", "Gefechtsordnung", "behoben",
+     "0cba440: beide Stopps in Plan, Chart, Lagekarte, CRV, Stückzahl und Prüfer; 143 Setups gemessen: Struktur im Schnitt "
+     "7,1 % vom Einstieg, 27 weiter als die Grenze des Meisters (rot), 50 im Tagesrauschen, 7 mit Lücke"),
     (6, "Schritt 4: Spring und Upthrust als eigene Setups (long und short)", "Gefechtsordnung", "offen", ""),
     (7, "Schritt 5: Stopp am 10er/20er, Mauer, Kraft ohne Weg und Klimax ziehen ihn enger", "Gefechtsordnung", "offen", ""),
     (8, "Schritt 8: Phasen nach Weinstein als Rahmen (30 oder 40 Wochen, Sperre nach Phase 4)", "Gefechtsordnung", "offen", ""),
@@ -178,6 +180,11 @@ PLAN = [
          "App kennt Shorts heute erst nach dem Bruch (Bärenflagge, Bruch der Spanne) – sie braucht dafür die Zone von der "
          "Short-Seite vor dem Bruch; gebaut mit Schritt 4 (Spring/Upthrust braucht dieselben beiden Ränder)",
      "Gefechtsordnung", "offen", ""),
+    (22, "Inventur Stufe 3: Regeln in den Anzeige-Modulen – die Inventur sah nur Funktionen der Karte; in Titelseite, "
+         "Lagekarte und Kartentisch stehen noch rund 40 Regel-Zahlen ohne Namen (Kacheln: Base Nr. 1–2 grün, RS ab 70/60, "
+         "Trendvorlage 7/5, Reaktion ±3 %, Absturz 15 %, Termin 14 Tage, Abstand 10 %), im Chart 189 Zahlen (meist Layout). "
+         "Benennen, Kopien auf die eine Quelle führen, Wachposten auf alle Module ausdehnen (Layout als Technik)",
+     "Inventur", "offen", ""),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
