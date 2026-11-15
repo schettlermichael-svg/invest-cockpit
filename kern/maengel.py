@@ -87,6 +87,9 @@ VORGABEN = [
      "nur fertige Wochen bestätigen ein Schwunghoch; steht der Kurs über allen Hochs, heißt der Anker sichtbar "
      "Ausbruchspunkt (172 Titel) – letztes Hoch bei 194 Titeln anders"),
     ("chart", "2026-11-15 11:37", "Quad-Führer", "behoben", "Anzeige im Material des Prüfers (Text statt Buchstaben)"),
+    ("chart", "2026-11-15 11:37", "Flagge ohne Fahnenstange", "behoben",
+     "Micky 15.11.: Flagge nur mit haltenden Tiefs (sonst Base/Konsolidierung) und Stange direkt davor (nach einem "
+     "Rücksetzer über 25 % beginnt sie an dessen Tief) – Titel mit Flagge 174 → 123, reife 108 → 72"),
     ("chart", "2026-11-15 11:37", "Phase nach Weinstein", "offen", "Micky 14.11.: Schritt 8 der Gefechtsordnung"),
     ("chart", "2026-11-15 11:37", "Kette erkennt Ausbruch", "offen", "Gefechtsordnung (Regelkarte, Schritte 2–5)"),
 ]

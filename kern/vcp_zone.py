@@ -93,6 +93,7 @@ TASSE_MIN_W = 7                # … und nur bei einer Tasse: linke Seite bis re
 ABSTURZ_TIEFE = 0.50           # Chart-Prüfer 14.11.2026: Zonen von 51–73 % Tiefe (WIX, CNXC, RH …) fassten den Absturz mit ein
 FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
 FLAGGE_MIN_W = 1
+FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 ATR unter dem der ersten liegen (Shakeout)
 
 
 def atr(df, n=ATR_TAGE):
@@ -230,12 +231,33 @@ def zone(df):
 
 
 def _stange(df, i, top):
-    """Fahnenstange: Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne höheres Hoch dazwischen."""
+    """Fahnenstange: Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne höheres Hoch dazwischen – und
+    direkt vor der Flagge (Micky 15.11.2026, Chart-Prüfer Lauf 4: die Stange kam aus einem Lauf, der Monate
+    zurücklag): gab es in den 13 Wochen einen Rücksetzer tiefer als eine Flagge sein darf (25 %), beginnt die Stange
+    erst an dessen Tief."""
     h, l = df["High"].to_numpy(), df["Low"].to_numpy()
     s0 = max(0, i - FLAGGE_STANGE_W * WOCHE)
-    si = s0 + int(np.argmin(l[s0:i + 1]))
+    hm, tief_ab = h[s0], s0
+    for j in range(s0, i + 1):
+        hm = max(hm, h[j])
+        if l[j] <= hm * (1 - FLAGGE_TIEFE):
+            tief_ab, hm = j, h[j]                    # tiefer Rücksetzer: die Stange beginnt frühestens hier
+    si = tief_ab + int(np.argmin(l[tief_ab:i + 1]))
     sauber = h[si:i].max() <= top if i > si else False
     return {"prozent": (top / l[si] - 1) * 100, "wochen": (i - si) / WOCHE, "von_i": si, "von": l[si], "sauber": sauber}
+
+
+def tiefs_fallen(df, i, bis=None):
+    """Fallen die Tiefs einer Flagge ab Index i (bis heute bzw. bis `bis`)? Das tiefste Tief der zweiten Hälfte liegt
+    mehr als FLAGGE_TIEF_ATR unter dem der ersten (Kullamägi: steigende Tiefs; Micky 14./15.11.2026) → (fallen,
+    tief1, tief2) oder None bei weniger als 4 Tagen."""
+    l = df["Low"].to_numpy(float)
+    e = (len(df) - 1) if bis is None else bis
+    if e - i + 1 < 4:
+        return None
+    m = i + (e - i + 1) // 2
+    t1, t2 = l[i:m].min(), l[m:e + 1].min()
+    return t2 < t1 - FLAGGE_TIEF_ATR * float(atr(df).iloc[e]), t1, t2
 
 
 def _rahmen(df, i, top):
@@ -248,8 +270,9 @@ def _rahmen(df, i, top):
     wochen = (n - 1 - i) / WOCHE
     v = _vorgeschichte(df, i, top)
     stange = _stange(df, i, top)
+    tf = tiefs_fallen(df, i)
     if (stange["sauber"] and stange["prozent"] >= FLAGGE_SCHUB * 100 and wochen <= FLAGGE_ZONE_W
-            and hoehe / top <= FLAGGE_TIEFE):
+            and hoehe / top <= FLAGGE_TIEFE and not (tf and tf[0])):     # fallende Tiefs: die Truppe weicht – keine Flagge
         name = "Flagge"
     elif v["art"] == "Absturz":
         name = "Konsolidierung"

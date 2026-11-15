@@ -1070,5 +1070,11 @@ Gemessen über 1.865 Titel, alter gegen neuen Code (Mac-Daten bis 04.11.):
 | AVWAP letztes Hoch | nur fertige Wochen bestätigen; Kurs über allen Hochs = „Ausbruchspunkt“ | 172 Ausbruchspunkte, 194 Anker anders |
 | Quad in Buchstaben | Material des Prüfers | – |
 
-Offen aus Lauf 4: Flagge (Name der Zone bei fallenden Tiefs, Stange aus altem Lauf), Pivot verbraucht/Drittel,
+- **Flagge** (Micky 15.11.2026, `vcp_zone._stange`, `vcp_zone.tiefs_fallen`): eine Zone heißt nur noch Flagge, wenn
+  ihre Tiefs halten (Tief der zweiten Hälfte höchstens 0,5 ATR unter dem der ersten), sonst Base bzw. Konsolidierung;
+  die Fahnenstange liegt direkt davor (nach einem Rücksetzer über 25 % in den 13 Wochen beginnt sie erst an dessen
+  Tief). Die Prüfung der Tiefs im Kartentisch ist damit in die Zone gewandert. Titel mit Flagge 174 → 123, reife
+  Flaggen 108 → 72; 33 Zonen heißen jetzt Base (22) bzw. Konsolidierung (11).
+
+Offen aus Lauf 4: Pivot verbraucht/Drittel,
 Volumenprofil der Balance, Basenzählung, Kette (Gefechtsordnung), Phase (Schritt 8), Gruppen und Markt.

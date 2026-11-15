@@ -213,7 +213,9 @@ WERKZEUGE = {
                                 "Schluss darüber bricht sie nicht – ein abgelehnter Vorstoß; so entschieden, nicht als "
                                 "Widerspruch melden). Eine Tasse ab 7 Wochen gilt als gescheitert, wenn der Kurs nach der "
                                 "rechten Seite in der unteren Hälfte schließt (Schlusskurs, nicht Tagestief). Über 50 % tief "
-                                "ist keine Base; eine zu kurze Zone ist noch im Aufbau (kein Pivot).",
+                                "ist keine Base; eine zu kurze Zone ist noch im Aufbau (kein Pivot). Flagge = Fahnenstange ab 30 % "
+                                "direkt davor, 1–8 Wochen, höchstens 25 % tief, die Tiefs halten (sonst Base bzw. "
+                                "Konsolidierung).",
              messung=["vcp_zone.zone"], stand="gemessen",
              pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen"]),
         dict(name="Enge und Pivot", regel="Kontraktionen: die linke Seite bis zum Tief der Base, dann jede Welle der "
@@ -375,12 +377,13 @@ SETUPS = [
          messung=["system_minervini.pruefen", "vcp_zone.enge"], stand="teilweise",
          luecke="früher Einstieg am Rand (Schritt 2) und Struktur-Stopp (Schritt 3) fehlen im Plan"),
     dict(name="Flagge", reihen=["flagge"], lehrer="Kullamägi", weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
-         regel="Fahnenstange ab 30 % in höchstens 13 Wochen, Flagge 1–8 Wochen, höchstens 25 % tief, im Aufwärtstrend "
+         regel="Fahnenstange ab 30 % in höchstens 13 Wochen direkt davor (nach einem Rücksetzer über 25 % beginnt sie erst an "
+               "dessen Tief), Flagge 1–8 Wochen, höchstens 25 % tief, im Aufwärtstrend "
                "(Kurs über steigendem GD50), Volumen in der Flagge leiser als in der Stange, steigende Tiefs (das Tief der "
-               "zweiten Hälfte höchstens 0,5 ATR unter dem der ersten); Pivot = Oberkante.",
+               "zweiten Hälfte höchstens 0,5 ATR unter dem der ersten – sonst heißt die Zone nicht Flagge); Pivot = Oberkante.",
          einstieg="Ausbruch über die Oberkante", stopp="Tagestief, höchstens eine Tagesspanne",
          widerlegt="Schluss zurück in der Flagge", abweichung="",
-         messung=["vcp_zone.zone", "kartentisch.flagge_im_trend"], stand="teilweise",
+         messung=["vcp_zone.zone", "vcp_zone.tiefs_fallen", "kartentisch.flagge_im_trend"], stand="teilweise",
          luecke="Struktur-Stopp (Schritt 3) fehlt im Plan"),
     dict(name="Momentum-Ausbruch", reihen=["k_breakout"], lehrer="Kullamägi",
          weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",

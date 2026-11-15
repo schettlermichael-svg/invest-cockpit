@@ -257,7 +257,6 @@ def setup_feststellen(df, m, k, zr, scan):
 
 
 STILL_PCT = 0.5               # ATR unter 0,5 % des Kurses: der Kurs steht still (Übernahme), kein handelbares Setup
-FLAGGE_TIEF_ATR = 0.5         # Flagge: das Tief der zweiten Hälfte darf bis 0,5 ATR unter dem der ersten liegen
 PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
 KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis 5 % darüber (Minervinis Kaufzone)
 
@@ -265,9 +264,8 @@ KAUFZONE_M = 5.0              # ★ Spitze M: höchstens 5 % unter dem Pivot bis
 def flagge_im_trend(df, f):
     """Eine Flagge zählt nur im Aufwärtstrend und bei leisem Volumen (Prüf-Agent 13.11.2026: sie wurde auch in Phase 4
     grün): Kurs über dem steigenden GD50 und Volumen in der Flagge leiser als in der Fahnenstange → (ok, Lücken).
-    Steigende Tiefs (Kullamägi, Micky 14.11.2026, Chart-Prüfer Lauf 3): das tiefste Tief der zweiten Hälfte der Flagge
-    liegt nicht mehr als 0,5 ATR unter dem der ersten (gleiche Tiefs oder ein kurzes Unterschneiden halten das Gelände) –
-    fallende Tiefs heißen, die Truppe weicht (GPK, BR)."""
+    Steigende Tiefs prüft seit 15.11.2026 die Zone selbst (vcp_zone.tiefs_fallen): mit fallenden Tiefs heißt sie nicht
+    mehr Flagge."""
     if df is None or len(df) < 70 or not f:
         return True, []
     c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
@@ -280,16 +278,6 @@ def flagge_im_trend(df, f):
         flg, stg = v[i0:].mean(), v[s0:i0 + 1].mean()
         if stg and flg >= stg:
             luecken.append(f"Flagge: Volumen nicht leiser als in der Fahnenstange ({flg / stg:.2f}-fach)".replace(".", ","))
-    l_, ob = df["Low"].to_numpy(float), f.get("oben")
-    drin = [i for i in range(i0, len(c)) if ob is None or c[i] <= ob]     # nach einem Ausbruch: nur die Tage der Flagge
-    if len(drin) >= 4:
-        e = drin[-1]
-        m = i0 + (e - i0 + 1) // 2
-        t1, t2 = l_[i0:m].min(), l_[m:e + 1].min()
-        import vcp_zone
-        atr_ = float(vcp_zone.atr(df).iloc[e])
-        if t2 < t1 - FLAGGE_TIEF_ATR * atr_:      # gleiche Tiefs oder ein kurzes Unterschneiden (Shakeout) halten
-            luecken.append(f"Flagge: Tiefs fallen ({t1:.2f} → {t2:.2f} $) – die Truppe weicht".replace(".", ","))
     return not luecken, luecken
 
 
