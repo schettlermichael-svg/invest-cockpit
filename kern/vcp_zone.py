@@ -96,6 +96,25 @@ FLAGGE_MIN_W = 1
 FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 ATR unter dem der ersten liegen (Shakeout)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+VOR_WOCHEN = 52         # Vorgeschichte: Anstieg in den 52 Wochen vor der Oberkante
+VOR_TIEF_WOCHEN = 26    # … Tief der 26 Wochen davor
+FLAGGE_MIN_TAGE = 4     # Tiefs der Flagge erst ab 4 Tagen vergleichbar
+VOL_MIN_TAGE = 20       # Volumen-Schnitt der 50 Tage ab 20 Tagen Daten
+VERLAUF_TAGE = 600      # Historie: die letzten 600 Handelstage
+VERLAUF_START = 120     # … frühestens ab Tag 120 (Zonen brauchen Vorlauf)
+NEUES_HOCH_TAGE = 5     # Ausbruch nur an einem Tag mit Schluss über den 5 Schlüssen davor
+MIN_DATEN = 80          # Ausbruch/Ermüdung ab 80 Handelstagen Daten
+MIN_DATEN_BF = 120      # Bärenflagge ab 120 Handelstagen Daten
+BF_GD50_TAGE = 20       # Bärenflagge: GD50 fällt (gegen 20 Tage vorher)
+BF_DRIFT_TIEF_TAGE = 5  # Bärenflagge: Tief des Driftens der letzten 5 Tage
+BF_RUECKHOL = 0.5       # Bärenflagge: holt höchstens die Hälfte des Falls zurück
+MIN_DATEN_PHASE = 300   # Bruch der Spanne ab 300 Handelstagen (Phase braucht sie)
+PHASE_VERTEILUNG = 3    # Basis (1) oder Verteilung (3)
+WOCHE_RAND_TAGE = 6     # Beginn der Phase: Wochenbeginn (6 Kalendertage vor dem Wochenschluss)
+SPANNE_BRUCH = 0.99     # Bruch der Spanne: Schluss 1 % unter ihrem Tief
+
+
 def atr(df, n=ATR_TAGE):
     """Die eine ATR der App (atr.reihe)."""
     import atr as atr_
@@ -140,14 +159,14 @@ def zigzag(df, faktor):
 
 def _vorgeschichte(df, top_i, top):
     h, l = df["High"].to_numpy(), df["Low"].to_numpy()
-    start = max(0, top_i - 52 * WOCHE)
+    start = max(0, top_i - VOR_WOCHEN * WOCHE)
     hoeher = np.where(h[start:top_i] > top)[0]
     von = start + (hoeher[-1] + 1 if len(hoeher) else 0)
     if von >= top_i:
         von = max(0, top_i - 1)
     tief_i = von + int(np.argmin(l[von:top_i + 1]))
     tief = l[tief_i]
-    vor = max(0, tief_i - 26 * WOCHE)
+    vor = max(0, tief_i - VOR_TIEF_WOCHEN * WOCHE)
     if tief_i > vor:
         hoch_i = vor + int(np.argmax(h[vor:tief_i]))
         if h[hoch_i] > top:
@@ -253,7 +272,7 @@ def tiefs_fallen(df, i, bis=None):
     tief1, tief2) oder None bei weniger als 4 Tagen."""
     l = df["Low"].to_numpy(float)
     e = (len(df) - 1) if bis is None else bis
-    if e - i + 1 < 4:
+    if e - i + 1 < FLAGGE_MIN_TAGE:
         return None
     m = i + (e - i + 1) // 2
     t1, t2 = l[i:m].min(), l[m:e + 1].min()
@@ -307,7 +326,7 @@ def enge(df, z):
                         "kein Pivot".replace(".", ",")}
     h, l, c = df["High"].to_numpy(), df["Low"].to_numpy(), df["Close"].to_numpy()
     v = df["Volume"].to_numpy(float)
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().to_numpy()
     a = atr(df).to_numpy()
     n = len(df)
 
@@ -435,7 +454,7 @@ def _einordnen(fertig, jetzt):
     return aus
 
 
-def verlauf(df, tage=600):
+def verlauf(df, tage=VERLAUF_TAGE):
     """Abgeschlossene Zonen der letzten `tage` Handelstage – dieselbe Regel wie live: eine Zone ist fertig, wenn
     der Kurs über seiner Oberkante schließt (Flagge in der Zone ebenso). Gerechnet wird nur an Tagen mit Schluss über
     den fünf Schlüssen davor – nur dort kann eine Zone (ab 1 Woche) enden."""
@@ -443,8 +462,8 @@ def verlauf(df, tage=600):
     c = df["Close"].to_numpy()
     n = len(df)
     fertig = []
-    for t in range(max(120, n - tage), n):
-        if c[t] <= c[t - 5:t].max():
+    for t in range(max(VERLAUF_START, n - tage), n):
+        if c[t] <= c[t - NEUES_HOCH_TAGE:t].max():
             continue
         k = zone(df.iloc[:t])
         if not k.get("zone"):
@@ -473,13 +492,13 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
     mit cheats=True liefert die Funktion genau diesen Cheat (mit „cheat“: Drittel) – für Zustand und frühen Einstieg."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
-    if n < 80:
+    if n < MIN_DATEN:
         return None
     c = df["Close"].to_numpy(float)
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     for t in range(n - tage, n):
-        if c[t] <= c[t - 5:t].max():                       # Vorprüfung wie in verlauf(): ohne neues Schlusshoch kein Ausbruch
+        if c[t] <= c[t - NEUES_HOCH_TAGE:t].max():                       # Vorprüfung wie in verlauf(): ohne neues Schlusshoch kein Ausbruch
             continue
         vor = df.iloc[:t]
         z = zone(vor)
@@ -554,11 +573,11 @@ def ermuedung(df, tage=ERM_TAGE):
     """Short-Setup Ermüdung nach Überdehnung oder None. Zone und Flagge so, wie sie am Vortag des Bruchs standen."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
-    if n < 80:
+    if n < MIN_DATEN:
         return None
     c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     for t in range(n - tage, n):
         if c[t] >= l[t - FLAGGE_MIN_W * WOCHE:t].min():     # Vorprüfung: ohne Schluss unter den Tiefs der Woche kein Bruch
             continue
@@ -643,7 +662,7 @@ def _short_dict(df, art, t, oben, unten, regeln, start):
     if t < n - 1 and h[t + 1:].max() > stopp:                # Stopp erreicht: Setup vorbei
         return None
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
     unter = c[-1] < unten
     regeln = regeln + [("Schluss unter der Unterkante", True, f"{df.index[t]:%d.%m.} · {_de(c[t])} unter {_de(unten)}"),
@@ -659,22 +678,22 @@ def baerenflagge(df, tage=ERM_TAGE):
     """Echte Bärenflagge (steiler Fall, schwaches Driften nach oben, Bruch) oder None."""
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
-    if n < 120:
+    if n < MIN_DATEN_BF:
         return None
     c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
     g50 = pd.Series(c).rolling(50).mean().to_numpy()
     for t in range(n - tage, n):
-        if not g50[t] < g50[t - 20]:
+        if not g50[t] < g50[t - BF_GD50_TAGE]:
             continue
         b = t - BF_DRIFT[1] + int(np.argmin(l[t - BF_DRIFT[1]:t - BF_DRIFT[0] + 1]))     # Tief des Falls
         a = b - BF_FALL_TAGE + int(np.argmax(h[b - BF_FALL_TAGE:b]))                       # Hoch vor dem Fall
         fall = h[a] - l[b]
         if fall / h[a] < BF_FALL:
             continue
-        unten = l[t - 5:t].min()
+        unten = l[t - BF_DRIFT_TIEF_TAGE:t].min()
         oben = h[b:t].max()
-        if not (unten > l[b] and oben - l[b] <= 0.5 * fall and c[t - 1] > l[b]):
+        if not (unten > l[b] and oben - l[b] <= BF_RUECKHOL * fall and c[t - 1] > l[b]):
             continue
         ruhig = np.nanmean(v[b:t]) < np.nanmean(v[a:b + 1]) if b > a else False
         if not ruhig or c[t] >= unten or c[t - 1] < unten:
@@ -693,7 +712,7 @@ def spannenbruch(df, tage=ERM_TAGE):
     import phase as phase_mod
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
-    if n < 300:
+    if n < MIN_DATEN_PHASE:
         return None
     c, l = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
     try:
@@ -702,7 +721,7 @@ def spannenbruch(df, tage=ERM_TAGE):
         return None
     for t in range(n - tage, n):
         fertig = ph[ph.index < df.index[t]]      # nur Wochen, deren Freitag vor dem Bruchtag liegt
-        if not len(fertig) or int(fertig.iloc[-1]) not in (1, 3):
+        if not len(fertig) or int(fertig.iloc[-1]) not in (1, PHASE_VERTEILUNG):
             continue
         p = int(fertig.iloc[-1])
         lauf = 0
@@ -712,11 +731,11 @@ def spannenbruch(df, tage=ERM_TAGE):
             lauf += 1
         if lauf < SPANNE_WOCHEN:
             continue
-        von = fertig.index[-lauf] - pd.Timedelta(days=6)
+        von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
         maske = (df.index > von) & (df.index < df.index[t])
         unten = float(l[maske].min())
         oben = float(df["High"].to_numpy(float)[maske].max())
-        if not (c[t] < unten * 0.99 and c[t - 1] >= unten * 0.99) or oben / unten - 1 > SPANNE_BREIT:
+        if not (c[t] < unten * SPANNE_BRUCH and c[t - 1] >= unten * SPANNE_BRUCH) or oben / unten - 1 > SPANNE_BREIT:
             continue
         regeln = [(f"{'Basis' if p == 1 else 'Verteilung'} (Phase {p}) mindestens 6 Wochen, höchstens 40 % breit", True,
                    f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)")]

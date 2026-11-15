@@ -14,6 +14,17 @@ import numpy as np
 TAGE = 14
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+STOPP_GELB = 1.5     # Stopp im Rauschen: unter 1 ATR rot, bis 1,5 gelb, darüber grün
+ENGE_TAGE = 5        # Enge: Spannen der letzten 5 Tage …
+ENGE_TAGE_HEUTE = 4  # … (die 4 jüngsten nach dem Bezugstag)
+ENGE_GRUEN = 0.6     # … unter 0,6 ATR grün (eng)
+ENGE_GELB = 0.9      # … bis 0,9 gelb
+GD50_TAGE = 50       # GD50
+UEBERDEHNT_ROT = 6   # Überdehnung: ab 6 ATR vom GD50 rot
+UEBERDEHNT_GELB = 4  # … ab 4 gelb
+
+
 def _tr(df):
     h, l, c = (df[k].to_numpy(float) for k in ("High", "Low", "Close"))
     tr = np.empty(len(c))
@@ -50,7 +61,7 @@ def stopp(einstieg, stopp_, a):
     x = abs(einstieg - stopp_) / a
     if x < 1:
         return "rot", f"Stopp {_z(x)} × ATR vom Einstieg → im Tagesrauschen, wird leicht ausgelöst"
-    if x < 1.5:
+    if x < STOPP_GELB:
         return "gelb", f"Stopp {_z(x)} × ATR vom Einstieg → knapp über dem Tagesrauschen"
     return "grün", f"Stopp {_z(x)} × ATR vom Einstieg → außerhalb des Tagesrauschens"
 
@@ -73,13 +84,13 @@ def nachjagen(kurs, pivot, a, seite="long"):
 def enge(df):
     tr = _tr(df)
     n = len(tr) - 1
-    a = wert(df, n - 5)
+    a = wert(df, n - ENGE_TAGE)
     if not a:
         return None
-    x = float(np.mean(tr[n - 4:])) / a
-    if x < 0.6:
+    x = float(np.mean(tr[n - ENGE_TAGE_HEUTE:])) / a
+    if x < ENGE_GRUEN:
         return "grün", f"Spannen der letzten 5 Tage {_z(x)} × ATR → eng, Ruhe vor dem Ausbruch"
-    if x <= 0.9:
+    if x <= ENGE_GELB:
         return "gelb", f"Spannen der letzten 5 Tage {_z(x)} × ATR → beruhigt sich"
     return "rot", f"Spannen der letzten 5 Tage {_z(x)} × ATR → unruhig, keine Enge"
 
@@ -89,10 +100,10 @@ def ueberdehnung(df, a=None):
     c = df["Close"].to_numpy(float)
     if not a or len(c) < 50:
         return None
-    x = (c[-1] - float(np.mean(c[-50:]))) / a
+    x = (c[-1] - float(np.mean(c[-GD50_TAGE:]))) / a
     lage = "über" if x >= 0 else "unter"
-    if abs(x) >= 6:
+    if abs(x) >= UEBERDEHNT_ROT:
         return "rot", f"{_z(abs(x))} × ATR {lage} dem GD50 → überdehnt", x
-    if abs(x) >= 4:
+    if abs(x) >= UEBERDEHNT_GELB:
         return "gelb", f"{_z(abs(x))} × ATR {lage} dem GD50 → weit gespannt", x
     return "grün", f"{_z(abs(x))} × ATR {lage} dem GD50 → im üblichen Rahmen", x

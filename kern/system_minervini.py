@@ -30,18 +30,31 @@ MAX_STOPP = 0.08
 KAUFZONE = vcp_zone.KAUFZONE   # eine Quelle: Minervinis Kaufzone bis 5 % über dem Pivot (vcp_zone)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+GD50_TAGE = 50        # GD50
+GD150_TAGE = 150      # GD150
+GD200_TAGE = 200      # GD200
+GD200_VOR_ENDE = 222  # GD200 vor einem Monat: Tage 222 bis 22 zurück …
+GD200_VOR_START = 22  # … (der GD200 steigt seit einem Monat)
+UEBER_TIEF = 1.30     # Trendvorlage: mindestens 30 % über dem 52-Wochen-Tief
+JAHR = 252            # 52 Wochen in Handelstagen
+UNTER_HOCH = 0.75     # Trendvorlage: höchstens 25 % unter dem 52-Wochen-Hoch
+TIEFE_UNBEKANNT = 99  # Tiefe unbekannt = zu tief
+BASE_TIEFE_MAX = 50   # reife Base höchstens 50 % tief (über 50 % keine Base, O'Neil)
+
+
 def trendvorlage(df):
     """Die sieben Punkte der Trendvorlage ohne RS: Kurzname → erfüllt? (leer bei zu kurzer Historie)."""
     c, h, l = (df[s].to_numpy(float) for s in ("Close", "High", "Low"))
     if len(c) < 260:
         return {}
-    g50, g150, g200 = c[-50:].mean(), c[-150:].mean(), c[-200:].mean()
-    g200_vor = c[-222:-22].mean()
+    g50, g150, g200 = c[-GD50_TAGE:].mean(), c[-GD150_TAGE:].mean(), c[-GD200_TAGE:].mean()
+    g200_vor = c[-GD200_VOR_ENDE:-GD200_VOR_START].mean()
     k = c[-1]
     return {"Kurs über GD150/200": bool(k > g150 and k > g200), "GD150 über GD200": bool(g150 > g200),
             "GD200 steigt": bool(g200 > g200_vor), "GD50 über GD150/200": bool(g50 > g150 and g50 > g200),
-            "Kurs über GD50": bool(k > g50), "30 % über Tief": bool(k >= 1.30 * l[-252:].min()),
-            "höchstens 25 % unter Hoch": bool(k >= 0.75 * h[-252:].max())}
+            "Kurs über GD50": bool(k > g50), "30 % über Tief": bool(k >= UEBER_TIEF * l[-JAHR:].min()),
+            "höchstens 25 % unter Hoch": bool(k >= UNTER_HOCH * h[-JAHR:].max())}
 
 
 def _zahlen(fund):
@@ -64,7 +77,7 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     br = vcp_zone.ausbruch(df) if ausbruch is False else ausbruch
 
     def _reif(b):
-        return b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok" and b.get("tiefe", 99) <= 50
+        return b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok" and b.get("tiefe", TIEFE_UNBEKANNT) <= BASE_TIEFE_MAX
 
     def _waehle(z, e):
         """Die große Zone – oder die Flagge darin, wenn die große durchfällt (Micky, 06.11.2026)."""

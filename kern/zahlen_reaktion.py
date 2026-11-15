@@ -20,6 +20,12 @@ REAKTION_PCT = 3.0            # Micky 12.11.2026
 FENSTER = 20                  # Handelstage nach dem Reaktionstag (Micky 12.11.2026)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+VOL_MIN_TAGE = 20  # Volumen-Schnitt ab 20 Tagen Daten
+LAGE_MITTE = 0.5   # ohne Tagesspanne gilt die Mitte
+GD50_TAGE = 50     # GD50
+
+
 def reaktionstag(df, gewinne):
     """Jüngster Reaktionstag: (Index-Position, Prozent) oder None."""
     if gewinne is None or getattr(gewinne, "empty", True) or df is None or len(df) < 60:
@@ -51,20 +57,20 @@ def pruefen(df, gewinne):
     short = pct < 0
     o, h, l, c = (df[s].to_numpy(float) for s in ("Open", "High", "Low", "Close"))
     v = df["Volume"].to_numpy(float)
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     vol = v[pos] / v50[pos] if v50[pos] == v50[pos] and v50[pos] else None
     spanne = h[pos] - l[pos]
-    lage = (c[pos] - l[pos]) / spanne if spanne > 0 else 0.5          # 0 = Tief, 1 = Hoch
+    lage = (c[pos] - l[pos]) / spanne if spanne > 0 else LAGE_MITTE          # 0 = Tief, 1 = Hoch
     av = avwap.reihe(df, df.index[pos])
     w = float(av.iloc[-1]) if len(av) else None
     danach = slice(pos + 1, n)
     if short:
         halten = not (c[danach] > h[pos]).any() and (len(av) < 2 or not (c[danach] > av.to_numpy()[1:]).any())
-        trend = n >= 50 and c[-1] < c[-50:].mean()
+        trend = n >= GD50_TAGE and c[-1] < c[-GD50_TAGE:].mean()
         lage_ok = lage <= 1 / 3
     else:
         halten = not (c[danach] < l[pos]).any() and (len(av) < 2 or not (c[danach] < av.to_numpy()[1:]).any())
-        trend = n >= 50 and c[-1] > c[-50:].mean()
+        trend = n >= GD50_TAGE and c[-1] > c[-GD50_TAGE:].mean()
         lage_ok = lage >= 2 / 3
     k = lambda x: f"{x:.1f}".replace(".", ",")         # noqa: E731
     drittel = "oberen" if lage >= 2 / 3 else "unteren" if lage <= 1 / 3 else "mittleren"

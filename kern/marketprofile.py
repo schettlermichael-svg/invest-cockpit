@@ -33,12 +33,18 @@ SCHWELLE_MIN = 3         # … davon mindestens 3 in eine Richtung (▲/△ bzw.
 ZEICHEN = {"hoch": "▲", "ueber": "△", "gleich": "▬", "unter": "▽", "tief": "▼"}
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+STUFE_MITTE = 0.5      # Technik: Preis in der Mitte der Stufe
+RUNDUNG = 1e-9         # Technik: nicht durch null teilen
+GESCHEITERT_TAGE = 10  # ein gescheiterter Ausbruch zählt 10 Tage
+
+
 def _zeile(preis):
     return int(np.floor(np.log(preis) / LOG_STUFE))
 
 
 def _preis(zeile):
-    return float(np.exp((zeile + 0.5) * LOG_STUFE))
+    return float(np.exp((zeile + STUFE_MITTE) * LOG_STUFE))
 
 
 def _marken(d):
@@ -245,7 +251,7 @@ def _zustand(tage, stand, aktiv, gescheitert, signale):
         tag = n - aktiv["seit"] + 1
         name = "Umkehr" if aktiv.get("art") == "U" else "Ausbruch"
         return {"wort": f"{name} {d} (Tag {tag})", "dir": d, "ampel": "grün", "belege": belege}
-    lage = (p["schluss"] - ref["val"]) / max(ref["vah"] - ref["val"], 1e-9)
+    lage = (p["schluss"] - ref["val"]) / max(ref["vah"] - ref["val"], RUNDUNG)
     lage_text = ("über dem Wertbereich" if lage > 1 else "im oberen Drittel des Wertbereichs" if lage >= 2 / 3 else
                  "in der Mitte des Wertbereichs" if lage > 1 / 3 else "im unteren Drittel des Wertbereichs" if lage >= 0
                  else "unter dem Wertbereich")
@@ -256,6 +262,6 @@ def _zustand(tage, stand, aktiv, gescheitert, signale):
         return {"wort": "an der Schwelle ↑", "dir": "↑", "ampel": "gelb", "belege": belege}
     if tief >= SCHWELLE_MIN and "hoch" not in folge and p["poc"] < poc_vor and lage <= 1 / 3:
         return {"wort": "an der Schwelle ↓", "dir": "↓", "ampel": "gelb", "belege": belege}
-    if gescheitert and n - gescheitert["i"] < 10:
+    if gescheitert and n - gescheitert["i"] < GESCHEITERT_TAGE:
         belege.insert(0, f"Ausbruch {gescheitert['dir']} am {gescheitert['tag']:%d.%m.} gescheitert")
     return {"wort": "Balance", "dir": None, "ampel": "grau", "belege": belege}

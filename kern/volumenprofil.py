@@ -15,6 +15,10 @@ GIPFEL_MIN = 0.30           # Knoten: Gipfel mit mindestens 30 % des größten V
 GIPFEL_UEBER = 0.10         # … der mindestens 10 % (des größten) über dem höheren der beiden Täler daneben liegt
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+GLAETTEN = 3  # Profil über 3 Stufen geglättet, bevor die Gipfel gesucht werden
+
+
 def profil(df, start, ende=None):
     """Volumen je Preisfach von start bis ende (einschließlich): Fachgrenzen, Volumen, meistgehandelter Preis und
     Wertbereich."""
@@ -54,7 +58,7 @@ def knoten(p):
     """Knoten als Preiszonen [(unten, oben)]: jeder Gipfel des geglätteten Profils ab GIPFEL_MIN, der sich mindestens
     GIPFEL_UEBER über das höhere der beiden Täler daneben erhebt; die Zone reicht so weit, wie das Volumen über der
     halben Höhe zwischen Tal und Gipfel bleibt."""
-    v = np.convolve(p["volumen"], np.ones(3) / 3, mode="same")
+    v = np.convolve(p["volumen"], np.ones(GLAETTEN) / 3, mode="same")
     g, n = p["grenzen"], len(v)
     if not n or v.max() <= 0:
         return []

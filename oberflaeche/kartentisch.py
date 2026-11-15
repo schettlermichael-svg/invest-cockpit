@@ -60,6 +60,11 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
 WATCHLISTS_NACH = "m_spitze"
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+JAHR = 252            # 52 Wochen in Handelstagen
+GD50_STEIG_TAGE = 21  # Flagge im Trend: GD50 steigt (gegen 20 Tage vorher)
+
+
 def _fund_gespeichert(tk):
     """Fundament-Ampeln aus dem Zwischenspeicher, ohne Abruf (Stufe 1 rechnet über das ganze Revier)."""
     import fundament
@@ -110,8 +115,8 @@ def _stufe1(tk, start=None, regeln=False):
         ph = erkennung._phase_von(df)
         info = {"tk": tk, "zustand": z["wort"], "zdir": z["dir"], "seite": erk.get("seite"),
                 "phase": int(ph[-1]) if ph is not None else None,
-                "hoch52": bool(len(h) >= 252 and h[-1] >= h[-252:].max()),
-                "tief52": bool(len(l) >= 252 and l[-1] <= l[-252:].min()),
+                "hoch52": bool(len(h) >= 252 and h[-1] >= h[-JAHR:].max()),
+                "tief52": bool(len(l) >= 252 and l[-1] <= l[-JAHR:].min()),
                 "m": {"ampel": m["ampel"], "setup": m["setup"], "fehlt": [n for n, ok, _ in m["regeln"] if not ok]},
                 "k": {"ampel": k["ampel"], "setup": k["setup"],
                       **{f_: (k.get(f_) or {}).get("ampel") for f_ in SHORTS.values()}}}
@@ -271,7 +276,7 @@ def flagge_im_trend(df, f):
     c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
     g50 = df["Close"].rolling(50).mean().to_numpy(float)
     luecken = []
-    if not (c[-1] > g50[-1] and g50[-1] > g50[-21]):
+    if not (c[-1] > g50[-1] and g50[-1] > g50[-GD50_STEIG_TAGE]):
         luecken.append("Flagge: kein Aufwärtstrend (Kurs unter dem GD50 oder GD50 fällt)")
     i0, s0 = int(f.get("start_i", 0)), int((f.get("stange") or {}).get("von_i", 0))
     if i0 > s0 and i0 < len(v):

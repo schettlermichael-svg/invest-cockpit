@@ -52,11 +52,21 @@ BALANCE_FEHL = 2              # höchstens 2 Blöcke in Folge ohne Überlappung 
 BALANCE_MAX = 65 * 5          # höchstens 65 Wochen zurück
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+HALBJAHR = 126          # ein halbes Jahr in Handelstagen (Ereignis-Anker höchstens so alt)
+JAHR = 252              # 52 Wochen in Handelstagen
+ZWEI_JAHRE = 504        # 2 Jahre in Handelstagen (Hoch des Rückgangs, Fenster des Tiefs)
+WOCHE_KALENDERTAGE = 7  # eine Woche
+ATR_N = 14              # Ersatz, wenn keine ATR: Spanne der letzten 14 Tage
+KERN_UNTEN = 25         # Kern der Balance: mittlere Hälfte der typischen Preise (25. …
+KERN_OBEN = 75          # … bis 75. Perzentil)
+
+
 def _echt(reihe, art, fenster, bis=None):
     """Position des echten Extrems (art "max"/"min") in den letzten `fenster` Tagen vor `bis` – liegt es am Rand, wird
     das Fenster bis auf 2 Jahre verlängert."""
     n = len(reihe) if bis is None else bis
-    for f in (fenster, fenster + 126, fenster + 252, 504):
+    for f in (fenster, fenster + HALBJAHR, fenster + JAHR, ZWEI_JAHRE):
         lo = max(0, n - f)
         seg = reihe[lo:n]
         if not len(seg):
@@ -91,7 +101,7 @@ def _wochen_hochs(df):
     aus = []
     for i, p in hochs:
         ende = w.index[i]
-        teil = df[(df.index > ende - pd.Timedelta(days=7)) & (df.index <= ende)]
+        teil = df[(df.index > ende - pd.Timedelta(days=WOCHE_KALENDERTAGE)) & (df.index <= ende)]
         if len(teil):
             aus.append((teil["High"].idxmax(), float(p)))
     return aus
@@ -109,7 +119,7 @@ def anker(df, zahltag=None):
     offen = {d: p for d, p in wh if not (h[h.index > d] > p).any()}     # seitdem nicht überschritten
     suf_max = np.maximum.accumulate(hv[::-1])[::-1]
     suf_min = np.minimum.accumulate(lv[::-1])[::-1]
-    for i in range(max(0, n - 504), n - 1):                            # bestätigt durch 8 % Rückgang danach
+    for i in range(max(0, n - ZWEI_JAHRE), n - 1):                            # bestätigt durch 8 % Rückgang danach
         if (hv[i] >= suf_max[i] and hv[i] >= hv[max(0, i - WOCHE_TAGE):i + 1].max()     # ein echter Gipfel, keine
                 and suf_min[i + 1] <= hv[i] * (1 - HOCH_RUECKGANG)):                     # Stufe im Fall
 
@@ -120,7 +130,7 @@ def anker(df, zahltag=None):
     elif wh:
         hoch = wh[-1][0]                                                   # Kurs über allen: der Ausbruchspunkt
     else:
-        hoch = df.index[_echt(hv, "max", 252)]
+        hoch = df.index[_echt(hv, "max", JAHR)]
     aus = {"hoch": hoch}
     if not offen:                    # sichtbar machen (Chart-Prüfer Lauf 4): kein Hoch steht mehr über dem Kurs
         aus["ausbruchspunkt"] = True
@@ -130,15 +140,15 @@ def anker(df, zahltag=None):
     # Hoch des Rückgangs = der Gipfel, von dem die ganze Korrektur ausging: das höchste bestätigte Hoch, das der Kurs
     # seitdem nicht überschritten hat (Chart-Prüfer 14.11.2026, KBH/BAX/ORA: vorher schied jedes Hoch aus, nach dem der
     # Kurs tiefer fiel als seit dem letzten Hoch – lag das letzte Hoch nach dem Tief, blieb nur das letzte Hoch selbst)
-    kand = [(p, d) for d, p in offen if d >= df.index[max(0, n - 504)]]
+    kand = [(p, d) for d, p in offen if d >= df.index[max(0, n - ZWEI_JAHRE)]]
     if kand:
         g = max(kand)[1]
         if g != hoch:
             aus["gipfel"] = g
-    grenze = df.index[max(0, n - 126)]
+    grenze = df.index[max(0, n - HALBJAHR)]
     tage = []
     if "Open" in df.columns:
-        d = df.iloc[-126:]
+        d = df.iloc[-HALBJAHR:]
         vol50 = df["Volume"].rolling(50).mean().shift(1).reindex(d.index)
         luecke = (d["Open"] / df["Close"].shift(1).reindex(d.index) - 1).abs()
         bewegung = (d["Close"] / df["Close"].shift(1).reindex(d.index) - 1).abs()
@@ -166,7 +176,7 @@ def _trendstart(df, hoch):
     seit = l[l.index >= hoch]                                  # Trend gebrochen: die neue Bewegung seit dem Hoch
     tag = seit.idxmin()
     import atr as atr_
-    atr = atr_.wert(df) or float((h - l).iloc[-14:].mean())      # die eine ATR der App
+    atr = atr_.wert(df) or float((h - l).iloc[-ATR_N:].mean())      # die eine ATR der App
     if tag != df.index[-1] and float(df["Close"].iloc[-1]) >= float(seit.min()) + TIEF_ATR * atr:
         return tag
     return None
@@ -187,7 +197,7 @@ def balance_beginn(df, bis=None):
     fehl, e = 0, n - BALANCE_BLOCK
     while e - BALANCE_BLOCK >= max(0, n - BALANCE_MAX):
         blk = list(range(e - BALANCE_BLOCK, e))
-        k0, k1 = np.percentile(tp[drin], [25, 75])
+        k0, k1 = np.percentile(tp[drin], [KERN_UNTEN, KERN_OBEN])
         if lv[blk].min() <= k1 and hv[blk].max() >= k0:
             drin += blk
             fehl = 0
@@ -196,7 +206,7 @@ def balance_beginn(df, bis=None):
             if fehl > BALANCE_FEHL:
                 break
         e -= BALANCE_BLOCK
-    k0, k1 = np.percentile(tp[drin], [25, 75])
+    k0, k1 = np.percentile(tp[drin], [KERN_UNTEN, KERN_OBEN])
     i = min(drin)
     while i < n - 1 and not (lv[i] <= k1 and hv[i] >= k0):     # der erste Tag, der den Wert berührt
         i += 1

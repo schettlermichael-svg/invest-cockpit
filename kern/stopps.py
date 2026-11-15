@@ -18,6 +18,17 @@ MIN_TRADES = 5
 FENSTER, JAHR = 10, 252       # Wendepunkt: höchstes Hoch ±10 Tage; Suche über 52 Wochen
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+CRV_GRUEN = 3          # CRV grün ab 3 : 1 (gelb ab 2 : 1)
+UEBER_EINSTIEG = 1.01  # Hürde mindestens 1 % über dem Einstieg
+UNTER_EINSTIEG = 0.99  # short: Hürde mindestens 1 % unter dem Einstieg
+GD150_TAGE = 150       # fallender GD150 …
+GD200_TAGE = 200       # … bzw. GD200 als Hürde
+GD_STEIG_MIN = 20      # Steigung des GD ab 20 Tagen Vorlauf
+GD_STEIG_TAGE = 21     # … gegen den Wert vor 20 Tagen
+RUNDUNG = 1e-6         # Technik: Rundung (Stopp B nicht gleich A)
+
+
 def _z(x):
     return f"{x:.1f}".replace(".", ",")
 
@@ -27,7 +38,7 @@ def _geld(x):
 
 
 def _ampel(x):
-    return "grün" if x >= 3 else "gelb" if x >= 2 else "rot"
+    return "grün" if x >= CRV_GRUEN else "gelb" if x >= 2 else "rot"
 
 
 def widerstand(df, seite, e, knoten=()):
@@ -41,20 +52,20 @@ def widerstand(df, seite, e, knoten=()):
     kand = []
     for i in range(a, n - 1):
         f0, f1 = max(a, i - FENSTER), min(n, i + FENSTER + 1)
-        if lang and h[i] >= h[f0:f1].max() and h[i] >= h[i + 1:].max() and h[i] > e * 1.01:
+        if lang and h[i] >= h[f0:f1].max() and h[i] >= h[i + 1:].max() and h[i] > e * UEBER_EINSTIEG:
             kand.append((float(h[i]), f"altes Hoch {df.index[i]:%d.%m.%y}"))
-        if not lang and l[i] <= l[f0:f1].min() and l[i] <= l[i + 1:].min() and l[i] < e * 0.99:
+        if not lang and l[i] <= l[f0:f1].min() and l[i] <= l[i + 1:].min() and l[i] < e * UNTER_EINSTIEG:
             kand.append((float(l[i]), f"altes Tief {df.index[i]:%d.%m.%y}"))
-    for k in (150, 200):
-        if n >= k + 20:
+    for k in (GD150_TAGE, GD200_TAGE):
+        if n >= k + GD_STEIG_MIN:
             gd = df["Close"].rolling(k).mean()
-            jetzt, vorher = float(gd.iloc[-1]), float(gd.iloc[-21])
-            if (lang and jetzt > e * 1.01 and jetzt < vorher) or (not lang and jetzt < e * 0.99 and jetzt > vorher):
+            jetzt, vorher = float(gd.iloc[-1]), float(gd.iloc[-GD_STEIG_TAGE])
+            if (lang and jetzt > e * UEBER_EINSTIEG and jetzt < vorher) or (not lang and jetzt < e * UNTER_EINSTIEG and jetzt > vorher):
                 kand.append((jetzt, f"GD{k} {'fallend' if lang else 'steigend'}"))
     for k0, k1 in knoten or ():                 # Volumenknoten des verankerten Profils: nächster Wert in Laufrichtung
-        if lang and k0 > e * 1.01:
+        if lang and k0 > e * UEBER_EINSTIEG:
             kand.append((float(k0), f"Volumenknoten {_geld(k0)}–{_geld(k1)} $"))
-        if not lang and k1 < e * 0.99:
+        if not lang and k1 < e * UNTER_EINSTIEG:
             kand.append((float(k1), f"Volumenknoten {_geld(k0)}–{_geld(k1)} $"))
     if not kand:
         return None
@@ -72,7 +83,7 @@ def linien(erk, atr_wert, df=None):
     r_a = abs(e - s_a)
     if r_a <= 0:
         return None
-    r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert - 1e-6 * atr_wert else None   # Rundung: kein B gleich A
+    r_b = B_ATR * atr_wert if atr_wert and r_a < B_ATR * atr_wert - RUNDUNG * atr_wert else None   # Rundung: kein B gleich A
     w = widerstand(df, seite, e, ((erk.get("profil") or {}).get("knoten")))
     erg = {"seite": seite, "einstieg": e, "stopp_a": s_a, "risiko_a": r_a,
            "stopp_b": (e - r_b if seite == "long" else e + r_b) if r_b else None, "risiko_b": r_b, "widerstand": w}

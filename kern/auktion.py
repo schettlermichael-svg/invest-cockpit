@@ -42,6 +42,27 @@ EIGEN_PCT = 5.0        # eigen: RS-Linie in 20 Tagen mindestens 5 % in Laufricht
 PFEIL = {"aufwärts": "↑", "abwärts": "↓", None: ""}
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+ATR_N = 14             # ATR über 14 Tage (die eine ATR: atr.reihe)
+VOL_MIN_TAGE = 20      # Volumen-Schnitt der 50 Tage ab 20 Tagen Daten
+KLIMAX_FENSTER = 59    # Klimax: Tief bzw. Hoch der letzten 60 Tage (Tag selbst + 59)
+LAGE_MITTE = 0.5       # Klimax: Schluss in der oberen (bzw. unteren) Hälfte des Tages
+EXZESS_TAGE = 20       # Exzess: am Hoch bzw. Tief der letzten 20 Tage
+URSACHE_VOR_TAGE = 50  # Ursache: Volumen der Balance gegen die 50 Tage davor
+RS_TAGE = 21           # Eigen oder geliehen: RS-Linie über 20 Tage (Wert vor 21 Handelstagen)
+WEIT_BASIS = 10        # Technik: „sehr weit her“ = 10 hoch 6 Tage
+WEIT_HOCH = 6          # Technik: Exponent zu WEIT_BASIS
+TEXT_KURZ = 40         # Anzeige: Kurzname des Entscheids höchstens 40 Zeichen
+BELEGE_JUENGSTE = 3    # die drei jüngsten Ereignisse am Rand bleiben als Beleg
+ZONE_PUFFER = 1.005    # Kurs in der Zone: bis 0,5 % über der Oberkante
+PHASE_VERTEILUNG = 3   # Antrieb erlischt: Wechsel zu Phase 3 (aufwärts) bzw. 1 (abwärts) zeichnet sich ab
+WERT_WOCHEN = 3        # Wert akzeptiert: neue Wertzone seit mindestens 3 Wochen
+BREITE_PUNKTE = 10     # Gruppe: Breite steigt bzw. fällt um 10 Punkte in 4 Wochen
+ZUFLUSS_AB = 1.1       # Gruppe angenommen: Zufluss ab 1,1 (wie rueckenwind.ZUFLUSS)
+FTD_TAG = 4            # Markt: Follow-Through-Day ab Tag 4 des Erholungsversuchs (O'Neil)
+FTD_FRISCH_TAGE = 14   # Markt: Follow-Through-Day gilt als frisch bis 14 Tage
+
+
 def _z(x, f=".2f"):
     return format(x, f).replace(".", ",")
 
@@ -74,7 +95,7 @@ def farbe(e):
 
 
 # ── Messungen ───────────────────────────────────────────────────────────────────────────────────────────────────
-def _atr(df, n=14):
+def _atr(df, n=ATR_N):
     """Die eine ATR der App (atr.reihe) als Array."""
     import atr as atr_
     return atr_.reihe(df, n).to_numpy(float)
@@ -85,7 +106,7 @@ def kraft_ohne_weg(df, oben, unten):
     if len(df) < 60 or not oben or not unten:
         return None
     h, l, c, v = (df[x].to_numpy(float) for x in ("High", "Low", "Close", "Volume"))
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     a = _atr(df)
     for i in range(len(df) - 1, len(df) - 1 - KOW_TAGE, -1):
         if not (v50[i] > 0 and a[i] > 0) or v[i] < KOW_VOL * v50[i] or h[i] - l[i] >= KOW_SPANNE * a[i]:
@@ -103,16 +124,16 @@ def klimax_tag(df):
     if len(df) < 70:
         return None
     h, l, c, v = (df[x].to_numpy(float) for x in ("High", "Low", "Close", "Volume"))
-    v50 = pd.Series(v).rolling(50, min_periods=20).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
     a = _atr(df)
     for i in range(len(df) - 1, len(df) - 1 - KLIMAX_TAGE, -1):
         sp = h[i] - l[i]
         if not (v50[i] > 0 and a[i] > 0 and sp > 0) or v[i] < KLIMAX_VOL * v50[i] or sp < KLIMAX_SPANNE * a[i]:
             continue
         lage = (c[i] - l[i]) / sp
-        if l[i] <= l[i - 59:i + 1].min() and lage >= 0.5:
+        if l[i] <= l[i - KLIMAX_FENSTER:i + 1].min() and lage >= LAGE_MITTE:
             return {"tag": df.index[i], "art": "Verkaufs-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
-        if h[i] >= h[i - 59:i + 1].max() and lage <= 0.5:
+        if h[i] >= h[i - KLIMAX_FENSTER:i + 1].max() and lage <= LAGE_MITTE:
             return {"tag": df.index[i], "art": "Kauf-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
     return None
 
@@ -124,7 +145,7 @@ def exzess(df, roh30):
     aus = {}
     a = _atr(df)[-1]
     atr_pct = a / float(df["Close"].iloc[-1]) * 100 if a == a else 2.0
-    t = df.iloc[-20:]
+    t = df.iloc[-EXZESS_TAGE:]
     for seite, spalte, fn in (("oben", "High", "idxmax"), ("unten", "Low", "idxmin")):
         tag = getattr(t[spalte], fn)()
         k = roh30[roh30.index.normalize() == pd.Timestamp(tag).normalize()]
@@ -145,7 +166,7 @@ def ursache(df, zone):
         return None
     i = int(zone["start_i"])
     v = df["Volume"].to_numpy(float)
-    vor = v[max(0, i - 50):i]
+    vor = v[max(0, i - URSACHE_VOR_TAGE):i]
     if len(vor) < 20 or not np.nanmean(vor) > 0:
         return {"wochen": zone.get("wochen"), "volumen": None}
     return {"wochen": zone.get("wochen"), "volumen": float(np.nanmean(v[i:]) / np.nanmean(vor))}
@@ -155,11 +176,11 @@ def _rs20(df, idx):
     try:
         c = df["Close"]
         i = idx["Close"].reindex(c.index).ffill()
-        if len(c) < 22 or not i.iloc[-21] > 0:
+        if len(c) < 22 or not i.iloc[-RS_TAGE] > 0:
             return None
-        t = (c.iloc[-1] / c.iloc[-21] - 1) * 100
-        m = (i.iloc[-1] / i.iloc[-21] - 1) * 100
-        rs = ((c.iloc[-1] / i.iloc[-1]) / (c.iloc[-21] / i.iloc[-21]) - 1) * 100
+        t = (c.iloc[-1] / c.iloc[-RS_TAGE] - 1) * 100
+        m = (i.iloc[-1] / i.iloc[-RS_TAGE] - 1) * 100
+        rs = ((c.iloc[-1] / i.iloc[-1]) / (c.iloc[-RS_TAGE] / i.iloc[-RS_TAGE]) - 1) * 100
         return t, m, rs
     except Exception:  # noqa: BLE001
         return None
@@ -222,7 +243,7 @@ def _seit(df, tag):
     try:
         return int(len(df) - 1 - df.index.get_indexer([pd.Timestamp(tag)], method="nearest")[0])
     except Exception:  # noqa: BLE001
-        return 10 ** 6
+        return WEIT_BASIS ** WEIT_HOCH
 
 
 def _tag_im_text(text, df):
@@ -387,8 +408,8 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     zustand = richtung = rand = None
     if ereignisse:
         _, zustand, richtung, entscheid = ereignisse[-1]
-        mess["entscheid"] = entscheid.split(":")[0].split(" am ")[0][:40]
-        for _, zst, ri, text in ereignisse[-3:]:          # die drei jüngsten, das jüngste zuletzt
+        mess["entscheid"] = entscheid.split(":")[0].split(" am ")[0][:TEXT_KURZ]
+        for _, zst, ri, text in ereignisse[-BELEGE_JUENGSTE:]:          # die drei jüngsten, das jüngste zuletzt
             belege.append((zst, text))
     for zst, text in nachher[-2:]:
         if (zst == "angenommen" and zustand != "angenommen") or (zst == "Balance" and zustand):
@@ -401,7 +422,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
                                                       else "schon erreicht"))
 
     # 3. Balance oder Test am Rand: der Kurs steht in der Zone
-    in_zone = bool(zone and zone.get("zone") and unten <= c <= oben * 1.005)
+    in_zone = bool(zone and zone.get("zone") and unten <= c <= oben * ZONE_PUFFER)
     if not zustand and (in_zone or (p in (1, 3) and oben and unten and unten <= c <= oben)
                         or (p in (0, None) and mz.get("wort", "").startswith(("Balance", "an der Schwelle")))):
         zustand = "Balance"
@@ -447,7 +468,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
             kw = mess["kraft_ohne_weg"]
             ende.append(f"Gegner antwortet: Kraft ohne Weg am {_d(kw['tag'])} (Volumen {_z(kw['volumen'])}-fach, "
                         f"Spanne {_z(kw['spanne_atr'], '.1f')} ATR)")
-        if k.get("ziel") == (3 if auf else 1):
+        if k.get("ziel") == (PHASE_VERTEILUNG if auf else 1):
             ende.append(f"Antrieb erlischt: Wechsel {p} → {k['ziel']} zeichnet sich ab")
         if auf and k.get("rueckschlag"):
             ende.append("Antrieb erlischt: Rückschlag (Wochenschluss unter dem GD10W, mindestens 15 % unter dem Hoch)")
@@ -463,7 +484,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
             except Exception:  # noqa: BLE001
                 pass
         st = (mp or {}).get("stand") or []
-        if mz.get("wort", "").startswith("Balance") and st and st[-1].get("wochen", 0) >= 3 \
+        if mz.get("wort", "").startswith("Balance") and st and st[-1].get("wochen", 0) >= WERT_WOCHEN \
                 and st[-1].get("herkunft") == ("↑" if auf else "↓"):
             ende.append(f"Wert akzeptiert: neue Wertzone seit {st[-1]['wochen']} Wochen auf der neuen Höhe")
         if ende and zustand == "Ungleichgewicht":
@@ -579,13 +600,13 @@ def gruppe(g):
     if anf:
         belege.append(("Anführer bricht aus", "Anführer: " + ", ".join(anf) + (f" · Verfolger: {', '.join(g['verfolger'])}"
                                                                   if g.get("verfolger") else " · noch keine Verfolger")))
-    steigt = br is not None and br4 is not None and br >= br4 + 10
-    faellt = br is not None and br4 is not None and br <= br4 - 10
+    steigt = br is not None and br4 is not None and br >= br4 + BREITE_PUNKTE
+    faellt = br is not None and br4 is not None and br <= br4 - BREITE_PUNKTE
     ende, richtung = [], None
     if f4 == "Erstarkend" and f == "Abgehängt":
         z, richtung = "abgelehnt", "aufwärts"
     elif f == "Erstarkend":
-        z, richtung = ("angenommen", "aufwärts") if steigt and (zu or 0) >= 1.1 else ("Test am Rand", None)
+        z, richtung = ("angenommen", "aufwärts") if steigt and (zu or 0) >= ZUFLUSS_AB else ("Test am Rand", None)
     elif f == "Führend":
         z, richtung = "Ungleichgewicht", "aufwärts"
         if faellt:
@@ -627,7 +648,7 @@ def markt(r, p=None):
         elif v:
             z, ri = "Test am Rand", None
             belege.append(("Test am Rand", f"Erholungsversuch {v[1]} Tag {v[0]}" +
-                           (" – Follow-Through ab Tag 4 möglich" if v[0] < 4 else " – wartet auf den Follow-Through-Day")))
+                           (" – Follow-Through ab Tag 4 möglich" if v[0] < FTD_TAG else " – wartet auf den Follow-Through-Day")))
         else:
             z, ri = "Ungleichgewicht", "abwärts"
             belege.append(("Ungleichgewicht", "Korrektur ohne Erholungsversuch"))
@@ -637,7 +658,7 @@ def markt(r, p=None):
                 z = "Ende des Laufs"
     else:
         f = r.get("ftd")
-        if f and _seit_tage(f["tag"]) <= 14:
+        if f and _seit_tage(f["tag"]) <= FTD_FRISCH_TAGE:
             z, ri = "angenommen", "aufwärts"
             belege.append(("angenommen", f"Follow-Through-Day am {_d(f['tag'])} ({f['index']}, Tag {f['tag_nr']}, "
                                          f"+{_z(f['plus'], '.1f')} %)"))

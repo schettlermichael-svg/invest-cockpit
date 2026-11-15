@@ -48,6 +48,20 @@ ADTR_TAGE = 20
 SHORTS = {"k_ermuedung": "ermuedung", "k_baerenflagge": "baerenflagge", "k_bruch": "spannenbruch"}  # Reihe → Feld
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+WOCHEN_SPIEL = 0.5    # Dauer der Pause: bis eine halbe Woche Spielraum (Rundung der Wochen)
+GD50_TAGE = 50        # GD50
+GD20_PUFFER = 0.99    # Pause hält den GD20: höchstens 1 % darunter
+VORHER_MIN = 65       # davor 3 Wochen über dem GD50: ab Tag 65 (GD50 + 15)
+VORHER_TAGE = 15      # … die 15 Tage vor der Pause über dem GD50
+VOL_MIN_TAGE = 20     # Volumen-Vergleich ab 20 Tagen Daten
+VOL_SCHNITT = 50      # Volumen-Schnitt der 50 Tage
+EP_MIN_DATEN = 120    # Episodic Pivot ab 120 Handelstagen Daten
+EP_START = 60         # … gesucht ab Tag 60
+EP_VORLAUF_TAGE = 64  # … Vorlauf: Kurs der 64 Tage davor (ein Quartal)
+EP_HAELT = 0.999      # … Kurs hält das Tief des Sprungtags (Rundung 0,1 %)
+
+
 def short_von(k, reihe=None):
     """Das Short-Setup einer Short-Reihe (dict wie vcp_zone.ermuedung); ohne Reihe das erste vorhandene. Oder None."""
     k = k or {}
@@ -72,7 +86,7 @@ def _konsolidierung(z):
     kand = [z] + ([z["innen"]] if z.get("innen") else [])
     for lo, hi in (KONS_GRUEN, (KONS_GRUEN[0], KONS_GELB)):
         for b in kand:
-            if lo <= b["wochen"] <= hi + 0.5:
+            if lo <= b["wochen"] <= hi + WOCHEN_SPIEL:
                 return b
     return z
 
@@ -97,8 +111,8 @@ def breakout(df, fr, scan=None, br=None):
         return {"art": "Breakout", "ampel": "rot" if f_ampel != "grün" else "gelb", "regeln": regeln, "pivot": None}
     wochen = float(z["wochen"])
     schub = z.get("name") == "Flagge" or (z.get("vorgeschichte") or {}).get("art") == "Schub"
-    trend = schub or (len(c) >= 50 and c[-1] > c[-50:].mean())
-    kons = KONS_GRUEN[0] <= wochen <= KONS_GRUEN[1] + 0.5 and trend
+    trend = schub or (len(c) >= 50 and c[-1] > c[-GD50_TAGE:].mean())
+    kons = KONS_GRUEN[0] <= wochen <= KONS_GRUEN[1] + WOCHEN_SPIEL and trend
     w_txt = f"{wochen:.1f}".replace(".", ",")
     regeln.append(("Konsolidierung 1–3 Wochen nach einem Schub", kons,
                    f"{z.get('name', 'Zone')} {w_txt} Wochen" + ("" if trend else ", kein Schub davor und Kurs unter GD50")))
@@ -108,20 +122,20 @@ def breakout(df, fr, scan=None, br=None):
     g20 = df["Close"].rolling(20).mean().to_numpy(float)
     g50 = df["Close"].rolling(50).mean().to_numpy(float)
     pause = slice(i0, ende)
-    haelt20 = bool(ende > i0 and np.all(c[pause] >= g20[pause] * 0.99))
-    vorher50 = bool(i0 >= 65 and np.all(c[i0 - 15:i0] > g50[i0 - 15:i0]))
-    unter = int(np.sum(c[pause] < g20[pause] * 0.99)) if ende > i0 else 0
+    haelt20 = bool(ende > i0 and np.all(c[pause] >= g20[pause] * GD20_PUFFER))
+    vorher50 = bool(i0 >= VORHER_MIN and np.all(c[i0 - VORHER_TAGE:i0] > g50[i0 - VORHER_TAGE:i0]))
+    unter = int(np.sum(c[pause] < g20[pause] * GD20_PUFFER)) if ende > i0 else 0
     regeln.append(("Pause hält den GD20, davor 3 Wochen über dem GD50", haelt20 and vorher50,
                    ("hält den GD20" if haelt20 else f"{unter} Schlüsse unter dem GD20")
                    + (", davor über dem GD50" if vorher50 else ", davor nicht 3 Wochen über dem GD50")))
-    ruhig = (v[i0:ende].mean() / v[max(0, i0 - 50):i0].mean()
-             if ende > i0 and i0 >= 20 and v[max(0, i0 - 50):i0].mean() else None)
+    ruhig = (v[i0:ende].mean() / v[max(0, i0 - GD50_TAGE):i0].mean()
+             if ende > i0 and i0 >= VOL_MIN_TAGE and v[max(0, i0 - GD50_TAGE):i0].mean() else None)
     if ruhig is not None:
         regeln.append(("Volumen in der Konsolidierung reduziert (vorzugsweise)", bool(ruhig < 1.0),
                        f"{ruhig:.2f}-fach".replace(".", ",")))
     if f_ampel == "grün" and kons and haelt20 and vorher50:
         ampel = "grün"
-    elif (f_ampel in ("grün", "gelb") and kons) or (f_ampel == "grün" and wochen <= KONS_GELB + 0.5):
+    elif (f_ampel in ("grün", "gelb") and kons) or (f_ampel == "grün" and wochen <= KONS_GELB + WOCHEN_SPIEL):
         ampel = "gelb"                           # Führer knapp (oberste 5 %) oder Konsolidierung bis 8 Wochen
     else:
         ampel = "rot"
@@ -137,13 +151,13 @@ def episodic_pivot(df, gewinn_tage=()):
     """Jüngster Sprungtag der letzten EP_TAGE Handelstage, der die Zutaten erfüllt, oder None."""
     o, h, l, c, v = (df[s].to_numpy(float) for s in ("Open", "High", "Low", "Close", "Volume"))
     n = len(c)
-    if n < 120:
+    if n < EP_MIN_DATEN:
         return None
     zahlen = {t.normalize() for t in gewinn_tage}
-    for i in range(n - 1, max(60, n - EP_TAGE) - 1, -1):
+    for i in range(n - 1, max(EP_START, n - EP_TAGE) - 1, -1):
         sprung = (c[i] / c[i - 1] - 1) * 100
         luecke = o[i] > h[i - 1]
-        s50 = v[i - 50:i].mean()
+        s50 = v[i - VOL_SCHNITT:i].mean()
         vol = v[i] / s50 if s50 else 0
         if sprung < EP_SPRUNG or vol < EP_VOLUMEN or not luecke:
             continue
@@ -151,8 +165,8 @@ def episodic_pivot(df, gewinn_tage=()):
         nachricht = any(abs((tag.normalize() - z).days) <= 1 for z in zahlen)
         oben3 = h[i] > l[i] and (c[i] - l[i]) / (h[i] - l[i]) >= 2 / 3
         bewertet = not nachricht and vol >= EP_VOLUMEN_OHNE and oben3
-        vorlauf = (c[i - 1] / c[max(0, i - 64)] - 1) * 100
-        haelt = l[i:].min() >= l[i] * 0.999 if i < n - 1 else True
+        vorlauf = (c[i - 1] / c[max(0, i - EP_VORLAUF_TAGE)] - 1) * 100
+        haelt = l[i:].min() >= l[i] * EP_HAELT if i < n - 1 else True
         regeln = [("Große Lücke (Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch)", True,
                    f"{tag:%d.%m.}: " + f"+{sprung:.1f} %, Eröffnung {(o[i] / c[i - 1] - 1) * 100:+.1f} %".replace(".", ",")),
                   ("Volumenexplosion (ab 3-fach)", True,

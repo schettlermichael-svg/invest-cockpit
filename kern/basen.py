@@ -19,12 +19,17 @@ STUFE = 0.20                  # neue Base erst 20 % über der Oberkante der zule
 ERFOLG, VERLUST = 0.20, 0.08  # Ausgang nach O'Neil
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+P_ABWAERTS = 4  # Phase 4 (Abwärts) – die Zählung beginnt nach Phase 1 oder 4
+VOL_TAGE = 50   # Volumen am Ausbruch gegen den Schnitt der 50 Tage
+
+
 def beginn(df, index=None):
     """Beginn der Zählung (Datum) oder None (zu kurze Historie)."""
     if len(df) < 300:
         return None
     ph = erkennung.phasen(df)
-    vorher = ph[ph.isin([1, 4])]
+    vorher = ph[ph.isin([1, P_ABWAERTS])]
     b = vorher.index[-1] if len(vorher) else ph.index[0]
     markt = erkennung.letztes_markttief(index, df.index[-1])
     return markt if markt is not None and markt > b else b
@@ -56,7 +61,7 @@ def zaehlen(df, index, verlauf, jetzt=None):
     zahl, letzter = 0, None
     for b in liste:
         i = b["ende_i"]
-        s50 = np.nanmean(v[max(0, i - 50):i]) if i > 0 else np.nan
+        s50 = np.nanmean(v[max(0, i - VOL_TAGE):i]) if i > 0 else np.nan
         b["volumen"] = float(v[i] / s50) if s50 == s50 and s50 else None
         b["ausgang"] = _ausgang(df, i, b["oben"])
         if b.get("cheat"):                       # Ausbruch aus einer Pause in einer größeren Zone: keine eigene Base

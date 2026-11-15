@@ -58,6 +58,73 @@ PHASE_NAME = {0: "jung", 1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwär
 RUECKSCHLAG = 21          # Phase 2 · Rückschlag (Wochenschluss unter GD10W und ≥ 15 % unter dem 52-Wochen-Hoch)
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+ATR_N = 14                  # ATR über 14 Tage (die eine ATR: atr.reihe)
+DOW_N_TAG = 5               # Dow-Struktur im Tageschart: Schwungpunkt mit 5 Tagen davor und danach (Woche: 2)
+DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief (bzw. über dem tieferen Hoch)
+DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
+STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
+SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
+SPRING_VOR = 20             # … gegen das Tief bzw. Hoch der 20 Tage davor
+SPRING_SPANNE_MAX = 0.15    # … die Spanne davor höchstens 15 % breit
+SPRING_ZURUECK = 4          # … Schluss innerhalb von 3 Tagen wieder in der Spanne (Tag selbst + 3)
+EINQ_VERGLEICH_TAGE = 10    # Einquetschung: Spanne und Volumen der letzten 10 Tage gegen die ersten 10 bzw. den Schnitt davor
+EINQ_VOL_FENSTER = 60       # … Volumen gegen die 60 Tage davor
+EINQ_NAH_OBEN = 1.05        # … Kurs höchstens 5 % über der flachen Oberkante
+EINQ_NAH_UNTEN = 0.95       # … gespiegelt: höchstens 5 % unter der flachen Unterkante
+VOLUMEN_TAGE = 20           # Kauf- und Abgabetage: die letzten 20 Tage
+PP_TAGE = 5                 # Pocket Pivot in den letzten 5 Tagen
+LAGE_MITTE = 0.5            # Schluss in der oberen Hälfte des Tages (Lage ab 0,5); ohne Spanne gilt die Mitte
+PP_GD10_MAX = 1.04          # Pocket Pivot: höchstens 4 % über dem GD10 (Morales/Kacher)
+PP_RUECK = 6                # … Vorlauf: Schluss vor 6 Tagen gegen gestern (die 5 Tage davor)
+PP_VORLAUF_MAX = 0.03       # … die 5 Tage davor zusammen höchstens +3 %
+PP_ABGABE_TAGE = 10         # … Volumen über dem größten Abgabetag der 10 Tage davor
+AKKU_SALDO = 3              # Akkumulation/Distribution: Saldo der Kauf- und Abgabetage mindestens 3 (und doppelt so viele)
+MARKEN_TAGE = 260           # Tagesmarken im Chart: die letzten 260 Handelstage
+MARKEN_START = 60           # … erst ab Tag 60 (GD50 und Volumen-Schnitt stehen)
+W_ATR_FENSTER = 15          # Freitag: Wochen-ATR der 14 Wochen davor
+FREITAG_SCHLUSS_PCT = 0.5   # … letzter Handelstag nicht schwächer als −0,5 % (gespiegelt +0,5 %)
+FREITAG_WOCHE_OBEN = 0.75   # … Woche im oberen Viertel ihrer Spanne
+FREITAG_WOCHE_UNTEN = 0.25  # … gespiegelt im unteren Viertel
+ENG_WOCHEN = 3              # 3 Wochen eng (O'Neil): drei Wochenschlüsse …
+ENG_PCT = 0.015             # … innerhalb von 1,5 %
+TROCKEN_SPANNE_TAGE = 60    # Trockenheit: in der unteren Hälfte der Spanne der 60 Tage …
+TROCKEN_TAGE = 10           # … in den letzten 10 Tagen …
+TROCKEN_VERGLEICH = 49      # … der leiseste Tag seit 50 Tagen (Tag selbst + 49 davor)
+KORREKTUR_FENSTER = 60      # Korrektur des Index: Hoch und Tief in 60 Handelstagen
+DIV_ABSTAND_TAGE = 3        # Divergenz: das eigene Tief (Hoch) mindestens 3 Handelstage vor dem des Index
+DIV_FALL_MIN = 5.0          # … der Titel fiel mindestens 5 % …
+DIV_FALL_ATR = 3            # … bzw. 3 ATR (das Größere zählt)
+DIV_INDEX_TIEFER = 0.995    # … der Index fällt danach mindestens 0,5 % tiefer
+DIV_UEBER_TIEF = 1.05       # … der Titel bleibt 5 % über seinem Tief
+DIV_FENSTER = 60            # Divergenz short: in den letzten 60 Tagen
+DIV_ANSTIEG = 0.10          # … der Titel stieg mindestens 10 % bis zu seinem Hoch
+DIV_INDEX_HOEHER = 1.005    # … der Index macht ein um mindestens 0,5 % höheres Hoch
+DIV_UNTER_HOCH = 0.95       # … der Titel bleibt 5 % unter seinem Hoch
+GEGEN_TAGE = 20             # Tage gegen den Markt: die letzten 20 Tage
+GEGEN_INDEX_TAG = 0.01      # … Indextage mit −1 % oder schwächer (gespiegelt +1 %)
+GEGEN_MIN_TAGE = 4          # … an mindestens 4 solchen Tagen …
+GEGEN_ANTEIL = 0.6          # … und an mindestens 60 % davon im Plus geschlossen
+RS_LINIE_FENSTER = 60       # RS-Linie in der Base: Schwungpunkte der 60 Tage
+RS_LINIE_N = 3              # … mit 3 Tagen davor und danach
+JAHR_TAGE = 252             # 52 Wochen in Handelstagen
+NAH_ANTEIL = 0.5            # „nah“: höchstens halb so weit vom eigenen Hoch wie der Index
+RS_HOCH_TAGE = 5            # RS-Linie am 52-Wochen-Hoch bzw. -Tief: in den letzten 5 Tagen
+INDEX_TIEF_FENSTER = 60     # Schwäche in der Stärke: Tief des Index in den letzten 60 Tagen
+REAKTION_MAX_TAGE = 60      # Reaktion auf die Zahlen: höchstens 60 Handelstage her
+ZAHLEN_TOLERANZ_TAGE = 4    # … Zahlentermin bis 4 Kalendertage neben dem Reaktionstag
+REAKTION_LUECKE = 3         # … Lücke ab 3 % gegen den Schluss im Tag
+CHURNING_TAGE = 3           # verdeckte Abgabe: mindestens 3 Tage
+PHASE_MIN_WOCHEN = 4        # Bruch der Phase 1/3: die Phase läuft mindestens 4 Wochen
+BRUCH_PUFFER = 0.99         # … Schluss mindestens 1 % unter ihrem Tief
+RS_GD_TAGE = 50             # … Ausbruch aus Phase 3 mit RS-Linie über ihrem GD50
+GEWICHT_MIN = 4             # Wechsel der Phase: Gewicht der Seite mindestens 4 (und doppelt so schwer wie die Gegenseite)
+JAHR_WOCHEN = 52            # 52 Wochen
+JAHR_WOCHEN_MIN = 10        # … 52-Wochen-Hoch ab 10 Wochen Daten
+ABLAGE_BEHALTEN = 10        # Technik: so viele gespeicherte Stände bleiben liegen
+RUECKSCHLAG_TIEFE = 0.85    # Rückschlag in Phase 2: Wochenschluss unter GD10W und mindestens 15 % unter dem 52-Wochen-Hoch
+
+
 def _z(x, fmt):
     """Zahl deutsch: Komma statt Punkt, echtes Minus."""
     return format(x, fmt).replace(".", ",").replace("-", "−")
@@ -75,7 +142,7 @@ def _zeichen(seite, art, text, gewicht=1, tag=None):
     return z
 
 
-def _atr(df, n=14):
+def _atr(df, n=ATR_N):
     """Die eine ATR der App (atr.reihe)."""
     import atr as atr_
     return atr_.reihe(df, n)
@@ -84,7 +151,7 @@ def _atr(df, n=14):
 def lage_ok(df, i):
     """Schluss in der oberen Hälfte der Tagesspanne."""
     h, l, c = df["High"].iloc[i], df["Low"].iloc[i], df["Close"].iloc[i]
-    return h > l and (c - l) / (h - l) >= 0.5
+    return h > l and (c - l) / (h - l) >= LAGE_MITTE
 
 
 # ── Dow-Struktur ──────────────────────────────────────────────────────────────────────────────────────────────────
@@ -100,7 +167,7 @@ def schwungpunkte(h, l, n):
     return hochs, tiefs
 
 
-def dow(df, n=5):
+def dow(df, n=DOW_N_TAG):
     """→ {struktur: aufwärts/abwärts/balance, signal, richtung: stärke/schwäche/None, letztes_tief, letztes_hoch,
     tief_tag, hoch_tag}."""
     if df is None or len(df) < 4 * n + 4:
@@ -120,13 +187,13 @@ def dow(df, n=5):
     else:
         struktur = "balance"
     signal = richtung = None
-    if struktur == "aufwärts" and kurs < t2 - 0.5 * a:
+    if struktur == "aufwärts" and kurs < t2 - DOW_BRUCH_ATR * a:
         signal, richtung = f"Schluss unter dem letzten höheren Tief {_z(t2, '.2f')}", "schwäche"
-    elif struktur == "abwärts" and kurs > h2 + 0.5 * a:
+    elif struktur == "abwärts" and kurs > h2 + DOW_BRUCH_ATR * a:
         signal, richtung = f"Schluss über dem letzten tieferen Hoch {_z(h2, '.2f')}", "stärke"
-    elif (t2 > t1 and kurs > t2 and len(tiefs) >= 3 and len(hochs) >= 3 and tiefs[-3][1] > t1 and hochs[-3][1] > h1):
+    elif (t2 > t1 and kurs > t2 and len(tiefs) >= 3 and len(hochs) >= 3 and tiefs[-DOW_WECHSEL][1] > t1 and hochs[-DOW_WECHSEL][1] > h1):
         signal, richtung = f"erstes höheres Tief {_z(t2, '.2f')} nach tieferen Hochs und Tiefs", "stärke"
-    elif (h2 < h1 and kurs < h2 and len(hochs) >= 3 and len(tiefs) >= 3 and hochs[-3][1] < h1 and tiefs[-3][1] < t1):
+    elif (h2 < h1 and kurs < h2 and len(hochs) >= 3 and len(tiefs) >= 3 and hochs[-DOW_WECHSEL][1] < h1 and tiefs[-DOW_WECHSEL][1] < t1):
         signal, richtung = f"erstes tieferes Hoch {_z(h2, '.2f')} nach höheren Hochs und Tiefs", "schwäche"
     return {"struktur": struktur, "signal": signal, "richtung": richtung, "letztes_tief": round(t2, 2),
             "letztes_hoch": round(h2, 2), "tief_tag": df.index[it2], "hoch_tag": df.index[ih2]}
@@ -143,12 +210,12 @@ def trendqualitaet(df):
     if len(c) < 70:
         return None
     g = c.rolling(50).mean()
-    return {"steigung_gd50": round(float(g.iloc[-1] / g.iloc[-21] - 1) * 100, 1),
+    return {"steigung_gd50": round(float(g.iloc[-1] / g.iloc[-STEIGUNG_TAGE] - 1) * 100, 1),
             "abstand_gd50": round(float(c.iloc[-1] / g.iloc[-1] - 1) * 100, 1)}
 
 
 # ── Spring und Upthrust ───────────────────────────────────────────────────────────────────────────────────────────
-def spring(df, tage=10, vor=20):
+def spring(df, tage=SPRING_TAGE, vor=SPRING_VOR):
     """Spring (Stärke) bzw. Upthrust (Schwäche) in den letzten `tage` Tagen → Zeichen oder None."""
     if df is None or len(df) < vor + tage + 50:
         return None
@@ -158,10 +225,10 @@ def spring(df, tage=10, vor=20):
     n = len(df)
     for i in range(n - 1, n - tage - 1, -1):
         unten, oben = lo[i - vor:i].min(), hi[i - vor:i].max()
-        if not unten > 0 or oben / unten - 1 > 0.15:
+        if not unten > 0 or oben / unten - 1 > SPRING_SPANNE_MAX:
             continue
         if lo[i] < unten and unten - lo[i] <= a[i]:
-            for j in range(i, min(i + 4, n)):
+            for j in range(i, min(i + SPRING_ZURUECK, n)):
                 if c[j] > unten and v[j] > v50[j]:
                     return _zeichen("stärke", "struktur", f"Spring am {df.index[i]:%d.%m.}: Tief unter "
                                     f"{_z(unten, '.2f')} $, " + ("am selben Tag" if j == i else f"am {df.index[j]:%d.%m.}") +
@@ -181,7 +248,7 @@ def _ohne_spring(t_, d):
     c = d["Close"].to_numpy(float)
     for i, p in t_:
         vorher = aus[-1][1] if aus else None
-        if vorher is not None and p <= vorher and any(c[j] > vorher for j in range(i, min(i + 4, len(c)))):
+        if vorher is not None and p <= vorher and any(c[j] > vorher for j in range(i, min(i + SPRING_ZURUECK, len(c)))):
             continue
         aus.append((i, p))
     return aus
@@ -203,9 +270,9 @@ def einquetschung(df, fenster=None):
         return None
     d = df.iloc[-fenster:]
     spanne = lambda x: float(x["High"].max() / x["Low"].min() - 1)    # noqa: E731
-    if not spanne(d.iloc[-10:]) < spanne(d.iloc[:10]):
+    if not spanne(d.iloc[-EINQ_VERGLEICH_TAGE:]) < spanne(d.iloc[:EINQ_VERGLEICH_TAGE]):
         return None
-    if not float(d["Volume"].iloc[-10:].mean()) < float(df["Volume"].iloc[-60:-10].mean()):
+    if not float(d["Volume"].iloc[-EINQ_VERGLEICH_TAGE:].mean()) < float(df["Volume"].iloc[-EINQ_VOL_FENSTER:-EINQ_VERGLEICH_TAGE].mean()):
         return None
     hochs, tiefs = schwungpunkte(d["High"], d["Low"], 2)
     kurs = float(d["Close"].iloc[-1])
@@ -216,7 +283,7 @@ def einquetschung(df, fenster=None):
     if len(t_) >= 3 and len(h_) >= 2 and all(b_[1] > a_[1] for a_, b_ in zip(t_, t_[1:])):
         top = max(p for _, p in h_)
         an = [(i, p) for i, p in h_ if abs(p / top - 1) * 100 <= GLEICH_PCT]
-        if len(an) >= 2 and kurs <= top * 1.05 and len(d) - 1 - an[0][0] >= EINQ_MIN_TAGE:
+        if len(an) >= 2 and kurs <= top * EINQ_NAH_OBEN and len(d) - 1 - an[0][0] >= EINQ_MIN_TAGE:
             return {"art": "aufsteigend", "oberkante": round(top, 2), "beruehrungen": len(an), "tiefs": len(t_),
                     "tage": len(d) - 1 - an[0][0]}
     j0 = int(hi.argmax())
@@ -225,14 +292,14 @@ def einquetschung(df, fenster=None):
     if len(h2) >= 3 and len(t2) >= 2 and all(b_[1] < a_[1] for a_, b_ in zip(h2, h2[1:])):
         boden = min(p for _, p in t2)
         am = [(i, p) for i, p in t2 if abs(p / boden - 1) * 100 <= GLEICH_PCT]
-        if len(am) >= 2 and kurs >= boden * 0.95 and len(d) - 1 - am[0][0] >= EINQ_MIN_TAGE:
+        if len(am) >= 2 and kurs >= boden * EINQ_NAH_UNTEN and len(d) - 1 - am[0][0] >= EINQ_MIN_TAGE:
             return {"art": "absteigend", "unterkante": round(boden, 2), "beruehrungen": len(am), "hochs": len(h2),
                     "tage": len(d) - 1 - am[0][0]}
     return None
 
 
 # ── Volumen ───────────────────────────────────────────────────────────────────────────────────────────────────────
-def akkumulation(df, tage=20):
+def akkumulation(df, tage=VOLUMEN_TAGE):
     if df is None or len(df) < 70:
         return None
     c, h, l, v = df["Close"], df["High"], df["Low"], df["Volume"]
@@ -246,20 +313,20 @@ def akkumulation(df, tage=20):
     churning = int((auf & hoch_vol & (lage <= 1 / 3)).iloc[letzte].sum())
     pocket = None
     g10, g50 = c.rolling(10).mean(), c.rolling(50).mean()
-    for i in range(len(df) - 5, len(df)):
-        if (auf.iloc[i] and c.iloc[i] > g10.iloc[i] and c.iloc[i] > g50.iloc[i] and lage.iloc[i] >= 0.5
-                and c.iloc[i] <= g10.iloc[i] * 1.04 and c.iloc[i - 1] / c.iloc[i - 6] - 1 <= 0.03):
-            vor = df.iloc[i - 10:i]
-            ab_vol = vor["Volume"][vor["Close"] < df["Close"].shift(1).iloc[i - 10:i]]
+    for i in range(len(df) - PP_TAGE, len(df)):
+        if (auf.iloc[i] and c.iloc[i] > g10.iloc[i] and c.iloc[i] > g50.iloc[i] and lage.iloc[i] >= LAGE_MITTE
+                and c.iloc[i] <= g10.iloc[i] * PP_GD10_MAX and c.iloc[i - 1] / c.iloc[i - PP_RUECK] - 1 <= PP_VORLAUF_MAX):
+            vor = df.iloc[i - PP_ABGABE_TAGE:i]
+            ab_vol = vor["Volume"][vor["Close"] < df["Close"].shift(1).iloc[i - PP_ABGABE_TAGE:i]]
             if len(ab_vol) and v.iloc[i] > ab_vol.max():
                 pocket = f"{df.index[i]:%d.%m.}"
     saldo = kauf - abgabe
     return {"kauftage": kauf, "abgabetage": abgabe, "churning": churning, "pocket_pivot": pocket,
-            "bild": "Akkumulation" if saldo >= 3 and kauf >= 2 * abgabe else
-            "Distribution" if saldo <= -3 and abgabe >= 2 * kauf else "ausgeglichen"}
+            "bild": "Akkumulation" if saldo >= AKKU_SALDO and kauf >= 2 * abgabe else
+            "Distribution" if saldo <= -AKKU_SALDO and abgabe >= 2 * kauf else "ausgeglichen"}
 
 
-def tagesmarken(df, tage=260):
+def tagesmarken(df, tage=MARKEN_TAGE):
     """Für den Chart (13.11.2026): Pocket Pivots, Abgabetage (Distributionstage des Titels) und verdeckte Abgabe der
     letzten `tage` Handelstage, nach denselben Regeln wie akkumulation() → {pocket, abgabe, churning: [Datum]}."""
     aus = {"pocket": [], "abgabe": [], "churning": []}
@@ -269,17 +336,17 @@ def tagesmarken(df, tage=260):
     s50 = pd.Series(v).rolling(50).mean().to_numpy()
     g10 = pd.Series(c).rolling(10).mean().to_numpy()
     g50 = pd.Series(c).rolling(50).mean().to_numpy()
-    for i in range(max(60, len(df) - tage), len(df)):
+    for i in range(max(MARKEN_START, len(df) - tage), len(df)):
         sp = h[i] - l[i]
-        lage = (c[i] - l[i]) / sp if sp > 0 else 0.5
+        lage = (c[i] - l[i]) / sp if sp > 0 else LAGE_MITTE
         auf, ab, laut = c[i] > c[i - 1], c[i] < c[i - 1], v[i] > s50[i]
         if ab and laut and lage <= 1 / 3:
             aus["abgabe"].append(df.index[i])
         if auf and laut and lage <= 1 / 3:
             aus["churning"].append(df.index[i])
-        if (auf and c[i] > g10[i] and c[i] > g50[i] and lage >= 0.5 and c[i] <= g10[i] * 1.04
-                and c[i - 1] / c[i - 6] - 1 <= 0.03):
-            vor = range(i - 10, i)
+        if (auf and c[i] > g10[i] and c[i] > g50[i] and lage >= LAGE_MITTE and c[i] <= g10[i] * PP_GD10_MAX
+                and c[i - 1] / c[i - PP_RUECK] - 1 <= PP_VORLAUF_MAX):
+            vor = range(i - PP_ABGABE_TAGE, i)
             ab_vol = [v[j] for j in vor if c[j] < c[j - 1]]
             if ab_vol and v[i] > max(ab_vol):
                 aus["pocket"].append(df.index[i])
@@ -301,7 +368,7 @@ def freitag(df, n_atr=2.0):
         return None
     tr = pd.concat([w["High"] - w["Low"], (w["High"] - w["Close"].shift()).abs(),
                     (w["Low"] - w["Close"].shift()).abs()], axis=1).max(axis=1)
-    watr = float(tr.iloc[-15:-1].mean())
+    watr = float(tr.iloc[-W_ATR_FENSTER:-1].mean())
     zug = float(w["Close"].iloc[-1] - w["Close"].iloc[-2])
     sp_w = float(w["High"].iloc[-1] - w["Low"].iloc[-1])
     if not watr or sp_w <= 0 or abs(zug) < n_atr * watr:
@@ -311,13 +378,13 @@ def freitag(df, n_atr=2.0):
     i = df.index.get_loc(tag)
     h, l, c = (float(df[x].iloc[i]) for x in ("High", "Low", "Close"))
     pct = (c / float(df["Close"].iloc[i - 1]) - 1) * 100
-    lage = (c - l) / (h - l) if h > l else 0.5
+    lage = (c - l) / (h - l) if h > l else LAGE_MITTE
     woche = (float(w["Close"].iloc[-1]) / float(w["Close"].iloc[-2]) - 1) * 100
-    if zug > 0 and lage >= 2 / 3 and pct >= -0.5 and lage_w >= 0.75:
+    if zug > 0 and lage >= 2 / 3 and pct >= -FREITAG_SCHLUSS_PCT and lage_w >= FREITAG_WOCHE_OBEN:
         return _zeichen("stärke", "volumen", f"keine Gewinnmitnahme am {tag:%d.%m.}: Woche {_z(woche, '+.1f')} % "
                         f"({_z(zug / watr, '.1f')} Wochen-ATR), Schluss im oberen Drittel ({_z(pct, '+.1f')} %) – die "
                         "Käufer halten über das Wochenende", 1, tag)
-    if zug < 0 and lage <= 1 / 3 and pct <= 0.5 and lage_w <= 0.25:
+    if zug < 0 and lage <= 1 / 3 and pct <= FREITAG_SCHLUSS_PCT and lage_w <= FREITAG_WOCHE_UNTEN:
         return _zeichen("schwäche", "volumen", f"keine Eindeckung am {tag:%d.%m.}: Woche {_z(woche, '+.1f')} % "
                         f"({_z(-zug / watr, '.1f')} Wochen-ATR), Schluss im unteren Drittel ({_z(pct, '+.1f')} %) – die "
                         "Verkäufer halten über das Wochenende", 1, tag)
@@ -329,14 +396,14 @@ def enge_trocken(df):
     aus = []
     if df is None or len(df) < 70:
         return aus
-    w = wochenkerzen(df)["Close"].iloc[-3:]
-    if len(w) == 3 and w.max() / w.min() - 1 <= 0.015:
+    w = wochenkerzen(df)["Close"].iloc[-ENG_WOCHEN:]
+    if len(w) == 3 and w.max() / w.min() - 1 <= ENG_PCT:
         aus.append(_zeichen("stärke", "volumen", f"3 Wochen eng: Wochenschlüsse innerhalb von "
                             f"{_z((w.max() / w.min() - 1) * 100, '.1f')} % – das Angebot ist aufgebraucht"))
     v, lo, hi, c = df["Volume"], df["Low"], df["High"], df["Close"]
-    unten, oben = float(lo.iloc[-60:].min()), float(hi.iloc[-60:].max())
-    for i in range(len(df) - 10, len(df)):
-        if v.iloc[i] > 0 and v.iloc[i] <= v.iloc[i - 49:i + 1].min() and c.iloc[i] <= unten + (oben - unten) / 2:
+    unten, oben = float(lo.iloc[-TROCKEN_SPANNE_TAGE:].min()), float(hi.iloc[-TROCKEN_SPANNE_TAGE:].max())
+    for i in range(len(df) - TROCKEN_TAGE, len(df)):
+        if v.iloc[i] > 0 and v.iloc[i] <= v.iloc[i - TROCKEN_VERGLEICH:i + 1].min() and c.iloc[i] <= unten + (oben - unten) / 2:
             aus.append(_zeichen("stärke", "volumen", f"Volumen trocknet aus: {df.index[i]:%d.%m.} der leiseste Tag "
                                 "seit 50 Tagen, in der unteren Hälfte der Spanne – niemand will mehr verkaufen"))
             break
@@ -354,16 +421,16 @@ def korrekturfenster(idx):
         import marktrichtung
         mr = marktrichtung.richtung(bis=idx.index[-1])
         if mr.get("ampel") != "grün" and mr.get("seit") is not None:
-            vor = c.loc[:pd.Timestamp(mr["seit"])].iloc[-60:]
+            vor = c.loc[:pd.Timestamp(mr["seit"])].iloc[-KORREKTUR_FENSTER:]
             return vor.idxmax(), None
     except Exception:  # noqa: BLE001
         pass
-    c60 = c.iloc[-60:]
+    c60 = c.iloc[-KORREKTUR_FENSTER:]
     if (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:
         return c60.idxmax(), None
-    fenster = c.iloc[-(NACHWIRKUNG_TAGE + 60):]
+    fenster = c.iloc[-(NACHWIRKUNG_TAGE + KORREKTUR_FENSTER):]
     tief = fenster.iloc[-NACHWIRKUNG_TAGE:].idxmin()
-    hoch = fenster.loc[:tief].iloc[-60:].idxmax()
+    hoch = fenster.loc[:tief].iloc[-KORREKTUR_FENSTER:].idxmax()
     if hoch < tief < c.index[-1] and (1 - fenster.loc[tief] / fenster.loc[hoch]) * 100 >= MIN_RUECKGANG:
         return hoch, tief
     return None
@@ -382,7 +449,7 @@ def divergenz(df, idx, s, ende=None):
         return []
     d1, t2 = lo.idxmin(), i_lo.idxmin()
     pos1, pos2 = df.index.get_loc(d1), df.index.get_loc(t2)
-    if pos2 - pos1 < 3:
+    if pos2 - pos1 < DIV_ABSTAND_TAGE:
         return []
     um_t2 = float(df["Low"].iloc[max(pos2 - 1, 0):pos2 + 2].min())
     tief1 = float(lo.loc[d1])
@@ -393,9 +460,9 @@ def divergenz(df, idx, s, ende=None):
     a_pct = a_ / tief1 * 100 if a_ == a_ else 0.0
     t_ = float(c.iloc[-1] / c.loc[d1] - 1) * 100
     i_ = float(i_c.iloc[-1] / i_c.loc[d1] - 1) * 100
-    if not ((1 - tief1 / hoch) * 100 >= max(5.0, 3 * a_pct, i_fall)
-            and float(i_lo.loc[t2]) <= float(i_lo.loc[d1]) * 0.995
-            and um_t2 >= tief1 * 1.05 and t_ - i_ >= FUEHRT_PUNKTE):
+    if not ((1 - tief1 / hoch) * 100 >= max(DIV_FALL_MIN, DIV_FALL_ATR * a_pct, i_fall)
+            and float(i_lo.loc[t2]) <= float(i_lo.loc[d1]) * DIV_INDEX_TIEFER
+            and um_t2 >= tief1 * DIV_UEBER_TIEF and t_ - i_ >= FUEHRT_PUNKTE):
         return []
     return [_zeichen("stärke", "rs", f"höheres Tief gegen den Index: eigenes Tief am {d1:%d.%m.} bei "
                      f"{_z(tief1, '.2f')} $, am tieferen Indextief {t2:%d.%m.} {_z((um_t2 / tief1 - 1) * 100, '+.1f')} % "
@@ -409,29 +476,29 @@ def divergenz_short(df, idx):
     10 Punkte hinter dem Index."""
     if df is None or len(df) < 70:
         return []
-    hi, c = df["High"].iloc[-60:], df["Close"]
-    i_hi = idx["High"].reindex(df.index).ffill().iloc[-60:]
+    hi, c = df["High"].iloc[-DIV_FENSTER:], df["Close"]
+    i_hi = idx["High"].reindex(df.index).ffill().iloc[-DIV_FENSTER:]
     i_c = idx["Close"].reindex(df.index).ffill()
     if i_hi.isna().all():
         return []
     d1, t2 = hi.idxmax(), i_hi.idxmax()
     pos1, pos2 = df.index.get_loc(d1), df.index.get_loc(t2)
-    if pos2 - pos1 < 3:
+    if pos2 - pos1 < DIV_ABSTAND_TAGE:
         return []
     um_t2 = float(df["High"].iloc[max(pos2 - 1, 0):pos2 + 2].max())
     hoch1 = float(hi.loc[d1])
-    tief = float(df["Low"].iloc[-60:].loc[:d1].min())
+    tief = float(df["Low"].iloc[-DIV_FENSTER:].loc[:d1].min())
     t_ = float(c.iloc[-1] / c.loc[d1] - 1) * 100
     i_ = float(i_c.iloc[-1] / i_c.loc[d1] - 1) * 100
-    if not (hoch1 / tief - 1 >= 0.10 and float(i_hi.loc[t2]) >= float(i_hi.loc[d1]) * 1.005
-            and um_t2 <= hoch1 * 0.95 and i_ - t_ >= FUEHRT_PUNKTE):
+    if not (hoch1 / tief - 1 >= DIV_ANSTIEG and float(i_hi.loc[t2]) >= float(i_hi.loc[d1]) * DIV_INDEX_HOEHER
+            and um_t2 <= hoch1 * DIV_UNTER_HOCH and i_ - t_ >= FUEHRT_PUNKTE):
         return []
     return [_zeichen("schwäche", "rs", f"tieferes Hoch gegen den Index: eigenes Hoch am {d1:%d.%m.} bei "
                      f"{_z(hoch1, '.2f')} $, am höheren Indexhoch {t2:%d.%m.} {_z((um_t2 / hoch1 - 1) * 100, '+.1f')} % "
                      f"darunter; seitdem {_z(t_, '+.1f')} %, der S&P 500 {_z(i_, '+.1f')} %", 2, t2) | {"auch_struktur": True}]
 
 
-def tage_gegen_markt(df, idx, tage=20):
+def tage_gegen_markt(df, idx, tage=GEGEN_TAGE):
     """Versteckte Stärke: an mindestens 4 (und 60 %) der Indextage mit −1 % oder weniger im Plus geschlossen (20 Tage); gespiegelt
     Schwäche: an mindestens 3 Indextagen mit +1 % oder mehr im Minus."""
     if df is None or len(df) < tage + 2:
@@ -440,12 +507,12 @@ def tage_gegen_markt(df, idx, tage=20):
     ic = idx["Close"].reindex(df.index).ffill()
     r, ir = (c / c.shift() - 1).iloc[-tage:], (ic / ic.shift() - 1).iloc[-tage:]
     aus = []
-    schwach = ir <= -0.01
-    if (r[schwach] > 0).sum() >= max(4, 0.6 * schwach.sum()):
+    schwach = ir <= -GEGEN_INDEX_TAG
+    if (r[schwach] > 0).sum() >= max(GEGEN_MIN_TAGE, GEGEN_ANTEIL * schwach.sum()):
         aus.append(_zeichen("stärke", "rs", f"an {int((r[schwach] > 0).sum())} von {int(schwach.sum())} schwachen "
                             "Indextagen (−1 % und mehr, 20 Tage) im Plus geschlossen – versteckte Stärke"))
-    stark = ir >= 0.01
-    if (r[stark] < 0).sum() >= max(4, 0.6 * stark.sum()):
+    stark = ir >= GEGEN_INDEX_TAG
+    if (r[stark] < 0).sum() >= max(GEGEN_MIN_TAGE, GEGEN_ANTEIL * stark.sum()):
         aus.append(_zeichen("schwäche", "rs", f"an {int((r[stark] < 0).sum())} von {int(stark.sum())} starken "
                             "Indextagen (+1 % und mehr, 20 Tage) im Minus geschlossen – versteckte Schwäche"))
     return aus
@@ -459,15 +526,15 @@ def rs_linie(df, idx):
     aus = []
     if len(rs) < 70 or len(c) < 70:
         return aus
-    d_rs, d_k = float(rs.iloc[-1] / rs.iloc[-21] - 1) * 100, float(c.iloc[-1] / c.iloc[-21] - 1) * 100
+    d_rs, d_k = float(rs.iloc[-1] / rs.iloc[-STEIGUNG_TAGE] - 1) * 100, float(c.iloc[-1] / c.iloc[-STEIGUNG_TAGE] - 1) * 100
     if d_rs >= 2 and d_k <= 0:
         aus.append(_zeichen("stärke", "rs", f"RS-Linie steigt in 20 Tagen {_z(d_rs, '+.1f')} %, während der Kurs "
                             f"{_z(d_k, '+.1f')} % nachgibt"))
     elif d_rs <= -2 and d_k >= 0:
         aus.append(_zeichen("schwäche", "rs", f"RS-Linie fällt in 20 Tagen {_z(d_rs, '+.1f')} %, während der Kurs "
                             f"{_z(d_k, '+.1f')} % steigt"))
-    d = df.iloc[-60:]
-    hs, ts = schwungpunkte(d["High"], d["Low"], 3)
+    d = df.iloc[-RS_LINIE_FENSTER:]
+    hs, ts = schwungpunkte(d["High"], d["Low"], RS_LINIE_N)
     r60 = rs.reindex(d.index)
     if len(ts) >= 2:
         (i1, p1), (i2, p2) = ts[-2], ts[-1]
@@ -528,32 +595,32 @@ def relativ(df, idx, start=None):
             if t_tief >= i_fall and t_tief + i_fall >= HAELT_PUNKTE:
                 z_.append(_zeichen("stärke", "rs", f"{vor}vom Indexhoch {s:%d.%m.} bis zum Indextief {tief_tag:%d.%m.} "
                                    f"{_z(t_tief, '+.1f')} %, der S&P 500 {_z(-i_fall, '+.1f')} % (hält in der Schwäche)", 2))
-            hoch52_jetzt = float(df["High"].iloc[-252:].max())
+            hoch52_jetzt = float(df["High"].iloc[-JAHR_TAGE:].max())
             if tief_tag < c.index[-1]:
                 t3 = float(c.iloc[-1] / c.loc[tief_tag] - 1) * 100
                 i3 = float(i_c.iloc[-1] / i_c.loc[tief_tag] - 1) * 100
                 if t3 - i3 >= FUEHRT_PUNKTE and (1 - float(c.iloc[-1]) / hoch52_jetzt) * 100 <= FUEHRT_NAH_HOCH:
                     z_.append(_zeichen("stärke", "rs", f"seit dem Indextief {tief_tag:%d.%m.} {_z(t3, '+.1f')} %, "
                                        f"der S&P 500 {_z(i3, '+.1f')} % (führt aus der Korrektur)", 2))
-            hoch52 = float(df["High"].loc[:tief_tag].iloc[-252:].max())
-            i_hoch52 = float(idx["High"].loc[:tief_tag].iloc[-252:].max())
+            hoch52 = float(df["High"].loc[:tief_tag].iloc[-JAHR_TAGE:].max())
+            i_hoch52 = float(idx["High"].loc[:tief_tag].iloc[-JAHR_TAGE:].max())
             abst = (1 - float(c.loc[tief_tag]) / hoch52) * 100
             i_abst = (1 - float(i_c.loc[tief_tag]) / i_hoch52) * 100
-            if abst <= 0.5 * i_abst and abst <= FUEHRT_NAH_HOCH:
+            if abst <= NAH_ANTEIL * i_abst and abst <= FUEHRT_NAH_HOCH:
                 z_.append(_zeichen("stärke", "rs", f"{vor}am Indextief {tief_tag:%d.%m.} {_z(abst, '.0f')} % unter dem "
                                    f"eigenen Hoch, der Index {_z(i_abst, '.0f')} %"))
             r_bis = rs.loc[:bis]
-            if len(r_bis) > 5 and float(r_bis.iloc[-5:].max()) >= float(r_bis.iloc[-252:].max()) * RS_HOCH:
+            if len(r_bis) > 5 and float(r_bis.iloc[-RS_HOCH_TAGE:].max()) >= float(r_bis.iloc[-JAHR_TAGE:].max()) * RS_HOCH:
                 z_.append(_zeichen("stärke", "rs", f"{vor}RS-Linie am 52-Wochen-Hoch, während der Index fällt", 2))
             z_ += divergenz(df, idx, s, ende)
-    tief = i_c.iloc[-60:].idxmin()
+    tief = i_c.iloc[-INDEX_TIEF_FENSTER:].idxmin()
     if (float(i_c.iloc[-1]) / float(i_c.loc[tief]) - 1) * 100 >= MIN_RUECKGANG:
         t2 = float(c.iloc[-1] / c.loc[tief] - 1) * 100
         i2 = float(i_c.iloc[-1] / i_c.loc[tief] - 1) * 100
         if t2 < 0:
             z_.append(_zeichen("schwäche", "rs", f"seit dem Indextief {tief:%d.%m.} {_z(t2, '+.1f')} %, der S&P 500 "
                                f"{_z(i2, '+.1f')} % (Schwäche in der Stärke)", 2))
-        if float(rs.iloc[-5:].min()) <= float(rs.iloc[-252:].min()) / RS_HOCH:
+        if float(rs.iloc[-RS_HOCH_TAGE:].min()) <= float(rs.iloc[-JAHR_TAGE:].min()) / RS_HOCH:
             z_.append(_zeichen("schwäche", "rs", "RS-Linie am 52-Wochen-Tief, während der Index steigt", 2))
         z_ += divergenz_short(df, idx)
     aus["staerke"] = [x["text"] for x in z_ if x["seite"] == "stärke"]
@@ -562,7 +629,7 @@ def relativ(df, idx, start=None):
 
 
 # ── Reaktion auf Nachrichten (Zahlen) ─────────────────────────────────────────────────────────────────────────────
-def reaktion(df, gewinne, max_tage=60):
+def reaktion(df, gewinne, max_tage=REAKTION_MAX_TAGE):
     """Reaktion auf die letzte Zahlenmeldung → Liste von Zeichen. Überraschung gegen Reaktion (Schwäche ab −2 % trotz
     guter Zahlen, Stärke ab +1 % mit Schluss in der oberen Hälfte trotz schlechter), Lücke gegen Schluss im Tag
     (Lücke ≥ +3 % und Schluss im unteren Drittel = verkauft; gespiegelt gekauft), Kurs heute (zurück unter
@@ -580,27 +647,27 @@ def reaktion(df, gewinne, max_tage=60):
     tag = df.index[pos]
     ue = None
     for t, z in gewinne.iterrows():
-        if abs((pd.Timestamp(t) - tag).days) <= 4:
+        if abs((pd.Timestamp(t) - tag).days) <= ZAHLEN_TOLERANZ_TAGE:
             ue = z.get("ueberraschung_pct")
     if ue is not None and pd.isna(ue):
         ue = None
     o, h, l, c = (float(df[x].iloc[pos]) for x in ("Open", "High", "Low", "Close"))
     vor = float(df["Close"].iloc[pos - 1])
     luecke = (o / vor - 1) * 100
-    lage = (c - l) / (h - l) if h > l else 0.5
+    lage = (c - l) / (h - l) if h > l else LAGE_MITTE
     aus = []
     zahl = f"Zahlen am {tag:%d.%m.}" + (f" {_z(ue, '+.0f')} % {'über' if ue > 0 else 'unter'} Erwartung"
                                          if ue else "")
-    if luecke >= 3 and lage <= 1 / 3:
+    if luecke >= REAKTION_LUECKE and lage <= 1 / 3:
         aus.append(_zeichen("schwäche", "ereignis", f"{zahl}: Lücke {_z(luecke, '+.1f')} % verkauft, Schluss im "
                             "unteren Drittel des Tages", 2))
-    elif luecke <= -3 and lage >= 2 / 3:
+    elif luecke <= -REAKTION_LUECKE and lage >= 2 / 3:
         aus.append(_zeichen("stärke", "ereignis", f"{zahl}: Lücke {_z(luecke, '+.1f')} % gekauft, Schluss im "
                             "oberen Drittel des Tages", 2))
     if ue is not None:
         if ue > 0 and pct <= -2:
             aus.append(_zeichen("schwäche", "ereignis", f"{zahl}, der Kurs fiel {_z(pct, '+.1f')} % (Käufer erschöpft)", 2))
-        elif ue < 0 and pct >= 1 and lage >= 0.5:
+        elif ue < 0 and pct >= 1 and lage >= LAGE_MITTE:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} % (Nachfrage trägt)", 2))
         elif ue > 0 and pct >= zahlen_reaktion.REAKTION_PCT:
             aus.append(_zeichen("stärke", "ereignis", f"{zahl}, der Kurs stieg {_z(pct, '+.1f')} %"))
@@ -669,7 +736,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         phl = [int(x) for x in ph]
         phl[-1] = p
     zs = []
-    dt, dw = dow(df, 5), dow(w, 2)
+    dt, dw = dow(df, DOW_N_TAG), dow(w, 2)
     if dt and dt.get("signal"):
         zs.append(_zeichen(dt["richtung"], "struktur", dt["signal"]))
     if dw and dw.get("signal") and not (dt and dt.get("richtung") == dw["richtung"]):
@@ -693,7 +760,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         elif ak["bild"] == "Distribution":
             zs.append(_zeichen("schwäche", "volumen", f"Distribution: {_tage(ak['abgabetage'], 'Abgabetag')} gegen "
                                f"{_tage(ak['kauftage'], 'Kauftag')} mit Volumen (20 Tage)"))
-        if ak["churning"] >= 3:
+        if ak["churning"] >= CHURNING_TAGE:
             zs.append(_zeichen("schwäche", "volumen", f"verdeckte Abgabe: {ak['churning']} Tage mit Volumen im Plus, "
                                "aber Schluss im unteren Drittel (Churning, 20 Tage)"))
         if ak["pocket_pivot"]:
@@ -720,25 +787,25 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     lauf = 0 if jung else _lauf(phl)
     kurs = float(df["Close"].iloc[-1])
     bruch = ausbruch3 = False
-    if p in (1, 3) and lauf >= 4:
+    if p in (1, 3) and lauf >= PHASE_MIN_WOCHEN:
         spanne = w[w.index < df.index[-1]].iloc[-lauf:]
         if len(spanne) >= 3:
             unten, oben = float(spanne["Low"].min()), float(spanne["High"].max())
-            if kurs < unten * 0.99 and (dt or {}).get("struktur") != "aufwärts":
+            if kurs < unten * BRUCH_PUFFER and (dt or {}).get("struktur") != "aufwärts":
                 bruch = True
                 zs.append(_zeichen("schwäche", "struktur", f"Schluss unter dem Tief der {PHASE_NAME[p]} "
                                    f"{_z(unten, '.2f')} $", 2))
             if p == 3 and kurs > oben and idx is not None:
                 rs = (df["Close"] / idx["Close"].reindex(df.index).ffill()).dropna()
-                if len(rs) > 50 and float(rs.iloc[-1]) > float(rs.iloc[-50:].mean()):
+                if len(rs) > 50 and float(rs.iloc[-1]) > float(rs.iloc[-RS_GD_TAGE:].mean()):
                     ausbruch3 = True
                     zs.append(_zeichen("stärke", "struktur", f"Schluss über dem Hoch der Verteilung "
                                        f"{_z(oben, '.2f')} $, RS-Linie über ihrem GD50", 2))
     st_ = [x for x in zs if x["seite"] == "stärke"]
     sw_ = [x for x in zs if x["seite"] == "schwäche"]
     g_st, g_sw = sum(x["gewicht"] for x in st_), sum(x["gewicht"] for x in sw_)
-    stark = _traegt(st_) and g_st >= 4 and g_st >= 2 * g_sw       # klares Übergewicht, nicht bloß eins mehr
-    schwach = _traegt(sw_) and g_sw >= 4 and g_sw >= 2 * g_st
+    stark = _traegt(st_) and g_st >= GEWICHT_MIN and g_st >= 2 * g_sw       # klares Übergewicht, nicht bloß eins mehr
+    schwach = _traegt(sw_) and g_sw >= GEWICHT_MIN and g_sw >= 2 * g_st
     ziel = None
     if p == 4 and stark:
         ziel = 1
@@ -755,10 +822,10 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     # Rückschlag in Phase 2: Wochenschluss unter GD10W und mindestens 15 % unter dem 52-Wochen-Hoch
     rueckschlag = False
     if not jung:
-        wc, wh = w["Close"], w["High"].rolling(52, min_periods=10).max()
+        wc, wh = w["Close"], w["High"].rolling(JAHR_WOCHEN, min_periods=JAHR_WOCHEN_MIN).max()
         g10 = wc.rolling(10).mean()
         for i in range(len(phl)):
-            if phl[i] == 2 and wc.iloc[i] < g10.iloc[i] and wc.iloc[i] <= wh.iloc[i] * 0.85:
+            if phl[i] == 2 and wc.iloc[i] < g10.iloc[i] and wc.iloc[i] <= wh.iloc[i] * RUECKSCHLAG_TIEFE:
                 phl[i] = RUECKSCHLAG
         rueckschlag = p == 2 and phl[-1] == RUECKSCHLAG
     wort = PHASE_NAME[0] if jung else (f"{p} → {ziel}" if ziel else str(p))
@@ -793,18 +860,18 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         satz += " · Stärke: " + "; ".join(x["text"] for x in st_[:3])
     if sw_:
         satz += " · Schwäche: " + "; ".join(x["text"] for x in sw_[:3])
-    kurve = w["Close"].iloc[-52:]
+    kurve = w["Close"].iloc[-JAHR_WOCHEN:]
     i_w = None
     if idx is not None:
-        iw = idx["Close"].reindex(w.index, method="ffill").iloc[-52:]
+        iw = idx["Close"].reindex(w.index, method="ffill").iloc[-JAHR_WOCHEN:]
         if iw.notna().all():
             i_w = [round(float(x), 2) for x in iw]
     return {"phase": p, "ziel": ziel, "wort": wort, "satz": satz, "zeichen": st_ + sw_,
             "staerke": [x["text"] for x in st_], "schwaeche": [x["text"] for x in sw_],
             "dow_tag": dt, "dow_woche": dw, "einquetschung": eq, "akkumulation": ak, "relativ": rel,
             "trend": trendqualitaet(df), "jung": jung, "rueckschlag": rueckschlag,
-            "kurve": [round(float(x), 2) for x in kurve], "tiefs": [round(float(x), 2) for x in w["Low"].iloc[-52:]],
-            "index_kurve": i_w, "phasen": phl[-52:],
+            "kurve": [round(float(x), 2) for x in kurve], "tiefs": [round(float(x), 2) for x in w["Low"].iloc[-JAHR_WOCHEN:]],
+            "index_kurve": i_w, "phasen": phl[-JAHR_WOCHEN:],
             "kurve_von": f"{kurve.index[0]:%d.%m.%Y}", "kurve_bis": f"{df.index[-1]:%d.%m.%Y}",
             "wechsel_wochen": wechsel_wochen}
 
@@ -850,7 +917,7 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     return k
 
 
-def ablegen(stand, alle, behalten=10):
+def ablegen(stand, alle, behalten=ABLAGE_BEHALTEN):
     from dateien import json_schreiben
     os.makedirs(SPEICHER, exist_ok=True)
     for f in sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))[:-behalten]:

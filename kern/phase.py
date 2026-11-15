@@ -25,25 +25,42 @@ FAELLT = -0.005
 NEUSTART_WOCHEN = 4   # aus Phase 1, 3 oder 4 zurück in Phase 2 erst nach 4 Wochen Phase-2-Bild
 
 
+# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
+STEIG_WOCHEN = 4         # Steigung der 40-Wochen-Linie über 4 Wochen
+HALBJAHR_W = 26          # 26 Wochen (Kreuzungen, Hoch davor)
+QUARTAL_W = 13           # Treppe abwärts: tiefer als vor 13 Wochen
+MIN_WOCHEN_HOCH = 10     # Hoch der 26 Wochen ab 10 Wochen Daten
+JAHR_W = 52              # 52 Wochen
+MIN_WOCHEN_TIEF = 20     # Tief der 52 Wochen ab 20 Wochen Daten
+SEITWAERTS_STEIG = 0.03  # seitwärts: mindestens 2 Kreuzungen in 26 Wochen und die Linie fällt höchstens 3 %
+TREPPE_ROC = 0.05        # Treppe abwärts: 13 Wochen mindestens 5 % tiefer
+P_ABWAERTS = 4           # Phase 4 (Abwärts)
+NAH_TIEF = 1.25          # Basis: Kurs höchstens 25 % über dem 52-Wochen-Tief
+SPANNE_GLAETTEN = 0.9    # geglättete Wochenspanne: 90 % alt …
+SPANNE_NEU = 0.1         # … 10 % neu
+SPANNE_SPRUNG = 1.8      # Wochenspanne 1,8-fach der geglätteten: Ausbruchswoche
+SPERRE_WOCHEN = 8        # nach Phase 4 frühestens nach 8 Wochen zurück in Phase 1
+
+
 def wochen(df):
     w = df.resample("W-FRI").agg({"Open": "first", "High": "max", "Low": "min",
                                   "Close": "last", "Volume": "sum"}).dropna()
     w["gd10"] = w["Close"].rolling(10).mean()
     w["gd30"] = w["Close"].rolling(30).mean()
     w["gd40"] = w["Close"].rolling(40).mean()
-    w["steig40"] = w["gd40"] / w["gd40"].shift(4) - 1
+    w["steig40"] = w["gd40"] / w["gd40"].shift(STEIG_WOCHEN) - 1
     w["spanne"] = (w["High"] / w["Low"] - 1).rolling(10).mean()
     ueber = (w["Close"] > w["gd40"]).astype(int)
-    w["kreuz26"] = ueber.diff().abs().rolling(26).sum()
-    w["roc13"] = w["Close"] / w["Close"].shift(13) - 1
-    w["hoch26_vor"] = w["Close"].shift(1).rolling(26, min_periods=10).max()
-    w["tief52"] = w["Low"].rolling(52, min_periods=20).min()
+    w["kreuz26"] = ueber.diff().abs().rolling(HALBJAHR_W).sum()
+    w["roc13"] = w["Close"] / w["Close"].shift(QUARTAL_W) - 1
+    w["hoch26_vor"] = w["Close"].shift(1).rolling(HALBJAHR_W, min_periods=MIN_WOCHEN_HOCH).max()
+    w["tief52"] = w["Low"].rolling(JAHR_W, min_periods=MIN_WOCHEN_TIEF).min()
     return w
 
 
 def ist_seitwaerts(z):
     """Kurs pendelt um einen flachen oder nur leicht fallenden GD40W."""
-    return z.kreuz26 >= 2 and z.steig40 > -0.03
+    return z.kreuz26 >= 2 and z.steig40 > -SEITWAERTS_STEIG
 
 
 def bild(z):
@@ -53,9 +70,9 @@ def bild(z):
     if z.Close > z.gd30 and z.Close > z.gd40 and z.gd30 > z.gd40 and z.steig40 > STEIGT:
         return 2
     seitwaerts = ist_seitwaerts(z)
-    if (z.Close < z.gd40 and z.steig40 < FAELLT and z.gd30 < z.gd40 and z.roc13 < -0.05
+    if (z.Close < z.gd40 and z.steig40 < FAELLT and z.gd30 < z.gd40 and z.roc13 < -TREPPE_ROC
             and not seitwaerts):
-        return 4                                            # Treppe abwärts: tiefer als vor 13 Wochen
+        return P_ABWAERTS                                            # Treppe abwärts: tiefer als vor 13 Wochen
     return 0
 
 
@@ -71,14 +88,14 @@ def phasen(df):
         serie2 = serie2 + 1 if b == 2 else 0
         if b == 2 and (serie2 >= 2 if phase == 2 else serie2 >= NEUSTART_WOCHEN):
             ueber = z.Close <= (basis_hoch if phase == 1 and basis_hoch is not None else z.hoch26_vor)
-            if phase in (1, 4) and (z.Close < 1.25 * z.tief52 or ueber):
+            if phase in (1, 4) and (z.Close < NAH_TIEF * z.tief52 or ueber):
                 aus.append(phase)                           # noch keine Rallye vom Tief bzw. kein
                 continue                                    # Ausbruch über die Spanne der Bodenphase
             phase = 2
-            spanne2 = z.spanne if spanne2 is None else 0.9 * spanne2 + 0.1 * z.spanne
-            if spanne2 and z.spanne > 1.8 * spanne2 and z.Close < z.gd10:
+            spanne2 = z.spanne if spanne2 is None else SPANNE_GLAETTEN * spanne2 + SPANNE_NEU * z.spanne
+            if spanne2 and z.spanne > SPANNE_SPRUNG * spanne2 and z.Close < z.gd10:
                 phase = 3                                   # Schwankung explodiert, Kurs bricht ein
-        elif b == 4 and vorher == 4:
+        elif b == P_ABWAERTS and vorher == P_ABWAERTS:
             phase = 4
             spanne2 = None
         elif phase == 2 and b != 2 and (z.Close < z.gd40 or vorher != 2):
@@ -88,7 +105,7 @@ def phasen(df):
             phase = 4                                       # zwei Wochen unter fallendem GD40W (Weinstein: die Linie
             #                                                 fällt – flach ist sie bei weniger als 0,5 % in 4 Wochen;
             #                                                 Chart-Prüfer 14.11.2026, LUV: −0,1 % galt als fallend)
-        elif phase == 4 and seit4 >= 8 and b != 4 and vorher != 4 and z.steig40 >= FAELLT:
+        elif phase == 4 and seit4 >= SPERRE_WOCHEN and b != P_ABWAERTS and vorher != P_ABWAERTS and z.steig40 >= FAELLT:
             phase = 1                                       # Abwärtsbild weg, GD40W fällt nicht mehr
             basis_hoch = None
         if phase == 1:
