@@ -41,9 +41,9 @@ VORGABEN = [
      "048ab72: Lücken und Volumenspitzen (Micky); Ereignis jetzt an jedem jüngsten Zahlentag – Anker bei 1.342 statt 1.255 "
      "von 1.343 Titeln mit Zahlen"),
     ("chart", "2026-11-14 09:40", "Schub der Vorgeschichte", "behoben",
-     "e02bc42: Vorgeschichte und Fahnenstange im Material getrennt, mit Zeitraum"),
+     "e02bc42: Vorgeschichte und Fahnenstange im Material getrennt, mit Zeitraum – Anzeige (Material des Prüfers)"),
     ("chart", "2026-11-14 09:40", "Ausgebrochene Base", "behoben",
-     "e02bc42: am Hoch zeigt das Material die zuletzt verlassene Zone mit Pivot und Abstand"),
+     "e02bc42: am Hoch zeigt das Material die zuletzt verlassene Zone mit Pivot und Abstand – Anzeige (Material des Prüfers)"),
     ("chart", "2026-11-14 09:40", "Einquetschung", "behoben",
      "9afb297: flache Kante seit mindestens 3 Wochen, 60 und 120 Tage – 48 → 27 Titel"),
     ("chart", "2026-11-14 09:40", "wenigen Cent", "entschieden",
@@ -143,8 +143,11 @@ QUELLEN = {"chart": ("🔎 Chart-Prüfer", "chartpruefer"), "setup": ("🎯 Setu
 # Prüfberichte steht hier – mit Stand und Notiz wie ein Befund. Was nicht in der Mängelliste steht, gibt es nicht.
 # (Nr, Titel, Bereich, Stand, Notiz) – behoben nur mit Commit und Messung.
 PLAN = [
-    (1, "Mängelliste als einzige Liste offener Punkte (Gesamtplan, Stand neben jedem Vorschlag)", "Checkliste", "offen", ""),
-    (2, "Wachposten prüft die Mängelliste: Stand, Commit und Messung, behoben muss im nächsten Lauf sinken", "Checkliste", "offen", ""),
+    (1, "Mängelliste als einzige Liste offener Punkte (Gesamtplan, Stand neben jedem Vorschlag)", "Checkliste", "behoben",
+     "5a61824: 20 Punkte des Gesamtplans in der Liste, alle 31 offenen Befunde einem Planpunkt zugeordnet, 6 Befunde "
+     "standen fälschlich offen (alte Stempel) und sind jetzt behoben; jede Auswertung zeigt den Stand neben dem Vorschlag"),
+    (2, "Wachposten prüft die Mängelliste: Stand, Commit und Messung, behoben muss im nächsten Lauf sinken", "Checkliste",
+     "behoben", "5a61824: auf dem Server sofort 2 Einträge „behoben ohne Messung“ gefunden und nachgetragen"),
     (3, "Zweite Stufe der Inventur: die 386 Zahlen ohne Namen bekommen Namen und kommen auf die Karte", "Inventur", "offen", ""),
     (4, "Schritt 2: zwei Einstiege – Cheat (früh am Rand) und Ausbruch", "Gefechtsordnung", "offen", ""),
     (5, "Schritt 3: Struktur-Stopp neben 1,5 ATR (Base: unter der letzten Kontraktion, höchstens 8 %; schnelles Setup: "
