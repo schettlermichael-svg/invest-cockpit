@@ -1054,3 +1054,21 @@ teilweise, fehlt – mit der Lücke und dem Schritt, in dem sie geschlossen wird
   ersten Entwurf und sind nachgetragen („bringt die Balance an den Rand“, Spring/Upthrust „Ziel der andere Rand“).
   Bewusst aktualisiert: „angenommen“ ohne Volumen-Pflicht, Ereignis-Anker an jedem Zahlentag, Hoch des Rückgangs
   2 Jahre. Die Anleitung des Chart-Prüfers ist etwa 3.700 Zeichen länger (rund 1.000 Token, unter 1 Cent je Chart).
+
+## Befunde aus Lauf 4 (15.11.2026) – behoben
+
+Lauf 4: 100 Charts, 690 Widersprüche (309 sicher), 21,74 $ (die Anleitung ist mit Regelkarte und Zeichen länger).
+Gemessen über 1.865 Titel, alter gegen neuen Code (Mac-Daten bis 04.11.):
+
+| Befund | Änderung | vorher → nachher |
+|---|---|---|
+| Test am Rand ohne 3 % | Schwelle des Market Profile und Exzess nur bis 3 % vom Rand; Exzess vor der Zone fällt weg | Titel mit Beleg „Test am Rand“ 1.195 → 740 |
+| Wert gewandert als Ungleichgewicht | innerhalb der Zone = innere Rotation | 785 → 284 |
+| Upthrust/Spring nicht aufgehoben | Schluss jenseits des Tageshochs/-tiefs hebt auf (auch Anlass, Waage) | 72 aufgehoben, abgelehnt 365 → 280 |
+| Eigen/geliehen | RS in Laufrichtung: eigen ≥ 5 %, geliehen ±1 %, teils eigen, Gegenzeichen | „mit dem Markt“ 494 → 0 |
+| Waage | alle Zeichen, Seiten getrennt, Gleichstand kein Beleg | Gleichstand-Belege 152 → 0 |
+| AVWAP letztes Hoch | nur fertige Wochen bestätigen; Kurs über allen Hochs = „Ausbruchspunkt“ | 172 Ausbruchspunkte, 194 Anker anders |
+| Quad in Buchstaben | Material des Prüfers | – |
+
+Offen aus Lauf 4: Flagge (Name der Zone bei fallenden Tiefs, Stange aus altem Lauf), Pivot verbraucht/Drittel,
+Volumenprofil der Balance, Basenzählung, Kette (Gefechtsordnung), Phase (Schritt 8), Gruppen und Markt.

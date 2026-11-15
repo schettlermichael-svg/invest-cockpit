@@ -224,7 +224,8 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                   f'stroke-width="2"/>')
             w = float(av.iloc[-1])
             if pmin <= w <= pmax:
-                text = f"AVWAP {AVWAP_KURZ[k]} {zahl(w)} $"
+                name_ = "Ausbruchspunkt" if k == "hoch" and anker.get("ausbruchspunkt") else AVWAP_KURZ[k]
+                text = f"AVWAP {name_} {zahl(w)} $"
                 y_, strich = _rechts(platz, ENDE, Y(w), text, nach_oben=Y(w) > 230)   # oben: nach unten ausweichen
                 spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe}" font-size="12" '
                               f'font-weight="600">{text}</text>')

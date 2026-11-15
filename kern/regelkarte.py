@@ -230,8 +230,10 @@ WERKZEUGE = {
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
              messung=["volumenprofil.knoten"], stand="gemessen", pruefer=["Gegenseite (Mauer/Stütze)"]),
-        dict(name="Eigen oder geliehen", regel="Eigen: RS-Linie in 20 Tagen mindestens 5 % in Laufrichtung; geliehen: "
-                                               "höchstens 1 % (der Markt trägt).",
+        dict(name="Eigen oder geliehen", regel="RS-Linie in 20 Tagen, in Laufrichtung gemessen: eigen ab 5 %; geliehen "
+                                               "höchstens ±1 % (der Markt trägt); teils eigen 1–5 %; über 1 % gegen die "
+                                               "Laufrichtung = Gegenzeichen. Stärke in der Schwäche macht eigen, solange "
+                                               "die RS nicht gegen die Laufrichtung läuft.",
              messung=["auktion.kraft"], stand="gemessen", pruefer=["Eigen oder geliehen"]),
         dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Wechsel 3 → 4 erst, wenn die Linie fällt); "
                                  "Rahmen für jeden Kasten.",
@@ -243,7 +245,8 @@ WERKZEUGE = {
              pruefer=["Short-Form"]),
         dict(name="AVWAP letztes Hoch", regel="Letztes Hoch = jüngstes Hoch, das der Kurs nicht überschritten hat und "
                                               "das bestätigt ist (Rückgang ab 8 % danach oder Wochen-Schwunghoch mit 2 "
-                                              "Wochen davor und danach tiefer).",
+                                              "fertige Wochen davor und danach tiefer). Steht der Kurs über allen bestätigten Hochs, "
+                                              "ankert die App am jüngsten Wochen-Schwunghoch und nennt es Ausbruchspunkt.",
              messung=["avwap.anker"], stand="gemessen", pruefer=["AVWAP letztes Hoch"]),
         dict(name="AVWAP Hoch des Rückgangs", regel="Hoch des Rückgangs = der Gipfel der ganzen Korrektur: das höchste "
                                                     "bestätigte Hoch der letzten 2 Jahre, das der Kurs nicht überschritten "

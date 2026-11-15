@@ -173,7 +173,15 @@ def bewegung(zustand, richtung):
 
 
 def kraft(df, idx, richtung, k=None):
-    """Eigen oder geliehen: trägt der Titel die Bewegung selbst oder trägt ihn der Markt?"""
+    """Eigen oder geliehen: trägt der Titel die Bewegung selbst oder trägt ihn der Markt? (RS-Linie in 20 Tagen,
+    gemessen in Laufrichtung; Chart-Prüfer Lauf 4, 15.11.2026: vorher hieß jeder Rest „mit dem Markt“ – auch +22 % RS
+    gegen die Laufrichtung.)
+      eigen     RS-Linie mindestens 5 % in Laufrichtung
+      geliehen  RS-Linie höchstens ±1 %, der Kurs läuft mit dem Markt
+      gemischt  RS-Linie zwischen 1 und 5 % in Laufrichtung (teils eigen)
+      gegen     RS-Linie über 1 % gegen die Laufrichtung – Gegenzeichen (die Kraft liegt auf der anderen Seite)
+    Stärke in der Schwäche (bzw. Schwäche in der Stärke) macht „eigen“, solange die RS-Linie nicht gegen die
+    Laufrichtung läuft (Micky: der stärkste Edge)."""
     r = _rs20(df, idx) if idx is not None else None
     if not r:
         return None
@@ -181,17 +189,21 @@ def kraft(df, idx, richtung, k=None):
     rel = (k or {}).get("relativ") or {}
     zahl = f"Titel {_z(t, '+.1f')} %, S&P 500 {_z(m, '+.1f')} %, RS-Linie {_z(rs, '+.1f')} % (20 Tage)"
     auf = richtung == "aufwärts" if richtung else t >= 0     # ohne Laufrichtung (Balance): die Richtung des Kurses
-    if (auf and rs >= EIGEN_PCT) or (not auf and rs <= -EIGEN_PCT):
+    mit = rs if auf else -rs                                  # RS-Änderung in Laufrichtung
+    if mit >= EIGEN_PCT:
         art = "eigen"
-    elif (auf and t > 0 and rs <= 1) or (not auf and t < 0 and rs >= -1):
+    elif abs(rs) <= 1:
         art = "geliehen"
-    else:
+    elif mit > 1:
         art = "gemischt"
-    if auf and rel.get("staerke"):
+    else:
+        art = "gegen"
+    if art != "gegen" and auf and rel.get("staerke"):
         art, zahl = "eigen", zahl + " · Stärke in der Schwäche"
-    if not auf and rel.get("schwaeche"):
+    if art != "gegen" and not auf and rel.get("schwaeche"):
         art, zahl = "eigen", zahl + " · Schwäche in der Stärke"
-    text = {"eigen": "eigene Kraft", "geliehen": "geliehen vom Markt", "gemischt": "mit dem Markt"}[art]
+    text = {"eigen": "eigene Kraft", "geliehen": "geliehen vom Markt", "gemischt": "teils eigen (RS 1–5 %)",
+            "gegen": "RS gegen die Laufrichtung (Gegenzeichen)"}[art]
     return {"art": art, "text": f"{text}: {zahl}"}
 
 
@@ -331,16 +343,41 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
                                                             "Tageswert ganz außerhalb der Wertzone"))
         elif s_["art"] == "R" and aktiv and aktiv["dir"] == s_["dir"]:
             nachher.append(("angenommen", f"Rücktest hält am {_d(s_['tag'])} (Market Profile R)"))
+        elif s_["art"] in ("F", "B") and aktiv and aktiv["dir"] == s_["dir"] and scanner \
+                and unten <= s_["preis"] <= oben:
+            # Wert wandert innerhalb der Zone: innere Rotation, kein Ungleichgewicht (Chart-Prüfer Lauf 4, 42 Fälle)
+            nachher.append(("Balance", f"innere Rotation: Market Profile {'Fortsetzung' if s_['art'] == 'F' else 'Wert gewandert'} "
+                                       f"{s_['dir']} am {_d(s_['tag'])} bei {_z(s_['preis'])} $, innerhalb der Zone"))
         elif s_["art"] in ("F", "B") and aktiv and aktiv["dir"] == s_["dir"]:
             nachher.append(("Ungleichgewicht", f"Market Profile: {'Fortsetzung' if s_['art'] == 'F' else 'Wert gewandert'} "
                                                f"{s_['dir']} am {_d(s_['tag'])}"))
+    aufgehoben = []                              # Spring/Upthrust, die der Kurs danach widerlegt hat – zählen nicht mehr
     for vor, zst, ri in (("Spring", "abgelehnt", "abwärts"), ("Upthrust", "abgelehnt", "aufwärts"),
                          ("Schluss unter dem Tief der", "angenommen", "abwärts"),
                          ("Schluss über dem Hoch der Verteilung", "angenommen", "aufwärts")):
         x = hat(vor)
         if x:
             tag = x.get("tag") or _tag_im_text(x["text"], df) or df.index[-1]
+            if vor in ("Spring", "Upthrust"):
+                # aufgehoben (Chart-Prüfer Lauf 4): nach dem Upthrust ein Schluss über seinem Tageshoch, nach dem Spring
+                # ein Schluss unter seinem Tagestief – dann gilt der Fehlausbruch nicht mehr
+                try:
+                    i_ = df.index.get_indexer([pd.Timestamp(tag)], method="nearest")[0]
+                    nach = df["Close"].iloc[i_ + 1:]
+                    if len(nach) and ((vor == "Upthrust" and nach.max() > df["High"].iloc[i_])
+                                      or (vor == "Spring" and nach.min() < df["Low"].iloc[i_])):
+                        aufgehoben.append(x["text"])
+                        nachher.append(("Balance", f"{vor} am {_d(df.index[i_])} aufgehoben: Schluss "
+                                                   f"{'über seinem Tageshoch' if vor == 'Upthrust' else 'unter seinem Tagestief'}"))
+                        continue
+                except Exception:  # noqa: BLE001
+                    pass
             ereignisse.append((pd.Timestamp(tag), zst, ri, x["text"]))
+    if aufgehoben:                               # ein widerlegter Spring/Upthrust ist auch kein Anlass mehr
+        anlass = [x_ for x_ in anlass if not any(x_.endswith(t_) for t_ in aufgehoben)]
+        up = hat("Upthrust")
+        if up and up["text"] in aufgehoben and not (fa or hat("Schluss unter dem Tief der")):
+            anlass = [x_ for x_ in anlass if not x_.startswith("Zwang: gefangene Käufer")]
     ereignisse = [e_ for e_ in ereignisse if _seit(df, e_[0]) <= FRISCH]
     ereignisse.sort(key=lambda e_: pd.Timestamp(e_[0]))
     zustand = richtung = rand = None
@@ -369,8 +406,13 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
         elif unten and c <= unten * (1 + RAND_PCT / 100):
             zustand, rand = "Test am Rand", "unten"
         if mz.get("wort", "").startswith("an der Schwelle"):
-            zustand, rand = "Test am Rand", "oben" if mz.get("dir") == "↑" else "unten"
-            belege.append(("Test am Rand", f"Market Profile: {mz['wort']}"))
+            r_ = "oben" if mz.get("dir") == "↑" else "unten"
+            nah = not (oben and unten) or (c >= oben * (1 - RAND_PCT / 100) if r_ == "oben" else c <= unten * (1 + RAND_PCT / 100))
+            if nah:                                      # Test am Rand nur bis 3 % vom Rand (Chart-Prüfer Lauf 4)
+                zustand, rand = "Test am Rand", r_
+                belege.append(("Test am Rand", f"Market Profile: {mz['wort']}"))
+            else:
+                belege.append(("Balance", f"Market Profile: {mz['wort']} – innerhalb der Zone, noch nicht am Rand"))
         if oben and unten:
             belege.insert(0, ("Balance", f"{rahmen}: {_z(unten)}–{_z(oben)} $, Kurs {_z((c / oben - 1) * 100, '+.1f')} % "
                                          f"zum oberen Rand"))
@@ -423,16 +465,17 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
         if ende and zustand == "Ungleichgewicht":
             zustand = "Ende des Laufs"
 
-    # Wer ist am Rand stärker (Struktur und Volumen)
-    st_ = [x for x in zs if x["seite"] == "stärke" and x["art"] in ("struktur", "volumen")]
-    sw_ = [x for x in zs if x["seite"] == "schwäche" and x["art"] in ("struktur", "volumen")]
+    # Wer ist stärker – die Waage über alle Zeichen (Struktur, Volumen, RS, Ereignis; Regelkarte). Chart-Prüfer Lauf 4:
+    # vorher nur Struktur und Volumen, Zeichen ohne Seite aufgezählt und ein Gleichstand als Beleg
+    st_ = [x for x in zs if x["seite"] == "stärke" and x["text"] not in aufgehoben]
+    sw_ = [x for x in zs if x["seite"] == "schwäche" and x["text"] not in aufgehoben]
     gs, gw = sum(x["gewicht"] for x in st_), sum(x["gewicht"] for x in sw_)
-    if st_ or sw_:
-        wer = "Käufer stärker" if gs > gw else "Verkäufer stärker" if gw > gs else "gleichauf"
-        schon = {b for _, b in belege} | {a_.split(": ", 1)[-1] for a_ in anlass}
-        neu = [x["text"] for x in (st_ + sw_) if x["text"] not in schon][:3]
-        belege.append(("Test am Rand" if zustand in ("Balance", "Test am Rand") else zustand,
-                       f"{wer} (Gewicht {gs} gegen {gw})" + (": " + "; ".join(neu) if neu else "")))
+    if gs != gw:
+        wer = "Käufer stärker" if gs > gw else "Verkäufer stärker"
+        seite = lambda xs: "; ".join(f"{x['text']} ({x['gewicht']})" for x in xs[:3])  # noqa: E731
+        teile = ([f"Käufer: {seite(st_)}"] if st_ else []) + ([f"Verkäufer: {seite(sw_)}"] if sw_ else [])
+        platz = "Test am Rand" if zustand == "Test am Rand" else "Balance" if zustand is None or zustand == "Balance" else zustand
+        belege.append((platz, f"{wer} (Gewicht {gs} gegen {gw}) – " + " · ".join(teile)))
     mess["gewicht"] = (gs, gw)
 
     # Gegenseite und Volumenlücke
@@ -455,9 +498,17 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
         elif x["art"] == "flach":
             gegen.append(f"schwaches {'Hoch' if seite == 'oben' else 'Tief'} {_z(x['preis'])} $ am {_d(x['tag'])}: "
                          f"flache Kante (30-Minuten-Kerzen {_z(x['abstand'], '.2f')} % auseinander) – Auktion dort unfertig")
-        else:
-            belege.append(("Test am Rand", f"Exzess am {'Hoch' if seite == 'oben' else 'Tief'} {_z(x['preis'])} $ am {_d(x['tag'])} "
-                           f"(äußerste 30-Minuten-Kerze {_z(x['abstand'], '.1f')} % vor der nächsten) – Auktion dort beendet, Rand verteidigt"))
+        elif x["art"] == "Exzess":
+            # nur am Rand der laufenden Zone ein Test am Rand (Chart-Prüfer Lauf 4: Exzesse aus alten Zonen oder mitten
+            # in der Zone landeten unter „Test am Rand“)
+            if scanner and zone.get("start_i") is not None and _seit(df, x["tag"]) > len(df) - 1 - zone["start_i"]:
+                continue                                  # vor Beginn der Zone
+            r_nah = oben and unten and (x["preis"] >= oben * (1 - RAND_PCT / 100) if seite == "oben"
+                                        else x["preis"] <= unten * (1 + RAND_PCT / 100))
+            belege.append(("Test am Rand" if r_nah else "Balance",
+                           f"Exzess am {'Hoch' if seite == 'oben' else 'Tief'} {_z(x['preis'])} $ am {_d(x['tag'])} "
+                           f"(äußerste 30-Minuten-Kerze {_z(x['abstand'], '.1f')} % vor der nächsten) – Auktion dort beendet"
+                           + (", Rand verteidigt" if r_nah else ", innerhalb der Zone")))
     if kl and kl["art"] == "Verkaufs-Klimax" and zustand != "Ende des Laufs":
         belege.append(("Ende des Laufs", f"Verkaufs-Klimax am {_d(kl['tag'])} (Volumen {_z(kl['volumen'])}-fach, "
                                          f"Spanne {_z(kl['spanne_atr'], '.1f')} ATR) – der Abwärtslauf brennt aus"))

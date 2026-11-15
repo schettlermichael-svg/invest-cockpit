@@ -237,7 +237,9 @@ def material(tk, df):
                        ("ereignis", "Ereignis")):
         if schl in a:
             preis = df["High"][a[schl]] if schl in ("gipfel", "hoch") else df["Low"][a[schl]]
-            zeilen.append(f"AVWAP-Anker {name}: {_d(a[schl])} bei {_z(preis)} $")
+            zeilen.append(f"AVWAP-Anker {name}: {_d(a[schl])} bei {_z(preis)} $"
+                          + (" – Ausbruchspunkt: der Kurs steht über allen bestätigten Hochs, die App ankert am jüngsten "
+                             "Wochen-Schwunghoch (Regel der App, kein Widerspruch)" if schl == "hoch" and a.get("ausbruchspunkt") else ""))
         elif schl == "gipfel" and "hoch" in a:          # gleich dem letzten Hoch – die App zeigt dann nur eine Linie
             zeilen.append(f"AVWAP-Anker {name}: derselbe Punkt wie das letzte Hoch (nur eine Linie)")
         elif schl == "tief":
@@ -512,7 +514,8 @@ def _quad_text():
         q = lage.quadrant()
         return (f"Wirtschaftswetter: Quad {q['quad']} {q['name']} (amtlich Quad {q['amtlich']}"
                 + (", Wechsel möglich" if q.get("wechsel_moeglich") else "") + f"), Wachstum {q['wachstum']['richtung']}, "
-                f"Inflation {q['inflation']['richtung']}; typische Führer des Quads: {', '.join(q.get('fuehrer') or [])}")
+                f"Inflation {q['inflation']['richtung']}; typische Führer des Quads: "
+                + (q.get("fuehrer") if isinstance(q.get("fuehrer"), str) else ", ".join(q.get("fuehrer") or [])))
     except Exception:  # noqa: BLE001
         return "Wirtschaftswetter: nicht verfügbar"
 

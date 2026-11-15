@@ -85,7 +85,8 @@ def _wochen_hochs(df):
     """Schwunghochs der Wochenkerzen (n = 2) als [(Tag des Hochs in der Woche, Preis)]."""
     import zeichen
     w = zeichen.wochenkerzen(df)
-    w = w[w.index <= df.index[-1] + pd.Timedelta(days=6)]
+    # nur fertige Wochen bestätigen ein Schwunghoch (Chart-Prüfer Lauf 4: frische Hochs ohne 2 fertige Wochen danach)
+    w = w[w.index <= df.index[-1]]
     hochs, _ = zeichen.schwungpunkte(w["High"].to_numpy(float), w["Low"].to_numpy(float), WOCHEN_N)
     aus = []
     for i, p in hochs:
@@ -121,6 +122,8 @@ def anker(df, zahltag=None):
     else:
         hoch = df.index[_echt(hv, "max", 252)]
     aus = {"hoch": hoch}
+    if not offen:                    # sichtbar machen (Chart-Prüfer Lauf 4): kein Hoch steht mehr über dem Kurs
+        aus["ausbruchspunkt"] = True
     t_ = _trendstart(df, hoch)
     if t_ is not None:
         aus["tief"] = t_

@@ -67,6 +67,28 @@ VORGABEN = [
      "Beleg heißt bei einem Wert unter 1 jetzt „Abfluss“ statt „Zufluss“ (auktion.gruppe)"),
     ("chart", "2026-11-14 18:18", "Ausbruch ohne Volumen", "entschieden",
      "Micky (06.11.): Volumen ist Zeichen, keine Pflicht; über dem 50-Tage-Schnitt reicht (O'Neils 1,4-fach zu streng)"),
+    # Lauf 4 (15.11.2026 11:37) – klare Fehler behoben, gemessen über 1.865 Titel (Mac-Daten bis 04.11.)
+    ("chart", "2026-11-15 11:37", "Test am Rand ohne 3-%-Regel", "behoben",
+     "Market Profile „an der Schwelle“ und Exzess nur bis 3 % vom Rand als Test am Rand, Exzess vor Beginn der Zone fällt "
+     "weg – Titel mit Beleg „Test am Rand“ 1.195 → 740, Zustand Test am Rand 220 → 177"),
+    ("chart", "2026-11-15 11:37", "Wert gewandert", "behoben",
+     "Market Profile Wert gewandert/Fortsetzung innerhalb der Zone = innere Rotation (Balance) – als Ungleichgewicht "
+     "785 → 284 Titel (der Rest steht über bzw. unter der Zone)"),
+    ("chart", "2026-11-15 11:37", "Upthrust/Spring", "behoben",
+     "aufgehoben, wenn danach ein Schluss über dem Hoch des Upthrust- bzw. unter dem Tief des Spring-Tags kommt – auch "
+     "aus Anlass und Waage – bei 72 Titeln; abgelehnt 365 → 280"),
+    ("chart", "2026-11-15 11:37", "Eigen/geliehen", "behoben",
+     "RS in Laufrichtung: eigen ab 5 %, geliehen ±1 %, teils eigen 1–5 %, gegen die Laufrichtung = Gegenzeichen – "
+     "„mit dem Markt“ 494 → 0 (teils eigen 177, Gegenzeichen 232)"),
+    ("chart", "2026-11-15 11:37", "Waage", "behoben",
+     "alle Zeichen gewogen (auch RS und Ereignis), Seiten getrennt aufgeführt, Gleichstand kein Beleg (152 → 0), "
+     "aufgehobene Springs/Upthrusts zählen nicht"),
+    ("chart", "2026-11-15 11:37", "AVWAP letztes Hoch", "behoben",
+     "nur fertige Wochen bestätigen ein Schwunghoch; steht der Kurs über allen Hochs, heißt der Anker sichtbar "
+     "Ausbruchspunkt (172 Titel) – letztes Hoch bei 194 Titeln anders"),
+    ("chart", "2026-11-15 11:37", "Quad-Führer", "behoben", "Anzeige im Material des Prüfers (Text statt Buchstaben)"),
+    ("chart", "2026-11-15 11:37", "Phase nach Weinstein", "offen", "Micky 14.11.: Schritt 8 der Gefechtsordnung"),
+    ("chart", "2026-11-15 11:37", "Kette erkennt Ausbruch", "offen", "Gefechtsordnung (Regelkarte, Schritte 2–5)"),
 ]
 QUELLEN = {"chart": ("🔎 Chart-Prüfer", "chartpruefer"), "setup": ("🎯 Setup-Prüfer", "setuppruefer")}
 
