@@ -29,8 +29,6 @@ KLUMPEN = 25.0               # Positionswert über 25 % des Kontos: Klumpen (Min
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-GD10 = 10               # 10-Tage-Durchschnitt (Kullamägi)
-GD20 = 20               # 20-Tage-Durchschnitt (Kullamägi)
 TEILGEWINN_AB_TAG = 3   # Kullamägi: Teilgewinn am Tag 3 …
 TEILGEWINN_BIS_TAG = 5  # … bis Tag 5 nach dem Kauf
 SQUAT_DRITTEL = 0.33    # Squat: Schluss im unteren Drittel der Tagesspanne
@@ -405,11 +403,14 @@ def nach_dem_kauf(p, df, erk=None):
 
 
 def _nach_dem_kauf(p, df, erk=None):
-    """Zeichen nach dem Kauf als Liste (Ampel, Text) – je nach System der Position (05.11.2026):
-    Minervini (M, Vorgabe): Stopp vor dem Kauf, Verlustgrenze, Stopp auf Einstand ab 2R, Squat, Tennisball, Reset.
-    Kullamägi (K): Teilgewinn in den ersten 3–5 Tagen und Stopp auf Einstand, dann Schluss unter dem 10er (schnelle
-    Titel) bzw. 20er als Ausstieg für den Rest. Kein festes Gewinnziel (Gewinne laufen lassen, Stopp nachziehen)."""
+    """Zeichen nach dem Kauf als Liste (Ampel, Text) – ein System für alle Positionen (Gefechtsordnung Schritt 5,
+    Micky 16.11.2026; vorher je System M/K getrennt):
+    Stopp: bis Tag 3 der Anfangsstopp, danach folgt er dem 10er bzw. 20er (reiten.nachgezogen), Schluss jenseits heißt
+    raus; Mauer, Kraft ohne Weg und Klimax ziehen ihn unter das Tagestief. Daneben Kullamägis Teilgewinn (Tag 3–5) und
+    Minervinis Zeichen: Verlustgrenze, Stopp auf Einstand ab 2R, Squat, Tennisball, Reset, Führer. Kein festes
+    Gewinnziel (Gewinne laufen lassen, Stopp nachziehen)."""
     import pandas as pd
+    import reiten
     aus = []
     if df is None or not p.get("einstieg"):
         return aus
@@ -422,24 +423,32 @@ def _nach_dem_kauf(p, df, erk=None):
     r1 = abs(e - s) if s else e * VERLUSTGRENZE
     r_mult = ((k - e) if lang else (e - k)) / r1 if r1 else None
     if not s:
-        aus.append(("rot", "kein Stopp gesetzt – jede Position braucht einen Stopp vor dem Kauf (Minervini)"))
-    if p.get("system") == "K":
+        aus.append(("rot", "kein Stopp gesetzt – jede Position braucht einen Stopp vor dem Kauf (Minervini; Kullamägi: "
+                           "am Tagestief des Einstiegstags)"))
+    else:
+        a_ = (erk or {}).get("auktion") or {}
+        ende = reiten.ende_zeichen(df, p.get("seite", "long"), a_.get("messung") if a_ else None,
+                                   ((erk or {}).get("profil") or {}).get("verankert") if erk else None)
+        nz = reiten.nachgezogen(df, p.get("datum"), e, float(s), p.get("seite", "long"), ende)
+        if nz and nz.get("stopp"):                 # die Zeichen unten messen am Stopp, der jetzt gilt
+            s = nz["stopp"]
+        if nz:
+            wo = "unter" if lang else "über"
+            if nz["raus"]:
+                aus.append(("rot", f"Schluss {wo} dem nachgezogenen Stopp {nz['stopp']:.2f} ({nz['regel']}) – raus (Kullamägi)"))
+            else:
+                aus.append(("grün" if nz["linie"] else "grau",
+                            f"Stopp jetzt {nz['stopp']:.2f}: {nz['regel']}" + (f", Tag {nz['tag_nr']} nach dem Kauf")))
+            if nz["enger"]:
+                en = nz["enger"]
+                getroffen = (k < en["stopp"]) if lang else (k > en["stopp"])
+                aus.append(("rot" if getroffen else "gelb",
+                            f"{en['art']} am {en['tag']:%d.%m.}: Stopp enger {wo} das {'Tief' if lang else 'Hoch'} jenes Tages "
+                            f"{en['stopp']:.2f} (Stopp im Markt)" + (" – erreicht" if getroffen else "")))
         tage = len(seit) - 1
-        g10, g20 = float(c[-GD10:].mean()), float(c[-GD20:].mean())
-        if TEILGEWINN_AB_TAG <= tage <= TEILGEWINN_BIS_TAG and g > 0 and s and ((s < e) if lang else (s > e)):
+        if TEILGEWINN_AB_TAG <= tage <= TEILGEWINN_BIS_TAG and g > 0 and ((s < e) if lang else (s > e)):
             aus.append(("gelb", f"Tag {tage} nach dem Kauf, {g:+.1f} %: Teilgewinn nehmen und den Stopp für den Rest auf "
                                 f"Einstand {e:.2f} ziehen (Kullamägi)"))
-        if tage >= 1 and lang:
-            if k < g20:
-                aus.append(("rot", f"Schluss unter dem 20-Tage-Durchschnitt ({g20:.2f}) – Rest verkaufen (Kullamägi)"))
-            elif k < g10:
-                aus.append(("gelb", f"Schluss unter dem 10-Tage-Durchschnitt ({g10:.2f}) – Ausstieg für weit gelaufene "
-                                    f"Titel; sonst gilt der 20er ({g20:.2f}) (Kullamägi)"))
-            else:
-                aus.append(("grün", f"über 10er ({g10:.2f}) und 20er ({g20:.2f}) – laufen lassen (Kullamägi)"))
-        if not s:
-            aus.append(("rot", "kein Stopp – Kullamägi: Stopp am Tagestief des Einstiegstags"))
-        return aus
     if g <= -VERLUSTGRENZE * 100:
         aus.append(("rot", f"Verlustgrenze: {g:.1f} % – höchstens 8 % Verlust, ohne Ausnahme (Minervini, O'Neil)"))
     if s and r_mult is not None and r_mult >= NACHZIEHEN_R and ((s < e) if lang else (s > e)):

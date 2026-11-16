@@ -445,12 +445,21 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
 
     # 4. Ungleichgewicht oder Ende des Laufs
     if not zustand:
-        auf = p == 2 or (p in (0, None) and ((k.get("dow_tag") or {}).get("struktur") == "aufwärts"))
-        ab = p == 4 or (p in (0, None) and ((k.get("dow_tag") or {}).get("struktur") == "abwärts"))
-        if auf or ab:
-            zustand, richtung = "Ungleichgewicht", "aufwärts" if auf else "abwärts"
-            belege.append(("Ungleichgewicht", f"Phase {p} ({'Aufwärts' if auf else 'Abwärts'})" if p in (2, 4) else
-                           f"Dow-Struktur {'aufwärts' if auf else 'abwärts'}"))
+        # Kullamägi führt (Gefechtsordnung Schritt 5, Micky 16.11.2026): der Kurs reitet am steigenden 10er bzw. 20er;
+        # Phase und Dow-Struktur sind Zeichen (vorher maßen sie das Ungleichgewicht)
+        import reiten
+        rt = reiten.ungleichgewicht(df)
+        if rt:
+            zustand, richtung = "Ungleichgewicht", rt["richtung"]
+            auf = richtung == "aufwärts"
+            belege.append(("Ungleichgewicht", f"Schluss {'über dem steigenden' if auf else 'unter dem fallenden'} "
+                                              f"{rt['linie']} {_z(rt['wert'])} $ (Kullamägi)"))
+            dow = (k.get("dow_tag") or {}).get("struktur")
+            if p in (2, 4) or dow:
+                passt = (p == 2 or dow == "aufwärts") if auf else (p == 4 or dow == "abwärts")
+                belege.append(("Ungleichgewicht" if passt else "Balance",
+                               f"Zeichen: {'Phase ' + str(p) if p in (2, 4) else 'Dow-Struktur ' + str(dow)}"
+                               + ("" if passt else " – passt nicht zur Richtung")))
         else:
             zustand = "Balance"
             if oben and unten:

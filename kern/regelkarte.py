@@ -78,10 +78,10 @@ KAESTEN = {
              messung=["vcp_zone.ausbruch", "marketprofile.analyse"], stand="gemessen",
              pruefer=["abgelehnt/angenommen"]),
         dict(name="Ungleichgewicht", zustand="Ungleichgewicht",
-             regel="Schnell durch dünnes Volumen – Kullamägi führt: der Kurs reitet am 10er bzw. 20er.",
+             regel="Schnell durch dünnes Volumen – Kullamägi führt: Schluss über dem steigenden 10er bzw. 20er (steigend "
+                   "= höher als vor einer Woche), abwärts gespiegelt; Phase und Dow-Struktur sind Zeichen.",
              fuehrt="Kullamägi (10er/20er)", zeichen="Weinstein (Stufe 2), Dalton (dünnes Volumen)",
-             messung=["auktion.titel", "phase.aktuell"], stand="teilweise",
-             luecke="heute an Phase 2/4 bzw. der Dow-Struktur gemessen; der 10er/20er kommt mit Schritt 5",
+             messung=["auktion.titel", "reiten.ungleichgewicht", "phase.aktuell"], stand="gemessen",
              pruefer=["Ungleichgewicht"]),
         dict(name="Ende: Gegner antwortet", zustand="Ende des Laufs",
              regel="Knoten im Volumenprofil (Mauer), alter Wert, AVWAP vom alten Hoch, Exzess, Kraft ohne Weg am Rand.",
@@ -509,11 +509,17 @@ BEREICHE = [
          messung=["depot.plan", "depot.plaene", "depot.struktur_stopp", "stopps.linien", "stopps.widerstand", "stopps.zeichen", "atr.stopp", "atr.nachjagen", "atr.enge",
                   "atr.ueberdehnung", "system_kullamaegi.adtr"],
          pruefer=["Stopp", "Einstieg/Pivot", "Kaufzone/Abstand"]),
-    dict(name="Nach dem Kauf und Depot", quelle="O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
-         regel="Verlustgrenze 8 % vom Einstieg ohne Ausnahme; ab 2R Gewinn Stopp mindestens auf Einstand; Positionswert "
+    dict(name="Nach dem Kauf und Depot", quelle="Kullamägi (10er/20er, Teilgewinn), Micky 14./16.11.2026 (Schritt 5), "
+                                                "O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
+         regel="Ein System für alle Positionen: bis Tag 3 gilt der Anfangsstopp, danach folgt der Stopp dem 10er (solange "
+               "seit Tag 3 kein Schluss darunter lag) bzw. dem 20er, er steigt nur, Schluss darunter heißt raus; Mauer "
+               "(höchstens 3 % über dem Kurs), Kraft ohne Weg am oberen Rand und Kauf-Klimax ziehen ihn sofort unter das "
+               "Tief jenes Tages (Stopp im Markt); short gespiegelt. Teilgewinn Tag 3–5 (Kullamägi). "
+               "Verlustgrenze 8 % vom Einstieg ohne Ausnahme; ab 2R Gewinn Stopp mindestens auf Einstand; Positionswert "
                "über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = Zeichen, das Risiko je Trade zu "
                "halbieren; Depot-Hitze höchstens 6 % des Kontos.",
-         messung=["depot._nach_dem_kauf", "depot.verlustbremse", "depotleiste.titelkarte"], pruefer=[],
+         messung=["depot._nach_dem_kauf", "reiten.nachgezogen", "reiten.ende_zeichen", "depot.verlustbremse",
+                  "depotleiste.titelkarte"], pruefer=[],
          luecke="kein Prüfer – die Regeln sind fest, gemessen wird am eigenen Depot"),
     dict(name="Rückenwind: Stufen der Titel", quelle="O'Neil/IBD (RS-Rang), Micky 09.11.2026 (Stufen)",
          regel="RS-Rang 1–99 wie IBD (letztes Quartal 40 %, die drei davor je 20 %). Läuft: Rang ab 85 und Tempo nicht "
