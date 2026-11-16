@@ -23,7 +23,8 @@ Regeln der Meister, die der Prüfer bekommt (recherchiert 14.11.2026, Quellen im
   Minervini VCP: 2–6 Kontraktionen, jede grob halb so tief wie die vorige, das Volumen trocknet aus; Pivot = Hoch der
            letzten Kontraktion. Low Cheat im unteren, Cheat im mittleren, Henkel im oberen Drittel. Nach einer
            gescheiterten Tasse bildet sich eine neue Base.
-  Kullamägi Flagge: Fahnenstange ab 30 % in 1–3 Monaten, danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs.
+  Kullamägi Flagge: großer Anstieg von 30–100 % in den letzten 1–3 Monaten, der ein paar Tage bis ein paar Wochen
+           dauert (Fahnenstange), danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs.
   Shannon  AVWAP-Anker: ein Hoch wird erst durch den Rückgang danach zum Anker; das Pivot-Tief, das einen Trend
            startete; das jüngste große Hoch; der Tag der Zahlen bzw. eine Lücke; mehrere übereinander.
   Dalton   Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende Balance.
@@ -220,7 +221,7 @@ def material(tk, df):
                       f"O'Neils vorheriger Aufwärtstrend – nicht die Fahnenstange): {z['vorgeschichte']['art']} "
                       f"{_z(z['vorgeschichte']['prozent'], '+.0f')} % in {_z(z['vorgeschichte']['wochen'], '.0f')} "
                       f"Wochen vom {_d(df.index[z['vorgeschichte']['von_i']])} ({_z(z['vorgeschichte']['von'])} $). "
-                      f"Fahnenstange (Kullamägi, höchstens 13 Wochen): {_z(z['stange']['prozent'], '+.0f')} % in "
+                      f"Fahnenstange (Regel der App: höchstens {vcp_zone.FLAGGE_STANGE_W} Wochen, die Flagge kürzer als sie): {_z(z['stange']['prozent'], '+.0f')} % in "
                       f"{_z(z['stange']['wochen'], '.1f')} Wochen"
                       + (" · flache Base nach O'Neil (mindestens 5 Wochen, höchstens 15 % tief, nahe am Hoch)" if z.get("flach") else "")
                       + ". Regeln der App (Plan 16): die Zone beginnt am ältesten Hoch ohne Schluss darüber – ein älteres "

@@ -421,8 +421,8 @@ SETUPS = [
                   "depot.plaene", "depot.struktur_stopp", "titel._heute_ueber"], stand="gemessen",
          kacheln=dict(Trend="trendvorlage", Stärke="rs70", Fundament="zahlen_wachsen", Enge="vcp")),
     dict(name="Flagge", reihen=["flagge"], lehrer="Kullamägi", weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
-         regel="Fahnenstange ab 30 % in höchstens 13 Wochen direkt davor (nach einem Rücksetzer über 25 % beginnt sie erst an "
-               "dessen Tief), Flagge 1–8 Wochen, höchstens 25 % tief, im Aufwärtstrend "
+         regel="Fahnenstange ab 30 % in höchstens 6 Wochen direkt davor (Kullamägi: der Anstieg dauert „ein paar Tage bis ein paar Wochen“ – Micky 16.11.2026, vorher 13 Wochen) (nach einem Rücksetzer über 25 % beginnt sie erst an "
+               "dessen Tief), Flagge 1–8 Wochen und kürzer als die Stange, höchstens 25 % tief, im Aufwärtstrend "
                "(Kurs über steigendem GD50), Volumen in der Flagge leiser als in der Stange, steigende Tiefs (das Tief der "
                "zweiten Hälfte höchstens 0,5 ATR unter dem der ersten – sonst heißt die Zone nicht Flagge); Pivot = Oberkante.",
          einstieg="Ausbruch über die Oberkante", stopp="Struktur: Tief des Ausbruchstags; bis dahin Einstieg − 1 "
@@ -512,7 +512,7 @@ KACHEL_REGELN = {
     "zahlen_wachsen": "Zahlen wachsen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot, beide grün = grün",
     "nachricht": "Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und Schluss im oberen Drittel",
     "vcp": "Enge (VCP): 2 bis 6 Kontraktionen, jede höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser",
-    "flagge": "Flagge 1–8 Wochen, höchstens 25 % tief, Volumen leiser als in der Stange (sonst gelb)",
+    "flagge": "Flagge 1–8 Wochen und kürzer als die Stange, höchstens 25 % tief, Volumen leiser als in der Stange (sonst gelb)",
     "pause": "Pause 1–3 Wochen nach einem Schub, hält den GD20 (gelb bis 8 Wochen)",
     "sprungtief": "Kurs hält das Tief des Sprungtags",
     "zahlentief": "Kurs hält Tief und AVWAP des Reaktionstags (short: Hoch und AVWAP)",
@@ -643,9 +643,10 @@ MEISTER = [
      "steigendem Volumen, bis 5 % darüber; Stopp unter dem Tief der letzten Kontraktion, höchstens etwa 8 % (absolut "
      "10 %). Kauf nur in Stufe 2."),
     ("Kullamägi",
-     "Flagge: Fahnenstange ab 30 % in 1–3 Monaten, danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs. Episodic "
+     "Flagge: großer Anstieg von 30–100 % in den letzten 1–3 Monaten, der ein paar Tage bis ein paar Wochen dauert "
+     "(Fahnenstange), danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs. Episodic "
      "Pivot: Lücke mit sehr hohem Volumen auf eine Nachricht.",
-     "Breakout nach einem Lauf von 30–100 % in 1–3 Monaten, geordnete Pause mit höheren Tiefs, enger werdend, am "
+     "Breakout nach einem Lauf von 30–100 % in den letzten 1–3 Monaten (ein paar Tage bis ein paar Wochen lang), geordnete Pause mit höheren Tiefs, enger werdend, am "
      "10er/20er, 2 Wochen bis 2 Monate; Einstieg über dem Hoch der Eröffnungsspanne oder Ausbruch im Tageschart, nicht "
      "vorweggenommen; Stopp am Tagestief, nie weiter als eine durchschnittliche Tagesspanne. EP: Lücke ab 10 % bei "
      "riesigem Volumen auf eine Nachricht, Einstieg Hoch der Eröffnungsspanne, Stopp am Tagestief. Short: Stopp am "

@@ -14,7 +14,7 @@ Regeln der Meister, die der Prüfer bekommt (recherchiert 14.11.2026):
   Minervini  Trendvorlage (8 Punkte inkl. RS), VCP mit mindestens 2 Kontraktionen, jede kleiner, Volumen trocknet aus;
              Pivot = Hoch der letzten, engsten Kontraktion; Kauf beim Ausbruch über den Pivot mit steigendem Volumen,
              bis 5 % darüber; Stopp unter dem Tief der letzten Kontraktion, höchstens etwa 8 % (absolut 10 %).
-  Kullamägi  Breakout: Lauf von 30–100 % in 1–3 Monaten, danach geordnete Pause mit höheren Tiefs, enger werdend, am
+  Kullamägi  Breakout: Lauf von 30–100 % in den letzten 1–3 Monaten, der ein paar Tage bis ein paar Wochen dauert, danach geordnete Pause mit höheren Tiefs, enger werdend, am
              10er/20er (manchmal 50er), 2 Wochen bis 2 Monate; Einstieg Hoch der Eröffnungsspanne oder Ausbruch im
              Tageschart; Stopp am Tagestief, nie weiter als eine durchschnittliche Tagesspanne (ADR/ATR).
              Episodic Pivot: Lücke ab 10 % bei riesigem Volumen auf eine Nachricht (Zahlen am verlässlichsten);

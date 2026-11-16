@@ -92,7 +92,10 @@ HENKEL_NAH = 0.15              # … sobald die rechte Seite bis 15 % an das Hoc
 TASSE_MIN_W = 7                # … und nur bei einer Tasse: linke Seite bis rechte Seite mindestens 7 Wochen (O'Neil) –
                                # Chart-Prüfer 14.11.2026: sonst „scheiterten“ Pausen von Tagen und es blieben Zonen von 0,2 Wochen
 ABSTURZ_TIEFE = 0.50           # Chart-Prüfer 14.11.2026: Zonen von 51–73 % Tiefe (WIX, CNXC, RH …) fassten den Absturz mit ein
-FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 13, 8, 0.25   # Kullamägi: 30 % in 1–3 Monaten
+FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 6, 8, 0.25
+# Kullamägi: ein großer Anstieg (30–100 %) in den letzten 1–3 Monaten, der „ein paar Tage bis ein paar Wochen“ dauert –
+# der Mast höchstens 6 Wochen (Micky 16.11.2026; vorher 13 Wochen: die 3 Monate sagen, wann der Mast war, nicht wie lang
+# er dauern darf – WST stieg 13 Wochen stufenweise und hieß Flagge); die Flagge kürzer als ihr Mast (klassische Lehre)
 FLAGGE_MIN_W = 1
 FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 ATR unter dem der ersten liegen (Shakeout)
 
@@ -292,9 +295,9 @@ def zone(df):
 
 
 def _stange(df, i, top):
-    """Fahnenstange: Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne höheres Hoch dazwischen – und
+    """Fahnenstange: Anstieg vom tiefsten Tief der 6 Wochen vor der Oberkante (FLAGGE_STANGE_W), ohne höheres Hoch dazwischen – und
     direkt vor der Flagge (Micky 15.11.2026, Chart-Prüfer Lauf 4: die Stange kam aus einem Lauf, der Monate
-    zurücklag): gab es in den 13 Wochen einen Rücksetzer tiefer als eine Flagge sein darf (25 %), beginnt die Stange
+    zurücklag): gab es in diesen Wochen einen Rücksetzer tiefer als eine Flagge sein darf (25 %), beginnt die Stange
     erst an dessen Tief."""
     h, l = df["High"].to_numpy(), df["Low"].to_numpy()
     s0 = max(0, i - FLAGGE_STANGE_W * WOCHE)
@@ -333,6 +336,7 @@ def _rahmen(df, i, top):
     stange = _stange(df, i, top)
     tf = tiefs_fallen(df, i)
     if (stange["sauber"] and stange["prozent"] >= FLAGGE_SCHUB * 100 and wochen <= FLAGGE_ZONE_W
+            and wochen < stange["wochen"]                                  # Atempause kürzer als der Angriff
             and hoehe / top <= FLAGGE_TIEFE and not (tf and tf[0])):     # fallende Tiefs: die Truppe weicht – keine Flagge
         name = "Flagge"
     elif v["art"] == "Absturz":
