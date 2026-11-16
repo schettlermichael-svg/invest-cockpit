@@ -1189,3 +1189,17 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   27 Tagen mindestens einmal unter dem 10er); raus 215; enger 34 (27 Mauer, 4 Kauf-Klimax, 3 Kraft ohne Weg).
   Zustand: anders bei 82 von 468 – 47 Balance → Ungleichgewicht, 9 Ende des Laufs ↑ → Ungleichgewicht ↓ (Phase 2 im
   Rücksetzer unter dem fallenden 10er).
+
+## Seiten Depot und Performance (16.11.2026)
+
+- **Fünf Seiten in einer Reihe:** Rückenwind · Setups · Titelseite · Depot · Performance (auf schmalem Schirm seitlich
+  schieben, kein Umbruch).
+- **Depot:** Konto und Risiko (⚙), Depot-Hitze, Verlustbremse, Positionen. Für die gewählte Position: Chart der Position
+  (Einstieg blau, Anfangsstopp grau, Stopp jetzt rot – 10er/20er nach Schritt 5 –, Ende-Zeichen gelb, GD10/GD20), „Nach dem
+  Kauf“ mit Stückzahl und Knock-out, Knöpfe TradingView → und Deep Dive →, Position ändern oder schließen. Die Depot-Karte
+  auf Rückenwind entfällt. Die Setup-Art M/K beim Anlegen einer Position entfällt (ein System).
+- **Performance** (`kern/performance.py`, Speicher `einstellungen/performance.json`, nicht in GitHub): Depotwert je
+  Freitag und Ein-/Auszahlungen eintragen; die App rechnet die Wochenrendite ohne Einzahlungen, die Ø Wochenrendite
+  geometrisch aus den echten Wochen, die Hochrechnung auf ein Jahr (mit Ø und mit der letzten Woche), den Zielpfad nach
+  dem Wochenziel, Unterwasser-Phasen (rot ab 10 % wie die Verlustbremse) und die Bilanz der geschlossenen Trades. Die
+  Excel-Liste lässt sich übernehmen (Startkapital C4, Ziel D12, reale Renditen Spalte E).
