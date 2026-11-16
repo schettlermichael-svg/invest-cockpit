@@ -243,9 +243,9 @@ PLAN = [
      "479 Titel: Flagge als Setup 30 → 11 (grün 7 → 2), daraus 14 ohne Setup, 2 Momentum, 2 Base-Ausbruch, 1 Bruch; "
      "Ermüdung 3 → 1; WST jetzt Base (Stange in 6 Wochen nur +22 %)"),
     (26, "AVWAP mit Shannons Werkzeugen geprüft (Micky 16.11.): Zahlentag eigene Linie, Börsengang, Handoff; "
-         "Kalender-Anker (Jahresbeginn) – Micky entscheidet", "Befunde", "behoben",
+         "Kalender-Anker (Jahresbeginn): Micky 16.11. nein, die Anker bleiben aus der Struktur", "Befunde", "behoben",
      "39d0659: 1.865 Titel: Zahlentag 1.328, Lücke/Volumen 1.626 (bei 1.166 beide – vorher nur die jüngere), Börsengang 90 "
-     "(CRWV, CRCL, ALAB …), Handoff ab dem Ausbruchstag 282. Kalender-Anker offen als Entscheidung"),
+     "(CRWV, CRCL, ALAB …), Handoff ab dem Ausbruchstag 282. Kalender-Anker: entschieden, keine"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
