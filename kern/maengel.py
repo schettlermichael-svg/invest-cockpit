@@ -126,7 +126,9 @@ VORGABEN = [
     ("chart", "2026-11-14 18:18", "Ersatzregel der App", "offen", "→ Plan 19 (Prüfer irrt: Material erklären)"),
     ("chart", "2026-11-15 11:37", "Spring als", "offen", "→ Plan 15 (Kette der Belege: Anlass)"),
     ("chart", "2026-11-15 11:37", "Anlass zeitlich", "offen", "→ Plan 15 (Kette der Belege: Anlass)"),
-    ("chart", "2026-11-15 11:37", "Volumenprofil fasst", "offen", "→ Plan 10"),
+    ("chart", "2026-11-15 11:37", "Volumenprofil fasst", "behoben",
+     "3e94e01: Profil nie vor der Zone, Lücke ab 2 % beendet die Balance, im Ungleichgewicht „verlassene Balance“ (109 von "
+     "468); Kartentisch unverändert (0 von 468)"),
     ("chart", "2026-11-15 11:37", "Pivot verbraucht", "behoben",
      "96f5ace (Schritt 2): Drittel aus der Lage in der Zone, überschrittener Pivot zählt nicht – es gilt der nächste "
      "Einstieg (82 Zonen); 1. Kontraktion ab dem Hoch der Zone bei 329 von 329; Zonen unter 5 Wochen (35): Prüfer irrt, "
@@ -137,7 +139,9 @@ VORGABEN = [
     ("chart", "2026-11-15 11:37", "Ampel grün trotz", "behoben",
      "20e3ed0: Minervini grün nur mit Volumen der Enge unter dem Schnitt – grün 11 → 7 (CBOE, COKE, CSX, MEDP gelb)"),
     ("chart", "2026-11-15 11:37", "Base-Gültigkeit", "offen", "→ Plan 16 (Gültigkeit der Zone)"),
-    ("chart", "2026-11-15 11:37", "Basenzählung", "offen", "→ Plan 10"),
+    ("chart", "2026-11-15 11:37", "Basenzählung", "behoben",
+     "3e94e01: neu nach Phase 4, 3 → 2 und unter dem Tief der vorigen Base (58), Markttief entfällt; Nummer an jeder Zone "
+     "(289 mit Nummer statt 140), in Kasten, Kachel und Material"),
     ("chart", "2026-11-15 11:37", "AVWAP Tief der Bewegung und Ereignis", "offen", "→ Plan 20 (Auslegung: Micky entscheidet)"),
     ("chart", "2026-11-15 11:37", "Gruppen-Anlass", "offen", "→ Plan 11 (Gruppe)"),
     ("chart", "2026-11-15 11:37", "Markt:", "offen", "→ Plan 12 (Markt)"),
@@ -177,7 +181,9 @@ PLAN = [
         "Befunde", "behoben",
      "20e3ed0: Minervini grün 11 → 7 (Volumen der Enge unter dem Schnitt, höchstens 6 Wellen); Drittel, linke Seite und "
      "verbrauchter Pivot schon mit 96f5ace behoben (nachgemessen an 329 Zonen)"),
-    (10, "Lauf 4: Volumenprofil der Balance (52, 4 sicher); Basenzählung (34)", "Befunde", "offen", ""),
+    (10, "Lauf 4: Volumenprofil der Balance (52, 4 sicher); Basenzählung (34)", "Befunde", "behoben",
+     "3e94e01: Profil nach Dalton an der Zone (Lücke ab 2 %), Basenzählung nach IBD – 289 Zonen mit Nummer, 179 ohne "
+     "(106 ohne Zone, 68 in Phase 4)"),
     (11, "Gruppe: Anlass (Quad, Verkäufer leer, Zwang), „Geld wandert weiter“", "Gruppe und Markt", "offen", ""),
     (12, "Markt: Anlass, Marktzone gegen Erholungsversuch", "Gruppe und Markt", "offen", ""),
     (13, "Setup-Prüfer prüft die Rückenwind-Stufen (RS-Rang, Ermüdet, Abfluss) – Micky 15.11.: ja", "Prüfer", "offen", ""),
