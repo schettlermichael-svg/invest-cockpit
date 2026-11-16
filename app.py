@@ -284,13 +284,13 @@ def depot_zeigen():
 
 
 def performance_zeigen():
-    """Seite Performance: Eingaben (Start und Ziel, Woche eintragen, Excel übernehmen) und die Seite aus
+    """Seite Performance: Eingaben (Start und Ziel, Woche eintragen) und die Seite aus
     performance_seite (Kurve gegen Zielpfad, Hochrechnung auf ein Jahr, Unterwasser, Bilanz)."""
     import datetime as dt
     import performance
     import performance_seite
     d = performance.laden()
-    a_, b_, c_, _ = st.columns([2, 2, 2, 6])
+    a_, b_, _ = st.columns([2, 2, 8])
     with a_:
         with _fenster("⚙ Start und Ziel"):
             with st.form("perf_start"):
@@ -319,23 +319,6 @@ def performance_zeigen():
                     if st.form_submit_button("Löschen", use_container_width=True):
                         performance.woche_loeschen(weg)
                         st.rerun()
-    with c_:
-        with _fenster("⇪ Excel-Liste übernehmen"):
-            datei = st.file_uploader("Trading Performance Tracker (.xlsx)", type=["xlsx"])
-            erster = st.date_input("Freitag der ersten Woche", value=dt.date.today() - dt.timedelta(days=7),
-                                   format="DD.MM.YYYY", key="perf_erster")
-            if datei and st.button("Übernehmen", use_container_width=True):
-                x = performance.aus_excel(datei)
-                d = {"start": x["start"], "ziel_woche": x["ziel_woche"], "start_datum": None, "wochen": []}
-                wert = x["start"]
-                for i, r_ in enumerate(x["renditen"]):
-                    wert *= 1 + r_
-                    d["wochen"].append({"datum": (erster + dt.timedelta(days=7 * i)).isoformat(), "wert": round(wert, 2),
-                                        "einzahlung": 0.0})
-                performance.speichern(d)
-                st.success(f"Übernommen: Start {x['start']:.0f} €, {len(x['renditen'])} Woche(n), Ziel "
-                           f"{(x['ziel_woche'] or 0) * 100:.0f} % je Woche")
-                st.rerun()
     st.markdown(performance_seite.seite_performance(), unsafe_allow_html=True)
 
 

@@ -1201,5 +1201,4 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - **Performance** (`kern/performance.py`, Speicher `einstellungen/performance.json`, nicht in GitHub): Depotwert je
   Freitag und Ein-/Auszahlungen eintragen; die App rechnet die Wochenrendite ohne Einzahlungen, die Ø Wochenrendite
   geometrisch aus den echten Wochen, die Hochrechnung auf ein Jahr (mit Ø und mit der letzten Woche), den Zielpfad nach
-  dem Wochenziel, Unterwasser-Phasen (rot ab 10 % wie die Verlustbremse) und die Bilanz der geschlossenen Trades. Die
-  Excel-Liste lässt sich übernehmen (Startkapital C4, Ziel D12, reale Renditen Spalte E).
+  dem Wochenziel, Unterwasser-Phasen (rot ab 10 % wie die Verlustbremse) und die Bilanz der geschlossenen Trades.

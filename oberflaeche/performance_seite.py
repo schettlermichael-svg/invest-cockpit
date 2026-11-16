@@ -96,7 +96,7 @@ def seite_performance():
     p = performance.rechnen(d)
     if not p:
         return seite(karte(f'<div style="color:{TEXT_2};font-size:15px">Noch kein Startkapital eingetragen – unten '
-                           f'„Start und Ziel“ oder die Excel-Liste übernehmen.</div>', "Performance"))
+                           f'„⚙ Start und Ziel“.</div>', "Performance"))
     kacheln = []
     if p["wochen"]:
         letzte = p["wochen"][-1]

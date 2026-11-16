@@ -83,22 +83,3 @@ def rechnen(d=None):
         aus["ziel_jahr"] = (1 + d["ziel_woche"]) ** WOCHEN_JAHR - 1
         aus["ziel_wert_jahr"] = float(d["start"]) * (1 + d["ziel_woche"]) ** WOCHEN_JAHR
     return aus
-
-
-def aus_excel(datei):
-    """Mickys Excel-Liste übernehmen: Startkapital (C4), Ziel-Rendite (D12), reale Renditen der Wochen (Spalte E ab
-    Zeile 12). Die Freitage zählt die Funktion vom Start rückwärts nicht – sie werden ab start_datum (Freitag) gesetzt."""
-    import datetime as dt
-    import openpyxl
-    ws = openpyxl.load_workbook(datei, data_only=False).worksheets[0]
-    start = float(ws["C4"].value)
-    ziel = ws["D12"].value
-    renditen = []
-    for zeile in range(12, 12 + WOCHEN_JAHR):
-        v = ws.cell(zeile, 5).value
-        if isinstance(v, (int, float)):
-            renditen.append(float(v))
-        else:
-            break
-    return {"start": start, "ziel_woche": float(ziel) if isinstance(ziel, (int, float)) else None, "renditen": renditen,
-            "heute": dt.date.today()}
