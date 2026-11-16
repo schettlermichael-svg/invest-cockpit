@@ -98,7 +98,8 @@ VORGABEN = [
     ("chart", "2026-11-14 09:40", "Kontraktionen aus Absturz", "behoben",
      "bb6e3d1 und 4910faf: rechte Seite der Reihe nach, Kontraktion ab 3 Tagen, 2 bis 6 Wellen, Volumen ausgetrocknet, "
      "nicht in Phase 4 – grün 94 → 44; Lauf 4: Enge/Kontraktionen 21 Widersprüche"),
-    ("chart", "2026-11-14 09:40", "Pivot aus 1–3-Tage-Hoch", "offen", "→ Plan 9 (Pivot verbraucht oder zu früh)"),
+    ("chart", "2026-11-14 09:40", "Pivot aus 1–3-Tage-Hoch", "behoben",
+     "4910faf: Kontraktion ab 3 Handelstagen, auch die letzte am rechten Rand – Pivot nie aus einem 1–2-Tage-Zucken"),
     ("chart", "2026-11-14 09:40", "Anker Hoch des Rückgangs", "behoben",
      "4910faf: höchstes nicht überschrittenes Hoch der letzten 2 Jahre – eigener Anker bei 1.434 statt 1.053 Titeln"),
     ("chart", "2026-11-14 09:40", "Ereignis-Anker fehlt", "behoben",
@@ -126,11 +127,15 @@ VORGABEN = [
     ("chart", "2026-11-15 11:37", "Spring als", "offen", "→ Plan 15 (Kette der Belege: Anlass)"),
     ("chart", "2026-11-15 11:37", "Anlass zeitlich", "offen", "→ Plan 15 (Kette der Belege: Anlass)"),
     ("chart", "2026-11-15 11:37", "Volumenprofil fasst", "offen", "→ Plan 10"),
-    ("chart", "2026-11-15 11:37", "Pivot verbraucht", "offen", "→ Plan 9"),
+    ("chart", "2026-11-15 11:37", "Pivot verbraucht", "behoben",
+     "96f5ace (Schritt 2): Drittel aus der Lage in der Zone, überschrittener Pivot zählt nicht – es gilt der nächste "
+     "Einstieg (82 Zonen); 1. Kontraktion ab dem Hoch der Zone bei 329 von 329; Zonen unter 5 Wochen (35): Prüfer irrt, "
+     "Minervini ab 3 Wochen; 20e3ed0: ab 7 Wellen Minervini höchstens gelb (13 Zonen)"),
     ("chart", "2026-11-15 11:37", "Anderer Rand", "offen", "→ Plan 18 (Gegenseite und Abstände)"),
     ("chart", "2026-11-15 11:37", "Gruppen: Kästen", "offen", "→ Plan 11 (Gruppe)"),
     ("chart", "2026-11-15 11:37", "Bild und Zahlen", "offen", "→ Plan 17 (Bild und Zahlen gleich)"),
-    ("chart", "2026-11-15 11:37", "Ampel grün trotz", "offen", "→ Plan 9"),
+    ("chart", "2026-11-15 11:37", "Ampel grün trotz", "behoben",
+     "20e3ed0: Minervini grün nur mit Volumen der Enge unter dem Schnitt – grün 11 → 7 (CBOE, COKE, CSX, MEDP gelb)"),
     ("chart", "2026-11-15 11:37", "Base-Gültigkeit", "offen", "→ Plan 16 (Gültigkeit der Zone)"),
     ("chart", "2026-11-15 11:37", "Basenzählung", "offen", "→ Plan 10"),
     ("chart", "2026-11-15 11:37", "AVWAP Tief der Bewegung und Ereignis", "offen", "→ Plan 20 (Auslegung: Micky entscheidet)"),
@@ -169,7 +174,9 @@ PLAN = [
      "9bd94f6: 462 Titel Phase 1/2/3/4 = 87/102/183/90 → 39/219/112/92; Stufe im Namen jedes Kastens; gegen die Stufe 80 "
      "Setups (22 grün → gelb); Bruch der Spanne auch aus Phase 2: 68 → 81; Phasenwechsel in 2 Jahren höchstens 15 → 10"),
     (9, "Lauf 4: Pivot verbraucht oder zu früh, Drittel falsch (28); grün trotz nicht ausgetrocknetem Volumen (7)",
-        "Befunde", "offen", ""),
+        "Befunde", "behoben",
+     "20e3ed0: Minervini grün 11 → 7 (Volumen der Enge unter dem Schnitt, höchstens 6 Wellen); Drittel, linke Seite und "
+     "verbrauchter Pivot schon mit 96f5ace behoben (nachgemessen an 329 Zonen)"),
     (10, "Lauf 4: Volumenprofil der Balance (52, 4 sicher); Basenzählung (34)", "Befunde", "offen", ""),
     (11, "Gruppe: Anlass (Quad, Verkäufer leer, Zwang), „Geld wandert weiter“", "Gruppe und Markt", "offen", ""),
     (12, "Markt: Anlass, Marktzone gegen Erholungsversuch", "Gruppe und Markt", "offen", ""),
