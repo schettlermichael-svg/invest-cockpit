@@ -125,7 +125,9 @@ VORGABEN = [
     ("chart", "2026-11-14 18:18", "Ende des Laufs ohne", "behoben",
      "7f19f61 (Schritt 5): Ende nur aus einem Ungleichgewicht am 10er/20er – Ende ohne Lauf 0 von 468"),
     ("chart", "2026-11-14 18:18", "Profil schließt", "offen", "→ Plan 10 (Volumenprofil der Balance)"),
-    ("chart", "2026-11-14 18:18", "Zone zu tief", "offen", "→ Plan 16 (Gültigkeit der Zone)"),
+    ("chart", "2026-11-14 18:18", "Zone zu tief", "behoben",
+     "4abf7a9: Micky 16.11.: Pivot bleibt (Konsolidierung über 30 % ist sein Setup), Lücke „über 33 % tief“ und Minervini "
+     "höchstens gelb – 62 Zonen 33–50 % tief; über 50 % keine Base seit 14.11."),
     ("chart", "2026-11-14 18:18", "Pivot veraltet", "offen", "→ Plan 9"),
     ("chart", "2026-11-14 18:18", "Chart und Zahlen", "offen", "→ Plan 17 (Bild und Zahlen gleich)"),
     ("chart", "2026-11-14 18:18", "Abstände und Gegenseite", "offen", "→ Plan 18 (Gegenseite und Abstände)"),
@@ -149,7 +151,9 @@ VORGABEN = [
     ("chart", "2026-11-15 11:37", "Bild und Zahlen", "offen", "→ Plan 17 (Bild und Zahlen gleich)"),
     ("chart", "2026-11-15 11:37", "Ampel grün trotz", "behoben",
      "20e3ed0: Minervini grün nur mit Volumen der Enge unter dem Schnitt – grün 11 → 7 (CBOE, COKE, CSX, MEDP gelb)"),
-    ("chart", "2026-11-15 11:37", "Base-Gültigkeit", "offen", "→ Plan 16 (Gültigkeit der Zone)"),
+    ("chart", "2026-11-15 11:37", "Base-Gültigkeit", "behoben",
+     "4abf7a9: flache Base nach O'Neil als Zone (2 von 462 heute, Spring/Upthrust an ihren Rändern +6); tiefe Zonen behalten den "
+     "Pivot (Micky); Zonenbeginn hinter älterem Hoch ist Regel, im Material erklärt"),
     ("chart", "2026-11-15 11:37", "Basenzählung", "behoben",
      "3e94e01: neu nach Phase 4, 3 → 2 und unter dem Tief der vorigen Base (58), Markttief entfällt; Nummer an jeder Zone "
      "(289 mit Nummer statt 140), in Kasten, Kachel und Material"),
@@ -204,7 +208,8 @@ PLAN = [
      "Befunde", "behoben",
      "e2a2de5: 7 von 9 Befunden behoben und gemessen (angenommen 139 → 84, Anlass gegen die Richtung 24 → 0); „Belege aus alter "
      "Balance“ und „Dauer der Balance“ prüft Lauf 5 (Plan 14)"),
-    (16, "Gültigkeit der Zone: Tiefe, Vorlauf, keine Zone, Zonenbeginn (Lauf 3/4)", "Befunde", "offen", ""),
+    (16, "Gültigkeit der Zone: Tiefe, Vorlauf, keine Zone, Zonenbeginn (Lauf 3/4)", "Befunde", "behoben",
+     "4abf7a9: flache Base nach O'Neil, tiefe Zonen mit Pivot und Lücke (62), Minervini grün 7 → 6, Zonenregeln im Material"),
     (17, "Bild und Zahlen gleich: Chart und Material aus derselben Zone, Enge und Base (Lauf 3/4)", "Befunde", "offen", ""),
     (18, "Gegenseite und Abstände: anderer Rand, Abstand zu Mauer und Stütze (Lauf 3/4)", "Befunde", "offen", ""),
     (19, "Prüfer irrt: Ersatzregeln der App im Material erklären (Lauf 3)", "Prüfer", "offen", ""),
