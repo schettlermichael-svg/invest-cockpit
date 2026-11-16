@@ -319,6 +319,8 @@ def _k2_staerke(m, k, rang, rw=None):
         if best is not None else ("grau", "–")
     zeile = (f'Rückenwind: {rw["stufe"] or "keine Stufe"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
              f'({rw["tempo"]:+d} in 4 Wo.)' if rw else fuehrer_rang.text(fr))
+    if gestaltung.SYSTEM_JE.get("Stärke", gestaltung.SYSTEM) == "K" and best is not None:
+        zeile = "Kullamägi: grün bis oberste 2 %, gelb bis 5 % · " + zeile   # WST 16.11.2026: rot bei RS-Rang 90 erklären
     return kachel2("Stärke", mm, kk, zeile,
                    "Base-Ausbruch – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
                    "unserem Revier. Minervini verlangt mindestens 70 – der achte Punkt der Trendvorlage. Die Zahl ist "
@@ -403,6 +405,23 @@ def _k2_enge(m, k, erk, df):
     if reif and e.get("folge"):
         zeile = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
                                                      if e.get("volumen") == e.get("volumen") and e.get("volumen") else "")
+    su_ = erk.get("setup_info") or {}
+    if gestaltung.SYSTEM_JE.get("Enge", gestaltung.SYSTEM) == "K":
+        # Ampel und Zeile messen dasselbe (WST/AGYS 16.11.2026: Ampel aus Kullamägis großer Zone, Zeile aus Minervinis VCP,
+        # Setup aber die Flagge): beim Setup Flagge die Flagge selbst
+        fz = su_.get("flagge_zone") if su_.get("reihe") == "flagge" else None
+        if fz:
+            w_ = fz["wochen"]
+            kk = (("grün" if system_kullamaegi.KONS_GRUEN[0] <= w_ <= system_kullamaegi.KONS_GRUEN[1] + system_kullamaegi.WOCHEN_SPIEL
+                   else "gelb" if w_ <= system_kullamaegi.KONS_GELB + system_kullamaegi.WOCHEN_SPIEL else "rot"),
+                  f"{zahl(w_, 1)} Wochen")
+            vol_f = next((x for x in su_.get("luecken") or [] if "Volumen" in x), None)
+            zeile = f"Flagge {zahl(w_, 1)} Wochen, {zahl(fz['tiefe'], 0)} % tief" + (f" · {vol_f}" if vol_f else " · Volumen leiser als in der Stange")
+        elif kons:
+            z_k = b.get("zone") or {}
+            vol_k = next((r for r in b.get("regeln", []) if r[0].startswith("Volumen in der Konsolidierung")), None)
+            zeile = (f"{z_k.get('name', 'Zone')} {zahl(z_k.get('wochen', 0), 1)} Wochen, {zahl(z_k.get('tiefe', 0), 0)} % tief"
+                     + (f" · Volumen {vol_k[2]} {'(reduziert)' if vol_k[1] else '(nicht reduziert)'}" if vol_k else ""))
     return kachel2("Enge", mm, kk, zeile,
                    "Base-Ausbruch – Minervinis VCP (Baustein 2 des Scanners, wie im Chart): jede Kontraktion höchstens 70 % so tief "
                    "wie die vorige, die letzte höchstens 10 %, das Volumen leiser als in der ersten. Grün = mindestens "
@@ -616,13 +635,19 @@ def _stellung(df, marken):
     (Kurs unter dem Stopp, Fehlausbruch) und Ausbruch ohne Volumen – vorher nur klein im Chart."""
     aus = []
     kurs = float(df["Close"].iloc[-1])
-    st_ = (marken or {}).get("stopp")
-    if st_ and kurs < st_:
-        aus.append(("rot", f"Stellung gebrochen: Kurs {zahl(kurs)} $ unter dem Stopp {zahl(st_)} $ (1,5 ATR)"))
-    sst = ((marken or {}).get("short") or {}).get("stopp")
-    if sst and kurs > sst:
-        aus.append(("rot", f"Short-Stellung gebrochen: Kurs {zahl(kurs)} $ über dem Stopp {zahl(sst)} $ (1,5 ATR)"))
     br = (marken or {}).get("ausbruch") or {}
+    # gebrochen erst, wenn die Stellung bezogen ist – Ausbruch über den Einstieg oder eine Position (WST 16.11.2026: vor dem
+    # Einstieg stand „gebrochen“, weil der Kurs unter dem Stopp eines Plans lag, der noch gar nicht ausgelöst war)
+    bezogen = br.get("tag") is not None and br.get("fehl_tag") is None or bool((marken or {}).get("position"))
+    for schl, art, seite in (("struktur", "an der Struktur", "long"), ("", "1,5 ATR", "long")):
+        quelle = (marken or {}).get(schl) or {} if schl else (marken or {})
+        st_ = quelle.get("stopp")
+        if bezogen and st_ and kurs < st_:
+            aus.append(("rot", f"Stellung gebrochen: Kurs {zahl(kurs)} $ unter dem Stopp {zahl(st_)} $ ({art})"))
+            break
+    sst = ((marken or {}).get("short") or {}).get("stopp")
+    if sst and kurs > sst and not ((marken or {}).get("short") or {}).get("vor_bruch"):   # Short erst nach dem Bruch bezogen
+        aus.append(("rot", f"Short-Stellung gebrochen: Kurs {zahl(kurs)} $ über dem Stopp {zahl(sst)} $ (1,5 ATR)"))
     if br.get("fehl_tag") is not None:
         aus.append(("rot", f"Fehlausbruch am {pd.Timestamp(br['fehl_tag']):%d.%m.} – Schluss unter dem Tief des "
                            f"Ausbruchstags bzw. mehr als 3 % unter dem Pivot; kein Kauf, weiter beobachten"))
@@ -1073,6 +1098,10 @@ def _kreislauf_box(tk, df, index, gewinne, m_, erk=None, zonen=None):
                               erkennung._ROH.get(tk))
         except Exception:  # noqa: BLE001 – dann ohne Zustand
             e = None
+        bs_ = erk.get("basen") or {}
+        if e and bs_.get("zahl") and e.get("zustand") in ("Balance", "Test am Rand"):   # Nummer im Kasten (Plan 10) –
+            nr_ = f"{bs_['zahl']}. Base" + ("" if bs_.get("reif") else " (noch nicht reif)")   # Kopfzeile und Kasten gleich
+            e = dict(e, stufe=" · ".join(x for x in (e.get("stufe"), nr_) if x))
         erk["auktion"] = e
         erk["kreislauf"] = k
         return zustandsbild.box(e) + kreislaufbild.gross(k, tk)
@@ -1207,13 +1236,10 @@ def seite_titel(ticker, laufend=False, _stand=None):
     try:
         import auktion
         import zustandsbild
-        au_, bs_ = erk.get("auktion"), erk.get("basen") or {}
+        au_ = erk.get("auktion")
         g_ = ((erk.get("profil") or {}).get("verankert") or {}).get("grau")
         if au_ and g_ and str(g_.get("art", "")).startswith("Balance") and au_.get("zustand") in auktion.UNGLEICH:
             g_["art"] = "verlassene Balance"         # Plan 10: im Ungleichgewicht ist es die verlassene Balance
-        if au_ and bs_.get("zahl") and au_.get("zustand") in ("Balance", "Test am Rand"):   # Nummer im Kasten (Plan 10)
-            nr_ = f"{bs_['zahl']}. Base" + ("" if bs_.get("reif") else " (noch nicht reif)")
-            erk["auktion"] = dict(au_, stufe=" · ".join(x for x in (au_.get("stufe"), nr_) if x))
         kz = zustandsbild.kopfzeile(erk.get("auktion"))             # Zustand zuerst (13.11.2026)
     except Exception:  # noqa: BLE001
         kz = ""

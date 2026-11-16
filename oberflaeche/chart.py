@@ -38,6 +38,7 @@ AVWAP_FARBEN = {"gipfel": "#E57373", "hoch": "#FF8A65", "tief": "#4DD0E1", "erei
 # Tief, von dem die Bewegung ausging; Ereignis = jüngere von Zahlenreaktion ab 3 % und Lücke ab 4 % mit Volumen ×2
 AVWAP_KURZ = {"gipfel": "Hoch des Rückgangs", "hoch": "letztes Hoch", "tief": "Tief der Bewegung", "ereignis": "Ereignis"}
 PROFIL_FARBE = "#8FA3BF"
+LINIEN_SPIEL = 0.30   # Skala: Linien bis 30 % unter dem tiefsten bzw. über dem höchsten Kurs des Ausschnitts
 AVWAP_START = ["hoch", "tief"]       # Voreinstellung: Shannons Zange (Micky 14.11.2026: Chart nicht überladen); Gipfel und Ereignis zuschaltbar
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
@@ -127,7 +128,19 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                + tuple(w_["wert"] for w_ in marken.get("weitere") or [])
                + tuple(x_ for x_ in ((marken.get("position") or {}).get(k_) for k_ in ("einstieg", "anfang", "stopp", "enger"))
                        if x_) if x and tag_ebene]
-    pmax, pmin = max([h.max()] + grenzen) * 1.04, min([l.min()] + grenzen) * 0.97
+    # Linien im Ausschnitt (Durchschnitte, Anchored VWAP) gehören in die Skala (WST 16.11.2026: GD150, GD200 und AVWAP
+    # Tief begannen mitten im Bild am unteren Rand, weil die Skala nur die Kerzen fasste) – höchstens LINIEN_SPIEL weiter
+    anker = reihen = None
+    if tag_ebene:
+        import avwap
+        anker = avwap.anker(voll, marken.get("zahltag"))   # dieselben Anker wie die Lagekarte
+        reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
+                  if k in anker}
+    werte_l = [float(x) for r_ in list(linien.values()) + list(kurz.values()) + list((reihen or {}).values())
+               for x in r_.reindex(d.index).to_numpy(float) if x == x]
+    unten_l = min([l.min()] + [x for x in werte_l if x >= l.min() * (1 - LINIEN_SPIEL)])
+    oben_l = max([h.max()] + [x for x in werte_l if x <= h.max() * (1 + LINIEN_SPIEL)])
+    pmax, pmin = max([oben_l] + grenzen) * 1.04, min([unten_l] + grenzen) * 0.97
 
     def Y(y):
         return 30 + 400 * (1 - (np.log(y) - np.log(pmin)) / (np.log(pmax) - np.log(pmin)))
@@ -207,10 +220,6 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y2:.1f}" fill="{INDEX_SCHATTEN}" font-size="12">'
                               f'{text.replace("&", "&amp;")}</text>')
     if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
-        import avwap
-        anker = avwap.anker(voll, marken.get("zahltag"))   # dieselben Anker wie die Lagekarte
-        reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
-                  if k in anker}
         if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
             o_, u_ = reihen["hoch"].reindex(d.index), reihen["tief"].reindex(d.index)   # Zange schattiert
             pkt = [(X(i), Y(a_), Y(b_)) for i, (a_, b_) in enumerate(zip(o_.to_numpy(float), u_.to_numpy(float)))

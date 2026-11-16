@@ -352,7 +352,7 @@ def _scannerfeld(info, scan, br=None, df=None):
         if bz.get("name") == "Flagge":
             ok_, l_ = flagge_im_trend(df, bz)
             info.update(reihe="flagge", gruen=br["kaufzone"] and ok_, stern=False, luecken=l_, abstand=abs(br["abstand"]), abstand_vz=br["abstand"],
-                        pivot_scanner=float(br["pivot"]),
+                        pivot_scanner=float(br["pivot"]), flagge_zone={"wochen": float(bz["wochen"]), "tiefe": float(bz["tiefe"])},
                         scanner=f'Flagge {zahl(bz["wochen"], 1)} Wochen, {zahl(bz["tiefe"], 0)} % tief · Stange '
                                 f'+{zahl(bz["stange"]["prozent"], 0)} % · Pivot {zahl(br["pivot"])} $'
                                 + (" · in einer Base" if br["innen"] else ""))
@@ -377,7 +377,7 @@ def _scannerfeld(info, scan, br=None, df=None):
         nah = f["abstand"] >= -PIVOT_NAH
         ok_, l_ = flagge_im_trend(df, f)
         info.update(reihe="flagge", gruen=nah and ok_, stern=False, luecken=l_, abstand=abs(f["abstand"]), abstand_vz=f["abstand"],
-                    pivot_scanner=float(f["oben"]),
+                    pivot_scanner=float(f["oben"]), flagge_zone={"wochen": float(f["wochen"]), "tiefe": float(f["tiefe"])},
                     scanner=f'Flagge {zahl(f["wochen"], 1)} Wochen, {zahl(f["tiefe"], 0)} % tief · Stange '
                             f'+{zahl(f["stange"]["prozent"], 0)} % in {zahl(f["stange"]["wochen"], 1)} Wochen · '
                             f'Kurs {zahl(f["abstand"], 1)} % zur Oberkante'
