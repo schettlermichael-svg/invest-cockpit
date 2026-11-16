@@ -55,9 +55,8 @@ VORGABEN = [
      "4910faf: höchstes nicht überschrittenes Hoch der letzten 2 Jahre – eigener Anker bei 1.434 statt 1.053 Titeln"),
     ("chart", "2026-11-14 18:18", "Abwärtstrend und Ein-Tages", "behoben",
      "4910faf: Kontraktion ab 3 Tagen, höchstens 6 Wellen, Volumen ausgetrocknet, nicht in Phase 4 – grün 94 → 44"),
-    ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "offen",
-     "30-Wochen-Linie ausprobiert (35 % der Titel wechseln, Beispiele teils besser, teils schlechter) – Micky 14.11.: "
-     "Schritt 8 der Gefechtsordnung (Phasen als Rahmen)"),
+    ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "behoben",
+     "9bd94f6: Schritt 8 (Micky 16.11.) – Phase 3 erst bei flacher Linie (183 → 112, 102 Titel 3 → 2), Phase 2 mit dem Ausbruch (Phase 1 über steigender Linie 23 → 3), eine Phase je Titel"),
     ("chart", "2026-11-14 18:18", "Ereignis", "behoben",
      "faa61d2: Micky 14.11.: Ereignis-Anker an jedem jüngsten Zahlentag (Shannon), die 3 % gelten nur fürs Setup Zahlen-Reaktion – "
      "269 von 1.343 Titeln mit Zahlen ankern anders"),
@@ -91,7 +90,8 @@ VORGABEN = [
     ("chart", "2026-11-15 11:37", "Flagge ohne Fahnenstange", "behoben",
      "47ea8c9: Micky 15.11.: Flagge nur mit haltenden Tiefs (sonst Base/Konsolidierung) und Stange direkt davor (nach einem "
      "Rücksetzer über 25 % beginnt sie an dessen Tief) – Titel mit Flagge 174 → 123, reife 108 → 72"),
-    ("chart", "2026-11-15 11:37", "Phase nach Weinstein", "offen", "→ Plan 8 (Schritt 8, Micky 14.11.)"),
+    ("chart", "2026-11-15 11:37", "Phase nach Weinstein", "behoben",
+     "9bd94f6: Schritt 8 (Micky 16.11.) – Phase 3 erst bei flacher Linie (183 → 112, 102 Titel 3 → 2), Phase 2 mit dem Ausbruch (Phase 1 über steigender Linie 23 → 3), eine Phase je Titel"),
     ("chart", "2026-11-15 11:37", "Kette erkennt Ausbruch", "offen", "→ Plan 15 (Kette der Belege), Plan 4–7"),
     # Gesamtplan 15.11.2026: jeder offene Befund ist einem Punkt des Plans zugeordnet („→ Plan N“) – der Wachposten
     # meldet jeden offenen Befund ohne Zuordnung
@@ -108,7 +108,8 @@ VORGABEN = [
     ("chart", "2026-11-14 18:18", "Belege aus alter Balance", "offen", "→ Plan 15 (Kette der Belege)"),
     ("chart", "2026-11-14 18:18", "Letztes Hoch überschritten", "behoben",
      "af0614d: nur fertige Wochen bestätigen, Kurs über allen Hochs = Ausbruchspunkt – 172 Ausbruchspunkte, 194 Anker anders"),
-    ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "offen", "→ Plan 8 (Schritt 8, Micky 14.11.)"),
+    ("chart", "2026-11-14 18:18", "Phase nach Weinstein", "behoben",
+     "9bd94f6: Schritt 8 (Micky 16.11.) – Phase 3 erst bei flacher Linie (183 → 112, 102 Titel 3 → 2), Phase 2 mit dem Ausbruch (Phase 1 über steigender Linie 23 → 3), eine Phase je Titel"),
     ("chart", "2026-11-14 18:18", "Eigen oder geliehen", "behoben",
      "af0614d: RS in Laufrichtung, Gegenzeichen – „mit dem Markt“ 494 → 0"),
     ("chart", "2026-11-14 18:18", "Anlass ohne Richtung", "offen", "→ Plan 15 (Kette der Belege: Anlass)"),
@@ -164,7 +165,9 @@ PLAN = [
     (7, "Schritt 5: Stopp am 10er/20er, Mauer, Kraft ohne Weg und Klimax ziehen ihn enger", "Gefechtsordnung", "behoben",
      "7f19f61: Nach dem Kauf für alle Positionen; gedachte Position vor 30 Tagen an 462 Titeln: 0 am 10er, 462 am 20er, "
      "215 raus, 34 enger (27 Mauer, 4 Klimax, 3 Kraft ohne Weg); Ungleichgewicht am 10er/20er, Zustand anders bei 82 von 468"),
-    (8, "Schritt 8: Phasen nach Weinstein als Rahmen (30 oder 40 Wochen, Sperre nach Phase 4)", "Gefechtsordnung", "offen", ""),
+    (8, "Schritt 8: Phasen nach Weinstein als Rahmen (40 Wochen, Sperre nach Phase 4)", "Gefechtsordnung", "behoben",
+     "9bd94f6: 462 Titel Phase 1/2/3/4 = 87/102/183/90 → 39/219/112/92; Stufe im Namen jedes Kastens; gegen die Stufe 80 "
+     "Setups (22 grün → gelb); Bruch der Spanne auch aus Phase 2: 68 → 81; Phasenwechsel in 2 Jahren höchstens 15 → 10"),
     (9, "Lauf 4: Pivot verbraucht oder zu früh, Drittel falsch (28); grün trotz nicht ausgetrocknetem Volumen (7)",
         "Befunde", "offen", ""),
     (10, "Lauf 4: Volumenprofil der Balance (52, 4 sicher); Basenzählung (34)", "Befunde", "offen", ""),
