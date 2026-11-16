@@ -116,11 +116,14 @@ def seite_performance():
                                f'Woche {letzte["nr"]} · Start {zahl(d["start"], 0)} €'))
         kacheln.append(_kachel("Ø Wochenrendite (real)", _pct(p["schnitt"]),
                                f'letzte Woche {_pct(p["letzte"])}', GRUEN if p["schnitt"] >= 0 else ROT))
+        n_ = len(p["wochen"])                    # worauf die Hochrechnung steht (Micky 16.11.2026: „aus N Wochen“)
+        aus_ = f'aus {n_} Woche{"" if n_ == 1 else "n"}'
         kacheln.append(_kachel("Hochgerechnet auf ein Jahr", _pct(p["jahr_schnitt"], 0),
-                               f'mit Ø: {zahl(p["wert_jahr_schnitt"], 0)} € nach 52 Wochen',
+                               f'mit Ø {aus_}: {zahl(p["wert_jahr_schnitt"], 0)} € nach 52 Wochen',
                                GRUEN if p["jahr_schnitt"] >= 0 else ROT))
-        kacheln.append(_kachel("… mit der letzten Woche", _pct(p["jahr_letzte"], 0),
-                               f'{zahl(p["wert_jahr_letzte"], 0)} € nach 52 Wochen'))
+        if n_ > 1:                               # mit einer Woche zeigt sie dasselbe wie der Ø
+            kacheln.append(_kachel("… mit der letzten Woche", _pct(p["jahr_letzte"], 0),
+                                   f'{zahl(p["wert_jahr_letzte"], 0)} € nach 52 Wochen'))
     if p.get("ziel_jahr") is not None:
         kacheln.append(_kachel("Ziel", f'{_pct(d["ziel_woche"])} je Woche',
                                f'= {_pct(p["ziel_jahr"], 0)} im Jahr · {zahl(p["ziel_wert_jahr"], 0)} €'))
