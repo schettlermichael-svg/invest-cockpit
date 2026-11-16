@@ -424,7 +424,7 @@ SETUPS = [
          widerlegt="Schluss zurück in der Flagge", abweichung="",
          messung=["vcp_zone.zone", "vcp_zone.tiefs_fallen", "kartentisch.flagge_im_trend", "depot.struktur_stopp"],
          stand="gemessen",
-         kacheln=dict(Trend="gd50_steigt", Stärke=None, Fundament=None, Enge="flagge")),
+         kacheln=dict(Trend="gd50_steigt", Stärke="rs70", Fundament=None, Enge="flagge")),
     dict(name="Momentum-Ausbruch", reihen=["k_breakout"], lehrer="Kullamägi",
          weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
          regel="Führer (oberste 2 % nach 1, 3 oder 6 Monaten), Pause 1–3 Wochen nach einem Schub, hält den GD20, Kurs "
@@ -441,7 +441,7 @@ SETUPS = [
          einstieg="Hoch des Sprungtags", stopp="Struktur: unter dem Tief des Sprungtags (ohne Grenze der Tagesspanne); "
                                               "daneben 1,5 ATR", widerlegt="Schluss unter dem Tief des Sprungtags",
          abweichung="", messung=["system_kullamaegi.episodic_pivot"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke=None, Fundament="nachricht", Enge="sprungtief")),
+         kacheln=dict(Trend=None, Stärke="rs70", Fundament="nachricht", Enge="sprungtief")),
     dict(name="Zahlen-Reaktion", reihen=["zahlen"], lehrer="Micky (Drift nach den Zahlen, Shannons Anker am Ereignistag)",
          weg="Anlass „neue Information“ → direkt angenommen",
          regel="Reaktion ab 3 % in den letzten 20 Tagen, Volumen über dem Schnitt, Schluss im oberen Drittel (short: "
@@ -451,19 +451,19 @@ SETUPS = [
                                                                            "Reaktionstags; daneben 1,5 ATR",
          widerlegt="Schluss unter dem Tief bzw. dem AVWAP ab dem Reaktionstag", abweichung="",
          messung=["zahlen_reaktion.pruefen"], stand="gemessen",
-         kacheln=dict(Trend="gd50", Stärke=None, Fundament=None, Enge="zahlentief")),
+         kacheln=dict(Trend="gd50", Stärke="rs70", Fundament=None, Enge="zahlentief")),
     dict(name="Ermüdung (Short)", reihen=["k_ermuedung"], lehrer="Kullamägi", weg="gespiegelt: Ende des Laufs → abgelehnt",
          regel="Flagge nach Stange ab 30 % bricht nach unten (Schluss unter der Unterkante, letzte 5 Tage).",
          einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Flagge", abweichung="", messung=["vcp_zone.ermuedung"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke=None, Fundament=None, Enge=None)),
+         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
     dict(name="Bärenflagge (Short)", reihen=["k_baerenflagge"], lehrer="Kullamägi",
          weg="gespiegelt: kleine Balance im Ungleichgewicht abwärts → angenommen abwärts",
          regel="Fall ab 15 % in höchstens 30 Tagen, Driften 3–25 Tage mit steigenden Tiefs, holt höchstens die Hälfte "
                "zurück, GD50 fällt, Bruch unter das Tief des Driftens.",
          einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück im Driften", abweichung="", messung=["vcp_zone.baerenflagge"], stand="gemessen",
-         kacheln=dict(Trend="gd50_faellt", Stärke=None, Fundament=None, Enge=None)),
+         kacheln=dict(Trend="gd50_faellt", Stärke="rs70", Fundament=None, Enge=None)),
     dict(name="Bruch der Spanne (Short)", reihen=["k_bruch"], lehrer="Weinstein", weg="gespiegelt: Balance → angenommen abwärts",
          regel="Basis, Verteilung oder Balance in Phase 2 (Rücksetzer; Short gegen die Stufe, höchstens gelb – Schritt 8, "
                "Micky 16.11.2026) ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Eine Verteilung "
@@ -475,7 +475,7 @@ SETUPS = [
          stopp="Struktur: über dem Hoch des Auslösetags; vor dem Bruch über dem Hoch der letzten Gegenbewegung; daneben 1,5 ATR",
          widerlegt="Schluss zurück in der Spanne", abweichung="",
          messung=["vcp_zone.spannenbruch", "vcp_zone._vor_dem_bruch", "vcp_zone.naechster"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke=None, Fundament=None, Enge=None)),
+         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
     dict(name="Spring / Upthrust", reihen=["w_spring", "w_upthrust"], lehrer="Wyckoff", weg="abgelehnt → Lauf zum anderen Rand",
          regel="An der Zone des Scanners, wie sie am Vortag stand: Tief höchstens 1 ATR unter der Unterkante (Upthrust: Hoch "
                "höchstens 1 ATR über der Oberkante), Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach "
@@ -487,12 +487,13 @@ SETUPS = [
          widerlegt="Kurs jenseits des Stopps", abweichung="Ziel der andere Rand (kein fester Gewinn, Stopp nachziehen)",
          messung=["vcp_zone.spring_upthrust", "system_kullamaegi.pruefen", "kartentisch.setup_feststellen",
                   "depot.struktur_stopp"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke=None, Fundament=None, Enge=None)),
+         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
 ]
 
 # Kacheln der Titelseite je Setup (Micky 16.11.2026: „die Setups werden nach unseren Kriterien gemessen, nicht nach den
 # Meistern“): jede Kachel urteilt mit der Regel, die der Katalog dem Setup gibt; None = das Setup hat dort keine Regel,
-# die Kachel zeigt den Wert als Zeichen (grauer Punkt). Ohne Setup gilt der Maßstab des Base-Ausbruchs.
+# die Kachel zeigt den Wert als Zeichen (grauer Punkt). Ohne Setup gilt der Maßstab des Base-Ausbruchs. Stärke: der
+# RS-Rang gilt für alle Setups außer dem Momentum-Ausbruch (Führer) – Micky 16.11.2026, Plan 24.
 KACHELN = ("Trend", "Stärke", "Fundament", "Enge")
 KACHEL_REGELN = {
     "trendvorlage": "Trendvorlage, sieben Punkte zu Kurs und Durchschnitten: grün 7 von 7, gelb ab 5, sonst rot",
@@ -500,7 +501,7 @@ KACHEL_REGELN = {
     "gd50_3w": "Kurs vor der Pause 3 Wochen über dem GD50",
     "gd50": "Kurs über dem GD50 (short: darunter)",
     "gd50_faellt": "GD50 fällt (tiefer als vor 20 Tagen)",
-    "rs70": "RS-Rang ab 70 grün, 60–69 gelb, darunter rot",
+    "rs70": "RS-Rang ab 70 grün, 60–69 gelb, darunter rot; beim Short gespiegelt: bis 30 grün, 31–40 gelb",
     "fuehrer2": "Führer: in 1, 3 oder 6 Monaten unter den obersten 2 % grün, oberste 5 % gelb",
     "zahlen_wachsen": "Zahlen wachsen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot, beide grün = grün",
     "nachricht": "Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und Schluss im oberen Drittel",

@@ -358,9 +358,11 @@ def _k_trend(regel, setup, m, ph, ph_reihe, df, b, short):
     return _urteil("Trend", regel, setup, x, gd_txt, hilfe)
 
 
-def _k_staerke(regel, setup, k, rang, rw=None):
-    """Stärke nach der Regel des Setups: RS-Rang ab 70 (Base-Ausbruch) oder Führer (Momentum-Ausbruch); sonst Zeichen."""
-    rs_x = (("grün" if rang >= 70 else "gelb" if rang >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
+def _k_staerke(regel, setup, k, rang, rw=None, short=False):
+    """Stärke nach der Regel des Setups: RS-Rang (alle Setups, beim Short gespiegelt) oder Führer (Momentum-Ausbruch)."""
+    # Short gespiegelt (Plan 24): Schwäche ist Rückenwind – der Rang von unten gezählt (RS 30 wie long RS 70)
+    v = (rs_rang.SPIEGEL - rang if short else rang) if rang is not None else None
+    rs_x = (("grün" if v >= 70 else "gelb" if v >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
         else ("grau", "kein RS-Rang")
     fr = k["fuehrer"]
     best = max((v for v in (fr or {}).values() if v == v), default=None)
@@ -492,7 +494,7 @@ def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, gewinne, m, k, mm, rw=None):
         or f"Kein Setup – Maßstab {regelkarte.KEIN_SETUP}"
     kl = [_k2_markt(mm),
           _k_trend(regel["Trend"], setup, m, ph, ph_reihe, df, k.get("breakout") or {}, gestaltung.SYSTEM_SHORT),
-          _k_staerke(regel["Stärke"], setup, k, rang, rw),
+          _k_staerke(regel["Stärke"], setup, k, rang, rw, gestaltung.SYSTEM_SHORT),
           _k_fundament(regel["Fundament"], setup, m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df),
           _k_enge(regel["Enge"], setup, m, k, su, df), _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'

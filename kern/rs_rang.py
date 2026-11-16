@@ -24,6 +24,7 @@ GEWICHT_LETZTES = 0.4  # RS-Wert (IBD): letztes Quartal zählt 40 % …
 GEWICHT_FRUEHER = 0.2  # … die drei davor je 20 %
 KURS_TAGE = 260        # Kurse der letzten 260 Tage (vier Quartale und Rand)
 RANG_SPANNE = 98       # RS-Rang 1 bis 99 (IBD)
+SPIEGEL = RANG_SPANNE + 2  # Short: der Rang von unten gezählt, 100 − Rang (RS 30 short wie RS 70 long, Plan 24)
 
 
 def wert(schluss):
