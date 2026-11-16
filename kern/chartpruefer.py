@@ -242,7 +242,7 @@ def material(tk, df):
             zeilen.append(f"Zwei Einstiege (Gefechtsordnung): früh beim Schluss über dem Hoch der Enge {_z(e['pivot'])} $ "
                           f"({e['lage']}) und am Ausbruch über die Oberkante {_z(z_e['oben'])} $")
     for schl, name in (("gipfel", "Hoch des Rückgangs"), ("hoch", "letztes Hoch"), ("tief", "Tief der Bewegung"),
-                       ("ereignis", "Ereignis")):
+                       ("hoeher", "letztes höheres Tief"), ("ereignis", "Ereignis")):
         if schl in a:
             preis = df["High"][a[schl]] if schl in ("gipfel", "hoch") else df["Low"][a[schl]]
             zeilen.append(f"AVWAP-Anker {name}: {_d(a[schl])} bei {_z(preis)} $"
@@ -250,6 +250,9 @@ def material(tk, df):
                              "Wochen-Schwunghoch (Regel der App, kein Widerspruch)" if schl == "hoch" and a.get("ausbruchspunkt") else ""))
         elif schl == "gipfel" and "hoch" in a:          # gleich dem letzten Hoch – die App zeigt dann nur eine Linie
             zeilen.append(f"AVWAP-Anker {name}: derselbe Punkt wie das letzte Hoch (nur eine Linie)")
+        elif schl == "hoeher":
+            zeilen.append(f"AVWAP-Anker {name}: keiner – kein Rückgang ab 8 % zwischen dem Trendstart und dem letzten Hoch, "
+                          "oder der Kurs fiel seitdem darunter")
         elif schl == "tief":
             zeilen.append(f"AVWAP-Anker {name}: keiner – der Kurs fiel unter den Start des Trends und steht noch "
                           "nicht 1 ATR über dem tiefsten Tief seit dem letzten Hoch (keine Bewegung begonnen)")
@@ -403,8 +406,9 @@ def bild(tk, df, marken):
         for k in e.get("kontraktionen") or []:
             i0, i1 = px(df.index[k["hoch_i"]]), px(df.index[k["tief_i"]])
             ax.plot([i0, i1], [k["hoch"], k["tief"]], color="#888", linestyle=":", linewidth=1.2)
-    farben = {"gipfel": "#C62828", "hoch": "#EF6C00", "tief": "#00838F", "ereignis": "#B8860B"}
+    farben = {"gipfel": "#C62828", "hoch": "#EF6C00", "tief": "#00838F", "hoeher": "#2E7D32", "ereignis": "#B8860B"}
     namen = {"gipfel": "AVWAP Hoch des Rückgangs", "hoch": "AVWAP letztes Hoch", "tief": "AVWAP Tief der Bewegung",
+             "hoeher": "AVWAP letztes höheres Tief",
              "ereignis": "AVWAP Ereignis"}
     for k, t in a.items():
         r = avwap.reihe(df, t)

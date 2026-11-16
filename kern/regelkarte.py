@@ -291,6 +291,12 @@ WERKZEUGE = {
                                                    "Hoch; ist es gebrochen, das tiefste Tief seit dem letzten Hoch, sobald "
                                                    "der Kurs 1 ATR darüber steht).",
              messung=["avwap.anker"], stand="gemessen", pruefer=["AVWAP Tief der Bewegung"]),
+        dict(name="AVWAP letztes höheres Tief", regel="Letztes höheres Tief = das Tief des letzten Rückgangs ab 8 % "
+                                                       "(dieselbe Bestätigung wie beim Hoch), aus dem der Anstieg zum "
+                                                       "letzten Hoch kam – Shannons Stopp-Anker; nur nach dem "
+                                                       "Trendstart-Tief und solange der Kurs nicht darunter fiel (Plan 20, "
+                                                       "Micky 16.11.2026: beide Tiefs).",
+             messung=["avwap.anker", "avwap._hoeheres_tief"], stand="gemessen", pruefer=["AVWAP letztes höheres Tief"]),
         dict(name="AVWAP Ereignis", regel="Ereignis = der jüngste Zahlentag (jeder, gleich wie stark die Reaktion), die "
                                           "jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem Schnitt mit Bewegung ab "
                                           "3 % (6 Monate).",

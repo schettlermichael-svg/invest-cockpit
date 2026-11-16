@@ -20,6 +20,9 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
             früheren, höheren Hoch (dem Gipfel davor; ohne ihn 52 Wochen zurück, liegt das Tief am Rand des Fensters, bis 2 Jahre) und dem letzten Hoch. Fiel der
             Kurs seitdem darunter, ist der Trend gebrochen: dann das tiefste Tief seit dem letzten Hoch, wenn der Kurs
             mindestens 1 ATR darüber steht und es nicht von heute ist (sonst hat keine Bewegung begonnen).
+  hoeher    letztes höheres Tief (Plan 20, Micky 16.11.2026: beide Linien): das Tief des letzten Rückgangs ab 8 %,
+            aus dem der Anstieg zum letzten Hoch kam (Shannons Stopp-Anker); nur nach dem Trendstart-Tief und solange
+            der Kurs nicht darunter fiel.
   gipfel    Hoch des Rückgangs: das höchste bestätigte Hoch der letzten 2 Jahre, das der Kurs seitdem nicht
             überschritten hat – der Gipfel, von dem die ganze Korrektur ausging (14.11.2026, vorher schied es aus, wenn der
             Kurs danach tiefer fiel als seit dem letzten Hoch). Nur, wenn es nicht das letzte Hoch ist.
@@ -109,7 +112,7 @@ def _wochen_hochs(df):
 
 
 def anker(df, zahltag=None):
-    """{"hoch"|"tief"|"gipfel"|"ereignis": Tag} aus Tageskerzen (fehlt ein Anker, fehlt der Schlüssel). zahltag:
+    """{"hoch"|"tief"|"hoeher"|"gipfel"|"ereignis": Tag} aus Tageskerzen (fehlt ein Anker, fehlt der Schlüssel). zahltag:
     Reaktionstag der Zahlen (zahlentag()), wenn bekannt."""
     if df is None or len(df) < 30 or not {"High", "Low", "Close", "Volume"} <= set(df.columns):
         return {}
@@ -138,6 +141,9 @@ def anker(df, zahltag=None):
     t_ = _trendstart(df, hoch)
     if t_ is not None:
         aus["tief"] = t_
+    hh = _hoeheres_tief(df, hoch, t_)
+    if hh is not None:
+        aus["hoeher"] = hh
     # Hoch des Rückgangs = der Gipfel, von dem die ganze Korrektur ausging: das höchste bestätigte Hoch, das der Kurs
     # seitdem nicht überschritten hat (Chart-Prüfer 14.11.2026, KBH/BAX/ORA: vorher schied jedes Hoch aus, nach dem der
     # Kurs tiefer fiel als seit dem letzten Hoch – lag das letzte Hoch nach dem Tief, blieb nur das letzte Hoch selbst)
@@ -180,6 +186,30 @@ def _trendstart(df, hoch):
     atr = atr_.wert(df) or float((h - l).iloc[-ATR_N:].mean())      # die eine ATR der App
     if tag != df.index[-1] and float(df["Close"].iloc[-1]) >= float(seit.min()) + TIEF_ATR * atr:
         return tag
+    return None
+
+
+def _hoeheres_tief(df, hoch, tief):
+    """Tag des letzten höheren Tiefs (Plan 20, Micky 16.11.2026: neben dem Trendstart-Tief) oder None: das Tief des
+    letzten Rückgangs ab 8 % (dieselbe Bestätigung wie beim Hoch), aus dem der Anstieg zum letzten Hoch kam – Shannons
+    „most recent and relevant higher low“, unter dem sein Stopp sitzt. Nur nach dem Trendstart-Tief und solange der
+    Kurs nicht darunter fiel."""
+    hv, lv = df["High"].to_numpy(float), df["Low"].to_numpy(float)
+    ih = df.index.get_loc(hoch)
+    it = df.index.get_loc(tief) if tief is not None else max(0, len(df) - ZWEI_JAHRE)
+    for i in range(ih - 1, it, -1):                       # vom letzten Hoch zurück: das jüngste bestätigte Hoch davor
+        if hv[i] < hv[max(0, i - WOCHE_TAGE):i + 1].max():
+            continue
+        ueber = np.nonzero(hv[i + 1:ih + 1] > hv[i])[0]    # der Anstieg zum letzten Hoch hat es überschritten
+        if not len(ueber) or ueber[0] == 0:
+            continue
+        rueck = lv[i + 1:i + 1 + ueber[0]]
+        if rueck.min() > hv[i] * (1 - HOCH_RUECKGANG):
+            continue
+        k = i + 1 + int(rueck.argmin())
+        if k <= it or (lv[k + 1:] < lv[k]).any():         # nicht nach dem Trendstart oder seitdem unterschritten
+            return None
+        return df.index[k]
     return None
 
 
