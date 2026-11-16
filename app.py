@@ -51,7 +51,7 @@ div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid
   background:{KARTE}; margin-right:8px}}
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 /* Seitenwahl: alle Seiten in einer Reihe (Micky 16.11.2026) – auf schmalem Schirm seitlich schieben statt umbrechen */
-.st-key-ansicht {{max-width:1392px; margin:0 auto; padding:0 24px}}
+.st-key-ansicht {{max-width:1392px; width:100%; box-sizing:border-box; margin:0 auto; padding:0 24px}}
 .st-key-ansicht div[role="radiogroup"] {{flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:thin}}
 .st-key-ansicht div[role="radiogroup"] label {{white-space:nowrap; flex:0 0 auto}}
 </style>""", unsafe_allow_html=True)
