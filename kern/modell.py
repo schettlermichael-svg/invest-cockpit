@@ -27,6 +27,8 @@ MODELL = "claude-opus-5-5"                                             # alle St
 PREIS_EIN, PREIS_AUS, PREIS_SUCHE = 4.0 / 1e6, 20.0 / 1e6, 0.01       # $ je Token bzw. je Suche
 
 
+CACHE_SCHREIBEN = 1.25   # Prompt-Caching: Ablegen (5 Minuten) kostet das 1,25-Fache des Eingabepreises …
+CACHE_LESEN = 0.1        # … Lesen das 0,1-Fache (Anthropic, Prompt caching; vorher stand hier 0,05)
 DECKEL_USD = 100.0                                                     # Monatsdeckel (Micky 14.11.2026: 100 $ – so viel API-Guthaben enthält sein Max-Abo im Monat; vorher 50 $)
 
 
@@ -50,7 +52,8 @@ def _pfad(name):
 
 
 def kosten():
-    """Kostenbuch des laufenden Monats: {"usd", "aufrufe", "suchen", "ein", "aus"}."""
+    """Kostenbuch des laufenden Monats: {"usd", "aufrufe", "suchen", "ein", "aus", "cache_schreiben", "cache_lesen",
+    "ohne_cache"} (die drei Cache-Felder seit 16.11.2026, Tokens)."""
     return (json_lesen(_pfad("kosten.json"), {}) or {}).get(f"{datetime.now():%Y-%m}",
                                                              {"usd": 0.0, "aufrufe": 0, "suchen": 0, "ein": 0, "aus": 0})
 
@@ -58,8 +61,8 @@ def kosten():
 def _buchen(usage):
     buch = json_lesen(_pfad("kosten.json"), {}) or {}
     m = buch.setdefault(f"{datetime.now():%Y-%m}", {"usd": 0.0, "aufrufe": 0, "suchen": 0, "ein": 0, "aus": 0})
-    ein = (usage.get("input_tokens") or 0) + (usage.get("cache_creation_input_tokens") or 0) * 1.25 \
-        + (usage.get("cache_read_input_tokens") or 0) * 0.05
+    schreiben, lesen = usage.get("cache_creation_input_tokens") or 0, usage.get("cache_read_input_tokens") or 0
+    ein = (usage.get("input_tokens") or 0) + schreiben * CACHE_SCHREIBEN + lesen * CACHE_LESEN
     aus = usage.get("output_tokens") or 0
     suchen = ((usage.get("server_tool_use") or {}).get("web_search_requests") or 0)
     usd = ein * PREIS_EIN + aus * PREIS_AUS + suchen * PREIS_SUCHE
@@ -68,6 +71,9 @@ def _buchen(usage):
     m["suchen"] += suchen
     m["ein"] += int(ein)
     m["aus"] += aus
+    m["cache_schreiben"] = m.get("cache_schreiben", 0) + schreiben      # Prompt-Caching (16.11.2026): gemessen, was es spart
+    m["cache_lesen"] = m.get("cache_lesen", 0) + lesen
+    m["ohne_cache"] = m.get("ohne_cache", 0) + (usage.get("input_tokens") or 0)
     json_schreiben(_pfad("kosten.json"), buch)
     return usd
 
@@ -86,7 +92,10 @@ def _rufen(system, nachrichten, max_tokens, werkzeuge=None, wahl=None):
         raise Deckel(f"Monatsdeckel von {DECKEL_USD:.0f} $ erreicht – Modell-Aufrufe ruhen bis zum Monatsende")
     bloecke = []
     for _ in range(4):
-        daten = {"model": MODELL, "max_tokens": max_tokens, "system": system, "messages": nachrichten}
+        # Prompt-Caching (Micky 16.11.2026, Mail von Anthropic: Trefferquote niedrig): Werkzeug und Auftrag sind bei jedem
+        # Chart gleich – markiert, liest Anthropic sie aus dem Zwischenspeicher (5 Minuten, bei jedem Treffer verlängert)
+        daten = {"model": MODELL, "max_tokens": max_tokens, "messages": nachrichten,
+                 "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]}
         if werkzeuge:
             daten["tools"] = werkzeuge
         if wahl:
