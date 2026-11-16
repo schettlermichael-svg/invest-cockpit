@@ -161,7 +161,9 @@ PLAN = [
     (6, "Schritt 4: Spring und Upthrust als eigene Setups (long und short)", "Gefechtsordnung", "behoben",
      "dd133cd: eine Regel an der Zone des Scanners für Zeichen, Zustand und Setup; 468 Titel: Spring 11, Upthrust 23 "
      "(14 grün) als Setup; Zeichen Spring 47 → 36, Upthrust 41 → 76 (vorher eigene 20-Tage-Spanne)"),
-    (7, "Schritt 5: Stopp am 10er/20er, Mauer, Kraft ohne Weg und Klimax ziehen ihn enger", "Gefechtsordnung", "offen", ""),
+    (7, "Schritt 5: Stopp am 10er/20er, Mauer, Kraft ohne Weg und Klimax ziehen ihn enger", "Gefechtsordnung", "behoben",
+     "7f19f61: Nach dem Kauf für alle Positionen; gedachte Position vor 30 Tagen an 462 Titeln: 0 am 10er, 462 am 20er, "
+     "215 raus, 34 enger (27 Mauer, 4 Klimax, 3 Kraft ohne Weg); Ungleichgewicht am 10er/20er, Zustand anders bei 82 von 468"),
     (8, "Schritt 8: Phasen nach Weinstein als Rahmen (30 oder 40 Wochen, Sperre nach Phase 4)", "Gefechtsordnung", "offen", ""),
     (9, "Lauf 4: Pivot verbraucht oder zu früh, Drittel falsch (28); grün trotz nicht ausgetrocknetem Volumen (7)",
         "Befunde", "offen", ""),

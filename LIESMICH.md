@@ -1173,3 +1173,19 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   8 Stellen von Hand; die Shorts tragen ihren Einstieg als eigenes Feld.
 - **Gemessen an 468 Titeln:** Setup Spring 11, Upthrust 23 (14 grün); Bruch der Spanne vor dem Bruch 65, davon 18 mit
   frühem Short. Zeichen: Spring 47 → 36, Upthrust 41 → 76. 4 Base-Ausbrüche stehen jetzt hinter einem Upthrust (unter „auch“).
+
+## Gefechtsordnung Schritt 5: Stopp am 10er/20er (16.11.2026)
+
+- **Eine Quelle** (`kern/reiten.py`), Kullamägi führt:
+  - *Ungleichgewicht* (Zustand): Schluss über dem steigenden 10er bzw. 20er (steigend = höher als vor einer Woche),
+    abwärts gespiegelt. Phase und Dow-Struktur stehen als Zeichen daneben (vorher maßen sie das Ungleichgewicht).
+  - *Nachgezogener Stopp* (Nach dem Kauf): bis Tag 3 der Anfangsstopp; danach folgt er dem 10er, solange seit Tag 3 kein
+    Schluss darunter lag, sonst dem 20er (Wechsel nur von 10 auf 20). Er steigt nur; ein Schluss darunter heißt raus.
+  - *Ende-Zeichen*: Mauer höchstens 3 % über dem Kurs, Kraft ohne Weg am oberen Rand, Kauf-Klimax – gemessen wie im
+    Zustand – ziehen den Stopp sofort unter das Tief des Tages, an dem das Zeichen kam (Stopp im Markt). Short gespiegelt.
+- **Ein System für alle Positionen:** die Trennung M/K in „Nach dem Kauf“ entfällt. Kullamägis Teilgewinn (Tag 3–5) und
+  Minervinis Zeichen (Verlustgrenze, Einstand ab 2R, Squat, Tennisball, Reset, Führer) bleiben; sie messen am Stopp, der gilt.
+- **Gemessen** (gedachte Position vor 30 Handelstagen, 462 Titel): am 10er 0, am 20er 462 (jeder Titel schloss in den
+  27 Tagen mindestens einmal unter dem 10er); raus 215; enger 34 (27 Mauer, 4 Kauf-Klimax, 3 Kraft ohne Weg).
+  Zustand: anders bei 82 von 468 – 47 Balance → Ungleichgewicht, 9 Ende des Laufs ↑ → Ungleichgewicht ↓ (Phase 2 im
+  Rücksetzer unter dem fallenden 10er).
