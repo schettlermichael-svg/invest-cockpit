@@ -1329,3 +1329,17 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - Gemessen (479 Titel): von 123 Flaggen-Zonen hatten 61 eine Stange von 10–13 Wochen. Setup Flagge 30 → 11 (grün 7 → 2);
   die übrigen: 14 ohne Setup, 2 Momentum-Ausbruch, 2 Base-Ausbruch, 1 Bruch der Spanne; Ermüdung 3 → 1. WST ist jetzt
   eine Base (in 6 Wochen nur +22 %).
+
+## AVWAP nach Shannons Werkzeugen (16.11.2026, Plan 26)
+
+- Geprüft gegen Shannon: letztes Hoch (erst nach dem Rückgang), Trendstart-Tief, letztes höheres Tief, Hoch des
+  Rückgangs und Zange passen. Neu:
+  - **Zahlentag** (`zahlen`) als eigene Linie; **Lücke/Volumen** (`ereignis`) nur noch ohne Zahlen (mehr als 1 Tag
+    daneben). Vorher verdrängte die jüngere die ältere – Shannon legt mehrere Ereignisse übereinander.
+  - **Börsengang** (`ipo`, `avwap._boersengang`): erster Handelstag, wenn die Kursreihe mehr als 30 Tage nach der des
+    Index beginnt. Vorher galt der Rand nie als Anker.
+  - **Ausbruch (Handoff)** (`ausbruch`, `avwap._ausbruch`): AVWAP ab dem Tag des laufenden Ausbruchs aus der Zone
+    (ohne Fehlausbruch).
+- Chart: Voreinstellung letztes Hoch, Trendstart, höheres Tief, Börsengang, Handoff (Wahlschalter `avwap_anker5`;
+  Zahlen-Reaktion zusätzlich Zahlentag). Prüfer-Material und Regelkarte mit allen Ankern.
+- Gemessen (1.865 Titel): Zahlentag 1.328, Lücke/Volumen 1.626, beide 1.166, Börsengang 90, Handoff 282.
