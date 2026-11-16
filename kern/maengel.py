@@ -157,7 +157,8 @@ VORGABEN = [
     ("chart", "2026-11-15 11:37", "Basenzählung", "behoben",
      "3e94e01: neu nach Phase 4, 3 → 2 und unter dem Tief der vorigen Base (58), Markttief entfällt; Nummer an jeder Zone "
      "(289 mit Nummer statt 140), in Kasten, Kachel und Material"),
-    ("chart", "2026-11-15 11:37", "AVWAP Tief der Bewegung und Ereignis", "offen", "→ Plan 20 (Auslegung: Micky entscheidet)"),
+    ("chart", "2026-11-15 11:37", "AVWAP Tief der Bewegung und Ereignis", "behoben",
+     "ab6a236: Plan 20 – letztes höheres Tief neben dem Trendstart-Tief; Ereignis höchstens 6 Monate (seit 14.11.); 328 von 1.865 Titeln"),
     ("chart", "2026-11-15 11:37", "Gruppen-Anlass", "offen", "→ Plan 11 (Gruppe)"),
     ("chart", "2026-11-15 11:37", "Markt:", "offen", "→ Plan 12 (Markt)"),
 ]
@@ -213,9 +214,10 @@ PLAN = [
     (17, "Bild und Zahlen gleich: Chart und Material aus derselben Zone, Enge und Base (Lauf 3/4)", "Befunde", "offen", ""),
     (18, "Gegenseite und Abstände: anderer Rand, Abstand zu Mauer und Stütze (Lauf 3/4)", "Befunde", "offen", ""),
     (19, "Prüfer irrt: Ersatzregeln der App im Material erklären (Lauf 3)", "Prüfer", "offen", ""),
-    (20, "Auslegung für Micky: AVWAP Tief der Bewegung und Ereignis-Anker „zu alt“ (Lauf 4)", "Entscheidung", "offen",
-     "Micky 16.11.: beide Linien – Trendstart-Tief (großes Bild) und letztes höheres Tief (Tief des letzten Rückgangs ab "
-     "8 %, aus dem der laufende Anstieg kam; Shannons Stopp-Anker); noch zu bauen"),
+    (20, "Auslegung für Micky: AVWAP Tief der Bewegung und Ereignis-Anker „zu alt“ (Lauf 4)", "Entscheidung", "behoben",
+     "ab6a236: Micky 16.11.: beide Linien – Trendstart-Tief und letztes höheres Tief (Tief des letzten Rückgangs ab 8 %, aus dem "
+     "der Anstieg zum letzten Hoch kam). 1.865 Titel: 328 mit höherem Tief, Kurs im Median 4,5 % über dessen AVWAP (Trendstart "
+     "20,7 %); von 195 Trendstarts älter als ein Jahr haben 87 jetzt die nahe Linie; WST 27.07. 325,06 $, AVWAP 370,74 $"),
     (21, "Schritt 2 gespiegelt für Shorts (Micky 15.11.: ja): früh unter dem Tief einer Enge, Bruch an der Unterkante. Die "
          "App kennt Shorts heute erst nach dem Bruch (Bärenflagge, Bruch der Spanne) – sie braucht dafür die Zone von der "
          "Short-Seite vor dem Bruch; gebaut mit Schritt 4 (Spring/Upthrust braucht dieselben beiden Ränder)",

@@ -1304,3 +1304,16 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   unverändert; Base-Ausbruch und Titel ohne Setup unverändert. Flagge: Stärke 30 → Zeichen, Enge 10 gelb → grün
   (4–8 Wochen), 8 grün → gelb (Volumen laut). Sprung: Enge 6 → grün (hält das Tief). Die Titelseite zeigt das nach dem
   nächsten Nachtlauf.
+
+## Plan 20: AVWAP letztes höheres Tief (16.11.2026)
+
+- **Zwei Tiefs** (Micky: beide Linien, wie Shannon mehrere Anker übereinander): das **Tief der Bewegung** bleibt das
+  Trendstart-Tief (großes Bild, mit dem letzten Hoch die Zange). Neu: das **letzte höhere Tief** (`avwap._hoeheres_tief`,
+  Schlüssel `hoeher`) = das Tief des letzten Rückgangs ab 8 % (dieselbe Bestätigung wie beim Hoch), aus dem der Anstieg
+  zum letzten Hoch kam – Shannons „most recent and relevant higher low“, unter dem sein Stopp sitzt. Nur nach dem
+  Trendstart-Tief und solange der Kurs nicht darunter fiel.
+- Chart: grüne Linie, in der Voreinstellung an (Wahlschalter neu: `avwap_anker4`); Prüfer-Material und Regelkarte
+  (Prüf-Element „AVWAP letztes höheres Tief“).
+- Gemessen (1.865 Titel, Mac-Daten): 328 mit höherem Tief; Kurs im Median 4,5 % über dessen AVWAP (Trendstart-Tief
+  20,7 %), Alter im Median 73 Tage. Von 195 Trendstarts älter als ein Jahr haben 87 jetzt die nahe Linie. WST (mit den
+  Kursen bis 13.11.): Trendstart 30.01. 223,52 $ (AVWAP 313,46 $), höheres Tief 27.07. 325,06 $ (AVWAP 370,74 $).
