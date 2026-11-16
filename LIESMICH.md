@@ -1268,3 +1268,16 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   (vorher bei 41 Titeln Stärke und Schwäche zugleich).
 - Gemessen (468): angenommen 139 → 84, Ungleichgewicht 12 → 34, Ende des Laufs 18 → 30, Test am Rand 53 → 64 (11 Vorstöße),
   abgelehnt 56 → 66; Kartentisch unverändert.
+
+## Plan 16: Gültigkeit der Zone (16.11.2026)
+
+- **Tiefe Zonen (über 33 %)** behalten ihren Pivot (Mickys Konsolidierung darf über 30 % tief sein); die Lücke „über 33 %
+  tief, nur im Bärenmarkt üblich (O'Neil)“ steht dabei, Minervini ist dort höchstens gelb (Regel „Reife Base“). Gemessen:
+  62 Zonen 33–50 % tief (48 Konsolidierungen nach einem Absturz, 14 Basen).
+- **Flache Base nach O'Neil** (`vcp_zone.flache_base`): läuft keine fertige Zone, gilt eine Spanne von mindestens 5 Wochen
+  seit ihrem Hoch, höchstens 15 % tief, Kurs höchstens 15 % unter dem 52-Wochen-Hoch, ohne Schluss über der Oberkante und
+  nicht nach einem Absturz als Zone (LNTH, UBSI heute). An ihren Rändern entstehen Spring und Upthrust: w_spring 11 → 15,
+  w_upthrust 23 → 25.
+- **Zonenbeginn hinter einem älteren Hoch** ist eine Regel (Absturz über 50 % oder gescheiterte Tasse) – jetzt im Material
+  des Prüfers erklärt.
+- Minervini grün 7 → 6, gelb 27 → 26; Kartentisch grün 46 → 49, ★ 25 → 27.

@@ -221,7 +221,12 @@ def material(tk, df):
                       f"{_z(z['vorgeschichte']['prozent'], '+.0f')} % in {_z(z['vorgeschichte']['wochen'], '.0f')} "
                       f"Wochen vom {_d(df.index[z['vorgeschichte']['von_i']])} ({_z(z['vorgeschichte']['von'])} $). "
                       f"Fahnenstange (Kullamägi, höchstens 13 Wochen): {_z(z['stange']['prozent'], '+.0f')} % in "
-                      f"{_z(z['stange']['wochen'], '.1f')} Wochen")
+                      f"{_z(z['stange']['wochen'], '.1f')} Wochen"
+                      + (" · flache Base nach O'Neil (mindestens 5 Wochen, höchstens 15 % tief, nahe am Hoch)" if z.get("flach") else "")
+                      + ". Regeln der App (Plan 16): die Zone beginnt am ältesten Hoch ohne Schluss darüber – ein älteres "
+                        "Hoch zählt nicht, wenn der Fall von dort über 50 % tief war (Absturz, O'Neil) oder die Tasse "
+                        "scheiterte (neue Base, Minervini); eine Zone über 33 % tief behält ihren Pivot (Mickys "
+                        "Konsolidierung), Minervini ist dort höchstens gelb")
         if z.get("innen"):
             f = z["innen"]
             zeilen.append(f"Darin Flagge ab {_d(f['start'])}, Oberkante {_z(f['oben'])} $, {_z(f['tiefe'], '.1f')} % tief")

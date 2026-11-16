@@ -105,6 +105,8 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     eng = e.get("ampel", "grau") if reif else "grau"
     z_ok, z_txt = _zahlen(fund)
     n_kontr = len(e.get("kontraktionen") or []) if reif else 0
+    # Plan 16 (Micky 16.11.2026): eine Base über 33 % tief behält ihren Pivot, Minervini ist dort höchstens gelb
+    tief_ok = not reif or z.get("tiefe", TIEFE_UNBEKANNT) <= vcp_zone.BASE_TIEFE_UEBLICH
     # Plan 9 (Micky 16.11.2026): eine gelbe Enge erfüllt die Regel nur, wenn das Volumen ausgetrocknet ist und es höchstens
     # 6 Wellen sind – vorher wurde Minervini grün bei 114–143 % Volumen (CBOE, COKE, CSX) und bei 8 Wellen (COKE)
     trocken = not reif or e.get("volumen") != e.get("volumen") or e.get("volumen") is None or bool(e.get("trocken"))
@@ -127,7 +129,9 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
               ("RS ab 70 (8. Punkt)", rs_rang is not None and rs_rang >= RS_MIN,
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
-              ("Reife Base (Scanner)", reif, zone_txt),
+              ("Reife Base (Scanner)", reif and tief_ok, zone_txt + ("" if tief_ok else
+                                                                      f" – über {vcp_zone.BASE_TIEFE_UEBLICH:.0f} % tief, nur im "
+                                                                      "Bärenmarkt üblich (O'Neil)")),
               ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= KONTR_MIN and trocken and wenige,
                (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", "")
                 + ("" if n_kontr >= KONTR_MIN or eng not in ("grün", "gelb") else " – erst eine Kontraktion")

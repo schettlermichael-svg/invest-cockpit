@@ -79,7 +79,7 @@ und höchstens 40 % Breite bricht nach unten – Schluss mindestens 1 % unter ih
 """
 import numpy as np
 import pandas as pd
-from masse import PHASE_VERTEILUNG, VOL_MIN_TAGE, WOCHE  # noqa: E402
+from masse import JAHR_TAGE, PHASE_VERTEILUNG, VOL_MIN_TAGE, WOCHE  # noqa: E402
 from phase import RUECKSETZER  # noqa: E402  Rücksetzer in Phase 2 – eine Quelle (phase)
 
 ATR_TAGE = 14
@@ -176,8 +176,44 @@ def _vorgeschichte(df, top_i, top):
             "von_i": tief_i, "bis_i": top_i, "von": tief, "bis": top}
 
 
+FLACH_MIN_W = 5                # flache Base (O'Neil): mindestens 5 Wochen …
+FLACH_TIEFE = 0.15             # … höchstens 15 % tief …
+FLACH_VOM_HOCH = 0.15          # … und höchstens 15 % unter dem 52-Wochen-Hoch (Plan 16, Micky 16.11.2026)
+
+
+def flache_base(df):
+    """Flache Base nach O'Neil am rechten Rand (mindestens 5 Wochen, höchstens 15 % tief, Kurs höchstens 15 % unter dem
+    52-Wochen-Hoch, kein Schluss über ihrer Oberkante) → Zone wie _rahmen (mit flach=True) oder None. Die längste solche
+    Spanne zählt; sie beginnt am ersten Tag, dessen Hoch bis RAND_PCT an die Oberkante reicht."""
+    h, l, c = (df[x].to_numpy(float) for x in ("High", "Low", "Close"))
+    n = len(df)
+    if n < FLACH_MIN_W * WOCHE + 1 or c[-1] < h[-JAHR_TAGE:].max() * (1 - FLACH_VOM_HOCH):
+        return None
+    beste = None
+    for t in range(FLACH_MIN_W * WOCHE, min(MAX_WOCHEN * WOCHE, n - 1) + 1, WOCHE):
+        hi, lo = h[-t:].max(), l[-t:].min()
+        if hi / lo - 1 > FLACH_TIEFE:
+            break
+        beste = t
+    if not beste:
+        return None
+    hi = h[-beste:].max()
+    top_i = n - beste + int(np.argmax(h[-beste:]))
+    if top_i < n - 1 and c[top_i + 1:].max() > hi:
+        return None
+    i = n - beste + int(np.argmax(h[-beste:] >= hi * (1 - RAND_PCT / 100)))
+    if (n - 1 - i) / WOCHE < FLACH_MIN_W:        # die Base zählt ab ihrem Hoch: erst 5 Wochen danach ist sie eine
+        return None                              # flache Base (vorher eine enge Spanne mit frischem Hoch)
+    z = _rahmen(df, i, float(hi))
+    if z["name"] == "Konsolidierung":            # nach einem Absturz keine flache Base (O'Neil: nach einem Anstieg)
+        return None
+    z.update(flach=True, name="Base" if z["name"] != "Flagge" else "Flagge")
+    return z
+
+
 def zone(df):
-    """Zone am rechten Rand oder None (dann mit Grund in 'grund')."""
+    """Zone am rechten Rand oder None (dann mit Grund in 'grund'). Läuft keine fertige Zone, gilt eine flache Base nach
+    O'Neil (flache_base) als Zone."""
     df = df.dropna(subset=["High", "Low", "Close"])
     if len(df) < 60:
         return {"zone": False, "grund": "zu wenig Kurse"}
@@ -188,6 +224,9 @@ def zone(df):
     # ungebrochen: seit dem Hoch kein Schluss darüber
     ungebrochen = [p for p in hochs if p[0] < n - 1 and c[p[0] + 1:].max() <= p[1]]
     if not ungebrochen:
+        fb = flache_base(df)
+        if fb:
+            return fb
         return {"zone": False, "grund": "kein grobes Hoch ohne Schluss darüber in 65 Wochen – Kurs läuft am Hoch"}
     kand = sorted((p[0], p[1]) for p in ungebrochen)   # älteste zuerst
     gewaehlt, gescheitert, k_ = None, None, 0
@@ -217,6 +256,10 @@ def zone(df):
                 continue
             gewaehlt = (i, top)
             break
+    if gewaehlt is None:
+        fb = flache_base(df)                    # Plan 16: eine flache Base im laufenden Rücksetzer ist eine eigene Zone
+        if fb:
+            return fb
     if gewaehlt is None:                        # Rücksetzer läuft: Zone noch nicht fertig, Rahmen trotzdem zeigen
         if gescheitert:                         # ab der neuen linken Seite (dem Hoch der gescheiterten rechten Seite)
             i = gescheitert[1]
@@ -386,7 +429,7 @@ def enge(df, z):
     fehlt = ([] if len(kontr) >= 2 else ["erst eine Kontraktion"]) + ([] if schrumpft else ["schrumpft nicht"]) \
         + ([] if eng else [f"Enge {letzte['tiefe']:.1f} % (über {ENGE_MAX:.0f} %)".replace(".", ",")]) \
         + ([] if ruhig or len(kontr) < 2 else ["Volumen nicht leiser als in der ersten Kontraktion"]) \
-        + ([] if flach_genug else [f"Base {z['tiefe']:.0f} % tief (über {BASE_TIEFE_UEBLICH:.0f} %, nur im Bärenmarkt üblich)"]) \
+        + ([] if flach_genug else [f"{z.get('name', 'Zone')} {z['tiefe']:.0f} % tief (über {BASE_TIEFE_UEBLICH:.0f} %, nur im Bärenmarkt üblich, O'Neil)"]) \
         + ([] if wenige else [f"{len(kontr)} Wellen (Minervini: 2–{KONTR_MAX})"]) \
         + ([] if trocken or vol_enge != vol_enge else [f"Volumen der Enge {vol_enge:.0f} % des Schnitts (nicht ausgetrocknet)"]) \
         + ([] if ph != 4 else ["Phase 4 – im Abwärtstrend kein VCP"])
