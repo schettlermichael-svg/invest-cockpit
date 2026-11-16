@@ -14,3 +14,4 @@ __pycache__/
 .DS_Store
 *.neu
 einstellungen/ntfy_kanal.txt
+einstellungen/performance.json

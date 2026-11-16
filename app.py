@@ -50,9 +50,13 @@ div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padd
 div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid {RAND}; border-radius:10px;
   background:{KARTE}; margin-right:8px}}
 div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
+/* Seitenwahl: alle Seiten in einer Reihe (Micky 16.11.2026) – auf schmalem Schirm seitlich schieben statt umbrechen */
+.st-key-ansicht div[role="radiogroup"] {{flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:thin}}
+.st-key-ansicht div[role="radiogroup"] label {{white-space:nowrap; flex:0 0 auto}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Setups", "Titelseite"]   # Rückenwind = Lagezentrum, Setups = Aufklärung und Filter
+ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Depot", "Performance"]   # Rückenwind = Lagezentrum, Setups =
+# Aufklärung und Filter; Depot und Performance seit 16.11.2026
 # (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026 abgebaut
 ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Setups"}                       # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
@@ -62,7 +66,7 @@ if "ansicht" not in st.session_state:
     seite = ALTE_SEITEN.get(st.query_params.get("seite", "Rückenwind"), st.query_params.get("seite", "Rückenwind"))
     st.session_state.ansicht = seite if seite in ansicht_liste else "Rückenwind"
     st.session_state.ticker = st.query_params.get("t", "HWM")
-spalte0, spalte1, _ = st.columns([4, 2, 6])
+spalte0, spalte1 = st.columns([9, 2])           # alle Seiten nebeneinander, der Titel rechts daneben
 with spalte0:
     ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")
 with spalte1:
@@ -142,9 +146,7 @@ def position_knopf(tk):
         with st.form(f"pos_{tk}"):
             seite_ = st.radio("Seite", ["long", "short"], horizontal=True,
                               index=0 if not p or p.get("seite", "long") == "long" else 1)
-            systeme_ = ["Base-Ausbruch (Stopp nach Minervini)", "Momentum · Flagge · Sprung · Zahlen-Reaktion (GD10/GD20)"]
-            system_ = st.radio("Setup-Art (bestimmt Stopp nachziehen und Ausstieg)", systeme_, horizontal=True,
-                               index=1 if (p or {}).get("system") == "K" else 0)
+            # die Setup-Art (M/K) entfällt seit 16.11.2026: ein System, der Stopp folgt dem 10er/20er (Schritt 5)
             stueck = st.number_input("Stück", min_value=0, step=1, value=int(p["stueck"]) if p else 0)
             einstieg = st.number_input("Einstieg (Kurs des Titels)", min_value=0.0, format="%.2f",
                                        value=float(p["einstieg"] or 0) if p else 0.0)
@@ -156,7 +158,7 @@ def position_knopf(tk):
             bezug = st.number_input("Bezugsverhältnis (z. B. 0,1)", min_value=0.0, format="%.3f",
                                     value=float(ko.get("bezug") or 0))
             if st.form_submit_button("Speichern", use_container_width=True):
-                depot.setzen(tk, seite=seite_, system="K" if system_ == systeme_[1] else "M", stueck=int(stueck),
+                depot.setzen(tk, seite=seite_, stueck=int(stueck),
                              einstieg=einstieg or None, stopp=stopp or None,
                              ko={"schwelle": schwelle, "bezug": bezug} if schwelle and bezug else None)
                 st.rerun()
@@ -245,6 +247,96 @@ def konto_knopf():
             if st.form_submit_button("Speichern", use_container_width=True):
                 depot.einstellen(konto=konto, risiko_pct=risiko)
                 st.rerun()
+
+
+def depot_zeigen():
+    """Seite Depot: Konto und Risiko, Depot-Hitze und Positionen; für die gewählte Position der Chart der Position
+    (Einstieg, Anfangsstopp, Stopp jetzt am 10er/20er, Ende-Zeichen), „Nach dem Kauf“, TradingView und Deep Dive."""
+    import depotleiste
+    _, k_ = st.columns([10, 2])
+    with k_:
+        konto_knopf()
+    st.markdown(gestaltung.seite(depotleiste.leiste(), oben=0, unten=12), unsafe_allow_html=True)
+    pos = [p["ticker"] for p in depot.laden()["positionen"]]
+    if not pos:
+        return
+    with st.container(key="depot_wahl"):
+        tk = st.radio("Position", pos, horizontal=True, key="depot_tk")
+    p = depot.position(tk)
+    _, df = depotleiste._kurs(tk)                 # dieselben Kurse wie die Liste darüber
+    if df is None or not len(df):
+        st.warning(f"Keine Kurse für {tk}")
+        return
+    df.attrs["ticker"] = tk
+    a_, b_, c_, _ = st.columns([2, 2, 2, 6])
+    with a_:
+        st.link_button("TradingView →", titel.tv_link(tk), use_container_width=True)
+    with b_:
+        st.link_button("Deep Dive →", f"?seite=Titelseite&t={tk}", use_container_width=True)
+    with c_:
+        position_knopf(tk)
+    marken = depotleiste.positionsmarken(p, df)
+    svg = chart.chart(df, "Tag", None, "6 M", gd_kurz=True, marken=marken)
+    st.markdown(gestaltung.seite(gestaltung.karte(
+        f'<div style="color:{TEXT_2};font-size:14px;margin-bottom:6px">Chart der Position · GD10 orange, GD20 rosa · '
+        f'Einstieg blau, Anfangsstopp grau, Stopp jetzt rot, Ende-Zeichen gelb</div>' + svg, f"{tk} · Chart der Position")
+        + depotleiste.titelkarte(tk, df, {}), oben=0, unten=12), unsafe_allow_html=True)
+
+
+def performance_zeigen():
+    """Seite Performance: Eingaben (Start und Ziel, Woche eintragen, Excel übernehmen) und die Seite aus
+    performance_seite (Kurve gegen Zielpfad, Hochrechnung auf ein Jahr, Unterwasser, Bilanz)."""
+    import datetime as dt
+    import performance
+    import performance_seite
+    d = performance.laden()
+    a_, b_, c_, _ = st.columns([2, 2, 2, 6])
+    with a_:
+        with _fenster("⚙ Start und Ziel"):
+            with st.form("perf_start"):
+                start = st.number_input("Startkapital (€)", min_value=0.0, step=100.0, format="%.2f",
+                                        value=float(d.get("start") or 0))
+                ziel = st.number_input("Ziel-Rendite je Woche (%)", min_value=-100.0, step=1.0, format="%.2f",
+                                       value=float((d.get("ziel_woche") or 0) * 100))
+                if st.form_submit_button("Speichern", use_container_width=True):
+                    d["start"], d["ziel_woche"] = start or None, ziel / 100
+                    performance.speichern(d)
+                    st.rerun()
+    with b_:
+        with _fenster("＋ Woche eintragen"):
+            with st.form("perf_woche"):
+                heute = dt.date.today()
+                freitag = heute - dt.timedelta(days=(heute.weekday() - 4) % 7)
+                tag = st.date_input("Freitag", value=freitag, format="DD.MM.YYYY")
+                wert = st.number_input("Depotwert (€)", min_value=0.0, step=10.0, format="%.2f")
+                ein = st.number_input("Einzahlung (+) bzw. Auszahlung (−) in dieser Woche (€)", step=10.0, format="%.2f")
+                if st.form_submit_button("Speichern", use_container_width=True) and wert:
+                    performance.woche_setzen(tag.isoformat(), wert, ein)
+                    st.rerun()
+            if d["wochen"]:
+                with st.form("perf_weg"):
+                    weg = st.selectbox("Woche löschen", [w["datum"] for w in reversed(d["wochen"])])
+                    if st.form_submit_button("Löschen", use_container_width=True):
+                        performance.woche_loeschen(weg)
+                        st.rerun()
+    with c_:
+        with _fenster("⇪ Excel-Liste übernehmen"):
+            datei = st.file_uploader("Trading Performance Tracker (.xlsx)", type=["xlsx"])
+            erster = st.date_input("Freitag der ersten Woche", value=dt.date.today() - dt.timedelta(days=7),
+                                   format="DD.MM.YYYY", key="perf_erster")
+            if datei and st.button("Übernehmen", use_container_width=True):
+                x = performance.aus_excel(datei)
+                d = {"start": x["start"], "ziel_woche": x["ziel_woche"], "start_datum": None, "wochen": []}
+                wert = x["start"]
+                for i, r_ in enumerate(x["renditen"]):
+                    wert *= 1 + r_
+                    d["wochen"].append({"datum": (erster + dt.timedelta(days=7 * i)).isoformat(), "wert": round(wert, 2),
+                                        "einzahlung": 0.0})
+                performance.speichern(d)
+                st.success(f"Übernommen: Start {x['start']:.0f} €, {len(x['renditen'])} Woche(n), Ziel "
+                           f"{(x['ziel_woche'] or 0) * 100:.0f} % je Woche")
+                st.rerun()
+    st.markdown(performance_seite.seite_performance(), unsafe_allow_html=True)
 
 
 def _watch_umschalten(tk):
@@ -948,10 +1040,17 @@ def datenstand_zeigen():
 
 
 if ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
-    _, k_ = st.columns([10, 2])
-    with k_:
-        konto_knopf()
     zeigen("uebersicht")
+elif ansicht == "Depot":                       # Depot (16.11.2026): Konto, Hitze, Positionen, Chart der Position
+    try:
+        depot_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
+elif ansicht == "Performance":                 # Performance (16.11.2026): Kurve, Hochrechnung, Unterwasser, Bilanz
+    try:
+        performance_zeigen()
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
 elif ansicht == "Setups":                      # Aufklärung und Filter (12.11.2026)
     datenstand_zeigen()
     _, n_, w_ = st.columns([8, 2, 2])

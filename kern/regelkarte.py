@@ -519,8 +519,14 @@ BEREICHE = [
                "über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = Zeichen, das Risiko je Trade zu "
                "halbieren; Depot-Hitze höchstens 6 % des Kontos.",
          messung=["depot._nach_dem_kauf", "reiten.nachgezogen", "reiten.ende_zeichen", "depot.verlustbremse",
-                  "depotleiste.titelkarte"], pruefer=[],
+                  "depotleiste.titelkarte", "depotleiste.positionsmarken"], pruefer=[],
          luecke="kein Prüfer – die Regeln sind fest, gemessen wird am eigenen Depot"),
+    dict(name="Performance", quelle="Micky 16.11.2026 (Excel-Liste „Trading Performance Tracker“), Minervini (Verlustbremse)",
+         regel="Wochenrendite = (Depotwert − Vorwoche − Einzahlung) / Vorwoche; Ø Wochenrendite geometrisch aus den echten "
+               "Wochen; Hochrechnung auf ein Jahr (52 Wochen) mit der Ø und mit der letzten Woche; Zielpfad Start × (1 + "
+               "Wochenziel)^Woche; Unterwasser = Abstand zum bisherigen Hoch, ab 10 % rot wie die Verlustbremse.",
+         messung=["performance.rechnen"], pruefer=[],
+         luecke="kein Prüfer – gerechnet wird am eigenen Konto"),
     dict(name="Rückenwind: Stufen der Titel", quelle="O'Neil/IBD (RS-Rang), Micky 09.11.2026 (Stufen)",
          regel="RS-Rang 1–99 wie IBD (letztes Quartal 40 %, die drei davor je 20 %). Läuft: Rang ab 85 und Tempo nicht "
                "schlechter als −5 in 4 Wochen; Entsteht: Rang 50 bis unter 85, mindestens +15 in 4 Wochen und "
@@ -674,6 +680,7 @@ TECHNIK = {
     "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
     "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
     "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
+    **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS")},
 }
 VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE"}   # gleicher Name, verschiedene Begriffe
 

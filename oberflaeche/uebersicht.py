@@ -19,7 +19,6 @@ import lage                                                  # noqa: E402
 import marktdaten                                            # noqa: E402
 from frontkarte import quad_abgleich  # noqa: E402
 import quadbild                                              # noqa: E402
-import depotleiste                                           # noqa: E402
 from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, punkt, seite, sprungleiste,
                         station, t, zahl)  # noqa: E402
 
@@ -194,4 +193,4 @@ def seite_uebersicht():
         zustand = ""
     return {"lage": seite(kopf + sprungleiste() + station("lage") + zustand + leiste + '<div style="height:12px"></div>' + einzeln,
                           unten=12),
-            "unten": seite(station("truppe") + depotleiste.leiste(), oben=12)}
+            "unten": seite(station("truppe"), oben=12)}     # das Depot steht seit 16.11.2026 auf der Seite Depot

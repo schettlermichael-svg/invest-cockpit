@@ -34,7 +34,7 @@ def leiste():
     """Übersicht: Depot-Hitze und je Position eine Zeile mit Abstand zum Stopp und dem wichtigsten Zeichen."""
     d = depot.laden()
     if not d.get("konto"):
-        return karte(f'<div style="font-size:15px;color:{TEXT_2}">Noch kein Konto eingetragen – oben „⚙ Konto und Risiko“. '
+        return karte(f'<div style="font-size:15px;color:{TEXT_2}">Noch kein Konto eingetragen – Seite Depot oben, „⚙ Konto und Risiko“. '
                      f'Danach rechnet die App Stückzahl und Risiko auf jeder Karte und die Depot-Hitze.</div>', "Depot")
     h = depot.hitze(d)
     kopf = (f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:baseline">'
@@ -77,6 +77,22 @@ def leiste():
     return karte(kopf + liste, "Depot · Positionen und Hitze")
 
 
+def positionsmarken(p, df, erk=None):
+    """Marken für den Chart der Position (Depot-Seite): Einstieg, Anfangsstopp, Stopp jetzt (reiten.nachgezogen) und
+    die enge Linie eines Ende-Zeichens – dieselbe Rechnung wie „Nach dem Kauf“."""
+    import reiten
+    if df is None or not p.get("einstieg"):
+        return {}
+    a_ = (erk or {}).get("auktion") or {}
+    ende = reiten.ende_zeichen(df, p.get("seite", "long"), a_.get("messung") if a_ else None)
+    nz = reiten.nachgezogen(df, p.get("datum"), float(p["einstieg"]), float(p["stopp"]) if p.get("stopp") else None,
+                            p.get("seite", "long"), ende) if p.get("stopp") else None
+    return {"position": {"einstieg": float(p["einstieg"]), "anfang": p.get("stopp"), "seite": p.get("seite", "long"),
+                         "tag": p.get("datum"), "stopp": (nz or {}).get("stopp"), "linie": (nz or {}).get("linie"),
+                         "enger": ((nz or {}).get("enger") or {}).get("stopp"),
+                         "enger_art": ((nz or {}).get("enger") or {}).get("art", "")}}
+
+
 def _deepdive(tk, lang):
     """Derselbe Knopf wie auf dem Kartentisch: „Deep Dive →“, neuer Tab, Rahmen long grün / short rot."""
     return (f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid '
@@ -113,7 +129,7 @@ def titelkarte(tk, df, erk):
                      "Position und Risiko · nach dem Kauf")
     plaene = depot.plaene(erk, df)
     if not d.get("konto"):
-        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Rückenwind oben, „⚙ Konto und '
+        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Depot oben, „⚙ Konto und '
                      f'Risiko“) – dann steht hier die Stückzahl für das Setup.</div>', "Position und Risiko")
     if not plaene:
         return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Setup mit Einstieg und Stopp – keine Stückzahl. '

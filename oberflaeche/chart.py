@@ -124,7 +124,9 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                            *(w_["wert"] for w_ in (marken.get("short") or {}).get("weitere") or []),
                            (marken.get("struktur") or {}).get("stopp"),
                            ((marken.get("short") or {}).get("struktur") or {}).get("stopp"))
-               + tuple(w_["wert"] for w_ in marken.get("weitere") or []) if x and tag_ebene]
+               + tuple(w_["wert"] for w_ in marken.get("weitere") or [])
+               + tuple(x_ for x_ in ((marken.get("position") or {}).get(k_) for k_ in ("einstieg", "anfang", "stopp", "enger"))
+                       if x_) if x and tag_ebene]
     pmax, pmin = max([h.max()] + grenzen) * 1.04, min([l.min()] + grenzen) * 0.97
 
     def Y(y):
@@ -162,6 +164,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     if tag_ebene:
         _profil(marken.get("profil"), d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax)
         _kaufzone(marken, d, pos, X, Y, A, spaete, platz, ENDE)
+        _position(marken.get("position"), d, pos, X, Y, A, spaete, platz, ENDE)
 
     # Kerzen
     bw = breite / N * 0.6
@@ -515,6 +518,31 @@ def _x0(m, d, pos, X):
     if ab is not None and pd.Timestamp(ab) >= d.index[0]:
         return X(pos(ab))
     return X(max(0, len(d) - 30))
+
+
+def _position(p, d, pos, X, Y, A, spaete, platz, ENDE):
+    """Chart der Position (Depot-Seite, 16.11.2026): Einstieg ab dem Kauftag, Anfangsstopp gestrichelt, der Stopp, der
+    jetzt gilt (10er/20er, reiten.nachgezogen), durchgezogen und – wenn ein Ende-Zeichen ihn enger zieht – die enge Linie."""
+    if not p or not p.get("einstieg"):
+        return
+    x0 = X(pos(p["tag"])) if p.get("tag") is not None and pd.Timestamp(p["tag"]) >= d.index[0] else X(0)
+    lang = p.get("seite", "long") == "long"
+    for wert, farbe, strich, dicke, vor, fett in (
+            (p["einstieg"], BLAU, "6 4", 1.6, "Einstieg", False),
+            (p.get("anfang"), TEXT_3, "4 4", 1.2, "Anfangsstopp", False),
+            (p.get("stopp"), ROT, "", 2.2, "Stopp jetzt", True),
+            (p.get("enger"), GELB, "", 2.0, f'enger: {p.get("enger_art", "")}', True)):
+        if not wert or (vor == "Anfangsstopp" and wert == p.get("stopp")):
+            continue
+        text = f'{vor} {zahl(wert)}' + (f' · {p.get("linie") or "Anfang"}' if vor == "Stopp jetzt" else "")
+        A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" '
+          f'stroke-width="{dicke}"' + (f' stroke-dasharray="{strich}"' if strich else "") + f'><title>{text}</title></line>')
+        y_, strich_ = _rechts(platz, ENDE, Y(wert), text, nach_oben=(wert >= p["einstieg"]) == lang)
+        spaete.append(f'{strich_}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe}" font-size="12"'
+                      + (' font-weight="600"' if fett else "") + f'>{text}</text>')
+    if p.get("tag") is not None and pd.Timestamp(p["tag"]) >= d.index[0]:
+        A(f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="30" y2="430" stroke="{BLAU}" stroke-opacity="0.5" stroke-dasharray="2 4">'
+          f'<title>Kauf am {pd.Timestamp(p["tag"]):%d.%m.%Y}</title></line>')
 
 
 def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
