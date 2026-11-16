@@ -65,12 +65,18 @@ ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Setups"}          
 if "ansicht" not in st.session_state:
     seite = ALTE_SEITEN.get(st.query_params.get("seite", "Rückenwind"), st.query_params.get("seite", "Rückenwind"))
     st.session_state.ansicht = seite if seite in ansicht_liste else "Rückenwind"
-    st.session_state.ticker = st.query_params.get("t", "HWM")
-spalte0, spalte1 = st.columns([9, 2])           # alle Seiten nebeneinander, der Titel rechts daneben
-with spalte0:
-    ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")
-with spalte1:
-    ticker = st.text_input("Titel", max_chars=12, key="ticker").strip().upper()
+    st.session_state.titel_tk = st.query_params.get("t", "HWM")
+if "titel_tk" not in st.session_state:          # offene Sitzungen von vor dem 16.11.2026
+    st.session_state.titel_tk = (st.session_state.get("ticker") or st.query_params.get("t", "HWM")).strip().upper()
+ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")      # alle Seiten nebeneinander
+if ansicht == "Titelseite":                     # das Titelfeld gehört zur Titelseite (Micky 16.11.2026) – der gewählte
+    if "ticker" not in st.session_state:        # Titel bleibt erhalten, während eine andere Seite offen ist
+        st.session_state.ticker = st.session_state.titel_tk
+    feld, _ = st.columns([2, 10])
+    with feld:
+        st.text_input("Titel", max_chars=12, key="ticker")
+    st.session_state.titel_tk = st.session_state.ticker.strip().upper()
+ticker = st.session_state.titel_tk
 st.query_params["t"] = ticker
 st.query_params["seite"] = ansicht
 

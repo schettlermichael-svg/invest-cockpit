@@ -6,13 +6,25 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "kern"))
 import depot  # noqa: E402
 import performance  # noqa: E402
+from fundament import MIO  # noqa: E402  eine Million – eine Quelle (fundament)
 from gestaltung import BLAU, GELB, GRUEN, RAND, ROT, TEXT, TEXT_2, TEXT_3, ampelzeile, karte, seite, t, zahl  # noqa: E402
 
 B = 1100                    # Breite der Kurve (Pixel)
 H = 330                     # Höhe der Kurve
 UW = 90                     # Höhe der Unterwasser-Leiste
-KURVE_LINKS = 70            # Rand links (Achse)
+KURVE_LINKS = 96            # Rand links (Achse: bis „999,9 Tsd. €“ – 16.11.2026: Zahlen links abgeschnitten)
+TSD_AB = 1e4                # Achse: ab 10.000 in Tsd.
+TAUSEND = 1e3               # Achse: Teiler für Tsd.
 KURVE_RECHTS = 150          # Rand rechts (Beschriftungen)
+
+
+def _achse(v):
+    """Wert an der Achse kurz: 652 €, 12,3 Tsd. €, 33,8 Mio. €."""
+    if v >= MIO:
+        return f"{zahl(v / MIO, 1)} Mio. €"
+    if v >= TSD_AB:
+        return f"{zahl(v / TAUSEND, 1)} Tsd. €"
+    return f"{zahl(v, 0)} €"
 
 
 def _pct(r, stellen=1):
@@ -54,7 +66,7 @@ def kurve(d, p):
         v = lo * (hi / lo) ** (k / 4)
         s.append(f'<line x1="{KURVE_LINKS}" x2="{B - KURVE_RECHTS}" y1="{Y(v):.1f}" y2="{Y(v):.1f}" stroke="{RAND}"/>'
                  f'<text x="{KURVE_LINKS - 8}" y="{Y(v) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">'
-                 f'{zahl(v, 0)} €</text>')
+                 f'{_achse(v)}</text>')
     for i in range(0, performance.WOCHEN_JAHR + 1, 4):
         s.append(f'<text x="{X(i):.1f}" y="{H + UW + 32}" fill="{TEXT_3}" font-size="12" text-anchor="middle">W {i}</text>')
 

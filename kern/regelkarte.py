@@ -690,7 +690,7 @@ TECHNIK = {
     "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
     "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
     "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
-    **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS")},
+    **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS", "TSD_AB", "TAUSEND")},
 }
 VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE"}   # gleicher Name, verschiedene Begriffe
 
