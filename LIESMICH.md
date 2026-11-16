@@ -1281,3 +1281,22 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - **Zonenbeginn hinter einem älteren Hoch** ist eine Regel (Absturz über 50 % oder gescheiterte Tasse) – jetzt im Material
   des Prüfers erklärt.
 - Minervini grün 7 → 6, gelb 27 → 26; Kartentisch grün 46 → 49, ★ 25 → 27.
+
+## Kacheln nach dem Regelkatalog (16.11.2026)
+
+- **Eine Quelle:** Jedes Setup im Regelkatalog (`regelkarte.SETUPS`, Feld `kacheln`) sagt, mit welcher Regel die Kacheln
+  Trend, Stärke, Fundament und Enge urteilen (`regelkarte.KACHEL_REGELN`, `kachel_regel`). Hat das Setup in einer Kachel
+  keine Regel, steht der Wert als Zeichen da (grauer Punkt, „Zeichen, keine Regel des Setups“). Ohne Setup gilt der
+  Maßstab des Base-Ausbruchs. Die Meister-Systeme M/K wählen keine Kachel-Regel mehr (`kachel2`, `SYSTEM`, `SYSTEM_JE`,
+  `punkt2` und die alten Zwei-System-Wege der Lagekarte entfernt).
+- **Je Setup:** Base-Ausbruch: Trendvorlage, RS ab 70, Zahlen wachsen, VCP. Flagge: Kurs über steigendem GD50, Enge der
+  Flagge (1–8 Wochen, Volumen leiser als in der Stange, sonst gelb). Momentum-Ausbruch: 3 Wochen über GD50, Führer
+  oberste 2 %, Pause 1–3 Wochen. Sprung: Nachricht, hält das Tief des Sprungtags. Zahlen-Reaktion: Kurs über GD50, hält
+  Tief und AVWAP. Bärenflagge: GD50 fällt. Alles Übrige (Spring/Upthrust, Ermüdung, Bruch der Spanne, Stärke bei Flagge,
+  Sprung und Zahlen-Reaktion) nur Zeichen – die Stärke-Frage entscheidet Micky (Mängelliste Plan 24).
+- **Wachposten:** meldet rot, wenn ein Setup nicht alle vier Kacheln im Katalog hat oder Katalog und Titelseite
+  (`titel.URTEILE`) verschiedene Regeln kennen. Der Setup-Prüfer liest die Kachel-Regeln je Setup im Material.
+- Gemessen (462 Titel, Mac-Daten): Trend 146, Stärke 180, Enge 140 Ampeln anders, Fundament, Markt, Setup, Geld und Base
+  unverändert; Base-Ausbruch und Titel ohne Setup unverändert. Flagge: Stärke 30 → Zeichen, Enge 10 gelb → grün
+  (4–8 Wochen), 8 grün → gelb (Volumen laut). Sprung: Enge 6 → grün (hält das Tief). Die Titelseite zeigt das nach dem
+  nächsten Nachtlauf.

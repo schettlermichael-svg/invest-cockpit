@@ -225,6 +225,12 @@ PLAN = [
          "Trendvorlage 7/5, Reaktion ±3 %, Absturz 15 %, Termin 14 Tage, Abstand 10 %), im Chart 189 Zahlen (meist Layout). "
          "Benennen, Kopien auf die eine Quelle führen, Wachposten auf alle Module ausdehnen (Layout als Technik)",
      "Inventur", "offen", ""),
+    (23, "Kacheln der Titelseite urteilen nach dem Regelkatalog, nicht nach den Meistern (Micky 16.11.: Stärke rot bei "
+         "einer Flagge mit RS-Rang 90)", "Befunde", "behoben",
+     "87c1f6e: je Setup eine Regel je Kachel im Katalog, sonst Zeichen (grau); 462 Titel: Trend 146, Stärke 180, Enge 140 "
+     "Ampeln anders, Base-Ausbruch und ohne Setup unverändert; Flagge 4–8 Wochen grün (10), Volumen laut gelb (8)"),
+    (24, "Stärke bei Setups ohne Stärke-Regel (Flagge, Sprung, Zahlen-Reaktion, Spring, Shorts): Zeichen oder ein "
+         "einheitlicher RS-Rang – vorläufig Zeichen, Micky entscheidet", "Entscheidung", "offen", ""),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
