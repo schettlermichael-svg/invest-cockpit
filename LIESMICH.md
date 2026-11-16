@@ -1317,3 +1317,15 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - Gemessen (1.865 Titel, Mac-Daten): 328 mit höherem Tief; Kurs im Median 4,5 % über dessen AVWAP (Trendstart-Tief
   20,7 %), Alter im Median 73 Tage. Von 195 Trendstarts älter als ein Jahr haben 87 jetzt die nahe Linie. WST (mit den
   Kursen bis 13.11.): Trendstart 30.01. 223,52 $ (AVWAP 313,46 $), höheres Tief 27.07. 325,06 $ (AVWAP 370,74 $).
+
+## Begriff Flagge (16.11.2026, Plan 25)
+
+- Kullamägi: ein großer Anstieg (30–100 %) **in den letzten 1–3 Monaten**, der **ein paar Tage bis ein paar Wochen
+  dauert**. Die 1–3 Monate sagen, wann der Mast war, nicht wie lang er sein darf. Der Katalog las sie als Länge
+  („30 % in höchstens 13 Wochen“) – so hieß auch ein Aufwärtstrend mit Pause Flagge (WST: 33 % in 13,0 Wochen).
+- Neu (`vcp_zone.FLAGGE_STANGE_W` = 6): Fahnenstange ab 30 % in höchstens 6 Wochen, die Flagge kürzer als ihre Stange
+  (klassische Lehre: Bulkowski, Murphy; O'Neils High Tight Flag 100 % in 4–8 Wochen). Meistertexte in Regelkarte,
+  Chart- und Setup-Prüfer berichtigt.
+- Gemessen (479 Titel): von 123 Flaggen-Zonen hatten 61 eine Stange von 10–13 Wochen. Setup Flagge 30 → 11 (grün 7 → 2);
+  die übrigen: 14 ohne Setup, 2 Momentum-Ausbruch, 2 Base-Ausbruch, 1 Bruch der Spanne; Ermüdung 3 → 1. WST ist jetzt
+  eine Base (in 6 Wochen nur +22 %).

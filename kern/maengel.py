@@ -237,6 +237,11 @@ PLAN = [
          "einheitlicher RS-Rang – vorläufig Zeichen, Micky entscheidet", "Entscheidung", "behoben",
      "82ae33e: Micky 16.11.: RS-Rang für alle Setups außer Momentum, Short gespiegelt; übrige Kacheln ohne Regel bleiben "
      "Zeichen. 462 Titel: Stärke bei 180 aus Zeichen ein Urteil (64 grün, 23 gelb, 93 rot), Flagge 26 grün, 1 gelb, 3 rot"),
+    (25, "Begriff Flagge (Micky 16.11.: WST stieg 13 Wochen stufenweise und hieß Flagge): Fahnenstange höchstens 6 Wochen, "
+         "Flagge kürzer als ihre Stange", "Befunde", "behoben",
+     "e724df8: Kullamägis 1–3 Monate sagen, wann der Mast war; der Anstieg selbst dauert ein paar Tage bis ein paar Wochen. "
+     "479 Titel: Flagge als Setup 30 → 11 (grün 7 → 2), daraus 14 ohne Setup, 2 Momentum, 2 Base-Ausbruch, 1 Bruch; "
+     "Ermüdung 3 → 1; WST jetzt Base (Stange in 6 Wochen nur +22 %)"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
