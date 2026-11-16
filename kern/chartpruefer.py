@@ -243,7 +243,8 @@ def material(tk, df):
             zeilen.append(f"Zwei Einstiege (Gefechtsordnung): früh beim Schluss über dem Hoch der Enge {_z(e['pivot'])} $ "
                           f"({e['lage']}) und am Ausbruch über die Oberkante {_z(z_e['oben'])} $")
     for schl, name in (("gipfel", "Hoch des Rückgangs"), ("hoch", "letztes Hoch"), ("tief", "Tief der Bewegung"),
-                       ("hoeher", "letztes höheres Tief"), ("ereignis", "Ereignis")):
+                       ("hoeher", "letztes höheres Tief"), ("zahlen", "Zahlentag"), ("ereignis", "Lücke/Volumen"),
+                       ("ipo", "Börsengang"), ("ausbruch", "Ausbruch (Handoff)")):
         if schl in a:
             preis = df["High"][a[schl]] if schl in ("gipfel", "hoch") else df["Low"][a[schl]]
             zeilen.append(f"AVWAP-Anker {name}: {_d(a[schl])} bei {_z(preis)} $"
@@ -407,11 +408,15 @@ def bild(tk, df, marken):
         for k in e.get("kontraktionen") or []:
             i0, i1 = px(df.index[k["hoch_i"]]), px(df.index[k["tief_i"]])
             ax.plot([i0, i1], [k["hoch"], k["tief"]], color="#888", linestyle=":", linewidth=1.2)
-    farben = {"gipfel": "#C62828", "hoch": "#EF6C00", "tief": "#00838F", "hoeher": "#2E7D32", "ereignis": "#B8860B"}
+    farben = {"gipfel": "#C62828", "hoch": "#EF6C00", "tief": "#00838F", "hoeher": "#2E7D32", "zahlen": "#B8860B",
+              "ereignis": "#7B1FA2", "ipo": "#607D8B", "ausbruch": "#1565C0"}
     namen = {"gipfel": "AVWAP Hoch des Rückgangs", "hoch": "AVWAP letztes Hoch", "tief": "AVWAP Tief der Bewegung",
              "hoeher": "AVWAP letztes höheres Tief",
-             "ereignis": "AVWAP Ereignis"}
+             "zahlen": "AVWAP Zahlentag", "ereignis": "AVWAP Lücke/Volumen", "ipo": "AVWAP Börsengang",
+             "ausbruch": "AVWAP Ausbruch (Handoff)"}
     for k, t in a.items():
+        if k not in farben:                        # „ausbruchspunkt“ ist ein Merkmal, kein Anker
+            continue
         r = avwap.reihe(df, t)
         if r.empty:
             continue

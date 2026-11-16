@@ -26,8 +26,11 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
   gipfel    Hoch des Rückgangs: das höchste bestätigte Hoch der letzten 2 Jahre, das der Kurs seitdem nicht
             überschritten hat – der Gipfel, von dem die ganze Korrektur ausging (14.11.2026, vorher schied es aus, wenn der
             Kurs danach tiefer fiel als seit dem letzten Hoch). Nur, wenn es nicht das letzte Hoch ist.
-  ereignis  die Neubewertung (Shannon: Zahlen, Lücke, große Nachricht): der jüngste von Zahlentag (jeder, gleich wie stark
-            die Reaktion – 14.11.2026, vorher ab 3 %), Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
+  zahlen    der letzte Zahlentag (jeder, gleich wie stark die Reaktion), höchstens 6 Monate zurück – eigene Linie seit
+            16.11.2026 (Shannon: mehrere Ereignisse übereinander; vorher verdrängte eine spätere Lücke den Zahlentag).
+  ipo       Tag des Börsengangs bei jungen Aktien (Kursreihe jünger als die des Index; Shannon).
+  ausbruch  Handoff nach Shannon: der Tag des laufenden Ausbruchs aus der Zone (ohne Fehlausbruch).
+  ereignis  die Neubewertung ohne Zahlen (Shannon: Lücke, große Nachricht): die jüngste Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
             ab 3 % – ein Tag mit viel Volumen und ohne Bewegung, etwa eine Indexanpassung, ist kein Ereignis), höchstens
             6 Monate zurück (Micky 14.11.2026; vorher nur Lücken mit doppeltem Volumen).
 Letztes Hoch und Tief zusammen sind Shannons Zange („Pinch“).
@@ -62,6 +65,9 @@ HALBJAHR = 126          # ein halbes Jahr in Handelstagen (Ereignis-Anker höchs
 JAHR = 252              # 52 Wochen in Handelstagen
 ZWEI_JAHRE = 504        # 2 Jahre in Handelstagen (Hoch des Rückgangs, Fenster des Tiefs)
 WOCHE_KALENDERTAGE = 7  # eine Woche
+NACHRICHT_KALENDERTAGE = 1   # Lücke oder Spitze bis 1 Tag neben dem Zahlentag ist die Reaktion auf die Zahlen
+JUNG_KALENDERTAGE = 30       # Börsengang: die Kursreihe beginnt mehr als 30 Tage nach der des Index
+AUSBRUCH_SPEICHER = 500      # Technik: so viele Ausbrüche im Zwischenspeicher
 KERN_UNTEN = 25         # Kern der Balance: mittlere Hälfte der typischen Preise (25. …
 KERN_OBEN = 75          # … bis 75. Perzentil)
 
@@ -112,7 +118,7 @@ def _wochen_hochs(df):
 
 
 def anker(df, zahltag=None):
-    """{"hoch"|"tief"|"hoeher"|"gipfel"|"ereignis": Tag} aus Tageskerzen (fehlt ein Anker, fehlt der Schlüssel). zahltag:
+    """{"hoch"|"tief"|"hoeher"|"gipfel"|"zahlen"|"ereignis"|"ipo"|"ausbruch": Tag} aus Tageskerzen (fehlt ein Anker, fehlt der Schlüssel). zahltag:
     Reaktionstag der Zahlen (zahlentag()), wenn bekannt."""
     if df is None or len(df) < 30 or not {"High", "Low", "Close", "Volume"} <= set(df.columns):
         return {}
@@ -153,6 +159,11 @@ def anker(df, zahltag=None):
         if g != hoch:
             aus["gipfel"] = g
     grenze = df.index[max(0, n - HALBJAHR)]
+    # Zahlentag als eigene Linie (Shannon: mehrere Ereignisse übereinander, nicht nur das jüngste – Micky 16.11.2026);
+    # Lücke und Volumenspitze als zweite Linie, wenn sie nicht auf den Zahlentag fallen
+    zt_ = pd.Timestamp(zahltag) if zahltag is not None and pd.Timestamp(zahltag) >= grenze else None
+    if zt_ is not None:
+        aus["zahlen"] = zt_
     tage = []
     if "Open" in df.columns:
         d = df.iloc[-HALBJAHR:]
@@ -160,11 +171,48 @@ def anker(df, zahltag=None):
         luecke = (d["Open"] / df["Close"].shift(1).reindex(d.index) - 1).abs()
         bewegung = (d["Close"] / df["Close"].shift(1).reindex(d.index) - 1).abs()
         tage = list(d.index[(luecke >= LUECKE) | ((d["Volume"] >= VOLUMEN_FACH * vol50) & (bewegung >= SPITZE_BEWEGUNG))])
-    if zahltag is not None and pd.Timestamp(zahltag) >= grenze:
-        tage.append(pd.Timestamp(zahltag))
+    tage = [t for t in tage if zt_ is None or abs((t - zt_).days) > NACHRICHT_KALENDERTAGE]
     if tage:
         aus["ereignis"] = max(tage)
+    ipo = _boersengang(df)
+    if ipo is not None:
+        aus["ipo"] = ipo
+    br = _ausbruch(df)
+    if br is not None:
+        aus["ausbruch"] = br
     return aus
+
+
+_INDEX_START = {}
+_AUSBRUCH = {}
+
+
+def _boersengang(df):
+    """Erster Handelstag, wenn die Aktie jünger ist als die Kursreihe des Index (Shannon: bei jungen Aktien ist der Tag
+    des Börsengangs der wichtigste Anker – Micky 16.11.2026; vorher galt der Rand nie als Anker) – sonst None."""
+    try:
+        if "start" not in _INDEX_START:
+            import daten
+            _INDEX_START["start"] = daten.kurse_gespeichert(daten.INDEX).index[0]
+        return df.index[0] if df.index[0] > _INDEX_START["start"] + pd.Timedelta(days=JUNG_KALENDERTAGE) else None
+    except Exception:  # noqa: BLE001 – ohne Index kein Urteil
+        return None
+
+
+def _ausbruch(df):
+    """Tag des laufenden Ausbruchs aus der Zone (vcp_zone.ausbruch, ohne Fehlausbruch) – Shannons „Handoff“: nach dem
+    Ausbruch die AVWAP ab dem Ausbruchstag als neue Stütze (Micky 16.11.2026) – sonst None."""
+    schl = (len(df), df.index[-1], float(df["Close"].iloc[-1]))
+    if schl not in _AUSBRUCH:
+        import vcp_zone
+        try:
+            br = vcp_zone.ausbruch(df)
+        except Exception:  # noqa: BLE001
+            br = None
+        if len(_AUSBRUCH) > AUSBRUCH_SPEICHER:
+            _AUSBRUCH.clear()
+        _AUSBRUCH[schl] = br["tag"] if br and not br.get("fehl") else None
+    return _AUSBRUCH[schl]
 
 
 def _trendstart(df, hoch):

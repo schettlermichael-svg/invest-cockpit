@@ -33,14 +33,16 @@ SAND = "#D9B26F"             # GD200 / GD40W: Trennlinie des langfristigen Trend
 TUERKIS = "#2EC4B6"          # Ruhe im Volumenband
 GD_KURZ = {10: "#F0883E", 20: "#FF7EB6"}   # GD10 orange, GD20 rosa (Kullamägi)
 # Anchored VWAP nach Shannon (10.11.2026): Wahlschalter über dem Chart, mehrere gleichzeitig (Zange = Hoch + Tief)
-AVWAP_FARBEN = {"gipfel": "#E57373", "hoch": "#FF8A65", "tief": "#4DD0E1", "hoeher": "#81C784", "ereignis": "#FFD54F"}
+AVWAP_FARBEN = {"gipfel": "#E57373", "hoch": "#FF8A65", "tief": "#4DD0E1", "hoeher": "#81C784", "zahlen": "#FFD54F",
+                "ereignis": "#BA68C8", "ipo": "#B0BEC5", "ausbruch": "#64B5F6"}
 # Anker aus Ereignis und Struktur, nie aus dem Kalender (13.11.2026, kern/avwap.py): Hoch, von dem der Fall ausging;
 # Tief, von dem die Bewegung ausging; Ereignis = jüngere von Zahlenreaktion ab 3 % und Lücke ab 4 % mit Volumen ×2
 AVWAP_KURZ = {"gipfel": "Hoch des Rückgangs", "hoch": "letztes Hoch", "tief": "Tief der Bewegung",
-              "hoeher": "letztes höheres Tief", "ereignis": "Ereignis"}
+              "hoeher": "letztes höheres Tief", "zahlen": "Zahlentag", "ereignis": "Lücke/Volumen",
+              "ipo": "Börsengang", "ausbruch": "Ausbruch (Handoff)"}
 PROFIL_FARBE = "#8FA3BF"
 LINIEN_SPIEL = 0.30   # Skala: Linien bis 30 % unter dem tiefsten bzw. über dem höchsten Kurs des Ausschnitts
-AVWAP_START = ["hoch", "tief", "hoeher"]   # Voreinstellung: Shannons Zange und das letzte höhere Tief (Plan 20, Micky
+AVWAP_START = ["hoch", "tief", "hoeher", "ipo", "ausbruch"]   # Voreinstellung: Shannons Zange und das letzte höhere Tief (Plan 20, Micky
 # 16.11.2026: beide Tiefs); Gipfel und Ereignis zuschaltbar
 RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
@@ -868,7 +870,10 @@ def legende(ebene="Tag", gd_kurz=False):
                       (AVWAP_FARBEN["hoch"], "AVWAP ab dem letzten Hoch (jüngstes nicht überschrittenes Wochen-Schwunghoch)"),
                       (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief der Bewegung (Tief, an dem der Trend zum letzten Hoch begann; mit ihm: Zange)"),
                       (AVWAP_FARBEN["hoeher"], "AVWAP ab dem letzten höheren Tief (Tief des letzten Rückgangs ab 8 %, aus dem der Anstieg kam)"),
-                      (AVWAP_FARBEN["ereignis"], "AVWAP ab dem Ereignis (Zahlen ab 3 % oder Lücke ab 4 % mit Volumen ×2)"),
+                      (AVWAP_FARBEN["zahlen"], "AVWAP ab dem letzten Zahlentag"),
+                      (AVWAP_FARBEN["ereignis"], "AVWAP ab der jüngsten Lücke ab 4 % oder Volumenspitze (ohne Zahlen)"),
+                      (AVWAP_FARBEN["ipo"], "AVWAP ab dem Börsengang (junge Aktien)"),
+                      (AVWAP_FARBEN["ausbruch"], "AVWAP ab dem Ausbruchstag (Shannons Handoff)"),
                       (PROFIL_FARBE, "Volumenprofil der laufenden Balance (überlappende Tage nach Dalton), Linie = akzeptierter Wert"),
                       (ROT, "Band rechts rot: Mauer (Knoten seit dem Hoch des Rückgangs) · grün: Stütze (Knoten seit dem Tief der Bewegung)"), (GRUEN, "↑ Ausbruch mit Volumen-Vielfachem · ✕ Fehlausbruch"),
                       (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),

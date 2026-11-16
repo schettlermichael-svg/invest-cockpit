@@ -297,10 +297,21 @@ WERKZEUGE = {
                                                        "Trendstart-Tief und solange der Kurs nicht darunter fiel (Plan 20, "
                                                        "Micky 16.11.2026: beide Tiefs).",
              messung=["avwap.anker", "avwap._hoeheres_tief"], stand="gemessen", pruefer=["AVWAP letztes höheres Tief"]),
-        dict(name="AVWAP Ereignis", regel="Ereignis = der jüngste Zahlentag (jeder, gleich wie stark die Reaktion), die "
-                                          "jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem Schnitt mit Bewegung ab "
-                                          "3 % (6 Monate).",
-             messung=["avwap.anker", "avwap.zahlentag"], stand="gemessen", pruefer=["AVWAP Ereignis"]),
+        dict(name="AVWAP Zahlentag", regel="Zahlentag = der letzte Zahlentag (jeder, gleich wie stark die Reaktion), "
+                                           "höchstens 6 Monate zurück – eigene Linie (Shannon: mehrere Ereignisse "
+                                           "übereinander; Micky 16.11.2026).",
+             messung=["avwap.anker", "avwap.zahlentag"], stand="gemessen", pruefer=["AVWAP Zahlentag"]),
+        dict(name="AVWAP Lücke/Volumen", regel="Lücke/Volumen = die jüngste Lücke ab 4 % oder Volumenspitze ab doppeltem "
+                                               "Schnitt mit Bewegung ab 3 % (6 Monate), die nicht auf den Zahlentag fällt.",
+             messung=["avwap.anker"], stand="gemessen", pruefer=["AVWAP Lücke/Volumen"]),
+        dict(name="AVWAP Börsengang", regel="Börsengang = der erste Handelstag einer jungen Aktie (ihre Kursreihe beginnt "
+                                            "mehr als 30 Tage nach der des Index) – Shannons wichtigster Anker bei "
+                                            "Neuemissionen (Micky 16.11.2026).",
+             messung=["avwap.anker", "avwap._boersengang"], stand="gemessen", pruefer=["AVWAP Börsengang"]),
+        dict(name="AVWAP Ausbruch (Handoff)", regel="Ausbruch = der Tag des laufenden Ausbruchs aus der Zone (ohne "
+                                                    "Fehlausbruch) – Shannons Handoff: nach dem Ausbruch die neue Stütze "
+                                                    "(Micky 16.11.2026).",
+             messung=["avwap.anker", "avwap._ausbruch"], stand="gemessen", pruefer=["AVWAP Ausbruch (Handoff)"]),
         dict(name="Volumenprofil", regel="Volumenprofil der Balance ab dem ersten Tag, ab dem sich die Tagesspannen "
                                          "überlappen (Dalton).",
              messung=["avwap.profil_anker", "volumenprofil.verankert"], stand="gemessen",
@@ -663,7 +674,9 @@ MEISTER = [
     ("Einquetschung", "Steigende Tiefs gegen eine flache Oberkante (aufsteigendes Dreieck).", ""),
     ("Shannon",
      "AVWAP: Ein Hoch wird erst durch den Rückgang danach zum Anker. Anker sind das Pivot-Tief, das einen Trend "
-     "startete, das jüngste große Hoch, der Tag der Zahlen bzw. eine Kurslücke; mehrere übereinander.", ""),
+     "startete, das jüngste große Hoch, der Tag der Zahlen bzw. eine Kurslücke, der Börsengang bei jungen Aktien; "
+     "mehrere übereinander. Stopp unter dem jüngsten maßgeblichen höheren Tief. Zange (Pinch): AVWAP vom Hoch und "
+     "vom Tief laufen zusammen; nach dem Ausbruch daraus die AVWAP ab dem Ausbruch als neue Stütze (Handoff).", ""),
     ("Dalton",
      "Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende Balance. Exzess "
      "= scharfe Ablehnung am Extrem (Auktion dort beendet); flache Kante (schwaches Hoch/Tief) = Auktion unfertig.", ""),
