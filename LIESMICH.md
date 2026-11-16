@@ -1293,7 +1293,11 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Flagge (1–8 Wochen, Volumen leiser als in der Stange, sonst gelb). Momentum-Ausbruch: 3 Wochen über GD50, Führer
   oberste 2 %, Pause 1–3 Wochen. Sprung: Nachricht, hält das Tief des Sprungtags. Zahlen-Reaktion: Kurs über GD50, hält
   Tief und AVWAP. Bärenflagge: GD50 fällt. Alles Übrige (Spring/Upthrust, Ermüdung, Bruch der Spanne, Stärke bei Flagge,
-  Sprung und Zahlen-Reaktion) nur Zeichen – die Stärke-Frage entscheidet Micky (Mängelliste Plan 24).
+  Sprung und Zahlen-Reaktion) nur Zeichen.
+- **Stärke (Plan 24, Micky 16.11.):** der RS-Rang urteilt bei allen Setups außer dem Momentum-Ausbruch (dort Führer,
+  oberste 2 %): ab 70 grün, 60–69 gelb; beim Short gespiegelt, der Rang von unten gezählt (`rs_rang.SPIEGEL`): bis 30
+  grün, 31–40 gelb. Gemessen: 180 Stärke-Kacheln von Zeichen zu Urteil – 64 grün, 23 gelb, 93 rot; Flagge 26 grün,
+  1 gelb, 3 rot (vorher nach Kullamägi 7/8/15); Shorts in noch starken Titeln sind jetzt rot (Bruch der Spanne 54).
 - **Wachposten:** meldet rot, wenn ein Setup nicht alle vier Kacheln im Katalog hat oder Katalog und Titelseite
   (`titel.URTEILE`) verschiedene Regeln kennen. Der Setup-Prüfer liest die Kachel-Regeln je Setup im Material.
 - Gemessen (462 Titel, Mac-Daten): Trend 146, Stärke 180, Enge 140 Ampeln anders, Fundament, Markt, Setup, Geld und Base

@@ -232,7 +232,9 @@ PLAN = [
      "87c1f6e: je Setup eine Regel je Kachel im Katalog, sonst Zeichen (grau); 462 Titel: Trend 146, Stärke 180, Enge 140 "
      "Ampeln anders, Base-Ausbruch und ohne Setup unverändert; Flagge 4–8 Wochen grün (10), Volumen laut gelb (8)"),
     (24, "Stärke bei Setups ohne Stärke-Regel (Flagge, Sprung, Zahlen-Reaktion, Spring, Shorts): Zeichen oder ein "
-         "einheitlicher RS-Rang – vorläufig Zeichen, Micky entscheidet", "Entscheidung", "offen", ""),
+         "einheitlicher RS-Rang – vorläufig Zeichen, Micky entscheidet", "Entscheidung", "behoben",
+     "82ae33e: Micky 16.11.: RS-Rang für alle Setups außer Momentum, Short gespiegelt; übrige Kacheln ohne Regel bleiben "
+     "Zeichen. 462 Titel: Stärke bei 180 aus Zeichen ein Urteil (64 grün, 23 gelb, 93 rot), Flagge 26 grün, 1 gelb, 3 rot"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
