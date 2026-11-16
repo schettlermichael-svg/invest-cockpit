@@ -213,7 +213,9 @@ PLAN = [
     (17, "Bild und Zahlen gleich: Chart und Material aus derselben Zone, Enge und Base (Lauf 3/4)", "Befunde", "offen", ""),
     (18, "Gegenseite und Abstände: anderer Rand, Abstand zu Mauer und Stütze (Lauf 3/4)", "Befunde", "offen", ""),
     (19, "Prüfer irrt: Ersatzregeln der App im Material erklären (Lauf 3)", "Prüfer", "offen", ""),
-    (20, "Auslegung für Micky: AVWAP Tief der Bewegung und Ereignis-Anker „zu alt“ (Lauf 4)", "Entscheidung", "offen", ""),
+    (20, "Auslegung für Micky: AVWAP Tief der Bewegung und Ereignis-Anker „zu alt“ (Lauf 4)", "Entscheidung", "offen",
+     "Micky 16.11.: beide Linien – Trendstart-Tief (großes Bild) und letztes höheres Tief (Tief des letzten Rückgangs ab "
+     "8 %, aus dem der laufende Anstieg kam; Shannons Stopp-Anker); noch zu bauen"),
     (21, "Schritt 2 gespiegelt für Shorts (Micky 15.11.: ja): früh unter dem Tief einer Enge, Bruch an der Unterkante. Die "
          "App kennt Shorts heute erst nach dem Bruch (Bärenflagge, Bruch der Spanne) – sie braucht dafür die Zone von der "
          "Short-Seite vor dem Bruch; gebaut mit Schritt 4 (Spring/Upthrust braucht dieselben beiden Ränder)",
