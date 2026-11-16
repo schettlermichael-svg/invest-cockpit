@@ -32,17 +32,22 @@ KAESTEN = {
     "titel": [
         dict(name="Anlass: neue Information", zustand=None,
              regel="Bringt die Balance an den Rand: der Wert ändert sich (Zahlen, Lücke, Nachricht) – ein Ereignis, das den "
-                   "Wert neu bewertet.",
+                   "Wert neu bewertet. Anlass nur vor dem Ereignis am Rand und in Laufrichtung, sonst Gegenzeichen bzw. "
+                   "Beleg danach; die Zahlenreaktion zählt einmal, nach dem heutigen Kurs gegen den Schluss vor den Zahlen "
+                   "(Plan 15, Micky 16.11.2026).",
              fuehrt="Kullamägi/Bonde (Episodic Pivot)", zeichen="O'Neil (das „N“: neues Produkt, neue Zahlen), Mickys Zahlen-Reaktion",
              messung=["auktion.titel", "avwap.zahlentag", "zahlen_reaktion.reaktionstag"], stand="gemessen",
              pruefer=["Anlass"]),
         dict(name="Anlass: Verteidiger leer", zustand=None,
-             regel="Angebot aufgebraucht: Enge, Volumen trocknet aus, Einquetschung.",
+             regel="Angebot aufgebraucht: Enge, Volumen trocknet aus, Einquetschung – nur bei echter Enge (letzte "
+                   "Kontraktion höchstens 10 %, Volumen der Enge unter dem Schnitt; Plan 15).",
              fuehrt="Minervini (VCP, Volumen trocknet aus)", zeichen="Wyckoff",
              messung=["zeichen.enge_trocken", "zeichen.einquetschung", "vcp_zone.enge"], stand="gemessen",
              pruefer=["Anlass", "Einquetschung"]),
         dict(name="Anlass: Zwang", zustand=None,
-             regel="Stopps, Gefangene; geht im Spring/Upthrust auf (Micky 14.11.2026, kein eigenes Zeichen).",
+             regel="Stopps, Gefangene; geht im Spring/Upthrust auf (Micky 14.11.2026, kein eigenes Zeichen): Spring = "
+                   "gefangene Verkäufer unter dem Rand, Upthrust oder Fehlausbruch = gefangene Käufer über dem Rand – nur "
+                   "solange er gilt (Plan 15).",
              fuehrt="Wyckoff (Shakeout, Spring)", zeichen="Dalton",
              messung=["zeichen.spring", "vcp_zone.ausbruch"], stand="gemessen", pruefer=["Anlass"]),
         dict(name="Balance", zustand="Balance",
@@ -72,7 +77,9 @@ KAESTEN = {
              pruefer=["Lauf zum anderen Rand"]),
         dict(name="angenommen", zustand="angenommen",
              regel="Der Wert folgt dem Kurs: Ausbruch über den Pivot (Volumen ist Zeichen, keine Pflicht); Dalton "
-                   "bestätigt, wenn der Wert folgt.",
+                   "bestätigt, wenn der Wert folgt – aus dem Market Profile erst ab 2 Tagen mit dem Wert außerhalb (der 1. Tag ist "
+                   "ein Vorstoß, Test am Rand). Höchstens 10 Tage – mehr als 5 % über dem Pivot (Kaufzone verlassen) und "
+                   "am 10er/20er wird es Ungleichgewicht (Plan 15, Micky 16.11.2026).",
              fuehrt="O'Neil und Minervini (Ausbruch über den Pivot)",
              zeichen="Kullamägi (Ausbruch am Tag), Shannon (Kurs über dem AVWAP vom Hoch), Dalton (Wert folgt, bestätigt)",
              messung=["vcp_zone.ausbruch", "marketprofile.analyse"], stand="gemessen",

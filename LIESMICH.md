@@ -1254,3 +1254,17 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   3 ist sie die 1. Base des neuen Anstiegs, in Phase 4 wird nicht gezählt. Nummer im Kasten („Test am Rand (oben) · Basis
   · 1. Base“), in der Kachel und im Material des Prüfers. Gemessen: 266 × 1., 20 × 2., 2 × 3., 1 × 4.; ohne Nummer 179
   (106 ohne Zone, 68 in Phase 4, 5 zu kurz).
+
+## Plan 15: Kette der Belege (16.11.2026)
+
+- **angenommen → Ungleichgewicht**, sobald der Kurs die Kaufzone verlassen hat (mehr als 5 % über dem Pivot bzw. jenseits
+  des Randes, `vcp_zone.KAUFZONE`) und am 10er/20er reitet – nicht erst nach 10 Tagen.
+- **angenommen aus dem Market Profile** erst ab 2 Tagen mit dem Tageswert außerhalb der Wertzone (`auktion.MP_TAGE`,
+  Dalton); der 1. Tag ist ein Vorstoß (Test am Rand). Der Ausbruch des Scanners über den Pivot bleibt sofort angenommen.
+- **Anlass:** Spring = Zwang (gefangene Verkäufer unter dem Rand), Upthrust/Fehlausbruch = Zwang (gefangene Käufer über
+  dem Rand), nur solange er gilt; „Verteidiger leer“ nur bei echter Enge (höchstens 10 %, Volumen unter dem Schnitt);
+  die Information (Zahlen) nur vor dem Ereignis und in Laufrichtung – sonst Gegenzeichen bzw. Beleg „nach dem Ereignis“.
+- **Zahlenreaktion einmal** (`zeichen`): nur die Seite, die der heutige Kurs gegen den Schluss vor den Zahlen zeigt
+  (vorher bei 41 Titeln Stärke und Schwäche zugleich).
+- Gemessen (468): angenommen 139 → 84, Ungleichgewicht 12 → 34, Ende des Laufs 18 → 30, Test am Rand 53 → 64 (11 Vorstöße),
+  abgelehnt 56 → 66; Kartentisch unverändert.

@@ -673,7 +673,10 @@ def reaktion(df, gewinne, max_tage=REAKTION_MAX_TAGE):
     elif pct < 0 and jetzt > vor:
         aus.append(_zeichen("stärke", "ereignis", f"{zahl}: Tag 1 {_z(pct, '+.1f')} %, der Kurs steht jetzt über dem "
                             f"Schluss vor den Zahlen {_z(vor, '.2f')} $ – Abverkauf zurückgekauft", 2))
-    return aus
+    # Plan 15 (Micky 16.11.2026): die Reaktion zählt einmal – nach dem heutigen Kurs gegen den Schluss vor den Zahlen
+    # (vorher stand dieselbe Reaktion bei 41 von 468 Titeln zugleich als Stärke und als Schwäche)
+    heute = "stärke" if jetzt > vor else "schwäche"
+    return [x for x in aus if x["seite"] == heute]
 
 
 # ── Wert an der Schwelle (Market Profile) ─────────────────────────────────────────────────────────────────────────

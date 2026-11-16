@@ -32,6 +32,7 @@ FARBE = {"Balance": "#8B949E", "Test am Rand": "#8B949E", "abgelehnt": "#3FB950"
          "Ungleichgewicht": "#F85149", "Ende des Laufs": "#3FB950", "Anlass": "#A371F7"}
 KRAEFTE = ("Gegner antwortet", "Antrieb erlischt", "Wert akzeptiert")
 
+MP_TAGE = 2            # angenommen aus dem Market Profile erst ab 2 Tagen mit dem Wert außerhalb (Plan 15)
 FRISCH = 10            # abgelehnt/angenommen: höchstens 10 Handelstage her (danach Ungleichgewicht bzw. zurück in der Balance)
 from vcp_zone import RAND_PCT   # noqa: E402  Test am Rand: Kurs höchstens 3 % vom Rand – eine Quelle (vcp_zone)
 from masse import ATR_N, LAGE_MITTE, PHASE_VERTEILUNG, VOL_MIN_TAGE  # noqa: E402
@@ -293,20 +294,30 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     belege, anlass, ende, gegen = [], [], [], []
     mess = {}
 
-    # Anlass
-    for x in zs:
-        if x["art"] == "ereignis" and not x["text"].startswith("Market Profile an der Schwelle"):
-            anlass.append(f"Information: {x['text']}")
-            break
-    if not anlass and zahltag is not None and _seit(df, zahltag) <= FRISCH:
-        anlass.append(f"Information: Zahlen am {_d(zahltag)}")
-    for vor in ("Spring", "Volumen trocknet aus", "Einquetschung", "3 Wochen eng"):
+    # Anlass (Plan 15, Micky 16.11.2026): Spring und Upthrust sind Zwang (gefangene Verkäufer bzw. Käufer), nur solange
+    # sie gelten; „Verteidiger leer“ nur bei echter Enge (letzte Kontraktion höchstens 10 %, Volumen der Enge unter dem
+    # Schnitt); die Information (Zahlen) prüft Zeit und Richtung, sobald der Zustand feststeht
+    info = next((x for x in zs if x["art"] == "ereignis" and not x["text"].startswith("Market Profile an der Schwelle")),
+                None)
+    e_z = {}
+    if zone and zone.get("zone"):
+        try:
+            import vcp_zone
+            e_z = vcp_zone.enge(df, zone) or {}
+        except Exception:  # noqa: BLE001
+            e_z = {}
+    echt_eng = bool(e_z.get("eng") and e_z.get("trocken"))
+    for vor in ("Volumen trocknet aus", "Einquetschung", "3 Wochen eng"):
         x = hat(vor)
-        if x:
+        if x and echt_eng:
             anlass.append(f"Verteidiger leer: {x['text']}")
+    sp_ = hat("Spring")
+    if sp_:
+        anlass.append(f"Zwang: gefangene Verkäufer unter dem Rand: {sp_['text']}")
     fa = next((t for t in texte if "Fehlausbruch" in t), None)
-    if fa or hat("Schluss unter dem Tief der") or hat("Upthrust"):
-        anlass.append("Zwang: gefangene Käufer über dem Rand")
+    up_ = hat("Upthrust")
+    for x_ in ([fa] if fa else []) + ([up_["text"]] if up_ else []):
+        anlass.append(f"Zwang: gefangene Käufer über dem Rand: {x_}")
 
     # Messungen
     if oben and unten:
@@ -366,6 +377,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
                            + (", Rücktest läuft" if br.get("ruecktest") else "")))
     aktiv = (mp or {}).get("aktiv")
     scanner = bool(zone and zone.get("zone"))
+    vorstoss = None
 
     def am_rand(preis, d):
         """Liegt ein Ereignis des Market Profile am Rand der großen Balance (Zone des Scanners)? Innerhalb der Zone
@@ -386,8 +398,18 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
                                                            "gescheitert, Schluss zurück im Wert der verlassenen Wertzone"))
         elif s_["art"] in ("A", "U") and aktiv and aktiv["dir"] == s_["dir"]:
             name = {"A": "Ausbruch", "U": "Umkehr"}[s_["art"]]
-            ereignisse.append((s_["tag"], "angenommen", ri, f"Market Profile: {name} {s_['dir']} am {_d(s_['tag'])} – "
-                                                            "Tageswert ganz außerhalb der Wertzone"))
+            # Plan 15 (Micky 16.11.2026, Dalton: Zeit baut Wert): angenommen erst ab MP_TAGE Tagen mit dem Tageswert
+            # außerhalb der Wertzone – der erste Tag ist ein Vorstoß (Test am Rand)
+            wz, t_ = aktiv["zone"], (mp or {}).get("tage") or []
+            draussen = sum(1 for p_ in t_[aktiv["seit"]:] if (p_["val"] > wz["vah"] if s_["dir"] == "↑"
+                                                               else p_["vah"] < wz["val"]))
+            if draussen >= MP_TAGE:
+                ereignisse.append((s_["tag"], "angenommen", ri, f"Market Profile: {name} {s_['dir']} am {_d(s_['tag'])} – "
+                                                                f"Tageswert an {draussen} Tagen ganz außerhalb der Wertzone"))
+            else:
+                vorstoss = ("oben" if s_["dir"] == "↑" else "unten",
+                            f"Vorstoß: Market Profile {name} {s_['dir']} am {_d(s_['tag'])} – Tageswert außerhalb, Tag "
+                            f"{draussen} (angenommen ab {MP_TAGE} Tagen, Dalton)")
         elif s_["art"] == "R" and aktiv and aktiv["dir"] == s_["dir"]:
             nachher.append(("angenommen", f"Rücktest hält am {_d(s_['tag'])} (Market Profile R)"))
         elif s_["art"] in ("F", "B") and aktiv and aktiv["dir"] == s_["dir"] and scanner \
@@ -422,17 +444,18 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
             ereignisse.append((pd.Timestamp(tag), zst, ri, x["text"]))
     if aufgehoben:                               # ein widerlegter Spring/Upthrust ist auch kein Anlass mehr
         anlass = [x_ for x_ in anlass if not any(x_.endswith(t_) for t_ in aufgehoben)]
-        up = hat("Upthrust")
-        if up and up["text"] in aufgehoben and not (fa or hat("Schluss unter dem Tief der")):
-            anlass = [x_ for x_ in anlass if not x_.startswith("Zwang: gefangene Käufer")]
     ereignisse = [e_ for e_ in ereignisse if _seit(df, e_[0]) <= FRISCH]
     ereignisse.sort(key=lambda e_: pd.Timestamp(e_[0]))
     zustand = richtung = rand = None
+    t_ereignis = None
     if ereignisse:
-        _, zustand, richtung, entscheid = ereignisse[-1]
+        t_ereignis, zustand, richtung, entscheid = ereignisse[-1]
         mess["entscheid"] = entscheid.split(":")[0].split(" am ")[0][:TEXT_KURZ]
         for _, zst, ri, text in ereignisse[-BELEGE_JUENGSTE:]:          # die drei jüngsten, das jüngste zuletzt
             belege.append((zst, text))
+    if vorstoss and not zustand:                 # Vorstoß über den Rand, noch nicht angenommen
+        zustand, rand = "Test am Rand", vorstoss[0]
+        belege.append(("Test am Rand", vorstoss[1]))
     for zst, text in nachher[-2:]:
         if (zst == "angenommen" and zustand != "angenommen") or (zst == "Balance" and zustand):
             continue
@@ -442,6 +465,23 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
         weg = (ziel / c - 1) * 100
         gegen.append(f"anderer Rand {_z(ziel)} $ " + (f"({_z(weg, '+.1f')} %)" if (weg < 0) == (richtung == "aufwärts")
                                                       else "schon erreicht"))
+
+    # angenommen → Ungleichgewicht (Plan 15, Micky 16.11.2026): sobald der Kurs die Kaufzone verlassen hat (mehr als 5 %
+    # über dem Pivot bzw. jenseits des Randes) und am 10er/20er reitet – nicht erst nach 10 Tagen
+    if zustand == "angenommen":
+        import reiten
+        import vcp_zone
+        ref = (br["pivot"] if br and c > br["pivot"] and richtung == "aufwärts"
+               else oben if richtung == "aufwärts" else unten)
+        weit = bool(ref) and ((c / ref - 1) * 100 > vcp_zone.KAUFZONE if richtung == "aufwärts"
+                              else (1 - c / ref) * 100 > vcp_zone.KAUFZONE)
+        rt_ = reiten.ungleichgewicht(df) if weit else None
+        if rt_ and rt_["richtung"] == richtung:
+            zustand = "Ungleichgewicht"
+            belege.append(("Ungleichgewicht", f"Kaufzone verlassen: Kurs {_z(abs(c / ref - 1) * 100, '.1f')} % "
+                                              f"{'über' if richtung == 'aufwärts' else 'unter'} {_z(ref)} $, Schluss "
+                                              f"{'über dem steigenden' if richtung == 'aufwärts' else 'unter dem fallenden'} "
+                                              f"{rt_['linie']} {_z(rt_['wert'])} $ (Kullamägi)"))
 
     # 3. Balance oder Test am Rand: der Kurs steht in der Zone
     in_zone = bool(zone and zone.get("zone") and unten <= c <= oben * ZONE_PUFFER)
@@ -485,6 +525,23 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
             zustand = "Balance"
             if oben and unten:
                 belege.insert(0, ("Balance", f"{rahmen}: {_z(unten)}–{_z(oben)} $"))
+
+    # Information als Anlass (Plan 15): sie muss vor dem Ereignis am Rand liegen und in Laufrichtung zeigen; gegen die
+    # Richtung ist sie ein Gegenzeichen (Zahlen: eine Reaktion, nach dem heutigen Kurs – zeichen.zahlen)
+    ri_ = bewegung(zustand, richtung) or {"oben": "aufwärts", "unten": "abwärts"}.get(rand)   # abgelehnt ↑ = Lauf abwärts
+    if info:
+        seite_ = "aufwärts" if info["seite"] == "stärke" else "abwärts"
+        t_info = info.get("tag") or _tag_im_text(info["text"], df)
+        spaeter = t_ereignis is not None and t_info is not None and pd.Timestamp(t_info) > pd.Timestamp(t_ereignis)
+        if ri_ and seite_ != ri_:
+            gegen.append(f"Gegenzeichen: {info['text']}")
+        elif spaeter:
+            belege.append((zustand or "Balance", f"nach dem Ereignis: {info['text']}"))
+        else:
+            anlass.insert(0, f"Information: {info['text']}")
+    elif zahltag is not None and _seit(df, zahltag) <= FRISCH and (t_ereignis is None
+                                                                    or pd.Timestamp(zahltag) <= pd.Timestamp(t_ereignis)):
+        anlass.insert(0, f"Information: Zahlen am {_d(zahltag)}")
 
     # Kräfte, die den Lauf beenden (bei Ungleichgewicht und angenommen)
     if zustand in ("Ungleichgewicht", "angenommen"):
