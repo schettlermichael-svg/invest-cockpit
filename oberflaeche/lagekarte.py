@@ -8,7 +8,7 @@ import re
 
 import numpy as np
 
-from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, punkt2, t, zahl
+from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
 
 PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Geld", "Base")
 
@@ -224,31 +224,12 @@ def _atr_zeilen(erk, df, kurs):
 
 
 def _setup_kasten(kacheln, erk):
-    """Kasten oben rechts: das Setup je System. Der äußere Rahmen wird von faerben() eingefärbt."""
-    sy = erk.get("systeme") or {}
-    m, k = sy.get("m") or {}, sy.get("k") or {}
-    s_ = kacheln.get("Setup", ((None, None), "", ""))
-    zeile = s_[2]
-    if not isinstance(s_[0], tuple):                 # ein eigenes System (12.11.2026): das eine Setup des Titels
-        return (f'<div title="{t(zeile)}" style="background:#1C2430;border:1px solid {RAND};border-radius:8px;'
-                f'padding:6px 10px;font-size:14px;text-align:right;max-width:55%"><span style="display:inline-block;'
-                f'width:10px;height:10px;border-radius:50%;background:{AMPEL.get(s_[0] or "grau", GRAU)};margin:0 6px">'
-                f'</span>{t(s_[1] or "kein Setup")}</div>')
-    am = s_[0][0] if isinstance(s_[0], tuple) else s_[0]
-    ak = s_[0][1] if isinstance(s_[0], tuple) else None
-    kw = (k.get("haupt") or {}).get("art") if (k.get("haupt") or {}).get("ampel") not in (None, "rot") else None
-    if not kw:
-        import system_kullamaegi
-        em_ = system_kullamaegi.short_von(k)
-        kw = f'{em_["art"]} (short)' if em_ else None
-    zeilen = (f'<div><span style="color:{TEXT_3};font-size:12px">M</span> '
-              f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
-              f'{AMPEL.get(am or "grau", GRAU)};margin:0 4px"></span>{t(m.get("setup", "–"))}</div>'
-              f'<div><span style="color:{TEXT_3};font-size:12px">K</span> '
-              f'<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'
-              f'{AMPEL.get(ak or "grau", GRAU)};margin:0 4px"></span>{t(kw or "keines")}</div>')
-    return (f'<div title="{t(zeile)}" style="background:#1C2430;border:1px solid {RAND};'
-            f'border-radius:8px;padding:6px 10px;font-size:14px;text-align:right;max-width:55%">{zeilen}</div>')
+    """Kasten oben rechts: das eine Setup des Titels (12.11.2026). Der äußere Rahmen wird von faerben() eingefärbt."""
+    s_ = kacheln.get("Setup", ("grau", "", ""))
+    return (f'<div title="{t(s_[2])}" style="background:#1C2430;border:1px solid {RAND};border-radius:8px;'
+            f'padding:6px 10px;font-size:14px;text-align:right;max-width:55%"><span style="display:inline-block;'
+            f'width:10px;height:10px;border-radius:50%;background:{AMPEL.get(s_[0] or "grau", GRAU)};margin:0 6px">'
+            f'</span>{t(s_[1] or "kein Setup")}</div>')
 
 
 def _befund(erk):
@@ -266,25 +247,18 @@ def _befund(erk):
 
 
 def karte(tk, branche, erk, kacheln, df, liste=None):
-    """kacheln: {Beschriftung: (Ampel oder (Ampel M, Ampel K), Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
+    """kacheln: {Beschriftung: (Ampel, Wert, Zeile)} aus gestaltung.MITSCHRIFT."""
     def kz(name, default=("grau", "–", "")):
         return kacheln.get(name, default)
     zone = kz("Wertzone")
     staerke, trend, base = kz("Stärke"), kz("Trend"), kz("Base")
 
-    def ampel_m(x):
-        return x[0][0] if isinstance(x[0], tuple) else x[0]
-
-    def wort_m(x):
-        return x[1].split(" · K ")[0].replace("M ", "", 1) if isinstance(x[0], tuple) else x[1]
     kurs = float(df["Close"].iloc[-1])
     titel_, wert_, anteil, farbe_ = _abstand(erk, kurs)
 
-    def pkt(x):
-        return punkt2(x[0][0], x[0][1], 14) if isinstance(x[0], tuple) else punkt(x[0], 14)
     punkte = "".join(
         f'<div title="{t(name)}: {t(kz(name)[1])} · {t(kz(name)[2])}" style="display:flex;flex-direction:column;'
-        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{pkt(kz(name))}{name}</div>'
+        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{punkt(kz(name)[0], 14)}{name}</div>'
         for name in PUNKTE)
     zahlen = kz("Nächste Zahlen")
     zahlen_text = f"Zahlen {zahlen[1]}" if zahlen[1] != "–" else "kein Zahlentermin"
@@ -297,7 +271,7 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
         + (f'<div style="font-size:14px;color:{LILA}">Liste: {t(liste)}</div>' if liste else "") +
         f'</div>{_setup_kasten(kacheln, erk)}</div>'
         f'<div style="display:flex;flex-wrap:wrap;gap:6px">{_chip("Auktion: " + zone[1], zone[0])}'
-        f'{_chip(wort_m(staerke), ampel_m(staerke))}{_chip(wort_m(trend), ampel_m(trend))}'
+        f'{_chip(staerke[1], staerke[0])}{_chip(trend[1], trend[0])}'
         f'{_chip("Base " + base[1], base[0])}</div>'
         f'<div style="font-size:13px;color:{TEXT_2}">{t(_befund(erk))}</div>'
         f'{_kleinchart(df, erk)}'

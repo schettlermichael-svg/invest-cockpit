@@ -32,9 +32,10 @@ import system_minervini                               # noqa: E402
 import vcp_zone  # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
+from masse import GD50_TAGE                          # noqa: E402
 import gestaltung                                     # noqa: E402
 from chart import chart, legende, reaktionen, stunden  # noqa: E402
-from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, kachel2, karte,  # noqa: E402
+from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, karte,  # noqa: E402
                         seite, t, zahl)
 
 def _tv_symbol(tk):
@@ -263,12 +264,15 @@ def _zuletzt(fund):
 
 
 def _k2_markt(mm):
-    """Markt: eine Ampel nach O'Neil (12.11.2026); beim Short gespiegelt (gestaltung.kachel2)."""
-    m = (mm["ampel"], mm["wort"]) if mm else ("grau", "–")
+    """Markt: eine Ampel nach O'Neil (12.11.2026); beim Short gespiegelt – Gegenwind für long ist Rückenwind für Short."""
+    x = (mm["ampel"], mm["wort"]) if mm else ("grau", "–")
     zeile = f"O'Neil seit {mm['seit']}" if mm else ""
-    return kachel2("Markt", m, None, zeile,
-                   (mm["regel"] + "\n\nHeute: " + mm["text"] + ("\n\nZeichen ohne Urteil: " + mm["zeichen"]
-                                                               if mm["zeichen"] else "")) if mm else "keine Daten")
+    if gestaltung.SYSTEM_SHORT and x[0] != "grau":
+        x = (gestaltung._GEGEN.get(x[0], x[0]), x[1])
+        zeile = "für Short gespiegelt" + (f" · {zeile}" if zeile else "")
+    return kachel("Markt", x[0], x[1], zeile,
+                  (mm["regel"] + "\n\nHeute: " + mm["text"] + ("\n\nZeichen ohne Urteil: " + mm["zeichen"]
+                                                              if mm["zeichen"] else "")) if mm else "keine Daten", ganz=True)
 
 
 def _weinstein_ausbruch(m, ph, df):
@@ -290,195 +294,209 @@ def _weinstein_ausbruch(m, ph, df):
             + ("bestätigt" if ok else "möglich, noch nicht bestätigt") + f" ({', '.join(gruende)})")
 
 
-def _k2_trend(m, ph, ph_reihe, df=None):
+# Die Urteile der Kacheln je Regel des Katalogs (regelkarte.KACHEL_REGELN, 16.11.2026) – der Wachposten prüft, dass
+# beide dieselben Regeln kennen
+URTEILE = {"Trend": ("trendvorlage", "gd50_steigt", "gd50_3w", "gd50", "gd50_faellt"),
+           "Stärke": ("rs70", "fuehrer2"), "Fundament": ("zahlen_wachsen", "nachricht"),
+           "Enge": ("vcp", "flagge", "pause", "sprungtief", "zahlentief")}
+URTEILE = {r: n for n, rs in URTEILE.items() for r in rs}
+
+
+def _regeltext(setup, regel):
+    """Erste Zeile im ⓘ: nach welcher Regel des Katalogs die Kachel für das Setup urteilt."""
+    import regelkarte
+    return (f"{setup} – Regel des Katalogs: {regelkarte.KACHEL_REGELN[regel]}." if regel else
+            f"{setup} – das Setup hat in dieser Kachel keine Regel: der Wert steht als Zeichen da (grauer Punkt), "
+            "ohne Urteil.")
+
+
+def _urteil(name, regel, setup, x, zeile, hilfe):
+    """Kachel mit dem Urteil x = (Ampel, Wert) nach der Regel des Setups, oder ohne Regel als Zeichen (grau)."""
+    hilfe = _regeltext(setup, regel) + ("\n\n" + hilfe if hilfe else "")
+    if regel is None:
+        return kachel(name, "grau", x[1], "Zeichen, keine Regel des Setups" + (f" · {zeile}" if zeile else ""), hilfe,
+                      ganz=True)
+    return kachel(name, x[0], x[1], zeile, hilfe, ganz=True)
+
+
+def _k_trend(regel, setup, m, ph, ph_reihe, df, b, short):
+    """Trend nach der Regel des Setups: Trendvorlage, Kurs über (steigendem) GD50, 3 Wochen über GD50, GD50 fällt."""
+    import kartentisch
     tv = m["trendvorlage"]
     n = sum(tv.values()) if tv else 0
-    mm = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
     seit = _seit(ph_reihe) if ph else None
-    # Die Phase selbst steht im Zustand und im Kreislauf darunter (13.11.2026: die Weinstein-Zeile doppelte ihn);
-    # hier bleibt nur, was es dort nicht gibt – seit wann und die Bestätigung einer Rückkehr in Phase 2
-    zeile = ((f"Phase {ph} seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
+    phase = ((f"Phase {ph} seit KW {seit.isocalendar()[1]}/{seit.year}" if seit is not None else "")
              + _weinstein_ausbruch(m, ph, df)).lstrip(" ·") if ph else ""
-    return kachel2("Trend", mm, None, zeile,
-                   "Base-Ausbruch – Minervinis Trendvorlage, sieben Punkte zu Kurs und Durchschnitten (der achte, RS ab 70, steht in "
-                   "der Kachel „Stärke“). Sie entspricht Phase 2 (Aufwärts) nach Weinstein: "
-                   + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in tv.items())
-                   + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi nutzt keine Trendvorlage; seine Auswahl ist die Stärke (Kachel „Stärke“)."
-                   + "\n\nPhase nach Weinstein nur noch als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
-                     "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
-                     "steigender 30-Wochen-Linie.")
+    c = df["Close"]
+    g50 = c.rolling(GD50_TAGE).mean()
+    if len(c) <= GD50_TAGE + kartentisch.GD50_STEIG_TAGE:
+        return _urteil("Trend", regel, setup, ("grau", "zu kurze Historie"), "", "")
+    kurs, g, vor = float(c.iloc[-1]), float(g50.iloc[-1]), float(g50.iloc[-kartentisch.GD50_STEIG_TAGE])
+    ueber, steigt = kurs > g, g > vor
+    gd_txt = f"GD50 {zahl(g)} $ · Kurs {_vorzeichen((kurs / g - 1) * 100)} % · GD50 {'steigt' if steigt else 'fällt'}"
+    hilfe = ("Trendvorlage: " + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in (tv or {}).items())
+             + f"\n{gd_txt}\n\nPhase nach Weinstein nur als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
+               "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
+               "steigender 30-Wochen-Linie.")
+    tv_x = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
+    if regel == "trendvorlage":
+        return _urteil("Trend", regel, setup, tv_x, phase, hilfe)
+    if regel == "gd50_steigt":
+        ok = ueber and steigt
+        x = ("grün" if ok else "rot",
+             "Kurs über steigendem GD50" if ok else "Kurs unter GD50" if not ueber else "GD50 fällt")
+    elif regel == "gd50_3w":
+        v = b.get("vorher50")
+        x = ("grau", "keine Pause") if v is None else \
+            ("grün", "3 Wochen über GD50") if v else ("rot", "nicht 3 Wochen über GD50")
+    elif regel == "gd50":
+        x = ("grün" if (not ueber if short else ueber) else "rot", f"Kurs {'über' if ueber else 'unter'} GD50")
+    elif regel == "gd50_faellt":
+        x = ("grün" if not steigt else "rot", "GD50 fällt" if not steigt else "GD50 steigt")
+    else:                                        # keine Regel: die Trendvorlage als Zeichen
+        return _urteil("Trend", None, setup, tv_x, phase or gd_txt, hilfe)
+    return _urteil("Trend", regel, setup, x, gd_txt, hilfe)
 
 
-def _k2_staerke(m, k, rang, rw=None):
-    mm = (("grün" if rang >= 70 else "gelb" if rang >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
+def _k_staerke(regel, setup, k, rang, rw=None):
+    """Stärke nach der Regel des Setups: RS-Rang ab 70 (Base-Ausbruch) oder Führer (Momentum-Ausbruch); sonst Zeichen."""
+    rs_x = (("grün" if rang >= 70 else "gelb" if rang >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
         else ("grau", "kein RS-Rang")
     fr = k["fuehrer"]
     best = max((v for v in (fr or {}).values() if v == v), default=None)
-    # K als „oberste x %“ (10.11.2026): „besser als 92,6 %“ in Rot wirkte widersinnig – Kullamägi will die obersten 1–2 %
-    kk = (k["fuehrer_ampel"], f"oberste {zahl(max(0.1, 100 - best), 1 if best >= 90 else 0)} %") \
-        if best is not None else ("grau", "–")
+    # „oberste x %“ (10.11.2026): „besser als 92,6 %“ in Rot wirkte widersinnig
+    oben = f"oberste {zahl(max(0.1, 100 - best), 1 if best >= 90 else 0)} %" if best is not None else None
     zeile = (f'Rückenwind: {rw["stufe"] or "keine Stufe"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
-             f'({rw["tempo"]:+d} in 4 Wo.)' if rw else fuehrer_rang.text(fr))
-    if gestaltung.SYSTEM_JE.get("Stärke", gestaltung.SYSTEM) == "K" and best is not None:
-        zeile = "Kullamägi: grün bis oberste 2 %, gelb bis 5 % · " + zeile   # WST 16.11.2026: rot bei RS-Rang 90 erklären
-    return kachel2("Stärke", mm, kk, zeile,
-                   "Base-Ausbruch – RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit "
-                   "unserem Revier. Minervini verlangt mindestens 70 – der achte Punkt der Trendvorlage. Die Zahl ist "
-                   "kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi sucht die ein bis "
-                   "zwei Prozent mit den größten Kursanstiegen über 1, 3 und 6 Monate. Grün = in einem Zeitraum unter "
-                   "den obersten 2 %, gelb = oberste 5 %. Angezeigt: der beste der drei Zeiträume ("
-                   + fuehrer_rang.text(fr) + ").\n\nRückenwind – die Stufe aus der Seite Rückenwind: Entsteht = früh, "
-                   "das Geld beginnt zu fließen, auch wenn der RS-Rang noch unter 70 liegt.")
+             f'({rw["tempo"]:+d} in 4 Wo.)' if rw else "")
+    hilfe = ("RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit unserem "
+             "Revier – kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\nFührer: bester Kursanstieg über "
+             f"1, 3 und 6 Monate ({fuehrer_rang.text(fr)}).\nRückenwind: die Stufe aus der Seite Rückenwind – Entsteht = "
+             "früh, das Geld beginnt zu fließen, auch wenn der RS-Rang noch unter 70 liegt.")
+    if regel == "fuehrer2":
+        x = (k["fuehrer_ampel"], oben) if oben else ("grau", "–")
+        return _urteil("Stärke", regel, setup, x, zeile, hilfe)
+    if regel == "rs70":
+        return _urteil("Stärke", regel, setup, rs_x, zeile, hilfe)
+    return _urteil("Stärke", None, setup, rs_x, " · ".join(x for x in (oben, zeile) if x), hilfe)
 
 
-def _k2_fundament(m, k, fund, ph, df, gewinne):
+def _k_fundament(regel, setup, m, k, fund, ph, df, gewinne):
+    """Fundament nach der Regel des Setups: Zahlen wachsen (Base-Ausbruch) oder Nachricht am Sprungtag; sonst Zeichen."""
     z = next(r for r in m["regeln"] if r[0] == "Zahlen wachsen")
     if not fund:
-        mm = ("grau", "keine Daten")
+        zw = ("grau", "keine Daten")
     else:
         pk = fund["punkte"]
         g, u = pk.get("Quartalsgewinn zum Vorjahr", ("grau", ""))[0], pk.get("Umsatz", ("grau", ""))[0]
-        mm = ("grün" if g == "grün" and u == "grün" else "rot" if "rot" in (g, u) else "gelb",
-              "wachsen" if z[1] else "zu schwach")
-    ep = k.get("ep")
-    kk = ((("grün", "Zahlen am Sprungtag" if ep["regeln"][2][2].startswith("Zahlen") else
-             "ohne Zahlen, 5-fach Volumen, Schluss oben") if ep["regeln"][2][1] else ("gelb", "Nachricht prüfen"))
-          if ep else None)
+        zw = ("grün" if g == "grün" and u == "grün" else "rot" if "rot" in (g, u) else "gelb",
+              "Zahlen wachsen" if z[1] else "Zahlen zu schwach")
     ev = _ereignis(df, gewinne, fund) if (df is not None and fund) else None
     zeile = z[2] + (f" · {ev[1]}" if ev and ev[0] != "grau" else "")
     gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün") if fund else 0
-    return kachel2("Fundament", mm, kk, zeile,
-                   "Base-Ausbruch – Minervini kauft Führer mit wachsenden Zahlen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot "
-                   f"(grün ab 25 %). Alle sieben Prüfpunkte: {gruen} von 7 grün (Liste weiter unten). "
-                   + (_widerspruch(ph) or "")
-                   + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – Beim Breakout schaut Kullamägi nicht auf die Zahlen (rein technisch). Beim Episodic Pivot "
-                     "braucht er eine Nachricht, die den Markt zur Neubewertung zwingt – oft überraschend starke Zahlen."
-                   + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
+    hilfe = (f"Alle sieben Prüfpunkte: {gruen} von 7 grün (Liste weiter unten). " + (_widerspruch(ph) or "")
+             + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
+    if regel == "nachricht":
+        ep = k.get("ep")
+        x = ((("grün", "Zahlen am Sprungtag" if ep["regeln"][2][2].startswith("Zahlen") else
+               "ohne Zahlen, Markt hat bewertet") if ep["regeln"][2][1] else ("gelb", "Nachricht prüfen"))
+             if ep else ("grau", "kein Sprungtag"))
+        return _urteil("Fundament", regel, setup, x, ep["regeln"][2][2] if ep else zeile, hilfe)
+    return _urteil("Fundament", regel if regel == "zahlen_wachsen" else None, setup, zw, zeile, hilfe)
+
+
+def _k_enge(regel, setup, m, k, su, df):
+    """Enge nach der Regel des Setups: VCP, Flagge, Pause, Tief des Sprungtags, Tief und AVWAP des Reaktionstags."""
+    e = m.get("enge") or {}
+    eng = next(r for r in m["regeln"] if r[0] == "Enge (VCP)")
+    wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
+    reif = next(r for r in m["regeln"] if r[0].startswith("Reife Base"))[1]
+    vcp_x = (e["ampel"], f"VCP {wort[e['ampel']]}") if reif and e.get("ampel") in wort else ("grau", "VCP nicht messbar")
+    vcp_z = eng[2]
+    if reif and e.get("folge"):
+        vcp_z = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
+                                                   if e.get("volumen") == e.get("volumen") and e.get("volumen") else "")
+    b = k.get("breakout") or {}
+    z_k = b.get("zone") or {}
+    zone_txt = (f"{z_k.get('name', 'Zone')} {zahl(z_k.get('wochen', 0), 1)} Wochen, {zahl(z_k.get('tiefe', 0), 0)} % tief"
+                if z_k else "")
+    if regel == "vcp":
+        return _urteil("Enge", regel, setup, vcp_x, vcp_z, "")
+    if regel == "flagge":
+        fz = su.get("flagge_zone")
+        if not fz:
+            return _urteil("Enge", regel, setup, ("grau", "keine Flagge"), "", "")
+        vol_f = next((x for x in su.get("luecken") or [] if "Volumen" in x), None)
+        return _urteil("Enge", regel, setup, ("gelb" if vol_f else "grün", f"Flagge {zahl(fz['wochen'], 1)} Wochen"),
+                       f"{zahl(fz['tiefe'], 0)} % tief · " + (vol_f or "Volumen leiser als in der Stange"), "")
+    if regel == "pause":
+        kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
+        x = (("grün" if kons[1] else "gelb" if b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
+             f"Pause {b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else \
+            ("grau", "keine Pause")
+        vol_k = next((r for r in b.get("regeln", []) if r[0].startswith("Volumen in der Konsolidierung")), None)
+        zeile = zone_txt + (f" · GD20 {'gehalten' if b.get('haelt20') else 'gebrochen'}" if b.get("haelt20") is not None
+                            else "") + (f" · Volumen {vol_k[2]}" if vol_k else "")
+        return _urteil("Enge", regel, setup, x, zeile, "")
+    if regel == "sprungtief":
+        ep = k.get("ep")
+        if not ep:
+            return _urteil("Enge", regel, setup, ("grau", "kein Sprungtag"), "", "")
+        h = ep["regeln"][4]
+        return _urteil("Enge", regel, setup, ("grün", "hält das Tief") if h[1] else ("rot", "Tief gebrochen"),
+                       f"{h[2]} · Sprungtag {pd.Timestamp(ep['tag']):%d.%m.}", "")
+    if regel == "zahlentief":
+        zr = su.get("zr") or {}
+        if not zr:
+            return _urteil("Enge", regel, setup, ("grau", "keine Reaktion"), "", "")
+        return _urteil("Enge", regel, setup, ("grün", "hält den AVWAP") if zr.get("halten") else ("rot", "AVWAP gebrochen"),
+                       f"AVWAP Zahlentag {zahl(zr['avwap'])} $" if zr.get("avwap") else "",
+                       "Bondes „Delayed Reaction“, Shannons Anker am Ereignistag.")
+    return _urteil("Enge", None, setup, ("grau", zone_txt or vcp_x[1]), vcp_z if not zone_txt else "", "")
 
 
 def _k2_setup(m, k, erk, df):
-    mm = (m["ampel"], m["setup"] if m["setup"] != "keines" else "keines")
+    """Setup: das eine Setup des Titels mit seinem Namen (12.11.2026); die Regeln der Lehrer stehen im ⓘ."""
+    import kartentisch
     em = system_kullamaegi.short_von(k)
-    h = k.get("haupt")
-    if em and (not h or h["ampel"] == "rot"):
-        kk = (em["ampel"], em["art"] + " (short)" + (f" vor {em['tage_her']} T." if em["tage_her"] else ""))
-    else:
-        kk = ((h["ampel"], h["art"] + (f" vor {h['tage_her']} T." if h["art"] == "Episodic Pivot" and h["tage_her"] else ""))
-              if h and h["ampel"] != "rot" else ("rot", "keines"))
     teile = ([f"Pivot {zahl(m['pivot'])} $ · {m['lage']}"] if m.get("pivot")     # Base und Tiefe stehen in „Base“
              else [next(x for n, _, x in m["regeln"] if n.startswith("Reife Base"))])
     hilfe = ("Base-Ausbruch – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
              + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – " + "\n".join(
                  f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), em) if x))
-    su = erk.get("setup_info")
-    if gestaltung.SYSTEM and su is not None:         # ein eigenes System: das eine Setup mit seinem Namen
-        import kartentisch
-        r_ = su.get("reihe")
-        name = kartentisch.NAME.get(r_, "kein Setup")
-        ampel = ("grün" if su.get("gruen") else "grau" if r_ == "vcp" else "gelb") if r_ else "rot"
-        zeile_ = [su["scanner"]] if su.get("scanner") else (teile if r_ in ("m_spitze", "m_weitere") else [])
-        if su.get("ausbruch") and r_ not in ("m_spitze", "m_weitere"):
-            zeile_.append(su["ausbruch"])
-        if su.get("luecken") and not su.get("gruen"):
-            zeile_.append("Es fehlt: " + "; ".join(su["luecken"]))
-        if su.get("auch"):
-            zeile_.append("Auch: " + ", ".join(su["auch"]))
-        return kachel("Setup", ampel, name, " · ".join(x for x in zeile_ if x), hilfe, ganz=True)
-    f_ = fehlt(m, k)
-    if f_:
-        teile.append("Es fehlt: " + "; ".join(f_))
-    return kachel2("Setup", mm, kk, " · ".join(x for x in teile if x), hilfe)
-
-
-def _k2_enge(m, k, erk, df):
-    e = m.get("enge") or {}
-    eng = next(r for r in m["regeln"] if r[0] == "Enge (VCP)")
-    wort = {"grün": "ja", "gelb": "teilweise", "rot": "nein"}
-    reif = next(r for r in m["regeln"] if r[0].startswith("Reife Base"))[1]
-    mm = (e["ampel"], wort[e["ampel"]]) if reif and e.get("ampel") in wort else ("grau", "nicht messbar")
-    b = k.get("breakout") or {}
-    kons = next((r for r in b.get("regeln", []) if r[0].startswith("Konsolidierung")), None)
-    kk = (("grün" if kons[1] else "gelb" if b.get("wochen") and b["wochen"] <= system_kullamaegi.KONS_GELB else "rot"),
-          f"{b['wochen']} Woche{'n' if b['wochen'] != 1 else ''}") if kons and b.get("wochen") else ("grau", "keine Zone")
-    zeile = eng[2]
-    if reif and e.get("folge"):
-        zeile = f"Kontraktionen {e['folge']} %" + (f" · Volumen {zahl(e['volumen'] / 100, 1)}-fach"
-                                                     if e.get("volumen") == e.get("volumen") and e.get("volumen") else "")
-    su_ = erk.get("setup_info") or {}
-    if gestaltung.SYSTEM_JE.get("Enge", gestaltung.SYSTEM) == "K":
-        # Ampel und Zeile messen dasselbe (WST/AGYS 16.11.2026: Ampel aus Kullamägis großer Zone, Zeile aus Minervinis VCP,
-        # Setup aber die Flagge): beim Setup Flagge die Flagge selbst
-        fz = su_.get("flagge_zone") if su_.get("reihe") == "flagge" else None
-        if fz:
-            w_ = fz["wochen"]
-            kk = (("grün" if system_kullamaegi.KONS_GRUEN[0] <= w_ <= system_kullamaegi.KONS_GRUEN[1] + system_kullamaegi.WOCHEN_SPIEL
-                   else "gelb" if w_ <= system_kullamaegi.KONS_GELB + system_kullamaegi.WOCHEN_SPIEL else "rot"),
-                  f"{zahl(w_, 1)} Wochen")
-            vol_f = next((x for x in su_.get("luecken") or [] if "Volumen" in x), None)
-            zeile = f"Flagge {zahl(w_, 1)} Wochen, {zahl(fz['tiefe'], 0)} % tief" + (f" · {vol_f}" if vol_f else " · Volumen leiser als in der Stange")
-        elif kons:
-            z_k = b.get("zone") or {}
-            vol_k = next((r for r in b.get("regeln", []) if r[0].startswith("Volumen in der Konsolidierung")), None)
-            zeile = (f"{z_k.get('name', 'Zone')} {zahl(z_k.get('wochen', 0), 1)} Wochen, {zahl(z_k.get('tiefe', 0), 0)} % tief"
-                     + (f" · Volumen {vol_k[2]} {'(reduziert)' if vol_k[1] else '(nicht reduziert)'}" if vol_k else ""))
-    return kachel2("Enge", mm, kk, zeile,
-                   "Base-Ausbruch – Minervinis VCP (Baustein 2 des Scanners, wie im Chart): jede Kontraktion höchstens 70 % so tief "
-                   "wie die vorige, die letzte höchstens 10 %, das Volumen leiser als in der ersten. Grün = mindestens "
-                   "zwei schrumpfende Kontraktionen; rot = die letzte ist tiefer als die vorige.\n\n"
-                   "Flagge · Momentum · Sprung · Zahlen-Reaktion – Kullamägi: kurze Konsolidierung, meist 1–3 Wochen, nach einem Schub nach oben, vorzugsweise bei "
-                   "reduziertem Volumen. Gelb bis 8 Wochen.")
-
-
-def _k_trend50(df, short=False):
-    """Trend für Flagge, Momentum-Ausbruch, Sprung und Zahlen-Reaktion (Kullamägi): Kurs über dem GD50 (Short: darunter)."""
-    c = df["Close"]
-    if len(c) < 50:
-        return kachel("Trend", "grau", "zu kurze Historie", "")
-    g50, kurs = float(c.iloc[-50:].mean()), float(c.iloc[-1])
-    ueber = kurs > g50
-    ok = (not ueber) if short else ueber
-    return kachel("Trend", "grün" if ok else "rot", f"Kurs {'über' if ueber else 'unter'} GD50",
-                  f"GD50 {zahl(g50)} $ · {_vorzeichen((kurs / g50 - 1) * 100)} %",
-                  "Momentum-Setups (Kullamägi): Kurs über dem 50-Tage-Durchschnitt, beim Short darunter. Die volle "
-                  "Trendvorlage gilt nur für den Base-Ausbruch.", ganz=True)
-
-
-def _k_enge_zahlen(zr):
-    """Enge-Kachel der Zahlen-Reaktion: hält der Kurs Tief (Short: Hoch) und AVWAP des Reaktionstags?"""
-    return kachel("Enge", "grün" if zr.get("halten") else "rot",
-                  "hält den AVWAP" if zr.get("halten") else "AVWAP gebrochen",
-                  f"AVWAP Zahlentag {zahl(zr['avwap'])} $" if zr.get("avwap") else "",
-                  "Zahlen-Reaktion: Seit dem Reaktionstag kein Schluss unter dessen Tief und unter dem AVWAP ab diesem "
-                  "Tag (Short: über dem Hoch und über dem AVWAP) – Bondes „Delayed Reaction“, Shannons Anker.", ganz=True)
+    su = erk.get("setup_info") or {}
+    r_ = su.get("reihe")
+    name = kartentisch.NAME.get(r_, "kein Setup")
+    ampel = ("grün" if su.get("gruen") else "grau" if r_ == "vcp" else "gelb") if r_ else "rot"
+    zeile_ = [su["scanner"]] if su.get("scanner") else (teile if r_ in ("m_spitze", "m_weitere") else [])
+    if su.get("ausbruch") and r_ not in ("m_spitze", "m_weitere"):
+        zeile_.append(su["ausbruch"])
+    if su.get("luecken") and not su.get("gruen"):
+        zeile_.append("Es fehlt: " + "; ".join(su["luecken"]))
+    if su.get("auch"):
+        zeile_.append("Auch: " + ", ".join(su["auch"]))
+    return kachel("Setup", ampel, name, " · ".join(x for x in zeile_ if x), hilfe, ganz=True)
 
 
 def _kacheln(erk, ph, ph_reihe, fund, df, rd, fd, gewinne, m, k, mm, rw=None):
-    """Die acht Kacheln der Titelseite. Seit 12.11.2026 (ein eigenes System) urteilt jede Kachel mit einer Ampel für das
-    eine Setup des Titels (gestaltung.SYSTEM: aus wessen Regeln); Geld und Base als Zeichen. Fehlt ein Wert, steht ein
-    grauer Punkt mit dem Grund."""
+    """Die acht Kacheln der Titelseite. Seit 16.11.2026 urteilt jede Kachel mit der Regel, die der Regelkatalog dem
+    Setup des Titels gibt (regelkarte.kachel_regel); hat das Setup dort keine Regel, steht der Wert als Zeichen da
+    (grauer Punkt). Markt nach O'Neil, Geld und Base als Zeichen. Fehlt ein Wert, steht ein grauer Punkt mit dem Grund."""
+    import regelkarte
     _k_zone(erk), _k_zahlen(fd, fund)            # nur mitgeschrieben für die Lagekarte, hier nicht gezeigt
     rang = (erk.get("rs_rang") or (None, ""))[0]
     su = erk.get("setup_info") or {}
-    trend = _k2_trend(m, ph, ph_reihe, df) if gestaltung.SYSTEM != "K" else _k_trend50(df, gestaltung.SYSTEM_SHORT)
-    enge = (_k_enge_zahlen(su["zr"]) if su.get("reihe") == "zahlen" and su.get("zr") else _k2_enge(m, k, erk, df))
-    kl = [_k2_markt(mm), trend, _k2_staerke(m, k, rang, rw),
-          _k2_fundament(m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df), enge,
-          _k_geld(rw), _k_base(erk)]
+    r_ = su.get("reihe")
+    regel = {n: regelkarte.kachel_regel(r_, n) for n in regelkarte.KACHELN}
+    setup = next((s["name"] for s in regelkarte.SETUPS if r_ in s["reihen"]), None) \
+        or f"Kein Setup – Maßstab {regelkarte.KEIN_SETUP}"
+    kl = [_k2_markt(mm),
+          _k_trend(regel["Trend"], setup, m, ph, ph_reihe, df, k.get("breakout") or {}, gestaltung.SYSTEM_SHORT),
+          _k_staerke(regel["Stärke"], setup, k, rang, rw),
+          _k_fundament(regel["Fundament"], setup, m, k, fund, ph, df, gewinne), _k2_setup(m, k, erk, df),
+          _k_enge(regel["Enge"], setup, m, k, su, df), _k_geld(rw), _k_base(erk)]
     return (f'<section aria-label="Lage in fünf Sekunden" style="display:grid;'
             f'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">{"".join(kl)}</section>')
-
-
-def fehlt(m, k):
-    """Was dem Setup fehlt, für die Setup-Kachel (12.11.2026, vorher in der Karte „Plan“): die Regeln, die nicht erfüllt
-    sind – Minervini, wenn genau eine fehlt; Kullamägi und Ermüdung, wenn ihr Setup gelb ist."""
-    aus = []
-    if m.get("ampel") == "gelb":
-        aus += [f"M {n}" for n, ok, _ in m["regeln"] if not ok]
-    for x in ((k.get("haupt") or {}), (system_kullamaegi.short_von(k) or {})):
-        if x.get("ampel") == "gelb":
-            aus += [f"K {n}" for n, ok, _ in x.get("regeln", []) if not ok]
-    return aus
 
 
 def _heute_ueber(df, ausloeser, short=False):
@@ -1217,16 +1235,14 @@ def seite_titel(ticker, laufend=False, _stand=None):
         if su_w.get("zone"):
             zonen["jetzt"] = vcp_zone.datiert(df, su_w["zone"])
     gestaltung.MITSCHRIFT = {}                  # die Lagekarte liest die Ampeln der Kacheln mit
-    gestaltung.SYSTEM = kartentisch.LEHRER.get(su.get("reihe"), "M")
     gestaltung.SYSTEM_SHORT = lagekarte.richtung(su) == "short"
-    gestaltung.SYSTEM_JE = {"Stärke": "M"} if su.get("reihe") in ("zahlen", "k_ep") else {}
     try:
         rw = _rueckenwind(tk)
         leiste = _kacheln(erk, ph, ph_reihe, fund, df, rd, fd if fund else None, gewinne, m_, k_, mm_, rw)
         k_info = dict(gestaltung.MITSCHRIFT)
     finally:
         gestaltung.MITSCHRIFT = None
-        gestaltung.SYSTEM, gestaltung.SYSTEM_SHORT, gestaltung.SYSTEM_JE = None, False, {}
+        gestaltung.SYSTEM_SHORT = False
     lk = lagekarte.karte(tk, namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche")) or "", erk, k_info, df)
     marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw, su, zr_)
     marken["profil"] = (erk.get("profil") or {}).get("verankert")

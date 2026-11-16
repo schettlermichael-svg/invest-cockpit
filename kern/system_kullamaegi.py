@@ -146,7 +146,8 @@ def breakout(df, fr, scan=None, br=None):
     lage = (vcp_zone.ausbruch_text(br) if br else
             (f"{ab:.1f} % über der Oberkante" if ab >= 0 else f"{-ab:.1f} % unter der Oberkante").replace(".", ","))
     return {"art": "Breakout", "ampel": ampel, "regeln": regeln, "pivot": pivot, "wochen": round(wochen),
-            "zone": z, "ausbruch": br, "abstand": ab, "lage": lage}
+            "zone": z, "ausbruch": br, "abstand": ab, "lage": lage,
+            "vorher50": vorher50, "haelt20": haelt20}
 
 
 def episodic_pivot(df, gewinn_tage=()):
