@@ -1228,3 +1228,14 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   in 2 Jahren Median 4 → 3, höchstens 15 → 10. Kartentisch (468): Rückschlag 87, Rücksetzer 12; gegen die Stufe 80
   Setups, davon 22 von grün auf gelb; grün 68 → 47, ★ 40 → 25; Bruch der Spanne 68 → 81 (22 neu, 9 weg – vor dem Bruch,
   die Spanne ist wieder Trend oder breiter als 40 %).
+
+## Plan 9: Pivot, Drittel und Enge (16.11.2026)
+
+- **Minervinis Regel „Enge (VCP)“** verlangt jetzt neben der gelben oder grünen Enge mit mindestens 2 Kontraktionen auch
+  höchstens 6 Wellen und ein Volumen der Enge unter dem 50-Tage-Schnitt (`vcp_zone.enge` liefert `trocken` und `wenige`).
+  Gemessen (468): Minervini grün 11 → 7 (CBOE 121 %, COKE 114 % und 8 Wellen, CSX 143 %, MEDP), gelb 31 → 27; 4 Titel
+  fallen aus „Base-Ausbruch“, weil ihnen nun zwei Regeln fehlen (FTDR, AAPL, MAS, OMC).
+- **Schon behoben, nachgemessen:** Drittel aus der Lage in der Zone (Schritt 2), die 1. Kontraktion beginnt am Hoch der
+  Zone (329 von 329), ein überschrittener Pivot zählt nicht mehr – es gilt der nächste Einstieg (82 Zonen, Schritt 2).
+- **Prüfer irrt:** Zonen unter 5 Wochen mit Pivot (35) sind richtig – Minervini: eine Base ab 3 Wochen (5 Wochen ist
+  O'Neils flache Base).

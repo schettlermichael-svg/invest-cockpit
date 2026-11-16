@@ -12,7 +12,8 @@ Regeln für „grün“ (alle erfüllt; gelb = genau eine fehlt oder die Enge is
      Flagge mit eigener Fahnenstange, gilt die Flagge als Base (Micky, 06.11.2026) – Enge, Pivot und Stopp dann aus ihr.
   5. Enge (VCP): Baustein 2 des Scanners (vcp_zone.enge) – schrumpfende Kontraktionen, letzte höchstens 10 %, Volumen
      leiser als in der ersten. Erfüllt bei grün oder teilweise (gelb) und mindestens 2 Kontraktionen (Micky 13.11.2026:
-     „ab zwei Kontraktionen“ – mit einer ist es noch kein VCP); nicht erfüllt bei rot.
+     „ab zwei Kontraktionen“ – mit einer ist es noch kein VCP), höchstens 6 Wellen und Volumen der Enge unter dem
+     50-Tage-Schnitt (Plan 9, Micky 16.11.2026); nicht erfüllt bei rot.
 Seit 06.11.2026 kommen Base, Enge, Pivot und Stopp aus dem Scanner (vorher Wertzone und Absorption) – Chart, Scanner und
 Minervini zeigen dieselbe Linie.
 Ausbruch (06.11.2026): Schloss der Kurs in den letzten 4 Wochen über dem Pivot, gelten Zone, Enge und Pivot vom
@@ -104,6 +105,10 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
     eng = e.get("ampel", "grau") if reif else "grau"
     z_ok, z_txt = _zahlen(fund)
     n_kontr = len(e.get("kontraktionen") or []) if reif else 0
+    # Plan 9 (Micky 16.11.2026): eine gelbe Enge erfüllt die Regel nur, wenn das Volumen ausgetrocknet ist und es höchstens
+    # 6 Wellen sind – vorher wurde Minervini grün bei 114–143 % Volumen (CBOE, COKE, CSX) und bei 8 Wellen (COKE)
+    trocken = not reif or e.get("volumen") != e.get("volumen") or e.get("volumen") is None or bool(e.get("trocken"))
+    wenige = not reif or n_kontr <= vcp_zone.KONTR_MAX
     if reif:
         zone_txt = (f"{art} {z['wochen']:.1f} Wochen, {z['tiefe']:.0f} % tief".replace(".", ",")
                     + (f" (in einer {z['in_zone']})" if z.get("in_zone") else ""))
@@ -123,9 +128,11 @@ def pruefen(df, erk, rs_rang, fund, scan=None, ausbruch=False):
                f"RS {rs_rang} von 99" if rs_rang is not None else "kein RS-Rang"),
               ("Zahlen wachsen", z_ok, z_txt),
               ("Reife Base (Scanner)", reif, zone_txt),
-              ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= KONTR_MIN,
+              ("Enge (VCP)", eng in ("grün", "gelb") and n_kontr >= KONTR_MIN and trocken and wenige,
                (("" if eng == "grün" else "teilweise · " if eng == "gelb" else "nicht eng · ") + e.get("text", "")
-                + ("" if n_kontr >= KONTR_MIN or eng not in ("grün", "gelb") else " – erst eine Kontraktion"))
+                + ("" if n_kontr >= KONTR_MIN or eng not in ("grün", "gelb") else " – erst eine Kontraktion")
+                + ("" if trocken else f" – Volumen der Enge {e['volumen']:.0f} % des Schnitts (nicht ausgetrocknet)")
+                + ("" if wenige else f" – {n_kontr} Wellen (Minervini: {KONTR_MIN}–{vcp_zone.KONTR_MAX})"))
                if reif else "ohne reife Base nicht prüfbar")]
     fehlt = sum(1 for _, ok, _ in regeln if not ok)
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"

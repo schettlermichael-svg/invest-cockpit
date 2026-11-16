@@ -397,6 +397,7 @@ def enge(df, z):
     return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
             "lage": lage, "lage_anteil": anteil,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
+            "trocken": bool(trocken), "wenige": wenige,
             "volumen": vol_enge, "volumen_erste": vol_erste, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
             "abstand": (c[-1] / pivot - 1) * 100,
             "text": f"{len(kontr)} Kontraktion{'en' if len(kontr) != 1 else ''} {folge} %"

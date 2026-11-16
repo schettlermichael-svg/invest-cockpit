@@ -391,8 +391,9 @@ SETUPS = [
          weg="Balance → Test am Rand → angenommen",
          regel="Trendvorlage (Kurs über GD150/200, GD150 über GD200, GD200 steigt seit einem Monat, GD50 über GD150/200, "
                "Kurs über GD50, mindestens 30 % über dem 52-Wochen-Tief, höchstens 25 % unter dem Hoch), RS ab 70, Zahlen "
-               "wachsen, reife Base (fertig, Länge ok, höchstens 50 % tief), Enge (mindestens 2 Kontraktionen, jede "
-               "höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser). ★ = grün und Kurs bis 5 % unter bzw. "
+               "wachsen, reife Base (fertig, Länge ok, höchstens 50 % tief), Enge (2 bis 6 Kontraktionen, jede "
+               "höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser und unter dem 50-Tage-Schnitt – Plan 9, "
+               "Micky 16.11.2026). ★ = grün und Kurs bis 5 % unter bzw. "
                "über dem Pivot. Pivot = Hoch der letzten Kontraktion. Nach einem Ausbruch gilt das Setup 4 Wochen weiter. "
                "Nur Muster: die Zone hat eine grüne Enge, aber die Systemregeln (Trendvorlage, Zahlen) fehlen.",
          einstieg="Zwei Einstiege, wenn das Hoch der letzten Enge mehr als 3 % unter der Oberkante liegt: früh beim Schluss "
