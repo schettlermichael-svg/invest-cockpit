@@ -1,5 +1,5 @@
 """Kreislaufbild je Titel (Micky 13.11.2026): der echte Kursverlauf eines Jahres (Wochenschlüsse), nach Phasen gefärbt –
-Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag in Phase 2 amber –, ein Punkt „hier steht
+Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag in Phase 2 amber, Rücksetzer gelbgrün –, ein Punkt „hier steht
 er“, dazu die Wochentiefs (gepunktet) und der S&P 500 als Schatten (gestrichelt, gleicher Start), damit Stärke oder
 Schwäche gegen den Markt sofort sichtbar ist. Zeichnet sich ein Wechsel ab, verblasst die laufende Phase (hell) ab dem
 ersten Zeichen. Darunter die Phase in Worten und die Zeichen der Stärke und Schwäche, die die App gemessen hat.
@@ -10,12 +10,13 @@ punkt_wort(k)                    Phase in einem Wort mit farbigem Punkt für Tab
 """
 from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
 
-from zeichen import RUECKSCHLAG  # noqa: E402  eine Quelle (zeichen)
-# Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag amber, jung neutral
-FARBE = {0: "#6B7280", 1: "#7F93AD", 2: "#1D9E75", 3: "#B09A72", 4: "#D85A30", RUECKSCHLAG: "#E0A33A"}
+from zeichen import RUECKSCHLAG, RUECKSETZER  # noqa: E402  eine Quelle (zeichen)
+# Basis blaugrau, aufwärts grün, Verteilung ambergrau, abwärts rot, Rückschlag amber, Rücksetzer gelbgrün, jung neutral
+FARBE = {0: "#6B7280", 1: "#7F93AD", 2: "#1D9E75", 3: "#B09A72", 4: "#D85A30", RUECKSCHLAG: "#E0A33A",
+         RUECKSETZER: "#97C459"}
 # Wechsel zeichnet sich ab (Micky 13.11.2026: „Hell = laufende Phase verblasst“): die laufende Phase hell ab dem
 # ersten Zeichen – 4 → 1 hellrot, 2 → 3 hellgrün, 1 → 2 und 1 → 4 hell-blaugrau, 3 → 2 und 3 → 4 hell-ambergrau
-HELL = {1: "#BCC8D8", 2: "#9FE1CB", 3: "#DCCDAE", 4: "#F0997B", RUECKSCHLAG: "#F1D29A"}
+HELL = {1: "#BCC8D8", 2: "#9FE1CB", 3: "#DCCDAE", 4: "#F0997B", RUECKSCHLAG: "#F1D29A", RUECKSETZER: "#C0DD97"}
 PUNKT = {0: "◌", 1: "🔵", 2: "🟢", 3: "🟤", 4: "🔴"}
 from zeichen import PHASE_NAME as NAME   # noqa: E402  ein Name je Phase in der ganzen App
 INDEX_FARBE = "#9AA3AF"
@@ -33,6 +34,10 @@ def wort(k):
         w = f'{p} → {k["ziel"]} {NAME[p]} → {NAME[k["ziel"]]}'
     if k.get("rueckschlag"):
         w += " · Rückschlag"
+    elif k.get("ruecksetzer"):
+        w += " · Rücksetzer"
+    if k.get("ausbruch_basis"):
+        w += " · Ausbruch"
     if k.get("einquetschung"):
         w += " · Einquetschung"
     return w
@@ -43,7 +48,8 @@ def punkt_wort(k):
 
 
 def _farbe_jetzt(k):
-    return FARBE[RUECKSCHLAG] if k.get("rueckschlag") else FARBE.get(k["phase"], FARBE[0])
+    return FARBE[RUECKSCHLAG] if k.get("rueckschlag") else FARBE[RUECKSETZER] if k.get("ruecksetzer") \
+        else FARBE.get(k["phase"], FARBE[0])
 
 
 def _farben(k):
@@ -53,7 +59,7 @@ def _farben(k):
     if k.get("ziel") and k.get("wechsel_wochen"):
         jetzt = ph[-1]
         for i in range(max(0, len(ph) - int(k["wechsel_wochen"]) - 1), len(ph)):
-            if ph[i] == jetzt or (jetzt in (2, RUECKSCHLAG) and ph[i] in (2, RUECKSCHLAG)):
+            if ph[i] == jetzt or (jetzt in (2, RUECKSCHLAG, RUECKSETZER) and ph[i] in (2, RUECKSCHLAG, RUECKSETZER)):
                 f[i] = HELL.get(ph[i], f[i])
     return f
 
@@ -157,6 +163,8 @@ def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):
                  (FARBE[4], "abwärts", "")]
     if RUECKSCHLAG in k.get("phasen", []):
         eintraege.append((FARBE[RUECKSCHLAG], "Rückschlag", ""))
+    if RUECKSETZER in k.get("phasen", []):
+        eintraege.append((FARBE[RUECKSETZER], "Rücksetzer", ""))
     if k.get("ziel") and k.get("wechsel_wochen"):
         eintraege.append((farben[-1], "hell: die Phase verblasst, Wechsel zeichnet sich ab", ""))
     if tiefs:

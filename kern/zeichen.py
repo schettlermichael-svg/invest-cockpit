@@ -57,6 +57,7 @@ RS_HOCH = 0.99            # RS-Linie „am Hoch“: höchstens 1 % darunter – 
 JUNG_TAGE = 70            # Zeichen ab 70 Handelstagen; Phase erst ab 300 (vorher „jung“)
 PHASE_NAME = {0: "jung", 1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
 RUECKSCHLAG = 21          # Phase 2 · Rückschlag (Wochenschluss unter GD10W und ≥ 15 % unter dem 52-Wochen-Hoch)
+from phase import RUECKSETZER  # noqa: E402  Phase 2 · Rücksetzer (Phase-2-Bild fehlt, die Linie steigt noch) – eine Quelle
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -712,21 +713,33 @@ def _traegt(liste):
 def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None):
     """Phase, Wechsel und Zeichen eines Titels → dict mit phase (0 jung, 1–4), ziel, wort, satz, zeichen (Liste),
     staerke/schwaeche (Texte, stärkste zuerst), dow_tag, dow_woche, einquetschung, akkumulation, relativ, trend,
-    kurve, tiefs, index_kurve, phasen (52 Wochen; 21 = Rückschlag in Phase 2), wechsel_wochen, rueckschlag, jung."""
+    kurve, tiefs, index_kurve, phasen (52 Wochen; 21 = Rückschlag, 22 = Rücksetzer in Phase 2), wechsel_wochen, rueckschlag,
+    ruecksetzer, ausbruch_basis (Hoch der Basis, solange der Wechsel 1 → 2 läuft), jung."""
     import phase as phase_mod
     if df is None or len(df) < JUNG_TAGE:
         return None
     w = wochenkerzen(df)
     jung = len(df) < 300
+    zusatz, basis = "", None
     if jung:
         phl = [0] * len(w)
         p = 0
     else:
-        ph = phase_mod.phasen(df).reindex(w.index).ffill().fillna(1).astype(int)
+        ph_, zu_, ba_ = phase_mod.rechnen(df)
+        ph = ph_.reindex(w.index).ffill().fillna(1).astype(int)
         # wie erkennung._phase_von (Karte, Weinstein-Zeichen): die laufende Woche zählt erst ab ihrem Freitag
         p = phase_mod.aktuell(df, ph)
+        fertig = ph_.index <= df.index[-1]
+        zusatz = str(zu_[fertig].iloc[-1]) if fertig.any() else ""
+        basis = float(ba_[fertig].iloc[-1]) if zusatz == "Ausbruch" else None
+        zu_w = zu_.reindex(w.index).fillna("")
         phl = [int(x) for x in ph]
         phl[-1] = p
+        if p != 2:
+            zusatz = "" if zusatz == "Rücksetzer" else zusatz
+        for i in range(len(phl)):                 # Rücksetzer in Phase 2 (die Linie steigt noch) – eigene Farbe
+            if phl[i] == 2 and zu_w.iloc[i] == "Rücksetzer" and (i < len(phl) - 1 or zusatz == "Rücksetzer"):
+                phl[i] = RUECKSETZER
     zs = []
     dt, dw = dow(df, DOW_N_TAG), dow(w, 2)
     if dt and dt.get("signal"):
@@ -779,6 +792,9 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     lauf = 0 if jung else _lauf(phl)
     kurs = float(df["Close"].iloc[-1])
     bruch = ausbruch3 = False
+    if not jung and p == 1 and zusatz == "Ausbruch":     # Wechsel 1 → 2 läuft: über dem Basis-Hoch, die Linie steigt noch nicht
+        zs.append(_zeichen("stärke", "struktur", f"Ausbruch: Wochenschluss über dem Hoch der Basis {_z(basis, '.2f')} $, "
+                           "die 40-Wochen-Linie steigt noch nicht", 2))
     if p in (1, 3) and lauf >= PHASE_MIN_WOCHEN:
         spanne = w[w.index < df.index[-1]].iloc[-lauf:]
         if len(spanne) >= 3:
@@ -803,8 +819,8 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         ziel = 1
     elif p == 1 and bruch and schwach:
         ziel = 4
-    elif p == 1 and stark:
-        ziel = 2
+    elif p == 1 and (stark or zusatz == "Ausbruch"):
+        ziel = 2                                   # mit dem Ausbruch über das Basis-Hoch immer (Schritt 8, Micky 16.11.2026)
     elif p == 2 and schwach:
         ziel = 3
     elif p == 3 and ausbruch3 and stark:
@@ -817,12 +833,17 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         wc, wh = w["Close"], w["High"].rolling(JAHR_WOCHEN, min_periods=JAHR_WOCHEN_MIN).max()
         g10 = wc.rolling(10).mean()
         for i in range(len(phl)):
-            if phl[i] == 2 and wc.iloc[i] < g10.iloc[i] and wc.iloc[i] <= wh.iloc[i] * RUECKSCHLAG_TIEFE:
+            if phl[i] in (2, RUECKSETZER) and wc.iloc[i] < g10.iloc[i] and wc.iloc[i] <= wh.iloc[i] * RUECKSCHLAG_TIEFE:
                 phl[i] = RUECKSCHLAG
         rueckschlag = p == 2 and phl[-1] == RUECKSCHLAG
+    ruecksetzer = not jung and p == 2 and not rueckschlag and phl[-1] == RUECKSETZER   # zwei Stufen: Rückschlag geht vor
     wort = PHASE_NAME[0] if jung else (f"{p} → {ziel}" if ziel else str(p))
     if rueckschlag:
         wort += " · Rückschlag"
+    elif ruecksetzer:
+        wort += " · Rücksetzer"
+    if not jung and zusatz == "Ausbruch" and p == 1:
+        wort += " · Ausbruch"
     if eq:
         wort += " · Einquetschung"
     # seit wann sich der Wechsel abzeichnet (Kurve ab dort hell)
@@ -846,6 +867,8 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     satz = "jung (unter 300 Handelstagen, noch keine Phase)" if jung else f"Phase {p} ({PHASE_NAME[p]})"
     if rueckschlag:
         satz += ", Rückschlag (Wochenschluss unter dem GD10W, mindestens 15 % unter dem Hoch)"
+    elif ruecksetzer:
+        satz += ", Rücksetzer (das Phase-2-Bild fehlt, die 40-Wochen-Linie steigt noch)"
     if ziel:
         satz += f", Wechsel zu Phase {ziel} ({PHASE_NAME[ziel]}) zeichnet sich ab"
     if st_:
@@ -862,6 +885,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
             "staerke": [x["text"] for x in st_], "schwaeche": [x["text"] for x in sw_],
             "dow_tag": dt, "dow_woche": dw, "einquetschung": eq, "akkumulation": ak, "relativ": rel,
             "trend": trendqualitaet(df), "jung": jung, "rueckschlag": rueckschlag,
+            "ruecksetzer": ruecksetzer, "ausbruch_basis": basis if p == 1 and zusatz == "Ausbruch" else None,
             "kurve": [round(float(x), 2) for x in kurve], "tiefs": [round(float(x), 2) for x in w["Low"].iloc[-JAHR_WOCHEN:]],
             "index_kurve": i_w, "phasen": phl[-JAHR_WOCHEN:],
             "kurve_von": f"{kurve.index[0]:%d.%m.%Y}", "kurve_bis": f"{df.index[-1]:%d.%m.%Y}",

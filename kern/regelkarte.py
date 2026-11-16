@@ -253,10 +253,19 @@ WERKZEUGE = {
                                                "Laufrichtung = Gegenzeichen. Stärke in der Schwäche macht eigen, solange "
                                                "die RS nicht gegen die Laufrichtung läuft.",
              messung=["auktion.kraft"], stand="gemessen", pruefer=["Eigen oder geliehen"]),
-        dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Wechsel 3 → 4 erst, wenn die Linie fällt); "
-                                 "Rahmen für jeden Kasten.",
-             messung=["phase.aktuell", "zeichen.kreislauf"], stand="teilweise",
-             luecke="Neubau als Rahmen in Schritt 8 (30 oder 40 Wochen, Sperre nach Phase 4)",
+        dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Schritt 8, Micky 16.11.2026): Phase 2 beginnt mit "
+                                 "dem Wochenschluss über dem Hoch der Basis und über der Linie, die nicht mehr fällt "
+                                 "(„1 → 2 · Ausbruch“), bestätigt, sobald die Linie steigt; fehlt das Phase-2-Bild, solange "
+                                 "die Linie steigt: „2 · Rücksetzer“ (ab 15 % unter dem Hoch und unter dem GD10W "
+                                 "„2 · Rückschlag“, Ende-Zeichen); Phase 3 erst, wenn die Linie flach wird; Phase 4 "
+                                 "unter der fallenden Linie; aus Phase 4 immer erst in die Basis (frühestens nach 8 Wochen).",
+             messung=["phase.rechnen", "phase.aktuell", "zeichen.kreislauf"], stand="gemessen",
+             pruefer=["Kreislauf/Phase"]),
+        dict(name="Stufe als Rahmen", regel="Die Stufe gibt jedem Kasten den Namen: Balance in Stufe 1 = Basis, 2 = "
+                                            "Fortsetzung, 3 = Verteilung, 4 = Pause im Fall; Lauf aus Stufe 1 = Beginn, "
+                                            "in Stufe 2 = Fortsetzung. Ein Setup gegen die Stufe (Long in Phase 4, Short in "
+                                            "Phase 2) trägt ein Gegenzeichen und wird höchstens gelb – nie gefiltert.",
+             messung=["auktion.stufe_name", "kartentisch.setup_feststellen"], stand="gemessen",
              pruefer=["Kreislauf/Phase"]),
         dict(name="Short-Form", regel="Ermüdung, Bärenflagge, Bruch der Spanne (siehe Setups).",
              messung=["vcp_zone.ermuedung", "vcp_zone.baerenflagge", "vcp_zone.spannenbruch"], stand="gemessen",
@@ -441,8 +450,9 @@ SETUPS = [
          einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
          widerlegt="Schluss zurück im Driften", abweichung="", messung=["vcp_zone.baerenflagge"], stand="gemessen"),
     dict(name="Bruch der Spanne (Short)", reihen=["k_bruch"], lehrer="Weinstein", weg="gespiegelt: Balance → angenommen abwärts",
-         regel="Basis oder Verteilung ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Eine Verteilung "
-               "(Phase 3) steht schon vor dem Bruch in der Reihe, wie der Base-Ausbruch vor dem Ausbruch (gelb, im "
+         regel="Basis, Verteilung oder Balance in Phase 2 (Rücksetzer; Short gegen die Stufe, höchstens gelb – Schritt 8, "
+               "Micky 16.11.2026) ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Eine Verteilung "
+               "(Phase 3) oder Balance in Phase 2 steht schon vor dem Bruch in der Reihe, wie der Base-Ausbruch vor dem Ausbruch (gelb, im "
                "Vorrang hinten wie „weiter weg“; mit ausgelöstem frühen Short grün bei den Shorts; Micky 15.11.2026).",
          einstieg="Unterkante; grün nur bis 5 % darunter. Vor dem Bruch zwei Einstiege, wenn das Tief der letzten "
                   "Gegenbewegung mehr als 3 % über der Unterkante liegt: früh beim Schluss darunter (früher Short, grün), "

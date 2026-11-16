@@ -41,6 +41,14 @@ KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
 MAUER_NAH = 3.0        # Gegner antwortet: Kurs höchstens 3 % vor Mauer bzw. Stütze
 EIGEN_PCT = 5.0        # eigen: RS-Linie in 20 Tagen mindestens 5 % in Laufrichtung; geliehen: höchstens 1 %
 PFEIL = {"aufwärts": "↑", "abwärts": "↓", None: ""}
+# Die Stufe gibt dem Kasten den Namen (Schritt 8, Micky 16.11.2026): Balance in Stufe 1 ist die Basis, in Stufe 2 die
+# Fortsetzung, in Stufe 3 die Verteilung, in Stufe 4 die Pause im Fall; ein Lauf aus Stufe 1 ist der Beginn, in Stufe 2
+# die Fortsetzung – die übrigen Läufe nach dem, was sie in ihrer Stufe sind
+BALANCE_IN_STUFE = {1: "Basis", 2: "Fortsetzung", 3: "Verteilung", 4: "Pause im Fall"}
+LAUF_IN_STUFE = {("aufwärts", 1): "Beginn", ("aufwärts", 2): "Fortsetzung", ("aufwärts", 3): "aus der Verteilung",
+                 ("aufwärts", 4): "Gegenbewegung im Fall", ("abwärts", 1): "Bruch der Basis",
+                 ("abwärts", 2): "Gegenbewegung im Anstieg", ("abwärts", 3): "Beginn des Falls",
+                 ("abwärts", 4): "Fortsetzung des Falls"}
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -79,8 +87,18 @@ def _ergebnis(ebene, zustand, richtung=None, **kw):
     return e
 
 
+def stufe_name(zustand, richtung, p):
+    """Name des Kastens in seiner Stufe (Gefechtsordnung Schritt 8, Micky 16.11.2026: der Kreislauf läuft in jeder Stufe
+    neu ab) – „Basis“, „Fortsetzung“, „Beginn“ …; None ohne Phase."""
+    if p not in (1, 2, 3, 4) or not zustand:
+        return None
+    if zustand in ("Balance", "Test am Rand") or not richtung:
+        return BALANCE_IN_STUFE[p]
+    return LAUF_IN_STUFE[(richtung, p)]
+
+
 def wort(e):
-    """„Ungleichgewicht ↑“, „Test am Rand (oben)“ …"""
+    """„Ungleichgewicht ↑ · Beginn“, „Test am Rand (oben) · Basis“ …"""
     if not e:
         return ""
     w = e["zustand"]
@@ -88,6 +106,8 @@ def wort(e):
         w += " " + PFEIL[e["richtung"]]
     if w == "Test am Rand" and e.get("rand"):
         w += f" ({e['rand']})"
+    if e.get("stufe"):
+        w += " · " + e["stufe"]
     return w
 
 
@@ -554,6 +574,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     e = _ergebnis("titel", zustand, richtung, rand=rand, anlass=anlass, belege=belege, ende=ende, gegenseite=gegen,
                   kraft=kraft(df, idx, bewegung(zustand, richtung), k), unterzeile=" · ".join(x for x in unter if x), messung=mess)
     e["oben"], e["unten"] = oben, unten
+    e["stufe"] = None if k.get("jung") else stufe_name(zustand, richtung, p)
     return e
 
 

@@ -25,6 +25,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
+import phase                                         # noqa: E402
 from dateien import json_lesen, json_schreiben  # noqa: E402
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
 REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und eng (VCP), Trendvorlage, RS ab 70, Zahlen "
@@ -62,7 +63,7 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
           ("k_baerenflagge", "Bärenflagge · Short", "Steiler Fall ab 15 %, dann schwaches, leises Driften nach oben (GD50 "
                                                     "fällt), dann Schluss unter dem Tief der letzten 5 Tage des "
                                                     "Driftens; grün bis 5 % unter der Unterkante"),
-          ("k_bruch", "Bruch der Spanne · Short", "Eine Basis (Phase 1) oder Verteilung (Phase 3) von mindestens 6 Wochen "
+          ("k_bruch", "Bruch der Spanne · Short", "Eine Basis, Verteilung oder Balance in Phase 2 von mindestens 6 Wochen "
                                                   "bricht: Schluss mindestens 1 % unter ihrem Tief; grün bis 5 % "
                                                   "darunter")]
 WATCHLISTS_NACH = "m_spitze"
@@ -168,7 +169,9 @@ def setup_feststellen(df, m, k, zr, scan):
     → {reihe, gruen, stern, abstand, abstand_vz, luecken, zr, zr_seite, short_art, still, scanner, ausbruch, auch}"""
     import atr as atr_
     import depot
+    import erkennung
     import vcp_zone
+    import zeichen
     c = df["Close"].to_numpy(float)
     info = {}
     hk = k.get("haupt") or {}
@@ -282,8 +285,9 @@ def setup_feststellen(df, m, k, zr, scan):
         info["ausbruch"] = ("▽ Bruch der Spanne: Verteilung, noch nicht gebrochen – Auslöser Unterkante"
                             + (" (früher Short am Tief der letzten Gegenbewegung)" if len(short_von(k, r_).get("einstiege") or []) > 1 else ""))
     elif r_ == "k_bruch":
+        r0_ = str(short_von(k, r_)["regeln"][0][0])
         info["ausbruch"] = "▼ Bruch der Spanne: Schluss unter dem Tief der " + (
-            "Basis" if "Basis" in str(short_von(k, r_)["regeln"][0][0]) else "Verteilung")
+            "Basis" if "Basis" in r0_ else "Balance in Phase 2" if "Phase 2" in r0_ else "Verteilung")
     if zeichen_br:                           # Zeichen auf jeder Karte: Ausbruch mit/ohne Volumen, Fehlausbruch
         info["ausbruch"] = vcp_zone.ausbruch_text(zeichen_br)
     if zeichen_br and (zeichen_br.get("fehl") or zeichen_br.get("ruecktest")):
@@ -291,8 +295,19 @@ def setup_feststellen(df, m, k, zr, scan):
         # sind nicht einsatzbereit, bleiben aber in der Reihe unter Beobachtung
         info.update(gruen=False, stern=False, luecken=(info.get("luecken") or []) + [
             "Fehlausbruch – beobachten" if zeichen_br.get("fehl") else "Rücktest des Pivots – beobachten"])
+    # Gegen die Stufe (Gefechtsordnung Schritt 8, Micky 16.11.2026): Long in Phase 4 oder Short in Phase 2 bleibt
+    # sichtbar, trägt ein Gegenzeichen und wird höchstens gelb
+    ph_ = erkennung._phase_von(df) if seite_ else None
+    p_ = int(ph_[-1]) if ph_ is not None else None
+    if (seite_, p_) in GEGEN_STUFE:
+        info["gegen_stufe"] = (f"Gegenzeichen: {'Long' if seite_ == 'long' else 'Short'}-Setup in Phase {p_} "
+                               f"({zeichen.PHASE_NAME[p_]}) – gegen die Stufe")
+        info.update(gruen=False, stern=False, luecken=(info.get("luecken") or []) + [info["gegen_stufe"]])
     info["gruen"], info["stern"] = bool(info.get("gruen")), bool(info.get("stern"))
     return info
+
+
+GEGEN_STUFE = {("long", 4), ("short", 2)}   # Setup gegen die Stufe: Long im Abwärts, Short im Aufwärts (Schritt 8)
 
 
 STILL_PCT = 0.5               # ATR unter 0,5 % des Kurses: der Kurs steht still (Übernahme), kein handelbares Setup
@@ -424,7 +439,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
                               "hochs": sum(x["hoch52"] for x in stufe1), "tiefs": sum(x["tief52"] for x in stufe1),
                               "titel": len(stufe1)},
                 "titel": {x["tk"]: {k: v for k, v in x.items() if k != "tk"} for x in in_reihe},
-                "phasen": {x["tk"]: x["phase"] for x in stufe1}}
+                "phasen": {x["tk"]: x["phase"] for x in stufe1}, "phasen_regel": phase.REGEL}
     ergebnis["neu"] = _neu(vorher, ergebnis)
     os.makedirs(SPEICHER, exist_ok=True)
     json_schreiben(os.path.join(SPEICHER, f"{stand}.json"), ergebnis, ensure_ascii=False)
@@ -496,7 +511,8 @@ def _neu(vorher, jetzt):
             aus.append((tk, f"neu in {name.get(r_neu, r_neu)}"))
         elif RANG.get(r_neu, 0) > RANG.get(r_alt, 0) or (x.get("stern") and not alt[tk].get("stern")):
             aus.append((tk, f"vorgerückt: {name.get(r_alt, r_alt)} → {name.get(r_neu, r_neu)}"))
-    pa = vorher.get("phasen", {})
+    # neue Phasenregel (Schritt 8: 102 Titel wechselten auf einen Schlag von 3 nach 2): kein Vergleich mit dem alten Stand
+    pa = vorher.get("phasen", {}) if vorher.get("phasen_regel") == jetzt.get("phasen_regel") else {}
     for tk, p in jetzt["phasen"].items():
         if pa.get(tk) and p and pa[tk] != p:
             aus.append((tk, f"Phase {pa[tk]} → {p}"))

@@ -1202,3 +1202,29 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Freitag und Ein-/Auszahlungen eintragen; die App rechnet die Wochenrendite ohne Einzahlungen, die Ø Wochenrendite
   geometrisch aus den echten Wochen, die Hochrechnung auf ein Jahr (mit Ø und mit der letzten Woche), den Zielpfad nach
   dem Wochenziel, Unterwasser-Phasen (rot ab 10 % wie die Verlustbremse) und die Bilanz der geschlossenen Trades.
+
+## Gefechtsordnung Schritt 8: Phasen als Rahmen (16.11.2026)
+
+- **Phase nach Weinstein** (`kern/phase.py`, `rechnen` → Phase, Zusatz, Basis-Hoch je Woche; Regelstand `phase.REGEL`):
+  - *Phase 2* beginnt mit dem Ausbruch: Wochenschluss über dem Hoch der Basis (höchster Wochenschluss seit Beginn der
+    Phase 1) und über der 40-Wochen-Linie, die nicht mehr fällt → Wechsel „1 → 2 · Ausbruch“; bestätigt, sobald die
+    Linie steigt (über 0,5 % in 4 Wochen). Schluss zurück unter das Basis-Hoch oder die Linie: Ausbruch gescheitert.
+    Die frühere 25-%-Regel vom Tief (Minervini) gilt für die Phase nicht mehr, nur noch in der Trendvorlage.
+  - *2 · Rücksetzer*: das Phase-2-Bild fehlt, die Linie steigt aber noch (Weinstein: noch Stufe 2). Zwei Stufen:
+    *2 · Rückschlag* (ab 15 % unter dem Hoch, unter dem GD10W) geht vor und ist Ende-Zeichen; ein Titel trägt nur eines.
+  - *Phase 3* erst, wenn die Linie flach wird; *Phase 4* unverändert; aus Phase 4 immer erst in die Basis (8 Wochen Sperre).
+- **Die Stufe gibt dem Kasten den Namen** (`auktion.stufe_name`, im Wort jedes Zustands): Balance in 1 = Basis, 2 =
+  Fortsetzung, 3 = Verteilung, 4 = Pause im Fall; Lauf aus 1 = Beginn, in 2 = Fortsetzung, in 3 aufwärts = aus der
+  Verteilung, abwärts = Beginn des Falls, in 4 = Fortsetzung des Falls bzw. Gegenbewegung im Fall, in 1 abwärts = Bruch
+  der Basis, in 2 abwärts = Gegenbewegung im Anstieg.
+- **Gegen die Stufe** (`kartentisch.setup_feststellen`, `GEGEN_STUFE`): Long in Phase 4, Short in Phase 2 – Gegenzeichen,
+  höchstens gelb, nie gefiltert.
+- **Bruch der Spanne** auch aus einer Balance in Phase 2 (Rücksetzer-Wochen; Phase 3 und Rücksetzer zählen zusammen,
+  kürzere Rückkehr ins volle Phase-2-Bild unter 4 Wochen überbrückt) – als Short gegen die Stufe gelb.
+- **Kreislaufbild:** Rücksetzer gelbgrün. Der Kartentisch vergleicht Phasen nur bei gleichem Regelstand (kein
+  Meldungsschwall „Phase 3 → 2“ am ersten Tag).
+- **Gemessen** (462 Titel): Phase 1 / 2 / 3 / 4 = 87 / 102 / 183 / 90 → 39 / 219 / 112 / 92; 102 Titel 3 → 2 (Linie
+  steigt noch), 31 Titel 1 → 3; Wechsel „1 → 2 · Ausbruch“ läuft bei 4; Phase 1 über steigender Linie 23 → 3; Phasenwechsel
+  in 2 Jahren Median 4 → 3, höchstens 15 → 10. Kartentisch (468): Rückschlag 87, Rücksetzer 12; gegen die Stufe 80
+  Setups, davon 22 von grün auf gelb; grün 68 → 47, ★ 40 → 25; Bruch der Spanne 68 → 81 (22 neu, 9 weg – vor dem Bruch,
+  die Spanne ist wieder Trend oder breiter als 40 %).

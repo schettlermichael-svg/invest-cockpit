@@ -73,13 +73,14 @@ und weicht weiter.
   steigende Tiefs, Volumen leiser als im Fall · GD50 fällt · Auslöser: Schluss unter dem Tief der letzten 5 Tage des
   Driftens (Unterkante) · Stopp und Ampel wie bei der Ermüdung.
 
-Short – Bruch der Spanne (Prüf-Agent 13.11.2026): eine Basis (Phase 1) oder Verteilung (Phase 3) von mindestens 6 Wochen
+Short – Bruch der Spanne (Prüf-Agent 13.11.2026): eine Basis (Phase 1), Verteilung (Phase 3) oder Balance in Phase 2 (Rücksetzer, Schritt 8) von mindestens 6 Wochen
 und höchstens 40 % Breite bricht nach unten – Schluss mindestens 1 % unter ihrem Tief (Unterkante). Die Stellung, die lange gehalten wurde, fällt.
   Stopp und Ampel wie bei der Ermüdung.
 """
 import numpy as np
 import pandas as pd
 from masse import PHASE_VERTEILUNG, VOL_MIN_TAGE, WOCHE  # noqa: E402
+from phase import RUECKSETZER  # noqa: E402  Rücksetzer in Phase 2 – eine Quelle (phase)
 
 ATR_TAGE = 14
 GROB = 2.0
@@ -824,8 +825,37 @@ def baerenflagge(df, tage=ERM_TAGE):
     return None
 
 
+def _spannen_phasen(ph, zu):
+    """Phase je Woche für den Bruch der Spanne: Rücksetzer-Wochen in Phase 2 eigens (phase.RUECKSETZER) – eine Balance in
+    Phase 2 ist eine Spanne wie Basis und Verteilung (Schritt 8, Micky 16.11.2026: der Bruch gilt auch dort, als Short
+    gegen die Stufe höchstens gelb)."""
+    import phase as phase_mod
+    return ph.where(~((ph == 2) & (zu == "Rücksetzer")), phase_mod.RUECKSETZER)
+
+
+def _spannen_lauf(werte, p):
+    """Wochen der laufenden Spanne: Basis = Wochen in Phase 1; Verteilung und Balance in Phase 2 = Wochen in Phase 3 oder
+    Rücksetzer zusammen, kürzere Rückkehr ins volle Phase-2-Bild (unter NEUSTART_WOCHEN) überbrückt – wie die Verteilung
+    vor Schritt 8, die erst nach 4 Wochen Phase-2-Bild endete."""
+    import phase as phase_mod
+    teil = {1} if p == 1 else {PHASE_VERTEILUNG, RUECKSETZER}
+    n = luecke = 0
+    for x in reversed(werte):
+        if int(x) in teil:
+            n, luecke = n + luecke + 1, 0
+        elif p != 1 and int(x) == 2 and luecke + 1 < phase_mod.NEUSTART_WOCHEN:
+            luecke += 1
+        else:
+            break
+    return n
+
+
+SPANNE_NAME = {1: "Basis (Phase 1)", PHASE_VERTEILUNG: "Verteilung (Phase 3)", RUECKSETZER: "Balance in Phase 2 (Rücksetzer)"}
+
+
 def spannenbruch(df, tage=ERM_TAGE):
-    """Bruch der Spanne: Schluss mindestens 1 % unter dem Tief einer Phase 1 oder 3 von mindestens 6 Wochen, oder None."""
+    """Bruch der Spanne: Schluss mindestens 1 % unter dem Tief einer Spanne von mindestens 6 Wochen – Basis (Phase 1),
+    Verteilung (Phase 3) oder Balance in Phase 2 (Rücksetzer) –, oder None."""
     import phase as phase_mod
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
@@ -833,19 +863,16 @@ def spannenbruch(df, tage=ERM_TAGE):
         return None
     c, l = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
     try:
-        ph = phase_mod.phasen(df)
+        ph_, zu_, _ = phase_mod.rechnen(df)
+        ph = _spannen_phasen(ph_, zu_)
     except Exception:  # noqa: BLE001
         return None
     for t in range(n - tage, n):
         fertig = ph[ph.index < df.index[t]]      # nur Wochen, deren Freitag vor dem Bruchtag liegt
-        if not len(fertig) or int(fertig.iloc[-1]) not in (1, PHASE_VERTEILUNG):
+        if not len(fertig) or int(fertig.iloc[-1]) not in SPANNE_NAME:
             continue
         p = int(fertig.iloc[-1])
-        lauf = 0
-        for x in reversed(fertig.to_numpy()):
-            if int(x) != p:
-                break
-            lauf += 1
+        lauf = _spannen_lauf(fertig.to_numpy(), p)
         if lauf < SPANNE_WOCHEN:
             continue
         von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
@@ -854,7 +881,7 @@ def spannenbruch(df, tage=ERM_TAGE):
         oben = float(df["High"].to_numpy(float)[maske].max())
         if not (c[t] < unten * SPANNE_BRUCH and c[t - 1] >= unten * SPANNE_BRUCH) or oben / unten - 1 > SPANNE_BREIT:
             continue
-        regeln = [(f"{'Basis' if p == 1 else 'Verteilung'} (Phase {p}) mindestens 6 Wochen, höchstens 40 % breit", True,
+        regeln = [(f"{SPANNE_NAME[p]} mindestens 6 Wochen, höchstens 40 % breit", True,
                    f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)")]
         return _short_dict(df, "Bruch der Spanne", t, oben, unten, regeln, df.index[maske][0])
     return _vor_dem_bruch(df, ph)
@@ -862,20 +889,17 @@ def spannenbruch(df, tage=ERM_TAGE):
 
 def _vor_dem_bruch(df, ph):
     """Bruch der Spanne VOR dem Bruch (Gefechtsordnung Schritt 2 gespiegelt, Micky 15.11.2026): eine Verteilung (Phase 3)
-    von mindestens 6 Wochen, höchstens 40 % breit, die noch nicht gebrochen ist – wie der Base-Ausbruch vor dem Ausbruch.
+    oder Balance in Phase 2 (Rücksetzer, Schritt 8) von mindestens 6 Wochen, höchstens 40 % breit, die noch nicht gebrochen ist – wie der Base-Ausbruch vor dem Ausbruch.
     Einstieg an der Unterkante; liegt das Tief der letzten Gegenbewegung (Schwungtief vor dem letzten Anstieg in der
     Spanne) mehr als RAND_PCT über der Unterkante, ist ein Schluss darunter der frühe Short. Struktur-Stopp über dem Hoch
     der letzten Gegenbewegung (ohne Gegenbewegung: Oberkante der Spanne)."""
     n = len(df)
     c = df["Close"].to_numpy(float)
     fertig = ph[ph.index < df.index[-1]]
-    if not len(fertig) or int(fertig.iloc[-1]) != PHASE_VERTEILUNG:
+    if not len(fertig) or int(fertig.iloc[-1]) not in (PHASE_VERTEILUNG, RUECKSETZER):
         return None
-    lauf = 0
-    for x in reversed(fertig.to_numpy()):
-        if int(x) != PHASE_VERTEILUNG:
-            break
-        lauf += 1
+    p = int(fertig.iloc[-1])
+    lauf = _spannen_lauf(fertig.to_numpy(), p)
     if lauf < SPANNE_WOCHEN:
         return None
     von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
@@ -895,7 +919,7 @@ def _vor_dem_bruch(df, ph):
                "quelle": "früher Short: Schluss unter dem Tief der letzten Gegenbewegung"}] if frueh else []) + \
         [{"art": "ausbruch", "wort": "Bruch", "wert": unten, "struktur": stopp, "quelle": "Bruch der Unterkante"}]
     ab = (c[-1] / unten - 1) * 100
-    regeln = [("Verteilung (Phase 3) mindestens 6 Wochen, höchstens 40 % breit", True,
+    regeln = [(f"{SPANNE_NAME[p]} mindestens 6 Wochen, höchstens 40 % breit", True,
                f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)"),
               ("Bruch der Unterkante (Schluss 1 % darunter)", False, f"noch {_de(ab, '.1f')} % darüber")]
     ausgeloest = frueh and c[-1] < tief_g             # früher Short ausgelöst: Schluss unter dem Tief der Gegenbewegung
