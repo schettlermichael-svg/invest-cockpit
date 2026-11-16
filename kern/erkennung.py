@@ -7,7 +7,7 @@ erkenne(df, woche=False, index=None) -> dict
     werte     start_index, val, vah, poc der Wertzone, die heute gilt (Nach dem Kauf: enger Nachzieh-Stopp)
     hinweise  Warnungen für den Kopf der Titelseite: Übernahme-Verdacht, Klimax-Verdacht, Daten gestört
     daten     Datenampel (datenpruefung)
-Dazu klimax() (Klimax-Zeichen, auch für den Zustand), letztes_markttief() (Beginn der Basenzählung), _phase_von().
+Dazu klimax() (Klimax-Zeichen, auch für den Zustand), _phase_von().
 
 Bis 15.11.2026 rechnete erkenne() zusätzlich eine eigene Base mit Trendvorlage, Muster, Kaufsetup und Hinweisen
 (Tiefenampel, Kaufzone, V-Erholung, Base auf Base, Primärbasis) – eine zweite Base neben dem Scanner (vcp_zone) und eine
@@ -90,28 +90,6 @@ def klimax(h, l, c, v):
     return gruende
 
 
-MARKT_KORREKTUR = 0.15      # Markt fällt mindestens 15 %: danach beginnt die Zählung neu
-
-
-def letztes_markttief(index, bis):
-    """Datum des Tiefs der letzten abgeschlossenen oder laufenden Marktkorrektur ab 15 %."""
-    if index is None:
-        return None
-    teil = index[index.index < bis]["Close"]
-    if teil.empty:
-        return None
-    werte, tage = teil.to_numpy(float), teil.index
-    letzte, spitze, tief, tief_i, in_korr = None, werte[0], werte[0], 0, False
-    for i, x in enumerate(werte):
-        if x > spitze:
-            if in_korr:
-                letzte, in_korr = tage[tief_i], False
-            spitze, tief, tief_i = x, x, i
-        elif x < tief:
-            tief, tief_i = x, i
-            if x <= spitze * (1 - MARKT_KORREKTUR):
-                in_korr = True
-    return tage[tief_i] if in_korr else letzte
 
 
 def uebernahme_verdacht(h, l):

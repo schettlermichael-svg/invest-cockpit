@@ -51,6 +51,7 @@ SPITZE_BEWEGUNG = 0.03        # Volumenspitze zählt als Ereignis erst mit einer
 BALANCE_BLOCK = 5             # Balance: in Blöcken zu 5 Tagen zurück (eine Rotation dauert oft eine Woche)
 BALANCE_FEHL = 2              # höchstens 2 Blöcke in Folge ohne Überlappung (Rotation zum Rand), dann Ende
 BALANCE_MAX = 65 * 5          # höchstens 65 Wochen zurück
+LUECKE_BALANCE = 0.02         # eine Lücke ab 2 % beendet die Balance (Plan 10, Micky 16.11.2026: rund 3 je Jahr)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -208,6 +209,15 @@ def balance_beginn(df, bis=None):
         e -= BALANCE_BLOCK
     k0, k1 = np.percentile(tp[drin], [KERN_UNTEN, KERN_OBEN])
     i = min(drin)
+    # Plan 10 (Chart-Prüfer Lauf 4, Micky 16.11.2026): eine Lücke ohne Überlappung ist Ungleichgewicht und beendet die
+    # Balance – sie beginnt erst nach der letzten Lücke (die Spanne des Tages liegt mehr als LUECKE_BALANCE neben der des
+    # Vortags); den langsamen Trend ohne Lücke beendet schon der Kern (Blöcke ohne Berührung)
+    for g in range(n - 1, i, -1):
+        if lv[g] > hv[g - 1] * (1 + LUECKE_BALANCE) or hv[g] < lv[g - 1] * (1 - LUECKE_BALANCE):
+            i = g + 1
+            break
+    if i >= n:
+        return n - 1
     while i < n - 1 and not (lv[i] <= k1 and hv[i] >= k0):     # der erste Tag, der den Wert berührt
         i += 1
     return i
@@ -220,8 +230,13 @@ def profil_anker(df, zahltag=None, zone_start=None):
         return {}
     lang = lambda t: t is not None and (df.index >= pd.Timestamp(t)).sum() >= PROFIL_MIN_TAGE   # noqa: E731
     n = len(df)
+    z0 = int(df.index.searchsorted(pd.Timestamp(zone_start))) if zone_start is not None else 0
     bb = balance_beginn(df)
+    if bb is not None:
+        bb = max(bb, z0)                     # nie vor dem Beginn der Zone (Plan 10, Micky 16.11.2026)
     vor = balance_beginn(df, bb - 1) if bb is not None and n - bb < PROFIL_MIN_TAGE and bb > 0 else None
+    if vor is not None:
+        vor = max(vor, z0) if vor < bb else None
     if bb is not None and n - bb >= PROFIL_MIN_TAGE:
         grau = (df.index[bb], "Balance")
     elif vor is not None and bb - vor >= PROFIL_MIN_TAGE:   # Wert wandert seit wenigen Tagen: die Balance davor (Dalton:

@@ -1239,3 +1239,18 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Zone (329 von 329), ein überschrittener Pivot zählt nicht mehr – es gilt der nächste Einstieg (82 Zonen, Schritt 2).
 - **Prüfer irrt:** Zonen unter 5 Wochen mit Pivot (35) sind richtig – Minervini: eine Base ab 3 Wochen (5 Wochen ist
   O'Neils flache Base).
+
+## Plan 10: Volumenprofil der Balance und Basenzählung (16.11.2026)
+
+- **Volumenprofil der Balance** (`avwap.balance_beginn`, `avwap.profil_anker`): die Zone bleibt die Base nach Minervini
+  (ab dem Hoch der linken Seite, für alle Setups); das graue Profil folgt Dalton: es beginnt nie vor der Zone, eine Lücke
+  ab 2 % (`LUECKE_BALANCE`, rund 3 je Titel und Jahr) beendet die Balance, den langsamen Trend ohne Lücke beendet der Kern
+  (Wochen, die ihn nicht berühren). Im Ungleichgewicht („angenommen“, „Ungleichgewicht“, „Ende des Laufs“ –
+  `auktion.UNGLEICH`) heißt es „verlassene Balance“. Gemessen (468): Balance 178, Wert wandert 39, verlassene Balance 109,
+  seit Zone 42, seit Tief 71, seit Hoch 29; Kartentisch unverändert.
+- **Basenzählung** (`basen.py`): Beginn = Beginn der laufenden Phase 2 – neu nach Phase 4 und nach 3 → 2; neu bei 1, wenn
+  eine Zone unter das Tief der vorigen Base fällt (IBD; 58-mal); das Markttief setzt nicht mehr zurück
+  (`erkennung.letztes_markttief` entfernt). Jede laufende Zone trägt ihre Nummer (auch „noch nicht reif“), in Phase 1 oder
+  3 ist sie die 1. Base des neuen Anstiegs, in Phase 4 wird nicht gezählt. Nummer im Kasten („Test am Rand (oben) · Basis
+  · 1. Base“), in der Kachel und im Material des Prüfers. Gemessen: 266 × 1., 20 × 2., 2 × 3., 1 × 4.; ohne Nummer 179
+  (106 ohne Zone, 68 in Phase 4, 5 zu kurz).

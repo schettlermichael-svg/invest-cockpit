@@ -149,9 +149,10 @@ def _k_base(erk):
     bilanz = (f" Bilanz der abgeschlossenen Zonen der letzten gut zwei Jahre: {z_.get('gelungen', 0)} gelungen, "
               f"{z_.get('gescheitert', 0)} gescheitert, {z_.get('offen', 0)} offen (gelungen = 20 % über dem Pivot, "
               f"bevor ein Schluss 8 % darunter lag)." if liste else "")
-    regel = (" Gezählt wird ab dem Beginn der Phase 2 oder dem letzten Markttief nach einer Korrektur ab 15 % – was "
-             "später liegt; eine Zone zählt erst als neue Base, wenn ihre Oberkante 20 % über der zuletzt gezählten liegt "
-             "(sonst Base auf Base, gleiche Nummer). Basen und Flaggen zählen.")
+    regel = (" Gezählt wird ab dem Beginn der Phase 2 – nach Phase 4 und nach einer Verteilung (3 → 2) beginnt die "
+             "Zählung neu, ebenso, wenn eine Zone unter das Tief der vorigen Base fällt (IBD). Eine Zone zählt erst als "
+             "neue Base, wenn ihre Oberkante 20 % über der zuletzt gezählten liegt (sonst Base auf Base, gleiche "
+             "Nummer). Basen und Flaggen zählen; eine Zone, die noch keine reife Base ist, trägt ihre Nummer schon.")
     bz = bs.get("zahl")
     if not bz:
         if not liste:
@@ -168,6 +169,10 @@ def _k_base(erk):
     zeile = f"{z.get('name', 'Base')} · Tiefe {zahl(z.get('tiefe', 0), 0)} %"
     if bs.get("markt") is not None:
         zeile += f" · S&P 500 zugleich −{zahl(bs['markt'], 0)} %"
+    if not bs.get("reif"):
+        zeile += " · noch nicht reif"
+    if bs.get("neu"):
+        zeile += f" · neu gezählt ({bs['neu']})"
     return kachel("Base", ampel, f"Nr. {bz} · {'früh' if bz <= 2 else 'handelbar' if bz == 3 else 'spät'}", zeile,
                   "Die wievielte Base seit Beginn des Aufwärtstrends (IBD/O'Neil). Basen 1 und 2 sind früh und am "
                   "ergiebigsten, die dritte ist noch handelbar, ab der vierten scheitern die meisten. Tiefe der Base gegen "
@@ -1164,8 +1169,9 @@ def seite_titel(ticker, laufend=False, _stand=None):
     erk["scanner_zone"] = m_["zone"] if m_["zone"].get("zone") else None   # Frühwarnung: Unterkante der Zone
     try:                                         # IBD-Basenzählung auf den Scanner-Zonen (Kachel Base, Nummern im Chart)
         import basen
-        erk["basen"] = basen.zaehlen(df, index, (zonen or {}).get("verlauf"), m_["zone"] if reif else None)
-        if reif:
+        z_b = m_["zone"] if m_["zone"].get("zone") else None   # jede laufende Zone bekommt ihre Nummer (Plan 10)
+        erk["basen"] = basen.zaehlen(df, (zonen or {}).get("verlauf"), z_b, reif)
+        if z_b:
             erk["basen"]["markt"] = basen.markt_rueckgang(index, df.index[m_["zone"]["start_i"]])
     except Exception:  # noqa: BLE001 – Kachel ohne Zählung
         erk["basen"] = None
@@ -1199,7 +1205,15 @@ def seite_titel(ticker, laufend=False, _stand=None):
     stellung = _stellung(df, marken)
     kb = _kreislauf_box(tk, df, index, gewinne, m_, erk, zonen)      # setzt erk["auktion"]
     try:
+        import auktion
         import zustandsbild
+        au_, bs_ = erk.get("auktion"), erk.get("basen") or {}
+        g_ = ((erk.get("profil") or {}).get("verankert") or {}).get("grau")
+        if au_ and g_ and str(g_.get("art", "")).startswith("Balance") and au_.get("zustand") in auktion.UNGLEICH:
+            g_["art"] = "verlassene Balance"         # Plan 10: im Ungleichgewicht ist es die verlassene Balance
+        if au_ and bs_.get("zahl") and au_.get("zustand") in ("Balance", "Test am Rand"):   # Nummer im Kasten (Plan 10)
+            nr_ = f"{bs_['zahl']}. Base" + ("" if bs_.get("reif") else " (noch nicht reif)")
+            erk["auktion"] = dict(au_, stufe=" · ".join(x for x in (au_.get("stufe"), nr_) if x))
         kz = zustandsbild.kopfzeile(erk.get("auktion"))             # Zustand zuerst (13.11.2026)
     except Exception:  # noqa: BLE001
         kz = ""

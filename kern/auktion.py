@@ -41,6 +41,7 @@ KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
 MAUER_NAH = 3.0        # Gegner antwortet: Kurs höchstens 3 % vor Mauer bzw. Stütze
 EIGEN_PCT = 5.0        # eigen: RS-Linie in 20 Tagen mindestens 5 % in Laufrichtung; geliehen: höchstens 1 %
 PFEIL = {"aufwärts": "↑", "abwärts": "↓", None: ""}
+UNGLEICH = ("angenommen", "Ungleichgewicht", "Ende des Laufs")   # Zustände ohne laufende Balance (Profil: verlassen)
 # Die Stufe gibt dem Kasten den Namen (Schritt 8, Micky 16.11.2026): Balance in Stufe 1 ist die Basis, in Stufe 2 die
 # Fortsetzung, in Stufe 3 die Verteilung, in Stufe 4 die Pause im Fall; ein Lauf aus Stufe 1 ist der Beginn, in Stufe 2
 # die Fortsetzung – die übrigen Läufe nach dem, was sie in ihrer Stufe sind

@@ -1,8 +1,11 @@
 """IBD-Basenzählung auf den Zonen des VCP-Scanners (06.11.2026, statt der Wertzonen).
 
-Regeln wie bisher (O'Neil/IBD), nur auf Scanner-Zonen:
-  Beginn  = was später liegt: Beginn der aktuellen Phase 2 (Weinstein) oder das letzte Markttief nach einer Korrektur
-            ab 15 % (erkennung.letztes_markttief) – nach einer Marktkorrektur fängt jeder Titel wieder bei 1 an
+Regeln (O'Neil/IBD), auf Scanner-Zonen:
+  Beginn  = Beginn der laufenden Phase 2 (Weinstein): nach Phase 4 und auch nach einer Verteilung (3 → 2) fängt die
+            Zählung neu an (Plan 10, Micky 16.11.2026; das Markttief setzt nicht mehr zurück)
+  neu     = fällt eine Zone unter das Tief der vorigen Base, beginnt die Zählung wieder bei 1 (IBD-Faustregel; ohne
+            Phase 4 dazwischen in 622 von 966 Fällen, 16.11.2026); eine laufende Zone in Phase 1 oder 3 (oder vor dem
+            Wechsel zu Phase 2 begonnen) ist die 1. Base des neuen Anstiegs; in Phase 4 wird nicht gezählt
   gezählt = abgeschlossene Scanner-Zonen (Ausbruch über die Oberkante, vcp_zone.verlauf) ab dem Beginn, Basen ab
             3 Wochen und Flaggen ab 1 Woche (Micky); die laufende Zone zählt mit
   Stufe   = eine Zone zählt als neue Base erst, wenn ihre Oberkante mindestens 20 % über der Oberkante der zuletzt
@@ -14,7 +17,7 @@ lag; gescheitert = der Schluss 8 % darunter kam zuerst; sonst offen. Volumen am 
 import numpy as np
 
 import erkennung
-from masse import P_ABWAERTS, VOL_TAGE  # noqa: E402
+from masse import P_ABWAERTS, PHASE_VERTEILUNG, VOL_TAGE  # noqa: E402
 
 STUFE = 0.20                  # neue Base erst 20 % über der Oberkante der zuletzt gezählten
 ERFOLG, VERLUST = 0.20, 0.08  # Ausgang nach O'Neil
@@ -23,15 +26,14 @@ ERFOLG, VERLUST = 0.20, 0.08  # Ausgang nach O'Neil
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 
 
-def beginn(df, index=None):
-    """Beginn der Zählung (Datum) oder None (zu kurze Historie)."""
+def beginn(df):
+    """Beginn der Zählung (Datum): der Freitag nach der letzten Woche in Phase 1, 3 oder 4, oder None (zu kurze
+    Historie)."""
     if len(df) < 300:
         return None
     ph = erkennung.phasen(df)
-    vorher = ph[ph.isin([1, P_ABWAERTS])]
-    b = vorher.index[-1] if len(vorher) else ph.index[0]
-    markt = erkennung.letztes_markttief(index, df.index[-1])
-    return markt if markt is not None and markt > b else b
+    vorher = ph[ph.isin([1, PHASE_VERTEILUNG, P_ABWAERTS])]
+    return vorher.index[-1] if len(vorher) else ph.index[0]
 
 
 def _ausgang(df, i, pivot):
@@ -44,20 +46,22 @@ def _ausgang(df, i, pivot):
     return "offen"
 
 
-def zaehlen(df, index, verlauf, jetzt=None):
-    """verlauf: abgeschlossene Zonen aus vcp_zone.verlauf/alles (mit start_i, ende_i, oben); jetzt: die laufende Base
-    (Minervinis Zone) oder None. Ergebnis: {zahl (laufende Base, None ohne), liste (abgeschlossene Zonen mit nummer,
-    ausgang, volumen), beginn, bilanz}. Die Zonen in verlauf bekommen ihre Nummer (für den Chart)."""
+def zaehlen(df, verlauf, jetzt=None, reif=True):
+    """verlauf: abgeschlossene Zonen aus vcp_zone.verlauf/alles (mit start_i, ende_i, oben); jetzt: die laufende Zone
+    oder None, reif: ist sie eine reife Base (Minervini)? Ergebnis: {zahl (laufende Zone, None ohne), reif, neu (Grund,
+    wenn die laufende Zone neu bei 1 beginnt), grund (warum keine Zahl), liste (abgeschlossene Zonen mit nummer, ausgang, volumen), beginn,
+    bilanz}. Die Zonen in verlauf bekommen ihre Nummer (für den Chart)."""
     df = df.dropna(subset=["High", "Low", "Close"])
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(len(df), np.nan)
-    t0 = beginn(df, index)
+    tiefs = df["Low"].to_numpy(float)
+    t0 = beginn(df)
     gesehen, liste = set(), []
     for b in sorted(verlauf or [], key=lambda b: (b["ende_i"], b["start_i"])):
         if b["start_i"] in gesehen:
             continue
         gesehen.add(b["start_i"])
         liste.append(b)
-    zahl, letzter = 0, None
+    zahl, letzter, tief_vor = 0, None, None
     for b in liste:
         i = b["ende_i"]
         s50 = np.nanmean(v[max(0, i - VOL_TAGE):i]) if i > 0 else np.nan
@@ -69,19 +73,34 @@ def zaehlen(df, index, verlauf, jetzt=None):
         if t0 is None or df.index[b["start_i"]] < t0:
             b["nummer"] = None                   # vor dem Beginn der Zählung
             continue
+        tief_b = float(tiefs[b["start_i"]:b["ende_i"] + 1].min())
+        if tief_vor is not None and tief_b < tief_vor:   # unter dem Tief der vorigen Base: neu bei 1 (IBD)
+            zahl, letzter = 0, None
+            b["neu"] = "unter dem Tief der vorigen Base"
         if letzter is None or b["oben"] >= letzter * (1 + STUFE):
             zahl, letzter = zahl + 1, b["oben"]
-        b["nummer"] = zahl
-    lauf = None
+        b["nummer"], tief_vor = zahl, tief_b
+    lauf, neu = None, None
     if jetzt and jetzt.get("zone") and t0 is not None and df.index[jetzt["start_i"]] >= t0:
         schon = next((b for b in liste if b["start_i"] == jetzt["start_i"]), None)
         if schon:                                # frisch ausgebrochen: dieselbe Zone wie in der Liste
-            lauf = schon["nummer"]
+            lauf, neu = schon["nummer"], schon.get("neu")
+        elif tief_vor is not None and jetzt.get("unten") is not None and jetzt["unten"] < tief_vor:
+            lauf, neu = 1, "unter dem Tief der vorigen Base"
         else:
             lauf = zahl + 1 if letzter is None or jetzt["oben"] >= letzter * (1 + STUFE) else max(zahl, 1)
+    grund = None if lauf else "keine laufende Zone" if not (jetzt and jetzt.get("zone")) else None
+    if not lauf and jetzt and jetzt.get("zone") and t0 is not None:
+        # Plan 10 (Micky 16.11.2026): eine Zone in Phase 1 oder 3 – oder eine, die vor dem Wechsel zu Phase 2 begann – ist
+        # die Base, aus der der neue Anstieg startet: 1. Base; in Phase 4 wird nicht gezählt
+        p_ = int(erkennung._phase_von(df)[-1])
+        if p_ == P_ABWAERTS:
+            grund = "keine Zählung in Phase 4"
+        else:
+            lauf, neu = 1, f"Base vor dem neuen Anstieg (Phase {p_})" if p_ != 2 else "Base aus der Zeit vor Phase 2"
     zaehl = {a: sum(1 for b in liste if b["ausgang"] == a and not b.get("cheat"))
              for a in ("gelungen", "gescheitert", "offen")}
-    return {"zahl": lauf, "liste": liste, "beginn": t0, "bilanz": zaehl}
+    return {"zahl": lauf, "reif": bool(reif), "neu": neu, "grund": grund, "liste": liste, "beginn": t0, "bilanz": zaehl}
 
 
 def markt_rueckgang(index, von, bis=None):

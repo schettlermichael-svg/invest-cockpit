@@ -250,8 +250,6 @@ def material(tk, df):
                           "nicht 1 ATR über dem tiefsten Tief seit dem letzten Hoch (keine Bewegung begonnen)")
         else:
             zeilen.append(f"AVWAP-Anker {name}: keiner")
-    if pa.get("grau"):
-        zeilen.append(f"Volumenprofil der Balance ab {_d(pa['grau'][0])} ({pa['grau'][1]})")
     if wh:
         zeilen.append("Wochen-Schwunghochs: " + ", ".join(f"{_d(d)} {_z(p)} $" for d, p in wh))
     if ein:
@@ -268,6 +266,12 @@ def material(tk, df):
     k = zeichen.fuer_titel(tk, df, idx, g, fehlausbruch=fa)
     zst = auktion.fuer_titel(tk, df, k, idx, mp, br, z, g) if k else None
     vv = volumenprofil.verankert(df, zt, z.get("start") if z.get("zone") else None) or {}
+    if pa.get("grau"):                         # Plan 10: im Ungleichgewicht ist es die verlassene Balance
+        art_ = pa["grau"][1]
+        if art_.startswith("Balance") and zst and zst.get("zustand") in auktion.UNGLEICH:
+            art_ = "verlassene Balance"
+        zeilen.append(f"Volumenprofil der Balance ab {_d(pa['grau'][0])} ({art_}; endet an einer Lücke ab 2 %, nie vor "
+                      "dem Beginn der Zone)")
     if k:
         zeilen.append(f"Kreislauf (Weinstein): Phase {k['phase']} {zeichen.PHASE_NAME.get(k['phase'], '')}"
                       + (f", Wechsel zu {k['ziel']} zeichnet sich ab" if k.get("ziel") else "")
@@ -288,6 +292,26 @@ def material(tk, df):
                           f"Oberkante {_z(b['oben'])} $, Pivot {_z(piv)} $, Ausbruch am {_d(b['ende'])}; Kurs heute "
                           f"{_z((df['Close'].iloc[-1] / piv - 1) * 100, '.1f')} % über dem Pivot. Der Ausbruch gilt "
                           "4 Wochen (Kaufzone bis 5 % über dem Pivot), danach zeigt die App nur noch den blassen Rahmen")
+    try:                                       # Basenzählung (Plan 10, Micky 16.11.2026) – wie Kachel und Chart der App
+        import basen
+        import system_minervini
+        m_b = system_minervini.pruefen(df, {}, None, None)
+        reif_b = next(ok for n_, ok, _ in m_b["regeln"] if n_.startswith("Reife Base"))
+        z_b = m_b["zone"] if m_b["zone"].get("zone") else None
+        bz = basen.zaehlen(df, vcp_zone.verlauf(df), z_b, reif_b)
+        regel_b = ("gezählt ab dem Beginn der Phase 2; neu bei 1 nach Phase 4, nach einer Verteilung (3 → 2) und wenn eine "
+                   "Zone unter das Tief der vorigen Base fällt (IBD); eine Zone in Phase 1 oder 3 ist die 1. Base des neuen "
+                   "Anstiegs, in Phase 4 wird nicht gezählt; neue Nummer erst 20 % über der zuletzt gezählten")
+        if bz.get("zahl"):
+            zeilen.append(f"Basenzählung der App: die laufende Zone ist die {bz['zahl']}. Base"
+                          + ("" if bz.get("reif") else " (noch nicht reif)")
+                          + (f", neu gezählt ({bz['neu']})" if bz.get("neu") else "")
+                          + (f", Beginn der Zählung {_d(bz['beginn'])}" if bz.get("beginn") is not None else "")
+                          + f" – {regel_b}")
+        else:
+            zeilen.append(f"Basenzählung der App: keine Nummer – {bz.get('grund') or 'zu kurze Historie'} ({regel_b})")
+    except Exception:  # noqa: BLE001 – Material ohne Zählung
+        pass
     sig = (mp or {}).get("signale") or []
     if sig:
         zeilen.append("Signale des Market Profile (letzte 60 Tage): " + ", ".join(
