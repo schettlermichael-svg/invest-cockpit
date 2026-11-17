@@ -1368,3 +1368,14 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Wachen entfallen.
 - Die geplante Aufgabe „US-Trading-Screener“ (TradingView über Claude) hat Micky gelöscht – es gibt eine Liste, ein
   Regelwerk.
+
+## Zugangsausweis an der Haustür (17.11.2026)
+
+- ntfy fragte bei jedem Tipp auf eine Meldung zweimal nach dem Passwort: Der Browser in ntfy merkt sich die
+  Passwortsperre von Caddy nicht, und Streamlit öffnet Seite und Live-Leitung getrennt.
+- `werkzeuge/server/ausweis.sh` (einmalig, aus `aktualisieren.sh` und `einrichten.sh`): Nach dem ersten richtigen
+  Passwort gibt Caddy dem Gerät einen geheimen Ausweis (Cookie `ic_zugang`, 1 Jahr, nur https, HttpOnly). Mit ihm öffnet
+  die Tür ohne Frage; ohne ihn bleibt die Passwortsperre. Nutzer und Passwort bleiben unverändert. Umgebaut wird nur die
+  Tür aus `einrichten.sh` (6 Zeilen); vorher prüft `caddy validate`, die alte Datei liegt als `Caddyfile.vor-ausweis`.
+- Geprüft mit Caddy 2.8.4: ohne Passwort 401 ohne Ausweis, falsches Passwort 401, richtiges Passwort 200 mit Ausweis,
+  Ausweis allein 200, falscher Ausweis 401.

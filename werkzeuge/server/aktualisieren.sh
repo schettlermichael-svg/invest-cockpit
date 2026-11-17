@@ -27,6 +27,8 @@ if [ -f werkzeuge/server/pakete.txt ] && ! cmp -s werkzeuge/server/pakete.txt .v
     && chown -R cockpit:cockpit .venv
   echo "$(date '+%d.%m.%Y %H:%M') Pakete installiert: $(tr '\n' ' ' < werkzeuge/server/pakete.txt)" >> /var/log/invest-cockpit-update.log
 fi
+# Zugangsausweis an der Haustür (17.11.2026), einmalig
+[ -f werkzeuge/server/ausweis.sh ] && bash werkzeuge/server/ausweis.sh
 git fetch -q origin main 2>/dev/null || exit 0
 [ "$(git rev-parse HEAD 2>/dev/null)" = "$(git rev-parse origin/main)" ] && exit 0
 if .venv/bin/python werkzeuge/nachtlauf.py --laeuft 2>/dev/null; then

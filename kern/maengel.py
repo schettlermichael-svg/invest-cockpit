@@ -253,6 +253,8 @@ PLAN = [
     (28, "Tägliche Meldung mit den heißesten Long- und Short-Titeln (Micky 17.11.)", "Befunde", "behoben",
      "6375d27: nach dem Nachtlauf die ersten 5 Long und 5 Short aus „Einsatzbereit“ (Rangfolge vom 12.11.) per ntfy, Tipp öffnet "
      "die Seite Setups; der US-Trading-Screener ist gelöscht (Micky)"),
+    (29, "ntfy fragt bei jedem Tipp zweimal nach dem Passwort (Micky 17.11.)", "Befunde", "behoben",
+     "Zugangsausweis (Cookie, 1 Jahr) an der Haustür über werkzeuge/server/ausweis.sh – einmal einloggen je Gerät"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“

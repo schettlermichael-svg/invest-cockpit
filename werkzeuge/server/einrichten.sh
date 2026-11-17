@@ -78,6 +78,7 @@ EOF
 systemctl daemon-reload
 systemctl enable -q invest-cockpit nachtlauf.timer
 systemctl restart caddy
+bash "$(dirname "$0")/ausweis.sh"     # Zugangsausweis: nach dem ersten Passwort ein Jahr Ruhe je Gerät
 systemctl start nachtlauf.timer
 
 echo
