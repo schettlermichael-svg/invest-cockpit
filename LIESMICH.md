@@ -717,7 +717,7 @@ Ein Tipp auf die Meldung öffnet den Konferenzraum (`meldung.APP`, Kopfzeile „
 3. **Gegenprobe:** 10 Akten (Zufall mit dem Tag als Startwert) gegen TradingView: Schluss ±0,5 %, GD50 ±1 %, Zahlentermin ±1 Tag.
 4. **Stab als Prüfer:** Schreibt ein Stratege „Datenfehler“, „Widerspruch“, „doppelt“ oder Ähnliches, wird das ein Hinweis.
 
-Rot heißt Fehler der App: Der Schritt wird rot, und eine Warnung geht aufs Handy. Gelb sind Hinweise: Die Kopfzeile wird gelb, und eine Meldung geht aufs Handy. Die Liste steht unter der Datenstand-Zeile jeder Seite („Wachen vom …“).
+Rot heißt Fehler der App: Der Schritt wird rot, und eine Warnung geht aufs Handy. Gelb sind Hinweise: Die Kopfzeile wird gelb (seit 17.11.2026 ohne Meldung aufs Handy). Die Liste steht unter der Datenstand-Zeile jeder Seite („Wachen vom …“).
 
 Der erste Probelauf auf dem Mac hat die alten Seiten aus dem Schrank sofort erkannt (UNP, BNY, MA: Einstieg im Chart ≠ Kartentisch).
 
@@ -852,7 +852,7 @@ Micky: „Der Konferenzraum kann weg. Den brauchen wir nicht mehr.“ Die Strate
 - Entfernt: die acht Missionen (`kern/stab.py`), die Seite Konferenzraum (`oberflaeche/konferenz_seite.py`), die Konferenz im Frühlauf samt zweitem Anlauf und Knopf, der Tagesbefehl aufs Handy, die Nadeln der Strategen im Chart, der Satz des Stabs im Kreislaufbild, die Wachen „Stab“ und „Form des Stabs“, „Stab fragen“ und `rueckenwind.anfuehrer_verfolger` (nur vom Stab genutzt). Der alte Code liegt auf dem Mac in `_to_delete/stab_konferenzraum_2026-11-13.py` und `_to_delete/konferenz_seite_2026-11-13.py`.
 - Geblieben: die Auswahl „Einsatzbereit“ mit Zonen und Rangfolge (`kern/auswahl.py`, Seite Setups ① und Wachen) und die Verbindung zum Modell mit Schlüssel, Probe, Kostenbuch und Monatsdeckel (seit 14.11.2026 100 $ – das API-Guthaben im Max-Abo; vorher 50 $; `kern/modell.py`) für den künftigen Strategen-Call. Schlüssel und Kostenbuch bleiben, wo sie lagen (`einstellungen/anthropic_schluessel.txt`, `daten/konferenz/kosten.json`).
 - Seite Setups: ① heißt „Einsatzbereit“ (vorher „Auswahl für den Stab“), die Tabelle „🎯 Einsatzbereit · N Titel auf der Liste“ (vorher „Diese Titel liest der Stab“). Ganz unten „⚙ Verbindungen“: API-Schlüssel, Verbindung prüfen, Kosten des Monats, Kanal fürs Handy mit Testmeldung.
-- Handy: der Frühlauf meldet weiter „Lage steht …“ und Warnungen; was künftig aufs Handy kommt, legt Micky separat fest.
+- Handy: seit 17.11.2026 nur noch „Heiße Titel“ und Fehler (gescheiterte Schritte, rote Wachen) – kein „Lage steht“, keine gelben Hinweise.
 - Alte Lesezeichen `?seite=Konferenzraum` öffnen die Seite Setups.
 
 ## Der Code für Balance und Ungleichgewicht – eine Zustandsmaschine (13.11.2026)
@@ -1364,5 +1364,7 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   über ntfy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in ihrer Rangfolge (ohne Depot-Plätze), je Zeile
   Ticker, Setup, ★, Einstieg mit Abstand und RS-Rang. Tipp auf die Meldung öffnet die Seite Setups. Ohne
   einsatzbereites Setup steht das in der Meldung.
+- Micky 17.11.2026: aufs Handy nur noch diese Meldung und Fehler des Laufs – „Lage steht“ und die gelben Hinweise der
+  Wachen entfallen.
 - Die geplante Aufgabe „US-Trading-Screener“ (TradingView über Claude) hat Micky gelöscht – es gibt eine Liste, ein
   Regelwerk.

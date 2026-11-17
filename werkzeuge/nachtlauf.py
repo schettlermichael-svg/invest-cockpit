@@ -188,8 +188,6 @@ def main(nur_tisch=False):
         if rot:
             _mitteilung(f"⚠ Wachen: {len(rot)} Fehler der App – " + " · ".join(rot[:3]), True)
             raise RuntimeError(f"{len(rot)} Fehler: " + " · ".join(rot[:3]))
-        if gelb:
-            _mitteilung(f"Wachen: {len(gelb)} Hinweise – " + " · ".join(gelb[:3]))
         return f"{w['akten']} Akten geprüft · " + ("alles im Gleichlauf" if not gelb else f"{len(gelb)} Hinweise")
 
     if nur_tisch:
@@ -221,8 +219,8 @@ def main(nur_tisch=False):
     _schreiben(p)
     _kopf_neu()
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
-    _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
-                + f"{(p.get('reihen') or {}).get('m_spitze', 0)} × Base-Ausbruch ★ · {p.get('neu', 0)} Neuigkeiten")
+    if fehler:                                    # Micky 17.11.2026: kein „Lage steht“ mehr – aufs Handy nur die heißen
+        _mitteilung(f"⚠ gescheitert: {', '.join(fehler)}", True)   # Titel und Fehler des Laufs
     try:                                          # die heißesten Titel aus „Einsatzbereit“ (Micky 17.11.2026)
         import auswahl
         text_, n_ = auswahl.heisse()
