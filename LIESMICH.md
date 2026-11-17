@@ -1357,3 +1357,12 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   10 Tage, an einer Marke; nach einem Anstieg Schwäche, nach einem Fall Stärke. Kasten der Auktion, Reiten, Zeichen und
   Chart („KW“) nutzen dieselbe Funktion.
 - Gemessen (1.865 Titel): 942 Umkehrkerzen an Marken in 10 Tagen (399 bestätigt); Kraft ohne Weg 21 Titel (vorher 42).
+
+## Heiße Titel am Morgen (17.11.2026, Plan 28)
+
+- Nach dem Nachtlauf schickt die App (`auswahl.heisse`, aufgerufen in `werkzeuge/nachtlauf.py`) eine zweite Meldung
+  über ntfy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in ihrer Rangfolge (ohne Depot-Plätze), je Zeile
+  Ticker, Setup, ★, Einstieg mit Abstand und RS-Rang. Tipp auf die Meldung öffnet die Seite Setups. Ohne
+  einsatzbereites Setup steht das in der Meldung.
+- Die geplante Aufgabe „US-Trading-Screener“ (TradingView über Claude) hat Micky gelöscht – es gibt eine Liste, ein
+  Regelwerk.

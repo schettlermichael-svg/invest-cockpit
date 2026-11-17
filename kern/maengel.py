@@ -250,6 +250,9 @@ PLAN = [
      "ca2270d: Hammer, Shooting Star, Engulfing, Morning/Evening Star nach Nison an Marken, bestätigt durch den nächsten Tag – "
      "942 Kerzen in 10 Tagen über 1.865 Titel (399 bestätigt). 1a5da85: Kraft ohne Weg eine Regel (2-fach, Spanne ≤ 70 % des "
      "20-Tage-Schnitts, alle Marken) für Kasten, Reiten, Zeichen und Chart – 42 → 21 Titel"),
+    (28, "Tägliche Meldung mit den heißesten Long- und Short-Titeln (Micky 17.11.)", "Befunde", "behoben",
+     "6375d27: nach dem Nachtlauf die ersten 5 Long und 5 Short aus „Einsatzbereit“ (Rangfolge vom 12.11.) per ntfy, Tipp öffnet "
+     "die Seite Setups; der US-Trading-Screener ist gelöscht (Micky)"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“
