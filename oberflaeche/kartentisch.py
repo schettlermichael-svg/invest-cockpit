@@ -27,6 +27,7 @@ sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 import phase                                         # noqa: E402
 from dateien import json_lesen, json_schreiben  # noqa: E402
+from gestaltung import TERMIN_GELB  # noqa: E402  Zahlen in höchstens 14 Tagen: eine Termin-Regel
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
 REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und eng (VCP), Trendvorlage, RS ab 70, Zahlen "
                                                           "wachsen – alle Regeln erfüllt, Kurs 5 % vor bis 5 % über dem "
@@ -408,7 +409,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     except Exception:  # noqa: BLE001
         start = zeichen.KEIN
     with ProcessPoolExecutor(prozesse) as ex:
-        stufe1 = [x for x in ex.map(functools.partial(_stufe1, start=start), ticker_liste, chunksize=20) if x]
+        stufe1 = [x for x in ex.map(functools.partial(_stufe1, start=start), ticker_liste, chunksize=20) if x]  # Layout
     melden(f"  Stufe 1: {len(stufe1)} Titel gerechnet in {time.time() - beginn:.0f} s")
     import watchlists
     w = watchlists.laden()
@@ -611,7 +612,7 @@ def zeile(tk, x):
                 "Abstand %": "", "Was fehlt": ""}
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     st_ = x.get("stab")
-    return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],
+    return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],  # Layout
             "Stab": ("🎯 " if st_[0] else "") + st_[1] if st_ else "",
             "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
                                              "Market Profile: " + x["zustand"] if x.get("zustand") else "") if z),
@@ -648,12 +649,12 @@ def _klapp(titel, zeile_, inhalt):
 
 
 def _ordnung(x):
-    return (not x.get("stern"), not x.get("gruen"), x.get("abstand", 99))
+    return (not x.get("stern"), not x.get("gruen"), x.get("abstand", 99))  # Layout
 
 
 def _kopf(name, zahl_, text, h=2):
     from gestaltung import TEXT_2, TEXT_3, t
-    groesse = 26 if h == 2 else 19
+    groesse = 26 if h == 2 else 19  # Layout
     return (f'<div style="display:flex;align-items:baseline;gap:14px;margin:12px 0 4px"><h{h} style="margin:0;'
             f'font-size:{groesse}px">{t(name)} <span style="color:{TEXT_3};font-weight:500">{zahl_}</span></h{h}>'
             + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + '</div>')
@@ -730,13 +731,13 @@ def plan(tisch=None):
     chip = ('<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {f};'
             'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{tk}</b> '
             '<span style="color:' + TEXT_2 + '">{text}</span></a>')
-    neu_html = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=t(text)) for tk, text in neu[:60])
+    neu_html = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=t(text)) for tk, text in neu[:60])  # Layout
                 or f'<span style="color:{TEXT_2}">nichts Neues gegenüber dem letzten Lauf</span>')
     termine = []
     for tk, x in tisch["titel"].items():
         z = ((x.get("kacheln") or {}).get("Nächste Zahlen") or ("", "", ""))
-        tage = 0 if z[1] == "heute" else 1 if z[1] == "morgen" else (int(z[1].split()[1]) if z[1].startswith("in ") else 99)
-        if 0 <= tage <= 14:                    # vergangene Termine („in -1 Tagen“ älterer Tische) nicht mitzählen
+        tage = 0 if z[1] == "heute" else 1 if z[1] == "morgen" else (int(z[1].split()[1]) if z[1].startswith("in ") else 99)  # Layout
+        if 0 <= tage <= TERMIN_GELB:          # vergangene Termine („in -1 Tagen“ älterer Tische) nicht mitzählen
             termine.append((tage, tk, z[2].split(" ·")[0], "Watchlist" if x["listen"] else namen.get(x.get("reihe"), "")))
     termine.sort()
     earn = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=f"{t(d)} · {t(r)}")
@@ -784,9 +785,9 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
     stufen = (("Revier", n_revier), ("in einer Reihe", len(in_reihe)), ("Setup grün", len(gruen)),
               ("einsatzbereit", len(bereit)), ("auf der Liste", len(akten)))
     trichter = "".join(
-        f'<div style="flex:1 1 130px;background:{KARTE};border:1px solid {BLAU if i == 4 else RAND};border-radius:10px;'
+        f'<div style="flex:1 1 130px;background:{KARTE};border:1px solid {BLAU if i == 4 else RAND};border-radius:10px;'  # Layout
         f'padding:10px 14px"><div style="font-size:13px;color:{TEXT_3}">{n}</div>'
-        f'<div style="font-size:24px;font-weight:600;color:{BLAU if i == 4 else TEXT}">{zahl(z, 0)}</div></div>'
+        f'<div style="font-size:24px;font-weight:600;color:{BLAU if i == 4 else TEXT}">{zahl(z, 0)}</div></div>'  # Layout
         for i, (n, z) in enumerate(stufen))
     namen = {k: n for k, n, _ in REIHEN}
     zeilen = ""
@@ -823,7 +824,7 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
             + _watchlist_kasten(tt, gruende, [tk for tk in elite if tk in wl], set(akten), namen))
 
 
-def _knapp_draussen(tt, gruende, rest, namen, n=10):
+def _knapp_draussen(tt, gruende, rest, namen, n=10):  # Layout
     """Die Grenze sichtbar: die ersten Einsatzbereiten ohne Platz, in derselben Rangfolge (12.11.2026 – so prüft man
     mit einem Blick, ob draußen jemand Besseres steht als drinnen)."""
     from gestaltung import TEXT_2, TEXT_3, t
@@ -944,8 +945,8 @@ def lagebild(tisch):
         if x.get("listen"):
             zeilen.append("◆ auf der Watchlist")
         if g:
-            zeilen.append(f"⚑ Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))
-                          + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))
+            zeilen.append(f"⚑ Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))  # Layout
+                          + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))  # Layout
         tip = "<br>".join(zeilen)
         return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
                 f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:inline-block;border:{dicke}px solid {rand};'
@@ -961,7 +962,7 @@ def lagebild(tisch):
         liste = sorted(liste, key=lambda p: (-RANG.get(p[1].get("reihe"), 0) if spalte == "watch" else 0, _ordnung(p[1])))
         if not liste:
             return f'<span style="color:{TEXT_3}">–</span>'
-        breite = max(6, 100 * len(liste) / hoechst[spalte])
+        breite = max(6, 100 * len(liste) / hoechst[spalte])  # Layout
         balken = (f'<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:{RAND};'
                   f'border-radius:4px"><div style="width:{breite:.0f}%;height:8px;border-radius:4px;'
                   f'background:{farbe_sp[spalte]}"></div></div><b style="font-size:15px;min-width:22px;text-align:right">'

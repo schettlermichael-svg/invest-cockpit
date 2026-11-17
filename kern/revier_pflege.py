@@ -15,20 +15,21 @@ import pandas as pd
 HIER = os.path.dirname(os.path.abspath(__file__))
 REVIER = os.path.join(HIER, "..", "einstellungen", "revier.csv")
 SPALTEN = ["name", "exchange", "description", "market_cap_basic", "close", "average_volume_30d_calc", "type"]
+REVIER_WERT, REVIER_KURS, REVIER_UMSATZ = 1e9, 10, 20e6   # Revier: Börsenwert ab 1 Mrd $, Kurs ab 10 $, Umsatz ab 20 Mio $ am Tag
 HOECHSTENS = 40               # Zugänge je Lauf (Yahoo-Abfragen begrenzen); der Rest kommt nächste Woche
 
 
 def kandidaten():
     import tv_kennzahlen
     roh = tv_kennzahlen._abfrage("america", {
-        "filter": [{"left": "market_cap_basic", "operation": "egreater", "right": 1e9},
-                   {"left": "close", "operation": "egreater", "right": 10},
+        "filter": [{"left": "market_cap_basic", "operation": "egreater", "right": REVIER_WERT},
+                   {"left": "close", "operation": "egreater", "right": REVIER_KURS},
                    {"left": "exchange", "operation": "in_range", "right": ["NYSE", "NASDAQ", "AMEX"]},
                    {"left": "type", "operation": "equal", "right": "stock"}],
-        "markets": ["america"], "columns": SPALTEN, "range": [0, 9000]})
+        "markets": ["america"], "columns": SPALTEN, "range": [0, 9000]})  # Technik
     df = pd.DataFrame([dict(zip(SPALTEN, z["d"])) for z in roh])
     df["umsatz"] = df["close"] * df["average_volume_30d_calc"]
-    df = df[df["umsatz"] >= 20e6].copy()
+    df = df[df["umsatz"] >= REVIER_UMSATZ].copy()
     df["ticker"] = df["name"].astype(str).str.replace(".", "-", regex=False).str.upper()
     return df.drop_duplicates("ticker")
 
@@ -36,7 +37,7 @@ def kandidaten():
 def abgaenge(rv):
     import daten
     weg = []
-    grenze = pd.Timestamp.now().normalize() - pd.tseries.offsets.BDay(5)
+    grenze = pd.Timestamp.now().normalize() - pd.tseries.offsets.BDay(5)  # Technik
     for tk in rv["ticker"]:
         df = daten.kurse_gespeichert(tk)
         if df is None or df.index[-1] < grenze:
@@ -59,13 +60,13 @@ def pflegen():
             continue
         zeilen.append({"ticker": z["ticker"], "name": sb.get("name") or z["description"], "sektor": sb.get("sektor", ""),
                        "branche": sb.get("branche", ""), "etf": sektoren.sektor_von(sb.get("sektor", "")) or "",
-                       "quelle": "TradingView", "boersenwert_mrd": round(z["market_cap_basic"] / 1e9, 1),
-                       "umsatz_mio": round(z["umsatz"] / 1e6, 1), "land": "United States"})
+                       "quelle": "TradingView", "boersenwert_mrd": round(z["market_cap_basic"] / 1e9, 1),  # Technik
+                       "umsatz_mio": round(z["umsatz"] / 1e6, 1), "land": "United States"})  # Technik
     if zeilen:
         ziel = os.path.join(HIER, "..", "_to_delete", "revier")
         os.makedirs(ziel, exist_ok=True)
         shutil.copy(REVIER, os.path.join(ziel, f"revier_{time.strftime('%Y-%m-%d')}.csv"))
         pd.concat([rv, pd.DataFrame(zeilen)], ignore_index=True).to_csv(REVIER, index=False)
     weg = abgaenge(rv)
-    return (f"{len(zeilen)} Zugänge" + (f" ({', '.join(z['ticker'] for z in zeilen[:15])})" if zeilen else "")
+    return (f"{len(zeilen)} Zugänge" + (f" ({', '.join(z['ticker'] for z in zeilen[:15])})" if zeilen else "")  # Technik
             + f" · Abgänge gemeldet: {', '.join(weg) if weg else 'keine'}")

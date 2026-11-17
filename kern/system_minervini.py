@@ -28,6 +28,8 @@ import vcp_zone
 from masse import GD150_TAGE, GD200_TAGE, GD50_TAGE  # noqa: E402
 
 RS_MIN = 70
+RS_GELB = 60          # Kachel Stärke: RS-Rang 60–69 gelb (eine Quelle für Kachel und Prüfer)
+TV_GELB = 5           # Kachel Trend: Trendvorlage ab 5 von 7 Punkten gelb, alle grün
 MAX_STOPP = 0.08
 KAUFZONE = vcp_zone.KAUFZONE   # eine Quelle: Minervinis Kaufzone bis 5 % über dem Pivot (vcp_zone)
 

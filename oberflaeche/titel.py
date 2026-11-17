@@ -32,7 +32,13 @@ import system_minervini                               # noqa: E402
 import vcp_zone  # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
-from masse import GD50_TAGE                          # noqa: E402
+from masse import GD50_TAGE, JAHR_TAGE, MONAT_TAGE   # noqa: E402
+import basen                                         # noqa: E402
+import rudel                                         # noqa: E402
+import zahlen_reaktion                               # noqa: E402
+KOPF_RUECKGANG = 10     # Kopf: Rückgang vom 52-Wochen-Hoch ab 10 % zeigen (10.11.2026)
+REAKTION_TAGE = 10      # Reaktion auf die Zahlen: Tag 1 und die 9 Tage danach (O'Neil)
+ABSTURZ_ZAHLEN = 15     # O'Neil: ein Absturz um 15 % und mehr nach Zahlen ist ein großes Problem
 import gestaltung                                     # noqa: E402
 from chart import chart, legende, reaktionen, stunden  # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, karte,  # noqa: E402
@@ -68,13 +74,13 @@ def _termin(fd):
 def _kopf(tk, sb, df, fd=None, mit_rueckgang=True):
     """Kopf: Name, Branche, Kurs, Abstand zum 52-Wochen-Hoch (Trendvorlage) und der nächste Zahlentermin."""
     k = df["Close"].iloc[-1]
-    letzte = df.iloc[-252:]
+    letzte = df.iloc[-JAHR_TAGE:]
     hoch = letzte["High"].max()
     abstand = (1 - k / hoch) * 100
     lage = "am 52-Wochen-Hoch" if abstand < 1 else f"{zahl(abstand, 0)} % unter dem 52-Wochen-Hoch"
     tief_nach = letzte.loc[letzte["High"].idxmax():, "Low"].min()
     rueckgang = (1 - tief_nach / hoch) * 100
-    if rueckgang >= 10 and mit_rueckgang:         # mit Base steht der Rückgang in Kachel und Chart (10.11.2026)
+    if rueckgang >= KOPF_RUECKGANG and mit_rueckgang:         # mit Base steht der Rückgang in Kachel und Chart (10.11.2026)
         lage += f" · Rückgang Hoch bis Tief {zahl(rueckgang, 0)} % ({zahl(hoch)} → {zahl(tief_nach)} $)"
     zeile = " · ".join(x for x in (namen_de.SEKTOR.get(sb.get("sektor"), sb.get("sektor")),
                                     namen_de.BRANCHE.get(sb.get("branche"), sb.get("branche"))) if x)
@@ -166,7 +172,7 @@ def _k_base(erk):
                       "Zurzeit keine reife Base. Gezeigt wird die zuletzt abgeschlossene Zone des Scanners und ihr Ausgang "
                       "nach O'Neil. Eine gescheiterte Base ist oft das Ende des Aufwärtstrends." + regel + bilanz)
     z = ((erk.get("systeme") or {}).get("m") or {}).get("zone") or {}
-    ampel = "grün" if bz <= 2 else "gelb" if bz == 3 else "rot"
+    ampel = "grün" if bz <= basen.BASE_FRUEH else "gelb" if bz == basen.BASE_HANDELBAR else "rot"
     zeile = f"{z.get('name', 'Base')} · Tiefe {zahl(z.get('tiefe', 0), 0)} %"
     if bs.get("markt") is not None:
         zeile += f" · S&P 500 zugleich −{zahl(bs['markt'], 0)} %"
@@ -174,7 +180,7 @@ def _k_base(erk):
         zeile += " · noch nicht reif"
     if bs.get("neu"):
         zeile += f" · neu gezählt ({bs['neu']})"
-    return kachel("Base", ampel, f"Nr. {bz} · {'früh' if bz <= 2 else 'handelbar' if bz == 3 else 'spät'}", zeile,
+    return kachel("Base", ampel, f"Nr. {bz} · {'früh' if bz <= basen.BASE_FRUEH else 'handelbar' if bz == basen.BASE_HANDELBAR else 'spät'}", zeile,
                   "Die wievielte Base seit Beginn des Aufwärtstrends (IBD/O'Neil). Basen 1 und 2 sind früh und am "
                   "ergiebigsten, die dritte ist noch handelbar, ab der vierten scheitern die meisten. Tiefe der Base gegen "
                   "den Rückgang des S&P 500 im selben Zeitraum: O'Neil erlaubt höchstens das 2- bis 3-Fache." + regel + bilanz)
@@ -223,7 +229,7 @@ def _ereignis(df, gewinne, fund):
         ampel, wert = "gelb", "teils angenommen"
     else:
         ampel, wert = "gelb", "Reaktion verhalten"
-    if tage > 63:
+    if tage > rs_rang.QUARTAL:
         ampel = "grau"
     zeile += f" · Kurs {'über' if k >= vor else 'unter'} {zahl(vor)} $ vor den Zahlen"
     ablesung = "\n".join(f"{n}: {x}" for n, _, x in r["zeilen"])
@@ -284,7 +290,7 @@ def _weinstein_ausbruch(m, ph, df):
         return ""
     v = br.get("volumen")
     gd = df["Close"].rolling(150).mean()
-    steigt = bool(gd.iloc[-1] > gd.iloc[-21])
+    steigt = bool(gd.iloc[-1] > gd.iloc[-MONAT_TAGE])
     ok = bool(v and v == v and v >= 1.0) and steigt
     gruende = []
     if v and v == v:
@@ -338,7 +344,8 @@ def _k_trend(regel, setup, m, ph, ph_reihe, df, b, short):
              + f"\n{gd_txt}\n\nPhase nach Weinstein nur als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
                "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
                "steigender 30-Wochen-Linie.")
-    tv_x = (("grün" if n == 7 else "gelb" if n >= 5 else "rot"), f"Trendvorlage {n} von 7") if tv else ("grau", "zu kurz")
+    tv_x = (("grün" if n == len(tv) else "gelb" if n >= system_minervini.TV_GELB else "rot"), f"Trendvorlage {n} von {len(tv)}") \
+        if tv else ("grau", "zu kurz")
     if regel == "trendvorlage":
         return _urteil("Trend", regel, setup, tv_x, phase, hilfe)
     if regel == "gd50_steigt":
@@ -362,12 +369,13 @@ def _k_staerke(regel, setup, k, rang, rw=None, short=False):
     """Stärke nach der Regel des Setups: RS-Rang (alle Setups, beim Short gespiegelt) oder Führer (Momentum-Ausbruch)."""
     # Short gespiegelt (Plan 24): Schwäche ist Rückenwind – der Rang von unten gezählt (RS 30 wie long RS 70)
     v = (rs_rang.SPIEGEL - rang if short else rang) if rang is not None else None
-    rs_x = (("grün" if v >= 70 else "gelb" if v >= 60 else "rot"), f"RS {rang} von 99") if rang is not None \
+    rs_x = (("grün" if v >= system_minervini.RS_MIN else "gelb" if v >= system_minervini.RS_GELB else "rot"),
+            f"RS {rang} von 99") if rang is not None \
         else ("grau", "kein RS-Rang")
     fr = k["fuehrer"]
     best = max((v for v in (fr or {}).values() if v == v), default=None)
     # „oberste x %“ (10.11.2026): „besser als 92,6 %“ in Rot wirkte widersinnig
-    oben = f"oberste {zahl(max(0.1, 100 - best), 1 if best >= 90 else 0)} %" if best is not None else None
+    oben = f"oberste {zahl(max(0.1, 100 - best), 1 if best >= 90 else 0)} %" if best is not None else None  # Layout
     zeile = (f'Rückenwind: {rw["stufe"] or "keine Stufe"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
              f'({rw["tempo"]:+d} in 4 Wo.)' if rw else "")
     hilfe = ("RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit unserem "
@@ -396,7 +404,7 @@ def _k_fundament(regel, setup, m, k, fund, ph, df, gewinne):
     zeile = z[2] + (f" · {ev[1]}" if ev and ev[0] != "grau" else "")
     gruen = sum(1 for a, _ in fund["punkte"].values() if a == "grün") if fund else 0
     hilfe = (f"Alle sieben Prüfpunkte: {gruen} von 7 grün (Liste weiter unten). " + (_widerspruch(ph) or "")
-             + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))
+             + (f"\n\nReaktion auf die letzten Zahlen (Zeichen, O'Neil): {ev[1]} – {ev[2]}\n{ev[3]}" if ev else ""))  # Layout
     if regel == "nachricht":
         ep = k.get("ep")
         x = ((("grün", "Zahlen am Sprungtag" if ep["regeln"][2][2].startswith("Zahlen") else
@@ -443,7 +451,7 @@ def _k_enge(regel, setup, m, k, su, df):
         ep = k.get("ep")
         if not ep:
             return _urteil("Enge", regel, setup, ("grau", "kein Sprungtag"), "", "")
-        h = ep["regeln"][4]
+        h = ep["regeln"][4]  # Layout
         return _urteil("Enge", regel, setup, ("grün", "hält das Tief") if h[1] else ("rot", "Tief gebrochen"),
                        f"{h[2]} · Sprungtag {pd.Timestamp(ep['tag']):%d.%m.}", "")
     if regel == "zahlentief":
@@ -609,8 +617,8 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
             zeilen.append(("Auch · Base-Ausbruch", f"Pivot der Base {zahl(m['pivot'])} $" + zone(m["pivot"])
                            + st(m["pivot"], reihe="m_weitere")))
     elif not m.get("pivot") and len(c) >= 260 and r_ not in ("m_spitze", "m_weitere"):
-        g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))
-        tief52, hoch52 = float(l.iloc[-252:].min()), float(h.iloc[-252:].max())
+        g50, g150, g200 = (float(c.iloc[-n:].mean()) for n in (50, 150, 200))  # Layout
+        tief52, hoch52 = float(l.iloc[-JAHR_TAGE:].min()), float(h.iloc[-JAHR_TAGE:].max())
         marken_ = [(p_, x) for p_, x, f in ((max(g150, g200), "GD150/200", kurs < max(g150, g200)),
                                             (system_minervini.UEBER_TIEF * tief52, "+30 % über dem Tief", kurs < system_minervini.UEBER_TIEF * tief52),
                                             (system_minervini.UNTER_HOCH * hoch52, "−25 % unter dem Hoch", kurs < system_minervini.UNTER_HOCH * hoch52),
@@ -729,9 +737,9 @@ def _rs_lesart(df, index, sek, etf):
 
     def richtung(bezug):
         r = (df["Close"] / bezug.reindex(df.index, method="ffill")).dropna()
-        if len(r) < 64:
+        if len(r) < rudel.DREI_MONATE_ZURUECK:
             return None, None
-        a = (r.iloc[-1] / r.iloc[-64] - 1) * 100
+        a = (r.iloc[-1] / r.iloc[-rudel.DREI_MONATE_ZURUECK] - 1) * 100
         return (1 if a > 2 else -1 if a < -2 else 0), a
 
     rm, am = richtung(index["Close"])
@@ -748,8 +756,8 @@ def _rs_lesart(df, index, sek, etf):
            f'<div>Letzte 3 Monate: {t(zahlen)}</div>'
            f'<div style="margin:6px 0 4px">Linie 100 = so stark wie der Index; steigt die Linie, gewinnt der Titel dazu.</div>'
            f'{liste}</div>')
-    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{(104 + 200) / 1344 * 100:.2f}%;'
-            f'top:{604 / 760 * 100:.2f}%;height:{120 / 760 * 100:.2f}%">{tip}</div>')
+    return (f'<div class="hinweis-zone" style="position:absolute;left:{64 / 1344 * 100:.2f}%;right:{(104 + 200) / 1344 * 100:.2f}%;'  # Layout
+            f'top:{604 / 760 * 100:.2f}%;height:{120 / 760 * 100:.2f}%">{tip}</div>')  # Layout
 
 
 def _vorzeichen(x, stellen=1):
@@ -769,7 +777,7 @@ def _balken(werte, titel):
         f'<div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1">'
         f'<span style="font-size:14px;font-family:IBM Plex Mono,monospace">{_vorzeichen(w, 0)} %</span>'
         f'<div style="height:70px;display:flex;align-items:flex-end;width:100%;justify-content:center">'
-        f'<div style="width:60%;height:{max(4, 70 * abs(w) / hoechst):.0f}px;border-radius:4px;'
+        f'<div style="width:60%;height:{max(4, 70 * abs(w) / hoechst):.0f}px;border-radius:4px;'  # Layout
         f'background:{GRUEN if w >= 0 else ROT}"></div></div>'
         f'<span style="font-size:12px;color:{TEXT_3}">{t(q)}</span></div>' for q, w in werte)
     zeichen = " · beschleunigt ✓" if besch else ""
@@ -778,7 +786,7 @@ def _balken(werte, titel):
 
 
 def _quartal(tag):
-    return f"Q{(tag.month - 1) // 3 + 1} {tag.year % 100:02d}"
+    return f"Q{(tag.month - 1) // 3 + 1} {tag.year % 100:02d}"  # Layout
 
 
 def _earnings_feld(fd):
@@ -809,13 +817,13 @@ def _earnings_feld(fd):
                                     else ", keine Schätzung")))
     else:
         zeilen.append(ampelzeile("Letzte Zahlen", "grau", "noch keine gemeldeten Zahlen"))
-    eps = fundament._wachstum(g["eps"]).dropna().iloc[-3:]
+    eps = fundament._wachstum(g["eps"]).dropna().iloc[-3:]  # Layout
     # Gemeldet wird etwa einen Monat nach Quartalsende: das berichtete Quartal liegt davor
-    eps_w = [(_quartal(i - pd.Timedelta(days=45)), float(v)) for i, v in eps.items()]
+    eps_w = [(_quartal(i - pd.Timedelta(days=45)), float(v)) for i, v in eps.items()]  # Layout
     sec = fd.get("sec")
     ums_w = []
     if sec is not None and not sec.empty:
-        u = fundament._wachstum(sec["umsatz"].dropna()).dropna().iloc[-3:]
+        u = fundament._wachstum(sec["umsatz"].dropna()).dropna().iloc[-3:]  # Layout
         ums_w = [(_quartal(i), float(v)) for i, v in u.items()]
     balken = (f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">'
               f'{_balken(ums_w, "Umsatzwachstum zum Vorjahr")}{_balken(eps_w, "Gewinn je Aktie zum Vorjahr")}</div>')
@@ -832,10 +840,12 @@ def _reaktion_zeilen(df, gewinne):
     i = df.index.get_loc(tag)
     vor = float(df["Close"].iloc[i - 1])
     tag1 = float(df["Close"].iloc[i])
-    danach = df.iloc[i + 1:i + 10]
-    zeilen = [("Tag 1", "grün" if prozent >= 3 else "rot" if prozent <= -3 else "gelb",
+    danach = df.iloc[i + 1:i + REAKTION_TAGE]
+    zeilen = [("Tag 1", "grün" if prozent >= zahlen_reaktion.REAKTION_PCT else "rot"
+               if prozent <= -zahlen_reaktion.REAKTION_PCT else "gelb",
                f'{tag:%d.%m.%Y}: {_vorzeichen(prozent)} %'
-               + (" – Absturz um 15 % und mehr nach Zahlen ist ein großes Problem" if prozent <= -15 else ""))]
+               + (f" – Absturz um {ABSTURZ_ZAHLEN} % und mehr nach Zahlen ist ein großes Problem"
+                  if prozent <= -ABSTURZ_ZAHLEN else ""))]
     if danach.empty:
         zeilen += [("Tage 2–10", "grau", "beginnt mit dem nächsten Handelstag"),
                    ("Erholung", "grau", "beginnt mit dem nächsten Handelstag")]
@@ -844,7 +854,7 @@ def _reaktion_zeilen(df, gewinne):
         tage = len(danach) + 1
         drift = (schluss / tag1 - 1) * 100
         ampel = "grün" if schluss >= tag1 else "gelb" if schluss >= vor else "rot"
-        bisher = f"bisher {tage - 1} von 9 Tagen: " if tage < 10 else ""
+        bisher = f"bisher {tage - 1} von {REAKTION_TAGE - 1} Tagen: " if tage < REAKTION_TAGE else ""
         zeilen.append(("Tage 2–10", ampel, f'{bisher}{_vorzeichen(drift)} % seit Tag 1 – '
                        + {"grün": "die Gewinne halten", "gelb": "Gewinne teils abgegeben, aber über dem Ausgangskurs",
                           "rot": "unter den Kurs vor den Zahlen gefallen"}[ampel]))
@@ -1005,7 +1015,7 @@ def _stundenkerzen(tk, df):
         d30 = d30[~d30.index.duplicated(keep="last")].sort_index()
         h1 = d30.resample("60min", offset="30min").agg({"Open": "first", "High": "max", "Low": "min",
                                                        "Close": "last", "Volume": "sum"}).dropna()
-        tage = sorted(set(h1.index.date))[-10:]
+        tage = sorted(set(h1.index.date))[-10:]  # Layout
         return h1[pd.Index(h1.index.date).isin(tage)]
     except Exception:  # noqa: BLE001 – ohne Stundenkerzen kein Stundenchart
         return None
@@ -1039,7 +1049,7 @@ def ablegen(tk, teile):
     os.makedirs(ABLAGE, exist_ok=True)
     pfad = os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
     tmp = f"{pfad}.{os.getpid()}.neu"           # App und Hintergrundlauf können gleichzeitig ablegen
-    with gzip.open(tmp, "wb", compresslevel=3) as f:
+    with gzip.open(tmp, "wb", compresslevel=3) as f:  # Layout
         pickle.dump(teile, f, protocol=pickle.HIGHEST_PROTOCOL)
     os.replace(tmp, pfad)
 
@@ -1273,6 +1283,6 @@ def seite_titel(ticker, laufend=False, _stand=None):
     zwischen["stunde"] = _stundenkerzen(tk, df)
     teile = [_zahlen_gesamt(tk, fund, fd if fund else None)]        # Earnings und Zahlen in einer Karte (10.11.2026)
     teile.append(depotleiste.titelkarte(tk, df, erk))
-    return {"oben": waehrung_setzen(seite("".join(oben), unten=8), tk), "chart": zwischen,
-            "unten": waehrung_setzen(seite("".join(teile), oben=8), tk),
+    return {"oben": waehrung_setzen(seite("".join(oben), unten=8), tk), "chart": zwischen,  # Layout
+            "unten": waehrung_setzen(seite("".join(teile), oben=8), tk),  # Layout
             "lagekarte": waehrung_setzen(lk, tk), "kacheln": k_info}

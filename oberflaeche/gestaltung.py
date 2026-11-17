@@ -126,7 +126,7 @@ def kachel(beschriftung, ampel, wert, zeile="", hilfe="", ganz=False):
     (Maus darauf, kleines ⓘ). ganz=True: die Zeile wird nie abgeschnitten (Kacheln des Setups)."""
     if MITSCHRIFT is not None:                   # die Lagekarte liest Ampel, Wert und Zeile jeder Kachel mit
         MITSCHRIFT[beschriftung] = (ampel, str(wert), str(zeile))
-    titel = f' title="{t(hilfe).replace(chr(10), "&#10;")}"' if hilfe else ""
+    titel = f' title="{t(hilfe).replace(chr(10), "&#10;")}"' if hilfe else ""  # Layout
     zeile = str(zeile).replace(" %", "\u00a0%").replace(" $", "\u00a0$").replace(" Mio.", "\u00a0Mio.")  # Zahl und Einheit nie getrennt
     zeichen = f'<span style="float:right;color:{TEXT_3};text-transform:none">ⓘ</span>' if hilfe else ""
     return (f'<div{titel} style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'

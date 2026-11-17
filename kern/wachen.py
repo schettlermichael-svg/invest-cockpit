@@ -109,15 +109,15 @@ def plausibel(tisch, gruende, heute):
             a = float(x["abstand_vz"])
             lo, hi = ((auswahl_.ZONE_SHORT if _seite_aus_reihe(x) == "short" else
                        auswahl_.ZONE_VOLLTREFFER if "Volltreffer" in grund else auswahl_.ZONE_LONG))
-            if not lo - 0.05 <= a <= hi + 0.05:
+            if not lo - 0.05 <= a <= hi + 0.05:  # Technik
                 aus.append(("rot", f"{tk}: einsatzbereit mit {a:+.1f} % außerhalb der Zone {lo:+.0f} bis {hi:+.0f} %"))
         if drin:
             k_ = (x.get("kacheln") or {}).get("Nächste Zahlen")
             if k_:
-                teile = list(k_)[1:3] if not isinstance(k_, dict) else [k_.get("wert"), k_.get("text")]
+                teile = list(k_)[1:3] if not isinstance(k_, dict) else [k_.get("wert"), k_.get("text")]  # Technik
                 m_ = re.search(r"(\d{2})\.(\d{2})\.(\d{4})", " ".join(str(t) for t in teile))
                 if m_ and "zuletzt" not in " ".join(str(t) for t in teile):
-                    d = f"{m_.group(3)}-{m_.group(2)}-{m_.group(1)}"
+                    d = f"{m_.group(3)}-{m_.group(2)}-{m_.group(1)}"  # Technik
                     if d < heute and auswahl_.termin_tage(None, k_, heute) is not None:
                         aus.append(("rot", f"{tk}: vergangener Zahlentermin {d} zählt noch"))
     return aus
@@ -154,7 +154,7 @@ def gegenprobe(akten, n=STICHPROBE):
             continue
         tv_close, tv_sma, tv_er = d
         c = df["Close"]
-        unser_close, unser_sma = float(c.iloc[-1]), float(c.iloc[-50:].mean())
+        unser_close, unser_sma = float(c.iloc[-1]), float(c.iloc[-50:].mean())  # Technik
         if tv_close and _pct(unser_close, tv_close) > TOL_KURS:
             aus.append(("rot", f"{tk}: Schluss {unser_close:.2f} $, TradingView {tv_close:.2f} $"))
         if tv_sma and _pct(unser_sma, tv_sma) > TOL_GD50:
@@ -202,7 +202,7 @@ def pruefen():
         try:
             zeichen += [(a, f"{name} · {t}") for a, t in f()]
         except Exception as e:  # noqa: BLE001 – eine Wache, die selbst scheitert, ist ein Befund
-            zeichen.append(("rot", f"{name} · Wache gescheitert: {type(e).__name__}: {e}"[:200]))
+            zeichen.append(("rot", f"{name} · Wache gescheitert: {type(e).__name__}: {e}"[:200]))  # Technik
     ampel = ("rot" if any(a == "rot" for a, _ in zeichen) else "gelb" if any(a == "gelb" for a, _ in zeichen)
              else "grün")                         # grau = stiller Hinweis, färbt nichts
     erg = {"stand": heute, "ampel": ampel, "akten": len(akten), "zeichen": zeichen}

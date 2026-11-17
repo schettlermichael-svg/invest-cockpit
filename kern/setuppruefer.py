@@ -134,13 +134,13 @@ def material(tk, df):
     m, k, zr = rg.get("m") or {}, rg.get("k") or {}, rg.get("zr") or {}
     c, h, l = df["Close"], df["High"], df["Low"]
     kurs = float(c.iloc[-1])
-    g = {n_: float(c.rolling(n_).mean().iloc[-1]) for n_ in (10, 20, 50, 150, 200)}
+    g = {n_: float(c.rolling(n_).mean().iloc[-1]) for n_ in (10, 20, 50, 150, 200)}  # Technik
     a = atr_.wert(df)
-    adr = float(((h / l - 1).iloc[-20:]).mean() * 100)
-    v50 = float(df["Volume"].iloc[-50:].mean())
-    z = [f"Titel {tk}, Kurs {_z(kurs)} $ am {df.index[-1]:%d.%m.%Y}; GD10 {_z(g[10])}, GD20 {_z(g[20])}, GD50 "
-         f"{_z(g[50])}, GD150 {_z(g[150])}, GD200 {_z(g[200])} $; 52-Wochen-Hoch {_z(h.iloc[-252:].max())} $, -Tief "
-         f"{_z(l.iloc[-252:].min())} $; ATR {_z(a) if a else '–'} $, ADR (20 Tage) {_z(adr, '.1f')} %; Volumen Schnitt "
+    adr = float(((h / l - 1).iloc[-20:]).mean() * 100)  # Technik
+    v50 = float(df["Volume"].iloc[-50:].mean())  # Technik
+    z = [f"Titel {tk}, Kurs {_z(kurs)} $ am {df.index[-1]:%d.%m.%Y}; GD10 {_z(g[10])}, GD20 {_z(g[20])}, GD50 "  # Technik
+         f"{_z(g[50])}, GD150 {_z(g[150])}, GD200 {_z(g[200])} $; 52-Wochen-Hoch {_z(h.iloc[-252:].max())} $, -Tief "  # Technik
+         f"{_z(l.iloc[-252:].min())} $; ATR {_z(a) if a else '–'} $, ADR (20 Tage) {_z(adr, '.1f')} %; Volumen Schnitt "  # Technik
          f"50 Tage {f'{v50:,.0f}'.replace(',', '.')}; Phase {info.get('phase')}"]
     r = info.get("reihe")
     if r:
@@ -209,7 +209,7 @@ def material(tk, df):
         z.append(f"Zahlen-Reaktion: Ampel {zr.get('ampel')} ({zr.get('seite')}, {zr.get('pct')} % am {zr.get('tag')}); "
                  f"{_regeln(zr.get('regeln'))}" + (f"; AVWAP ab dem Reaktionstag {_z(zr['avwap'])} $" if zr.get("avwap")
                                                     else ""))
-    letzte = df.iloc[-10:]
+    letzte = df.iloc[-10:]  # Technik
     z.append("Letzte 10 Tage (Datum: Eröffnung/Hoch/Tief/Schluss, Volumen zum Schnitt): " + "; ".join(
         f"{d:%d.%m.} {_z(x.Open)}/{_z(x.High)}/{_z(x.Low)}/{_z(x.Close)} {_z(x.Volume / v50, '.1f')}×"
         for d, x in letzte.iterrows()))
@@ -231,7 +231,7 @@ def pruefen(tk, chart_teil=None):
         pass
     hinweis = "Das Bild ist der Chart der App, so wie der Nutzer ihn sieht. " if bilder else ""
     antwort = modell._formular(SYSTEM, f"{hinweis}Zahlen und Urteil der App zu {tk}:\n{text}", "setup_pruefung_melden",
-                               _schema(), 3000, bilder=bilder or None)
+                               _schema(), 3000, bilder=bilder or None)  # Technik
     return {"tk": tk, "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [],
             "zahlen": text}
 
@@ -241,7 +241,7 @@ def lauf(n=STICHPROBE):
     import modell
     os.makedirs(ORDNER, exist_ok=True)
     rest = modell.DECKEL_USD - modell.kosten()["usd"]
-    n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))
+    n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))  # Technik
     probe = stichprobe(n)
     start = datetime.now()
     vorher = modell.kosten()["usd"]
@@ -256,7 +256,7 @@ def lauf(n=STICHPROBE):
             bericht["abbruch"] = str(x)
             break
         except Exception as x:  # noqa: BLE001 – ein Titel darf den Lauf nicht beenden
-            r = {"tk": tk, "fehler": f"{type(x).__name__}: {x}"[:300]}
+            r = {"tk": tk, "fehler": f"{type(x).__name__}: {x}"[:300]}  # Technik
         r["gruppe"] = gruppe
         bericht["titel"].append(r)
         prot["fertig"] += 1

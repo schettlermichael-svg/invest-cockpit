@@ -50,7 +50,7 @@ def kurve(d, p):
     prog = ([real[-1] * (1 + p["schnitt"]) ** (i - n_real) for i in range(n_real, performance.WOCHEN_JAHR + 1)]
             if p.get("schnitt") is not None and n_real < performance.WOCHEN_JAHR else [])
     werte = [x for x in real + ziel + prog if x and x > 0]
-    lo, hi = min(werte) * 0.9, max(werte) * 1.1
+    lo, hi = min(werte) * 0.9, max(werte) * 1.1  # Layout
     import math
     breite = B - KURVE_LINKS - KURVE_RECHTS
 
@@ -58,45 +58,45 @@ def kurve(d, p):
         return KURVE_LINKS + breite * i / performance.WOCHEN_JAHR
 
     def Y(v):
-        return 20 + (H - 40) * (1 - (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo)))
+        return 20 + (H - 40) * (1 - (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo)))  # Layout
 
-    s = [f'<svg viewBox="0 0 {B} {H + UW + 40}" width="100%" xmlns="http://www.w3.org/2000/svg" '
+    s = [f'<svg viewBox="0 0 {B} {H + UW + 40}" width="100%" xmlns="http://www.w3.org/2000/svg" '  # Layout
          f'style="font-family:IBM Plex Sans,sans-serif">']
-    for k in range(5):
-        v = lo * (hi / lo) ** (k / 4)
+    for k in range(5):  # Layout
+        v = lo * (hi / lo) ** (k / 4)  # Layout
         s.append(f'<line x1="{KURVE_LINKS}" x2="{B - KURVE_RECHTS}" y1="{Y(v):.1f}" y2="{Y(v):.1f}" stroke="{RAND}"/>'
-                 f'<text x="{KURVE_LINKS - 8}" y="{Y(v) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">'
+                 f'<text x="{KURVE_LINKS - 8}" y="{Y(v) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">'  # Layout
                  f'{_achse(v)}</text>')
-    for i in range(0, performance.WOCHEN_JAHR + 1, 4):
-        s.append(f'<text x="{X(i):.1f}" y="{H + UW + 32}" fill="{TEXT_3}" font-size="12" text-anchor="middle">W {i}</text>')
+    for i in range(0, performance.WOCHEN_JAHR + 1, 4):  # Layout
+        s.append(f'<text x="{X(i):.1f}" y="{H + UW + 32}" fill="{TEXT_3}" font-size="12" text-anchor="middle">W {i}</text>')  # Layout
 
-    def linie(punkte, farbe, strich="", dicke=2.5):
+    def linie(punkte, farbe, strich="", dicke=2.5):  # Layout
         pts = " ".join(f"{X(i):.1f},{Y(v):.1f}" for i, v in punkte if v and v > 0)
         return (f'<polyline points="{pts}" fill="none" stroke="{farbe}" stroke-width="{dicke}"'
                 + (f' stroke-dasharray="{strich}"' if strich else "") + "/>")
     if ziel:
-        s.append(linie(list(enumerate(ziel)), TEXT_3, "6 5", 1.8))
-        s.append(f'<text x="{B - KURVE_RECHTS + 6}" y="{Y(ziel[-1]) + 4:.1f}" fill="{TEXT_3}" font-size="12">Ziel '
+        s.append(linie(list(enumerate(ziel)), TEXT_3, "6 5", 1.8))  # Layout
+        s.append(f'<text x="{B - KURVE_RECHTS + 6}" y="{Y(ziel[-1]) + 4:.1f}" fill="{TEXT_3}" font-size="12">Ziel '  # Layout
                  f'{zahl(ziel[-1], 0)} €</text>')
     if prog:
-        s.append(linie([(n_real + j, v) for j, v in enumerate(prog)], BLAU, "3 4", 1.8))
-        s.append(f'<text x="{B - KURVE_RECHTS + 6}" y="{Y(prog[-1]) + 18:.1f}" fill="{BLAU}" font-size="12">mit Ø '
+        s.append(linie([(n_real + j, v) for j, v in enumerate(prog)], BLAU, "3 4", 1.8))  # Layout
+        s.append(f'<text x="{B - KURVE_RECHTS + 6}" y="{Y(prog[-1]) + 18:.1f}" fill="{BLAU}" font-size="12">mit Ø '  # Layout
                  f'{zahl(prog[-1], 0)} €</text>')
     s.append(linie(list(enumerate(real)), ROT if real[-1] < start else GRUEN))
     for i, v in enumerate(real):
         s.append(f'<circle cx="{X(i):.1f}" cy="{Y(v):.1f}" r="3.5" fill="{TEXT}"><title>Woche {i}: {zahl(v, 0)} €'
                  f'</title></circle>')
     # Unterwasser: Abstand zum bisherigen Hoch, rot ab der Verlustbremse
-    oben = H + 10
-    s.append(f'<text x="{KURVE_LINKS - 8}" y="{oben + 12}" fill="{TEXT_3}" font-size="12" text-anchor="end">0 %</text>'
+    oben = H + 10  # Layout
+    s.append(f'<text x="{KURVE_LINKS - 8}" y="{oben + 12}" fill="{TEXT_3}" font-size="12" text-anchor="end">0 %</text>'  # Layout
              f'<line x1="{KURVE_LINKS}" x2="{B - KURVE_RECHTS}" y1="{oben}" y2="{oben}" stroke="{RAND}"/>'
-             f'<text x="{B - KURVE_RECHTS + 6}" y="{oben + 14}" fill="{TEXT_2}" font-size="12">Unterwasser</text>')
+             f'<text x="{B - KURVE_RECHTS + 6}" y="{oben + 14}" fill="{TEXT_2}" font-size="12">Unterwasser</text>')  # Layout
     tief = max([z["unterwasser"] for z in w] + [depot.VERLUSTBREMSE * 2])
     for z in w:
-        hoehe = (UW - 10) * z["unterwasser"] / tief
+        hoehe = (UW - 10) * z["unterwasser"] / tief  # Layout
         if hoehe > 0:
             farbe = ROT if z["unterwasser"] >= depot.VERLUSTBREMSE else GELB
-            s.append(f'<rect x="{X(z["nr"]) - 6:.1f}" y="{oben}" width="12" height="{hoehe:.1f}" fill="{farbe}" '
+            s.append(f'<rect x="{X(z["nr"]) - 6:.1f}" y="{oben}" width="12" height="{hoehe:.1f}" fill="{farbe}" '  # Layout
                      f'fill-opacity="0.8"><title>Woche {z["nr"]}: {zahl(z["unterwasser"], 1)} % unter dem Hoch</title></rect>')
     s.append("</svg>")
     return "".join(s)
@@ -142,7 +142,7 @@ def seite_performance():
                                   "Weit über dem Zielpfad: Teilgewinne sichern, Stopps eng; darunter: das System prüfen, "
                                   "nicht die Größe erhöhen")
     tabelle = "".join(
-        f'<tr><td>W {z["nr"]}</td><td>{z["datum"][8:10]}.{z["datum"][5:7]}.{z["datum"][:4]}</td>'
+        f'<tr><td>W {z["nr"]}</td><td>{z["datum"][8:10]}.{z["datum"][5:7]}.{z["datum"][:4]}</td>'  # Layout
         f'<td style="text-align:right">{zahl(z["wert"], 0)} €</td>'
         f'<td style="text-align:right">{zahl(z["einzahlung"], 0) + " €" if z["einzahlung"] else "–"}</td>'
         f'<td style="text-align:right;color:{GRUEN if z["rendite"] >= 0 else ROT}">{_pct(z["rendite"], 2)}</td>'

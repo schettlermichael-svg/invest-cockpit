@@ -39,7 +39,7 @@ def leiste():
     h = depot.hitze(d)
     kopf = (f'<div style="display:flex;flex-wrap:wrap;gap:24px;align-items:baseline">'
             f'<div title="Summe des offenen Risikos (Einstieg bis Stopp) aller Positionen gegen das Konto; Grenze '
-            f'{zahl(h["max"], 0)} %" style="display:flex;gap:10px;align-items:center">{punkt(h["ampel"], 16)}'
+            f'{zahl(h["max"], 0)} %" style="display:flex;gap:10px;align-items:center">{punkt(h["ampel"], 16)}'  # Layout
             f'<span style="font-size:26px;font-weight:600">{zahl(h["pct"] or 0, 1)} %</span>'
             f'<span style="color:{TEXT_2}">Depot-Hitze · {zahl(h["euro"], 0)} € offenes Risiko von höchstens '
             f'{zahl(h["max"], 0)} %</span></div>'
@@ -72,7 +72,7 @@ def leiste():
     liste = "".join(
         f'<div style="display:grid;grid-template-columns:22px 90px 1fr 120px;gap:10px;align-items:center;'
         f'padding:8px 4px 8px 10px;border-top:1px solid {RAND};border-left:3px solid {GRUEN if lang else ROT}">'
-        f'{punkt(a, 12)}<b>{t(tk)}</b><span>{t(text)}<br><span style="color:{TEXT_2};font-size:14px">{t(zz)}</span>'
+        f'{punkt(a, 12)}<b>{t(tk)}</b><span>{t(text)}<br><span style="color:{TEXT_2};font-size:14px">{t(zz)}</span>'  # Layout
         f'</span>{_deepdive(tk, lang)}</div>' for tk, lang, a, text, zz in zeilen) or f'<div style="color:{TEXT_2}">keine offenen Positionen</div>'
     return karte(kopf + liste, "Depot · Positionen und Hitze")
 

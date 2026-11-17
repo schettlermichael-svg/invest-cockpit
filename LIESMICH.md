@@ -1379,3 +1379,12 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
   Tür aus `einrichten.sh` (6 Zeilen); vorher prüft `caddy validate`, die alte Datei liegt als `Caddyfile.vor-ausweis`.
 - Geprüft mit Caddy 2.8.4: ohne Passwort 401 ohne Ausweis, falsches Passwort 401, richtiges Passwort 200 mit Ausweis,
   Ausweis allein 200, falscher Ausweis 401.
+
+## Inventur Stufe 3 (17.11.2026, Plan 22)
+
+Die Inventur sah bisher nur die Funktionen, die im Regelkatalog stehen. Jetzt prüft sie alle 373 Funktionen aller Module.
+Jede Zahl, die etwas entscheidet, hat einen Namen oder führt auf ihre eine Quelle (z. B. `rueckenwind.KURS_NAH` statt
+0,97/1,03, `system_minervini.BASE_TIEFE_MAX` im Chart-Prüfer). Reine Gestaltungs- oder Technikzahlen tragen am
+Zeilenende `# Layout` bzw. `# Technik` (282 Zeilen); sechs reine Technik-Module (`TECHNIK_MODULE`) sind ausgenommen.
+Neu im Katalog: „Kopf und Kacheln der Titelseite“, „Pendel der Übersicht“, „Bänder und Zeichen im Chart“.
+Ergebnis: 0 frei, 0 Kopien, 0 ohne Namen. Gegenprobe mit denselben Daten: 462 Titel, 0 Kacheln anders.

@@ -5,6 +5,7 @@ wurden nicht mehr gezeigt und liegen seit der Gesamtprüfung am 10.11.2026 in _t
 Rechenkern: kern/rudel.py. Hier nur Anzeige – nichts davon wirkt auf Muster, Kaufsetup oder Phase.
 """
 import marktdaten
+from masse import GD150_TAGE  # noqa: E402
 import rudel
 import sektoren
 
@@ -27,7 +28,8 @@ def _rot(kurs, markt):
 
 
 def _unter_gd30w(kurs):
-    return bool(kurs.iloc[-1] < kurs.rolling(150, min_periods=150).mean().iloc[-1]) if len(kurs) >= 150 else None
+    return bool(kurs.iloc[-1] < kurs.rolling(GD150_TAGE, min_periods=GD150_TAGE).mean().iloc[-1]) \
+        if len(kurs) >= GD150_TAGE else None
 
 
 def _vorhut(mitglieder):

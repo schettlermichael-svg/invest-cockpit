@@ -315,7 +315,7 @@ def dreifach(erg):
     """Karten: Kurs, Geld und Zahlen grün (Entsteht oder Läuft)."""
     liste = sorted(dreifach_liste(erg), key=lambda p: (p[1]["stufe"] != "Entsteht", -p[1]["tempo"]))
     if not liste:
-        return seite(f'<p style="color:{TEXT_2}">Zurzeit kein Titel mit dreifachem Rückenwind.</p>', oben=4, unten=4)
+        return seite(f'<p style="color:{TEXT_2}">Zurzeit kein Titel mit dreifachem Rückenwind.</p>', oben=4, unten=4)  # Layout
     karten = []
     for tk, x in liste:
         termin, warn = _termin(x, erg["stand"])
@@ -331,13 +331,13 @@ def dreifach(erg):
             f'<div style="color:{TEXT_2};font-size:13px">RS-Linie {_rs_linie(x)} · Volumen {_zufluss(x.get("zufluss"))}</div>'
             f'<div style="color:{TEXT_2};font-size:13px">{t(x["sektor"])}{" ◇" if x.get("sektor_stabil") else ""} · '
             f'{t(x["branche"])}{" ◇" if x.get("branche_stabil") else ""}</div>'
-            + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")
+            + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")  # Layout
             + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn == "rot" else GELB if warn else TEXT_2}">'
             + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
             + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
             + _punkte_html(x) + _mini(tk) + '</div></a>')
     return seite('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">'
-                 + "".join(karten) + '</div>', oben=4, unten=4)
+                 + "".join(karten) + '</div>', oben=4, unten=4)  # Layout
 
 
 def _kreis(tk):
@@ -388,7 +388,7 @@ def stufe(erg, name):
     return pd.DataFrame(reihen), tks
 
 
-def logbuch(erg, tage=28):
+def logbuch(erg, tage=28):  # Layout
     """Offene Einträge (seit wann in der Stufe, Kurs seitdem) und Austritte der letzten Wochen – Beobachtung."""
     lb = erg.get("logbuch") or {}
     grenze = pd.Timestamp(erg["stand"]) - pd.Timedelta(days=tage)

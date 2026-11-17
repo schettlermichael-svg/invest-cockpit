@@ -101,12 +101,12 @@ def _index_gleich(k):
     return [v * f for v in ik]
 
 
-def mini(k, breite=120, hoehe=30):
+def mini(k, breite=120, hoehe=30):  # Layout
     if not k or not k.get("kurve"):
         return ""
     farben = _farben(k)
-    _, _, y_ = _skala(k["kurve"], 3, hoehe - 6)
-    teile, xs, ys = _pfade(k["kurve"], farben, 2, breite - 6, y_, 1.6)
+    _, _, y_ = _skala(k["kurve"], 3, hoehe - 6)  # Layout
+    teile, xs, ys = _pfade(k["kurve"], farben, 2, breite - 6, y_, 1.6)  # Layout
     return (f'<svg width="{breite}" height="{hoehe}" viewBox="0 0 {breite} {hoehe}" role="img" '
             f'aria-label="Kreislauf ein Jahr, Phase {t(wort(k))}" style="display:block">' + "".join(teile)
             + f'<circle cx="{xs[-1]:.1f}" cy="{ys[-1]:.1f}" r="2.6" fill="{farben[-1]}"/></svg>')
@@ -115,7 +115,7 @@ def mini(k, breite=120, hoehe=30):
 def _ring(k):
     """Die vier Phasen als Leiste, die heutige hervorgehoben, das Ziel des Wechsels mit Pfeil."""
     zellen = []
-    for p in (1, 2, 3, 4):
+    for p in (1, 2, 3, 4):  # Layout
         an = p == k["phase"]
         ziel = p == k.get("ziel")
         f = _farbe_jetzt(k) if an else FARBE[p]
@@ -124,34 +124,34 @@ def _ring(k):
                       f'{rand};border-radius:8px;padding:6px 8px;background:{"#1F2833" if an else "transparent"}">'
                       f'<div style="font-size:12px;color:{TEXT_3}">Phase {p}{" · hier" if an else " · nächste?" if ziel else ""}'
                       f'</div><div style="font-size:14px;color:{f if an or ziel else TEXT_2};font-weight:'
-                      f'{600 if an else 400}">{NAME[p]}{" · Rückschlag" if an and k.get("rueckschlag") else ""}</div></div>')
+                      f'{600 if an else 400}">{NAME[p]}{" · Rückschlag" if an and k.get("rueckschlag") else ""}</div></div>')  # Layout
     return f'<div style="display:flex;gap:6px;margin:10px 0 4px">{"".join(zellen)}</div>'
 
 
-def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):
+def gross(k, titel="", satz_stab=None, breite=640, hoehe=170):  # Layout
     """Großes Kreislaufbild (HTML). satz_stab: der Satz des Stabs zu diesem Titel, wenn es einen gibt."""
     if not k or not k.get("kurve"):
         return ""
     farben = _farben(k)
     tiefs = k.get("tiefs") if k.get("tiefs") and len(k["tiefs"]) == len(k["kurve"]) else None
     ix = _index_gleich(k)
-    lo, hi, y_ = _skala(list(k["kurve"]) + (tiefs or []) + (ix or []), 12, hoehe - 34)
-    b = breite - 120
+    lo, hi, y_ = _skala(list(k["kurve"]) + (tiefs or []) + (ix or []), 12, hoehe - 34)  # Layout
+    b = breite - 120  # Layout
     unten = []
     if ix:
-        unten.append(_linie(ix, 8, b, y_, INDEX_FARBE, 1.2, "5 4"))
+        unten.append(_linie(ix, 8, b, y_, INDEX_FARBE, 1.2, "5 4"))  # Layout
     if tiefs:
-        unten.append(_linie(tiefs, 8, b, y_, TEXT_3, 1, "1 3"))
-    teile, xs, ys = _pfade(k["kurve"], farben, 8, b, y_, 2.4)
+        unten.append(_linie(tiefs, 8, b, y_, TEXT_3, 1, "1 3"))  # Layout
+    teile, xs, ys = _pfade(k["kurve"], farben, 8, b, y_, 2.4)  # Layout
     x, y = xs[-1], ys[-1]
     svg = (f'<svg viewBox="0 0 {breite} {hoehe}" width="100%" role="img" aria-label="Kreislauf {t(titel)}: '
            f'{t(wort(k))}" style="display:block;max-width:{breite}px">'
            f'<text x="8" y="10" font-size="11" fill="{TEXT_3}">{zahl(hi)} $</text>'
-           f'<text x="8" y="{hoehe - 4}" font-size="11" fill="{TEXT_3}">{zahl(lo)} $ · {t(k.get("kurve_von", ""))} – '
+           f'<text x="8" y="{hoehe - 4}" font-size="11" fill="{TEXT_3}">{zahl(lo)} $ · {t(k.get("kurve_von", ""))} – '  # Layout
            f'{t(k.get("kurve_bis", ""))} (Wochenschlüsse)</text>' + "".join(unten) + "".join(teile)
            + f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{farben[-1]}" stroke="{TEXT}" stroke-width="1.5"/>'
-           f'<line x1="{x + 7:.1f}" y1="{y:.1f}" x2="{x + 20:.1f}" y2="{y:.1f}" stroke="{TEXT_2}" stroke-width="1"/>'
-           f'<text x="{x + 24:.1f}" y="{y + 4:.1f}" font-size="13" fill="{TEXT}">hier steht er</text></svg>')
+           f'<line x1="{x + 7:.1f}" y1="{y:.1f}" x2="{x + 20:.1f}" y2="{y:.1f}" stroke="{TEXT_2}" stroke-width="1"/>'  # Layout
+           f'<text x="{x + 24:.1f}" y="{y + 4:.1f}" font-size="13" fill="{TEXT}">hier steht er</text></svg>')  # Layout
     if ix:                                        # wer liegt vorn – in Zahlen, nicht nur im Bild
         t_pct = (k["kurve"][-1] / k["kurve"][0] - 1) * 100
         i_pct = (ix[-1] / ix[0] - 1) * 100

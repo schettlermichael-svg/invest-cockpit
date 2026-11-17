@@ -19,6 +19,7 @@ import numpy as np
 import erkennung
 from masse import P_ABWAERTS, PHASE_VERTEILUNG, VOL_TAGE  # noqa: E402
 
+BASE_FRUEH, BASE_HANDELBAR = 2, 3   # O'Neil: Basen 1–2 früh (grün), die 3. noch handelbar (gelb), ab der 4. spät
 STUFE = 0.20                  # neue Base erst 20 % über der Oberkante der zuletzt gezählten
 ERFOLG, VERLUST = 0.20, 0.08  # Ausgang nach O'Neil
 

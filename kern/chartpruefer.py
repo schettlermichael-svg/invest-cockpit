@@ -43,6 +43,7 @@ import pandas as pd
 
 from dateien import json_lesen, json_schreiben
 import regelkarte
+from masse import JAHR_TAGE  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 ORDNER = os.path.join(HIER, "..", "daten", "chartpruefer")
@@ -105,7 +106,7 @@ def _schema(elemente):
         "type": "object",
         "properties": {
             "stimmt": {"type": "string", "description": "ein Satz: was die App richtig gesetzt hat"},
-            "widersprueche": {"type": "array", "maxItems": 8, "items": {"type": "object", "properties": {
+            "widersprueche": {"type": "array", "maxItems": 8, "items": {"type": "object", "properties": {  # Technik
                 "element": {"type": "string", "enum": elemente},
                 "befund": {"type": "string", "description": "was falsch ist, mit Datum und Kurs"},
                 "regel": {"type": "string", "description": "Meister und Regel"},
@@ -171,7 +172,7 @@ def stichprobe(n=STICHPROBE, seed=None):
 
 def _ticker():
     pfad = os.path.join(HIER, "..", "daten", "kurse")
-    return sorted(f[:-4] for f in os.listdir(pfad) if f.endswith(".csv"))
+    return sorted(f[:-4] for f in os.listdir(pfad) if f.endswith(".csv"))  # Technik
 
 
 # ── Material: Zahlen und Bild ───────────────────────────────────────────────────────────────────────────────────
@@ -193,8 +194,9 @@ def material(tk, df):
     # Dieselbe Enge wie der Chart der Titelseite (Chart-Prüfer 14.11.2026, NCNO/BR: Bild und Zahlen nannten verschiedene
     # Kontraktionen): fällt die große Zone durch und ist die Flagge darin reif, zeigt der Chart deren Enge; nach einem
     # frischen Ausbruch die Enge der Zone vom Vortag
+    import system_minervini
     reif = lambda b: (b.get("zone") and b.get("name") in ("Base", "Flagge") and b.get("laenge") == "ok"   # noqa: E731
-                      and b.get("tiefe", 99) <= 50)
+                      and b.get("tiefe", system_minervini.BASE_TIEFE_MAX + 1) <= system_minervini.BASE_TIEFE_MAX)
     enge_von, z_e = "Zone der App", z
     if z.get("zone") and not reif(z) and z.get("innen") and reif(z["innen"]):
         e, enge_von, z_e = vcp_zone.enge(df, z["innen"]), "Flagge in der Zone (die große Zone ist keine reife Base)", z["innen"]
@@ -209,11 +211,11 @@ def material(tk, df):
     except Exception:  # noqa: BLE001
         mp = None
     pa = avwap.profil_anker(df, zt, z.get("start") if z.get("zone") else None)
-    wh = avwap._wochen_hochs(df)[-6:]
+    wh = avwap._wochen_hochs(df)[-6:]  # Technik
     ein = zeichen.einquetschung(df)
     c = df["Close"]
     zeilen = [f"Titel {tk}, letzter Kurs {_z(c.iloc[-1])} $ am {_d(df.index[-1])}, 52-Wochen-Hoch "
-              f"{_z(df['High'].iloc[-252:].max())} $, 52-Wochen-Tief {_z(df['Low'].iloc[-252:].min())} $"]
+              f"{_z(df['High'].iloc[-JAHR_TAGE:].max())} $, 52-Wochen-Tief {_z(df['Low'].iloc[-JAHR_TAGE:].min())} $"]
     if z.get("zone"):
         zeilen.append(f"Zone der App: {z['name']} ab {_d(z['start'])}, Oberkante {_z(z['oben'])} $, Unterkante "
                       f"{_z(z['unten'])} $ am {_d(z['tief_datum'])}, {_z(z['wochen'], '.1f')} Wochen, "
@@ -263,7 +265,7 @@ def material(tk, df):
     if wh:
         zeilen.append("Wochen-Schwunghochs: " + ", ".join(f"{_d(d)} {_z(p)} $" for d, p in wh))
     if ein:
-        zeilen.append(f"Einquetschung der App: {json.dumps({k: (str(v) if not isinstance(v, (int, float)) else v) for k, v in ein.items()}, ensure_ascii=False)[:300]}")
+        zeilen.append(f"Einquetschung der App: {json.dumps({k: (str(v) if not isinstance(v, (int, float)) else v) for k, v in ein.items()}, ensure_ascii=False)[:300]}")  # Technik
     else:
         zeilen.append("Einquetschung der App: keine")
     # Die Kette (13./14.11.2026): Kreislauf, Zeichen, Zustand mit Belegen, Short-Formen, Market Profile
@@ -293,7 +295,7 @@ def material(tk, df):
                       + (f", Fehlausbruch am {_d(br['fehl_tag'])}" if br.get("fehl") else "")
                       + (f", Volumen {_z(br['volumen'])}-fach" if br.get("volumen") else ""))
     elif not z.get("zone"):                    # Kurs am Hoch: die zuletzt verlassene Zone (im Chart als blasser Rahmen)
-        fertig = vcp_zone.verlauf(df, tage=130)
+        fertig = vcp_zone.verlauf(df, tage=130)  # Technik
         if fertig:
             b = fertig[-1]
             e_b = vcp_zone.enge(df.iloc[:b["ende_i"]], b)
@@ -325,7 +327,7 @@ def material(tk, df):
     sig = (mp or {}).get("signale") or []
     if sig:
         zeilen.append("Signale des Market Profile (letzte 60 Tage): " + ", ".join(
-            f"{x['art']} {x['dir']} {_d(x['tag'])}" for x in sig if pd.Timestamp(x["tag"]) >= df.index[-60]))
+            f"{x['art']} {x['dir']} {_d(x['tag'])}" for x in sig if pd.Timestamp(x["tag"]) >= df.index[-60]))  # Technik
     if (mp or {}).get("zustand"):
         zeilen.append(f"Market Profile heute: {mp['zustand'].get('wort')}")
     for name, fn in (("Ermüdung", vcp_zone.ermuedung), ("Bärenflagge", vcp_zone.baerenflagge),
@@ -377,20 +379,20 @@ def bild(tk, df, marken):
     import matplotlib.pyplot as plt
     import avwap
     z, e, a = marken["zone"], marken["enge"], marken["anker"]
-    beginn = df.index[-252] if len(df) > 252 else df.index[0]
+    beginn = df.index[-JAHR_TAGE] if len(df) > JAHR_TAGE else df.index[0]
     if z.get("zone") and z["start"] < beginn:
-        beginn = z["start"] - pd.Timedelta(days=30)
+        beginn = z["start"] - pd.Timedelta(days=30)  # Technik
     d = df[df.index >= beginn]
     x = np.arange(len(d))
     pos = {t: i for i, t in enumerate(d.index)}
-    fig, (ax, av) = plt.subplots(2, 1, figsize=(14, 8), dpi=100, gridspec_kw={"height_ratios": [4, 1]}, sharex=True)
+    fig, (ax, av) = plt.subplots(2, 1, figsize=(14, 8), dpi=100, gridspec_kw={"height_ratios": [4, 1]}, sharex=True)  # Technik
     hoch = d["Close"] >= d["Open"]
     for maske, farbe in ((hoch, "#2E9E5B"), (~hoch, "#D9534F")):
-        ax.vlines(x[maske], d["Low"][maske], d["High"][maske], color=farbe, linewidth=0.8)
+        ax.vlines(x[maske], d["Low"][maske], d["High"][maske], color=farbe, linewidth=0.8)  # Technik
         ax.vlines(x[maske], d[["Open", "Close"]].min(axis=1)[maske], d[["Open", "Close"]].max(axis=1)[maske],
-                  color=farbe, linewidth=3)
-    av.bar(x, d["Volume"], color=np.where(hoch, "#2E9E5B", "#D9534F"), width=0.8)
-    av.plot(x, d["Volume"].rolling(50, min_periods=10).mean(), color="#333", linewidth=1)
+                  color=farbe, linewidth=3)  # Technik
+    av.bar(x, d["Volume"], color=np.where(hoch, "#2E9E5B", "#D9534F"), width=0.8)  # Technik
+    av.plot(x, d["Volume"].rolling(50, min_periods=10).mean(), color="#333", linewidth=1)  # Technik
 
     def px(t):
         t = pd.Timestamp(t)
@@ -399,15 +401,15 @@ def bild(tk, df, marken):
     if z.get("zone") or z.get("offen"):
         s = px(z["start"] if z.get("zone") else df.index[z["start_i"]])
         ax.add_patch(plt.Rectangle((s, z["unten"]), len(d) - 1 - s, z["oben"] - z["unten"], fill=False,
-                                   edgecolor="#1f6fd1", linewidth=1.6, linestyle="-" if z.get("zone") else "--"))
+                                   edgecolor="#1f6fd1", linewidth=1.6, linestyle="-" if z.get("zone") else "--"))  # Technik
         ax.text(s, z["oben"], f" Zone: {z.get('name', 'offen')} {_z(z['wochen'], '.1f')} W, {_z(z['tiefe'], '.0f')} %",
-                color="#1f6fd1", va="bottom", fontsize=9)
+                color="#1f6fd1", va="bottom", fontsize=9)  # Technik
     if e.get("pivot"):
         ax.axhline(e["pivot"], color="black", linestyle="--", linewidth=1)
-        ax.text(len(d) - 1, e["pivot"], f" Pivot {_z(e['pivot'])} ({e.get('lage')})", fontsize=9, va="bottom", ha="right")
+        ax.text(len(d) - 1, e["pivot"], f" Pivot {_z(e['pivot'])} ({e.get('lage')})", fontsize=9, va="bottom", ha="right")  # Technik
         for k in e.get("kontraktionen") or []:
             i0, i1 = px(df.index[k["hoch_i"]]), px(df.index[k["tief_i"]])
-            ax.plot([i0, i1], [k["hoch"], k["tief"]], color="#888", linestyle=":", linewidth=1.2)
+            ax.plot([i0, i1], [k["hoch"], k["tief"]], color="#888", linestyle=":", linewidth=1.2)  # Technik
     farben = {"gipfel": "#C62828", "hoch": "#EF6C00", "tief": "#00838F", "hoeher": "#2E7D32", "zahlen": "#B8860B",
               "ereignis": "#7B1FA2", "ipo": "#607D8B", "ausbruch": "#1565C0"}
     namen = {"gipfel": "AVWAP Hoch des Rückgangs", "hoch": "AVWAP letztes Hoch", "tief": "AVWAP Tief der Bewegung",
@@ -422,28 +424,28 @@ def bild(tk, df, marken):
             continue
         r = r[r.index >= d.index[0]]
         if len(r):
-            ax.plot([px(i) for i in r.index], r.values, color=farben[k], linewidth=1.4, label=f"{namen[k]} ab {_d(t)}")
-            ax.plot(px(t), df["High"][t] if k in ("gipfel", "hoch") else df["Low"][t], "o", color=farben[k], ms=6)
+            ax.plot([px(i) for i in r.index], r.values, color=farben[k], linewidth=1.4, label=f"{namen[k]} ab {_d(t)}")  # Technik
+            ax.plot(px(t), df["High"][t] if k in ("gipfel", "hoch") else df["Low"][t], "o", color=farben[k], ms=6)  # Technik
     if marken["profil"].get("grau"):
         ax.axvline(px(marken["profil"]["grau"][0]), color="#7B1FA2", linestyle="-.", linewidth=1,
                    label=f"Beginn der Balance (Profil) {_d(marken['profil']['grau'][0])}")
     for t, p in marken["wh"]:
         if t >= d.index[0]:
-            ax.plot(px(t), p * 1.01, "v", color="#555", ms=6)
+            ax.plot(px(t), p * 1.01, "v", color="#555", ms=6)  # Technik
     vv = marken.get("vv") or {}
     for schl, farbe, wort in (("mauer", "#D32F2F", "Mauer"), ("stuetze", "#388E3C", "Stütze")):
         if vv.get(schl):
             u, o = vv[schl][0], vv[schl][1]
-            ax.axhspan(u, o, xmin=0.85, xmax=1.0, color=farbe, alpha=0.18)
-            ax.text(len(d) - 1, o, f"{wort} {_z(u)}–{_z(o)}", color=farbe, fontsize=8, ha="right", va="bottom")
+            ax.axhspan(u, o, xmin=0.85, xmax=1.0, color=farbe, alpha=0.18)  # Technik
+            ax.text(len(d) - 1, o, f"{wort} {_z(u)}–{_z(o)}", color=farbe, fontsize=8, ha="right", va="bottom")  # Technik
 
     def marke(t, text, farbe, oben=True):
         t = pd.Timestamp(t)
         if t < d.index[0] or t > d.index[-1]:
             return
         i = px(t)
-        y = d["High"].iloc[min(i, len(d) - 1)] * 1.025 if oben else d["Low"].iloc[min(i, len(d) - 1)] * 0.975
-        ax.annotate(text, (i, y), color=farbe, fontsize=8, ha="center", va="bottom" if oben else "top",
+        y = d["High"].iloc[min(i, len(d) - 1)] * 1.025 if oben else d["Low"].iloc[min(i, len(d) - 1)] * 0.975  # Technik
+        ax.annotate(text, (i, y), color=farbe, fontsize=8, ha="center", va="bottom" if oben else "top",  # Technik
                     fontweight="bold")
 
     br = marken.get("br")
@@ -452,7 +454,7 @@ def bild(tk, df, marken):
         if br.get("fehl"):
             marke(br["fehl_tag"], "Fehlausbruch", "#B71C1C", oben=False)
     for x in marken.get("sig") or []:                 # nur die letzten 60 Tage (wie in den Zahlen), sonst zu voll
-        if x["art"] in ("A", "U", "S", "R") and pd.Timestamp(x["tag"]) >= df.index[-60]:
+        if x["art"] in ("A", "U", "S", "R") and pd.Timestamp(x["tag"]) >= df.index[-60]:  # Technik
             marke(x["tag"], f"MP {x['art']}{x['dir']}", "#6A1B9A", oben=x["dir"] == "↑")
     m = marken.get("mess") or {}
     if m.get("kraft_ohne_weg"):
@@ -465,12 +467,12 @@ def bild(tk, df, marken):
         for vor in ("Spring", "Upthrust"):
             if z_["text"].startswith(vor) and z_.get("tag"):
                 marke(z_["tag"], vor, "#2E7D32" if vor == "Spring" else "#C62828", oben=vor == "Upthrust")
-    ticks = list(range(0, len(d), max(1, len(d) // 12)))
+    ticks = list(range(0, len(d), max(1, len(d) // 12)))  # Technik
     av.set_xticks(ticks)
-    av.set_xticklabels([f"{d.index[i]:%d.%m.%y}" for i in ticks], fontsize=8)
-    ax.set_title(f"{tk} · Tageskerzen bis {_d(d.index[-1])} · Dreiecke = Wochen-Schwunghochs", fontsize=11)
-    ax.legend(loc="upper left", fontsize=8)
-    ax.grid(alpha=0.25)
+    av.set_xticklabels([f"{d.index[i]:%d.%m.%y}" for i in ticks], fontsize=8)  # Technik
+    ax.set_title(f"{tk} · Tageskerzen bis {_d(d.index[-1])} · Dreiecke = Wochen-Schwunghochs", fontsize=11)  # Technik
+    ax.legend(loc="upper left", fontsize=8)  # Technik
+    ax.grid(alpha=0.25)  # Technik
     fig.tight_layout()
     buf = io.BytesIO()
     fig.savefig(buf, format="png")
@@ -509,13 +511,13 @@ def _gruppen_reihen(g):
             df = None
         if df is not None and len(df) >= 60:
             kurse[tk] = df["Close"]
-    C = pd.DataFrame(kurse).iloc[-260:]
+    C = pd.DataFrame(kurse).iloc[-260:]  # Technik
     norm = C / C.bfill().iloc[0]
     index = norm.mean(axis=1)
     spx = daten.kurse_gespeichert(daten.INDEX)["Close"].reindex(index.index).ffill()
     rs = index / (spx / spx.iloc[0])
     alle = pd.DataFrame(kurse)
-    breite = (alle > alle.rolling(50, min_periods=40).mean()).where(alle.notna()).mean(axis=1).reindex(index.index) * 100
+    breite = (alle > alle.rolling(50, min_periods=40).mean()).where(alle.notna()).mean(axis=1).reindex(index.index) * 100  # Technik
     return index, rs, breite
 
 
@@ -524,18 +526,18 @@ def gruppen_bild(g):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     index, rs, breite = _gruppen_reihen(g)
-    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(14, 8), dpi=100, sharex=True,
-                                     gridspec_kw={"height_ratios": [3, 1.5, 1.5]})
+    fig, (a1, a2, a3) = plt.subplots(3, 1, figsize=(14, 8), dpi=100, sharex=True,  # Technik
+                                     gridspec_kw={"height_ratios": [3, 1.5, 1.5]})  # Technik
     a1.plot(index.index, index.values, color="#1565C0")
     a1.set_title(f"{g.get('art')} {g.get('name')} · gleichgewichteter Index der {len(g.get('mitglieder') or [])} "
-                 f"Mitglieder bis {_d(index.index[-1])}", fontsize=11)
+                 f"Mitglieder bis {_d(index.index[-1])}", fontsize=11)  # Technik
     a2.plot(rs.index, rs.values, color="#6A1B9A")
-    a2.set_ylabel("RS zum S&P 500", fontsize=8)
+    a2.set_ylabel("RS zum S&P 500", fontsize=8)  # Technik
     a3.plot(breite.index, breite.values, color="#2E7D32")
-    a3.axhline(50, color="#999", linewidth=0.8)
-    a3.set_ylabel("% über GD50", fontsize=8)
+    a3.axhline(50, color="#999", linewidth=0.8)  # Technik
+    a3.set_ylabel("% über GD50", fontsize=8)  # Technik
     for a in (a1, a2, a3):
-        a.grid(alpha=0.25)
+        a.grid(alpha=0.25)  # Technik
     fig.tight_layout()
     buf = io.BytesIO()
     fig.savefig(buf, format="png")
@@ -592,7 +594,7 @@ def markt_material():
 def pruefen_markt():
     import modell
     text = markt_material()
-    antwort = modell._formular(SYSTEM_MARKT, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_MARKT, 2500)
+    antwort = modell._formular(SYSTEM_MARKT, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_MARKT, 2500)  # Technik
     return {"tk": "Markt: S&P 500 und Nasdaq", "gruppe": "Markt", "stimmt": antwort.get("stimmt", ""),
             "widersprueche": antwort.get("widersprueche") or [], "zahlen": text}
 
@@ -601,7 +603,7 @@ def pruefen_gruppe(g):
     import modell
     text = gruppen_material(g)
     png = gruppen_bild(g)
-    antwort = modell._formular(SYSTEM_GRUPPE, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_GRUPPE, 2500,
+    antwort = modell._formular(SYSTEM_GRUPPE, f"Zahlen der App:\n{text}", "pruefung_melden", SCHEMA_GRUPPE, 2500,  # Technik
                                bilder=[png])
     return {"tk": f"{g.get('art')}: {g.get('name')}", "gruppe": f"Gruppe {g.get('feld')}",
             "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [], "zahlen": text}
@@ -618,9 +620,9 @@ def app_bild(tk, chart_teil=None):
     h = titel.chartkarte(chart_teil, "Tag", "1 J")
     svg = re.search(r"<svg.*?</svg>", h, flags=re.S).group(0)
     svg = re.sub(r"<style>text\{[^}]*\}</style>", "", svg, count=1)
-    svg = re.sub(r'viewBox="0 0 (\d+) (\d+)"', lambda m: f'viewBox="0 0 {int(m.group(1)) + 140} {m.group(2)}"', svg,
+    svg = re.sub(r'viewBox="0 0 (\d+) (\d+)"', lambda m: f'viewBox="0 0 {int(m.group(1)) + 140} {m.group(2)}"', svg,  # Technik
                  count=1)                                    # Platz für die Beschriftungen rechts
-    png = cairosvg.svg2png(bytestring=svg.encode("utf-8"), output_width=1600, background_color="#161C24")
+    png = cairosvg.svg2png(bytestring=svg.encode("utf-8"), output_width=1600, background_color="#161C24")  # Technik
     return base64.b64encode(png).decode()
 
 
@@ -640,7 +642,7 @@ def pruefen(tk, chart_teil=None):
     bilder.append(bild(tk, df, marken))
     hinweis = ("Bild 1 ist der Chart der App, so wie der Nutzer ihn sieht; Bild 2 ist ein Hilfsbild mit den Marken der "
                "Ereignisse. " if len(bilder) == 2 else "")
-    antwort = modell._formular(SYSTEM, f"{hinweis}Zahlen der App zu {tk}:\n{text}", "pruefung_melden", SCHEMA, 3000,
+    antwort = modell._formular(SYSTEM, f"{hinweis}Zahlen der App zu {tk}:\n{text}", "pruefung_melden", SCHEMA, 3000,  # Technik
                                bilder=bilder)
     return {"tk": tk, "stimmt": antwort.get("stimmt", ""), "widersprueche": antwort.get("widersprueche") or [],
             "zahlen": text}
@@ -651,7 +653,7 @@ def lauf(n=STICHPROBE):
     import modell
     os.makedirs(ORDNER, exist_ok=True)
     rest = modell.DECKEL_USD - modell.kosten()["usd"]
-    n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))
+    n = int(max(0, min(n, rest // KOSTEN_JE_CHART - 5)))  # Technik
     probe = ([(tk, g) for tk, g in stichprobe(max(0, n - GRUPPEN - 1))] + [(g, None) for g in gruppen_stichprobe()]
              + [("Markt", "Markt")])                      # der Markt einmal je Lauf (14.11.2026: fehlte im Prüfer)
     start = datetime.now()
@@ -669,7 +671,7 @@ def lauf(n=STICHPROBE):
             break
         except Exception as x:  # noqa: BLE001 – ein Titel darf den Lauf nicht beenden
             r = {"tk": tk if gruppe is not None else f"{tk.get('art')}: {tk.get('name')}",
-                 "fehler": f"{type(x).__name__}: {x}"[:300]}
+                 "fehler": f"{type(x).__name__}: {x}"[:300]}  # Technik
         r.setdefault("gruppe", gruppe)
         bericht["titel"].append(r)
         prot["fertig"] += 1
@@ -782,7 +784,7 @@ def auswerten(pfad=None, system=None, ordner=None):
     inhalt = (f"Bericht {b['stand']}: {len(b['titel'])} Charts, {len(zeilen)} Widersprüche, {ohne} ohne Widerspruch.\n"
               + "\n".join(zeilen))
     vorher = modell.kosten()["usd"]
-    a = modell._formular(system or SYSTEM_AUSWERTUNG, inhalt, "auswertung_melden", SCHEMA_AUSWERTUNG, 8000)
+    a = modell._formular(system or SYSTEM_AUSWERTUNG, inhalt, "auswertung_melden", SCHEMA_AUSWERTUNG, 8000)  # Technik
     a["kosten"] = round(modell.kosten()["usd"] - vorher, 3)
     a["stand"] = f"{datetime.now():%Y-%m-%d %H:%M}"
     b["auswertung"] = a

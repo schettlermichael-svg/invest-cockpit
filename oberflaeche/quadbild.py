@@ -38,7 +38,7 @@ def _lage(q):
     return ((w["steigt"] - w["fällt"]) / max(1, w["von"]), (i["steigt"] - i["fällt"]) / max(1, i["von"]))
 
 
-def verlauf(lage_modul, wochen=13):
+def verlauf(lage_modul, wochen=13):  # Layout
     """Quad für die Freitage der letzten `wochen` Wochen (älteste zuerst)."""
     heute = pd.Timestamp.today().normalize()
     aus = []
@@ -138,7 +138,7 @@ def _branchen_lage():
             h = r.iloc[-1]
             aus[b] = {"staerke": float(h["staerke"]), "schwung": float(h["schwung"]),
                       "feld": sektoren.feld(h["staerke"], h["schwung"]),
-                      "schweif": list(zip(r["staerke"].iloc[-11:].round(2), r["schwung"].iloc[-11:].round(2)))}
+                      "schweif": list(zip(r["staerke"].iloc[-11:].round(2), r["schwung"].iloc[-11:].round(2)))}  # Layout
         except Exception:  # noqa: BLE001 – Branche ohne Kurse bleibt grau
             pass
     return aus
@@ -189,7 +189,7 @@ def _felder(q):
                 f'<div style="display:flex;flex-wrap:wrap;gap:5px">{bra}</div></div>')
 
     return (f'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">'
-            f'{karte_(3)}{karte_(2)}{karte_(4)}{karte_(1)}</div>'
+            f'{karte_(3)}{karte_(2)}{karte_(4)}{karte_(1)}</div>'  # Layout
             f'<div style="font-size:13px;color:{TEXT_3}">Je Quad die Sektoren und Branchen, die in diesem Umfeld '
             f'typischerweise stark sind (Lehre), gefärbt nach ihrer Stärke heute: grün Führend, blau Erstarkend, gelb '
             f'Schwächelnd, rot Zurückfallend; Pfeil = Bewegung der letzten 5 Wochen; Branchen gleichgewichtet aus den '
@@ -202,7 +202,7 @@ def bild(q, spur):
     from lage import QUADS
 
     def xy(x, y):
-        return MX + x * RX * 0.62, MY - y * RY * 0.55
+        return MX + x * RX * 0.62, MY - y * RY * 0.55  # Layout
 
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Dalio-Quad" style="display:block;max-width:820px;font-family:IBM Plex Sans,sans-serif">'
@@ -213,30 +213,30 @@ def bild(q, spur):
         y0 = MY if unten > 0 else MY - RY
         aktiv = nr == q["quad"]
         farbe = AMPEL[QUAD_AMPEL[nr]]
-        A(f'<rect x="{x0 + 2}" y="{y0 + 2}" width="{RX - 4}" height="{RY - 4}" rx="10" fill="{farbe}" '
-          f'fill-opacity="{0.20 if aktiv else 0.06}" stroke="{farbe}" stroke-opacity="{0.9 if aktiv else 0.25}" '
+        A(f'<rect x="{x0 + 2}" y="{y0 + 2}" width="{RX - 4}" height="{RY - 4}" rx="10" fill="{farbe}" '  # Layout
+          f'fill-opacity="{0.20 if aktiv else 0.06}" stroke="{farbe}" stroke-opacity="{0.9 if aktiv else 0.25}" '  # Layout
           f'stroke-width="{2 if aktiv else 1}"/>')
         if nr == q["amtlich"] and nr != q["quad"]:
-            A(f'<rect x="{x0 + 8}" y="{y0 + 8}" width="{RX - 16}" height="{RY - 16}" rx="8" fill="none" '
+            A(f'<rect x="{x0 + 8}" y="{y0 + 8}" width="{RX - 16}" height="{RY - 16}" rx="8" fill="none" '  # Layout
               f'stroke="{TEXT_2}" stroke-width="1.5" stroke-dasharray="6 5"/>')
-        tx = x0 + 16 if rechts < 0 else x0 + RX - 16
+        tx = x0 + 16 if rechts < 0 else x0 + RX - 16  # Layout
         anker = "start" if rechts < 0 else "end"
-        ty = y0 + 28 if unten < 0 else y0 + RY - 40
+        ty = y0 + 28 if unten < 0 else y0 + RY - 40  # Layout
         A(f'<text x="{tx}" y="{ty}" fill="{TEXT if aktiv else TEXT_2}" font-size="17" font-weight="600" '
           f'text-anchor="{anker}">Quad {nr} · {QUADS[nr]}</text>')
         if nr == q["amtlich"] and nr != q["quad"]:
-            A(f'<text x="{tx}" y="{ty + 20 if unten < 0 else ty - 24}" fill="{TEXT_2}" font-size="12" '
+            A(f'<text x="{tx}" y="{ty + 20 if unten < 0 else ty - 24}" fill="{TEXT_2}" font-size="12" '  # Layout
               f'text-anchor="{anker}">amtliche Zahlen noch hier</text>')
     # Achsen mit Stimmleisten
     lw, li = _leiste(q, "wachstum"), _leiste(q, "inflation")
     A(f'<line x1="{MX - RX}" x2="{MX + RX}" y1="{MY}" y2="{MY}" stroke="{TEXT_3}" stroke-width="1.2"/>'
       f'<line x1="{MX}" x2="{MX}" y1="{MY - RY}" y2="{MY + RY}" stroke="{TEXT_3}" stroke-width="1.2"/>'
-      f'<text x="{MX + RX}" y="{MY + RY + 24}" fill="{TEXT}" font-size="14" text-anchor="end">Wachstum steigt → · '
+      f'<text x="{MX + RX}" y="{MY + RY + 24}" fill="{TEXT}" font-size="14" text-anchor="end">Wachstum steigt → · '  # Layout
       f'Stimmen <tspan font-size="17" font-weight="700" letter-spacing="2">{lw}</tspan></text>'
-      f'<text x="{MX - RX}" y="{MY + RY + 24}" fill="{TEXT_2}" font-size="14">← Wachstum fällt</text>'
-      f'<text x="{MX + 8}" y="{MY - RY - 10}" fill="{TEXT}" font-size="14">↑ Inflation steigt · Stimmen '
+      f'<text x="{MX - RX}" y="{MY + RY + 24}" fill="{TEXT_2}" font-size="14">← Wachstum fällt</text>'  # Layout
+      f'<text x="{MX + 8}" y="{MY - RY - 10}" fill="{TEXT}" font-size="14">↑ Inflation steigt · Stimmen '  # Layout
       f'<tspan font-size="17" font-weight="700" letter-spacing="2">{li}</tspan></text>'
-      f'<text x="{MX + 8}" y="{MY + RY + 44}" fill="{TEXT_2}" font-size="14">↓ Inflation fällt</text>')
+      f'<text x="{MX + 8}" y="{MY + RY + 44}" fill="{TEXT_2}" font-size="14">↓ Inflation fällt</text>')  # Layout
     # Spur: gleiche Lagen leicht versetzt, damit jede Woche sichtbar bleibt
     punkte = [(d, *_lage(x)) for d, x in spur] + [(None, *_lage(q))]
     gesehen, pos = {}, []
@@ -244,19 +244,19 @@ def bild(q, spur):
         k = gesehen.get((x, y), 0)
         gesehen[(x, y)] = k + 1
         px, py = xy(x, y)
-        pos.append((d, px + (k % 4) * 9 - 13 * (k > 0), py + (k // 4) * 9))
+        pos.append((d, px + (k % 4) * 9 - 13 * (k > 0), py + (k // 4) * 9))  # Layout
     if len(pos) >= 2:
         A(f'<polyline points="{" ".join(f"{px:.1f},{py:.1f}" for _, px, py in pos)}" fill="none" stroke="{TEXT_2}" '
           f'stroke-width="1.4" stroke-opacity="0.6" stroke-dasharray="3 3"/>')
     n = len(pos)
     for k, (d, px, py) in enumerate(pos[:-1]):
-        A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="4.5" fill="{TEXT_2}" fill-opacity="{0.25 + 0.6 * k / max(1, n - 2):.2f}">'
+        A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="4.5" fill="{TEXT_2}" fill-opacity="{0.25 + 0.6 * k / max(1, n - 2):.2f}">'  # Layout
           f'<title>{d:%d.%m.%Y}: Quad {spur[k][1]["quad"]} · {spur[k][1]["name"]}</title></circle>')
     _, px, py = pos[-1]
     farbe = AMPEL[QUAD_AMPEL[q["quad"]]]
     A(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="11" fill="{farbe}" stroke="{TEXT}" stroke-width="2.5">'
       f'<title>heute: Quad {q["quad"]} · {q["name"]}</title></circle>'
-      f'<text x="{px + 16:.1f}" y="{py + 5:.1f}" fill="{TEXT}" font-size="14" font-weight="700">heute</text>')
+      f'<text x="{px + 16:.1f}" y="{py + 5:.1f}" fill="{TEXT}" font-size="14" font-weight="700">heute</text>')  # Layout
     # Abstand zum Kippen: je Achse ein Hinweis im aktiven Feld, zur Grenze hin
     rechts, unten = FELD[q["quad"]]
     x0 = MX if rechts > 0 else MX - RX
@@ -269,7 +269,7 @@ def bild(q, spur):
         pf = ("←" if rechts > 0 else "→") if achse == "wachstum" else ("↓" if unten < 0 else "↑")
         text_ = f'{pf} Quad {ziel}, wenn noch {fehlt} {name}stimme{"n" if fehlt != 1 else ""} kippen'
         tx = x0 + RX / 2
-        ty = (y0 + RY - 30 if unten < 0 else y0 + 30) + zeile * 18
+        ty = (y0 + RY - 30 if unten < 0 else y0 + 30) + zeile * 18  # Layout
         A(f'<text x="{tx:.1f}" y="{ty:.1f}" fill="{TEXT_2}" font-size="12" text-anchor="middle"><title>Quad {ziel} · '
           f'{QUADS[ziel]}: die Achse dreht, wenn die Mehrheit ihrer Stimmen die Richtung wechselt</title>{text_}</text>')
     if spur:

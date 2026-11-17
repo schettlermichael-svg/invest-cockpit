@@ -8,6 +8,7 @@ import re
 
 import numpy as np
 
+PIVOT_GLEICH = 0.005   # Flagge in einer Base: Rahmen nur, wenn ihre Oberkante bis 0,5 % am Pivot des Scanners liegt
 from gestaltung import AMPEL, BLAU, GELB, GRAU, KARTE, RAND, ROT, GRUEN, TEXT, TEXT_2, TEXT_3, LILA, punkt, t, zahl
 
 PUNKTE = ("Markt", "Trend", "Stärke", "Fundament", "Setup", "Enge", "Geld", "Base")
@@ -72,7 +73,7 @@ def faerben(html, x):
         alt = m.group(2)
         ampel = "" if alt.upper() == RAND.upper() else (f'<span style="display:inline-block;width:10px;height:10px;'
                                                         f'border-radius:50%;background:{alt};margin-right:6px"></span>')
-        return f'{m.group(1)}1px solid {f}{m.group(3)}{ampel}'
+        return f'{m.group(1)}1px solid {f}{m.group(3)}{ampel}'  # Layout
     return _SETUP.sub(setup, html, count=1)
 
 
@@ -100,25 +101,25 @@ def _zone(erk):
     if r_ in ("flagge", "vcp"):                        # Flagge in einer Base: Rahmen nur, wenn seine Oberkante der
         z_ = (sy.get("m") or {}).get("zone") or {}     # Einstieg ist (Prüf-Agent: sonst Pivot-Linie neben dem Rahmen)
         p_ = (erk.get("setup_info") or {}).get("pivot_scanner")
-        return z_ if z_.get("zone") and p_ and abs(float(z_["oben"]) / float(p_) - 1) < 0.005 else None
+        return z_ if z_.get("zone") and p_ and abs(float(z_["oben"]) / float(p_) - 1) < PIVOT_GLEICH else None
     z = (sy.get("m") or {}).get("zone") or {}
     if z.get("zone"):
         return z
     return ((sy.get("k") or {}).get("breakout") or {}).get("zone")
 
 
-def _kleinchart(df, erk, tage=126):
+def _kleinchart(df, erk, tage=126):  # Layout
     """Kleinchart 6 Monate: Kurs, Zone des VCP-Scanners (Rahmen von der Oberkante bis heute) und Pivot."""
     d = df.iloc[-tage:]
     c = d["Close"].to_numpy(float)
-    W, H, P = 420, 120, 6
+    W, H, P = 420, 120, 6  # Layout
     werte = list(d["High"]) + list(d["Low"])
     z = _zone(erk)
     pivot = _pivot(erk)
     lo, hi = min(werte), max(werte)
     if pivot:
         lo, hi = min(lo, pivot), max(hi, pivot)
-    lo, hi = lo * 0.985, hi * 1.015
+    lo, hi = lo * 0.985, hi * 1.015  # Layout
 
     def X(i):
         return P + (W - 2 * P) * i / max(1, len(c) - 1)
@@ -166,10 +167,10 @@ def _abstand(erk, kurs):
         return "Abstand zum Einstieg", "kein Setup", 0.0, GRAU
     ab = (kurs / p - 1) * 100
     e = -ab if seite == "short" else ab                 # positiv = in Richtung des Setups
-    anteil = min(1.0, max(0.0, 1 + e / 10)) if e <= 0 else 1.0
+    anteil = min(1.0, max(0.0, 1 + e / 10)) if e <= 0 else 1.0  # Layout
     wert = "±0,0" if round(abs(ab), 1) == 0 else f"{'+' if ab >= 0 else '−'}{zahl(abs(ab), 1)}"
     import vcp_zone
-    return f"Abstand zum Einstieg ({seite})", f"{wert} %", anteil, (GRUEN if 0 <= e <= vcp_zone.KAUFZONE else ROT if e > 10 else BLAU)
+    return f"Abstand zum Einstieg ({seite})", f"{wert} %", anteil, (GRUEN if 0 <= e <= vcp_zone.KAUFZONE else ROT if e > 10 else BLAU)  # Layout
 
 
 def _plan_gilt(erk, df):
@@ -216,7 +217,7 @@ def _atr_zeilen(erk, df, kurs):
     z = stopps.zeichen(erk, df, a) + [atr.stopp(pg["einstieg"], pg["stopps"][0]["stopp"], a) if pg else None,
          atr.nachjagen(kurs, pl[1], a, pl[0]) if pl else None,
          atr.enge(df), atr.ueberdehnung(df, a)]
-    zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'
+    zeilen = "".join(f'<div style="display:flex;gap:6px;align-items:center">{punkt(x[0], 9)}<span>{t(x[1])}</span></div>'  # Layout
                      for x in z if x)
     return (f'<div title="Stopps, nächster Widerstand und ATR (14 Tage) = übliche Tagesbewegung des Titels – Zeichen, '
             f'kein Filter" style="display:flex;flex-direction:column;gap:3px;font-size:13px;color:{TEXT_2}">'
@@ -258,7 +259,7 @@ def karte(tk, branche, erk, kacheln, df, liste=None):
 
     punkte = "".join(
         f'<div title="{t(name)}: {t(kz(name)[1])} · {t(kz(name)[2])}" style="display:flex;flex-direction:column;'
-        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{punkt(kz(name)[0], 14)}{name}</div>'
+        f'align-items:center;gap:5px;font-size:12px;color:{TEXT_2};cursor:help">{punkt(kz(name)[0], 14)}{name}</div>'  # Layout
         for name in PUNKTE)
     zahlen = kz("Nächste Zahlen")
     zahlen_text = f"Zahlen {zahlen[1]}" if zahlen[1] != "–" else "kein Zahlentermin"

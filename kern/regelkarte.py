@@ -641,6 +641,26 @@ BEREICHE = [
          regel="Depot immer; dazu Setups grün und am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, short bis 5 % "
                "unter der Unterkante, Volltreffer bis 10 % darüber), je Reihe bis 2 Plätze vorab, höchstens 30.",
          messung=["auswahl.auswahl"], pruefer=[], luecke="kein Prüfer – eine Sortierregel"),
+    dict(name="Kopf und Kacheln der Titelseite", quelle="O'Neil (Basen, Reaktion), Minervini (Trendvorlage, RS), Micky",
+         regel="Kachel Base: Nr. 1–2 grün (früh), Nr. 3 gelb (handelbar), ab Nr. 4 rot (spät). Kachel Trend: Trendvorlage "
+               "alle Punkte grün, ab 5 von 7 gelb. Kachel Stärke: RS-Rang ab 70 grün, 60–69 gelb (Short gespiegelt). Kopf: "
+               "Rückgang vom 52-Wochen-Hoch ab 10 % genannt. Reaktion auf die Zahlen: Tag 1 ab ±3 % grün/rot, danach 9 Tage; "
+               "ein Absturz ab 15 % ist ein großes Problem (Plan 22, 17.11.2026: vorher Zahlen ohne Namen in der Anzeige).",
+         messung=["titel._kopf", "titel._k_base", "titel._k_trend", "titel._k_staerke", "titel._reaktion_zeilen",
+                  "titel._weinstein_ausbruch", "titel._ereignis", "titel.planzeile"],
+         pruefer=[], luecke="kein Prüfer – Anzeige der Kachel-Regeln"),
+    dict(name="Pendel der Übersicht", quelle="Marks (Pendel), Levy (Überdehnung)",
+         regel="Kreditrisiko und Angstindex (gespiegelt): Rang ab 60 von 100 grün, ab 30 gelb. Marktbreite: ab 60 % über "
+               "GD200 grün, ab 40 % gelb. Überdehnung (Levy): S&P 500 ab 10 % über dem 26-Wochen-Schnitt gelb, darunter "
+               "bis zum Schnitt grün, unter dem Schnitt rot.",
+         messung=["uebersicht._pendel_instrumente"], pruefer=[], luecke="kein Prüfer – die Seite Übersicht"),
+    dict(name="Bänder und Zeichen im Chart", quelle="O'Neil (Volumen), Dow (Schwungpunkte), Micky",
+         regel="Volumenband: Ruhe bis 50 % des 50-Tage-Schnitts (kräftig), bis 75 % blass, deutlich ab 150 %. RS-Pfeil: "
+               "Änderung der letzten 10 Tage (Wochenchart 3 Wochen), ↗/↘ ab 1 Punkt, ↑/↓ ab 3 Punkten. Dow-Schwungpunkte "
+               "mit 5 Tagen links und rechts. RS-Hoch vor dem Kurs: RS-Linie am Jahreshoch, Kurs mehr als 3 % darunter "
+               "(wie Rückenwind). Lagekarte: Rahmen einer Flagge nur, wenn ihre Oberkante bis 0,5 % am Pivot liegt.",
+         messung=["chart.chart", "chart._signale", "lagekarte._zone"], pruefer=[],
+         luecke="kein Prüfer – Zeichnung"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, ★, Einstieg mit Abstand und RS-Rang; ohne "
@@ -777,7 +797,9 @@ TECHNIK = {
     "setuppruefer.OHNE": "Stichprobe des Prüfers", "setuppruefer.KLEIN": "Stichprobe des Prüfers",
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
-    "revier_pflege.HOECHSTENS": "Datenpflege", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
+    "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
+    "revier_pflege.REVIER_KURS": "Datenpflege (Grenze des Reviers)",
+    "revier_pflege.REVIER_UMSATZ": "Datenpflege (Grenze des Reviers)", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
     "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
     "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
@@ -856,7 +878,9 @@ def inventur():
         abgedeckt |= k_
         stapel += list(f_)
     frei = sorted(f"{m}.{k}" for (m, k) in konst if (m, k) not in abgedeckt and f"{m}.{k}" not in TECHNIK)
-    ohne = [(m, f[1], z, wert, text) for f in sorted(gesehen) if (m := f[0]) not in TECHNIK_MODULE
+    # Stufe 3 (Plan 22, 17.11.2026): Zahlen ohne Namen in allen Funktionen aller Module, nicht nur in denen der Karte –
+    # Layout und Technik stehen mit der Marke „# Layout“ bzw. „# Technik“ in der Zeile
+    ohne = [(m, f[1], z, wert, text) for f in sorted(fdefs) if (m := f[0]) not in TECHNIK_MODULE
             for z, wert, text in _zahlen_ohne_namen(fdefs[f], _quellen()[m])]
     namen = {}
     for (m, k), v in konst.items():
@@ -874,7 +898,10 @@ RECHENZAHLEN = {0, 1, 2, -1, 100}
 GD_LAENGEN = {10, 20, 30, 40, 50, 150, 200}
 PHASE_NAMEN = {"p", "ph", "phase", "ziel", "p_", "pa", "pn", "phl", "phasen", "alt", "neu"}
 TECHNIK_MODULE = {"massive": "Datenquelle", "quellen": "Datenquelle", "daten": "Datenquelle", "marktdaten": "Datenquelle",
-                  "tpo_daten": "Datenquelle"}      # Abrufe, Wartezeiten, Börsenzeiten – keine Regel
+                  "tpo_daten": "Datenquelle", "tv_kennzahlen": "Datenquelle", "modell": "Schnittstelle (Anthropic)",
+                  "strategen": "Schnittstelle (Anthropic)", "meldung": "Versand (ntfy)", "maengel": "Mängelliste",
+                  "regelkarte": "Prüfwerkzeug"}      # Abrufe, Wartezeiten, Börsenzeiten, Schnittstellen – keine Regel
+MARKE_FREI = ("Layout", "Technik")   # Zeile mit „# Layout“ bzw. „# Technik“: Pixel, Schrift, Fenster der Anzeige, Abruf
 
 
 def _zahlen_ohne_namen(funktion, pfad):
@@ -887,9 +914,15 @@ def _zahlen_ohne_namen(funktion, pfad):
     aus = []
     for n in ast.walk(funktion):
         if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool) \
-                and n.value not in RECHENZAHLEN and not _frei(n, ast):
+                and n.value not in RECHENZAHLEN and not _frei(n, ast) and not _markiert(zeilen[n.lineno - 1]):
             aus.append((n.lineno, n.value, zeilen[n.lineno - 1].strip()[:100]))
     return aus
+
+
+def _markiert(zeile):
+    """Zeile mit der Marke „# Layout“ oder „# Technik“ (im Kommentar): keine Regel."""
+    i = zeile.find("#")
+    return i >= 0 and any(w in zeile[i:] for w in MARKE_FREI)
 
 
 def _zeilen(pfad, _cache={}):  # noqa: B006

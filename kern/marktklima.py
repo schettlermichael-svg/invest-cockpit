@@ -26,7 +26,7 @@ def zeichen(hochs=None, tiefs=None):
     teile = []
     for name, tk in INDIZES.items():
         c = md.yahoo_ohlc(tk)["Close"].to_numpy(float)
-        k, g50, g200 = float(c[-1]), float(c[-50:].mean()), float(c[-200:].mean())
+        k, g50, g200 = float(c[-1]), float(c[-50:].mean()), float(c[-200:].mean())  # Technik
         teile.append(f'{name}: {"über" if k > g50 else "unter"} GD50, {"über" if k > g200 else "unter"} GD200')
     if hochs is not None and tiefs is not None:
         teile.append(f"neue Hochs : Tiefs {hochs} : {tiefs}")
