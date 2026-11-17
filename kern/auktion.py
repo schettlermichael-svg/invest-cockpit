@@ -36,7 +36,6 @@ MP_TAGE = 2            # angenommen aus dem Market Profile erst ab 2 Tagen mit d
 FRISCH = 10            # abgelehnt/angenommen: höchstens 10 Handelstage her (danach Ungleichgewicht bzw. zurück in der Balance)
 from vcp_zone import RAND_PCT   # noqa: E402  Test am Rand: Kurs höchstens 3 % vom Rand – eine Quelle (vcp_zone)
 from masse import ATR_N, LAGE_MITTE, PHASE_VERTEILUNG, VOL_MIN_TAGE  # noqa: E402
-KOW_VOL, KOW_SPANNE, KOW_TAGE = 1.5, 0.7, 10
 EXZESS_ATR, FLACH_PCT = 0.15, 0.1    # Exzess: äußerste Kerze mindestens 15 % der Tagesschwankung (ATR) vor der nächsten
 KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
 MAUER_NAH = 3.0        # Gegner antwortet: Kurs höchstens 3 % vor Mauer bzw. Stütze
@@ -122,24 +121,6 @@ def _atr(df, n=ATR_N):
     """Die eine ATR der App (atr.reihe) als Array."""
     import atr as atr_
     return atr_.reihe(df, n).to_numpy(float)
-
-
-def kraft_ohne_weg(df, oben, unten):
-    """Letzter Tag mit viel Volumen und wenig Weg am Rand der Zone → {tag, rand, volumen, spanne_atr} oder None."""
-    if len(df) < 60 or not oben or not unten:
-        return None
-    h, l, c, v = (df[x].to_numpy(float) for x in ("High", "Low", "Close", "Volume"))
-    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
-    a = _atr(df)
-    for i in range(len(df) - 1, len(df) - 1 - KOW_TAGE, -1):
-        if not (v50[i] > 0 and a[i] > 0) or v[i] < KOW_VOL * v50[i] or h[i] - l[i] >= KOW_SPANNE * a[i]:
-            continue
-        if not unten <= c[i] <= oben:
-            continue
-        rand = "oben" if h[i] >= oben * (1 - RAND_PCT / 100) else "unten" if l[i] <= unten * (1 + RAND_PCT / 100) else None
-        if rand:
-            return {"tag": df.index[i], "rand": rand, "volumen": v[i] / v50[i], "spanne_atr": (h[i] - l[i]) / a[i]}
-    return None
 
 
 def klimax_tag(df):
@@ -321,12 +302,14 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
 
     # Messungen
     if oben and unten:
-        kow = kraft_ohne_weg(df, oben, unten)
+        import zeichen
+        kow = zeichen.kraft_ohne_weg(df, oben=oben, unten=unten)
         if kow:
             mess["kraft_ohne_weg"] = kow
             wer = "Verkäufer schlucken die Nachfrage" if kow["rand"] == "oben" else "Käufer schlucken das Angebot"
             belege.append(("Test am Rand", f"Kraft ohne Weg am {_d(kow['tag'])}: Volumen {_z(kow['volumen'])}-fach, "
-                                           f"Spanne {_z(kow['spanne_atr'], '.1f')} ATR am {kow['rand']}en Rand – {wer}"))
+                                           f"Spanne {_z(kow['spanne'] * 100, '.0f')} % des Schnitts an der Marke "
+                                           f"{kow['marke']} – {wer}"))
     kl = klimax_tag(df)
     if kl:
         mess["klimax"] = kl
@@ -555,7 +538,7 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
         if mess.get("kraft_ohne_weg") and mess["kraft_ohne_weg"]["rand"] == ("oben" if auf else "unten"):
             kw = mess["kraft_ohne_weg"]
             ende.append(f"Gegner antwortet: Kraft ohne Weg am {_d(kw['tag'])} (Volumen {_z(kw['volumen'])}-fach, "
-                        f"Spanne {_z(kw['spanne_atr'], '.1f')} ATR)")
+                        f"Spanne {_z(kw['spanne'] * 100, '.0f')} % des Schnitts, Marke {kw['marke']})")
         if k.get("ziel") == (PHASE_VERTEILUNG if auf else 1):
             ende.append(f"Antrieb erlischt: Wechsel {p} → {k['ziel']} zeichnet sich ab")
         if auf and k.get("rueckschlag"):

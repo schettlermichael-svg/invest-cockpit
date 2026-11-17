@@ -770,6 +770,17 @@ def _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l):
         spaete.append(f'<text x="{X(i):.1f}" y="{y_:.1f}" fill="{GRUEN if stark else ROT}" font-size="10" '
                       f'font-weight="700" text-anchor="middle" fill-opacity="{1 if u["bestaetigt"] else 0.55}">'
                       f'<title>{t_:%d.%m.%Y}: {u["name"]} an der Marke {u["marke"]} ({stand})</title>{u["kurz"]}</text>')
+    for kw in zeichen.kraft_ohne_weg(voll, zeichen.MARKEN_TAGE, alle=True):   # Urvater Wyckoff: Kraft ohne Weg
+        t_ = kw["tag"]
+        if t_ < d.index[0]:
+            continue
+        i = pos(t_)
+        stark = kw["seite"] == "stärke"
+        y_ = platz(X(i), Y(l[i]) + 15 if stark else Y(h[i]) - 9, "KW", 10, nach_oben=not stark)
+        spaete.append(f'<text x="{X(i):.1f}" y="{y_:.1f}" fill="{GRUEN if stark else ROT}" font-size="10" '
+                      f'font-weight="700" text-anchor="middle"><title>{t_:%d.%m.%Y}: Kraft ohne Weg an der Marke '
+                      f'{kw["marke"]} – Volumen {zahl(kw["volumen"], 1)}-fach, Spanne {zahl(kw["spanne"] * 100, 0)} % '
+                      f'des Schnitts (Wyckoff)</title>KW</text>')
     marken = []
     sp = zeichen.spring(voll)
     if sp:
@@ -892,7 +903,7 @@ def legende(ebene="Tag", gd_kurz=False):
                                "(grün) bzw. tieferes Hoch (rot) gegen den Index"),
                       (ROT, "● über dem Volumen: Abgabetag · ○ verdeckte Abgabe"),
                       (TEXT_2, "an Marken: H = Hammer · SS = Shooting Star · E↑/E↓ = Engulfing · MS/ES = Morning/Evening "
-                               "Star (Homma/Nison); blass = nicht bestätigt")]
+                               "Star (Homma/Nison); blass = nicht bestätigt · KW = Kraft ohne Weg (Wyckoff)")]
     eintraege += [(INDEX_SCHATTEN, "S&P 500 gestrichelt, am linken Rand auf den Kurs gelegt")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'

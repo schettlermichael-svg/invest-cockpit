@@ -96,7 +96,8 @@ def ende_zeichen(df, seite="long", messung=None, profil=None, zone=None):
         import vcp_zone
         z = zone or vcp_zone.zone(df)
         if z.get("zone"):
-            kw = auktion.kraft_ohne_weg(df, z["oben"], z["unten"])
+            import zeichen
+            kw = zeichen.kraft_ohne_weg(df, oben=z["oben"], unten=z["unten"])
             if kw:
                 m["kraft_ohne_weg"] = kw
         kl = auktion.klimax_tag(df)

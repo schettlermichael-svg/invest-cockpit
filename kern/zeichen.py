@@ -116,6 +116,11 @@ STERN_KOERPER = 0.35        # Morning/Evening Star: Körper des Sterns höchsten
 KERZE_TREND = 5             # Trend vor der Umkehr: Schluss des Vortags gegen 5 Tage davor (Nison: etwas zum Umkehren)
 MARKE_ATR = 1.0             # an einer Marke: höchstens 1 ATR entfernt
 UMKEHR_TAGE = 5             # im Kreislauf: Umkehrkerzen der letzten 5 Tage
+# Urvater Wyckoff, Aufwand ohne Ergebnis = Kraft ohne Weg (eine Regel für Auktion, Zeichen und Chart, Micky 17.11.2026)
+KOW_VOL = 2.0               # Volumen ab 2-fach des 50-Tage-Schnitts …
+KOW_SPANNE = 0.7            # … Spanne höchstens 70 % der durchschnittlichen Spanne …
+KOW_SPANNE_TAGE = 20        # … der 20 Tage davor
+KOW_TAGE = 10               # … in den letzten 10 Tagen, an einer Marke
 ZAHLEN_TOLERANZ_TAGE = 4    # … Zahlentermin bis 4 Kalendertage neben dem Reaktionstag
 REAKTION_LUECKE = 3         # … Lücke ab 3 % gegen den Schluss im Tag
 CHURNING_TAGE = 3           # verdeckte Abgabe: mindestens 3 Tage
@@ -414,6 +419,42 @@ def umkehr(df, tage=MARKEN_TAGE):
             aus.append({"tag": df.index[i], "name": name, "kurz": kurz, "seite": seite, "marke": marke,
                         "bestaetigt": best})
     return aus
+
+
+def kraft_ohne_weg(df, tage=KOW_TAGE, oben=None, unten=None, alle=False):
+    """Wyckoffs Aufwand ohne Ergebnis (Kraft ohne Weg): viel Volumen bei enger Spanne an einer Marke = Absorption.
+    Nach einem Anstieg am Widerstand („oben“: die Verkäufer schlucken die Nachfrage), nach einem Fall an der Stütze
+    („unten“: die Käufer schlucken das Angebot). Marken wie bei den Umkehrkerzen, dazu oben/unten der Zone des Aufrufers.
+    → jüngster Tag {tag, rand, seite, marke, volumen (Vielfaches), spanne (Anteil am 20-Tage-Schnitt)} oder None;
+    alle=True: Liste aller Tage."""
+    aus = []
+    if df is None or len(df) < MARKEN_START + KERZE_TREND:
+        return aus if alle else None
+    h, l, c, v = (df[x].to_numpy(float) for x in ("High", "Low", "Close", "Volume"))
+    n = len(df)
+    tr = np.maximum(h - l, np.maximum(abs(h - np.roll(c, 1)), abs(l - np.roll(c, 1))))
+    atr = pd.Series(tr).rolling(ATR_N).mean().to_numpy()
+    sp = h - l
+    sp20 = pd.Series(sp).rolling(KOW_SPANNE_TAGE).mean().shift().to_numpy()
+    v50 = pd.Series(v).rolling(50).mean().shift().to_numpy()
+    mk = _marken(df) + [(name, np.full(n, w)) for name, w in (("Oberkante der Zone", oben), ("Unterkante der Zone", unten))
+                        if w]
+    for i in range(n - 1, max(MARKEN_START, n - tage) - 1, -1):
+        if not (v50[i] > 0 and sp20[i] > 0) or v[i] < KOW_VOL * v50[i] or sp[i] > KOW_SPANNE * sp20[i]:
+            continue
+        stieg, fiel = c[i - 1] > c[i - 1 - KERZE_TREND], c[i - 1] < c[i - 1 - KERZE_TREND]
+        if not (stieg or fiel):
+            continue
+        preis = h[i] if stieg else l[i]
+        marke = next((name for name, r in mk if r[i] == r[i] and abs(preis - r[i]) <= MARKE_ATR * atr[i]), None)
+        if not marke:
+            continue
+        x = {"tag": df.index[i], "rand": "oben" if stieg else "unten", "seite": "schwäche" if stieg else "stärke",
+             "marke": marke, "volumen": v[i] / v50[i], "spanne": sp[i] / sp20[i]}
+        if not alle:
+            return x
+        aus.append(x)
+    return aus if alle else None
 
 
 def tagesmarken(df, tage=MARKEN_TAGE):
@@ -871,6 +912,12 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         if ak["pocket_pivot"]:
             zs.append(_zeichen("stärke", "volumen", f"Pocket Pivot am {ak['pocket_pivot']}"))
     zs += enge_trocken(df)
+    kw = kraft_ohne_weg(df)                                # Urvater Wyckoff: Aufwand ohne Ergebnis an einer Marke
+    if kw:
+        zs.append(_zeichen(kw["seite"], "volumen", f"Kraft ohne Weg am {kw['tag']:%d.%m.} an der Marke {kw['marke']}: "
+                           f"Volumen {_z(kw['volumen'], '.1f')}-fach, Spanne {_z(kw['spanne'] * 100, '.0f')} % des "
+                           f"Schnitts – {'Verkäufer schlucken die Nachfrage' if kw['rand'] == 'oben' else 'Käufer schlucken das Angebot'} "
+                           "(Wyckoff)", 2, tag=kw["tag"]))
     for u in umkehr(df, UMKEHR_TAGE):                      # Urvater Homma: Umkehrkerzen an Marken (Nison)
         stand = {True: "bestätigt", False: "nicht bestätigt", None: "Bestätigung steht aus"}[u["bestaetigt"]]
         zs.append(_zeichen(u["seite"], "struktur", f"{u['name']} am {u['tag']:%d.%m.} an der Marke {u['marke']} "

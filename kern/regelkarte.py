@@ -61,7 +61,7 @@ KAESTEN = {
                    "Auslöser – liegt er darunter, ist es der frühe Einstieg (Cheat), an der Oberkante der Ausbruch. "
                    "Kurs höchstens 3 % vom Rand.",
              fuehrt="Minervini und O'Neil (Pivot)", zeichen="Wyckoff (Spring, Upthrust), Dalton (Test der Kante), Shannon (Zange)",
-             messung=["auktion.titel", "auktion.kraft_ohne_weg", "auktion.exzess"], stand="gemessen",
+             messung=["auktion.titel", "zeichen.kraft_ohne_weg", "auktion.exzess"], stand="gemessen",
              pruefer=["Test am Rand: Zeichen"]),
         dict(name="abgelehnt", zustand="abgelehnt",
              regel="Zurück in den Wert – Wyckoff führt: Kurs bricht über den Rand und schließt zurück in der Zone "
@@ -93,7 +93,7 @@ KAESTEN = {
         dict(name="Ende: Gegner antwortet", zustand="Ende des Laufs",
              regel="Knoten im Volumenprofil (Mauer), alter Wert, AVWAP vom alten Hoch, Exzess, Kraft ohne Weg am Rand.",
              fuehrt="Dalton und Shannon", zeichen="Wyckoff (Kraft ohne Weg)",
-             messung=["volumenprofil.knoten", "auktion.kraft_ohne_weg", "auktion.exzess"], stand="teilweise",
+             messung=["volumenprofil.knoten", "zeichen.kraft_ohne_weg", "auktion.exzess"], stand="teilweise",
              luecke="der AVWAP vom alten Hoch zählt noch nicht als Gegner",
              pruefer=["Ende des Laufs"]),
         dict(name="Ende: Antrieb erlischt", zustand="Ende des Laufs",
@@ -366,6 +366,12 @@ ZEICHEN = [
                "davon mit Abstand, Schluss über bzw. unter der Mitte des ersten Körpers). Bestätigt: der nächste Tag "
                "schließt jenseits des Körpers (Micky 17.11.2026).",
          messung=["zeichen.umkehr", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Kraft ohne Weg", art="Volumen", meister="Wyckoff (Aufwand ohne Ergebnis)",
+         regel="Volumen ab 2-fach des 50-Tage-Schnitts bei einer Spanne von höchstens 70 % der Spanne der 20 Tage "
+               "davor, in den letzten 10 Tagen an einer Marke (wie die Umkehrkerzen): Absorption – nach einem Anstieg "
+               "Schwäche (Verkäufer schlucken die Nachfrage), nach einem Fall Stärke (Micky 17.11.2026; vorher 1,5-fach, "
+               "Spanne unter 0,7 ATR, nur am Rand der Zone). Eine Regel für Kasten, Zeichen und Chart.",
+         messung=["zeichen.kraft_ohne_weg", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="3 Wochen eng, Volumen trocknet aus", art="Volumen", meister="O'Neil (3 Wochen eng), Minervini",
          regel="Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit: der leiseste Tag seit 50 Tagen in den letzten 10, in "
                "der unteren Hälfte der Spanne der 60 Tage.",
