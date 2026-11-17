@@ -229,7 +229,7 @@ PLAN = [
          "Trendvorlage 7/5, Reaktion ±3 %, Absturz 15 %, Termin 14 Tage, Abstand 10 %), im Chart 189 Zahlen (meist Layout). "
          "Benennen, Kopien auf die eine Quelle führen, Wachposten auf alle Module ausdehnen (Layout als Technik)",
      "Inventur", "behoben",
-     "Plan 22 (17.11.): Inventur prüft alle 373 Funktionen aller Module (6 Technik-Module ausgenommen): 0 frei, 0 Kopien, "
+     "eb39f9c: Inventur prüft alle 373 Funktionen aller Module (6 Technik-Module ausgenommen): 0 frei, 0 Kopien, "
      "0 ohne Namen; 16 neue Namen, übrige Regel-Zahlen auf ihre eine Quelle geführt, 282 Zeilen als Layout/Technik "
      "markiert, 3 neue Einträge im Katalog (Kopf und Kacheln, Pendel, Bänder im Chart); 462 Titel vor/nach: 0 Kacheln anders"),
     (23, "Kacheln der Titelseite urteilen nach dem Regelkatalog, nicht nach den Meistern (Micky 16.11.: Stärke rot bei "
