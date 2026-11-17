@@ -608,11 +608,12 @@ def verbindungen_zeigen():
                                                                         "(kostet unter 1 Cent)."):
                 st.session_state["modell_probe"] = modell.probe()
                 st.rerun()
-        st.markdown("**Handy:** Der Frühlauf meldet sich über die kostenlose App **ntfy** (Stand der Lage, Warnungen). "
+        st.markdown("**Handy:** Jeden Morgen kommen über die kostenlose App **ntfy** die heißen Titel (5 Long, 5 Short), "
+                    "dazu Warnungen, wenn der Nachtlauf scheitert. "
                     "In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
         st.code(meldung.kanal(), language=None)
         if st.button("Testmeldung senden", key="ntfy_test"):
-            if meldung.senden("Test – die Leitung steht.", "Invest Cockpit", False, "Rückenwind"):
+            if meldung.senden("Test – die Leitung steht.", "Invest Cockpit", False, "Setups"):
                 st.success("Gesendet.")
             else:
                 st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
