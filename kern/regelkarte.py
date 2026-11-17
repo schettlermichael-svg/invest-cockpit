@@ -358,6 +358,14 @@ ZEICHEN = [
          regel="In den letzten 5 Tagen: Tag im Plus über GD10 und GD50, höchstens 4 % über dem GD10, Volumen über dem "
                "größten Abgabetag der 10 Tage davor, die 5 Tage davor zusammen höchstens +3 %.",
          messung=["zeichen.akkumulation", "zeichen.tagesmarken"], pruefer=["Test am Rand: Zeichen"]),
+    dict(name="Umkehrkerzen", art="Struktur", meister="Homma (Regeln nach Nison)",
+         regel="Nur an einer Marke (höchstens 1 ATR von 52-Wochen-Hoch/-Tief, Rand der Zone oder AVWAP-Linie) und nach "
+               "einem Trend, den sie umkehren kann (Vortag gegen 5 Tage davor): Hammer (unterer Schatten mindestens "
+               "2-mal der Körper, oberer höchstens 10 % der Spanne) und Shooting Star (gespiegelt), Engulfing (der Körper "
+               "umschließt den des Vortags in Gegenfarbe), Morning/Evening Star (langer Körper, Stern höchstens 35 % "
+               "davon mit Abstand, Schluss über bzw. unter der Mitte des ersten Körpers). Bestätigt: der nächste Tag "
+               "schließt jenseits des Körpers (Micky 17.11.2026).",
+         messung=["zeichen.umkehr", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="3 Wochen eng, Volumen trocknet aus", art="Volumen", meister="O'Neil (3 Wochen eng), Minervini",
          regel="Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit: der leiseste Tag seit 50 Tagen in den letzten 10, in "
                "der unteren Hälfte der Spanne der 60 Tage.",
@@ -672,6 +680,9 @@ MEISTER = [
     ("Morales/Kacher",
      "Pocket Pivot: Volumen des Anstiegstags über dem höchsten Volumen der Abwärtstage der letzten 10 Tage.", ""),
     ("Einquetschung", "Steigende Tiefs gegen eine flache Oberkante (aufsteigendes Dreieck).", ""),
+    ("Homma/Nison",
+     "Umkehrkerzen (Hammer, Shooting Star, Engulfing, Morning/Evening Star) sind kein Signal für sich: nur nach einem "
+     "Trend und an einer Marke, bestätigt durch den nächsten Tag.", ""),
     ("Shannon",
      "AVWAP: Ein Hoch wird erst durch den Rückgang danach zum Anker. Anker sind das Pivot-Tief, das einen Trend "
      "startete, das jüngste große Hoch, der Tag der Zahlen bzw. eine Kurslücke, der Börsengang bei jungen Aktien; "

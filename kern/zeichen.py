@@ -109,6 +109,13 @@ NAH_ANTEIL = 0.5            # „nah“: höchstens halb so weit vom eigenen Hoc
 RS_HOCH_TAGE = 5            # RS-Linie am 52-Wochen-Hoch bzw. -Tief: in den letzten 5 Tagen
 INDEX_TIEF_FENSTER = 60     # Schwäche in der Stärke: Tief des Index in den letzten 60 Tagen
 REAKTION_MAX_TAGE = 60      # Reaktion auf die Zahlen: höchstens 60 Handelstage her
+# Urvater Homma (Micky 17.11.2026): Umkehrkerzen, Regeln nach Nison – nur an Marken
+KERZE_SCHATTEN = 2.0        # Hammer/Shooting Star: Schatten mindestens 2-mal so lang wie der Körper (Nison) …
+KERZE_GEGEN = 0.1           # … der andere Schatten höchstens 10 % der Spanne
+STERN_KOERPER = 0.35        # Morning/Evening Star: Körper des Sterns höchstens 35 % des ersten Körpers
+KERZE_TREND = 5             # Trend vor der Umkehr: Schluss des Vortags gegen 5 Tage davor (Nison: etwas zum Umkehren)
+MARKE_ATR = 1.0             # an einer Marke: höchstens 1 ATR entfernt
+UMKEHR_TAGE = 5             # im Kreislauf: Umkehrkerzen der letzten 5 Tage
 ZAHLEN_TOLERANZ_TAGE = 4    # … Zahlentermin bis 4 Kalendertage neben dem Reaktionstag
 REAKTION_LUECKE = 3         # … Lücke ab 3 % gegen den Schluss im Tag
 CHURNING_TAGE = 3           # verdeckte Abgabe: mindestens 3 Tage
@@ -317,6 +324,96 @@ def akkumulation(df, tage=VOLUMEN_TAGE):
     return {"kauftage": kauf, "abgabetage": abgabe, "churning": churning, "pocket_pivot": pocket,
             "bild": "Akkumulation" if saldo >= AKKU_SALDO and kauf >= 2 * abgabe else
             "Distribution" if saldo <= -AKKU_SALDO and abgabe >= 2 * kauf else "ausgeglichen"}
+
+
+def _marken(df):
+    """Marken je Tag für die Umkehrkerzen: [(Name, Werte je Tag)] – 52-Wochen-Hoch und -Tief (vor dem Tag),
+    Ober- und Unterkante der laufenden Zone (ab ihrem Beginn), AVWAP vom letzten Hoch, vom Hoch des Rückgangs, vom
+    Trendstart und vom letzten höheren Tief (ab ihrem Anker)."""
+    import avwap
+    import vcp_zone
+    n = len(df)
+    aus = [("52-Wochen-Hoch", df["High"].rolling(JAHR_TAGE, min_periods=MARKEN_START).max().shift().to_numpy(float)),
+           ("52-Wochen-Tief", df["Low"].rolling(JAHR_TAGE, min_periods=MARKEN_START).min().shift().to_numpy(float))]
+    try:
+        z = vcp_zone.zone(df)
+    except Exception:  # noqa: BLE001
+        z = {}
+    if z.get("zone") and z.get("start") is not None:
+        ab = int(df.index.searchsorted(pd.Timestamp(z["start"])))
+        for name, wert in (("Oberkante der Zone", z.get("oben")), ("Unterkante der Zone", z.get("unten"))):
+            if wert:
+                r = np.full(n, np.nan)
+                r[ab:] = wert
+                aus.append((name, r))
+    try:
+        a = avwap.anker(df)
+    except Exception:  # noqa: BLE001
+        a = {}
+    for k, name in (("hoch", "AVWAP letztes Hoch"), ("gipfel", "AVWAP Hoch des Rückgangs"),
+                    ("tief", "AVWAP Tief der Bewegung"), ("hoeher", "AVWAP letztes höheres Tief")):
+        if k in a:
+            aus.append((name, avwap.reihe(df, a[k]).reindex(df.index).to_numpy(float)))
+    return aus
+
+
+def umkehr(df, tage=MARKEN_TAGE):
+    """Umkehrkerzen (Homma, Regeln nach Nison) an Marken, die letzten `tage` Handelstage →
+    [{tag, name, kurz, seite, marke, bestaetigt}] (bestaetigt: None = der nächste Tag fehlt noch). Nison: eine Kerze
+    zählt nur nach einem Trend, den sie umkehren kann, und an einer Marke; der nächste Tag bestätigt (Schluss jenseits
+    des Körpers)."""
+    aus = []
+    if df is None or len(df) < MARKEN_START + KERZE_TREND or "Open" not in df:
+        return aus
+    o, h, l, c = (df[x].to_numpy(float) for x in ("Open", "High", "Low", "Close"))
+    n = len(df)
+    tr = np.maximum(h - l, np.maximum(abs(h - np.roll(c, 1)), abs(l - np.roll(c, 1))))
+    atr = pd.Series(tr).rolling(ATR_N).mean().to_numpy()
+    sp = h - l
+    mk = _marken(df)
+
+    def an(i, preis):
+        for name, r in mk:
+            if r[i] == r[i] and abs(preis - r[i]) <= MARKE_ATR * atr[i]:
+                return name
+        return None
+
+    for i in range(max(MARKEN_START, n - tage), n):
+        if not sp[i] > 0:
+            continue
+        koerper = abs(c[i] - o[i])
+        unten, oben = min(o[i], c[i]) - l[i], h[i] - max(o[i], c[i])
+        fiel, stieg = c[i - 1] < c[i - 1 - KERZE_TREND], c[i - 1] > c[i - 1 - KERZE_TREND]
+        k1 = abs(c[i - 2] - o[i - 2])
+        treffer = []
+        if fiel and koerper > 0 and unten >= KERZE_SCHATTEN * koerper and oben <= KERZE_GEGEN * sp[i]:
+            treffer.append(("Hammer", "H", "stärke", l[i]))
+        if stieg and koerper > 0 and oben >= KERZE_SCHATTEN * koerper and unten <= KERZE_GEGEN * sp[i]:
+            treffer.append(("Shooting Star", "SS", "schwäche", h[i]))
+        if fiel and c[i - 1] < o[i - 1] and c[i] > o[i] and o[i] <= c[i - 1] and c[i] >= o[i - 1]:
+            treffer.append(("Engulfing aufwärts", "E↑", "stärke", l[i]))
+        if stieg and c[i - 1] > o[i - 1] and c[i] < o[i] and o[i] >= c[i - 1] and c[i] <= o[i - 1]:
+            treffer.append(("Engulfing abwärts", "E↓", "schwäche", h[i]))
+        f2 = c[i - 2] < c[i - 2 - KERZE_TREND]
+        s2 = c[i - 2] > c[i - 2 - KERZE_TREND]
+        stern = abs(c[i - 1] - o[i - 1]) <= STERN_KOERPER * k1 and k1 > 0
+        if (f2 and stern and c[i - 2] < o[i - 2] and max(o[i - 1], c[i - 1]) < c[i - 2] and c[i] > o[i]
+                and c[i] > (o[i - 2] + c[i - 2]) / 2):
+            treffer.append(("Morning Star", "MS", "stärke", min(l[i - 2:i + 1])))
+        if (s2 and stern and c[i - 2] > o[i - 2] and min(o[i - 1], c[i - 1]) > c[i - 2] and c[i] < o[i]
+                and c[i] < (o[i - 2] + c[i - 2]) / 2):
+            treffer.append(("Evening Star", "ES", "schwäche", max(h[i - 2:i + 1])))
+        for name, kurz, seite, preis in treffer:
+            marke = an(i, preis)
+            if not marke:
+                continue
+            if i + 1 < n:
+                best = c[i + 1] > max(o[i], c[i]) if seite == "stärke" else c[i + 1] < min(o[i], c[i])
+            else:
+                best = None
+            aus.append({"tag": df.index[i], "name": name, "kurz": kurz, "seite": seite, "marke": marke,
+                        "bestaetigt": best})
+    return aus
 
 
 def tagesmarken(df, tage=MARKEN_TAGE):
@@ -774,6 +871,10 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         if ak["pocket_pivot"]:
             zs.append(_zeichen("stärke", "volumen", f"Pocket Pivot am {ak['pocket_pivot']}"))
     zs += enge_trocken(df)
+    for u in umkehr(df, UMKEHR_TAGE):                      # Urvater Homma: Umkehrkerzen an Marken (Nison)
+        stand = {True: "bestätigt", False: "nicht bestätigt", None: "Bestätigung steht aus"}[u["bestaetigt"]]
+        zs.append(_zeichen(u["seite"], "struktur", f"{u['name']} am {u['tag']:%d.%m.} an der Marke {u['marke']} "
+                           f"({stand}, Homma/Nison)", 2 if u["bestaetigt"] else 1, tag=u["tag"]))
     fr = freitag(df)
     if fr:
         zs.append(fr)

@@ -759,6 +759,17 @@ def _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l):
             spaete.append(f'<text x="{X(i):.1f}" y="{platz(X(i), Y(l[i]) + 15, "PP", 10, nach_oben=False):.1f}" '
                           f'fill="{GRUEN}" font-size="10" font-weight="700" text-anchor="middle"><title>{t_:%d.%m.%Y}: '
                           f'Pocket Pivot – Volumen über dem größten Abgabetag der 10 Tage davor</title>PP</text>')
+    for u in zeichen.umkehr(voll):             # Urvater Homma: Umkehrkerzen an Marken (Regeln nach Nison)
+        t_ = u["tag"]
+        if t_ < d.index[0]:
+            continue
+        i = pos(t_)
+        stark = u["seite"] == "stärke"
+        stand = {True: "bestätigt", False: "nicht bestätigt", None: "Bestätigung steht aus"}[u["bestaetigt"]]
+        y_ = platz(X(i), Y(l[i]) + 15 if stark else Y(h[i]) - 9, u["kurz"], 10, nach_oben=not stark)
+        spaete.append(f'<text x="{X(i):.1f}" y="{y_:.1f}" fill="{GRUEN if stark else ROT}" font-size="10" '
+                      f'font-weight="700" text-anchor="middle" fill-opacity="{1 if u["bestaetigt"] else 0.55}">'
+                      f'<title>{t_:%d.%m.%Y}: {u["name"]} an der Marke {u["marke"]} ({stand})</title>{u["kurz"]}</text>')
     marken = []
     sp = zeichen.spring(voll)
     if sp:
@@ -879,7 +890,9 @@ def legende(ebene="Tag", gd_kurz=False):
                       (RS_HOCH, "● RS-Hoch vor Kurs"), (RS_TIEF, "● RS-Tief vor Kurs"),
                       (TEXT_2, "○ Schwungpunkte (Dow) · PP = Pocket Pivot · S = Spring · U = Upthrust · ◆ = höheres Tief "
                                "(grün) bzw. tieferes Hoch (rot) gegen den Index"),
-                      (ROT, "● über dem Volumen: Abgabetag · ○ verdeckte Abgabe")]
+                      (ROT, "● über dem Volumen: Abgabetag · ○ verdeckte Abgabe"),
+                      (TEXT_2, "an Marken: H = Hammer · SS = Shooting Star · E↑/E↓ = Engulfing · MS/ES = Morning/Evening "
+                               "Star (Homma/Nison); blass = nicht bestätigt")]
     eintraege += [(INDEX_SCHATTEN, "S&P 500 gestrichelt, am linken Rand auf den Kurs gelegt")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'
