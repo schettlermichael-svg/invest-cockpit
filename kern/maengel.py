@@ -246,6 +246,10 @@ PLAN = [
          "Kalender-Anker (Jahresbeginn): Micky 16.11. nein, die Anker bleiben aus der Struktur", "Befunde", "behoben",
      "39d0659: 1.865 Titel: Zahlentag 1.328, Lücke/Volumen 1.626 (bei 1.166 beide – vorher nur die jüngere), Börsengang 90 "
      "(CRWV, CRCL, ALAB …), Handoff ab dem Ausbruchstag 282. Kalender-Anker: entschieden, keine"),
+    (27, "Urväter (Micky 17.11.): Hommas Umkehrkerzen und Wyckoffs Aufwand ohne Ergebnis aufnehmen", "Befunde", "behoben",
+     "ca2270d: Hammer, Shooting Star, Engulfing, Morning/Evening Star nach Nison an Marken, bestätigt durch den nächsten Tag – "
+     "942 Kerzen in 10 Tagen über 1.865 Titel (399 bestätigt). 1a5da85: Kraft ohne Weg eine Regel (2-fach, Spanne ≤ 70 % des "
+     "20-Tage-Schnitts, alle Marken) für Kasten, Reiten, Zeichen und Chart – 42 → 21 Titel"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“

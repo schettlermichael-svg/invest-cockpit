@@ -1343,3 +1343,17 @@ Micky: „Die App auf ein einheitliches Niveau – blinde Flecken dürfen nicht 
 - Chart: Voreinstellung letztes Hoch, Trendstart, höheres Tief, Börsengang, Handoff (Wahlschalter `avwap_anker5`;
   Zahlen-Reaktion zusätzlich Zahlentag). Prüfer-Material und Regelkarte mit allen Ankern.
 - Gemessen (1.865 Titel): Zahlentag 1.328, Lücke/Volumen 1.626, beide 1.166, Börsengang 90, Handoff 282.
+
+## Urväter: Homma und Wyckoff (17.11.2026, Plan 27)
+
+- Micky prüfte Wyckoff, Weinstein, Livermore, Dow, Keene, Harriman und Homma als Grundgesetz; aufgenommen werden nur
+  zwei Lücken.
+- **Umkehrkerzen** (Homma, Regeln nach Nison; `zeichen.umkehr`): Hammer, Shooting Star, Engulfing auf- und abwärts,
+  Morning und Evening Star – nur nach einem Trend (Vortag gegen 5 Tage davor) und an einer Marke (höchstens 1 ATR von
+  52-Wochen-Hoch/-Tief, Rand der Zone oder AVWAP-Linie, `zeichen._marken`). Bestätigt: der nächste Tag schließt
+  jenseits des Körpers. Zeichen im Kreislauf (letzte 5 Tage), Kürzel im Chart (blass = nicht bestätigt).
+- **Kraft ohne Weg** (Wyckoffs Aufwand ohne Ergebnis; jetzt `zeichen.kraft_ohne_weg`, vorher `auktion.kraft_ohne_weg`
+  mit 1,5-fach und 0,7 ATR nur am Zonenrand): Volumen ab 2-fach, Spanne höchstens 70 % des 20-Tage-Schnitts, letzte
+  10 Tage, an einer Marke; nach einem Anstieg Schwäche, nach einem Fall Stärke. Kasten der Auktion, Reiten, Zeichen und
+  Chart („KW“) nutzen dieselbe Funktion.
+- Gemessen (1.865 Titel): 942 Umkehrkerzen an Marken in 10 Tagen (399 bestätigt); Kraft ohne Weg 21 Titel (vorher 42).
