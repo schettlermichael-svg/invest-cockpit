@@ -19,6 +19,7 @@ RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in
 
 
 AKTEN_JE_REIHE = 2
+PUSH_JE_SEITE = 5    # Meldung am Morgen: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ (Micky 17.11.2026)
 
 
 ZONE_LONG, ZONE_SHORT, ZONE_VOLLTREFFER = (-5.0, 5.0), (-5.0, 0.0), (-5.0, 10.0)
@@ -176,3 +177,42 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         return alle, gruende, elite
     return alle, gruende
 
+
+
+def heisse(n=PUSH_JE_SEITE):
+    """Die heißesten Titel für die Meldung am Morgen (Micky 17.11.2026): die ersten n Long und n Short der Liste
+    „Einsatzbereit“ in ihrer Rangfolge (dieselbe Auswahl wie die Seite Setups, ohne die Depot-Plätze) → (Text, Anzahl).
+    Je Titel: Setup, ★, Einstieg mit Abstand, RS-Rang. Ohne einsatzbereites Setup sagt die Meldung das."""
+    import depot
+    import kartentisch
+    import lagekarte
+    import rueckenwind
+    import rueckenwind_seite
+    import watchlists
+    from gestaltung import zahl
+    tisch = kartentisch.laden() or {}
+    titel_t = tisch.get("titel") or {}
+    rw_erg = rueckenwind.laden() or {}
+    rw_t = rw_erg.get("titel") or {}
+    drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
+    pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
+    wl = set(watchlists.laden().get(watchlists.STANDARD, []))
+    _, _, elite = auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=True)
+
+    def zeile(tk, zeichen_):
+        x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
+        name = kartentisch.NAME.get(x.get("reihe"), x.get("reihe") or "")
+        e = (x.get("einstieg") or {}).get("wert")
+        teile = [f"{zeichen_} {tk}", name + (" ★" if x.get("stern") and "★" not in name else "")]
+        if e:
+            teile.append(f"Einstieg {zahl(e)} $ ({'+' if x['abstand_vz'] >= 0 else ''}{zahl(x['abstand_vz'], 1)} %)" if x.get("abstand_vz") is not None
+                         else f"Einstieg {zahl(e)} $")
+        if r.get("rang"):
+            teile.append(f"RS {r['rang']}")
+        return " · ".join(teile)
+
+    lang = [tk for tk in elite if lagekarte.richtung(titel_t.get(tk) or {}) != "short"][:n]
+    kurz = [tk for tk in elite if lagekarte.richtung(titel_t.get(tk) or {}) == "short"][:n]
+    zeilen = ([zeile(tk, "🎯") for tk in lang] or ["🎯 Long: heute kein einsatzbereites Setup"]) + \
+             ([zeile(tk, "🔻") for tk in kurz] or ["🔻 Short: heute kein einsatzbereites Setup"])
+    return "\n".join(zeilen), len(lang) + len(kurz)

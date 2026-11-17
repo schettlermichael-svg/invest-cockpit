@@ -641,6 +641,11 @@ BEREICHE = [
          regel="Depot immer; dazu Setups grün und am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, short bis 5 % "
                "unter der Unterkante, Volltreffer bis 10 % darüber), je Reihe bis 2 Plätze vorab, höchstens 30.",
          messung=["auswahl.auswahl"], pruefer=[], luecke="kein Prüfer – eine Sortierregel"),
+    dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
+         regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
+               "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, ★, Einstieg mit Abstand und RS-Rang; ohne "
+               "einsatzbereites Setup sagt die Meldung das.",
+         messung=["auswahl.heisse"], pruefer=[], luecke="kein Prüfer – eine Auswahl aus der Liste"),
     dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",
          regel="Pfeil = Bewegung der letzten 5 Wochen; unter 0,5 Punkten gilt eine Achse als unverändert.",
          messung=["frontkarte.richtung"], pruefer=["Feld (Rotation)"]),

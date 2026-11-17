@@ -223,6 +223,12 @@ def main(nur_tisch=False):
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     _mitteilung((f"⚠ gescheitert: {', '.join(fehler)}. " if fehler else "Lage steht. ")
                 + f"{(p.get('reihen') or {}).get('m_spitze', 0)} × Base-Ausbruch ★ · {p.get('neu', 0)} Neuigkeiten")
+    try:                                          # die heißesten Titel aus „Einsatzbereit“ (Micky 17.11.2026)
+        import auswahl
+        text_, n_ = auswahl.heisse()
+        _mitteilung(text_, titel=f"Heiße Titel: {n_} einsatzbereit", seite="Setups")
+    except Exception as e:  # noqa: BLE001 – ohne Liste läuft der Lauf weiter
+        print(f"Heiße Titel: {e}", flush=True)
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
     durchgang = 0
