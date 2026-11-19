@@ -1,60 +1,60 @@
 {
- "start": "18.11.2026 06:05",
- "ende": "18.11.2026 09:13",
+ "start": "19.11.2026 06:05",
+ "ende": "19.11.2026 09:16",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
-   "text": "bis 17.11.2026",
+   "text": "bis 18.11.2026",
    "sekunden": 13
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
-   "text": "Stand 17.11.2026",
+   "text": "Stand 18.11.2026",
    "sekunden": 98
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
    "text": "1961 von 1972 Titeln ergänzt",
-   "sekunden": 508
+   "sekunden": 520
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
    "text": "1973 Titel",
-   "sekunden": 298
+   "sekunden": 304
   },
   {
    "name": "TradingView-Kennzahlen",
    "ok": true,
-   "text": "1958 Titel (99%)",
+   "text": "1957 Titel (99%)",
    "sekunden": 1
   },
   {
    "name": "RS-Rang, Führer-Rang (Kullamägi)",
    "ok": true,
-   "text": "RS-Rang 1873, Führer-Rang 1943 Titel (Stand 2026-11-17)",
+   "text": "RS-Rang 1873, Führer-Rang 1943 Titel (Stand 2026-11-18)",
    "sekunden": 10
   },
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "33 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 117
+   "text": "38 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 130
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
-   "text": "Stand 2026-11-17: Entsteht 182, Läuft 257, Ermüdet 34, Abfluss 138",
-   "sekunden": 1238
+   "text": "Stand 2026-11-18: Entsteht 206, Läuft 258, Ermüdet 30, Abfluss 146",
+   "sekunden": 1253
   },
   {
    "name": "Kartentisch",
    "ok": true,
-   "text": "1245 Titel auf dem Tisch, 135 Neuigkeiten",
-   "sekunden": 8460
+   "text": "1246 Titel auf dem Tisch, 85 Neuigkeiten",
+   "sekunden": 8986
   },
   {
    "name": "Lage (Wetter, Pendel, Breite, Front, Marktrichtung)",
@@ -65,8 +65,8 @@
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "158 von 158 Titelseiten abgelegt",
-   "sekunden": 522
+   "text": "39 von 39 Titelseiten abgelegt",
+   "sekunden": 134
   },
   {
    "name": "Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView",
@@ -75,19 +75,19 @@
    "sekunden": 2
   }
  ],
- "pid": 345000,
- "neu": 135,
+ "pid": 376103,
+ "neu": 85,
  "reihen": {
-  "m_spitze": 7,
-  "m_weitere": 31,
-  "k_breakout": 21,
-  "k_ep": 26,
-  "zahlen": 485,
-  "k_ermuedung": 21,
-  "k_baerenflagge": 47,
-  "k_bruch": 232,
+  "m_spitze": 10,
+  "m_weitere": 30,
+  "k_breakout": 20,
+  "k_ep": 21,
+  "zahlen": 476,
+  "k_ermuedung": 24,
+  "k_baerenflagge": 56,
+  "k_bruch": 233,
   "vcp": 15,
-  "flagge": 85
+  "flagge": 80
  },
  "wachen": {
   "ampel": "grün",
@@ -95,12 +95,12 @@
   "gelb": 0
  },
  "datenstand": {
-  "Massive-Tageskurse": "2026-11-17",
-  "Yahoo-Tageskurse": "2026-11-17",
-  "Marktdaten (Indizes)": "2026-11-17",
-  "Rückenwind": "2026-11-17",
-  "RS-Rang": "2026-11-17",
-  "Führer-Rang": "2026-11-17"
+  "Massive-Tageskurse": "2026-11-18",
+  "Yahoo-Tageskurse": "2026-11-18",
+  "Marktdaten (Indizes)": "2026-11-18",
+  "Rückenwind": "2026-11-18",
+  "RS-Rang": "2026-11-18",
+  "Führer-Rang": "2026-11-18"
  },
  "massive_durchgaenge": 1
 }
