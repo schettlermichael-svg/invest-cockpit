@@ -1388,3 +1388,28 @@ Jede Zahl, die etwas entscheidet, hat einen Namen oder führt auf ihre eine Quel
 Zeilenende `# Layout` bzw. `# Technik` (282 Zeilen); sechs reine Technik-Module (`TECHNIK_MODULE`) sind ausgenommen.
 Neu im Katalog: „Kopf und Kacheln der Titelseite“, „Pendel der Übersicht“, „Bänder und Zeichen im Chart“.
 Ergebnis: 0 frei, 0 Kopien, 0 ohne Namen. Gegenprobe mit denselben Daten: 462 Titel, 0 Kacheln anders.
+
+## Tiefenanalyse aus der App Titel-Analyse (21.11.2026)
+
+Die Bausteine der App „Titel-Analyse“ stehen jetzt im Cockpit (Rechnung in `kern/tiefe.py`, Seite `oberflaeche/analyse_seite.py`).
+Quelle: TitelAnalyse/LIESMICH.md und kern/rechnen.py, bericht.py, chart.py (Stand 20.11.2026). Mickys Entscheidungen:
+
+| Baustein | Regel |
+|---|---|
+| Balance | Cockpit (Blöcke zu 5 Tagen am Kern, Lücke ab 2 % beendet, bis 65 Wochen) |
+| Profil, Wertzone 70 % | Titel-Analyse: Stundenkerzen ab dem Anker, Stufen 0,25 %; Anker = Zahlentag, wenn ≥ 1 ATR und höchstens 10 Kerzen vor der Balance, sonst Cockpit-Anker. Das ist jetzt auch das graue Volumenprofil (`volumenprofil.verankert`) |
+| Dünne Zonen, Dochte | unter ⅓ des POC-Volumens ab 2 Stufen; dünne Ränder = Dochte |
+| Alte Wertzone | Titel-Analyse: letzte Balance ab 10 Kerzen vor dem Anker |
+| Pivot | beide: Rand der Balance (long/short) neben dem Pivot der Enge |
+| Quetschung | Titel-Analyse: Drittel seit dem Anker, Hochs höchstens 2 % auseinander; gespiegelt für Short (`zeichen.einquetschung`) |
+| Spring/Upthrust, Fehlausbruch | Cockpit |
+| AVWAP | Anker des Cockpits; neu die Zangen-Messung (vor 5 Tagen → heute) |
+| Stärke in der Schwäche | beide: an den Distributionstagen des S&P 500 besser als der Index, dazu die Cockpit-Regel |
+| Geldfluss | Rückenwind bleibt; neu die Rangtabelle der 11 Sektoren und CMF 20 |
+| Wertwanderung | beide Treppen (Tages-POCs, Wochen-Wertzone), 6 Klassen (innen ▬, außen ◇ getrennt) |
+| Zeichenliste | im ganzen Cockpit (`gestaltung.ZEICHEN_LISTE`): ★ → 💥, 🎯 → 💥 bzw. 🦬/🐻 in der Meldung, ⚡ → 🔥, ⚑ → 🌞, ✓/✗ → 🟢/🔴, ⚠ → 🟡/🔴/🦊 |
+| Einschätzung | Stratege mit Websuche (höchstens 8 Suchen): long, short, abwarten mit Tendenz, kein Schuss; Unternehmen, Quartal, Wettbewerber, Fazit, Quellen; der Code prüft jede Antwort |
+
+Wo: Seite **Analyse** (alle Aussagezeilen, Einschätzung darunter), **Chart** der Titelseite mit Reitern Woche/Tag/Stunde (Tag
+vorausgewählt; der Stundenchart der letzten 10 Tage entfällt) und Dalton-Flächen, PbD, POC je Kerze, nackten POCs;
+**Kartentisch** mit einer Zeile Zeichen je Titel (PbD-Form und D-Kante, Quetschung, CMF, Abgabetage, Wanderung).

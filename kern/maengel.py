@@ -257,7 +257,11 @@ PLAN = [
      "6375d27: nach dem Nachtlauf die ersten 5 Long und 5 Short aus „Einsatzbereit“ (Rangfolge vom 12.11.) per ntfy, Tipp öffnet "
      "die Seite Setups; der US-Trading-Screener ist gelöscht (Micky)"),
     (29, "ntfy fragt bei jedem Tipp zweimal nach dem Passwort (Micky 17.11.)", "Befunde", "behoben",
-     "Zugangsausweis (Cookie, 1 Jahr) an der Haustür über werkzeuge/server/ausweis.sh – einmal einloggen je Gerät"),
+     "26515cf: Zugangsausweis (Cookie, 1 Jahr) an der Haustür über werkzeuge/server/ausweis.sh – einmal einloggen je "
+     "Gerät; getestet 5 von 5 Fällen (ohne, falsches, richtiges Passwort, nur Ausweis, falscher Ausweis)"),
+    (30, "Titel-Analyse ins Cockpit übertragen (Micky 21.11.2026): Struktur nach Dalton, AVWAP-Zange, RS-Tabelle, "
+         "Abgabetage, CMF, Sektor-Rang, PbD nach Vorwald, Zeitebenen Woche/Tag/Stunde, Wertwanderung, Zeichenliste, "
+         "Einschätzung mit Recherche", "Gesamtplan", "offen", ""),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“

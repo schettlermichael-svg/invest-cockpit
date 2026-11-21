@@ -88,21 +88,28 @@ def knoten(p):
     return aus
 
 
-def verankert(df, zahltag=None, zone_start=None):
+def verankert(df, zahltag=None, zone_start=None, stunden=None):
     """Volumenprofil nach den Ankern aus avwap.profil_anker (Micky 13.11.2026: nie aus dem Kalender) →
     {grau: {profil, ab, art, tage}, mauer: (unten, oben, ab) oder None, stuetze: (unten, oben, ab) oder None,
     knoten: [(unten, oben)] – alle Knoten von grau, Hoch und Tief für die Hürde der Lagekarte} oder None.
     Mauer: der nächste Knoten über dem Kurs im Profil seit dem Hoch des Rückgangs bzw. dem letzten Hoch (das Angebot
     der gefangenen Käufer). Stütze: der nächste Knoten unter dem Kurs seit dem Tief der Bewegung (die Käufer im
-    Gewinn). Das graue Profil beginnt mit der laufenden Balance (avwap.balance_beginn, Dalton)."""
+    Gewinn). Das graue Profil beginnt mit der laufenden Balance (avwap.balance_beginn, Dalton) – seit 21.11.2026
+    (Micky, aus der Titel-Analyse) am Zahlentag, wenn er die Balance auslöste (tiefe.anker), und aus Stundenkerzen in
+    Stufen von 0,25 % (tiefe.profil_ab; ohne Stundenkerzen aus Tageskerzen). stunden: Stundenkerzen, sonst aus dem
+    Speicher (tpo_daten, Ticker in df.attrs)."""
     import avwap
+    import tiefe
     a = avwap.profil_anker(df, zahltag, zone_start)
     if not a:
         return None
     kurs = float(df["Close"].iloc[-1])
     pos = lambda t: int(df.index.searchsorted(pd.Timestamp(t)))      # noqa: E731
-    g_tag, g_art = a["grau"]
-    pg = profil(df, pos(g_tag))
+    i0, _, _, g_art = tiefe.anker(df, zahltag, zone_start=zone_start)
+    g_tag = df.index[i0]
+    if stunden is None:
+        stunden = tiefe.stunde(tiefe.dreissig(df))
+    pg = tiefe.profil_ab(df, stunden, i0)
     aus = {"grau": {"profil": pg, "ab": g_tag, "art": g_art, "tage": int((df.index >= g_tag).sum())} if pg else None,
            "mauer": None, "stuetze": None, "knoten": list(knoten(pg)) if pg else []}
     for schl, tag in (("mauer", a["mauer"]), ("stuetze", a["stuetze"])):

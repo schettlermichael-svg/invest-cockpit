@@ -58,8 +58,22 @@ ZONE_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup 
 
 # Ausschnitte je Zeitebene: Knopf → Zahl der Balken (feste Knöpfe statt Regler)
 AUSSCHNITT = {"Tag": {"3 M": 63, "6 M": 126, "1 J": 252, "2 J": 504},
-              "Woche": {"1 J": 52, "3 J": 156, "5 J": 260}}
-AUSSCHNITT_START = {"Tag": "6 M", "Woche": "3 J"}   # 6 Monate: das Setup groß genug (09.11.2026)
+              "Woche": {"1 J": 52, "3 J": 156, "5 J": 260},
+              "Stunde": {"10 T": 70, "20 T": 140, "200 Std": 200}}   # Stunde: 7 Kerzen je Tag (Titel-Analyse: 70–200)
+AUSSCHNITT_START = {"Tag": "6 M", "Woche": "3 J", "Stunde": "20 T"}   # 6 Monate: das Setup groß genug (09.11.2026)
+EBENEN = ("Woche", "Tag", "Stunde")      # Reiter über dem Chart, Tag vorausgewählt (Micky 20./21.11.2026)
+SEITE_PROFIL = 124                       # Spalten rechts für Zeit- und Volumenprofil der PbD-Formation (Titel-Analyse)
+PBD_FARBE = "#EDA100"                    # PbD: Impuls, faire Zone, Ziel (wie in Vorwalds Bildern gelb)
+WERT_FARBE = "#1BAF7A"                   # Wertzone und POC (Dalton)
+DUENN_FARBE = "#898781"                  # dünne Zone
+DOCHT_FARBE = "#2A78D6"                  # Docht (dünner Rand des Profils)
+ALT_FARBE = "#E34948"                    # alte Wertzone
+PIVOT_SHORT_FARBE = "#9085E9"            # Pivot short am Rand der Balance
+POC_KERZE = "#E8E6DC"                    # POC je Kerze, nackter POC
+ZEIT_FARBE = "#7DB4FF"                   # Zeitprofil
+GD_EBENE = {"Tag": (50, 150, 200), "Woche": (10, 30, 40), "Stunde": (50, 150, 200)}   # Durchschnitte in Kerzen der Ebene
+VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}                                  # Volumen-Schnitt in Kerzen
+STUNDE_ACHSE = 5                         # Zeitachse Stunde: jeder 5. Handelstag beschriftet
 
 
 def _verlaengert(df):
@@ -107,14 +121,17 @@ def reaktionen(df, gewinne):
 
 
 def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", zonen=None,
-          zonen_ansicht="Aktuell", gd_kurz=False, marken=None, avwap_wahl=None):
+          zonen_ansicht="Aktuell", gd_kurz=False, marken=None, avwap_wahl=None, tiefe_=None):
     """Kerzen mit GD, Zonen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT.
-    marken (titel._chartmarken, 09.11.2026): Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short."""
+    marken (titel._chartmarken, 09.11.2026): Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short.
+    ebene „Stunde“: df, index und sektor sind Stundenkerzen. tiefe_ (tiefe.ebene, Micky 21.11.2026): Dalton-Flächen
+    und -Linien, PbD auf den Kerzen mit Zeit- und Volumenprofil rechts, POC je Kerze und nackte POCs."""
     marken = marken or {}
     tag_ebene = ebene == "Tag"
-    voll = df if ebene == "Tag" else _woche(_verlaengert(df))
+    preis_ebene = ebene in ("Tag", "Stunde")    # Kaufzone, Stopp und Position sind Preise: auch im Stundenchart
+    voll = _woche(_verlaengert(df)) if ebene == "Woche" else df
     n_zeigen = AUSSCHNITT[ebene].get(ausschnitt or AUSSCHNITT_START[ebene], AUSSCHNITT[ebene][AUSSCHNITT_START[ebene]])
-    gd = (50, 150, 200) if ebene == "Tag" else (10, 30, 40)  # Layout
+    gd = GD_EBENE[ebene]
     linien = {k: voll["Close"].rolling(k).mean() for k in gd}
     kurz = {k: voll["Close"].rolling(k).mean() for k in GD_KURZ} if gd_kurz and ebene == "Tag" else {}
     d = voll.iloc[-n_zeigen:]
@@ -136,15 +153,15 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                            ((marken.get("short") or {}).get("struktur") or {}).get("stopp"))
                + tuple(w_["wert"] for w_ in marken.get("weitere") or [])
                + tuple(x_ for x_ in ((marken.get("position") or {}).get(k_) for k_ in ("einstieg", "anfang", "stopp", "enger"))
-                       if x_) if x and tag_ebene]
+                       if x_) if x and preis_ebene] + _tiefe_grenzen(tiefe_)
     # Linien im Ausschnitt (Durchschnitte, Anchored VWAP) gehören in die Skala (WST 16.11.2026: GD150, GD200 und AVWAP
     # Tief begannen mitten im Bild am unteren Rand, weil die Skala nur die Kerzen fasste) – höchstens LINIEN_SPIEL weiter
-    anker = reihen = None
-    if tag_ebene:
-        import avwap
-        anker = avwap.anker(voll, marken.get("zahltag"))   # dieselben Anker wie die Lagekarte
-        reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
-                  if k in anker}
+    import avwap
+    # dieselben Anker wie die Lagekarte, aus Tageskerzen; Woche und Stunde rechnen die Linie in ihren Kerzen ab dem
+    # Ankertag (Micky 21.11.2026: je Ebene dieselben Regeln)
+    anker = (marken.get("anker") or {}) if ebene == "Stunde" else avwap.anker(df, marken.get("zahltag"))
+    reihen = {k: avwap.reihe(voll, anker[k]) for k in (AVWAP_START if avwap_wahl is None else avwap_wahl)
+              if k in anker and isinstance(anker[k], pd.Timestamp)}
     werte_l = [float(x) for r_ in list(linien.values()) + list(kurz.values()) + list((reihen or {}).values())
                for x in r_.reindex(d.index).to_numpy(float) if x == x]
     unten_l = min([l.min()] + [x for x in werte_l if x >= l.min() * (1 - LINIEN_SPIEL)])
@@ -167,7 +184,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         belegt.append((x0, x1, y))
         return y
 
-    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} 760" width="100%" role="img" aria-label="Kurschart" '
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B + SEITE_PROFIL} 760" width="100%" role="img" aria-label="Kurschart" '
          f'style="display:block;font-family:IBM Plex Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
          + "<defs>" + "".join(f'<marker id="spitze{n_}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" '
@@ -185,8 +202,10 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
 
     if tag_ebene:
         _profil(marken.get("profil"), d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax)
+    if preis_ebene:
         _kaufzone(marken, d, pos, X, Y, A, spaete, platz, ENDE)
         _position(marken.get("position"), d, pos, X, Y, A, spaete, platz, ENDE)
+    _tiefe_flaechen(tiefe_, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, tag_ebene and marken.get("profil"))
 
     # Kerzen
     bw = breite / N * 0.6  # Layout
@@ -194,7 +213,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         f = GRUEN if c[i] >= o[i] else ROT
         A(f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="{Y(h[i]):.1f}" y2="{Y(l[i]):.1f}" stroke="{f}"/>')
         y1, y2 = sorted([Y(o[i]), Y(c[i])])
-        hohl = i == N - 1 and df.attrs.get("laufend") and ebene == "Tag"
+        hohl = i == N - 1 and df.attrs.get("laufend") and preis_ebene
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}" stroke-width="1.2"/>' if hohl else f'fill="{f}"/>'))
 
@@ -210,7 +229,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     for k, reihe in kurz.items():
         linie(reihe, GD_KURZ[k], 1.4)  # Layout
     if index is not None:                  # S&P 500 als Schatten (13.11.2026: der Fall HWM sofort sichtbar)
-        ix_ = index["Close"] if ebene == "Tag" else index["Close"].resample("W-FRI").last()
+        ix_ = index["Close"].resample("W-FRI").last() if ebene == "Woche" else index["Close"]
         ix_ = ix_.reindex(d.index, method="ffill")
         if ix_.notna().sum() > 5:  # Layout
             erst = ix_.first_valid_index()
@@ -228,7 +247,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 y2, strich = _rechts(platz, ENDE, y_, text, nach_oben=y_ > 230)  # Layout
                 spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y2:.1f}" fill="{INDEX_SCHATTEN}" font-size="12">'  # Layout
                               f'{text.replace("&", "&amp;")}</text>')
-    if tag_ebene:                                                  # Anchored VWAP: Anker nach Wahl (Shannon)
+    if reihen:                                                     # Anchored VWAP: Anker nach Wahl (Shannon)
         if "hoch" in reihen and "tief" in reihen and len(reihen["hoch"]) and len(reihen["tief"]):
             o_, u_ = reihen["hoch"].reindex(d.index), reihen["tief"].reindex(d.index)   # Zange schattiert
             pkt = [(X(i), Y(a_), Y(b_)) for i, (a_, b_) in enumerate(zip(o_.to_numpy(float), u_.to_numpy(float)))
@@ -242,7 +261,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 continue
             farbe = AVWAP_FARBEN[k]
             linie(av, farbe, 1.8)  # Layout
-            if anker[k] >= d.index[0]:                             # Ankerpunkt im Ausschnitt: kleiner Ring
+            if av.index[0] >= d.index[0]:                          # Ankerpunkt im Ausschnitt: kleiner Ring
                 i_ = pos(anker[k])
                 A(f'<circle cx="{X(i_):.1f}" cy="{Y(float(av.iloc[0])):.1f}" r="4" fill="none" stroke="{farbe}" '
                   f'stroke-width="2"/>')
@@ -253,7 +272,9 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 y_, strich = _rechts(platz, ENDE, Y(w), text, nach_oben=Y(w) > 230)   # oben: nach unten ausweichen · Layout
                 spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{farbe}" font-size="12" '  # Layout
                               f'font-weight="600">{text}</text>')
-    _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
+    _tiefe_linien(tiefe_, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax)
+    if ebene != "Stunde":
+        _earnings(marken, d, pos, X, A, spaete, ENDE, platz)
     tm = {}
     if tag_ebene:
         _zeichen(marken, d, pos, X, Y, A, spaete, platz, ENDE, h, l)
@@ -264,14 +285,14 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     # Volumen mit 50er-Schnitt (Woche: 10 Wochen)
     vmax = v.max() or 1
     A(f'<text x="{LINKS}" y="474" fill="{TEXT_3}" font-size="12">VOLUMEN · grün = Kauftag, rot = Abgabetag (Schluss zum '
-      f'Vortag) · Linie = Schnitt {"50 Tage" if ebene == "Tag" else "10 Wochen"}</text>')
+      f'Vortag) · Linie = Schnitt {VOL_SCHNITT[ebene]} {_einheit(ebene)}</text>')
     vorschluss = voll["Close"].shift().reindex(d.index).to_numpy(float)
     for i in range(N):
         hv = 90 * v[i] / vmax  # Layout
         auf_ = c[i] >= (vorschluss[i] if not np.isnan(vorschluss[i]) else o[i])
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{570 - hv:.1f}" width="{bw:.1f}" height="{hv:.1f}" '  # Layout
           f'fill="{GRUEN if auf_ else ROT}" fill-opacity="0.75"/>')
-    v50 = voll["Volume"].rolling(50 if ebene == "Tag" else 10).mean().reindex(d.index).to_numpy(float)  # Layout
+    v50 = voll["Volume"].rolling(VOL_SCHNITT[ebene]).mean().reindex(d.index).to_numpy(float)
     pkt = " ".join(f"{X(i):.1f},{570 - 90 * x / vmax:.1f}" for i, x in enumerate(v50) if not np.isnan(x))  # Layout
     A(f'<polyline points="{pkt}" fill="none" stroke="{TEXT}" stroke-width="1.2"/>')
     for t_ in tm.get("abgabe", []):            # Abgabetage des Titels (Distribution): roter Punkt über dem Balken
@@ -310,7 +331,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     # RS-Linien gegen den S&P 500 und gestrichelt gegen den Sektor-ETF, beide links bei 100
     if index is not None:
         def relativ(bezug):
-            bx = bezug if ebene == "Tag" else bezug.resample("W-FRI").last()
+            bx = bezug.resample("W-FRI").last() if ebene == "Woche" else bezug
             r = (voll["Close"] / bx.reindex(voll.index, method="ffill")).reindex(d.index).to_numpy(float)
             gueltig = np.flatnonzero(~np.isnan(r))
             return r / r[gueltig[0]] * 100 if len(gueltig) > 5 else None
@@ -323,7 +344,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
             rand = (hi - lo) * 0.06 or 1  # Layout
             lo, hi = lo - rand, hi + rand
             YR = lambda y: 618 + 102 * (1 - (y - lo) / (hi - lo))          # noqa: E731 · Layout
-            kurz_ = RS_PFEIL_TAGE if ebene == "Tag" else RS_PFEIL_WOCHEN
+            kurz_ = RS_PFEIL_WOCHEN if ebene == "Woche" else RS_PFEIL_TAGE
 
             def pfeil(r, farbe, name):
                 """Dynamik der letzten 10 Tage (3 Wochen) am Linienende: Pfeil und beide Werte (vorher → heute)."""
@@ -334,7 +355,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
                 pr = (neu / alt - 1) * 100
                 p_ = ("↑" if pr >= RS_PFEIL_STARK else "↗" if pr >= RS_PFEIL else "↓" if pr <= -RS_PFEIL_STARK
                       else "↘" if pr <= -RS_PFEIL else "→")
-                A(f'<g><title>{name}: {zahl(alt, 0)} → {zahl(neu, 0)} in {kurz_} {"Tagen" if ebene == "Tag" else "Wochen"} '
+                A(f'<g><title>{name}: {zahl(alt, 0)} → {zahl(neu, 0)} in {kurz_} {_einheit(ebene)} '
                   f'({"+" if pr >= 0 else "−"}{zahl(abs(pr), 1)} %); 100 = so stark wie am linken Rand</title>'
                   f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, YR(neu) + 5, "↗ 000 → 000", 12, "start"):.1f}" '  # Layout
                   f'fill="{farbe}" font-size="12"><tspan font-size="15" font-weight="700">{p_}</tspan> '
@@ -346,7 +367,7 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
             A(f'<text x="{LINKS}" y="608" fill="{TEXT_3}" font-size="12">RELATIVE STÄRKE SEIT {d.index[0]:%m/%Y}{rang_} · '
               f'<tspan fill="{BLAU}">— gegen S&amp;P 500</tspan>'
               + (f'  <tspan fill="{LILA}">- - gegen Sektor {sektor_name}</tspan>' if rk is not None else "")
-              + f'  · Pfeil = letzte {kurz_} {"Tage" if ebene == "Tag" else "Wochen"}</text>')
+              + f'  · Pfeil = letzte {kurz_} {_einheit(ebene)}</text>')
             A(f'<line x1="{LINKS}" x2="{ENDE}" y1="{YR(100):.1f}" y2="{YR(100):.1f}" stroke="{TEXT_3}" '
               f'stroke-width="1" stroke-dasharray="2 4"/>'
               f'<text x="{LINKS - 6}" y="{YR(100) + 4:.1f}" fill="{TEXT_3}" font-size="11" text-anchor="end">100</text>')  # Layout
@@ -387,8 +408,15 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
             if rk is not None:
                 pfeil(rk, LILA, f"gegen Sektor {sektor_name}")
 
-    # Zeitachse: Monatsanfänge
+    # Zeitachse: Monatsanfänge (Stunde: jeder 5. Handelstag)
     letzter = None
+    if ebene == "Stunde":
+        tage_ = sorted(set(d.index.normalize()))
+        for k_, tag in enumerate(tage_):
+            if k_ % STUNDE_ACHSE == 0:
+                A(f'<text x="{X(int(d.index.searchsorted(tag))):.1f}" y="748" fill="{TEXT_3}" font-size="12">{tag:%d.%m.}</text>')
+        A("</svg>")
+        return "".join(s)
     for i, tag in enumerate(d.index):
         schluessel = (tag.year, tag.month) if ebene == "Tag" else (tag.year, (tag.month - 1) // 3)  # Layout
         if schluessel != letzter:
@@ -657,7 +685,7 @@ def _earnings(m, d, pos, X, A, spaete, ENDE, platz):
             import gestaltung
             amp = gestaltung.termin_ampel(tage)
             nah = amp in ("rot", "gelb")
-            t_ = f'{"⚠ " if nah else ""}E in {tage} T · {termin:%d.%m.}'
+            t_ = f'{"🔴 " if nah else ""}E in {tage} T · {termin:%d.%m.}'
             spaete.append(f'<text x="{ENDE + 8:.1f}" y="{platz(ENDE + 8, 448, t_, 12, "start", False):.1f}" '  # Layout
                           f'fill="{ROT if amp == "rot" else GELB if nah else TEXT_3}" font-size="12" font-weight="600">{t_}</text>')
 
@@ -813,78 +841,125 @@ def _signale(voll, d, index, pos, X, Y, A, spaete, platz, h, l):
     return tm
 
 
-def stunden(dh, m=None, hohl=False):
-    """Stundenchart der letzten 10 Handelstage (09.11.2026, für das Timing des Einstiegs): Kerzen, Pivot, Kaufzone,
-    Stopp 1,5 ATR, Volumen (grün/rot nach Schluss zur Vorstunde), Tagesgrenzen. dh: Stundenkerzen (Zeit New York)."""
-    m = m or {}
-    if dh is None or len(dh) < 5:
-        return ""
-    BH, OB, UN = 330, 20, 210  # Layout
-    o, h, l, c, v = (dh[s_].to_numpy(float) for s_ in ("Open", "High", "Low", "Close", "Volume"))
-    N = len(dh)
-    breite = B - LINKS - RECHTS - ETIKETT
-    ENDE = LINKS + breite
-    X = lambda i: LINKS + breite * (i + 0.5) / N                                      # noqa: E731 · Layout
-    lv = [x for x in (m.get("einstieg"), m.get("kz_oben"), m.get("stopp"), (m.get("struktur") or {}).get("stopp"),
-                      *(w_["wert"] for w_ in m.get("weitere") or []))
-          if x]
-    lv_nah = [x for x in lv if l.min() * 0.92 <= x <= h.max() * 1.08]            # weiter als 8 %: nur als Hinweis am Rand · Layout
-    pmax, pmin = max([h.max()] + lv_nah) * 1.01, min([l.min()] + lv_nah) * 0.99  # Layout
-    Y = lambda y: OB + (UN - OB) * (pmax - y) / (pmax - pmin)                       # noqa: E731
-    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {BH}" width="100%" role="img" aria-label="Stundenchart" '
-         f'style="display:block;font-family:IBM Plex Sans,sans-serif">'
-         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>']
-    A = s.append
-    A(f'<text x="{LINKS}" y="12" fill="{TEXT_3}" font-size="12">STUNDENCHART · letzte {len(set(dh.index.date))} '
-      f'Handelstage · Zeit New York</text>')
-    for k in range(4):  # Layout
-        yv = pmin + (pmax - pmin) * k / 3
-        A(f'<line x1="{LINKS}" x2="{ENDE}" y1="{Y(yv):.1f}" y2="{Y(yv):.1f}" stroke="{RAND}"/>'
-          f'<text x="{LINKS - 8}" y="{Y(yv) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">{zahl(yv)}</text>')  # Layout
-    tage = pd.Series(dh.index.date)
-    for i in range(N):
-        if i == 0 or tage[i] != tage[i - 1]:
-            A(f'<line x1="{X(i) - breite / N / 2:.1f}" x2="{X(i) - breite / N / 2:.1f}" y1="{OB}" y2="{BH - 30}" '  # Layout
-              f'stroke="{RAND}" stroke-dasharray="2 3"/>'
-              f'<text x="{X(i) - breite / N / 2 + 4:.1f}" y="{BH - 14}" fill="{TEXT_3}" font-size="12">{dh.index[i]:%d.%m.}</text>')  # Layout
-    e = m.get("einstieg")
-    if e and m.get("kz_oben") and pmin <= e <= pmax:
-        A(f'<rect x="{LINKS}" y="{Y(min(m["kz_oben"], pmax)):.1f}" width="{breite:.1f}" '
-          f'height="{Y(e) - Y(min(m["kz_oben"], pmax)):.1f}" fill="{KAUFZONE_FARBE}" fill-opacity="0.14"/>')
-    for wert_, farbe, name, strich in ((e, TEXT, "Pivot", "6 4"), (m.get("stopp"), ROT, "Stopp 1,5 ATR", "7 4"),
-                                       ((m.get("struktur") or {}).get("stopp"), ROT, "Stopp Struktur", ""),
-                                       *((w_["wert"], KAUFZONE_FARBE, w_["quelle"].split(":")[0].replace(
-                                           "Ausbruch über die Oberkante", "Ausbruch"), "3 3")
-                                         for w_ in m.get("weitere") or [])):
-        if wert_ and pmin <= wert_ <= pmax:
-            A(f'<line x1="{LINKS}" x2="{ENDE + 4}" y1="{Y(wert_):.1f}" y2="{Y(wert_):.1f}" stroke="{farbe}" stroke-width="1.5"'  # Layout
-              + (f' stroke-dasharray="{strich}"' if strich else "") + "/>"
-              f'<text x="{ENDE + 8}" y="{Y(wert_) + 4:.1f}" fill="{farbe}" font-size="12" font-weight="600">{name} {zahl(wert_)} $</text>')  # Layout
-        elif wert_:
-            oben_ = wert_ > pmax
-            A(f'<text x="{ENDE + 8}" y="{OB + 10 if oben_ else UN:.1f}" fill="{farbe}" font-size="12">{name} {zahl(wert_)} $ '  # Layout
-              f'{"↑" if oben_ else "↓"} außerhalb</text>')
-    bw = breite / N * 0.6  # Layout
-    for i in range(N):
-        f = GRUEN if c[i] >= o[i] else ROT
-        A(f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="{Y(h[i]):.1f}" y2="{Y(l[i]):.1f}" stroke="{f}"/>')
-        y1, y2 = sorted([Y(o[i]), Y(c[i])])
-        leer = hohl and i == N - 1
-        A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
-          + (f'fill="none" stroke="{f}"/>' if leer else f'fill="{f}"/>'))
-    vmax = v.max() or 1
-    for i in range(N):
-        hv = 60 * v[i] / vmax  # Layout
-        auf_ = c[i] >= (c[i - 1] if i else o[i])
-        A(f'<rect x="{X(i) - bw / 2:.1f}" y="{BH - 34 - hv:.1f}" width="{bw:.1f}" height="{hv:.1f}" '  # Layout
-          f'fill="{GRUEN if auf_ else ROT}" fill-opacity="0.6"/>')
-    A("</svg>")
-    return "".join(s)
 
+def _einheit(ebene):
+    return {"Tag": "Tage", "Woche": "Wochen", "Stunde": "Stunden"}[ebene]
+
+
+def _tiefe_grenzen(t):
+    """Preise der Tiefenanalyse, die in die Skala gehören (die alte Wertzone immer, Titel-Analyse 18.11.2026)."""
+    if not t:
+        return []
+    st_, pb, alt = t["struktur"], t.get("pbd"), t.get("alt")
+    w = [st_["pivot"], st_["short_pivot"], st_["profil"]["val"], st_["profil"]["vah"]]
+    w += [alt["val"], alt["vah"]] if alt else []
+    w += [pb["zone_tief"], pb["zone_hoch"], pb["impuls_kurs"]] if pb else []
+    return w
+
+
+def _tiefe_flaechen(t, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, profil_da):
+    """Flächen nach Dalton (Micky 21.11.2026, aus der Titel-Analyse): alte Wertzone rot, Wertzone grün (im Tageschart
+    zeichnet sie das graue Volumenprofil – dieselbe Regel), dünne Zonen grau, Dochte blau – ab dem Anker."""
+    if not t:
+        return
+    pr, alt = t["struktur"]["profil"], t.get("alt")
+    ab = pd.Timestamp(pr["ab"])
+    x0 = X(pos(ab)) if ab >= d.index[0] else X(0)  # Layout
+
+    def feld(a, b, farbe, deck, text, von=None):
+        a, b = max(a, pmin), min(b, pmax)
+        if b <= a:
+            return
+        x_ = von if von is not None else x0
+        A(f'<rect x="{x_:.1f}" y="{Y(b):.1f}" width="{max(1, ENDE - x_):.1f}" height="{Y(a) - Y(b):.1f}" fill="{farbe}" '  # Layout
+          f'fill-opacity="{deck}"><title>{text}</title></rect>')
+        spaete.append(f'<text x="{x_ + 4:.1f}" y="{platz(x_ + 4, Y(b) + 12, text, 11, "start", False):.1f}" fill="{TEXT_2}" '  # Layout
+                      f'font-size="11">{text}</text>')  # Layout
+    if alt:
+        feld(alt["val"], alt["vah"], ALT_FARBE, 0.13, f"Alte Wertzone {zahl(alt['val'])}–{zahl(alt['vah'])} (POC {zahl(alt['poc'])})",  # Layout
+             X(0))  # Layout
+    if not profil_da:
+        feld(pr["val"], pr["vah"], WERT_FARBE, 0.16, f"Wertzone {zahl(pr['val'])}–{zahl(pr['vah'])}")  # Layout
+    for lo, hi in pr["duenn"]:
+        feld(lo, hi, DUENN_FARBE, 0.16, f"Dünne Zone {zahl(lo)}–{zahl(hi)}")  # Layout
+    for z in (pr["docht_unten"], pr["docht_oben"]):
+        if z:
+            feld(z[0], z[1], DOCHT_FARBE, 0.14, f"Docht {zahl(z[0])}–{zahl(z[1])}")  # Layout
+
+
+def _tiefe_linien(t, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax):
+    """Linien und PbD (Micky 21.11.2026, aus der Titel-Analyse): POC grün gepunktet, Pivot long rot und Pivot short
+    violett gestrichelt (Rand der Balance), POC je Kerze als weißer Strich, nackte POCs weiß gepunktet bis zum rechten
+    Rand; PbD nach Vorwald: Impuls als gelber Strich, faire Zone gelb gestrichelt mit dem Buchstaben, Ziel am
+    Impulsbeginn bei gescheiterter Form, rechts neben dem Chart Zeit- und Volumenprofil seit Impulsbeginn."""
+    if not t:
+        return
+    st_, pb, w = t["struktur"], t.get("pbd"), t.get("wander")
+    N = len(d)
+    halb = (X(1) - X(0)) / 2 if N > 1 else 4  # Layout
+    for y_, farbe, strich, text in ((st_["profil"]["poc"], WERT_FARBE, "2 3", f"POC {zahl(st_['profil']['poc'])}"),  # Layout
+                                    (st_["pivot"], ROT, "5 3", f"Pivot long {zahl(st_['pivot'])}"),  # Layout
+                                    (st_["short_pivot"], PIVOT_SHORT_FARBE, "5 3", f"Pivot short {zahl(st_['short_pivot'])}")):  # Layout
+        if pmin <= y_ <= pmax:
+            A(f'<line x1="{X(0) - halb:.1f}" x2="{ENDE:.1f}" y1="{Y(y_):.1f}" y2="{Y(y_):.1f}" stroke="{farbe}" '  # Layout
+              f'stroke-width="1.4" stroke-dasharray="{strich}"><title>{text}</title></line>')  # Layout
+            x_t = X(0) - halb + 4  # Layout: am linken Rand über der Linie (rechts drängen sich Kurse und Etiketten)
+            y2 = platz(x_t, Y(y_) - 4, text, 11, "start")  # Layout
+            spaete.append(f'<text x="{x_t:.1f}" y="{y2:.1f}" fill="{farbe}" font-size="11">{text}</text>')  # Layout
+    if w:
+        for i, tag in enumerate(d.index):
+            poc = (w["werte"].get(tag) or (None,))[0]  # Layout
+            if poc is not None and pmin <= poc <= pmax:
+                A(f'<line x1="{X(i) - halb * 0.8:.1f}" x2="{X(i) + halb * 0.8:.1f}" y1="{Y(poc):.1f}" y2="{Y(poc):.1f}" '  # Layout
+                  f'stroke="{POC_KERZE}" stroke-width="2"/>')  # Layout
+        for tag, poc in w["nackt"]:
+            if tag >= d.index[0] and pmin <= poc <= pmax:  # Layout
+                A(f'<line x1="{X(pos(tag)):.1f}" x2="{ENDE:.1f}" y1="{Y(poc):.1f}" y2="{Y(poc):.1f}" stroke="{POC_KERZE}" '  # Layout
+                  f'stroke-opacity="0.55" stroke-dasharray="1 3"><title>nackter POC {zahl(poc)} ({tag:%d.%m.}) – nie wieder '  # Layout
+                  f'erreicht</title></line>')
+    if not pb:
+        return
+    i0, i1 = pos(pb["impuls_tag"]), pos(pb["impuls_ende_tag"])
+    if pb["impuls_tag"] >= d.index[0]:  # Layout
+        A(f'<line x1="{X(i0):.1f}" y1="{Y(pb["impuls_kurs"]):.1f}" x2="{X(i1):.1f}" y2="{Y(pb["impuls_ende_kurs"]):.1f}" '  # Layout
+          f'stroke="{PBD_FARBE}" stroke-width="2.5"><title>PbD-Impuls {pb["impuls_tag"]:%d.%m.} → '  # Layout
+          f'{pb["impuls_ende_tag"]:%d.%m.}</title></line>')
+    zs = pd.Timestamp(pb["zone_start"])
+    xl = (X(pos(zs)) - halb) if zs >= d.index[0] else X(0) - halb  # Layout
+    yo, yu = Y(min(pb["zone_hoch"], pmax)), Y(max(pb["zone_tief"], pmin))
+    A(f'<rect x="{xl:.1f}" y="{yo:.1f}" width="{max(2, ENDE - xl):.1f}" height="{max(1, yu - yo):.1f}" fill="none" '  # Layout
+      f'stroke="{PBD_FARBE}" stroke-width="1.8" stroke-dasharray="6 3"><title>PbD: Form {pb["form"]} · faire Zone '  # Layout
+      f'{zahl(pb["zone_tief"])}–{zahl(pb["zone_hoch"])}</title></rect>')
+    spaete.append(f'<text x="{xl + 4:.1f}" y="{(yu + 20) if pb["form"] == "b" else (yo - 5):.1f}" fill="{PBD_FARBE}" '  # Layout
+                  f'font-size="20" font-weight="700">{pb["form"]}</text>')  # Layout
+    if pb["gescheitert"] and pmin <= pb["impuls_kurs"] <= pmax:
+        A(f'<line x1="{X(0) - halb:.1f}" x2="{ENDE:.1f}" y1="{Y(pb["impuls_kurs"]):.1f}" y2="{Y(pb["impuls_kurs"]):.1f}" '  # Layout
+          f'stroke="{PBD_FARBE}" stroke-width="1.4" stroke-dasharray="1 3"><title>Ziel am Impulsbeginn '  # Layout
+          f'{zahl(pb["impuls_kurs"])}</title></line>')
+    # Zeit- und Volumenprofil seit Impulsbeginn rechts neben dem Chart (Spalten nach den Etiketten)
+    x_sp = B + 4  # Layout
+    breite_ = (SEITE_PROFIL - 12) / 2  # Layout
+    for j, (name, sil, farbe) in enumerate((("Zeit", pb.get("profil_zeit"), ZEIT_FARBE),
+                                           ("Volumen", pb.get("profil_vol"), DUENN_FARBE))):
+        x0 = x_sp + j * (breite_ + 4)  # Layout
+        A(f'<text x="{x0:.1f}" y="26" fill="{TEXT_3}" font-size="10">{name}</text>'  # Layout
+          f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="30" y2="430" stroke="{RAND}"/>')  # Layout
+        if not sil:
+            A(f'<text x="{x0 + 2:.1f}" y="230" fill="{TEXT_3}" font-size="10">ungemessen</text>')  # Layout
+            continue
+        poc = st_["profil"]["poc"]
+        for lo, hi, anteil in sil:
+            if hi < pmin or lo > pmax:
+                continue
+            y1, y2 = Y(min(hi, pmax)), Y(max(lo, pmin))
+            A(f'<rect x="{x0:.1f}" y="{y1 + 0.5:.1f}" width="{max(1, anteil * breite_):.1f}" height="{max(1, y2 - y1 - 1):.1f}" '  # Layout
+              f'fill="{farbe}" fill-opacity="{0.95 if lo <= poc <= hi else 0.5}"/>')  # Layout
+    A(f'<text x="{x_sp:.1f}" y="446" fill="{PBD_FARBE}" font-size="10">Form {pb["form"]} seit {pb["impuls_tag"]:%d.%m.}</text>')  # Layout
 
 def legende(ebene="Tag", gd_kurz=False):
     from gestaltung import t
-    namen = ("GD50", "GD150", "GD200") if ebene == "Tag" else ("GD10W", "GD30W", "GD40W")
+    namen = {"Tag": ("GD50", "GD150", "GD200"), "Woche": ("GD10W", "GD30W", "GD40W"),
+             "Stunde": ("GD50 Std.", "GD150 Std.", "GD200 Std.")}[ebene]
     eintraege = [(BLAU, namen[0]), (LILA, namen[1]), (SAND, namen[2] + " (langfristiger Trend)")]
     if gd_kurz and ebene == "Tag":
         eintraege += [(GD_KURZ[10], "GD10"), (GD_KURZ[20], "GD20")]
@@ -894,8 +969,10 @@ def legende(ebene="Tag", gd_kurz=False):
                   (TEXT_2, "Kontraktionen mit Tiefe (gestrichelt) · Rahmen der Enge in der Ampelfarbe · Pivot gestrichelt"),
                   (TUERKIS, "Band unter dem Volumen: Ruhe – kräftig bis 50 % vom Schnitt, blass bis 75 %"),
                   (GRUEN, "Band: viel Volumen am Aufwärtstag (blass über dem Schnitt, kräftig ab 1,5-fach), rot am Abwärtstag")]
+    if ebene != "Woche":
+        eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)")]
     if ebene == "Tag":
-        eintraege += [(KAUFZONE_FARBE, "Kaufzone (Pivot bis +5 %)"), (ROT, "Stopp 1,5 ATR vom Einstieg (Short gestrichelt)"),
+        eintraege += [
                       (AVWAP_FARBEN["gipfel"], "AVWAP ab dem Hoch des Rückgangs (Gipfel der ganzen Korrektur, Wochen-Schwunghoch)"),
                       (AVWAP_FARBEN["hoch"], "AVWAP ab dem letzten Hoch (jüngstes nicht überschrittenes Wochen-Schwunghoch)"),
                       (AVWAP_FARBEN["tief"], "AVWAP ab dem Tief der Bewegung (Tief, an dem der Trend zum letzten Hoch begann; mit ihm: Zange)"),
@@ -912,6 +989,13 @@ def legende(ebene="Tag", gd_kurz=False):
                       (ROT, "● über dem Volumen: Abgabetag · ○ verdeckte Abgabe"),
                       (TEXT_2, "an Marken: H = Hammer · SS = Shooting Star · E↑/E↓ = Engulfing · MS/ES = Morning/Evening "
                                "Star (Homma/Nison); blass = nicht bestätigt · KW = Kraft ohne Weg (Wyckoff)")]
+    eintraege += [(WERT_FARBE, "Wertzone 70 % und POC (gepunktet) ab dem Anker – Dalton, im Tageschart das Volumenprofil"),
+                  (DUENN_FARBE, "Dünne Zone (unter ⅓ des POC-Volumens)"), (DOCHT_FARBE, "Docht (dünner Rand des Profils)"),
+                  (ALT_FARBE, "Alte Wertzone (letzte Balance ab 10 Kerzen vor dem Anker) · Pivot long gestrichelt"),
+                  (PIVOT_SHORT_FARBE, "Pivot short (Tief der Balance) gestrichelt"),
+                  (POC_KERZE, "Strich je Kerze = POC der Kerze · gepunktet = nackter POC (nie wieder erreicht)"),
+                  (PBD_FARBE, "PbD (Vorwald): Impuls als Strich, faire Zone gestrichelt mit P, b oder D; rechts Zeit- und "
+                              "Volumenprofil seit Impulsbeginn")]
     eintraege += [(INDEX_SCHATTEN, "S&P 500 gestrichelt, am linken Rand auf den Kurs gelegt")]
     eintraege += [(GELB, "E = Zahlen mit Kursreaktion unter dem Kurs, rechts daneben der nächste Termin")]
     return "".join(f'<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;color:{TEXT_2}">'

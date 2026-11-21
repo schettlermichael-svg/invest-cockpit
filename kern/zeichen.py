@@ -43,9 +43,6 @@ import numpy as np
 import pandas as pd
 from masse import ATR_N, JAHR_TAGE, JAHR_WOCHEN, LAGE_MITTE  # noqa: E402
 
-GLEICH_PCT = 1.5          # Einquetschung: Hochs innerhalb ±1,5 %
-EINQ_MIN_TAGE = 15        # … die flache Kante steht seit mindestens 3 Wochen (Chart-Prüfer 14.11.2026)
-EINQ_FENSTER = (60, 120)  # … gesucht in den letzten 60, dann 120 Handelstagen
 MIN_RUECKGANG = 3.0       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
 HAELT_PUNKTE = 15.0      # „hält“: am Indextief mindestens 15 Punkte vor dem Index (Messung 13.11.: mit 10 Punkten
                           # schlug jeder zweite Titel den S&P 500 – der Rückgang war eng von wenigen Riesen getragen)
@@ -66,11 +63,6 @@ DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem le
 DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
 STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
 SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
-SPRING_ZURUECK = 4          # … Schluss innerhalb von 3 Tagen wieder in der Spanne (Tag selbst + 3)
-EINQ_VERGLEICH_TAGE = 10    # Einquetschung: Spanne und Volumen der letzten 10 Tage gegen die ersten 10 bzw. den Schnitt davor
-EINQ_VOL_FENSTER = 60       # … Volumen gegen die 60 Tage davor
-EINQ_NAH_OBEN = 1.05        # … Kurs höchstens 5 % über der flachen Oberkante
-EINQ_NAH_UNTEN = 0.95       # … gespiegelt: höchstens 5 % unter der flachen Unterkante
 VOLUMEN_TAGE = 20           # Kauf- und Abgabetage: die letzten 20 Tage
 PP_TAGE = 5                 # Pocket Pivot in den letzten 5 Tagen
 PP_GD10_MAX = 1.04          # Pocket Pivot: höchstens 4 % über dem GD10 (Morales/Kacher)
@@ -247,60 +239,15 @@ def spring(df, tage=SPRING_TAGE):
 
 
 # ── Einquetschung ─────────────────────────────────────────────────────────────────────────────────────────────────
-def _ohne_spring(t_, d):
-    """Tiefs einer Reihe ohne die, die binnen 3 Tagen über das vorige Tief zurückgekauft wurden (Spring)."""
-    aus = []
-    c = d["Close"].to_numpy(float)
-    for i, p in t_:
-        vorher = aus[-1][1] if aus else None
-        if vorher is not None and p <= vorher and any(c[j] > vorher for j in range(i, min(i + SPRING_ZURUECK, len(c)))):
-            continue
-        aus.append((i, p))
-    return aus
-
-
-def einquetschung(df, fenster=None):
-    """Aufsteigendes Dreieck (gespiegelt absteigend) → {art, oberkante|unterkante, beruehrungen, tiefs|hochs, tage} oder
-    None. Ohne Fenster: erst die letzten 60, dann die letzten 120 Handelstage (Chart-Prüfer 14.11.2026: Einquetschungen
-    über Monate fehlten). Die flache Kante muss seit mindestens EINQ_MIN_TAGE stehen – ihre erste Berührung liegt so weit
-    zurück (sonst war es ein Dreieck von einer Woche oder ein steigender Kanal, dessen letzte zwei Hochs zufällig gleich
-    hoch waren)."""
-    if fenster is None:
-        for f_ in EINQ_FENSTER:
-            e_ = einquetschung(df, f_)
-            if e_:
-                return e_
+def einquetschung(df, zahltag=None):
+    """Einquetschung nach der Regel der Titel-Analyse (Micky 21.11.2026, vorher Dreieck über 60/120 Tage): seit dem
+    Anker des Profils (Zahlentag, der die Balance auslöste, sonst ihr Beginn – tiefe.anker) steigen die Tiefs der drei
+    Drittel, ihre Hochs liegen höchstens 2 % auseinander; gespiegelt fallende Hochs über flachen Tiefs. → {art,
+    oberkante|unterkante, tiefs, hochs, tage, ab} oder None (tiefe.quetschung)."""
+    import tiefe
+    if df is None or len(df) < JUNG_TAGE:
         return None
-    if df is None or len(df) < fenster + 50:
-        return None
-    d = df.iloc[-fenster:]
-    spanne = lambda x: float(x["High"].max() / x["Low"].min() - 1)    # noqa: E731
-    if not spanne(d.iloc[-EINQ_VERGLEICH_TAGE:]) < spanne(d.iloc[:EINQ_VERGLEICH_TAGE]):
-        return None
-    if not float(d["Volume"].iloc[-EINQ_VERGLEICH_TAGE:].mean()) < float(df["Volume"].iloc[-EINQ_VOL_FENSTER:-EINQ_VERGLEICH_TAGE].mean()):
-        return None
-    hochs, tiefs = schwungpunkte(d["High"], d["Low"], 2)
-    kurs = float(d["Close"].iloc[-1])
-    lo, hi = d["Low"].to_numpy(float), d["High"].to_numpy(float)
-    i0 = int(lo.argmin())
-    t_ = _ohne_spring([(i0, lo[i0])] + [(i, p) for i, p in tiefs if i > i0], d)
-    h_ = [(i, p) for i, p in hochs if i > i0]
-    if len(t_) >= 3 and len(h_) >= 2 and all(b_[1] > a_[1] for a_, b_ in zip(t_, t_[1:])):
-        top = max(p for _, p in h_)
-        an = [(i, p) for i, p in h_ if abs(p / top - 1) * 100 <= GLEICH_PCT]
-        if len(an) >= 2 and kurs <= top * EINQ_NAH_OBEN and len(d) - 1 - an[0][0] >= EINQ_MIN_TAGE:
-            return {"art": "aufsteigend", "oberkante": round(top, 2), "beruehrungen": len(an), "tiefs": len(t_),
-                    "tage": len(d) - 1 - an[0][0]}
-    j0 = int(hi.argmax())
-    h2 = [(j0, hi[j0])] + [(i, p) for i, p in hochs if i > j0]
-    t2 = [(i, p) for i, p in tiefs if i > j0]
-    if len(h2) >= 3 and len(t2) >= 2 and all(b_[1] < a_[1] for a_, b_ in zip(h2, h2[1:])):
-        boden = min(p for _, p in t2)
-        am = [(i, p) for i, p in t2 if abs(p / boden - 1) * 100 <= GLEICH_PCT]
-        if len(am) >= 2 and kurs >= boden * EINQ_NAH_UNTEN and len(d) - 1 - am[0][0] >= EINQ_MIN_TAGE:
-            return {"art": "absteigend", "unterkante": round(boden, 2), "beruehrungen": len(am), "hochs": len(h2),
-                    "tage": len(d) - 1 - am[0][0]}
-    return None
+    return tiefe.quetschung(df, tiefe.anker(df, zahltag, zone_start=tiefe.zone_beginn(df))[0])
 
 
 # ── Volumen ───────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -851,6 +798,17 @@ def _traegt(liste):
     return "struktur" in arten and bool(arten & {"volumen", "rs"})
 
 
+def avwap_zahltag(df, gewinne):
+    """Reaktionstag der jüngsten Zahlen (avwap.zahlentag) oder None."""
+    if gewinne is None:
+        return None
+    import avwap
+    try:
+        return avwap.zahlentag(df, gewinne)
+    except Exception:  # noqa: BLE001 – Technik: ohne lesbare Zahlen kein Zahlentag
+        return None
+
+
 def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None):
     """Phase, Wechsel und Zeichen eines Titels → dict mit phase (0 jung, 1–4), ziel, wort, satz, zeichen (Liste),
     staerke/schwaeche (Texte, stärkste zuerst), dow_tag, dow_woche, einquetschung, akkumulation, relativ, trend,
@@ -892,12 +850,12 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     sp = spring(df)
     if sp:
         zs.append(sp)
-    eq = einquetschung(df)
+    eq = einquetschung(df, avwap_zahltag(df, gewinne))
     if eq:
         zs.append(_zeichen("stärke", "struktur", f"Einquetschung: steigende Tiefs unter der Oberkante "
-                           f"{_z(eq['oberkante'], '.2f')} $ (seit {eq['tage']} Tagen)", 2) if eq["art"] == "aufsteigend" else
+                           f"{_z(eq['oberkante'], '.2f')} $ (Drittel seit {eq['ab']:%d.%m.}: Tiefs {' → '.join(_z(x, '.2f') for x in eq['tiefs'])})", 2) if eq["art"] == "aufsteigend" else
                   _zeichen("schwäche", "struktur", f"Einquetschung: fallende Hochs über der Unterkante "
-                           f"{_z(eq['unterkante'], '.2f')} $ (seit {eq['tage']} Tagen)", 2))
+                           f"{_z(eq['unterkante'], '.2f')} $ (Drittel seit {eq['ab']:%d.%m.}: Hochs {' → '.join(_z(x, '.2f') for x in eq['hochs'])})", 2))
     ak = akkumulation(df)
     if ak:
         if ak["bild"] == "Akkumulation":

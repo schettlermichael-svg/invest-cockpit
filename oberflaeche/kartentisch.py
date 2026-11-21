@@ -2,10 +2,10 @@
 geordnet, als Lagekarten. Die Reihen ordnen, sie filtern nicht – jeder Titel bleibt über die Titelseite erreichbar.
 
 Acht Setups (Namen nach dem, was sie sind; die Regeln stammen von den Meistern, siehe REIHEN und setup_feststellen):
-  Base-Ausbruch (VCP)  ★ in der Kaufzone · weiter weg oder eine Regel fehlt · nur Muster (Regeln: Minervini)
+  Base-Ausbruch (VCP)  💥 in der Kaufzone · weiter weg oder eine Regel fehlt · nur Muster (Regeln: Minervini)
   Flagge, Momentum-Ausbruch, Sprung (EP), Ermüdung (Short) (Regeln: Kullamägi; EP auch Bonde)
   Zahlen-Reaktion (Drift nach den Zahlen), Bärenflagge (Short), Bruch der Spanne (Short, seit 13.11.2026; Weinstein)
-  Watchlist: jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach dem Base-Ausbruch ★
+  Watchlist: jeder Titel aus einstellungen/watchlists.json, immer; steht direkt nach dem Base-Ausbruch 💥
 Ein Titel steht in genau einer Reihe (Vorrang in setup_feststellen); „auch“ nennt seine übrigen Setups.
 
 Rechnung in zwei Stufen: 1. alle Titel VCP-Scanner, die Regeln und Auktion als Zeichen (mehrere Prozesse) → Reihe; 2.
@@ -29,7 +29,7 @@ import phase                                         # noqa: E402
 from dateien import json_lesen, json_schreiben  # noqa: E402
 from gestaltung import TERMIN_GELB  # noqa: E402  Zahlen in höchstens 14 Tagen: eine Termin-Regel
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
-REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und eng (VCP), Trendvorlage, RS ab 70, Zahlen "
+REIHEN = [("m_spitze", "💥 Base-Ausbruch · in der Kaufzone", "Base reif und eng (VCP), Trendvorlage, RS ab 70, Zahlen "
                                                           "wachsen – alle Regeln erfüllt, Kurs 5 % vor bis 5 % über dem "
                                                           "Pivot"),
           ("m_weitere", "Base-Ausbruch · weiter weg oder eine Regel fehlt", "Base-Ausbruch mit allen Regeln, aber Kurs "
@@ -52,11 +52,11 @@ REIHEN = [("m_spitze", "★ Base-Ausbruch · in der Kaufzone", "Base reif und en
           ("w_spring", "Spring", "Wyckoff: Tief höchstens 1 ATR unter der Unterkante der Zone (wie sie am Vortag "
                                  "stand), Schluss binnen 3 Tagen zurück in der Zone; gilt 10 Tage, solange das Tief des "
                                  "Fehlausbruchs hält und die Oberkante nicht erreicht ist; Einstieg an der Unterkante, Ziel "
-                                 "die Oberkante; ★ bis 5 % darüber"),
+                                 "die Oberkante; 💥 bis 5 % darüber"),
           ("w_upthrust", "Upthrust · Short", "Wyckoff: Hoch höchstens 1 ATR über der Oberkante der Zone, Schluss binnen 3 "
                                              "Tagen zurück in der Zone; gilt 10 Tage, solange das Hoch des Fehlausbruchs "
                                              "hält und die Unterkante nicht erreicht ist; Einstieg an der Oberkante, Ziel die "
-                                             "Unterkante; ★ bis 5 % darunter"),
+                                             "Unterkante; 💥 bis 5 % darunter"),
           ("k_ermuedung", "Ermüdung · Short", "Nach einer Fahnenstange ab 30 % bricht die Flagge nach unten (Schluss "
                                               "unter der Unterkante, letzte 5 Tage) – meist ein Führer; grün bis 5 % "
                                               "darunter; Stopp 1,5 ATR über der Unterkante, das Setup erlischt schon "
@@ -148,12 +148,19 @@ def _stufe1(tk, start=None, regeln=False):
         if info["_kreislauf"]:
             info["kreislauf"] = {"wort": info["_kreislauf"]["wort"], "phase": info["_kreislauf"]["phase"],
                                  "ziel": info["_kreislauf"]["ziel"]}
+        try:                                        # Tiefenanalyse je Titel (Micky 21.11.2026, aus der Titel-Analyse)
+            import avwap
+            import tiefe
+            zt = avwap.zahlentag(df, gewinne) if gewinne is not None else None
+            info["tiefe"] = tiefe.kurz(df, tiefe.dreissig(df), zt, index, tiefe.zone_beginn(df))
+        except Exception:  # noqa: BLE001 – ohne Tiefenanalyse steht die Karte trotzdem
+            info["tiefe"] = None
         return info
     except Exception:  # noqa: BLE001 – ein Titel scheitert, der Tisch steht trotzdem
         return None
 
 
-NAME = {"m_spitze": "Base-Ausbruch ★", "m_weitere": "Base-Ausbruch", "vcp": "Base-Ausbruch · nur Muster",
+NAME = {"m_spitze": "Base-Ausbruch 💥", "m_weitere": "Base-Ausbruch", "vcp": "Base-Ausbruch · nur Muster",
         "flagge": "Flagge", "k_breakout": "Momentum-Ausbruch", "k_ep": "Sprung (EP)", "zahlen": "Zahlen-Reaktion",
         "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)", "k_bruch": "Bruch der Spanne (Short)",
         "w_spring": "Spring", "w_upthrust": "Upthrust (Short)"}
@@ -164,7 +171,7 @@ LEHRER = {"m_spitze": "M", "m_weitere": "M", "vcp": "M", "flagge": "K", "k_break
 
 def setup_feststellen(df, m, k, zr, scan):
     """Das eine Setup eines Titels (Micky 12.11.2026: ein eigenes System, ein Urteil je Titel) – für Kartentisch und
-    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Spring → Upthrust/Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★
+    Titelseite dieselbe Entscheidung. Vorrang: Sprung (EP) → Zahlen-Reaktion → Spring → Upthrust/Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch 💥
     (Kaufzone) → Flagge → Momentum-Ausbruch → Base-Ausbruch (weiter weg oder eine Regel fehlt) → Base-Ausbruch · nur
     Muster. „auch“ nennt die übrigen Setups, die der Titel zeigt (nichts geht verloren).
     → {reihe, gruen, stern, abstand, abstand_vz, luecken, zr, zr_seite, short_art, still, scanner, ausbruch, auch}"""
@@ -228,7 +235,7 @@ def setup_feststellen(df, m, k, zr, scan):
         e_s = ein_s[vcp_zone.naechster(ein_s, float(c[-1]), seite="short")]["wert"] if len(ein_s) > 1 else em["einstieg"]
         ab_ = float((c[-1] / e_s - 1) * 100)
         # Short-Zone wie die Kaufzone gespiegelt (12.11.2026: DT stand 21,9 %, ALNY 25,2 % unter der Unterkante als
-        # ★ – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
+        # 💥 – der Fall war längst gelaufen, der Stopp über dem Auslösetag 40 % entfernt)
         gruen_ = em["ampel"] == "grün" and -KAUFZONE_M <= ab_ <= 0
         info.update(reihe=r_, short_art=short_art, stern=gruen_, gruen=gruen_, abstand=abs(ab_), abstand_vz=ab_,
                     luecken=[] if gruen_ else [f"Short: vor dem Bruch, noch {ab_:.1f} % über dem Auslöser".replace(".", ",")]
@@ -313,7 +320,7 @@ GEGEN_STUFE = {("long", 4), ("short", 2)}   # Setup gegen die Stufe: Long im Abw
 
 STILL_PCT = 0.5               # ATR unter 0,5 % des Kurses: der Kurs steht still (Übernahme), kein handelbares Setup
 PIVOT_NAH = 5.0               # VCP-Reihe: Kurs höchstens 5 % unter bzw. über dem Pivot
-from vcp_zone import KAUFZONE as KAUFZONE_M  # noqa: E402  ★: höchstens 5 % unter bis 5 % über dem Pivot (Minervini, eine Quelle)
+from vcp_zone import KAUFZONE as KAUFZONE_M  # noqa: E402  💥: höchstens 5 % unter bis 5 % über dem Pivot (Minervini, eine Quelle)
 
 
 def flagge_im_trend(df, f):
@@ -484,7 +491,7 @@ RANG = {"m_spitze": 5, "k_ep": 5, "zahlen": 5, "w_spring": 5, "w_upthrust": 5, "
         "m_weitere": 3, "vcp": 1, None: 0}
 
 
-ALTE_REIHEN = {"spitze": "★ Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
+ALTE_REIHEN = {"spitze": "💥 Spitzenkandidaten (alt)", "weitere": "Weitere Kandidaten (alt)", "short": "Short (alt)",
                "konsolidierung": "Ausbruch aus der Konsolidierung (alt)", "frueh": "Frühaufklärung (alt)",
                "k_parabolic": "Parabolic Short (alt)",
                "flagge_alt": "Flagge (alt)"}
@@ -547,14 +554,14 @@ def _grundzeile(x):
 
 
 def stab_marke(x):
-    """Marke über jeder Karte (Seite Setups, 12.11.2026): 🎯 auf der Liste „Einsatzbereit“ oder der Grund, warum nicht."""
+    """Marke über jeder Karte (Seite Setups, 12.11.2026): 💥 auf der Liste „Einsatzbereit“ oder der Grund, warum nicht."""
     from gestaltung import BLAU, TEXT_3, t
     st_ = (x or {}).get("stab")
     if not st_:
         return ""
     drin, grund = st_
     if drin:
-        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">🎯 einsatzbereit'
+        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">💥 einsatzbereit'
                 f'<span style="font-weight:400"> · {t(grund)}</span></span>')
     return f'<span style="font-size:13px;color:{TEXT_3}">nicht auf der Liste · {t(grund)}</span>'
 
@@ -574,6 +581,41 @@ def rueckenwind_zeichen(x):
             + (f' · {rw["stufe"]}' if rw.get("stufe") else ""))
 
 
+def tiefe_zeichen(x):
+    """Zeichen der Tiefenanalyse in einer Zeile (Micky 21.11.2026): PbD-Form und D-Kante, Quetschung, CMF, Stärke in
+    der Schwäche an den Abgabetagen, Wertwanderung – jedes Zeichen aus der Zeichenliste."""
+    import tiefe
+    ti = (x or {}).get("tiefe")
+    if not ti:
+        return ""
+    from gestaltung import zahl
+    teile = []
+    p = ti.get("pbd")
+    if p:
+        f = {"P": "🦬", "b": "🐻", "D": "🟡"}[p["form"]]
+        teile.append(f"{f} PbD {p['form']}" + (" gescheitert" if p["gescheitert"] else "")
+                     + ({"unten": " · 🦬 D-Long an der Unterkante", "oben": " · 🐻 D-Short an der Oberkante"}.get(p["kante"], "")))
+    if ti.get("quetsch"):
+        teile.append("🦈 Quetschung" + (" nach unten" if ti["quetsch"] == "absteigend" else ""))
+    c = ti.get("cmf")
+    if c is not None:
+        teile.append(f"{'🟢' if c > tiefe.CMF_GRENZE else '🔴' if c < -tiefe.CMF_GRENZE else '🟡'} CMF "
+                     f"{'+' if c > 0 else '−' if c < 0 else ''}{zahl(abs(c), 2)}")
+    s_ = ti.get("sis")
+    if s_ and s_[1]:
+        teile.append(f"{'🦈' if s_[0] * 2 > s_[1] else '🟡' if s_[0] else '🔴'} Abgabetage {s_[0]}/{s_[1]} besser")
+    w = ti.get("wander")
+    if w:
+        r_, n_ = w["treppe"]
+        if n_ >= tiefe.TREPPE:
+            teile.append(f"{'🦬' if r_ > 0 else '🐻'} Treppe {'↑' if r_ > 0 else '↓'}{n_}")
+        if w["ballen"]:
+            teile.append("🟡 POCs ballen sich")
+        if w["abtasten"]:
+            teile.append(f"🪝 Abtasten {w['abtasten']}")
+    return " · ".join(teile)
+
+
 def karte_html(x, kopf="", tk=None):
     """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
     Grund, was fehlt), das Zeichen „Rückenwind“ und der Kreislauf (Mini-Kurve des Jahres und Phase, 13.11.2026)."""
@@ -581,6 +623,8 @@ def karte_html(x, kopf="", tk=None):
     kopf = stab_marke(x) + (kopf or _grundzeile(x))
     rw = rueckenwind_zeichen(x)
     rw = f'<span style="font-size:13px;color:{TEXT_2}">{t(rw)}</span>' if rw else ""
+    ti = tiefe_zeichen(x)
+    rw += f'<span style="font-size:13px;color:{TEXT_2}">{t(ti)}</span>' if ti else ""
     return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}{kreislauf_zeile(tk)}'
             f'{lagekarte.faerben(x["karte"], x)}</div>')
 
@@ -613,8 +657,8 @@ def zeile(tk, x):
     setup = (x.get("kacheln") or {}).get("Setup", ("grau", "–", ""))
     st_ = x.get("stab")
     return {"tk": tk, "farbe": _farbe(x)[:7], "blass": len(_farbe(x)) > 7, "Setup": setup[1],  # Layout
-            "Stab": ("🎯 " if st_[0] else "") + st_[1] if st_ else "",
-            "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x),
+            "Stab": ("💥 " if st_[0] else "") + st_[1] if st_ else "",
+            "Befund": " · ".join(z for z in (rueckenwind_zeichen(x), scanner_text(x), tiefe_zeichen(x),
                                              "Market Profile: " + x["zustand"] if x.get("zustand") else "") if z),
             "Abstand %": zahl(x["abstand_vz"], 1) if x.get("abstand_vz") is not None else "",   # ohne Einstieg leer
             "Zustand": _zustand_wort(tk), "Phase": _phase_wort(tk), "Was fehlt": lagekarte.grund(x)}
@@ -761,7 +805,7 @@ def plan(tisch=None):
         liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
                        key=lambda p: _ordnung(p[1]))
         teile.append(_abschnitt(name, text, liste))
-        if key == WATCHLISTS_NACH:             # Watchlist direkt nach ★ Spitze (05.11.2026)
+        if key == WATCHLISTS_NACH:             # Watchlist direkt nach 💥 Spitze (05.11.2026)
             watchlist_abschnitte()
     teile.append({"art": "html", "rolle": "termine", "html": station("termine")
                   + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
@@ -817,7 +861,7 @@ def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
     return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
             f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'
-            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">🎯 Einsatzbereit · {len(akten)} Titel auf der Liste'
+            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">💥 Einsatzbereit · {len(akten)} Titel auf der Liste'
             f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
             f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table>'
             + _knapp_draussen(tt, gruende, [tk for tk in elite if tk not in akten], namen) + '</div>'
@@ -839,11 +883,11 @@ def _knapp_draussen(tt, gruende, rest, namen, n=10):  # Layout
 
 def _watchlist_kasten(tt, gruende, liste, drin, namen):
     """◆ Deine Watchlist · einsatzbereit (Micky 12.11.2026): die Auswahl ist neutral, die eigene Truppe
-    steht hier getrennt – dieselbe Rangfolge, je Titel 🎯 auf der Liste oder der Grund. Die übrigen Watchlist-Titel zeigt
+    steht hier getrennt – dieselbe Rangfolge, je Titel 💥 auf der Liste oder der Grund. Die übrigen Watchlist-Titel zeigt
     ② Stellung vollständig."""
     from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
     zeilen = "".join(
-        f'<tr><td style="padding:6px 8px;width:28px">{"🎯" if tk in drin else ""}</td>'
+        f'<tr><td style="padding:6px 8px;width:28px">{"💥" if tk in drin else ""}</td>'
         f'<td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
         f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
         f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get((tt.get(tk) or {}).get("reihe"), "—"))}</td>'
@@ -855,7 +899,7 @@ def _watchlist_kasten(tt, gruende, liste, drin, namen):
             f'overflow-x:auto"><div style="font-size:16px;font-weight:600;margin-bottom:2px">◆ Deine Watchlist · '
             f'einsatzbereit · {len(liste)}, davon {n_drin} auf der Liste</div>'
             f'<div style="font-size:13px;color:{TEXT_3};margin-bottom:6px">Dieselbe Rangfolge wie oben, nur deine Titel · '
-            f'🎯 = auf der Liste, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
+            f'💥 = auf der Liste, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
             f'<table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><tbody>'
             f'{zeilen or "<tr><td>zurzeit keiner deiner Titel einsatzbereit</td></tr>"}</tbody></table></div>')
 
@@ -878,7 +922,7 @@ def _marken(x):
 # ── Lagekarte nach Sektoren (4.11.2026, neu geordnet 6.11.2026) ──
 # Eine Frage: an welchem Frontabschnitt sammeln sich die Angriffe, und wer führt dort? Zeilen = Sektoren, sortiert nach
 # der Zahl der Angriffe (dann der Bereitstellung); drei Spalten statt neun: Angriff jetzt (Setup grün in einem der
-# Systeme oder des VCP-Scanners, ★), Bereitstellung (übrige Reihen: Setup noch nicht grün, Flagge weiter weg) und ◆ Watchlist
+# Systeme oder des VCP-Scanners, 💥), Bereitstellung (übrige Reihen: Setup noch nicht grün, Flagge weiter weg) und ◆ Watchlist
 # ohne Reihe. Je Zelle ein Balken mit der Zahl und die drei stärksten Titel; der Rest aufklappbar – nichts wird gefiltert.
 SPALTEN = [("jetzt", "Angriff jetzt"), ("bereit", "Bereitstellung"), ("watch", "◆ Watchlist ohne Reihe")]
 TOP = 3                       # Marken je Zelle sichtbar, der Rest aufklappbar
@@ -922,22 +966,22 @@ def lagebild(tisch):
         zellen.setdefault((_sektor_etf(tk, rv), _spalte(x)), []).append((tk, x))
 
     def marke(tk, x):
-        stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # ★: jeder Spitzenkandidat (auch ältere Tische)
+        stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # 💥: jeder Spitzenkandidat (auch ältere Tische)
         rand, dicke = lagekarte.rahmen(x)                  # long grün, short rot, blass = Setup nicht grün, gelb = offen
-        text = ("★ " if stern else "") + tk
+        text = ("💥 " if stern else "") + tk
         if x.get("reihe") in ("vcp", "flagge"):
             text += " M" if x["reihe"] == "vcp" else " F"
         if x.get("reihe") == "zahlen":
-            text += " ⚡"
+            text += " 🔥"
         if x.get("listen"):
             text += " ◆"
         g = gruppen.get(tk)
         if g:
-            text += " ⚑"
+            text += " 🌞"
         zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
                   f"Auktion: {t(x.get('zustand', '–'))}"]
         if stern:
-            zeilen.append("★ Setup grün, Kurs am Pivot")
+            zeilen.append("💥 Setup grün, Kurs am Pivot")
         if scanner_text(x):
             zeilen.append("Scanner: " + t(scanner_text(x)))
         if lagekarte.grund(x):
@@ -945,7 +989,7 @@ def lagebild(tisch):
         if x.get("listen"):
             zeilen.append("◆ auf der Watchlist")
         if g:
-            zeilen.append(f"⚑ Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))  # Layout
+            zeilen.append(f"🌞 Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))  # Layout
                           + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))  # Layout
         tip = "<br>".join(zeilen)
         return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
@@ -996,7 +1040,7 @@ def lagebild(tisch):
                       f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []), k)}</div>' for k, _ in SPALTEN) + '</div>')
     hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Oben der Abschnitt mit den meisten Angriffen. '
              f'Angriff jetzt = Setup grün · Bereitstellung = in einer Reihe, Setup noch nicht grün oder nur Muster '
-             f'(„M“) · F = Flagge · ⚡ = Zahlen-Reaktion · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
-             f'die drei stärksten, „+n“ klappt den Rest auf · ★ Kaufzone · ◆ Watchlist · ⚑ Themen-Gruppe Führend/Erstarkend · '
+             f'(„M“) · F = Flagge · 🔥 = Zahlen-Reaktion · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
+             f'die drei stärksten, „+n“ klappt den Rest auf · 💥 Kaufzone · ◆ Watchlist · 🌞 Themen-Gruppe Führend/Erstarkend · '
              f'Maus auf einen Titel zeigt Reihe, Befund des Scanners, Auktion und was fehlt.</div>')
     return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

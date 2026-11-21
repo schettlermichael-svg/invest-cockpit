@@ -212,7 +212,7 @@ def material(tk, df):
         mp = None
     pa = avwap.profil_anker(df, zt, z.get("start") if z.get("zone") else None)
     wh = avwap._wochen_hochs(df)[-6:]  # Technik
-    ein = zeichen.einquetschung(df)
+    ein = zeichen.einquetschung(df, zt)
     c = df["Close"]
     zeilen = [f"Titel {tk}, letzter Kurs {_z(c.iloc[-1])} $ am {_d(df.index[-1])}, 52-Wochen-Hoch "
               f"{_z(df['High'].iloc[-JAHR_TAGE:].max())} $, 52-Wochen-Tief {_z(df['Low'].iloc[-JAHR_TAGE:].min())} $"]

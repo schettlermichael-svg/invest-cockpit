@@ -140,7 +140,7 @@ def seite_uebersicht():
     pendel_ampel = "gelb" if p["ampel"] == "grün" and len(gegen) >= 2 else p["ampel"]
     pendel_zeile = _bewegung(p["vor_4_wochen"], p["zone"])
     if breite_zeichen:
-        pendel_zeile += " ⚠ Marktbreite unsicher – Zone nur unter Vorbehalt."
+        pendel_zeile += " 🟡 Marktbreite unsicher – Zone nur unter Vorbehalt."
         pendel_ampel = schlimmste if pendel_ampel == "grün" or schlimmste == "rot" else pendel_ampel
     if p["ampel"] == "grün" and gegen:
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."

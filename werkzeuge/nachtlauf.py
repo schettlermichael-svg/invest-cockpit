@@ -80,7 +80,7 @@ def main(nur_tisch=False):
             traceback.print_exc()
         p["schritte"].append({"name": name, "ok": ok, "text": str(text)[:300], "sekunden": round(time.time() - t0)})
         _schreiben(p, datei)
-        print(f"    {'✓' if ok else '✗'} {text}", flush=True)
+        print(f"    {'🟢' if ok else '🔴'} {text}", flush=True)
         return ok
 
     alle = tpo_laden.titel()
@@ -186,7 +186,7 @@ def main(nur_tisch=False):
         gelb = [t for a, t in w["zeichen"] if a == "gelb"]
         p["wachen"] = {"ampel": w["ampel"], "rot": len(rot), "gelb": len(gelb)}
         if rot:
-            _mitteilung(f"⚠ Wachen: {len(rot)} Fehler der App – " + " · ".join(rot[:3]), True)
+            _mitteilung(f"🔴 Wachen: {len(rot)} Fehler der App – " + " · ".join(rot[:3]), True)
             raise RuntimeError(f"{len(rot)} Fehler: " + " · ".join(rot[:3]))
         return f"{w['akten']} Akten geprüft · " + ("alles im Gleichlauf" if not gelb else f"{len(gelb)} Hinweise")
 
@@ -220,7 +220,7 @@ def main(nur_tisch=False):
     _kopf_neu()
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     if fehler:                                    # Micky 17.11.2026: kein „Lage steht“ mehr – aufs Handy nur die heißen
-        _mitteilung(f"⚠ gescheitert: {', '.join(fehler)}", True)   # Titel und Fehler des Laufs
+        _mitteilung(f"🔴 gescheitert: {', '.join(fehler)}", True)   # Titel und Fehler des Laufs
     try:                                          # die heißesten Titel aus „Einsatzbereit“ (Micky 17.11.2026)
         import auswahl
         text_, n_ = auswahl.heisse()
@@ -425,7 +425,7 @@ def tisch_lauf_stand():
         return True, f"Läuft seit {p['start'][-5:]} Uhr · Schritt {i + 1} von 4: {namen[i]}"
     if not p.get("ende"):
         return False, f"Lauf vom {p['start']} brach ab"
-    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {fehler}" if fehler else "✓"))
+    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {fehler}" if fehler else "🟢"))
 
 
 def tisch_lauf_starten():

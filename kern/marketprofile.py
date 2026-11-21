@@ -8,7 +8,8 @@ Wertbereich (70 %): vom POC aus werden je zwei Zeilen darüber und darunter verg
 Wertzone (Dalton, überlappender Wert, Wochenprofile): eine abgeschlossene Woche gehört zur Wertzone, solange ihr Wertbereich den
     gemeinsamen Wertbereich der Wertzone überlappt. Liegt er ganz darüber oder darunter, ist der Wert gewandert (B), mit
     dieser Woche beginnt die nächste Wertzone.
-Tageswert zum Vortag: ▲ ganz höher · △ überlappend höher · ▬ unverändert (innen/außen) · ▽ überlappend tiefer · ▼ ganz tiefer.
+Tageswert zum Vortag (6 Klassen, Micky 21.11.2026): ▲ ganz höher · △ überlappend höher · ▬ innen · ◇ außen · ▽ überlappend
+    tiefer · ▼ ganz tiefer.
 
 Auslöser je Tag, gemessen an der Wertzone der abgeschlossenen Wochen davor (kein Blick in die Zukunft):
     A  Schluss jenseits des Rahmens und Tageswert ganz außerhalb des Wertzonenwerts, Wertzone mindestens 3 Wochen alt
@@ -30,7 +31,9 @@ LOG_STUFE = np.log1p(STUFE)
 ZONE_REIF = 3            # A erst ab einer Wertzone von 3 Wochen; jüngere Wertzonen: F (Fortsetzung) – Flaggenregel
 SCHWELLE_TAGE = 5        # an der Schwelle: Tageswerte der letzten 5 Tage
 SCHWELLE_MIN = 3         # … davon mindestens 3 in eine Richtung (▲/△ bzw. ▼/▽) und keiner ganz dagegen
-ZEICHEN = {"hoch": "▲", "ueber": "△", "gleich": "▬", "unter": "▽", "tief": "▼"}
+ZEICHEN = {"hoch": "▲", "ueber": "△", "innen": "▬", "aussen": "◇", "unter": "▽", "tief": "▼"}
+NAME = {"hoch": "höher", "ueber": "überlappend höher", "innen": "innen", "aussen": "außen", "unter": "überlappend tiefer",
+        "tief": "tiefer"}
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -102,17 +105,23 @@ def wochenprofile(df30, bis=None):
     return aus
 
 
+def klasse(v0, h0, v1, h1):
+    """Wertbereich v1–h1 gegen den vorigen v0–h0 (Dalton) in 6 Klassen (Micky 21.11.2026: innen und außen getrennt):
+    hoch · ueber · innen · aussen · unter · tief."""
+    if v1 > h0:
+        return "hoch"
+    if h1 < v0:
+        return "tief"
+    if v1 >= v0 and h1 <= h0:
+        return "innen"
+    if v1 <= v0 and h1 >= h0:
+        return "aussen"
+    return "ueber" if v1 > v0 else "unter"
+
+
 def beziehung(p, v):
     """Tageswert p zum Vortag v (Dalton)."""
-    if p["val"] > v["vah"]:
-        return "hoch"
-    if p["vah"] < v["val"]:
-        return "tief"
-    if p["vah"] > v["vah"] and p["val"] > v["val"]:
-        return "ueber"
-    if p["vah"] < v["vah"] and p["val"] < v["val"]:
-        return "unter"
-    return "gleich"
+    return klasse(v["val"], v["vah"], p["val"], p["vah"])
 
 
 def _zonen_verlauf(wochen):

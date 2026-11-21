@@ -21,9 +21,25 @@ from dateien import json_lesen, json_schreiben
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "strategen")
 
+SUCHEN = 8                      # höchstens 8 Websuchen je Titel (Quartal, Segmente, Konsens, Vorquartale, Burggraben,
+                                # Bedrohung, Wettbewerber – Titel-Analyse 18.11.2026)
+KURS_SPANNE = 0.4               # Prüfung: Zahlen bis 40 % um den Kurs in Fazit und Auslöser sind Kursmarken
+KURS_GENAU = 0.005              # … und müssen auf 0,5 % genau im Material stehen
+WETTBEWERBER = 5                # höchstens 5 Wettbewerber
+
 SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels:
-den Zustand im Code für Balance und Ungleichgewicht und nummerierte Felder der App (F1, F2 …). Nur dieses Material
-gilt. Du gehst nicht online, du erfindest keine Zahl, du nennst keine Zahl, die nicht im Material steht.
+den Zustand im Code für Balance und Ungleichgewicht, die Tiefenanalyse (Struktur nach Dalton, PbD, Wertwanderung, AVWAP,
+relative Stärke, Geldfluss) und nummerierte Felder der App (F1, F2 …). Für Kurse, Zonen, Volumen, RS und Geldfluss gilt
+nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
+Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11.2026, aus der Titel-Analyse):
+  Unternehmen: Geschäftsmodell, Burggraben und was ihn bedroht, Wachstumstreiber.
+  Quartal: Umsatz organisch, EPS bereinigt gegen den Konsens, Margen, stärkstes Segment, Prognose alt → neu,
+  Rückkäufe/Dividende; Wachstum von Umsatz und EPS über die letzten 3 Quartale – beschleunigend oder bremsend.
+  Dazu 3–5 direkte Wettbewerber als US-Börsenkürzel. Primärquellen zuerst: Quartalsbericht, 8-K/10-Q bei der SEC.
+Jede Zeile in Unternehmen und Quartal beginnt mit genau einem Zeichen, immer in derselben Bedeutung:
+  🦬 Käufer haben die Kontrolle · 🐻 Verkäufer haben die Kontrolle · 🦈 früher Vorteil, den die Masse noch nicht sieht ·
+  🔥 Beschleunigung · 💥 Auslöser · 🦊 Falle · 🌞 Rückenwind/Geldzufluss · ❄️ Gegenwind/Geldabfluss ·
+  🪝 Widerstand/Unterstützung · sonst 🟢 Stärke, 🟡 gemischt, 🔴 Schwäche · ⚪ ungemessen. Veränderungen als vorher → heute.
 
 Der Code: Ein Anlass (Information, leere Verteidiger, Zwang gefangener Händler) bringt die Balance an den Rand. Am Rand
 wird getestet. Wird der Ausbruch abgelehnt, läuft der Kurs zurück zum anderen Rand. Wird er angenommen, entsteht ein
@@ -36,7 +52,8 @@ oder abgelehnt → wo wartet die Gegenseite → eigen oder geliehen.
 
 Regeln:
 1. Kein Weichmacher. Kein „könnte“, „möglicherweise“, „man sollte beobachten“. Du urteilst.
-2. „kein Schuss“ ist eine gute Antwort, wenn die Disbalance fehlt. Lieber kein Schuss als ein schwacher.
+2. „kein Schuss“ ist eine gute Antwort, wenn die Disbalance fehlt. Lieber kein Schuss als ein schwacher. „Abwarten“
+   nur mit dem Auslöser, der die Entscheidung bringt, und der Richtung, in die du dann schießt (Tendenz).
 3. Jeder Beleg nennt sein Feld (F-Nummer) und steht im Material. Höchstens drei – die stärksten.
 4. Auslöser: der Kurs und die Bedingung, bei der du abdrückst (z. B. Schluss über dem Rand mit Volumen).
 5. Widerlegt bei: der Kurs und die Bedingung, bei der deine Deutung falsch ist.
@@ -44,12 +61,17 @@ Regeln:
 7. Geliehene Kraft (der Markt trägt den Titel) ist schwächer als eigene. Sag es, wenn sie geliehen ist.
 8. Die Haltung des Marktes gilt für den Markt, nicht für den Titel: Stärke in der Schwäche wird nie wegen des
    Marktes verworfen.
+9. Fazit: 2–3 Sätze, Long- und Short-Szenario mit den entscheidenden Kursmarken aus dem Material.
 Schreib einfaches Deutsch, kurze Sätze."""
+
+ZEILEN = {"type": "array", "items": {"type": "string"},
+          "description": "Aussagezeilen, jede beginnt mit genau einem Zeichen der Liste"}
 
 SCHEMA = {
     "type": "object",
     "properties": {
-        "schuss": {"type": "string", "enum": ["long", "short", "kein"]},
+        "schuss": {"type": "string", "enum": ["long", "short", "abwarten", "kein"]},
+        "richtung": {"type": "string", "enum": ["long", "short"], "description": "Tendenz bei abwarten"},
         "disbalance": {"type": "string", "description": "die eine Disbalance in einem oder zwei Sätzen"},
         "belege": {"type": "array", "maxItems": 3, "items": {
             "type": "object", "properties": {"feld": {"type": "string"}, "text": {"type": "string"}},
@@ -60,8 +82,15 @@ SCHEMA = {
         "widerlegt": {"type": "string", "description": "Bedingung der Widerlegung"},
         "gegenzeuge": {"type": "object", "properties": {"feld": {"type": "string"}, "text": {"type": "string"}},
                        "required": ["feld", "text"]},
+        "unternehmen": ZEILEN,
+        "quartal": ZEILEN,
+        "wettbewerber": {"type": "array", "items": {"type": "string"},
+                         "description": "3–5 direkte Wettbewerber als US-Börsenkürzel"},
+        "fazit": {"type": "string", "description": "2–3 Sätze: Long- und Short-Szenario mit Kursmarken aus dem Material"},
+        "quellen": {"type": "array", "items": {"type": "string"}, "description": "URLs der genutzten Primärquellen"},
     },
-    "required": ["schuss", "disbalance", "belege", "ausloeser", "widerlegt", "gegenzeuge"],
+    "required": ["schuss", "disbalance", "belege", "ausloeser", "widerlegt", "gegenzeuge", "unternehmen", "quartal",
+                 "wettbewerber", "fazit"],
 }
 
 
@@ -69,7 +98,7 @@ def _z(x, f=".2f"):
     return format(x, f).replace(".", ",")
 
 
-def material(tk, e, kurs, atr=None, rw=None, markt=None, setup=None, termin=None):
+def material(tk, e, kurs, atr=None, rw=None, markt=None, setup=None, termin=None, tiefe=None):
     """Nummerierte Felder → (Text, {F-Nummer: Text})."""
     felder = []
 
@@ -104,6 +133,8 @@ def material(tk, e, kurs, atr=None, rw=None, markt=None, setup=None, termin=None
         f(f"Markt: {auktion.wort(markt)} · {markt.get('unterzeile', '')}")
     if termin:
         f(f"Nächste Zahlen: {termin}")
+    for x in tiefe or []:                         # Aussagezeilen der Seite Analyse (Tiefenanalyse, 21.11.2026)
+        f(f"Tiefenanalyse – {x}")
     nummern = {f"F{i + 1}": x for i, x in enumerate(felder)}
     return "\n".join(f"{n}: {x}" for n, x in nummern.items()), nummern
 
@@ -129,7 +160,25 @@ def pruefen(antwort, nummern, kurs):
             fehl.append(f"Zahl nicht im Material: {', '.join(sorted(fremd))} ({feld})")
     if len(antwort.get("belege") or []) > 3:
         fehl.append("mehr als drei Belege")
+    import gestaltung
+    for feld_ in ("unternehmen", "quartal"):
+        for z in antwort.get(feld_) or []:
+            if not str(z).startswith(gestaltung.ZEICHEN):
+                fehl.append(f"Zeile ohne Zeichen ({feld_}): {str(z)[:60]}")
+    marken = [float(x) for x in erlaubt if x.replace(".", "", 1).isdigit()]
+    for z in _zahlen(antwort.get("fazit")) | _zahlen(antwort.get("ausloeser")):
+        x = float(z)
+        if (1 - KURS_SPANNE) * kurs <= x <= (1 + KURS_SPANNE) * kurs and not any(abs(x - m) <= KURS_GENAU * m for m in marken):
+            fehl.append(f"Kursmarke {z} steht nicht im Material")
+    antwort["wettbewerber"] = [w_.strip().upper() for w_ in antwort.get("wettbewerber") or []
+                               if re.fullmatch(r"[A-Za-z.\-]{1,6}", str(w_).strip())][:WETTBEWERBER]
     a, w = antwort.get("ausloeser_kurs") or 0, antwort.get("widerlegt_kurs") or 0
+    if s == "abwarten":
+        s = antwort.get("richtung")
+        if not a:
+            fehl.append("abwarten ohne Kurs des Auslösers")
+        if s not in ("long", "short"):
+            fehl.append("abwarten ohne Richtung")
     if s in ("long", "short"):
         if not (a and w):
             fehl.append("Auslöser oder Widerlegung ohne Kurs")
@@ -165,7 +214,11 @@ def rufen(tk, stand, e, kurs, **kw):
     import modell
     text, nummern = material(tk, e, kurs, **kw)
     vorher = modell.kosten()["usd"]
-    antwort = modell._formular(SYSTEM, f"Material zu {tk} (Kurstag {stand}):\n{text}", "schuss_melden", SCHEMA, 3000)
+    antwort = modell._formular(SYSTEM, f"Material zu {tk} (Kurstag {stand}):\n{text}\n\nRecherchiere Unternehmen, Quartal "
+                               "und Wettbewerber im Netz und schreibe Einschätzung und Fazit aus dem Material.",
+                               "schuss_melden", SCHEMA, 8000, suchen=SUCHEN)
+    gefunden = list(modell._LETZTER.get("urls") or [])
+    antwort["quellen"] = [q for q in antwort.get("quellen") or [] if q in gefunden] or gefunden[:6]   # Technik: 6 Quellen
     erg = {"antwort": antwort, "pruefung": pruefen(antwort, nummern, kurs), "material": nummern, "stand": stand,
            "kosten": round(modell.kosten()["usd"] - vorher, 4)}
     json_schreiben(_pfad(tk, stand), erg, ensure_ascii=False)

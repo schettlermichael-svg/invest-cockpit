@@ -118,7 +118,7 @@ def stichprobe(n=STICHPROBE, seed=None):
 
 # ── Material ────────────────────────────────────────────────────────────────────────────────────────────────────
 def _regeln(liste):
-    return "; ".join(f"{'✓' if ok else '✗'} {name}" + (f" ({text})" if text else "") for name, ok, text in liste or [])
+    return "; ".join(f"{'🟢' if ok else '🔴'} {name}" + (f" ({text})" if text else "") for name, ok, text in liste or [])
 
 
 def material(tk, df):
@@ -145,7 +145,7 @@ def material(tk, df):
     r = info.get("reihe")
     if r:
         z.append(f"SETUP DER APP: {kartentisch.NAME.get(r, r)} (Lehrer {kartentisch.LEHRER.get(r, '')}) · "
-                 f"{'GRÜN' if info.get('gruen') else 'nicht grün'}{' · ★' if info.get('stern') else ''}"
+                 f"{'GRÜN' if info.get('gruen') else 'nicht grün'}{' · 💥' if info.get('stern') else ''}"
                  + (f" · fehlt: {'; '.join(info['luecken'])}" if info.get("luecken") else "")
                  + (f" · Scanner: {info['scanner']}" if info.get("scanner") else "")
                  + (f" · Zeichen: {info['ausbruch']}" if info.get("ausbruch") else "")

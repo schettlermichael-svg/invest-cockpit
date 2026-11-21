@@ -166,15 +166,20 @@ def _gueltig(obj, schema):
     return True
 
 
-def _formular(system, inhalt, name, schema, max_tokens=8000, bilder=None):
+def _formular(system, inhalt, name, schema, max_tokens=8000, bilder=None, suchen=0):
     """Antwort über ein festes Formular (Werkzeug der Schnittstelle): die Schnittstelle gibt ein fertiges Objekt zurück,
     kein JSON-Text, der an Anführungszeichen zerbrechen kann. Opus 5.5 erlaubt kein erzwungenes Werkzeug
     (tool_choice „tool“/„any“ → Fehler 400, Nachtlauf 11.11.2026) – deshalb „auto“ mit klarer Anweisung; schreibt das
     Modell trotzdem Text, wird ein JSON-Objekt darin gelesen. Jede Meldung wird geprüft (alle Pflichtfelder, Listen als
     Listen); unvollständig – etwa am Token-Limit abgeschnitten (11.11.: leere Meldung des Risikomanagers, Tagesbefehl
-    nur mit Lage) – gibt es einen zweiten Versuch mit doppeltem Limit, sonst Unlesbar mit der Rohantwort."""
+    nur mit Lage) – gibt es einen zweiten Versuch mit doppeltem Limit, sonst Unlesbar mit der Rohantwort.
+    suchen: höchstens so viele Websuchen (Stratege mit Netz-Recherche, 21.11.2026); die Adressen, die die Suche
+    tatsächlich lieferte, stehen danach in _LETZTER["urls"] (zur Gegenprobe der angegebenen Quellen)."""
     werkzeug = [{"name": name, "description": "Meldung an den Stab abgeben – der einzige Weg, die Meldung abzugeben",
                  "input_schema": schema}]
+    if suchen:
+        werkzeug = [{"type": "web_search_20250305", "name": "web_search", "max_uses": suchen}] + werkzeug
+    _LETZTER["urls"] = []
     auftrag = (f"{inhalt}\n\nGib deine Antwort ausschließlich über das Werkzeug „{name}“ ab – genau ein Aufruf, "
                "alle Pflichtfelder ausgefüllt, Listen als echte Listen, kein Text davor oder danach.")
     roh = ""
@@ -183,6 +188,8 @@ def _formular(system, inhalt, name, schema, max_tokens=8000, bilder=None):
             [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b}} for b in bilder]
             + [{"type": "text", "text": auftrag}])
         bloecke = _rufen(system, [{"role": "user", "content": inhalt_}], max_tokens, werkzeug, {"type": "auto"})
+        _LETZTER["urls"] += [e.get("url") for b in bloecke if b.get("type") == "web_search_tool_result"
+                             and isinstance(b.get("content"), list) for e in b["content"] if isinstance(e, dict) and e.get("url")]
         kandidaten = [b["input"] for b in bloecke if b.get("type") == "tool_use" and isinstance(b.get("input"), dict)]
         text = "".join(b.get("text", "") for b in bloecke if b.get("type") == "text")
         a, e = text.find("{"), text.rfind("}")

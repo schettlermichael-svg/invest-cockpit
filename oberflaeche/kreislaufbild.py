@@ -17,7 +17,7 @@ FARBE = {0: "#6B7280", 1: "#7F93AD", 2: "#1D9E75", 3: "#B09A72", 4: "#D85A30", R
 # Wechsel zeichnet sich ab (Micky 13.11.2026: „Hell = laufende Phase verblasst“): die laufende Phase hell ab dem
 # ersten Zeichen – 4 → 1 hellrot, 2 → 3 hellgrün, 1 → 2 und 1 → 4 hell-blaugrau, 3 → 2 und 3 → 4 hell-ambergrau
 HELL = {1: "#BCC8D8", 2: "#9FE1CB", 3: "#DCCDAE", 4: "#F0997B", RUECKSCHLAG: "#F1D29A", RUECKSETZER: "#C0DD97"}
-PUNKT = {0: "◌", 1: "🔵", 2: "🟢", 3: "🟤", 4: "🔴"}
+PUNKT = {0: "⚪", 1: "🟡", 2: "🟢", 3: "🟡", 4: "🔴"}   # Zeichenliste (21.11.2026); das Wort nennt die Phase
 from zeichen import PHASE_NAME as NAME   # noqa: E402  ein Name je Phase in der ganzen App
 INDEX_FARBE = "#9AA3AF"
 
@@ -44,7 +44,7 @@ def wort(k):
 
 
 def punkt_wort(k):
-    return f'{PUNKT.get(k["phase"], "◌")} {wort(k)}' if k else ""
+    return f'{PUNKT.get(k["phase"], "⚪")} {wort(k)}' if k else ""
 
 
 def _farbe_jetzt(k):

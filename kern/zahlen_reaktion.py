@@ -83,7 +83,7 @@ def pruefen(df, gewinne):
     ampel = "grün" if fehlt == 0 else "gelb" if fehlt == 1 else "rot"
     abstand = float((c[-1] / w - 1) * 100) if w else None
     tag = df.index[pos]
-    text = (f"⚡ Zahlen-Reaktion {'+' if pct >= 0 else '−'}{k(abs(pct))} % am {tag:%d.%m.} (vor {tage_her} T.)"
+    text = (f"🔥 Zahlen-Reaktion {'+' if pct >= 0 else '−'}{k(abs(pct))} % am {tag:%d.%m.} (vor {tage_her} T.)"
             + (f" · Volumen {k(vol)}-fach" if vol else "") + f" · Schluss im {drittel} Drittel"
             + (f" · AVWAP {w:.2f} $ ".replace(".", ",") + _avwap_lage(halten, short, c[-1], w) if w else ""))
     return {"ampel": ampel, "seite": "short" if short else "long", "tag": f"{tag:%Y-%m-%d}", "pct": round(pct, 1),

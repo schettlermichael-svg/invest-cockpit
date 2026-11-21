@@ -87,7 +87,8 @@ def strategen_karte(erg):
     a = erg.get("antwort") or {}
     s = a.get("schuss", "kein")
     f = {"long": auktion.FARBE["angenommen"], "short": auktion.FARBE["angenommen"]}.get(s, TEXT_3)
-    wort = {"long": "Schuss long", "short": "Schuss short", "kein": "kein Schuss"}.get(s, s)
+    wort = {"long": "Schuss long", "short": "Schuss short", "kein": "kein Schuss",
+            "abwarten": f"Abwarten mit Tendenz {a.get('richtung', '–')}"}.get(s, s)
     mat = erg.get("material") or {}
 
     def feld(b):
@@ -103,16 +104,28 @@ def strategen_karte(erg):
     if li:
         zeilen.append(f'<ul style="margin:6px 0 0 18px;padding:0;color:{TEXT_2};font-size:13px">{li}</ul>')
     if s != "kein":
-        zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">Auslöser: '
+        zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">💥 Auslöser: '
                       f'{t(str(a.get("ausloeser_kurs", "")).replace(".", ","))} $ – {t(a.get("ausloeser", ""))}<br>'
                       f'Widerlegt bei: {t(str(a.get("widerlegt_kurs", "")).replace(".", ","))} $ – '
                       f'{t(a.get("widerlegt", ""))}</div>')
     if a.get("gegenzeuge"):
         zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">Gegenzeuge: {feld(a["gegenzeuge"])}</div>')
+    for kopf_, schl in (("Unternehmen", "unternehmen"), ("Letztes Quartal", "quartal")):   # Recherche (21.11.2026)
+        if a.get(schl):
+            zeilen.append(f'<div style="margin-top:8px;font-size:13px;font-weight:600">{kopf_}</div>'
+                          + "".join(f'<div style="font-size:13px;color:{TEXT_2}">{t(z)}</div>' for z in a[schl]))
+    if a.get("wettbewerber"):
+        zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">Wettbewerber: '
+                      + ", ".join(f'<a href="?seite=Analyse&t={t(w)}">{t(w)}</a>' for w in a["wettbewerber"]) + "</div>")
+    if a.get("fazit"):
+        zeilen.append(f'<div style="margin-top:8px;font-size:14px"><b>Fazit:</b> {t(a["fazit"])}</div>')
+    if a.get("quellen"):
+        zeilen.append(f'<div style="margin-top:6px;font-size:12px;color:{TEXT_3}">Quellen: '
+                      + " · ".join(f'<a href="{t(q)}" target="_blank">{t(q[:60])}</a>' for q in a["quellen"]) + "</div>")  # Layout
     p = erg.get("pruefung") or []
     zeilen.append(f'<div style="margin-top:8px;font-size:12px;color:{auktion.FARBE["Ende des Laufs"] if not p else "#D29922"}">'
-                  + ("✓ Prüfung bestanden: Felder, Zahlen und Seiten stimmen mit dem Material"
-                     if not p else "⚠ Prüfung: " + t(" · ".join(p))) + "</div>")
+                  + ("🟢 Prüfung bestanden: Felder, Zahlen und Seiten stimmen mit dem Material"
+                     if not p else "🦊 Prüfung: " + t(" · ".join(p))) + "</div>")
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:3px solid {f};border-radius:10px;'
             f'padding:12px 14px;margin:8px 0">{"".join(zeilen)}</div>')
 
@@ -138,7 +151,7 @@ def pruef_karte(r, name="🔎 Chart-Prüfer"):
     kopf = (f'<div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><span style="font-size:12px;'
             f'color:{TEXT_3}">{t(name)} · Kurstag {t(r.get("stand", ""))}</span><span style="font-size:16px;'
             f'font-weight:600;color:{f}">{"kein Widerspruch" if not w else f"{len(w)} Widerspruch" + ("e" if len(w) > 1 else "")}'
-            f'</span></div><div style="margin-top:6px;color:{TEXT_2};font-size:13px">✓ {t(r.get("stimmt", ""))}</div>')
+            f'</span></div><div style="margin-top:6px;color:{TEXT_2};font-size:13px">🟢 {t(r.get("stimmt", ""))}</div>')
     zeilen = "".join(
         f'<li style="margin:4px 0"><b>{t(x["element"])}</b> {"●" if x["gewicht"] == "sicher" else "○ strittig"} – '
         f'{t(x["befund"])}<br><span style="color:{TEXT_3}">Richtig wäre: {t(x["richtig"])} · {t(x["regel"])}</span></li>'

@@ -169,3 +169,28 @@ def ampelzeile(name, ampel, text="", hilfe=""):
 
 
 
+
+
+# Zeichenliste (Micky 21.11.2026, aus der Titel-Analyse, gilt im ganzen Cockpit): jede Aussagezeile beginnt mit genau
+# einem Zeichen, immer in derselben Bedeutung; Bildzeichen sparsam, sonst die Ampel.
+ZEICHEN_LISTE = (("🦬", "Käufer haben die Kontrolle (long)"), ("🐻", "Verkäufer haben die Kontrolle (short)"),
+                 ("🦈", "früher Vorteil – ein Signal, das die Masse noch nicht sieht"),
+                 ("🔥", "Beschleunigung (Gewinn, Umsatz, Volumen ab 1,5-fach)"), ("💥", "Auslöser"), ("🦊", "Falle"),
+                 ("🌞", "Rückenwind, Geldzufluss"), ("❄️", "Gegenwind, Geldabfluss"), ("🪝", "Widerstand oder Unterstützung"),
+                 ("🟢", "Stärke"), ("🟡", "gemischt"), ("🔴", "Schwäche"), ("⚪", "ungemessen"))
+ZEICHEN = tuple(z for z, _ in ZEICHEN_LISTE)
+
+
+def zeilen(liste, leer="⚪ ungemessen"):
+    """Aussagezeilen [(Zeichen, Text)] als HTML – ein Zeichen je Zeile (ZEICHEN_LISTE)."""
+    if not liste:
+        liste = [(leer[0], leer[2:])]
+    return "".join(f'<div style="display:flex;gap:10px;padding:6px 0;border-top:1px solid {RAND};font-size:15px;'
+                   f'line-height:1.45"><span style="flex:0 0 22px">{z}</span><span>{t(x)}</span></div>' for z, x in liste)
+
+
+def zeichen_legende():
+    """Die Zeichenliste als eine Zeile zum Aufklappen."""
+    return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Zeichen</summary>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:14px;color:{TEXT_2}">'
+            + "".join(f'<span>{z} {t(b)}</span>' for z, b in ZEICHEN_LISTE) + '</div></details>')

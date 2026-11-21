@@ -40,7 +40,7 @@ KOPF_RUECKGANG = 10     # Kopf: Rückgang vom 52-Wochen-Hoch ab 10 % zeigen (10.
 REAKTION_TAGE = 10      # Reaktion auf die Zahlen: Tag 1 und die 9 Tage danach (O'Neil)
 ABSTURZ_ZAHLEN = 15     # O'Neil: ein Absturz um 15 % und mehr nach Zahlen ist ein großes Problem
 import gestaltung                                     # noqa: E402
-from chart import chart, legende, reaktionen, stunden  # noqa: E402
+from chart import chart, legende, reaktionen  # noqa: E402
 from gestaltung import (BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT_2, TEXT_3, ampelzeile, kachel, karte,  # noqa: E402
                         seite, t, zahl)
 
@@ -340,7 +340,7 @@ def _k_trend(regel, setup, m, ph, ph_reihe, df, b, short):
     kurs, g, vor = float(c.iloc[-1]), float(g50.iloc[-1]), float(g50.iloc[-kartentisch.GD50_STEIG_TAGE])
     ueber, steigt = kurs > g, g > vor
     gd_txt = f"GD50 {zahl(g)} $ · Kurs {_vorzeichen((kurs / g - 1) * 100)} % · GD50 {'steigt' if steigt else 'fällt'}"
-    hilfe = ("Trendvorlage: " + "; ".join(f"{n_} {'✓' if ok else '✗'}" for n_, ok in (tv or {}).items())
+    hilfe = ("Trendvorlage: " + "; ".join(f"{'🟢' if ok else '🔴'} {n_}" for n_, ok in (tv or {}).items())
              + f"\n{gd_txt}\n\nPhase nach Weinstein nur als Zeichen. Bricht ein Titel aus Phase 3 nach oben aus, sieht "
                "Weinstein eine mögliche Rückkehr in Phase 2 – bestätigt mit Volumen über dem Schnitt und wieder "
                "steigender 30-Wochen-Linie.")
@@ -470,9 +470,9 @@ def _k2_setup(m, k, erk, df):
     em = system_kullamaegi.short_von(k)
     teile = ([f"Pivot {zahl(m['pivot'])} $ · {m['lage']}"] if m.get("pivot")     # Base und Tiefe stehen in „Base“
              else [next(x for n, _, x in m["regeln"] if n.startswith("Reife Base"))])
-    hilfe = ("Base-Ausbruch – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {x}" for n, ok, x in m["regeln"])
+    hilfe = ("Base-Ausbruch – " + system_minervini.kurz(m) + "\n" + "\n".join(f"{'🟢' if ok else '🔴'} {n} – {x}" for n, ok, x in m["regeln"])
              + "\n\nFlagge · Momentum · Sprung · Zahlen-Reaktion – " + "\n".join(
-                 f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'✓' if ok else '✗'} {n} – {y}" for n, ok, y in x["regeln"])
+                 f"{x['art']} ({x['ampel']}):\n" + "\n".join(f"{'🟢' if ok else '🔴'} {n} – {y}" for n, ok, y in x["regeln"])
                  for x in (k.get("ep"), k.get("breakout"), em) if x))
     su = erk.get("setup_info") or {}
     r_ = su.get("reihe")
@@ -584,7 +584,7 @@ def planzeile(m, k, df, marken=None, zr=None, su=None):
         else:
             regel = " · Ausstieg: " + str(m.get("ausstieg", "")).replace(
                 "Stopp unter dem Tief der letzten Kontraktion, höchstens 8 % unter dem Pivot. ", "")
-        name = kartentisch.NAME.get(r_, r_).replace(" ★", "")
+        name = kartentisch.NAME.get(r_, r_).replace(" 💥", "")
         if r_ == "zahlen":
             name += f" ({seite})"
         alle_ = depot_.einstiege(su, m, k, zr, kurs)
@@ -655,7 +655,7 @@ def warnung_kopf(erk):
     if not w:
         return ""
     return (f'<div style="background:{KARTE};border:2px solid {ROT};border-radius:12px;padding:10px 16px;'
-            f'font-size:15px;line-height:1.5">' + "".join(f'<div>⚠ {t(x)}</div>' for x in w) + '</div>')
+            f'font-size:15px;line-height:1.5">' + "".join(f'<div>🔴 {t(x)}</div>' for x in w) + '</div>')
 
 
 def _stellung(df, marken):
@@ -705,7 +705,7 @@ def _lagezeile(tk, rw, stellung):
             reihe = e["reihe"]
     kurz_ = lagekarte.richtung(e) == "short"
     if drei and reihe and not kurz_:                    # Volltreffer nur mit Long-Setup (Prüf-Agent 12.11.2026)
-        chips.append((GRUEN, "★ Volltreffer: dreifacher Rückenwind und Setup"))
+        chips.append((GRUEN, "💥 Volltreffer: dreifacher Rückenwind und Setup"))
     elif drei:
         chips.append((GRUEN, "▲▲▲ dreifacher Rückenwind (Kurs, Geld, Zahlen grün)"))
     if reihe:
@@ -780,7 +780,7 @@ def _balken(werte, titel):
         f'<div style="width:60%;height:{max(4, 70 * abs(w) / hoechst):.0f}px;border-radius:4px;'  # Layout
         f'background:{GRUEN if w >= 0 else ROT}"></div></div>'
         f'<span style="font-size:12px;color:{TEXT_3}">{t(q)}</span></div>' for q, w in werte)
-    zeichen = " · beschleunigt ✓" if besch else ""
+    zeichen = " · 🔥 beschleunigt" if besch else ""
     return (f'<div style="display:flex;flex-direction:column;gap:8px"><div style="font-size:14px;color:{TEXT_2}">'
             f'{t(titel)}{zeichen}</div><div style="display:flex;gap:12px">{spalten}</div></div>')
 
@@ -889,14 +889,27 @@ def waehrung_setzen(html, tk):
 
 def chartkarte(z, ebene="Tag", ausschnitt=None, zonen_ansicht="Aktuell", gd_kurz=False, avwap_wahl=None):
     """Karte mit Legende und Chart aus dem Zwischenstand von seite_titel; billig, wird bei jedem Knopfdruck neu
-    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20, AVWAP-Anker), ohne die Seite neu zu rechnen. Darunter der Stundenchart."""
+    gezeichnet (Zeitebene, Ausschnitt, Zonen, GD10/GD20, AVWAP-Anker), ohne die Seite neu zu rechnen. Reiter Woche,
+    Tag, Stunde mit denselben Bausteinen (Micky 21.11.2026; der Stundenchart der letzten 10 Tage entfällt)."""
     m = z.get("marken")
-    st_ = stunden(z.get("stunde"), m, bool(z["df"].attrs.get("laufend"))) if ebene == "Tag" else ""
+    t_ = (z.get("tiefe") or {}).get(ebene)
+    if ebene == "Stunde":
+        st_ = z.get("stunde") or {}
+        if st_.get("df") is None or len(st_["df"]) < 5:  # Layout
+            bild = f'<p style="color:{TEXT_2}">Stunde: keine 30-Minuten-Kerzen für diesen Titel – ungemessen.</p>'
+        else:
+            st_["df"].attrs.update(z["df"].attrs)
+            bild = chart(st_["df"], "Stunde", st_.get("index"), ausschnitt, st_.get("sek"), z.get("etf", ""), None,
+                         zonen_ansicht, False, m, avwap_wahl, t_)      # die Zonen des Scanners sind Tageszonen
+    else:
+        bild = chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht,
+                     gd_kurz, m, avwap_wahl, t_)
     return waehrung_setzen(seite(karte(f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
                        f'<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:10px">{legende(ebene, gd_kurz)}</div>'
                        '</details>'
-                       + f'<div style="position:relative">{chart(z["df"], ebene, z["index"], ausschnitt, z.get("sek"), z.get("etf", ""), z.get("zonen"), zonen_ansicht, gd_kurz, m, avwap_wahl)}'
-                       f'{z.get("rs_lesart", "")}{z.get("plan", "")}</div>' + st_), oben=0, unten=0), z["df"].attrs.get("ticker", ""))
+                       + f'<div style="position:relative">{bild}'
+                       f'{z.get("rs_lesart", "") if ebene == "Tag" else ""}{z.get("plan", "")}</div>'), oben=0, unten=0),
+                           z["df"].attrs.get("ticker", ""))
 
 
 from depot import ATR_STOPP  # noqa: E402  Stopp 1,5 ATR vom Einstieg – eine Quelle (depot), Micky 09.11.2026
@@ -1001,9 +1014,9 @@ def _chartmarken(tk, df, m_, k_, zonen, gewinne, fd, rw=None, su=None, zr=None):
     return m
 
 
-def _stundenkerzen(tk, df):
-    """Stundenkerzen der letzten 10 Handelstage aus den 30-Minuten-Kerzen (tpo_daten, auf die Tageskurse ausgerichtet),
-    beim laufenden Börsentag mit den heutigen Kerzen von Yahoo. None ohne Daten."""
+def _feine_kerzen(tk, df):
+    """30-Minuten-Kerzen des Titels (tpo_daten, auf die Tageskurse ausgerichtet), beim laufenden Börsentag mit den
+    heutigen Kerzen von Yahoo. None ohne Daten."""
     try:
         d30 = tpo_daten.kerzen(tk, df.iloc[:-1] if df.attrs.get("laufend") else df, abruf=False)
         if df.attrs.get("laufend"):
@@ -1012,12 +1025,24 @@ def _stundenkerzen(tk, df):
                 d30 = pd.concat([d30, heute]) if d30 is not None else heute
         if d30 is None or d30.empty:
             return None
-        d30 = d30[~d30.index.duplicated(keep="last")].sort_index()
-        h1 = d30.resample("60min", offset="30min").agg({"Open": "first", "High": "max", "Low": "min",
-                                                       "Close": "last", "Volume": "sum"}).dropna()
-        tage = sorted(set(h1.index.date))[-10:]  # Layout
-        return h1[pd.Index(h1.index.date).isin(tage)]
-    except Exception:  # noqa: BLE001 – ohne Stundenkerzen kein Stundenchart
+        return d30[~d30.index.duplicated(keep="last")].sort_index()
+    except Exception:  # noqa: BLE001 – ohne feinere Kerzen keine Stunde, kein Zeitprofil
+        return None
+
+
+def tiefe_stunden(tk, df):
+    """Stundenkerzen des Titels für das Volumenprofil (aus den 30-Minuten-Kerzen) oder None."""
+    import tiefe
+    return tiefe.stunde(_feine_kerzen(tk, df))
+
+
+def _stunde_bezug(symbol):
+    """Stundenkerzen eines Bezugs (S&P 500 über SPY, Sektor-ETF) aus dem Speicher der 30-Minuten-Kerzen oder None."""
+    import tiefe
+    try:
+        tages = daten.kurse_gespeichert(symbol)
+        return tiefe.stunde(tpo_daten.kerzen(symbol, tages, abruf=False)) if tages is not None else None
+    except Exception:  # noqa: BLE001 – Technik: ohne Datei keine Linie
         return None
 
 
@@ -1218,9 +1243,10 @@ def seite_titel(ticker, laufend=False, _stand=None):
     try:                       # Volumenprofil, verankert nach Ereignis und Struktur (13.11.2026, vorher starr 52 Wochen)
         import avwap
         import volumenprofil
-        z_j = (zonen or {}).get("jetzt") or {}
+        import tiefe
         erk["zahltag"] = avwap.zahlentag(df, gewinne) if gewinne is not None else None
-        vv = volumenprofil.verankert(df, erk["zahltag"], z_j.get("start_t") if z_j.get("zone") else None)
+        erk["profil_zone"] = tiefe.zone_beginn(df)          # eine Quelle für Profil, Analyse, Kartentisch, Quetschung
+        vv = volumenprofil.verankert(df, erk["zahltag"], erk["profil_zone"], tiefe_stunden(tk, df))
         erk["profil"] = {"knoten": vv["knoten"], "verankert": vv} if vv else None
     except Exception:  # noqa: BLE001
         erk["profil"] = None
@@ -1259,6 +1285,11 @@ def seite_titel(ticker, laufend=False, _stand=None):
     marken = _chartmarken(tk, df, m_, k_, zonen, gewinne, fd if fund else None, rw, su, zr_)
     marken["profil"] = (erk.get("profil") or {}).get("verankert")
     marken["zahltag"] = erk.get("zahltag")
+    try:                                         # Anker aus Tageskerzen auch für den Stundenchart
+        import avwap
+        marken["anker"] = avwap.anker(df, erk.get("zahltag"))
+    except Exception:  # noqa: BLE001
+        marken["anker"] = {}
     stellung = _stellung(df, marken)
     kb = _kreislauf_box(tk, df, index, gewinne, m_, erk, zonen)      # setzt erk["auktion"]
     try:
@@ -1280,7 +1311,13 @@ def seite_titel(ticker, laufend=False, _stand=None):
     zwischen["zonen"] = zonen
     zwischen["marken"] = marken
     zwischen["plan"] = planzeile(m_, k_, df, marken, zr_, su)        # Plan unter dem Chart (12.11.2026)
-    zwischen["stunde"] = _stundenkerzen(tk, df)
+    import tiefe                                 # Tiefenanalyse je Ebene (Micky 21.11.2026, aus der Titel-Analyse)
+    d30 = _feine_kerzen(tk, df)
+    h1 = tiefe.stunde(d30)
+    zwischen["tiefe"] = {"Tag": tiefe.ebene("Tag", df, d30, erk.get("zahltag"), zone_start=erk.get("profil_zone")),
+                         "Woche": tiefe.ebene("Woche", tiefe.woche(df), d30, erk.get("zahltag"), tage=df),
+                         "Stunde": tiefe.ebene("Stunde", h1, d30, erk.get("zahltag"))}
+    zwischen["stunde"] = {"df": h1, "index": _stunde_bezug("SPY"), "sek": _stunde_bezug(etf) if etf else None}
     teile = [_zahlen_gesamt(tk, fund, fd if fund else None)]        # Earnings und Zahlen in einer Karte (10.11.2026)
     teile.append(depotleiste.titelkarte(tk, df, erk))
     return {"oben": waehrung_setzen(seite("".join(oben), unten=8), tk), "chart": zwischen,  # Layout

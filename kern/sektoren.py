@@ -24,6 +24,20 @@ SEKTOREN = {"XLK": "Technologie", "XLC": "Kommunikation", "XLY": "Zyklischer Kon
 YAHOO = {"Technology": "XLK", "Communication Services": "XLC", "Consumer Cyclical": "XLY",
          "Financial Services": "XLF", "Industrials": "XLI", "Basic Materials": "XLB", "Energy": "XLE",
          "Healthcare": "XLV", "Consumer Defensive": "XLP", "Utilities": "XLU", "Real Estate": "XLRE"}
+# Yahoo-Branche → Branchen-ETF (aus der Titel-Analyse, 21.11.2026: Zeile „Branche“ der RS-Tabelle und CMF der Branche);
+# fehlt die Branche hier, gibt es keinen Branchen-ETF (ungemessen)
+BRANCHEN_ETF = {
+    "Aerospace & Defense": "ITA", "Semiconductors": "SOXX", "Semiconductor Equipment & Materials": "SOXX",
+    "Biotechnology": "XBI", "Medical Devices": "IHI", "Medical Instruments & Supplies": "IHI",
+    "Software - Application": "IGV", "Software - Infrastructure": "IGV", "Banks - Regional": "KRE",
+    "Banks - Diversified": "KBE", "Oil & Gas E&P": "XOP", "Oil & Gas Equipment & Services": "OIH",
+    "Residential Construction": "ITB", "Building Products & Equipment": "XHB", "Specialty Retail": "XRT",
+    "Insurance - Property & Casualty": "KIE", "Insurance - Life": "KIE", "Insurance - Diversified": "KIE",
+    "Drug Manufacturers - General": "PPH", "Drug Manufacturers - Specialty & Generic": "XPH", "Gold": "GDX",
+    "Silver": "SIL", "Steel": "SLX", "Copper": "COPX", "Uranium": "URA", "Airlines": "JETS", "Solar": "TAN",
+    "Internet Content & Information": "FDN", "Capital Markets": "IAI", "Railroads": "IYT", "Trucking": "IYT",
+    "Integrated Freight & Logistics": "IYT", "Home Improvement Retail": "XHB",
+}
 # typische Führer je Quad (Konzept, Abschnitt Quadrant) als ETFs
 QUAD_ETFS = {1: ["XLK", "XLY", "XLC"], 2: ["XLE", "XLB", "XLI", "XLF"],
              3: ["XLE", "XLU"], 4: ["XLU", "XLP", "XLV"]}

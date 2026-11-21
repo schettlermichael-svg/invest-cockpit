@@ -8,13 +8,13 @@ from masse import DATUM  # noqa: E402
 # Akten des Stabs (Micky 12.11.2026: „Klasse statt Masse – nur das Beste vom Besten im Konferenzraum“): immer das
 # Depot; dazu nur einsatzbereite Setups – Setup grün und Kurs am Auslöser oder in der Kaufzone (long −5 bis +5 % zum
 # Pivot, Short bis 5 % unter der Unterkante); Volltreffer auch bis 10 % über dem Pivot. Rang (Micky 12.11.2026):
-# Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des Setups (Short
+# Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, 💥 in der Kaufzone, Geld in Richtung des Setups (Short
 # gespiegelt: Abfluss zählt), RS (Short gespiegelt: schwächer zählt); die Watchlist gibt keinen Vorteil. Jede Reihe bekommt bis zu 2 Plätze vorab, damit Short und EP nie fehlen; höchstens
 # AKTEN_MAX. Alles andere zeigt der Kartentisch; Watchlist-Titel ohne Akte stehen mit festen Ampeln in der Tafel.
 AKTEN_MAX = 30
 
 
-RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, ★ in der Kaufzone, Geld in Richtung des "
+RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, 💥 in der Kaufzone, Geld in Richtung des "
              "Setups (Short: Abfluss), RS-Rang (Short: der schwächere zuerst) – die Watchlist gibt keinen Vorteil")
 
 
@@ -123,7 +123,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         t_ = termin_tage(tk)
         rs = r.get("rang") or 0
         import gestaltung
-        # Rang: Termin nah nach hinten, Volltreffer, ★, Geld in Setup-Richtung, Kreislauf in Setup-Richtung, RS – die
+        # Rang: Termin nah nach hinten, Volltreffer, 💥, Geld in Setup-Richtung, Kreislauf in Setup-Richtung, RS – die
         # Watchlist zählt nicht
         # (Micky 12.11.2026: neutral, die Stärke entscheidet)
         return (t_ is not None and t_ <= gestaltung.TERMIN_ROT, not voll, not x.get("stern"), not geld_mit(tk),
@@ -146,7 +146,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
         if not x.get("reihe") and tk not in pos and tk not in wl:
             continue
         r = rw_t.get(tk) or {}
-        merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") and not short(tk) else []) + ([("★ Short-Zone" if short(tk) else "★ Kaufzone")] if x.get("stern") else [])
+        merkmale = ((["Volltreffer"] if tk in drei and x.get("reihe") and not short(tk) else []) + ([("💥 Short-Zone" if short(tk) else "💥 Kaufzone")] if x.get("stern") else [])
                     + ([("Geld fließt ab" if short(tk) else "Geld grün")] if geld_mit(tk) else [])
                     + (["Watchlist"] if tk in wl else []) + ([f'RS {r["rang"]}'] if r.get("rang") else [])
                     + ([f"Zahlen in {termin_tage(tk)} Tagen"] if (termin_tage(tk) is not None and termin_tage(tk) <= TERMIN_NAH_TAGE)
@@ -182,7 +182,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
 def heisse(n=PUSH_JE_SEITE):
     """Die heißesten Titel für die Meldung am Morgen (Micky 17.11.2026): die ersten n Long und n Short der Liste
     „Einsatzbereit“ in ihrer Rangfolge (dieselbe Auswahl wie die Seite Setups, ohne die Depot-Plätze) → (Text, Anzahl).
-    Je Titel: Setup, ★, Einstieg mit Abstand, RS-Rang. Ohne einsatzbereites Setup sagt die Meldung das."""
+    Je Titel: Setup, 💥, Einstieg mit Abstand, RS-Rang. Ohne einsatzbereites Setup sagt die Meldung das."""
     import depot
     import kartentisch
     import lagekarte
@@ -203,7 +203,7 @@ def heisse(n=PUSH_JE_SEITE):
         x, r = titel_t.get(tk) or {}, rw_t.get(tk) or {}
         name = kartentisch.NAME.get(x.get("reihe"), x.get("reihe") or "")
         e = (x.get("einstieg") or {}).get("wert")
-        teile = [f"{zeichen_} {tk}", name + (" ★" if x.get("stern") and "★" not in name else "")]
+        teile = [f"{zeichen_} {tk}", name + (" 💥" if x.get("stern") and "💥" not in name else "")]
         if e:
             teile.append(f"Einstieg {zahl(e)} $ ({'+' if x['abstand_vz'] >= 0 else ''}{zahl(x['abstand_vz'], 1)} %)" if x.get("abstand_vz") is not None
                          else f"Einstieg {zahl(e)} $")
@@ -213,6 +213,6 @@ def heisse(n=PUSH_JE_SEITE):
 
     lang = [tk for tk in elite if lagekarte.richtung(titel_t.get(tk) or {}) != "short"][:n]
     kurz = [tk for tk in elite if lagekarte.richtung(titel_t.get(tk) or {}) == "short"][:n]
-    zeilen = ([zeile(tk, "🎯") for tk in lang] or ["🎯 Long: heute kein einsatzbereites Setup"]) + \
-             ([zeile(tk, "🔻") for tk in kurz] or ["🔻 Short: heute kein einsatzbereites Setup"])
+    zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein einsatzbereites Setup"]) + \
+             ([zeile(tk, "🐻") for tk in kurz] or ["⚪ Short: heute kein einsatzbereites Setup"])   # Zeichenliste (21.11.2026)
     return "\n".join(zeilen), len(lang) + len(kurz)

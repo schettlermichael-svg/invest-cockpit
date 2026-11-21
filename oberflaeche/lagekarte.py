@@ -37,7 +37,7 @@ def richtung(x):
 
 def rahmen(x):
     """(Farbe, Dicke) des Titelrahmens – drei Stufen je Richtung:
-    kräftig (★ Spitze bzw. Short im Ausbruch) · voll (Setup grün) · blass (Setup noch nicht grün);
+    kräftig (💥 Spitze bzw. Short im Ausbruch) · voll (Setup grün) · blass (Setup noch nicht grün);
     gelb, wenn keine Reihe oder die Richtung offen ist."""
     x = x or {}
     r = richtung(x)

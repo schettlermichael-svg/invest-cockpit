@@ -333,7 +333,7 @@ def dreifach(erg):
             f'{t(x["branche"])}{" ◇" if x.get("branche_stabil") else ""}</div>'
             + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")  # Layout
             + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn == "rot" else GELB if warn else TEXT_2}">'
-            + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" ⚠" if warn else "") + '</div>'
+            + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" 🔴" if warn == "rot" else " 🟡" if warn else "") + '</div>'
             + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
             + _punkte_html(x) + _mini(tk) + '</div></a>')
     return seite('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">'
@@ -363,12 +363,12 @@ def _zeile(tk, x, stand):
             "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
             "Zahlen": PUNKT[z.get("ampel") or "grau"],
             "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
-            "RS-Hoch vor Kurs": "✓" if x["rs_hoch_vor_kurs"] else "",
+            "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
             "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
             "Thema": (x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN],
-            "Zahlen am": ("🔴 " if warn == "rot" else "⚠ " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
+            "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
             "Zahlen im Einzelnen": _punkte_text(x)}
 
 

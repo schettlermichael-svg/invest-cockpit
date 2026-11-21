@@ -340,11 +340,11 @@ ZEICHEN = [
                "Hoch höchstens 1 ATR über der Oberkante und Schluss zurück = Upthrust; ein Fehlausbruch zählt auch. Zeichen "
                "in den letzten 10 Tagen; Volumen am Schluss zurück steht dabei (Zeichen, keine Bedingung).",
          messung=["zeichen.spring", "vcp_zone.spring_upthrust"], pruefer=["Test am Rand: Zeichen", "abgelehnt/angenommen"]),
-    dict(name="Einquetschung", art="Struktur", meister="Micky (aufsteigendes Dreieck)",
-         regel="Steigende Tiefs gegen eine flache Oberkante: in 60, sonst 120 Tagen mindestens 2 Schwunghochs innerhalb "
-               "±1,5 % der Oberkante, die flache Kante seit mindestens 3 Wochen, mindestens 3 steigende Tiefs (ein Spring "
-               "bricht die Reihe nicht), Spanne und Volumen werden kleiner. Gespiegelt.",
-         messung=["zeichen.einquetschung", "zeichen.kreislauf"], pruefer=["Einquetschung"]),
+    dict(name="Einquetschung", art="Struktur", meister="Micky (Titel-Analyse, 21.11.2026)",
+         regel="Seit dem Anker des Profils (Zahlentag, der die Balance auslöste, sonst ihr Beginn) steigen die Tiefs der "
+               "drei Drittel, ihre Hochs liegen höchstens 2 % auseinander. Gespiegelt: fallende Hochs über Tiefs, die "
+               "höchstens 2 % auseinanderliegen.",
+         messung=["zeichen.einquetschung", "tiefe.quetschung", "tiefe.anker", "zeichen.kreislauf"], pruefer=["Einquetschung"]),
     dict(name="Bruch der Phase", art="Struktur", meister="Weinstein",
          regel="Schluss unter dem Tief der Basis bzw. über dem Hoch der Verteilung.",
          messung=["zeichen.kreislauf"], pruefer=["Kreislauf/Phase", "abgelehnt/angenommen"]),
@@ -431,7 +431,7 @@ SETUPS = [
                "Kurs über GD50, mindestens 30 % über dem 52-Wochen-Tief, höchstens 25 % unter dem Hoch), RS ab 70, Zahlen "
                "wachsen, reife Base (fertig, Länge ok, höchstens 50 % tief), Enge (2 bis 6 Kontraktionen, jede "
                "höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser und unter dem 50-Tage-Schnitt – Plan 9, "
-               "Micky 16.11.2026). ★ = grün und Kurs bis 5 % unter bzw. "
+               "Micky 16.11.2026). 💥 = grün und Kurs bis 5 % unter bzw. "
                "über dem Pivot. Pivot = Hoch der letzten Kontraktion. Nach einem Ausbruch gilt das Setup 4 Wochen weiter. "
                "Nur Muster: die Zone hat eine grüne Enge, aber die Systemregeln (Trendvorlage, Zahlen) fehlen.",
          einstieg="Zwei Einstiege, wenn das Hoch der letzten Enge mehr als 3 % unter der Oberkante liegt: früh beim Schluss "
@@ -511,7 +511,7 @@ SETUPS = [
          regel="An der Zone des Scanners, wie sie am Vortag stand: Tief höchstens 1 ATR unter der Unterkante (Upthrust: Hoch "
                "höchstens 1 ATR über der Oberkante), Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach "
                "(ein Fehlausbruch zählt auch). Gilt bis 10 Handelstage nach dem Schluss zurück, solange der Stopp hält und "
-               "der andere Rand nicht erreicht ist; ★ bis 5 % jenseits des Einstiegs. Volumen und Phase sind Zeichen. "
+               "der andere Rand nicht erreicht ist; 💥 bis 5 % jenseits des Einstiegs. Volumen und Phase sind Zeichen. "
                "Vorrang: nach Sprung und Zahlen-Reaktion, vor den Shorts und dem Base-Ausbruch.",
          einstieg="beim Schluss zurück in der Zone (Auslöser: Unterkante bzw. Oberkante)",
          stopp="Struktur: unter dem Tief bzw. über dem Hoch des Fehlausbruchs; daneben 1,5 ATR",
@@ -568,7 +568,7 @@ SETUP_GRUNDSATZ = [
     "Gruppe: die ganze Truppe misst (Gruppen-RS, Breite, Zufluss); prüfe, ob das Setup Rückenwind der Gruppe hat, und "
     "melde es als Zeichen, nicht als Fehler.",
 ]
-VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Spring/Upthrust → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch ★ (Kaufzone) → "
+VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Spring/Upthrust → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch 💥 (Kaufzone) → "
            "Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster → Bruch der Spanne vor dem Bruch; „auch“ nennt die übrigen")
 
 # ── Weitere Bereiche der App (Generalinventur 15.11.2026) ────────────────────────────────────────────────────────
@@ -577,7 +577,7 @@ VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Spring/Upthrust → Ermüdung/B�
 BEREICHE = [
     dict(name="Wahl des Setups", quelle="Micky 12.11.2026 (ein System, ein Urteil je Titel)",
          regel=f"Vorrang: {VORRANG}. Kurs steht still (ATR unter 0,5 % des Kurses) → kein handelbares Setup; "
-               "VCP-Reihe nur bis 5 % unter bzw. über dem Pivot; ★ = Minervinis Kaufzone (bis 5 % unter bis 5 % über "
+               "VCP-Reihe nur bis 5 % unter bzw. über dem Pivot; 💥 = Minervinis Kaufzone (bis 5 % unter bis 5 % über "
                "dem Pivot).",
          messung=["kartentisch.setup_feststellen", "kartentisch._scannerfeld", "kartentisch._stufe1"],
          pruefer=["Wahl des Setups", "Kaufzone/Abstand"]),
@@ -661,9 +661,51 @@ BEREICHE = [
                "(wie Rückenwind). Lagekarte: Rahmen einer Flagge nur, wenn ihre Oberkante bis 0,5 % am Pivot liegt.",
          messung=["chart.chart", "chart._signale", "lagekarte._zone"], pruefer=[],
          luecke="kein Prüfer – Zeichnung"),
+    dict(name="Tiefenanalyse: Struktur nach Dalton", quelle="Dalton (Mind Over Markets), Titel-Analyse, Micky 21.11.2026",
+         regel="Anker: der Zahlentag, wenn sein Schluss mindestens 1 ATR vom Vortag lag und die Balance daraus hervorging "
+               "(höchstens 10 Kerzen vor ihrem Beginn), sonst der Beginn der Balance (Regel des Cockpits). Profil ab dem "
+               "Anker aus Stundenkerzen in Stufen von 0,25 % (ohne Stundenkerzen Tageskerzen), Wertzone 70 % vom POC nach "
+               "außen; dünne Zone unter ⅓ des POC-Volumens ab 2 Stufen, dünne Ränder = Dochte. Alte Wertzone: letzte "
+               "Balance ab 10 Kerzen vor dem Anker. Pivot long/short: Rand der Balance (Tests bis 1 %) neben dem Pivot der "
+               "Enge. Dasselbe Profil ist das graue Volumenprofil des Cockpits.",
+         messung=["tiefe.struktur", "tiefe.anker", "tiefe.profil_ab", "tiefe.zonen", "tiefe.alte_balance",
+                  "volumenprofil.verankert", "analyse_seite.struktur_zeilen"], pruefer=[],
+         luecke="kein Prüfer – neu aus der Titel-Analyse"),
+    dict(name="Tiefenanalyse: PbD nach Tom Vorwald", quelle="Vorwald (Videos PbD, gelesen 20.11.2026), Micky 20.11.2026",
+         regel="Impuls: mindestens 3 Schlüsse in Richtung, zusammen 2 ATR, ein Gegenschluss bis ½ ATR beendet ihn nicht; "
+               "ein späterer Impuls gilt erst, wenn er per Schluss aus der Zone läuft. Faire Zone aus Kerzenkörpern; ab 2 "
+               "Rückläufen Form D, gescheitert ab 2 Schlüssen auf der Gegenseite (1 = Warnung), Ziel unter bzw. über dem "
+               "Impulsbeginn. Form nach POC-Lage (oberes Drittel P, unteres b), Schwanz ab 2 Zeilen mit einer Marke. "
+               "D-Trade von Kante zu Kante: Kante 1 ATR (schmale Zone ¼), Stopp eine Stufe hinter dem Docht, mindestens "
+               "¼ ATR. Je Ebene Woche, Tag, Stunde mit denselben Regeln.",
+         messung=["tiefe.pbd", "tiefe.ebene", "tiefe.kurz", "analyse_seite.pbd_zeilen", "kartentisch.tiefe_zeichen"],
+         pruefer=[], luecke="kein Prüfer – neu aus der Titel-Analyse"),
+    dict(name="Tiefenanalyse: Wertwanderung", quelle="Dalton (überlappender Wert), Titel-Analyse",
+         regel="POC und Wertzone je Kerze aus feineren Kerzen (Tag aus 30 Minuten, Woche aus Stunden), 6 Klassen zur "
+               "vorigen; Treppe ab 3 POCs in Folge, Ballen = letzte 5 POCs innerhalb 1 ATR, Abtasten = Schluss außerhalb "
+               "der vorigen Wertzone mit eigenem POC darin, nackte POCs der letzten 60 Kerzen.",
+         messung=["tiefe.wanderung", "tiefe.klasse", "marketprofile.klasse", "analyse_seite.wander_zeilen"], pruefer=[],
+         luecke="kein Prüfer – neu aus der Titel-Analyse"),
+    dict(name="Tiefenanalyse: Zange, Stärke in der Schwäche, CMF, Sektor-Rang", quelle="Shannon, O'Neil, Chaikin, Titel-Analyse",
+         regel="Zange: Abstand der AVWAP vom letzten Hoch und vom Tief der Bewegung vor 5 Tagen → heute; Kurs bis 2 % unter "
+               "einer AVWAP = nächster Deckel. Stärke in der Schwäche: besser als der S&P 500 an seinen Distributionstagen der "
+               "letzten 25 Sitzungen, an der Mehrheit 🦈. CMF 20 Tage, über +0,05 Zufluss, unter −0,05 Abfluss. Sektor-Rang "
+               "der 11 Sektor-ETFs über 1M/3M/6M, im Mittel bis 3,5 🌞, ab 8 ❄️.",
+         messung=["tiefe.avwap_liste", "tiefe.staerke_in_schwaeche", "tiefe.cmf", "tiefe.sektor_rang", "tiefe.leistung",
+                  "analyse_seite.avwap_zeilen", "analyse_seite.rs_zeilen", "analyse_seite.geld_zeilen",
+                  "analyse_seite.seite_analyse", "analyse_seite.material"], pruefer=[],
+         luecke="kein Prüfer – neu aus der Titel-Analyse"),
+    dict(name="Einschätzung: Stratege mit Recherche", quelle="Titel-Analyse (Punkte 1, 2, 9, 11), Micky 21.11.2026",
+         regel="Long, short, abwarten (mit Auslöser und Tendenz) oder kein Schuss; höchstens 3 Belege mit Feldnummer, "
+               "Auslöser, Widerlegung, Gegenzeuge; im Netz nur Unternehmen, letztes Quartal und 3–5 Wettbewerber, höchstens "
+               "8 Suchen. Der Code prüft: Felder und Zahlen im Material, Kursmarken (bis 40 % um den Kurs) auf 0,5 % genau "
+               "im Material, Zeichen am Zeilenanfang, Long-Auslöser über der Widerlegung (Short umgekehrt), Quellen nur "
+               "aus der Websuche.",
+         messung=["strategen.pruefen", "strategen.rufen", "strategen.material"], pruefer=[],
+         luecke="kein Prüfer – der Code prüft jede Antwort"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
-               "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, ★, Einstieg mit Abstand und RS-Rang; ohne "
+               "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "
                "einsatzbereites Setup sagt die Meldung das.",
          messung=["auswahl.heisse"], pruefer=[], luecke="kein Prüfer – eine Auswahl aus der Liste"),
     dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",

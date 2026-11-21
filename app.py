@@ -56,7 +56,7 @@ div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 .st-key-ansicht div[role="radiogroup"] label {{white-space:nowrap; flex:0 0 auto}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Depot", "Performance"]   # Rückenwind = Lagezentrum, Setups =
+ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Analyse", "Depot", "Performance"]   # Rückenwind = Lagezentrum, Setups =
 # Aufklärung und Filter; Depot und Performance seit 16.11.2026
 # (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026 abgebaut
 ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Setups"}                       # alte Lesezeichen
@@ -70,7 +70,7 @@ if "ansicht" not in st.session_state:
 if "titel_tk" not in st.session_state:          # offene Sitzungen von vor dem 16.11.2026
     st.session_state.titel_tk = (st.session_state.get("ticker") or st.query_params.get("t", "HWM")).strip().upper()
 ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")      # alle Seiten nebeneinander
-if ansicht == "Titelseite":                     # das Titelfeld gehört zur Titelseite (Micky 16.11.2026) – der gewählte
+if ansicht in ("Titelseite", "Analyse"):        # das Titelfeld gehört zur Titelseite (Micky 16.11.2026) – der gewählte
     if "ticker" not in st.session_state:        # Titel bleibt erhalten, während eine andere Seite offen ist
         st.session_state.ticker = st.session_state.titel_tk
     feld, _ = st.columns([2, 10])
@@ -87,7 +87,9 @@ def _gebaut(name, codestand, *args):
     """Fertig gebaute Seite für eine Stunde im Speicher: ein Wechsel zwischen Seiten, Titeln oder Zeitebenen, die
     schon einmal offen waren, braucht dann keine Rechnung mehr. codestand ändert sich mit jeder Code-Änderung, damit
     nach einer Änderung nie eine alte Seite gezeigt wird."""
-    return {"uebersicht": uebersicht.seite_uebersicht, "titel": titel.seite_titel}[name](*args)
+    import analyse_seite
+    return {"uebersicht": uebersicht.seite_uebersicht, "titel": titel.seite_titel,
+            "analyse": analyse_seite.seite_analyse}[name](*args)
 
 
 def _fehler(e):
@@ -106,7 +108,8 @@ def chart_knoepfe(tk):
     """Knöpfe direkt über dem Chart: Zeitebene, Ausschnitt, Kurse aktualisieren, TradingView, Watchlist, Position."""
     k0, k1, k2, k7, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2, 2, 2])
     with k0:
-        ebene = st.radio("Zeitebene", ["Tag", "Woche"], horizontal=True, key="ebene")
+        ebene = st.radio("Zeitebene", list(chart.EBENEN), horizontal=True, key="ebene_3",
+                         index=chart.EBENEN.index("Tag"))       # Woche, Tag, Stunde – Tag vorausgewählt (21.11.2026)
     with k1:
         wahl = list(chart.AUSSCHNITT[ebene])
         aus = st.radio("Ausschnitt", wahl, horizontal=True, key=f"ausschnitt_{ebene}",
@@ -125,20 +128,19 @@ def chart_knoepfe(tk):
         watchlist_knopf(tk)
     with k6:
         position_knopf(tk)
-    avwap_wahl = None
-    if ebene == "Tag":                           # AVWAP nach Shannon (10.11.2026): mehrere Anker, Zange = Hoch + Tief
-        zr = (kartentisch.eintrag_von(tk) or {}).get("reihe") == "zahlen"   # Zahlen-Reaktion: Zahlentag vorgewählt
-        avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
-                              default=chart.AVWAP_START + (["zahlen"] if zr else []), format_func=chart.AVWAP_KURZ.get,
-                              key="avwap_anker_z5" if zr else "avwap_anker5",     # Voreinstellung Zange und höheres Tief 16.11.2026
-                              help="Anker nach Brian Shannon, aus der Struktur (nie aus dem Kalender). Hoch des "
-                                   "Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das jüngste "
-                                   "Hoch, das der Kurs nicht überschritten hat – bestätigt ab 8 % Rückgang (steht er über "
-                                   "allen: der Ausbruchspunkt). Tief der Bewegung: das Tief, an dem der Trend zum letzten "
-                                   "Hoch begann – mit dem letzten Hoch Shannons Zange. Letztes höheres Tief: das Tief des letzten "
-                                   "Rückgangs ab 8 %, aus dem der Anstieg kam – darunter setzt Shannon den Stopp. Ereignis: der jüngste Zahlentag "
-                                   "(Reaktion ab 3 %), die jüngste Lücke ab 4 % oder Volumenspitze (doppelter Schnitt, "
-                                   "Bewegung ab 3 %).")
+    # AVWAP nach Shannon (10.11.2026): mehrere Anker, Zange = Hoch + Tief – auf jeder Zeitebene (21.11.2026)
+    zr = (kartentisch.eintrag_von(tk) or {}).get("reihe") == "zahlen"   # Zahlen-Reaktion: Zahlentag vorgewählt
+    avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
+                          default=chart.AVWAP_START + (["zahlen"] if zr else []), format_func=chart.AVWAP_KURZ.get,
+                          key="avwap_anker_z5" if zr else "avwap_anker5",     # Voreinstellung Zange und höheres Tief 16.11.2026
+                          help="Anker nach Brian Shannon, aus der Struktur (nie aus dem Kalender). Hoch des "
+                               "Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das jüngste "
+                               "Hoch, das der Kurs nicht überschritten hat – bestätigt ab 8 % Rückgang (steht er über "
+                               "allen: der Ausbruchspunkt). Tief der Bewegung: das Tief, an dem der Trend zum letzten "
+                               "Hoch begann – mit dem letzten Hoch Shannons Zange. Letztes höheres Tief: das Tief des letzten "
+                               "Rückgangs ab 8 %, aus dem der Anstieg kam – darunter setzt Shannon den Stopp. Ereignis: der jüngste Zahlentag "
+                               "(Reaktion ab 3 %), die jüngste Lücke ab 4 % oder Volumenspitze (doppelter Schnitt, "
+                               "Bewegung ab 3 %).")
     return ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl
 
 
@@ -589,7 +591,7 @@ def verbindungen_zeigen():
     with st.expander("⚙ Verbindungen · API-Schlüssel und Handy"):
         probe_ = st.session_state.pop("modell_probe", None)
         if probe_:
-            (st.success if probe_[0] else st.error)(("✓ " if probe_[0] else "⚠ Der Schlüssel geht nicht: ") + probe_[1])
+            (st.success if probe_[0] else st.error)(("🟢 " if probe_[0] else "🔴 Der Schlüssel geht nicht: ") + probe_[1])
         if not modell.schluessel():
             st.markdown(ANLEITUNG_SCHLUESSEL)
             wert = st.text_input("API-Schlüssel", type="password", placeholder="sk-ant-…", key="modell_schluessel")
@@ -621,7 +623,7 @@ def verbindungen_zeigen():
 
 def setups_zeigen():
     """Seite „Setups“ (12.11.2026, Micky): Aufklärung und Filter – ① Einsatzbereit (Trichter, Liste), ② Stellung
-    (grüne Setups, Reihen, Watchlist mit Marke 🎯), ③ Rückenwind je Titel, ④ Termine."""
+    (grüne Setups, Reihen, Watchlist mit Marke 💥), ③ Rückenwind je Titel, ④ Termine."""
     st.markdown(gestaltung.seite(
         '<h1 style="margin:0;font-size:32px;font-weight:600">Setups · Aufklärung und Filter</h1>'
         + gestaltung.sprungleiste(gestaltung.STATIONEN_SETUPS), oben=12, unten=0), unsafe_allow_html=True)
@@ -733,8 +735,8 @@ def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten, klein=None):
                 except Exception:  # noqa: BLE001
                     y = None
                 if not y:
-                    return '<br><span style="color:#F85149">⚠ nicht in der Mängelliste</span>'
-                zeichen_ = {"behoben": "✅ behoben", "entschieden": "☑️ entschieden", "offen": "⏳ offen"}[y["stand"]]
+                    return '<br><span style="color:#F85149">🔴 nicht in der Mängelliste</span>'
+                zeichen_ = {"behoben": "🟢 behoben", "entschieden": "🟢 entschieden", "offen": "🟡 offen"}[y["stand"]]
                 return f'<br><b>{zeichen_}</b>' + (f' · {esc(y["notiz"])}' if y.get("notiz") else "")
             karten = "".join(
                 f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:6px 10px;margin:6px 0">'
@@ -821,7 +823,7 @@ def regelkarte_zeigen():
                    "🟡 erst teilweise · 🔴 noch nicht gemessen bzw. gebaut (geplant, mit Schritt). Alarm 🚨 heißt: "
                    "Karte und Code passen nicht zusammen – etwas wurde vergessen.")
         for x in alarm:
-            st.error(f"🚨 {x['art']} {x['name']} ({x['bild']}): {x['text']}")
+            st.error(f"🔴 {x['art']} {x['name']} ({x['bild']}): {x['text']}")
         try:
             inv = regelkarte.inventur()
             n_k = len(inv["konstanten"])
@@ -831,7 +833,7 @@ def regelkarte_zeigen():
                        f"{len(inv['ohne_namen'])} Zahlen ohne Namen in {inv['funktionen']} Regel-Funktionen "
                        f"(Datenquellen ausgenommen: {', '.join(regelkarte.TECHNIK_MODULE)})")
         except Exception as x_:  # noqa: BLE001
-            st.error(f"🚨 Inventur nicht lesbar: {x_}")
+            st.error(f"🔴 Inventur nicht lesbar: {x_}")
         ampel = {"gemessen": "🟢", "teilweise": "🟡", "fehlt": "🔴"}
         zelle = 'style="padding:3px 8px;vertical-align:top"'
         for bild, titel_ in (("titel", "Titel · Kreislauf und Code Balance/Ungleichgewicht"),
@@ -983,19 +985,22 @@ def strategen_call(tk, teile):
     stand = f"{df.index[-1]:%Y-%m-%d}"
     erg = strategen.gespeichert(tk, stand)
     if erg is None:
-        if not st.button("🎯 Strategen-Call", key=f"strategen_{tk}",
-                         help="Der Stratege deutet den Zustand aus dem Material der App (kein Online-Gang). Kostet "
-                              "einige Cent, einmal je Titel und Kurstag."):
+        if not st.button("🎯 Einschätzung mit Recherche (Websuche, kostet API-Guthaben)", key=f"strategen_{tk}",
+                         help="Der Stratege deutet Zustand und Tiefenanalyse aus dem Material der App: long, short, "
+                              "abwarten (mit Auslöser und Tendenz) oder kein Schuss, höchstens drei Belege, Auslöser, "
+                              "Widerlegung, Gegenzeuge. Dazu recherchiert er im Netz Unternehmen, letztes Quartal und "
+                              "Wettbewerber (höchstens 8 Suchen) und schreibt das Fazit. Einmal je Titel und Kurstag."):
             return
         try:
             rw = titel._rueckenwind(tk) or {}
             mm = titel.maerkte() or {}
             su = erk.get("setup_info") or {}
+            import analyse_seite
             import kartentisch
-            with st.spinner("Der Stratege deutet …"):
+            with st.spinner("Recherche im Netz und Einschätzung (1–3 Minuten) …"):
                 erg = strategen.rufen(tk, stand, e, float(df["Close"].iloc[-1]), atr=erk.get("atr"), rw=rw,
                                       markt=mm.get("auktion"), setup=kartentisch.NAME.get(su.get("reihe")),
-                                      termin=((rw.get("zahlen") or {}).get("termin")))
+                                      termin=((rw.get("zahlen") or {}).get("termin")), tiefe=analyse_seite.material(tk))
         except Exception as x:  # noqa: BLE001
             st.error(f"Strategen-Call ging nicht: {x}")
             return
@@ -1055,6 +1060,20 @@ elif ansicht == "Setups":                      # Aufklärung und Filter (12.11.2
         setups_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
+elif ansicht == "Analyse" and ticker:         # Tiefenanalyse (Micky 21.11.2026, aus der App Titel-Analyse)
+    datenstand_zeigen()
+    try:
+        t0 = time.time()
+        with st.spinner("Lade und rechne …"):
+            st.markdown(_gebaut("analyse", _codestand(), ticker), unsafe_allow_html=True)
+        _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
+        ab = titel.abgelegt(ticker)              # der Stratege braucht den Zustand der Titelseite
+        teile = ab[0] if ab is not None else _gebaut("titel", _codestand(), ticker)
+        st.markdown(gestaltung.seite("<h2 style='margin:0;font-size:20px;font-weight:600'>Einschätzung</h2>", oben=8,
+                                     unten=0), unsafe_allow_html=True)
+        strategen_call(ticker, teile)
+    except Exception as e:  # noqa: BLE001
+        _fehler(e)
 elif ticker:
     datenstand_zeigen()
     lauf = st.session_state.get("laufend")
@@ -1076,7 +1095,6 @@ elif ticker:
                 except Exception:  # noqa: BLE001
                     pass
         st.markdown(teile["oben"], unsafe_allow_html=True)
-        strategen_call(ticker, teile)
         ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl = chart_knoepfe(ticker)
         st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
                     unsafe_allow_html=True)
