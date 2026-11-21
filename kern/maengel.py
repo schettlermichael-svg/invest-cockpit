@@ -4,7 +4,7 @@ nichts verloren, und der nächste Prüflauf zeigt, ob ein behobener Befund wirkl
 je Chart und Element über alle Läufe).
 
 Die Befunde kommen von selbst aus jeder Auswertung (aus_berichten liest alle Berichte mit Auswertung, die noch nicht
-übernommen sind). Den Stand setzt man auf der Seite Setups. Gespeichert in daten/maengel.json (Server)."""
+übernommen sind). Den Stand setzte man auf der Seite Setups (abgebaut 21.11.2026). Gespeichert in daten/maengel.json (Server)."""
 import os
 from datetime import datetime
 

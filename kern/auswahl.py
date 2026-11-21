@@ -1,4 +1,4 @@
-"""Auswahl der einsatzbereiten Titel (Seite Setups und Wachen) – Depot immer, dazu Titel mit grünem Setup am Auslöser
+"""Auswahl der einsatzbereiten Titel (Morgenmeldung und Wachen; bis 21.11.2026 auch Seite Setups) – Depot immer, dazu Titel mit grünem Setup am Auslöser
 oder in der Kaufzone, in Rangfolge. Übrig vom Stab, als der Konferenzraum am 13.11.2026 abgebaut wurde; die Auswahl,
 ihre Zonen und die Termin-Regel gelten weiter."""
 from datetime import datetime
@@ -68,7 +68,7 @@ _GEGEN = {"grün": "rot", "rot": "grün", "gelb": "gelb"}
 
 
 def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
-    """Welche Titel eine Akte bekommen (eine Funktion für Seite Setups und Wachen). → (Liste in Rangfolge, {Ticker: (beim Stab?, Grund)}) für jeden Titel mit Reihe, auf der Watchlist oder
+    """Welche Titel eine Akte bekommen (eine Funktion für Morgenmeldung und Wachen). → (Liste in Rangfolge, {Ticker: (beim Stab?, Grund)}) für jeden Titel mit Reihe, auf der Watchlist oder
     im Depot."""
     import kartentisch
     import lagekarte
@@ -171,7 +171,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
             else:
                 g = " · ".join(["Platz voll"] + merkmale)
         gruende[tk] = (tk in drin, g.replace(".", ","))
-    if mit_rest:                                       # alle Einsatzbereiten in Rangfolge (Seite Setups)
+    if mit_rest:                                       # alle Einsatzbereiten in Rangfolge (Morgenmeldung)
         return alle, gruende, elite
     return alle, gruende
 
@@ -179,7 +179,7 @@ def auswahl(titel_t, rw_t, drei, wl, pos, mit_rest=False):
 
 def heisse(n=PUSH_JE_SEITE):
     """Die heißesten Titel für die Meldung am Morgen (Micky 17.11.2026): die ersten n Long und n Short der Liste
-    „Einsatzbereit“ in ihrer Rangfolge (dieselbe Auswahl wie die Seite Setups, ohne die Depot-Plätze) → (Text, Anzahl).
+    „Einsatzbereit“ in ihrer Rangfolge (die Auswahl „Einsatzbereit“, ohne die Depot-Plätze) → (Text, Anzahl).
     Je Titel: Setup, 💥, Einstieg mit Abstand, RS-Rang. Ohne einsatzbereites Setup sagt die Meldung das."""
     import depot
     import kartentisch

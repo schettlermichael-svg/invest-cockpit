@@ -1,4 +1,4 @@
-"""Prüflauf des Setup-Prüfers (kern/setuppruefer.py) – gestartet vom Knopf auf der Seite Setups oder von Hand."""
+"""Prüflauf des Setup-Prüfers (kern/setuppruefer.py) – von Hand gestartet (der Knopf stand bis 21.11.2026 auf der Seite Setups)."""
 import os
 import sys
 

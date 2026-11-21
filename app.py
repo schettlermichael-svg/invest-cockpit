@@ -390,8 +390,8 @@ def zeigen(name, *args):
 
 
 def rueckenwind_zeigen():
-    """Seite „Rückenwind“, ② (KONZEPT_RUECKENWIND.md): Strömungskarte und Gruppen nach Geldfluss; die Titel-Listen stehen
-    seit 12.11.2026 auf der Seite Setups. Rechnet nicht – liest den Stand des Frühlaufs."""
+    """Seite „Rückenwind“, ② (KONZEPT_RUECKENWIND.md): Strömungskarte und Gruppen nach Geldfluss (die Titel-Listen
+    standen vom 12. bis 21.11.2026 auf der Seite Setups). Rechnet nicht – liest den Stand des Frühlaufs."""
     import rueckenwind as rw_kern
     import rueckenwind_seite as rw
     erg = rw_kern.laden()

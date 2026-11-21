@@ -1,4 +1,4 @@
-"""Prüflauf des Chart-Prüfers (kern/chartpruefer.py) – gestartet vom Knopf auf der Seite Setups oder von Hand. Eigener
+"""Prüflauf des Chart-Prüfers (kern/chartpruefer.py) – von Hand gestartet (der Knopf stand bis 21.11.2026 auf der Seite Setups). Eigener
 Name, damit „import chartpruefer“ immer das Modul in kern/ findet (14.11.2026: gleicher Name verdeckte es)."""
 import os
 import sys
