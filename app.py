@@ -1098,7 +1098,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             watchlist_knopf(ticker)
         e_ = teile["r"]["ebenen"][ebene]
         g0, g3 = st.columns([1, 1])
-        g1, g2, _ = st.columns([2, 2, 6])
+        g1, g2, g4, _ = st.columns([2, 2, 2, 4])
         with g0:                                 # Durchschnitte nach Wahl (Micky 21.11.2026), in Kerzen der Ebene
             gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
                           format_func=lambda g: f"GD{g}", key="zonen_gd") or []
@@ -1106,17 +1106,20 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             poc_wahl = st.pills("POC-Linien", list(zonenchart.LINIEN_WAHL), selection_mode="multi", default=[],
                                 format_func=zonenchart.LINIEN_WAHL.get, key="zonen_poc") or []
         anker = zonenseite.anker_laden(ticker, ebene)
-        for k, spalte in enumerate((g1, g2)):    # eigener AVWAP: Balkennummer von rechts, gespeichert als Zeitpunkt
+        hilfe = ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den Anker. Sind beide gesetzt, ist "
+                 "der Raum dazwischen die Zange.",) * 2 + ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze): Zeit- "
+                 "und Volumenprofil ab dieser Kerze. 0 = automatisch ab Beginn des Impulses.",)
+        for k, spalte in enumerate((g1, g2, g4)):   # eigene Anker: Balkennummer von rechts, gespeichert als Zeitpunkt
             with spalte:
                 nr_jetzt = zonenchart.nummer(e_["df"], anker[k]) if e_ is not None and anker[k] is not None else 0
-                nr = st.number_input(f"AVWAP {k + 1} · Balken-Nr.", min_value=0, step=1, value=int(nr_jetzt),
-                                     key=f"zonen_anker_{ticker}_{ebene}_{k}",
-                                     help="Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den "
-                                          "Anker. Sind beide gesetzt, ist der Raum dazwischen die Zange.")
+                nr = st.number_input(f"AVWAP {k + 1} · Balken-Nr." if k < zonenseite.PROFIL_PLATZ else "Profil · Balken-Nr.",
+                                     min_value=0, step=1, value=int(nr_jetzt), key=f"zonen_anker_{ticker}_{ebene}_{k}",
+                                     help=hilfe[k])
                 if e_ is not None and int(nr) != int(nr_jetzt):
                     zonenseite.anker_setzen(ticker, ebene, k, zonenchart.zeitpunkt(e_["df"], nr) if nr else None)
                     anker = zonenseite.anker_laden(ticker, ebene)
-        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.chart(teile["r"], ebene, sorted(gd), anker, set(poc_wahl))
+        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.chart(teile["r"], ebene, sorted(gd), anker[:zonenseite.PROFIL_PLATZ],
+                                                                       set(poc_wahl), anker[zonenseite.PROFIL_PLATZ])
                                                       + teile["legende"]), oben=0, unten=12),
                     unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001

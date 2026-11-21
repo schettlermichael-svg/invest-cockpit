@@ -99,10 +99,16 @@ def _doppel(teil, schritt):
 
 
 def profil_impuls(e):
-    """Das eine Profil der Ebene: ab Beginn des Impulses der Zone von heute (ohne Impuls ab Beginn der Balance), aus den
+    """Das eine Profil der Ebene: ab Beginn des Impulses der Zone von heute (ohne Impuls ab Beginn der Balance)."""
+    pb = e.get("pbd")
+    return profil_seit(e, pb["impuls_tag"] if pb else e["struktur"]["balance_start"])
+
+
+def profil_seit(e, ab_):
+    """Zeit- und Volumenprofil ab Kerze ab_ der Ebene bis heute (auch am eigenen Anker, Micky 21.11.2026), aus den
     feineren Kerzen, sonst aus denen der Ebene → tiefe.profil plus zeit, tpoc, ab, quelle."""
-    df, pb, fein = e["df"], e.get("pbd"), e.get("fein")
-    ab_ = pd.Timestamp(pb["impuls_tag"] if pb else e["struktur"]["balance_start"])
+    df, fein = e["df"], e.get("fein")
+    ab_ = pd.Timestamp(ab_)
     ab = _von_bis(e, ab_)[0]
     schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
     f_ = fein[fein.index >= ab] if fein is not None and len(fein) else None

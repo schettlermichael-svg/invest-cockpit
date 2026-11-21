@@ -125,8 +125,9 @@ def seite_zonen(tk, laufend=False, _stand=None):
             "legende": zonenchart.legende() + gestaltung.zeichen_legende()}
 
 
-def chart(r, ebene, gd=(), anker=(), linien_=()):
+def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     """Zonenchart einer Ebene aus der Rechnung von seite_zonen."""
+    import zonen
     import zonenchart
     f = r["fuehrte"]
     ew = r["ebenen"]["Woche"]
@@ -135,11 +136,14 @@ def chart(r, ebene, gd=(), anker=(), linien_=()):
         w_start = (ew["pbd"] or {}).get("zone_start") or ew["struktur"]["balance_start"]
         woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
-                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker, linien_)
+                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker, linien_,
+                           zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None)
 
 
-# ── Eigener AVWAP (Micky 21.11.2026): Anker je Titel und Ebene, als Zeitpunkt gespeichert ─────────────────────────
+# ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──
 ANKER_DATEI = "avwap_anker.json"
+ANKER_PLAETZE = 3          # AVWAP 1, AVWAP 2, Profil
+PROFIL_PLATZ = 2
 
 
 def _anker_pfad():
@@ -148,18 +152,17 @@ def _anker_pfad():
 
 
 def anker_laden(tk, ebene):
-    """[Zeitpunkt oder None, Zeitpunkt oder None] – die zwei eigenen Anker."""
+    """[AVWAP 1, AVWAP 2, Profil] – je Zeitpunkt oder None."""
     from dateien import json_lesen
-    w = ((json_lesen(_anker_pfad(), {}) or {}).get(tk.upper()) or {}).get(ebene) or [None, None]
-    return [pd.Timestamp(x) if x else None for x in (w + [None, None])[:2]]
+    w = ((json_lesen(_anker_pfad(), {}) or {}).get(tk.upper()) or {}).get(ebene) or []
+    return [pd.Timestamp(x) if x else None for x in (list(w) + [None] * ANKER_PLAETZE)[:ANKER_PLAETZE]]
 
 
 def anker_setzen(tk, ebene, k, tag):
-    """Anker k (0 oder 1) auf den Zeitpunkt tag setzen (None löscht ihn)."""
+    """Anker k (0, 1 = AVWAP, 2 = Profil) auf den Zeitpunkt tag setzen (None löscht ihn)."""
     from dateien import json_lesen, json_schreiben
     alle = json_lesen(_anker_pfad(), {}) or {}
-    w = (alle.setdefault(tk.upper(), {}).get(ebene) or [None, None]) + [None, None]
-    w = w[:2]
+    w = (list(alle.setdefault(tk.upper(), {}).get(ebene) or []) + [None] * ANKER_PLAETZE)[:ANKER_PLAETZE]
     w[k] = f"{pd.Timestamp(tag):%Y-%m-%d %H:%M}" if tag is not None else None
     alle[tk.upper()][ebene] = w
     json_schreiben(_anker_pfad(), alle)

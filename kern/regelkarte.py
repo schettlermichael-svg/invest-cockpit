@@ -841,7 +841,8 @@ def elemente(bild):
 # Karte, wenn eine Messfunktion der Karte sie benutzt – direkt oder über Funktionen, die sie aufruft. Was keiner gehört,
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
-    "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
+    "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
+    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
     "kartentisch.SICHTBAR": "Anzeige (wie viele Karten offen)", "kartentisch.TOP": "Anzeige",
     "chartpruefer.GRUPPEN": "Stichprobe des Prüfers", "chartpruefer.STICHPROBE": "Stichprobe des Prüfers",
     "chartpruefer.KOSTEN_JE_CHART": "Kostenschätzung", "setuppruefer.STICHPROBE": "Stichprobe des Prüfers",

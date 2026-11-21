@@ -57,11 +57,12 @@ def zeitpunkt(df, nr):
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
 
 
-def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=()):
+def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL)."""
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
+    am eigenen Anker (zonen.profil_seit) statt des Profils ab Impulsbeginn."""
     import avwap
     import rueckenwind
     import tiefe
@@ -208,7 +209,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
                                   (t["ziel"], GRUEN, "Ziel")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}", farbe))
-    pr = la["profil"]                                                               # das eine Profil: Zeit ◂ ▸ Volumen
+    pr = profil or la["profil"]                                                     # das eine Profil: Zeit ◂ ▸ Volumen
     mitte_x = ende + PROFIL_W / 2
     halb_w = PROFIL_W / 2 - 4                                                       # Layout
     vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
@@ -223,8 +224,12 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
           f'fill-opacity="{0.9 if tpoc_ else 0.4}"/>')                              # Layout
         A(f'<rect x="{mitte_x + 1:.1f}" y="{y1 + 0.3:.1f}" width="{max(1, halb_w * w_ / vmax_p):.1f}" height="{hh:.1f}" '  # Layout
           f'fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else 0.45}"/>')  # Layout
-    A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3}" font-size="10" text-anchor="middle">Zeit ◂ ▸ Volumen seit '  # Layout
-      f'{pd.Timestamp(pr["ab"]):%d.%m.}</text>')                                    # Layout
+    A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3 if profil is None else ANKER_FARBE[0]}" font-size="10" '  # Layout
+      f'text-anchor="middle">Zeit ◂ ▸ Volumen seit {pd.Timestamp(pr["ab"]):%d.%m.}{" (eigener Anker)" if profil else ""}</text>')                                    # Layout
+    if profil is not None:                                                          # eigener Anker: sein POC
+        etiketten.append((Y(pr["poc"]), f"Profil-POC {zahl(pr['poc'])}", POC_FARBE))
+        A(f'<line x1="{LINKS}" x2="{ende}" y1="{Y(pr["poc"]):.1f}" y2="{Y(pr["poc"]):.1f}" stroke="{POC_FARBE}" '
+          f'stroke-width="1" stroke-dasharray="1 4" stroke-opacity="0.8"/>')        # Layout
     if abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
         etiketten.append((Y(pr["tpoc"]), f"Zeit-POC {zahl(pr['tpoc'])}", ZEIT_FARBE))
     belegt = []
