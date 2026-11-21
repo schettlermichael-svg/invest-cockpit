@@ -50,7 +50,6 @@ from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPAN
 from masse import DATUM, JAHR_TAGE, MONAT_TAGE, QUARTALE_JAHR, VOL_TAGE, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 KURS_NAH = 0.97                         # Kurs „am Hoch“: höchstens 3 % darunter (wie der Chart)
 HOCH_MITTEL = 25.0                      # Abstand zum 52-Wochen-Hoch: bis 25 % „mittel“ (Minervini), darüber „fern“
-RICHTUNG = ("steigt schneller", "dreht nach oben", "steigt", "dreht nach unten", "fällt")   # Rangfolge (21.11.2026)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -132,8 +131,8 @@ def _stufe(r, t, b, r4):
 
 
 def richtung(jetzt, davor):
-    """Richtung der RS-Linie aus ihrer Steigung in 4 Wochen (jetzt) und den 4 Wochen davor → Wort aus RICHTUNG oder
-    None. Rangfolge der Rückenwind-Liste nach „RS-Hoch vor Kurs“ (Micky 21.11.2026)."""
+    """Richtung der RS-Linie aus ihrer Steigung in 4 Wochen (jetzt) und den 4 Wochen davor → steigt schneller, dreht
+    nach oben, steigt, dreht nach unten, fällt oder None (Micky 21.11.2026)."""
     if jetzt is None:
         return None
     if jetzt > 0:
@@ -141,6 +140,26 @@ def richtung(jetzt, davor):
             return "dreht nach oben"
         return "steigt schneller" if davor is not None and jetzt > davor else "steigt"
     return "dreht nach unten" if davor is not None and davor > 0 else "fällt"
+
+
+KLASSEN = ("Garde", "Angriff", "Vorhut", "Ohne Nachschub", "Rückzug")   # Schlachtordnung (Micky 21.11.2026)
+STEIGT = ("steigt schneller", "steigt", "dreht nach oben")
+
+
+def klasse(x):
+    """Klasse 1–5 aus Front (RS-Linie) und Truppen (Volumen-Zufluss), keine Punkte: 1 Garde = RS-Hoch vor Kurs mit
+    Zufluss · 2 Angriff = Linie steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt,
+    Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. None = ohne RS-Linie (zu wenig Daten)."""
+    r = x.get("richtung") or richtung(x.get("rs_tempo"), x.get("rs_vortempo"))
+    hoch = x.get("rs_hoch_vor_kurs")
+    if r is None and not hoch:
+        return None
+    if not hoch and r not in STEIGT:
+        return 5                          # Technik: Klassennummer (Rückzug)
+    z = x.get("zufluss")
+    if z is not None and z >= ZUFLUSS[0]:
+        return 1 if hoch else 2
+    return 4 if z is not None and z < ZUFLUSS[1] else 3   # Technik: Klassennummern (Ohne Nachschub, Vorhut)
 
 
 def abstand_wort(abstand):

@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 
-from rueckenwind import RICHTUNG, ZUFLUSS, abstand_wort, richtung  # noqa: E402  eine Quelle (rueckenwind)
+from rueckenwind import KLASSEN, ZUFLUSS, abstand_wort, klasse, richtung  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
@@ -286,10 +286,16 @@ def _richtung(x):
     return x.get("richtung") or richtung(x.get("rs_tempo"), x.get("rs_vortempo"))
 
 
+AMPEL_ORDNUNG = {"grün": 0, "gelb": 1, "rot": 2}
+
+
 def _ordnung(x):
-    """Rangfolge (Micky 21.11.2026): RS-Hoch vor Kurs zuerst, dann die Richtung der RS-Linie, dann der Rang (Kraft)."""
-    r = _richtung(x)
-    return (not x.get("rs_hoch_vor_kurs"), RICHTUNG.index(r) if r in RICHTUNG else len(RICHTUNG), -x["rang"])
+    """Schlachtordnung (Micky 21.11.2026): Klasse aus Front und Truppen; in der Klasse 🦈 zuerst, dann das Geld der
+    Branche (Einzelkämpfer hinter Titeln mit gleicher Ampel), dann die Zahlen, dann der Rang als Kraft."""
+    k = klasse(x)
+    return (k or len(KLASSEN) + 1, not x.get("rs_hoch_vor_kurs"), AMPEL_ORDNUNG.get(x.get("geld_ampel"), len(AMPEL_ORDNUNG)),
+            bool(x.get("einzelkaempfer")), AMPEL_ORDNUNG.get((x.get("zahlen") or {}).get("ampel"), len(AMPEL_ORDNUNG)),
+            -x["rang"])
 
 
 def liste(erg, nur_watchlist=False):
@@ -304,7 +310,9 @@ def liste(erg, nur_watchlist=False):
         ab = x.get("abstand_hoch")
         wort = abstand_wort(ab)
         r = _richtung(x)
+        k = klasse(x)
         reihen.append({
+            "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
             "Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
@@ -322,7 +330,7 @@ def liste(erg, nur_watchlist=False):
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur_watchlist and not o.get("watchlist"):
             continue
-        reihen.append({"Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Geld": PUNKT["grau"],
+        reihen.append({"Klasse": "–", "Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Geld": PUNKT["grau"],
                        "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
         tks.append(o["tk"])
     return pd.DataFrame(reihen), tks

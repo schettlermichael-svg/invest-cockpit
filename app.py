@@ -409,9 +409,11 @@ def rueckenwind_zeigen():
                          f"nach Geldfluss"):
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
         st.markdown(gestaltung.seite("<h3 style='margin:0'>Titel mit Rückenwind</h3>"
-                                     f"<p style='color:{gestaltung.TEXT_2};font-size:14px;margin:6px 0 0'>Rangfolge: 🦈 "
-                                     "RS-Linie am Hoch vor dem Kurs zuerst, dann die Richtung der RS-Linie, dann der Rang "
-                                     "als Kraft. Alle Titel, nichts gefiltert; Zeile anklicken → Knopf zur Titelseite."
+                                     f"<p style='color:{gestaltung.TEXT_2};font-size:14px;margin:6px 0 0'>Schlachtordnung aus "
+                                     "Front (RS-Linie) und Truppen (Volumen): 1 Garde = 🦈 mit Zufluss · 2 Angriff = Linie "
+                                     "steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt, "
+                                     "Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. In der Klasse: 🦈, Geld der "
+                                     "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert; Zeile anklicken → Knopf zur Titelseite."
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
         wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
         df, tks = rw.liste(erg, nur_watchlist=wl_ != "Alle")
