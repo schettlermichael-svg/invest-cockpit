@@ -54,7 +54,9 @@ def rechnen(tk, laufend=False):
         avwaps = []
     f = zonen.fuehrte(ebenen, avwaps)
     f["gedaechtnis"] = {n: zonen.gedaechtnis(ebenen, f["lage"], n) for n in zonen.EBENEN}
-    return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": tiefe.cmf(df)["wert"],
+    cmf = tiefe.cmf(df)["wert"]
+    f["beurteilung"] = {n: zonen.lagebeurteilung(ebenen, f, rs[n], cmf, n) for n in zonen.EBENEN}
+    return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
             "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
 
 
@@ -102,10 +104,11 @@ def kopf(r):
                       f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])}{grund} · {tr["ampel"]} CRV {zahl(tr["crv"] or 0, 1)}</div>')
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Zonen-Trade</div>'
-    fe = f["festungen"]["Tag"]
-    teile_ = [f'{pf} {zahl(x["preis"])} ({" · ".join(x["grund"])}, {x["abstand"]:+.1f} %)'.replace(".", ",", 1)
-              for seite_f, pf in (("oben", "↑"), ("unten", "↓")) for x in fe[seite_f][:1]]
-    gedaechtnis = "Festungen " + " · ".join(teile_) if teile_ else "keine Festung in Reichweite"
+    bu = f["beurteilung"]["Tag"]
+    satz, szen = zonen.lagebericht(bu, f["lage"]["Tag"])
+    zeichen_ = "".join(f'<span title="{q}" style="margin-right:10px;white-space:nowrap">'
+                       f'{ {1: "🦬", -1: "🐻", 0: "⚪"}[bu["antworten"][q]]} <span style="font-size:12px;color:{TEXT_3}">{q}</span></span>'
+                       for q in zonen.FRAGEN) if bu else ""
     muster = {"innen": "🟢 Tageszone in der Wochenzone", "darüber": "🦬 Tageszone über der Wochenzone",
               "darunter": "🐻 Tageszone unter der Wochenzone", "überlappend": "🟡 Tageszone am Rand der Wochenzone",
               None: "⚪ Muster ungemessen"}[f["muster"]]
@@ -119,10 +122,13 @@ def kopf(r):
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>'
-            f'<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:{TEXT_2}">'
-            f'<span>{muster}</span><span>{gedaechtnis}</span></div>'
-            f'<div style="margin-top:6px;font-size:14px;color:{TEXT_2}">{t(zonen.gedaechtnis_text(f["gedaechtnis"]["Tag"]))}'
-            f'<span style="color:{TEXT_3}"> · Tageszone, Häufigkeit der Vergangenheit, kein Urteil</span></div>')
+            f'<div style="margin-top:12px;font-size:18px;color:{TEXT}">{t(satz)}</div>'
+            f'<div style="margin-top:4px;font-size:14px;color:{TEXT_2}">{t(szen)}</div>'
+            f'<div style="display:flex;flex-wrap:wrap;margin-top:8px;font-size:16px">{zeichen_}'
+            f'<span style="font-size:13px;color:{TEXT_3};align-self:center">{muster}</span></div>'
+            f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">{t(zonen.gedaechtnis_text(f["gedaechtnis"]["Tag"]))}'
+            f'<span style="color:{TEXT_3}"> · Tageszone, Häufigkeit der Vergangenheit, kein Urteil · Lagebeurteilung '
+            f'gleich gewichtet, bis der Prüfstand gemessen hat</span></div>')
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
@@ -147,7 +153,7 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
-                           f["gedaechtnis"][ebene], f["festungen"][ebene])
+                           f["gedaechtnis"][ebene], f["festungen"][ebene], f["beurteilung"][ebene])
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──

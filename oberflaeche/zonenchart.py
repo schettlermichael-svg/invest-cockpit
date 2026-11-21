@@ -45,6 +45,7 @@ LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen bes
 GEDAECHTNIS_FARBE = "#FFD166"
 KREIS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 KORRIDOR_FARBE = "#7DB4FF"
+ZUKUNFT = 14                           # Layout: 14 leere Kerzen rechts für die Pfeile der Szenarien
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 
@@ -70,13 +71,14 @@ def zeitpunkt(df, nr):
 
 
 def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, ged=None,
-         fest=None):
+         fest=None, bu=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Impulsbeginn, ged = zonen.gedaechtnis der Ebene, fest =
-    zonen.festungen der Ebene; woche = (Lage, Beginn, Name) der höheren Ebene als Rahmen."""
+    zonen.festungen der Ebene; woche = (Lage, Beginn, Name) der höheren Ebene als Rahmen; bu = zonen.lagebeurteilung
+    (Szenario-Pfeile, Angriffspunkt, Schatten, Lagebericht oben links)."""
     import avwap
     import rueckenwind
     import tiefe
@@ -114,10 +116,11 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     pmin, pmax = pmin - rand, pmax + rand
     ende = B - RECHTS - PROFIL_W
     breite = ende - LINKS
-    X = lambda i: LINKS + breite * (i + 0.5) / N                                   # noqa: E731  # Layout
+    NZ = N + (ZUKUNFT if bu else 0)                                                 # Raum rechts für die Szenarien
+    X = lambda i: LINKS + breite * (i + 0.5) / NZ                                  # noqa: E731  # Layout
     Y = lambda y: OBEN + KURS_H * (1 - (y - pmin) / (pmax - pmin))                 # noqa: E731
     pos = lambda t_: min(max(int(d.index.searchsorted(pd.Timestamp(t_))), 0), N - 1)   # noqa: E731
-    halb = breite / N / 2
+    halb = breite / NZ / 2
     y_band = OBEN + KURS_H + LUECKE
     y_vol = y_band + BAND_H + LUECKE
     y_rs = y_vol + VOL_H + LUECKE + 14                                              # Layout: Platz für die Überschrift
@@ -195,6 +198,26 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
             farbe = {1: GRUEN, -1: ROT, 0: ALT_FARBE}[zonen.treppe(za, zb)]
             A(f'<line x1="{xa:.1f}" y1="{Y(za["poc"]):.1f}" x2="{xb:.1f}" y2="{Y(zb["poc"]):.1f}" stroke="{farbe}" '
               f'stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#spitze)" stroke-opacity="0.75"/>')  # Layout
+    if bu:                                                                          # Lagebeurteilung: Szenarien
+        x_k = X(N - 1)
+        for s_, dick in ((bu["szenario"], 2.6), (bu["gegen"], 1.3)):  # Layout
+            if not s_ or not s_["ziel"] or not (pmin <= s_["ziel"]["preis"] <= pmax):
+                continue
+            farbe = GRUEN if s_["richtung"] > 0 else ROT
+            strich = "" if s_ is bu["szenario"] else ' stroke-dasharray="5 4"'
+            A(f'<line x1="{x_k + 4:.1f}" y1="{Y(la["kurs"]):.1f}" x2="{X(NZ - 2):.1f}" y2="{Y(s_["ziel"]["preis"]):.1f}" '  # Layout
+              f'stroke="{farbe}" stroke-width="{dick}"{strich} '
+              f'marker-end="url(#spitze)" stroke-opacity="0.9"/>')                  # Layout
+        if bu["angriff"] is not None and pmin <= bu["angriff"] <= pmax:
+            A(f'<text x="{xz - 4:.1f}" y="{Y(bu["angriff"]) + 5:.1f}" font-size="16" text-anchor="end">⚔️'  # Layout
+              f'<title>Angriffspunkt: Front und Druck zeigen auf diese Kante</title></text>')   # Layout
+        if bu["schatten"] and bu["schatten"]["tag"] >= d.index[0]:
+            sx = X(pos(bu["schatten"]["tag"]))
+            sy = Y(bu["schatten"]["preis"]) + (18 if bu["schatten"]["richtung"] > 0 else -8)  # Layout
+            A(f'<text x="{sx:.1f}" y="{sy:.1f}" font-size="16" text-anchor="middle">🐴<title>Schatten: Docht in die Festung '
+              f'{zahl(bu["schatten"]["preis"])} mit Volumen, Schluss zurück</title></text>')   # Layout
+        satz_, _ = zonen.lagebericht(bu, la)
+        A(f'<text x="{LINKS + 6}" y="{OBEN + 14}" fill="{TEXT_2}" font-size="13">{satz_.replace("&", "&amp;").replace("<", "&lt;")}</text>')  # Layout
     if "gedaechtnis" in linien_ and ged:                                            # Gedächtnis: gleiche Lage früher
         nr_ = 0
         for g_ in ged["treffer"]:
@@ -208,7 +231,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
               f'text-anchor="middle">{KREIS[nr_] if nr_ < len(KREIS) else nr_ + 1}<title>{g_["start"]:%d.%m.%y}: danach '
               f'{"↑" if g_["seite"] == "oben" else "↓"} {g_["weite"]:.1f} Zonenhöhen</title></text>')  # Layout
             nr_ += 1
-        A(f'<text x="{LINKS + 6}" y="{OBEN + 14}" fill="{GEDAECHTNIS_FARBE}" font-size="12">'  # Layout
+        A(f'<text x="{LINKS + 6}" y="{OBEN + 30}" fill="{GEDAECHTNIS_FARBE}" font-size="12">'  # Layout
           f'{zonen.gedaechtnis_text(ged).replace("&", "&amp;").replace("<", "&lt;")}</text>')   # Layout
     if any(korridor):                                                               # Korridor zwischen den nackten POCs
         oben_, unten_ = korridor
@@ -250,7 +273,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         w_ = r_.dropna()
         if len(w_):
             etiketten.append((Y(float(w_.iloc[-1])), f"AVWAP {k + 1} {zahl(float(w_.iloc[-1]))}", ANKER_FARBE[k]))
-    bw = max(1.0, breite / N * 0.6)                                                 # Layout: Kerzenbreite
+    bw = max(1.0, breite / NZ * 0.6)                                                # Layout: Kerzenbreite
     n_ges = len(df)
     for i in range(N):
         f = GRUEN if c[i] >= o[i] else ROT

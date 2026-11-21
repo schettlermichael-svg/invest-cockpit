@@ -177,7 +177,9 @@ ZEICHEN_LISTE = (("🦬", "Käufer haben die Kontrolle (long)"), ("🐻", "Verk�
                  ("🦈", "früher Vorteil – ein Signal, das die Masse noch nicht sieht"),
                  ("🔥", "Beschleunigung (Gewinn, Umsatz, Volumen ab 1,5-fach)"), ("💥", "Auslöser"), ("🦊", "Falle"),
                  ("🌞", "Rückenwind, Geldzufluss"), ("❄️", "Gegenwind, Geldabfluss"), ("🪝", "Widerstand oder Unterstützung"),
-                 ("🟢", "Stärke"), ("🟡", "gemischt"), ("🔴", "Schwäche"), ("⚪", "ungemessen"))
+                 ("🟢", "Stärke"), ("🟡", "gemischt"), ("🔴", "Schwäche"), ("⚪", "ungemessen"),
+                 ("⚔️", "Angriffspunkt – hier wird die Linie dünn"), ("🐴", "Schatten – Schreck der Masse an einer Festung "
+                  "(Bukephalos)"), ("⚡", "Zeit und Volumen widersprechen sich"), ("🧠", "Gedächtnis – gleiche Lage früher"))
 ZEICHEN = tuple(z for z, _ in ZEICHEN_LISTE)
 
 

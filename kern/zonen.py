@@ -602,6 +602,130 @@ def festungen(e, la, avwaps=()):
     return aus
 
 
+WANDER_N = 5               # Wanderung: POC heute gegen vor 5 Kerzen der Zone
+GLEICH = 0.5               # Truppen: Gleichstand von Käufern und Verkäufern …
+KAUF_GRENZE = 0.05         # … über 55 % bzw. unter 45 % Käufer zählt
+RS_N = 10                  # Moral: RS-Linie über die letzten 10 Kerzen …
+RS_SCHWELLE = 0.01         # … um mindestens 1 % gestiegen bzw. gefallen (wie der RS-Pfeil im Chart)
+SCHATTEN_N = 3             # Schatten: in den letzten 3 Kerzen
+FRAGEN = ("Großes Heer", "Schlachtfeld", "Front", "Druck", "Truppen", "Moral", "Geschichte")
+HOEHER = {"Woche": "Woche", "Tag": "Woche", "Stunde": "Tag"}
+
+
+def lagebeurteilung(ebenen, f, rs=None, cmf=None, name="Tag"):
+    """Die Lagebeurteilung nach Alexander (Micky 21.11.2026): sieben Fragen je 🦬 (1), 🐻 (−1) oder ⚪ (0) –
+    Großes Heer (Richtung der höheren Ebene, auf der Woche ihre Treppe), Schlachtfeld (Form P/b/D), Front (Wanderung
+    des POC in der Zone), Druck (Tiefs und Hochs der drei Drittel der Zone, Quetschung), Truppen (Käuferanteil im
+    Profil, sonst CMF), Moral (RS gegen den Index über 10 Kerzen), Geschichte (🧠 Gedächtnis ab 3 Treffern). Haupt-
+    szenario = Mehrheit, bei Gleichstand die Woche; Ziel die nächste Festung in seiner Richtung, widerlegt jenseits der
+    Kante der Zone; das Gegenszenario spiegelbildlich. Angriffspunkt: Front und Druck zeigen auf dieselbe Kante wie das
+    Hauptszenario, solange der Kurs in der Zone steht. Schatten 🐴 (Bukephalos): ein Docht sticht mindestens ¼ ATR
+    durch eine Festung, mit Volumen über dem Schnitt, der Schluss kehrt zurück (letzte 3 Kerzen). Gleich gewichtet, bis der
+    Prüfstand gemessen hat."""
+    import numpy as np
+    e, la = ebenen.get(name), f["lage"].get(name)
+    if not e or not la:
+        return None
+    df = e["df"]
+    lo, hi = la["zone"]
+    kurs = la["kurs"]
+    schritt = tiefe.stufe(kurs)
+    antw = {}
+    hl = f["lage"].get(HOEHER[name])
+    if name == "Woche":
+        h_ = historie(e)
+        antw["Großes Heer"] = treppe(h_[-1], {"poc": la["poc"]}) if h_ else 0
+    else:
+        antw["Großes Heer"] = hl["richtung"] if hl else 0
+    antw["Schlachtfeld"] = {"P": 1, "b": -1, "D": 0}[la["form"]]
+    w_ = wanderung(e, la["beginn"])
+    d_ = float(w_.iloc[-1] - w_.iloc[max(0, len(w_) - 1 - WANDER_N)]) if len(w_) > 1 else 0.0
+    antw["Front"] = 0 if abs(d_) < schritt else int(np.sign(d_))
+    i0 = int(df.index.searchsorted(la["beginn"]))
+    dr = tiefe.drittel(df, i0)
+    druck = 0
+    if dr:
+        tiefs, hochs = dr
+        druck = 1 if tiefs[2] > tiefs[0] and hochs[2] >= hochs[0] else -1 if hochs[2] < hochs[0] and tiefs[2] <= tiefs[0] else 0
+    antw["Druck"] = druck
+    pr = la["profil"]
+    anteil = float(np.sum(pr["kauf"]) / np.sum(pr["volumen"])) if np.sum(pr["volumen"]) else GLEICH
+    truppen = 1 if anteil > GLEICH + KAUF_GRENZE else -1 if anteil < GLEICH - KAUF_GRENZE else 0
+    if not truppen and cmf is not None:
+        truppen = 1 if cmf > tiefe.CMF_GRENZE else -1 if cmf < -tiefe.CMF_GRENZE else 0
+    antw["Truppen"] = truppen
+    moral = 0
+    idx = (rs or {}).get("index")
+    if idx is not None:
+        rel = (df["Close"] / idx.reindex(df.index, method="ffill")).dropna()
+        if len(rel) > RS_N:
+            p_ = float(rel.iloc[-1] / rel.iloc[-1 - RS_N] - 1)
+            moral = 1 if p_ >= RS_SCHWELLE else -1 if p_ <= -RS_SCHWELLE else 0
+    antw["Moral"] = moral
+    g = (f.get("gedaechtnis") or {}).get(name)
+    antw["Geschichte"] = 0 if not g or g["n"] < GEDAECHTNIS_MIN or g["auf"] == g["ab"] else (1 if g["auf"] > g["ab"] else -1)
+    summe = sum(antw.values())
+    wl = f["lage"].get("Woche")
+    haupt = int(np.sign(summe)) or ((wl or {}).get("richtung") or 0)
+    dafuer = sum(1 for v in antw.values() if haupt and v == haupt)
+    fe = f["festungen"].get(name) or {"oben": [], "unten": []}
+
+    def szenario(r):
+        if not r:
+            return None
+        ziele = fe["oben" if r > 0 else "unten"]
+        juengst = df.iloc[-WANDER_N:]                  # außerhalb der Zone gegen die Richtung: das jüngste Extrem
+        if lo <= kurs <= hi:
+            kante = lo if r > 0 else hi
+        elif kurs > hi:
+            kante = hi if r > 0 else float(juengst["High"].max())
+        else:
+            kante = float(juengst["Low"].min()) if r > 0 else lo
+        return {"richtung": r, "ziel": ziele[0] if ziele else None, "falsch": float(kante),
+                "haeufig": (g["auf"] if r > 0 else g["ab"]) if g and g["n"] else None, "n": g["n"] if g else 0}
+    angriff = None
+    if haupt and lo <= kurs <= hi and antw["Front"] == haupt and antw["Druck"] == haupt:   # nur in der Zone
+        angriff = hi if haupt > 0 else lo
+    schatten = None                                    # der Docht sticht mindestens ¼ ATR durch die Festung
+    tief_ = (e["atr"] or 0) * STOPP_ATR
+    vs = df["Volume"].rolling(UMKEHR_VOL_SCHNITT, min_periods=1).mean().shift(1)
+    for i in range(max(1, len(df) - SCHATTEN_N), len(df)):
+        k = df.iloc[i]
+        if not float(k["Volume"]) > float(vs.iloc[i]):
+            continue
+        for x in fe["unten"]:
+            if k["Low"] <= x["preis"] - tief_ and k["Close"] > x["preis"]:
+                schatten = {"richtung": 1, "preis": x["preis"], "tag": df.index[i]}
+        for x in fe["oben"]:
+            if k["High"] >= x["preis"] + tief_ and k["Close"] < x["preis"]:
+                schatten = {"richtung": -1, "preis": x["preis"], "tag": df.index[i]}
+    return {"antworten": antw, "haupt": haupt, "dafuer": dafuer, "fragen": len(FRAGEN),
+            "szenario": szenario(haupt), "gegen": szenario(-haupt) if haupt else None,
+            "angriff": angriff, "schatten": schatten}
+
+
+def lagebericht(b, la):
+    """Ein Satz zur Lage und die beiden Szenarien – für Kopf und Chart."""
+    if not b or not la:
+        return "⚪ Lage ungemessen", ""
+    z = "🦬" if b["haupt"] > 0 else "🐻" if b["haupt"] < 0 else "🟡"
+    wer = {1: "Käufer", -1: "Verkäufer"}.get(b["haupt"], "Keiner")
+    satz = (f'{z} {wer} {"führen" if b["haupt"] else "führt"} – {b["dafuer"]} von {b["fragen"]} Fragen'
+            f'{" · ⚔️ Angriffspunkt " + format(b["angriff"], ".2f").replace(".", ",") if b["angriff"] else ""}'
+            f'{" · 🐴 Schatten bei " + format(b["schatten"]["preis"], ".2f").replace(".", ",") if b["schatten"] else ""}')
+    teile = []
+    for s_, wort in ((b["szenario"], "Haupt"), (b["gegen"], "Gegen")):
+        if not s_:
+            continue
+        pf = "↑" if s_["richtung"] > 0 else "↓"
+        ziel = (f'{s_["ziel"]["preis"]:.2f} ({s_["ziel"]["grund"][0]})'.replace(".", ",", 1) if s_["ziel"]
+                else "freies Gelände")
+        haeufig = f' · Gedächtnis {s_["haeufig"]} von {s_["n"]}' if s_["haeufig"] is not None else ""
+        teile.append(f'{wort} {pf} {ziel}{haeufig} · falsch {"unter" if s_["richtung"] > 0 else "über"} '
+                     f'{s_["falsch"]:.2f}'.replace(".", ","))
+    return satz, " — ".join(teile)
+
+
 def korridor(alt, kurs):
     """(nächster nackter POC über dem Kurs, nächster darunter) – je Zone oder None (Micky 21.11.2026: der Raum zwischen
     zwei Magneten ist der wahrscheinliche Korridor der nächsten Bewegung, Dalton: von Bezug zu Bezug)."""
