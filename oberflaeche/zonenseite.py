@@ -6,6 +6,7 @@ import gestaltung
 from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
 
 EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Zone", "Stunde": "Einstieg"}
+HIST_KERZEN = {"Woche": 208, "Tag": 252, "Stunde": 280}   # Zonen der Vergangenheit: so weit zurück gesucht (2 Bilder)
 
 
 def rechnen(tk, laufend=False):
@@ -36,8 +37,34 @@ def rechnen(tk, laufend=False):
     ebenen = {"Woche": tiefe.ebene("Woche", tiefe.woche(df), d30, zt, tage=df),
               "Tag": tiefe.ebene("Tag", df, d30, zt),
               "Stunde": tiefe.ebene("Stunde", tiefe.stunde(d30), d30, zt)}
+    import sektoren
+    try:
+        index = daten.kurse(daten.INDEX)["Close"]
+    except Exception:  # noqa: BLE001 – ohne Index keine RS-Linie
+        index = None
+    etf = sektoren.sektor_von((daten.steckbrief(tk) or {}).get("sektor", ""))
+    try:
+        sektor = daten.kurse(etf)["Close"] if etf else None
+    except Exception:  # noqa: BLE001
+        sektor = None
+    rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
+          "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
+    hist = {n: zonen.historie(e, max(0, len(e["df"]) - HIST_KERZEN[n])) if e else [] for n, e in ebenen.items()}
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": zonen.fuehrte(ebenen), "cmf": tiefe.cmf(df)["wert"],
-            "laufend": bool(df.attrs.get("laufend"))}
+            "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": hist}
+
+
+def _stunde_bezug(symbol):
+    """Stundenschlüsse eines Bezugs (SPY, Sektor-ETF) aus den gespeicherten 30-Minuten-Kerzen oder None."""
+    import daten
+    import tiefe
+    import tpo_daten
+    try:
+        tages = daten.kurse_gespeichert(symbol)
+        h = tiefe.stunde(tpo_daten.kerzen(symbol, tages, abruf=False)) if tages is not None else None
+        return h["Close"] if h is not None and len(h) else None
+    except Exception:  # noqa: BLE001 – Technik: ohne Datei keine Linie
+        return None
 
 
 def _karte_ebene(name, la, aktiv=False):
@@ -96,7 +123,13 @@ def seite_zonen(tk, laufend=False, _stand=None):
     import zonenchart
     r = rechnen(tk.upper().strip(), laufend)
     f = r["fuehrte"]
-    charts = {n: zonenchart.bild(r["ebenen"][n], f["lage"][n], f["alt"][n], f["trade"] if n == "Tag" else None,
-                                 r["laufend"] and n != "Woche") for n in zonen.EBENEN}
+    ew = r["ebenen"]["Woche"]
+    woche = None
+    if f["lage"]["Woche"] and ew:
+        w_start = (ew["pbd"] or {}).get("zone_start") or ew["struktur"]["balance_start"]
+        woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
+    charts = {n: zonenchart.bild(r["ebenen"][n], f["lage"][n], r["hist"][n], f["trade"] if n == "Tag" else None,
+                                 r["laufend"] and n != "Woche", woche if n == "Tag" else None, r["rs"][n])
+              for n in zonen.EBENEN}
     return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "charts": charts,
             "legende": gestaltung.zeichen_legende()}

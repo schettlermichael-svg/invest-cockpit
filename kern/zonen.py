@@ -151,6 +151,44 @@ def alte_zonen(e):
     return aus
 
 
+def historie(e, ab):
+    """Alle Balancen der Ebene seit Kerze ab (Zonen der Vergangenheit, Micky 21.11.2026), älteste zuerst, je mit
+    Spanne (tief–hoch), Wertzone und Stand (offen = seit ihrem Ende nie wieder in ihrer Wertzone)."""
+    if not e:
+        return []
+    df = e["df"]
+    aus, vor = [], e["struktur"]["anker_i"]
+    while vor > ab:
+        b = tiefe.alte_balance(df, vor)
+        if not b or int(df.index.searchsorted(b["ende"])) < ab:
+            break
+        nach = df.loc[df.index > b["ende"]]
+        aus.append({"val": b["val"], "vah": b["vah"], "poc": b["poc"], "tief": b["tief"], "hoch": b["hoch"],
+                    "start": b["start"], "ende": b["ende"],
+                    "offen": not bool(((nach["Low"] <= b["vah"]) & (nach["High"] >= b["val"])).any())})
+        vor = int(df.index.searchsorted(b["start"]))
+    return aus[::-1]
+
+
+def phasenband(df, zonen_, la, zone_start):
+    """Phase je Kerze (Micky 21.11.2026): in einer Zone (Kasten der Vergangenheit bzw. die Zone von heute ab ihrem
+    Beginn) Balance, sonst gegen die letzte Zone davor: Schluss darüber Ausbruch oben, darunter Ausbruch unten.
+    → Liste 'b'/'o'/'u'/None je Kerze von df."""
+    c = df["Close"].to_numpy(float)
+    kaesten = [(z["start"], z["ende"], z["tief"], z["hoch"]) for z in zonen_]
+    if la:
+        kaesten.append((zone_start, df.index[-1], la["zone"][0], la["zone"][1]))
+    aus, letzte = [], None
+    for i, t in enumerate(df.index):
+        drin = next((k for k in kaesten if k[0] <= t <= k[1]), None)
+        if drin:
+            letzte = drin
+            aus.append("b" if drin[2] <= c[i] <= drin[3] else "o" if c[i] > drin[3] else "u")
+            continue
+        aus.append(None if letzte is None else "o" if c[i] > letzte[3] else "u" if c[i] < letzte[2] else "b")
+    return aus
+
+
 def naechste(alt, kurs):
     """Die nächste offene alte Zone über und unter dem Kurs (die Magnete) – höchstens zwei, damit das Bild schmal
     bleibt (Micky 21.11.2026: wenig, aber aussagekräftig)."""
