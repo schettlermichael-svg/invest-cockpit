@@ -12,8 +12,10 @@ Je Titel des Reviers drei Rückenwinde als Ampeln, dazu Earnings:
          fallende Tage, 50 Tage).
   Zahlen Fundament-Ampeln (fundament.ampeln, Minervini/O'Neil) aus dem Zwischenspeicher; Termin der nächsten Zahlen,
          Reaktion auf die letzten.
-Stufen (Ampel, keine Punktzahl): Entsteht · Läuft · Ermüdet · Abfluss. Logbuch: Eintritt in eine Stufe mit Datum und
-Kurs (Beobachtung, kein Urteil). Alles aus den Massive-Tagesdateien des Nachtlaufs, gespeichert in daten/rueckenwind/.
+Stufen (Ampel, keine Punktzahl): Entsteht · Läuft · Ermüdet · Abfluss.
+Rangfolge der Titel (Micky 21.11.2026): RS-Hoch vor Kurs, dann die Richtung der RS-Linie (richtung), dann der Rang als
+Kraft; dazu Abstand zum 52-Wochen-Hoch (nah · mittel · fern) und das Zeichen Einzelkämpfer (stark, Branche hinten).
+Alles aus den Massive-Tagesdateien des Nachtlaufs, gespeichert in daten/rueckenwind/.
 """
 import json
 import os
@@ -47,6 +49,8 @@ from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Ma�
 from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPANNE  # noqa: E402
 from masse import DATUM, JAHR_TAGE, MONAT_TAGE, QUARTALE_JAHR, VOL_TAGE, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 KURS_NAH = 0.97                         # Kurs „am Hoch“: höchstens 3 % darunter (wie der Chart)
+HOCH_MITTEL = 25.0                      # Abstand zum 52-Wochen-Hoch: bis 25 % „mittel“ (Minervini), darüber „fern“
+RICHTUNG = ("steigt schneller", "dreht nach oben", "steigt", "dreht nach unten", "fällt")   # Rangfolge (21.11.2026)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -59,7 +63,6 @@ EPS_MIN_BASIS = 0.05     # Jahresrate erst ab 5 Cent Gewinn je Aktie im Basisjah
 ROT_PUNKTE = 4           # Fundament rot ab 4 roten Prüfpunkten
 THEMA_TITEL = 4          # Themenname: die 4 stärksten Titel
 ANFUEHRER_ZAHL = 3       # Anführer einer Gruppe: die 3 stärksten
-LOGBUCH_EINTRAEGE = 12   # Logbuch: die letzten 12 Einträge je Titel
 VORNE_GRUEN = 2  # Geldfluss grün: mindestens 2 Gruppen vorne und kein Abfluss
 ROT_ERLAUBT = 1  # Fundament grün: höchstens 1 roter Prüfpunkt
 LUECKE_PCT = 2   # Lücke nach oben ab 2 % mit Volumen
@@ -126,6 +129,25 @@ def _stufe(r, t, b, r4):
     if MITTEL[0] <= r < MITTEL[1] and t >= TEMPO_HOCH and b > 0:
         return "Entsteht"
     return None
+
+
+def richtung(jetzt, davor):
+    """Richtung der RS-Linie aus ihrer Steigung in 4 Wochen (jetzt) und den 4 Wochen davor → Wort aus RICHTUNG oder
+    None. Rangfolge der Rückenwind-Liste nach „RS-Hoch vor Kurs“ (Micky 21.11.2026)."""
+    if jetzt is None:
+        return None
+    if jetzt > 0:
+        if davor is not None and davor <= 0:
+            return "dreht nach oben"
+        return "steigt schneller" if davor is not None and jetzt > davor else "steigt"
+    return "dreht nach unten" if davor is not None and davor > 0 else "fällt"
+
+
+def abstand_wort(abstand):
+    """Abstand zum 52-Wochen-Hoch in % → nah (bis 3 %, wie der Chart), mittel (bis 25 %, Minervini), fern."""
+    if abstand is None:
+        return None
+    return "nah" if abstand <= (1 - KURS_NAH) * 100 else "mittel" if abstand <= HOCH_MITTEL else "fern"
 
 
 def _ud(kurs, vol):
@@ -377,12 +399,14 @@ def rechnen(netz=False):
                        if len(rs) > 2 * WOCHEN4 else None)
         zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
         kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-JAHR_TAGE:].max())
+        abstand = float((1 - c.iloc[-1] / c.iloc[-JAHR_TAGE:].max()) * 100)
         stufe = _stufe(r, tempo, besch, a4)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
             stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
         sek, bra, th = sek_von.get(tk), bra_von.get(tk), thema_von.get(tk)
         x = {"rang": int(r), "rang_vor4": int(a4), "tempo": int(tempo), "beschleunigung": int(besch),
              "rs_hoch_vor_kurs": rs_hoch and not kurs_hoch, "stufe": stufe,
+             "abstand_hoch": round(abstand, 1),
              "rs_tempo": round(rs_tempo, 1) if rs_tempo is not None else None,
              "rs_vortempo": round(rs_vortempo, 1) if rs_vortempo is not None else None,
              "zufluss": round(zufluss, 2) if zufluss else None,
@@ -405,6 +429,10 @@ def rechnen(netz=False):
         if z:                                    # standen ohne Zahlen da)
             z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
         x["zahlen"] = z
+        x["richtung"] = richtung(x["rs_tempo"], x["rs_vortempo"])
+        # Einzelkämpfer (Micky 21.11.2026): stark (Stufe Entsteht/Läuft oder RS-Hoch vor Kurs), die Branche hinten
+        x["einzelkaempfer"] = bool((stufe in ("Entsteht", "Läuft") or x["rs_hoch_vor_kurs"])
+                                   and bra and bra["feld"] not in VORNE)
         titel[tk] = x
     for g in gruppen:                            # Anführer und Verfolger je Gruppe: folgen die Schwestern?
         anfuehrer_verfolger(g, titel)
@@ -412,7 +440,6 @@ def rechnen(netz=False):
     erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten,
            "schwellen": {"stark": STARK, "mittel": MITTEL, "tempo_hoch": TEMPO_HOCH, "ermuedet": ERMUEDET,
                          "abfluss": ABFLUSS}}
-    _logbuch(erg)
     json_schreiben(_pfad("stand.json"), erg, ensure_ascii=False)
     return erg
 
@@ -431,33 +458,8 @@ def anfuehrer_verfolger(g, titel, n=ANFUEHRER_ZAHL):
     return g
 
 
-def _logbuch(erg):
-    """Eintritt in eine Stufe mit Datum und Kurs; Austritt mit Datum. Nur Beobachtung."""
-    pfad = _pfad("logbuch.json")
-    lb = json_lesen(pfad, {})
-    for tk, x in erg["titel"].items():
-        e = lb.get(tk, [])
-        jetzt = x["stufe"]
-        offen = e[-1] if e and not e[-1].get("bis") else None
-        if offen and offen["stufe"] == jetzt:
-            continue
-        if offen:
-            offen["bis"] = erg["stand"]
-            offen["kurs_bis"] = x["kurs"]
-        if jetzt:
-            e.append({"stufe": jetzt, "seit": erg["stand"], "kurs_seit": x["kurs"]})
-        if e:
-            lb[tk] = e[-LOGBUCH_EINTRAEGE:]
-    json_schreiben(pfad, lb, ensure_ascii=False)
-
-
 def laden():
-    """Gespeicherter Stand (ohne Rechnen) und Logbuch, oder None."""
-    pfad = _pfad("stand.json")
-    erg = json_lesen(pfad)
-    if erg is None:
-        return None
-    erg["logbuch"] = json_lesen(_pfad("logbuch.json"), {})
-    return erg
+    """Gespeicherter Stand (ohne Rechnen) oder None."""
+    return json_lesen(_pfad("stand.json"))
 
 

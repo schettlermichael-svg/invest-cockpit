@@ -1,7 +1,7 @@
 """Seite „Rückenwind“ (Modul rueckenwind_seite, Rechnung in kern/rueckenwind.py) (Konzept: KONZEPT_RUECKENWIND.md, 09.11.2026) – nur dieses Setup, getrennt von den Systemen.
 
 Bausteine für app.py: kopf (Lage in Zahlen), wetterkarte (Feld je Gruppe in den letzten 5 Wochen, seit 10.11.2026),
-gruppen (Tabelle nach Geldfluss), dreifach (Karten: Kurs, Geld und Zahlen grün), stufe (Tabelle je Stufe), logbuch.
+gruppen (Tabelle nach Geldfluss), liste (alle Titel in der Rangfolge des Rückenwinds, 21.11.2026).
 Daten: kern/rueckenwind.py (Nachtlauf).
 """
 import os
@@ -13,9 +13,8 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
-import kreislaufbild  # noqa: E402
 
-from rueckenwind import ZUFLUSS  # noqa: E402  eine Quelle (rueckenwind)
+from rueckenwind import RICHTUNG, ZUFLUSS, abstand_wort, richtung  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
@@ -273,127 +272,53 @@ KURZ = {"Quartalsgewinn zum Vorjahr": "Gewinn", "Beschleunigung Gewinn": "Beschl
         "Jahresgewinne 3 Jahre": "3 Jahre", "Eigenkapitalrendite": "ROE", "Institutionen": "Inst."}
 
 
-def _punkte_html(x):
-    """Die neun Zahlen-Punkte als kleine Ampeln, der Wert beim Überfahren mit der Maus."""
-    pk = (x.get("zahlen") or {}).get("punkte") or {}
-    if not pk:
-        return ""
-    return ('<div style="display:flex;flex-wrap:wrap;gap:4px 8px;margin-top:6px">'
-            + "".join(f'<span title="{t(n)}: {t(w)}" style="font-size:12px;color:{TEXT_2};white-space:nowrap">'
-                      f'<span style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px;'
-                      f'background:{ {"grün": GRUEN, "gelb": GELB, "rot": ROT}.get(a, TEXT_3)}"></span>'
-                      f'{KURZ.get(n, n)}</span>' for n, (a, w) in pk.items())
-            + "</div>")
-
-
 def _punkte_text(x):
     pk = (x.get("zahlen") or {}).get("punkte") or {}
     return " ".join(f'{PUNKT.get(a, "⚪")}{KURZ.get(n, n)}' for n, (a, _) in pk.items())
 
 
-def _mini(tk):
-    kr = _kreis(tk)
-    if not kr:
-        return ""
-    return (f'<div style="display:flex;align-items:center;gap:8px;margin-top:8px">{kreislaufbild.mini(kr)}'
-            f'<span style="font-size:13px;color:{TEXT_2}">{t(kreislaufbild.punkt_wort(kr))}</span></div>')
+PFEIL = {"steigt schneller": "⏫", "dreht nach oben": "↗️", "steigt": "⬆️", "dreht nach unten": "↘️", "fällt": "⬇️"}
+HOCH_PUNKT = {"nah": "🟢", "mittel": "🟡", "fern": "🔴"}
 
 
-def dreifach(erg):
-    """Karten: Kurs, Geld und Zahlen grün (Entsteht oder Läuft)."""
-    liste = sorted(dreifach_liste(erg), key=lambda p: (p[1]["stufe"] != "Entsteht", -p[1]["tempo"]))
-    if not liste:
-        return seite(f'<p style="color:{TEXT_2}">Zurzeit kein Titel mit dreifachem Rückenwind.</p>', oben=4, unten=4)  # Layout
-    karten = []
-    for tk, x in liste:
+def _richtung(x):
+    """Gespeichert seit 21.11.2026; ältere Stände rechnen sie aus der Steigung nach."""
+    return x.get("richtung") or richtung(x.get("rs_tempo"), x.get("rs_vortempo"))
+
+
+def _ordnung(x):
+    """Rangfolge (Micky 21.11.2026): RS-Hoch vor Kurs zuerst, dann die Richtung der RS-Linie, dann der Rang (Kraft)."""
+    r = _richtung(x)
+    return (not x.get("rs_hoch_vor_kurs"), RICHTUNG.index(r) if r in RICHTUNG else len(RICHTUNG), -x["rang"])
+
+
+def liste(erg):
+    """Alle Titel des Reviers in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund.
+    → (DataFrame, Ticker in derselben Reihenfolge)."""
+    reihen, tks = [], []
+    for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
+        z = x.get("zahlen") or {}
         termin, warn = _termin(x, erg["stand"])
-        karten.append(
-            f'<a href="?seite=Titelseite&t={tk}" target="_self" style="text-decoration:none">'
-            f'<div style="background:{KARTE};border:1px solid {RAND};border-left:4px solid {GRUEN};border-radius:12px;'
-            f'padding:12px 14px;min-height:150px">'
-            f'<div style="display:flex;justify-content:space-between"><b style="color:{TEXT};font-size:18px">{tk}</b>'
-            f'<span style="color:{BLAU if x["stufe"] == "Entsteht" else GRUEN};font-size:13px">{x["stufe"]}</span></div>'
-            f'<div style="color:{TEXT_2};font-size:13px;margin:4px 0">RS {x["rang_vor4"]} → <b style="color:{TEXT}">'
-            f'{x["rang"]}</b> ({"+" if x["tempo"] >= 0 else ""}{x["tempo"]} in 4 Wo.)'
-            + (" · RS-Hoch vor Kurs" if x["rs_hoch_vor_kurs"] else "") + '</div>'
-            f'<div style="color:{TEXT_2};font-size:13px">RS-Linie {_rs_linie(x)} · Volumen {_zufluss(x.get("zufluss"))}</div>'
-            f'<div style="color:{TEXT_2};font-size:13px">{t(x["sektor"])}{" ◇" if x.get("sektor_stabil") else ""} · '
-            f'{t(x["branche"])}{" ◇" if x.get("branche_stabil") else ""}</div>'
-            + (f'<div style="color:{TEXT_3};font-size:12px">Thema: {t(x["thema"][:60])}</div>' if x.get("thema") else "")  # Layout
-            + f'<div style="margin-top:6px;font-size:13px;color:{ROT if warn == "rot" else GELB if warn else TEXT_2}">'
-            + (f'Zahlen {termin}' if termin else "Termin unbekannt") + (" 🔴" if warn == "rot" else " 🟡" if warn else "") + '</div>'
-            + (f'<div style="font-size:13px;color:{TEXT_2}">{_reaktion(x)}</div>' if _reaktion(x) else "")
-            + _punkte_html(x) + _mini(tk) + '</div></a>')
-    return seite('<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px">'
-                 + "".join(karten) + '</div>', oben=4, unten=4)  # Layout
-
-
-def _kreis(tk):
-    try:
-        import zeichen
-        return zeichen.von(tk)
-    except Exception:  # noqa: BLE001
-        return None
-
-
-def _zustand(kr):
-    import auktion
-    return auktion.wort((kr or {}).get("auktion"))
-
-
-def _zeile(tk, x, stand):
-    """Eine Tabellenzeile eines Titels (Stufen, Anführer, Verfolger)."""
-    z = x.get("zahlen") or {}
-    termin, warn = _termin(x, stand)
-    kr = _kreis(tk)
-    return {"Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
-            "Zustand": _zustand(kr), "Phase": kreislaufbild.punkt_wort(kr), "Kreislauf": (kr or {}).get("kurve") or [],
-            "Kurs": PUNKT[x["kurs_ampel"]], "Geld": PUNKT[x["geld_ampel"]],
-            "Zahlen": PUNKT[z.get("ampel") or "grau"],
-            "RS": f'{x["rang_vor4"]} → {x["rang"]}', "Tempo": x["tempo"], "Beschl.": x["beschleunigung"],
+        ab = x.get("abstand_hoch")
+        wort = abstand_wort(ab)
+        r = _richtung(x)
+        reihen.append({
+            "Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
-            "RS-Linie 4 Wo.": _rs_linie(x), "Volumen-Zufluss": _zufluss(x.get("zufluss")),
+            "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
+            "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}', "Stufe": x.get("stufe") or "",
+            "Volumen": _zufluss(x.get("zufluss")),
+            "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
+            "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
             "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
             "Thema": (x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN],
-            "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin, "letzte Zahlen": _reaktion(x),
-            "Zahlen im Einzelnen": _punkte_text(x)}
-
-
-def stufe(erg, name):
-    """Tabelle einer Stufe: Geld zuerst, dann Zahlen, dann Tempo."""
-    rang = {"grün": 0, "gelb": 1, "rot": 2, "grau": 3, None: 3}
-    liste = sorted(((tk, x) for tk, x in erg["titel"].items() if x["stufe"] == name),
-                   key=lambda p: (rang[p[1]["geld_ampel"]], rang[(p[1].get("zahlen") or {}).get("ampel")],
-                                  -p[1]["tempo"]))
-    reihen = [_zeile(tk, x, erg["stand"]) for tk, x in liste]
-    tks = [tk for tk, _ in liste]
-    if name is None:                            # nicht rechenbar: grau mit Grund, damit nichts still fehlt
-        for o in erg.get("ohne_daten") or []:
-            reihen.append({"Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Kurs": PUNKT["grau"],
-                           "Geld": PUNKT["grau"], "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
-            tks.append(o["tk"])
+            "Zahlen": PUNKT[z.get("ampel") or "grau"], "letzte Zahlen": _reaktion(x),
+            "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin,
+            "Zahlen im Einzelnen": _punkte_text(x)})
+        tks.append(tk)
+    for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
+        reihen.append({"Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Geld": PUNKT["grau"],
+                       "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
+        tks.append(o["tk"])
     return pd.DataFrame(reihen), tks
-
-
-def logbuch(erg, tage=28):  # Layout
-    """Offene Einträge (seit wann in der Stufe, Kurs seitdem) und Austritte der letzten Wochen – Beobachtung."""
-    lb = erg.get("logbuch") or {}
-    grenze = pd.Timestamp(erg["stand"]) - pd.Timedelta(days=tage)
-    reihen = []
-    for tk, e in lb.items():
-        for x in e:
-            offen = not x.get("bis")
-            if not offen and pd.Timestamp(x["bis"]) < grenze:
-                continue
-            heute = (erg["titel"].get(tk) or {}).get("kurs")
-            ende = heute if offen else x.get("kurs_bis")
-            reihen.append({"Titel": tk, "Stufe": x["stufe"], "seit": f'{pd.Timestamp(x["seit"]):%d.%m.%Y}',
-                           "bis": "" if offen else f'{pd.Timestamp(x["bis"]):%d.%m.%Y}',
-                           "Kurs seit": x["kurs_seit"], "Kurs heute/bis": ende,
-                           "Veränderung %": round((ende / x["kurs_seit"] - 1) * 100, 1) if ende and x["kurs_seit"]
-                           else None})
-    df = pd.DataFrame(reihen)
-    if len(df):
-        df = df.sort_values(["bis", "seit"], ascending=[True, False])
-    return df

@@ -390,8 +390,8 @@ def zeigen(name, *args):
 
 
 def rueckenwind_zeigen():
-    """Seite „Rückenwind“, ② (KONZEPT_RUECKENWIND.md): Strömungskarte und Gruppen nach Geldfluss (die Titel-Listen
-    standen vom 12. bis 21.11.2026 auf der Seite Setups). Rechnet nicht – liest den Stand des Frühlaufs."""
+    """Seite „Rückenwind“, ② (KONZEPT_RUECKENWIND.md): Strömungskarte, Gruppen nach Geldfluss und die Titel in der
+    Rangfolge des Rückenwinds (21.11.2026). Rechnet nicht – liest den Stand des Frühlaufs."""
     import rueckenwind as rw_kern
     import rueckenwind_seite as rw
     erg = rw_kern.laden()
@@ -408,6 +408,18 @@ def rueckenwind_zeigen():
         with st.expander(f"Alle {'Sektoren' if art == 'Sektor' else 'Branchen' if art == 'Branche' else 'Themen'} "
                          f"nach Geldfluss"):
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
+        st.markdown(gestaltung.seite("<h3 style='margin:0'>Titel mit Rückenwind</h3>"
+                                     f"<p style='color:{gestaltung.TEXT_2};font-size:14px;margin:6px 0 0'>Rangfolge: 🦈 "
+                                     "RS-Linie am Hoch vor dem Kurs zuerst, dann die Richtung der RS-Linie, dann der Rang "
+                                     "als Kraft. Alle Titel, nichts gefiltert; Zeile anklicken → Knopf zur Titelseite."
+                                     "</p>", oben=8, unten=0), unsafe_allow_html=True)
+        df, tks = rw.liste(erg)
+        wahl = st.dataframe(df, hide_index=True, use_container_width=True, height=560, on_select="rerun",  # Layout
+                            selection_mode="single-row", key="rw_liste")
+        reihen = wahl.selection.rows if wahl is not None else []
+        if reihen:
+            tk = tks[reihen[0]]
+            st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
 
 
 
