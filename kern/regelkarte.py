@@ -706,12 +706,12 @@ BEREICHE = [
     dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Vorwald (PbD), Dalton, Micky 21.11.2026",
          regel="Eine Regel für Woche, Tag und Stunde, die PbD-Kette: Impuls (3 Schlüsse, 2 ATR) → Zone von Körper zu Körper "
                "→ Ausbruch oder Scheitern ab 2 Schlüssen draußen → nächster maßgeblicher Impuls. D-Zonen ohne Impuls: 3 "
-               "Körper unter 2 ATR, mindestens 5 Kerzen; nach einem Impuls mindestens 3. Offen = seit dem Ende nie wieder in "
+               "Körper unter 2 ATR; jede Zone mindestens 3 Kerzen; der Impuls beginnt so spät wie möglich. Offen = seit dem Ende nie wieder in "
                "der Wertzone; nackter POC = seitdem nie berührt. Ein Profil je Ebene: Zeit und Volumen gespiegelt ab Beginn "
                "des Impulses der Zone von heute. Ausbruch und Gegentrade frisch bis 5 Schlüsse.",
          messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.band", "zonen.wanderung", "zonen.fuehrte",
                   "zonenchart.bild"], pruefer=[],
-         luecke="kein Prüfer – Mindestlängen 3 und 5 gesetzt, ungemessen"),
+         luecke="kein Prüfer – Mindestlänge 3 gesetzt, ungemessen"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "

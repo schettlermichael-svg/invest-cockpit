@@ -468,13 +468,29 @@ def impulse(df, atr_wert, suche=SUCHE):
                     break
                 k += 1
             if zahl >= IMPULS_SCHLUESSE and (c[ext] - c[s]) * richt >= IMPULS_ATR * atr_wert:
-                bester = (s + int(np.argmin(c[s:ext + 1] * richt)), ext, richt > 0, zahl)
+                bester = _spaet(c, s + int(np.argmin(c[s:ext + 1] * richt)), ext, richt, atr_wert)
         if bester:
             erg.append(bester)
             s = bester[1]
         else:
             s += 1
     return erg
+
+
+def _spaet(c, start, ext, richt, atr_wert):
+    """Der Impuls beginnt so spät wie möglich (Micky 21.11.2026, HWM Woche Sept./Okt.): der Anfang rückt vor, solange der
+    Rest bis zum Extrem noch 3 neue Schlüsse und 2 ATR hat – die kleinen Schritte davor gehören zur Zone, nicht zum
+    Sturm. → (Start, Ende, aufwärts, Anzahl Schlüsse)."""
+    def schluesse(a):
+        ext_, n_ = a, 0
+        for k in range(a + 1, ext + 1):
+            if (c[k] - c[ext_]) * richt > 0:
+                ext_, n_ = k, n_ + 1
+        return n_
+    s_ = start
+    while s_ + 1 < ext and schluesse(s_ + 1) >= IMPULS_SCHLUESSE and (c[ext] - c[s_ + 1]) * richt >= IMPULS_ATR * atr_wert:
+        s_ += 1
+    return s_, ext, richt > 0, schluesse(s_)
 
 
 def _zone(O, C, imp_kurs, i_end, aufwaerts, bis):

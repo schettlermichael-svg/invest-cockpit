@@ -34,8 +34,8 @@ Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde
   letzten Schluss darin vor dem 2. Schluss draußen, sonst am Beginn des nächsten Impulses. Kasten = Kerzenkörper (faire
   Zone, tiefe._zone), Dochte blass. Zwischen Ausbruch und nächstem Impuls und vor dem ersten Impuls: D-Zonen – 3 Kerzen,
   deren Körper zusammen keine 2 ATR überspannen (kein Impuls), danach wie die faire Zone fortgeschrieben, Ende wieder
-  beim 2. Schluss draußen. Mindestlänge 3 Kerzen nach einem Impuls, 5 für eine D-Zone (ZONE_MIN, D_MIN, Claude
-  21.11.2026, ungemessen). Alle Maße in ATR der Ebene.
+  beim 2. Schluss draußen. Mindestlänge 3 Kerzen für jede Zone (ZONE_MIN, Claude 21.11.2026, ungemessen). Der Impuls
+  beginnt so spät wie möglich (tiefe._spaet). Alle Maße in ATR der Ebene.
   Offen, solange der Kurs seit ihrem Ende nie wieder in ihre Wertzone lief (Magnet), sonst erledigt; ihr POC ist nackt,
   solange kein Docht ihn seitdem berührt hat. Nach einem Ausbruch beginnt die Suche nach der nächsten Zone erst nach dem
   bestätigenden Schluss – die Ausbruchskerzen bleiben Ausbruch.
@@ -51,8 +51,7 @@ import pandas as pd
 import tiefe
 
 FRISCH_SCHLUESSE = 5                 # Ausbruch und Gegentrade gelten bis 5 Schlüsse draußen
-ZONE_MIN = 3               # eine Zone nach einem Impuls braucht mindestens 3 Kerzen (Claude 21.11.2026, ungemessen)
-D_MIN = 5                  # eine D-Zone ohne Impuls davor mindestens 5 (eine Rotation, wie avwap.BALANCE_BLOCK; ungemessen)
+ZONE_MIN = 3               # jede Zone braucht mindestens 3 Kerzen (Claude 21.11.2026, ungemessen; Micky: auch die D-Zone)
 D_ATR = tiefe.IMPULS_ATR   # D-Zone: 3 Körper überspannen zusammen weniger als ein Impuls (2 ATR) – eine Quelle
 GESCHEITERT = tiefe.GESCHEITERT    # 2 Schlüsse draußen (Vorwald) – eine Quelle
 STOPP_ATR = tiefe.STOPP_ATR        # ¼ ATR jenseits der Kante – eine Quelle
@@ -291,7 +290,7 @@ def historie(e, ab=0):
     L, H = df["Low"].to_numpy(float), df["High"].to_numpy(float)
     erg = []
     for z in zonen_:
-        if z["e"] - z["s"] + 1 < (D_MIN if z["art"] == "D" else ZONE_MIN) or df.index[z["s"]] >= heute:
+        if z["e"] - z["s"] + 1 < ZONE_MIN or df.index[z["s"]] >= heute:
             continue
         von, bis = _von_bis(e, df.index[z["s"]])[0], _von_bis(e, df.index[z["e"]])[1]
         f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
