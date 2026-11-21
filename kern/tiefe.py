@@ -413,6 +413,18 @@ def sektor_rang(sektoren_df):
 
 
 # ── PbD nach Tom Vorwald ──────────────────────────────────────────────────────────────────────────────────────────
+def profilform(pr):
+    """Buchstabe aus der Form des Profils (Micky 21.11.2026, Steidlmayer/Dalton): POC im oberen Drittel der Spanne P,
+    im unteren b, sonst D – das Volumen entscheidet; widerspricht das Zeitprofil (zeit, tpoc), ist es ein Blitz ⚡.
+    → (Buchstabe, Widerspruch)."""
+    tief, hoch = float(pr["grenzen"][0]), float(pr["grenzen"][-1])
+    f_vol = _form(pr, tief, hoch)[0]
+    if pr.get("tpoc") is None:
+        return f_vol, False
+    f_zeit = _form({"poc": pr["tpoc"]}, tief, hoch)[0]
+    return f_vol, f_zeit != f_vol
+
+
 def _form(pr, tief, hoch):
     lage = (pr["poc"] - tief) / (hoch - tief) if hoch > tief else 0.5               # Technik: ohne Spanne die Mitte
     return ("P" if lage >= 1 - FORM_DRITTEL else "b" if lage <= FORM_DRITTEL else "D"), round(lage, 2)
@@ -619,7 +631,7 @@ def pbd(df, fein, atr_wert, gruppe="D"):
     kante = None
     if z_tief <= kurs <= z_hoch:
         kante = "unten" if kurs - z_tief <= nah else "oben" if z_hoch - kurs <= nah else None
-    return {"form": "D" if len(rueck) >= RUECKLAEUFE_D else ("P" if aufwaerts else "b"),
+    return {"form": f_vol,                                 # Micky 21.11.2026: der Buchstabe ist die Form des Profils
             "form_vol": f_vol, "lage_vol": lage_vol, "form_zeit": f_zeit, "lage_zeit": lage_zeit,
             "aufwaerts": aufwaerts, "impuls_tag": df.index[i_imp], "impuls_kurs": impuls_kurs,
             "impuls_ende_tag": df.index[i_end], "impuls_ende_kurs": float(C[i_end]), "impuls_schluesse": zahl,

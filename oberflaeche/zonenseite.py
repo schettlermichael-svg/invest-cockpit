@@ -48,7 +48,11 @@ def rechnen(tk, laufend=False):
         sektor = None
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
-    f = zonen.fuehrte(ebenen)
+    try:
+        avwaps = tiefe.avwap_liste(df, zt)[0]
+    except Exception:  # noqa: BLE001 – Technik: ohne AVWAP keine AVWAP-Festung
+        avwaps = []
+    f = zonen.fuehrte(ebenen, avwaps)
     f["gedaechtnis"] = {n: zonen.gedaechtnis(ebenen, f["lage"], n) for n in zonen.EBENEN}
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": tiefe.cmf(df)["wert"],
             "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
@@ -76,7 +80,8 @@ def _karte_ebene(name, la, aktiv=False):
     return (f'<div style="background:{KARTE};border:{2 if aktiv else 1}px solid {BLAU if aktiv else RAND};border-radius:10px;'
             f'padding:10px 12px"><div style="font-size:12px;color:{TEXT_3}">{name} · {EBENE_ROLLE[name]}</div>'
             f'<div style="font-size:20px;margin:2px 0">{la["pfeil"]} {la["zeichen"]} <span style="font-size:15px">'
-            f'{t(la["wort"])} · {la["form"]}</span></div>'
+            f'{t(la["wort"])} · {la["form"]}{"⚡" if la.get("blitz") else ""}'
+            f'{(" nach " + la["impuls"]) if la.get("impuls") else ""}</span></div>'
             f'<div style="font-size:13px;color:{TEXT_2}">{zahl(lo)} – {zahl(hi)} · POC {zahl(la["poc"])}</div></div>')
 
 
@@ -97,10 +102,10 @@ def kopf(r):
                       f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])}{grund} · {tr["ampel"]} CRV {zahl(tr["crv"] or 0, 1)}</div>')
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Zonen-Trade</div>'
-    alt = zonen.naechste(f["alt"]["Tag"], kurs) + zonen.naechste(f["alt"]["Woche"], kurs)
-    naechste = min(alt, key=lambda z: abs((z["val"] + z["vah"]) / 2 - kurs), default=None)
-    gedaechtnis = (f'🪝 offene alte Zone {zahl(naechste["val"], 0)}–{zahl(naechste["vah"], 0)}' if naechste else
-                   "🟢 keine offene alte Zone")
+    fe = f["festungen"]["Tag"]
+    teile_ = [f'{pf} {zahl(x["preis"])} ({" · ".join(x["grund"])}, {x["abstand"]:+.1f} %)'.replace(".", ",", 1)
+              for seite_f, pf in (("oben", "↑"), ("unten", "↓")) for x in fe[seite_f][:1]]
+    gedaechtnis = "Festungen " + " · ".join(teile_) if teile_ else "keine Festung in Reichweite"
     muster = {"innen": "🟢 Tageszone in der Wochenzone", "darüber": "🦬 Tageszone über der Wochenzone",
               "darunter": "🐻 Tageszone unter der Wochenzone", "überlappend": "🟡 Tageszone am Rand der Wochenzone",
               None: "⚪ Muster ungemessen"}[f["muster"]]
@@ -134,15 +139,15 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     import zonen
     import zonenchart
     f = r["fuehrte"]
-    ew = r["ebenen"]["Woche"]
-    woche = None
-    if ebene == "Tag" and f["lage"]["Woche"] and ew:
-        w_start = (ew["pbd"] or {}).get("zone_start") or ew["struktur"]["balance_start"]
-        woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
+    hoeher = {"Tag": "Woche", "Stunde": "Tag"}.get(ebene)             # die Front der höheren Ebene als Rahmen
+    rahmen = None
+    if hoeher and f["lage"][hoeher] and r["ebenen"][hoeher]:
+        beginn = pd.Timestamp(f["lage"][hoeher]["beginn"])
+        rahmen = (f["lage"][hoeher], beginn - pd.Timedelta(days=4) if hoeher == "Woche" else beginn, hoeher)  # Technik: Montag
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
-                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker, linien_,
+                           r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
-                           f["gedaechtnis"][ebene])
+                           f["gedaechtnis"][ebene], f["festungen"][ebene])
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──

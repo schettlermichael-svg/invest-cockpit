@@ -24,8 +24,8 @@ Die vier Zonen-Trades (Tageszone; Micky 21.11.2026: nur diese):
               dem Ausbruch.
   Gegentrade  Form gescheitert (2 bis 5 Schlüsse auf der Gegenseite) → Einstieg am Schluss, Stopp ¼ ATR hinter der
               gebrochenen Kante (Micky 21.11.2026, WST: läuft der Kurs zurück in die Zone, ist das Scheitern
-              gescheitert), Ziel der Impulsbeginn (Vorwald) – liegt er nicht mindestens 1 Risiko entfernt, der nächste
-              Bezug in Richtung des Trades mit 1 Risiko Abstand: nackter POC, Knoten des Profils, offene alte Zone.
+              gescheitert), Ziel der Impulsbeginn (Vorwald) – liegt er nicht mindestens 1 Risiko entfernt, die nächste
+              Festung in Richtung des Trades mit 1 Risiko Abstand (festungen()).
 CRV-Ampel an jedem Trade (Micky 21.11.2026): 🟢 ab 2, 🟡 ab 1, 🔴 darunter – der Trade bleibt immer sichtbar.
 Gesetzt (Claude, 21.11.2026, zur Bestätigung): „frisch“ = höchstens 5 Schlüsse draußen, danach läuft der Trend ohne
 neuen Einstieg; Ausbruchsziel = Zonenhöhe (Messregel der Balance).
@@ -42,6 +42,9 @@ Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde
   Offen, solange der Kurs seit ihrem Ende nie wieder in ihre Wertzone lief (Magnet), sonst erledigt; ihr POC ist nackt,
   solange kein Docht ihn seitdem berührt hat. Nach einem Ausbruch beginnt die Suche nach der nächsten Zone erst nach dem
   bestätigenden Schluss – die Ausbruchskerzen bleiben Ausbruch.
+Buchstabe (Micky 21.11.2026, Steidlmayer/Dalton): die Form des Profils der Formation (ab Impulsbeginn, ohne Impuls die
+  Zone) – POC im oberen Drittel P, unteren b, sonst D; widerspricht das Zeitprofil, ein Blitz ⚡ (tiefe.profilform). Die
+  Impulsrichtung steht als Pfeil daneben. In der Balance zeigt die Form die Richtung (P auf, b ab, D offen).
 Phasenband (Micky 21.11.2026): Farbe = Richtung, Stärke = Phase – Impuls kräftig, Ausbruch mittel (💥), Zone blass in
   der Richtung der Treppe (POC über bzw. unter der Wertzone der Zone davor), gelb nur ohne Richtung, Scheitern orange.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert
@@ -94,10 +97,13 @@ def _von_bis(e, t):
 
 
 def _doppel(teil, schritt):
-    """Volumen- und Zeitprofil (Market Profile: eine Marke je Kerze und berührter Stufe) auf denselben Stufen."""
+    """Volumen- und Zeitprofil (Market Profile: eine Marke je Kerze und berührter Stufe) auf denselben Stufen, dazu die
+    Truppen (Micky 21.11.2026, Näherung ohne Orderdaten): das Volumen steigender Kerzen zählt zu den Käufern."""
     pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
     zp = tiefe.profil(teil["High"], teil["Low"], [1.0] * len(teil), schritt)
-    pr["zeit"], pr["tpoc"] = zp["volumen"], zp["poc"]
+    auf = (teil["Close"] >= teil["Open"]).to_numpy()
+    kp = tiefe.profil(teil["High"], teil["Low"], teil["Volume"].where(auf, 0.0), schritt)
+    pr["zeit"], pr["tpoc"], pr["kauf"] = zp["volumen"], zp["poc"], kp["volumen"]
     return pr
 
 
@@ -146,7 +152,8 @@ def lage(e):
     """Zone, Phase und Richtung einer Ebene (tiefe.ebene) → dict oder None."""
     if not e:
         return None
-    lo, hi, pr, form, beginn = _zone(e)
+    lo, hi, pr, _, beginn = _zone(e)
+    form, blitz = tiefe.profilform(pr)                 # Micky 21.11.2026: Buchstabe aus der Form des Profils
     poc = pr["poc"]
     pb, df = e.get("pbd"), e["df"]
     kurs = float(df["Close"].iloc[-1])
@@ -162,18 +169,19 @@ def lage(e):
             phase = "test"
         elif pb["kante"]:
             phase = "kante"
-        if phase in ("balance", "kante") and form == "D":
-            richt = 0
+        if phase in ("balance", "kante"):              # in der Balance zeigt die Form, wer das Feld hält
+            richt = {"P": 1, "b": -1, "D": 0}[form]
     elif kurs >= hi or kurs <= lo:
         phase = "kante"
     z, wort = PHASE[phase]
     return {"zone": (float(lo), float(hi)), "poc": float(poc), "profil": pr, "beginn": beginn, "form": form,
+            "blitz": blitz, "impuls": ("↗" if pb["aufwaerts"] else "↘") if pb else "",
             "phase": phase, "zeichen": z,
             "wort": wort, "richtung": richt, "pfeil": {1: "↗", -1: "↘", 0: "→"}[richt], "kurs": kurs,
             "zaehl": pb["zaehl"] if pb else 0, "seite": pb["seite"] if pb else None, "kante": pb["kante"] if pb else None}
 
 
-def trade(e, la):
+def trade(e, la, fest=None):
     """Der eine Zonen-Trade der Tagesebene jetzt → {art, richtung (1/−1), einstieg, stopp, ziel, crv} oder None."""
     pb = e.get("pbd") if e else None
     if not pb or not la:
@@ -204,11 +212,10 @@ def trade(e, la):
         stopp = (lo + a * STOPP_ATR) if r < 0 else (hi - a * STOPP_ATR)            # hinter der gebrochenen Kante
         risiko = abs(kurs - stopp)
         ziel, grund = pb["impuls_kurs"], "Impulsbeginn"
-        if (ziel - kurs) * r < risiko:
-            bezug = _bezuege(e, la)
-            weiter = [(p, g) for p, g in bezug if (p - kurs) * r >= risiko]
+        if (ziel - kurs) * r < risiko:                 # sonst die nächste Festung mit 1 Risiko Abstand
+            weiter = [x for x in (fest or {}).get("oben" if r > 0 else "unten", []) if (x["preis"] - kurs) * r >= risiko]
             if weiter:
-                ziel, grund = min(weiter, key=lambda x: abs(x[0] - kurs))
+                ziel, grund = weiter[0]["preis"], "Festung: " + " · ".join(weiter[0]["grund"])
         t = {"art": "gegen", "richtung": r, "einstieg": kurs, "stopp": stopp, "ziel": ziel, "ziel_grund": grund}
     if t:
         risiko = abs(t["einstieg"] - t["stopp"])
@@ -224,19 +231,6 @@ AMPEL_GRUEN, AMPEL_GELB = 2, 1  # CRV-Ampel der Zonen-Trades (Micky 21.11.2026):
 def crv_ampel(crv):
     """Ampel zum Chance-Risiko-Verhältnis."""
     return "⚪" if crv is None else "🟢" if crv >= AMPEL_GRUEN else "🟡" if crv >= AMPEL_GELB else "🔴"
-
-
-def _bezuege(e, la):
-    """Bezugspunkte für ein Ziel: nackte POCs der alten Zonen, Knoten des Profils, Kanten offener alter Zonen →
-    [(Preis, Grund)]."""
-    aus = []
-    for z in historie(e):
-        if z["nackt"]:
-            aus.append((z["poc"], "nackter POC"))
-        if z["offen"]:
-            aus += [(z["vah"], "offene Zone"), (z["val"], "offene Zone")]
-    aus += [(k, "Knoten") for k in profil_details(la["profil"])["knoten"]]
-    return aus
 
 
 def _d_zonen(O, C, a, b, atr_wert, aus, band):
@@ -301,7 +295,8 @@ def kette(df, atr_wert):
                 ende, aus_seite, bestaetigt = j - zaehl, seite, j
                 break
         zt, zh = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, ende)[:2]
-        aus.append({"art": "P" if auf else "b", "s": e_, "e": ende, "tief": zt, "hoch": zh, "auf": auf, "aus": aus_seite})
+        aus.append({"art": "P" if auf else "b", "s": e_, "e": ende, "tief": zt, "hoch": zh, "auf": auf, "aus": aus_seite,
+                    "imp_s": s_})
         for j in range(e_ + 1, ende + 1):
             band[j] = "b"
         if aus_seite:
@@ -334,9 +329,14 @@ def historie(e, ab=0):
         f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
         teil = f_ if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN else df.iloc[z["s"]:z["e"] + 1]
         pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
+        a0 = z.get("imp_s", z["s"])                    # Formation: ab Impulsbeginn (D: die Zone selbst) – ihr Buchstabe
+        v0 = _von_bis(e, df.index[a0])[0]
+        f0 = fein[(fein.index >= v0) & (fein.index < bis)] if fein is not None and len(fein) else None
+        t0 = f0 if f0 is not None and len(f0) >= tiefe.STUNDEN_MIN else df.iloc[a0:z["e"] + 1]
+        form, blitz = tiefe.profilform(_doppel(t0, schritt))
         nach = slice(z["e"] + 1, len(df))
         beruehrt = (L[nach] <= pr["poc"]) & (H[nach] >= pr["poc"])
-        erg.append({"form": z["art"], "auf": z["auf"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
+        erg.append({"form": form, "blitz": blitz, "auf": z["auf"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
                     "docht_tief": float(L[z["s"]:z["e"] + 1].min()), "docht_hoch": float(H[z["s"]:z["e"] + 1].max()),
                     "poc": float(pr["poc"]), "val": float(pr["val"]), "vah": float(pr["vah"]),
                     "start": df.index[z["s"]], "ende": df.index[z["e"]], "aus": z["aus"],
@@ -518,6 +518,90 @@ def gedaechtnis_text(g):
     return f'🧠 {g["n"]}× diese Lage ({lage_}; {wo}) → {aus}'
 
 
+UMKEHR_FENSTER = 3         # Wendepunkt: höchstes Hoch bzw. tiefstes Tief von 3 Kerzen davor und danach (ungemessen)
+UMKEHR_MIN = 2             # bewährt: mindestens 2 Wendepunkte am selben Preis
+FESTUNGEN_JE_SEITE = 2     # je Richtung die 2 nächsten Festungen (Micky 21.11.2026)
+UMKEHR_VOL_SCHNITT = 50    # Volumen am Wendepunkt über dem 50-Kerzen-Schnitt
+AVWAP_GROSS = {"zahlen": "AVWAP Zahlen", "hoch": "AVWAP Hoch", "gipfel": "AVWAP Hoch",
+               "tief": "AVWAP Tief"}   # große Ereignisse nach Shannon (Micky 21.11.2026)
+FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sonst stehen Stunden-Festungen dicht an dicht)
+
+
+def _umkehrpreise(e):
+    """Bewährte Umkehrpreise der Ebene: mindestens 2 Wendepunkte innerhalb ¼ ATR, einer davon mit Volumen über dem
+    Schnitt → [(Preis, Grund)]."""
+    import numpy as np
+    df, a = e["df"], e["atr"]
+    if a is None or len(df) < 2 * UMKEHR_FENSTER + 1:
+        return []
+    H, L, V = (df[k].to_numpy(float) for k in ("High", "Low", "Volume"))
+    schnitt = pd.Series(V).rolling(UMKEHR_VOL_SCHNITT, min_periods=1).mean().to_numpy()
+    k = UMKEHR_FENSTER
+    punkte = []
+    for i in range(k, len(df) - k):
+        if H[i] >= H[i - k:i + k + 1].max():
+            punkte.append((H[i], V[i] > schnitt[i]))
+        if L[i] <= L[i - k:i + k + 1].min():
+            punkte.append((L[i], V[i] > schnitt[i]))
+    punkte.sort()
+    aus, gruppe = [], []
+    for p_, v_ in punkte + [(np.inf, False)]:
+        if gruppe and p_ - gruppe[0][0] > a * STOPP_ATR:
+            if len(gruppe) >= UMKEHR_MIN and any(x[1] for x in gruppe):
+                aus.append((float(np.mean([x[0] for x in gruppe])), f"{len(gruppe)}× gedreht"))
+            gruppe = []
+        gruppe.append((p_, v_))
+    return aus
+
+
+def _gebrochene_kanten(e):
+    """Kanten alter Zonen, die der Kurs durchbrochen hat und seitdem nicht per Schluss zurück durchquert: die alte Decke
+    wird Boden, der alte Boden Decke (Dalton) → [(Preis, Grund)]."""
+    df = e["df"]
+    C = df["Close"]
+    aus = []
+    for z in historie(e):
+        nach = C[C.index > z["ende"]]
+        if not len(nach):
+            continue
+        raus = nach[(nach > z["hoch"]) | (nach < z["tief"])]
+        if not len(raus):
+            continue
+        oben = float(raus.iloc[0]) > z["hoch"]
+        kante = z["hoch"] if oben else z["tief"]
+        danach = nach[nach.index > raus.index[0]]
+        zurueck = (danach < kante).any() if oben else (danach > kante).any()
+        if not zurueck:
+            aus.append((kante, "alte Decke" if oben else "alter Boden"))
+    return aus
+
+
+def festungen(e, la, avwaps=()):
+    """Die Festungen der Lagekarte (Micky 21.11.2026): bewährte Umkehrpreise, gebrochene Kanten alter Zonen und AVWAP
+    großer Ereignisse – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
+    Gründen. avwaps = tiefe.avwap_liste(Tageskurse)[0]. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
+    if not e or not la:
+        return {"oben": [], "unten": []}
+    kurs, a = la["kurs"], e["atr"] or 0
+    roh = _umkehrpreise(e) + _gebrochene_kanten(e) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
+                                                      if x["anker"] in AVWAP_GROSS]
+    aus = {}
+    for seite, auswahl in (("oben", [x for x in roh if x[0] > kurs]), ("unten", [x for x in roh if x[0] < kurs])):
+        auswahl.sort(key=lambda x: abs(x[0] - kurs))
+        liste = []
+        for p_, g_ in auswahl:
+            nah = next((f for f in liste if abs(f["preis"] - p_) <= a * FESTUNG_ABSTAND), None)
+            if nah:
+                if g_ not in nah["grund"]:
+                    nah["grund"].append(g_)
+                continue
+            if len(liste) >= FESTUNGEN_JE_SEITE:
+                break
+            liste.append({"preis": float(p_), "grund": [g_], "abstand": round((p_ / kurs - 1) * 100, 1)})
+        aus[seite] = liste
+    return aus
+
+
 def korridor(alt, kurs):
     """(nächster nackter POC über dem Kurs, nächster darunter) – je Zone oder None (Micky 21.11.2026: der Raum zwischen
     zwei Magneten ist der wahrscheinliche Korridor der nächsten Bewegung, Dalton: von Bezug zu Bezug)."""
@@ -527,19 +611,11 @@ def korridor(alt, kurs):
     return oben, unten
 
 
-def naechste(alt, kurs):
-    """Die nächste offene alte Zone über und unter dem Kurs (die Magnete) – höchstens zwei, damit das Bild schmal
-    bleibt (Micky 21.11.2026: wenig, aber aussagekräftig)."""
-    offen = [z for z in alt if z["offen"]]
-    ueber = min((z for z in offen if z["val"] > kurs), key=lambda z: z["val"], default=None)
-    unter = max((z for z in offen if z["vah"] < kurs), key=lambda z: z["vah"], default=None)
-    return [z for z in (ueber, unter) if z]
-
-
-def fuehrte(ebenen):
-    """Alles für Kopfzeile und Chart: Lage je Ebene, der Trade des Tages, Einigkeit, Muster, alte Zonen."""
+def fuehrte(ebenen, avwaps=()):
+    """Alles für Kopfzeile und Chart: Lage je Ebene, Festungen, der Trade des Tages, Einigkeit, Muster, alte Zonen."""
     la = {n: lage(ebenen.get(n)) for n in EBENEN}
-    t = trade(ebenen.get("Tag"), la["Tag"])
+    fest = {n: festungen(ebenen.get(n), la[n], avwaps) for n in EBENEN}
+    t = trade(ebenen.get("Tag"), la["Tag"], fest["Tag"])
     bezug = t["richtung"] if t else (la["Tag"] or {}).get("richtung", 0)
     einig = sum(1 for n in EBENEN if la[n] and bezug and la[n]["richtung"] == bezug) if bezug else 0
     if t and la["Tag"] and la["Tag"]["richtung"] != bezug:
@@ -548,7 +624,7 @@ def fuehrte(ebenen):
     if la["Tag"] and la["Woche"]:
         (lo, hi), (wl, wh) = la["Tag"]["zone"], la["Woche"]["zone"]
         muster = "innen" if wl <= lo and hi <= wh else "darüber" if lo > wh else "darunter" if hi < wl else "überlappend"
-    return {"lage": la, "trade": t, "einig": min(einig, len(EBENEN)), "richtung": bezug, "muster": muster,
+    return {"lage": la, "trade": t, "einig": min(einig, len(EBENEN)), "richtung": bezug, "muster": muster, "festungen": fest,
             "alt": {n: historie(ebenen.get(n), 0) for n in EBENEN}}
 
 
