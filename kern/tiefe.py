@@ -616,7 +616,7 @@ def pbd(df, fein, atr_wert, gruppe="D"):
             "pendel": _pendel(df, i_end, z_tief, z_hoch, atr_wert),
             "d_long": _d_trade(df, i_end, z_tief, z_hoch, atr_wert, "long"),
             "d_short": _d_trade(df, i_end, z_tief, z_hoch, atr_wert, "short"),
-            "profil_vol": _silhouette(vp), "profil_zeit": _silhouette(zp) if zp else None}
+            "profil_vol": _silhouette(vp), "profil_zeit": _silhouette(zp) if zp else None, "poc": float(vp["poc"])}
 
 
 # ── Wertwanderung ─────────────────────────────────────────────────────────────────────────────────────────────────

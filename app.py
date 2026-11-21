@@ -88,8 +88,9 @@ def _gebaut(name, codestand, *args):
     schon einmal offen waren, braucht dann keine Rechnung mehr. codestand ändert sich mit jeder Code-Änderung, damit
     nach einer Änderung nie eine alte Seite gezeigt wird."""
     import analyse_seite
+    import zonenseite
     return {"uebersicht": uebersicht.seite_uebersicht, "titel": titel.seite_titel,
-            "analyse": analyse_seite.seite_analyse}[name](*args)
+            "analyse": analyse_seite.seite_analyse, "zonen": zonenseite.seite_zonen}[name](*args)
 
 
 def _fehler(e):
@@ -1074,33 +1075,27 @@ elif ansicht == "Analyse" and ticker:         # Tiefenanalyse (Micky 21.11.2026,
         strategen_call(ticker, teile)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
-elif ticker:
-    datenstand_zeigen()
+elif ticker:                                  # Titelseite des schlanken Cockpits (Micky 21.11.2026): Zonen, Phasen
+    datenstand_zeigen()                       # und Strömung auf drei Ebenen, darunter der Zonenchart
     lauf = st.session_state.get("laufend")
     args = (ticker, True, lauf[1]) if lauf and lauf[0] == ticker else (ticker,)
     try:
-        ab = titel.abgelegt(ticker) if len(args) == 1 else None   # vom Abendlauf fertig gebaut: sofort da
-        if ab is not None:
-            teile, alt = ab
-            _QUELLE["text"] = _schrank_text(alt)
-        else:
-            t0 = time.time()
-            with st.spinner("Lade und rechne …"):
-                teile = _gebaut("titel", _codestand(), *args)
-            frisch_ = time.time() - t0 > 0.5
-            _QUELLE["text"] = "frisch gerechnet" if frisch_ else "aus dem Zwischenspeicher"
-            if frisch_ and len(args) == 1:
-                try:                             # beim nächsten Mal sofort da
-                    titel.ablegen(ticker, teile)
-                except Exception:  # noqa: BLE001
-                    pass
-        st.markdown(teile["oben"], unsafe_allow_html=True)
-        ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl = chart_knoepfe(ticker)
-        st.markdown(titel.chartkarte(teile["chart"], ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl=avwap_wahl),
+        t0 = time.time()
+        with st.spinner("Lade und rechne …"):
+            teile = _gebaut("zonen", _codestand(), *args)
+        _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
+        st.markdown(teile["kopf"], unsafe_allow_html=True)
+        k0, k1, k2, k3 = st.columns([4, 2, 2, 2])
+        with k0:
+            ebene = st.radio("Ebene", ["Woche", "Tag", "Stunde"], index=1, horizontal=True, key="zonen_ebene")
+        with k1:
+            st.button("↻ Kurse aktualisieren", use_container_width=True, on_click=_aktualisieren, args=(ticker,))
+        with k2:
+            st.link_button("TradingView ↗", titel.tv_link(ticker), use_container_width=True)
+        with k3:
+            watchlist_knopf(ticker)
+        st.markdown(gestaltung.seite(gestaltung.karte(teile["charts"][ebene] + teile["legende"]), oben=0, unten=12),
                     unsafe_allow_html=True)
-        chart_pruefen(ticker, teile)
-        setup_pruefen(ticker, teile)
-        st.markdown(teile["unten"], unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 
