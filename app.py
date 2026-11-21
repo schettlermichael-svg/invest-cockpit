@@ -23,7 +23,6 @@ from gestaltung import BLAU, KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
 import chart  # noqa: E402
 import titel  # noqa: E402
 import uebersicht  # noqa: E402
-import kartentisch  # noqa: E402
 import gestaltung  # noqa: E402
 import watchlists  # noqa: E402
 import depot  # noqa: E402
@@ -170,30 +169,6 @@ sys.path.insert(0, os.path.join(HIER, "werkzeuge"))
 import nachtlauf  # noqa: E402
 
 
-def _tisch_starten():
-    if nachtlauf.tisch_lauf_starten():
-        st.session_state.tisch_lief = True
-        st.toast("Kartentisch wird neu gerechnet – dauert eine Weile, die Seite füllt sich danach von selbst")
-
-
-def _tisch_knopf():
-    """Kartentisch (Ränge, alle Setups, Lage) mit den vorhandenen Kursen neu rechnen."""
-    laeuft, text = nachtlauf.tisch_lauf_stand()
-    if st.session_state.get("tisch_lief") and not laeuft:   # gerade fertig geworden: ganze Seite neu zeigen
-        st.session_state.tisch_lief = False
-        st.rerun()
-    st.session_state.tisch_lief = laeuft
-    st.button("↻ Kartentisch neu rechnen", use_container_width=True, disabled=laeuft, on_click=_tisch_starten,
-              help="Rechnet RS-Rang, Führer-Rang, den Kartentisch mit allen Setups und die Lage neu – "
-                   "mit den Kursen des letzten Nachtlaufs, ohne neuen Download. Läuft auf dem Server weiter, auch wenn "
-                   "du die Seite schließt.")
-    if text:
-        st.caption(text)
-    schrank = nachtlauf.seiten_lauf_stand()
-    if schrank:
-        st.caption(schrank)
-
-
 @st.cache_resource(show_spinner=False)
 def _schrank_fuellen(grenze):
     """Einmal je Programm- bzw. Depotstand: veraltete Titelseiten im Hintergrund neu ablegen (06.11.2026)."""
@@ -203,8 +178,6 @@ def _schrank_fuellen(grenze):
         return False
 
 
-_FRAGMENT = getattr(st, "fragment", None)
-tisch_knopf = _FRAGMENT(run_every=30)(_tisch_knopf) if _FRAGMENT else _tisch_knopf
 _schrank_fuellen(titel.ablage_grenze())
 
 
@@ -340,17 +313,6 @@ def _codestand(mit_watchlists=False):
 
 
 
-@st.cache_resource(show_spinner=False, max_entries=2)
-def _lagekarte_html(codestand):
-    """Lagekarte nach Sektoren (Seite Rückenwind) einmal je Code-/Datenstand."""
-    return kartentisch.lagekarte_html()
-
-
-def _lagekarte_zeigen():
-    st.markdown(gestaltung.seite(_lagekarte_html(_codestand(mit_watchlists=True)), oben=12, unten=12),
-                unsafe_allow_html=True)
-
-
 def _schrank_text(alt):
     """Hinweis am Seitenende (10.11.2026: vorher zusätzlich ein langer Hinweis ganz oben nach jedem Update)."""
     if not alt:
@@ -374,15 +336,13 @@ def zeigen(name, *args):
             with st.spinner("Lade und rechne …"):
                 html = _gebaut(name, _codestand(), *args)
             _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
-        if isinstance(html, dict):                   # Seite Rückenwind: ① Lage, ② Rückenwind, ③ Stellung, ④, ⑤
+        if isinstance(html, dict):                   # Seite Rückenwind: ① Lage, ② Rückenwind
             st.markdown(html["lage"], unsafe_allow_html=True)
             st.markdown(gestaltung.seite(gestaltung.station("wind"), oben=16, unten=0), unsafe_allow_html=True)
             try:                                     # ein Fehler im Rückenwind lässt Lagekarte und Truppe stehen
                 rueckenwind_zeigen()
             except Exception as e:  # noqa: BLE001
                 _fehler(e)
-            _lagekarte_zeigen()                         # direkt unter der Wetterkarte (Micky 12.11.2026)
-            st.markdown(html["unten"], unsafe_allow_html=True)
         else:
             st.markdown(html, unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
@@ -563,11 +523,9 @@ def datenstand_zeigen():
                 st.markdown(f"{punkt_.get(a_, '⚪')} {gestaltung.t(t_)}")
 
 
-if ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
+if ansicht == "Rückenwind":                  # Lage, Strömung, Titel mit Rückenwind (22.11.2026)
     zeigen("uebersicht")
-    _, n_, w_ = st.columns([8, 2, 2])          # seit der Seite Setups (abgebaut 21.11.2026) hier: Tisch, Watchlists, Verbindungen
-    with n_:
-        tisch_knopf()
+    _, w_ = st.columns([10, 2])                # Werkzeuge unten (22.11.2026): Watchlists, Verbindungen · Layout
     with w_:
         watchlists_verwalten()
     verbindungen_zeigen()

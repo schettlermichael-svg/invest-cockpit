@@ -34,7 +34,6 @@ from dateien import json_schreiben  # noqa: E402
 
 PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "protokoll.json")
 TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.json")   # Knopf in der Übersicht
-TISCH_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.log")
 SEITEN_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.json")   # Schrank nach Änderungen
 SEITEN_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.log")
 SCHLUSS = (11, 30)            # Massive-Durchgänge für Lücken enden vormittags (Frühlauf ab 6:05, seit 12.11.2026)
@@ -403,40 +402,8 @@ def _gruende(p):
     return "; ".join(f"{s['name'].split(' (')[0]} ({s['text'][:110]})" for s in p.get("schritte", []) if not s["ok"])
 
 
-def tisch_lauf_stand():
-    """Für den Knopf: (laeuft, Text). Läuft gerade der Nachtlauf, wird nicht doppelt gerechnet."""
-    nacht, pn = _laeuft(PROTOKOLL, 12)
-    if nacht:
-        return True, "Der Nachtlauf rechnet gerade – der Kartentisch kommt mit ihm."
-    laeuft, p = _laeuft(TISCH_PROTOKOLL, 3)
-    if p is None:
-        return False, ""
-    if not laeuft and pn and pn.get("start"):
-        # Ein späterer Nachtlauf hat den Kartentisch neu gerechnet: die alte Meldung des Knopfs gilt nicht mehr
-        # (12.11.2026: „Zuletzt 06.11. – gescheitert“ stand eine Woche lang da, obwohl jeder Nachtlauf danach lief)
-        import pandas as pd
-        a_, b_ = (pd.to_datetime(str(x.get("start")), dayfirst=True, errors="coerce") for x in (p, pn))
-        if not pd.isna(a_) and not pd.isna(b_) and b_ > a_:
-            return False, ""
-    namen = ["Ränge", "Rückenwind", "Kartentisch", "Lage"]
-    fehler = _gruende(p)
-    if laeuft:
-        i = min(len(p.get("schritte", [])), 3)
-        return True, f"Läuft seit {p['start'][-5:]} Uhr · Schritt {i + 1} von 4: {namen[i]}"
-    if not p.get("ende"):
-        return False, f"Lauf vom {p['start']} brach ab"
-    return False, (f"Zuletzt {p['start']}–{p['ende'][-5:]} " + (f"– gescheitert: {fehler}" if fehler else "🟢"))
 
 
-def tisch_lauf_starten():
-    """Startet `nachtlauf.py --tisch` als eigenen Prozess (die App wartet nicht darauf)."""
-    if tisch_lauf_stand()[0]:
-        return False
-    os.makedirs(os.path.dirname(TISCH_LOG), exist_ok=True)
-    log = open(TISCH_LOG, "w", encoding="utf-8")
-    subprocess.Popen([sys.executable, "-u", os.path.abspath(__file__), "--tisch"], cwd=os.path.join(HIER, ".."),
-                     stdout=log, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
-    return True
 
 
 def _gross_laeuft():
@@ -492,10 +459,6 @@ def seiten(prozesse=None):
     _schreiben(p, SEITEN_PROTOKOLL)
 
 
-def seiten_lauf_stand():
-    """Text für die Übersicht, solange der Schrank gefüllt wird, sonst ''."""
-    laeuft, p = _laeuft(SEITEN_PROTOKOLL, 6)
-    return f"Titelseiten nach der Änderung neu abgelegt: {p['fertig']} von {p['zahl']}" if laeuft else ""
 
 
 def seiten_lauf_starten():

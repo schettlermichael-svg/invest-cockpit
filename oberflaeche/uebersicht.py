@@ -1,11 +1,10 @@
 """Teile der Seite Rückenwind, die früher die Übersicht „Lageeinschätzung“ waren (zusammengelegt am 10.11.2026):
   ① Lage           Markt (Indizes und Hochs/Tiefs), Moral der Truppe, Wirtschaftswetter; aufklappbar das
                    Wirtschaftswetter im Einzelnen (Dalio-Quad mit Spur, Instrumente, Abgleich mit den Sektoren)
-  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, Gruppen nach Geldfluss), darunter die Lagekarte nach Sektoren
-                   (kartentisch.lagekarte_html; die übrigen Teile des Kartentischs standen bis 21.11.2026 auf der Seite Setups)
-  ③ Eigene Truppe  Verweis auf die Seite Depot
+  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, Gruppen nach Geldfluss, Titel in der Schlachtordnung; die
+                   Lagekarte nach Sektoren aus dem Kartentisch stand dort bis 22.11.2026)
 Die Vier-Felder-Tafel der Sektoren und die Themen-Gruppen der früheren Frontkarte zeigt die Wetterkarte (Ebene Sektor,
-Thema); app.py setzt ② zwischen „lage“ und „unten“."""
+Thema); app.py setzt ② unter „lage“."""
 import os
 import sys
 import time
@@ -186,13 +185,11 @@ def seite_uebersicht():
     from gestaltung import klapp
     einzeln = klapp("Wirtschaftswetter im Einzelnen", f"Dalio-Quad mit Spur, Instrumenten und Abgleich mit den Sektoren · "
                     f"heute Quad {q['quad']} · {q['name']}", quad_bild + abgleich)
-    # Seite Rückenwind (10.11.2026): ① Lage hier, ② Rückenwind aus rueckenwind_seite, ③ Stellung und ④ Termine aus dem
-    # Kartentisch (app.py, mit Knöpfen), ⑤ Eigene Truppe hier.
+    # Seite Rückenwind (22.11.2026): ① Lage hier, ② Rückenwind (Strömung und Titel) aus rueckenwind_seite über app.py.
     try:                                         # Zustand des Marktes zuerst (13.11.2026), die Ampeln darunter
         import zustandsbild
         zustand = zustandsbild.box((mm or {}).get("auktion"), "Zustand des Marktes")
     except Exception:  # noqa: BLE001
         zustand = ""
     return {"lage": seite(kopf + sprungleiste() + station("lage") + zustand + leiste + '<div style="height:12px"></div>' + einzeln,
-                          unten=12),  # Layout
-            "unten": seite(station("truppe"), oben=12)}     # das Depot steht seit 16.11.2026 auf der Seite Depot · Layout
+                          unten=12)}  # Layout

@@ -675,21 +675,6 @@ def _marken(x):
             + (f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g and r else "") + '</span>')
 
 
-def lagekarte_html(tisch=None):
-    """Lagekarte nach Sektoren für die Seite Rückenwind (seit 21.11.2026 der einzige Teil des Kartentischs auf einer
-    Seite). Watchlist-Zugehörigkeit immer aus den Listen der App, nicht aus dem Stand des Abendlaufs."""
-    import watchlists
-    from gestaltung import TEXT_2, karte
-    tisch = tisch if tisch is not None else laden()
-    if not tisch:
-        return karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Die Lagekarte wird im Abendlauf gerechnet. '
-                     f'Noch liegt kein Ergebnis vor.</p>', "Lagekarte nach Sektoren")
-    w = watchlists.laden()
-    titel_ = {tk: dict(x, listen=[n for n, l in w.items() if tk in l],
-                       # Tisch von vor dem VCP-Scanner: die alte Wertzonen-Flagge trägt keinen Scanner-Text
-                       **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge" and not x.get("scanner") else {}))
-              for tk, x in tisch["titel"].items()}
-    return lagebild(dict(tisch, titel=titel_))
 
 
 # ── Lagekarte nach Sektoren (4.11.2026, neu geordnet 6.11.2026) ──
@@ -701,119 +686,7 @@ SPALTEN = [("jetzt", "Angriff jetzt"), ("bereit", "Bereitstellung"), ("watch", "
 TOP = 3                       # Marken je Zelle sichtbar, der Rest aufklappbar
 
 
-def _spalte(x):
-    if not x.get("reihe"):
-        return "watch"
-    if x.get("reihe") == "vcp":                   # „nur Muster“ (12.11.2026): Bereitstellung, kein Angriff
-        return "bereit"
-    return "jetzt" if (x.get("stern") or x.get("gruen")) else "bereit"
 
 
-def _sektor_etf(tk, rv):
-    import daten
-    import sektoren
-    if tk in rv.index:
-        return rv.at[tk, "etf"]
-    sb = daten.steckbrief_gespeichert(tk) or {}
-    return sektoren.sektor_von(sb.get("sektor", "")) or "–"
 
 
-def lagebild(tisch):
-    import rudel
-    import sektoren
-    from frontkarte import FARBE, PFEILE, _pfeil
-    from gestaltung import BLAU, GRUEN, RAND, TEXT_2, TEXT_3, feld_name, karte, t, zahl
-    try:
-        rot = sektoren.rotation()
-    except Exception:  # noqa: BLE001 – ohne Kurse der Sektor-ETFs nur die Zuordnung
-        rot = {}
-    rv = pd.read_csv(os.path.join(HIER, "..", "einstellungen", "revier.csv")).drop_duplicates("ticker").set_index("ticker")
-    try:
-        gruppen = {tk: g for g in rudel.themen() if g.get("feld") in ("Führend", "Erstarkend") for tk in g["mitglieder"]}
-    except Exception:  # noqa: BLE001
-        gruppen = {}
-    zellen = {}
-    for tk, x in tisch["titel"].items():
-        if not x.get("reihe") and not x.get("listen"):
-            continue
-        zellen.setdefault((_sektor_etf(tk, rv), _spalte(x)), []).append((tk, x))
-
-    def marke(tk, x):
-        stern = x.get("stern") or x.get("reihe") in ("m_spitze", "spitze")   # 💥: jeder Spitzenkandidat (auch ältere Tische)
-        rand, dicke = lagekarte.rahmen(x)                  # long grün, short rot, blass = Setup nicht grün, gelb = offen
-        text = ("💥 " if stern else "") + tk
-        if x.get("reihe") in ("vcp", "flagge"):
-            text += " M" if x["reihe"] == "vcp" else " F"
-        if x.get("reihe") == "zahlen":
-            text += " 🔥"
-        if x.get("listen"):
-            text += " ◆"
-        g = gruppen.get(tk)
-        if g:
-            text += " 🌞"
-        zeilen = [f"<b>{t(tk)}</b> · {t({k: n for k, n, _ in REIHEN}.get(x.get('reihe'), 'keine Reihe'))}",
-                  f"Auktion: {t(x.get('zustand', '–'))}"]
-        if stern:
-            zeilen.append("💥 Setup grün, Kurs am Pivot")
-        if scanner_text(x):
-            zeilen.append("Scanner: " + t(scanner_text(x)))
-        if lagekarte.grund(x):
-            zeilen.append(t(lagekarte.grund(x)))
-        if x.get("listen"):
-            zeilen.append("◆ auf der Watchlist")
-        if g:
-            zeilen.append(f"🌞 Themen-Gruppe {t(g['feld'])}: " + t(" · ".join(g["mitglieder"][:6]))  # Layout
-                          + (f" +{len(g['mitglieder']) - 6}" if len(g["mitglieder"]) > 6 else ""))  # Layout
-        tip = "<br>".join(zeilen)
-        return (f'<span class="hinweis-zone" style="position:relative;display:inline-block">'
-                f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="display:inline-block;border:{dicke}px solid {rand};'
-                f'border-radius:6px;padding:2px 7px;font-size:13px;font-family:IBM Plex Mono,monospace;color:inherit;'
-                f'text-decoration:none;white-space:nowrap">{t(text)}</a>'
-                f'<span class="hinweis-tip" style="left:0;right:auto;width:320px;font-family:IBM Plex Sans,system-ui">'
-                f'{tip}</span></span>')
-
-    hoechst = {k: max([len(v) for (e, s_), v in zellen.items() if s_ == k] or [1]) for k, _ in SPALTEN}
-    farbe_sp = {"jetzt": GRUEN, "bereit": BLAU, "watch": TEXT_3}
-
-    def zelle(liste, spalte):
-        liste = sorted(liste, key=lambda p: (-RANG.get(p[1].get("reihe"), 0) if spalte == "watch" else 0, _ordnung(p[1])))
-        if not liste:
-            return f'<span style="color:{TEXT_3}">–</span>'
-        breite = max(6, 100 * len(liste) / hoechst[spalte])  # Layout
-        balken = (f'<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:{RAND};'
-                  f'border-radius:4px"><div style="width:{breite:.0f}%;height:8px;border-radius:4px;'
-                  f'background:{farbe_sp[spalte]}"></div></div><b style="font-size:15px;min-width:22px;text-align:right">'
-                  f'{len(liste)}</b></div>')
-        sicht = "".join(marke(tk, x) for tk, x in liste[:TOP])
-        rest = liste[TOP:]
-        if rest:
-            sicht += (f'<details style="display:inline"><summary style="display:inline;cursor:pointer;color:{BLAU};'
-                      f'font-size:13px">+{len(rest)}</summary> ' + " ".join(marke(tk, x) for tk, x in rest) + '</details>')
-        return balken + f'<div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:6px">{sicht}</div>'
-
-    zahl_von = lambda e, k: len(zellen.get((e, k), []))   # noqa: E731
-    etfs = sorted({e for e, _ in zellen}, key=lambda e: (-zahl_von(e, "jetzt"), -zahl_von(e, "bereit"),
-                                                         -rot.get(e, {}).get("staerke", 0), e))
-    raster = "200px repeat(3, minmax(0, 1fr))"
-    kopf = (f'<div style="display:grid;grid-template-columns:{raster};gap:16px;padding:6px 0;font-size:13px;color:{TEXT_3};'
-            f'letter-spacing:.05em;text-transform:uppercase"><span>Sektor · Feld · Stärke</span>'
-            + "".join(f'<span>{t(n)} ({sum(len(v) for (e, r), v in zellen.items() if r == k)})</span>'
-                      for k, n in SPALTEN) + '</div>')
-    zeilen = []
-    for e in etfs:
-        r = rot.get(e)
-        if r:
-            pf = _pfeil(r)
-            links = (f'<b>{t(r["name"])}</b><br><span style="color:{FARBE[r["feld"]]}">{t(feld_name(r["feld"]))}</span> '
-                     f'<span title="{t(PFEILE[pf])}">{pf}</span> <span style="color:{TEXT_2}">{zahl(r["staerke"], 0)}</span>')
-        else:
-            links = f'<b>{t(sektoren.SEKTOREN.get(e, "ohne Sektor"))}</b>'
-        zeilen.append(f'<div style="display:grid;grid-template-columns:{raster};gap:16px;padding:12px 0;'
-                      f'border-top:1px solid {RAND};align-items:start"><div style="font-size:14px;line-height:1.5">{links}'
-                      f'</div>' + "".join(f'<div>{zelle(zellen.get((e, k), []), k)}</div>' for k, _ in SPALTEN) + '</div>')
-    hilfe = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:8px">Oben der Abschnitt mit den meisten Angriffen. '
-             f'Angriff jetzt = Setup grün · Bereitstellung = in einer Reihe, Setup noch nicht grün oder nur Muster '
-             f'(„M“) · F = Flagge · 🔥 = Zahlen-Reaktion · Balken = Zahl der Titel, je Spalte am größten Abschnitt gemessen · sichtbar '
-             f'die drei stärksten, „+n“ klappt den Rest auf · 💥 Kaufzone · ◆ Watchlist · 🌞 Themen-Gruppe Führend/Erstarkend · '
-             f'Maus auf einen Titel zeigt Reihe, Befund des Scanners, Auktion und was fehlt.</div>')
-    return karte(kopf + "".join(zeilen) + hilfe, "Lagekarte nach Sektoren · wo die Angriffe sich sammeln")

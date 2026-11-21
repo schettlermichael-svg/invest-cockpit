@@ -84,8 +84,7 @@ def feld_name(f):
 
 
 STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind = Lagezentrum (12.11.2026)
-             ("wind", "②", "Rückenwind", "Wohin fließt das Geld, wo sammeln sich die Angriffe?"),
-             ("truppe", "③", "Eigene Truppe", "Wie stehen meine Positionen?"))
+             ("wind", "②", "Rückenwind", "Wohin fließt das Geld, welche Titel haben ihn im Rücken?"))
 
 
 def station(anker):
