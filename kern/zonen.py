@@ -360,6 +360,15 @@ def band(e, la=None):
     return roh
 
 
+def korridor(alt, kurs):
+    """(nächster nackter POC über dem Kurs, nächster darunter) – je Zone oder None (Micky 21.11.2026: der Raum zwischen
+    zwei Magneten ist der wahrscheinliche Korridor der nächsten Bewegung, Dalton: von Bezug zu Bezug)."""
+    nackt = [z for z in alt if z.get("nackt")]
+    oben = min((z for z in nackt if z["poc"] > kurs), key=lambda z: z["poc"] - kurs, default=None)
+    unten = min((z for z in nackt if z["poc"] < kurs), key=lambda z: kurs - z["poc"], default=None)
+    return oben, unten
+
+
 def naechste(alt, kurs):
     """Die nächste offene alte Zone über und unter dem Kurs (die Magnete) – höchstens zwei, damit das Bild schmal
     bleibt (Micky 21.11.2026: wenig, aber aussagekräftig)."""

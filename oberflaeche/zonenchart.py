@@ -33,7 +33,9 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "treppe": "POC-Treppe", "wanderung": "Wanderung"}
+LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "treppe": "POC-Treppe", "wanderung": "Wanderung",
+               "korridor": "Korridor"}
+KORRIDOR_FARBE = "#7DB4FF"
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 
 
@@ -90,6 +92,10 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     eigene = [avwap.reihe(df, a_).reindex(d.index) if a_ is not None else None for a_ in anker]
     for r_ in list(linien.values()) + [x for x in eigene if x is not None]:
         werte += [float(x) for x in r_.dropna() if l.min() * 0.7 <= x <= h.max() * 1.3]   # Layout: wie LINIEN_SPIEL
+    korridor = zonen.korridor(hist, la["kurs"]) if "korridor" in linien_ else (None, None)
+    spanne_ = float(h.max() - l.min())
+    korridor = tuple(z if z and l.min() - spanne_ <= z["poc"] <= h.max() + spanne_ else None for z in korridor)  # Layout: höchstens eine Bildhöhe
+    werte += [z["poc"] for z in korridor if z]
     pmin, pmax = min(werte), max(werte)
     rand = (pmax - pmin) * RAND_SPIEL or 1
     pmin, pmax = pmin - rand, pmax + rand
@@ -163,6 +169,19 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
             farbe = {1: GRUEN, -1: ROT, 0: ALT_FARBE}[zonen.treppe(za, zb)]
             A(f'<line x1="{xa:.1f}" y1="{Y(za["poc"]):.1f}" x2="{xb:.1f}" y2="{Y(zb["poc"]):.1f}" stroke="{farbe}" '
               f'stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#spitze)" stroke-opacity="0.75"/>')  # Layout
+    if any(korridor):                                                               # Korridor zwischen den nackten POCs
+        oben_, unten_ = korridor
+        ya = Y(oben_["poc"]) if oben_ else OBEN
+        yb = Y(unten_["poc"]) if unten_ else OBEN + KURS_H
+        x_k = X(pos(max(z["ende"] for z in korridor if z))) if max(z["ende"] for z in korridor if z) >= d.index[0] else LINKS
+        A(f'<rect x="{x_k:.1f}" y="{ya:.1f}" width="{max(2, ende - x_k):.1f}" height="{max(1, yb - ya):.1f}" '
+          f'fill="{KORRIDOR_FARBE}" fill-opacity="0.07"/>')                         # Layout
+        for z, pfeil in ((oben_, "↑"), (unten_, "↓")):
+            if z:
+                A(f'<line x1="{x_k:.1f}" x2="{ende}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{KORRIDOR_FARBE}" '
+                  f'stroke-width="1.4" stroke-dasharray="6 3"/>')                   # Layout
+                etiketten.append((Y(z["poc"]), f"Korridor {pfeil} {zahl(z['poc'], 0)} · {(z['poc'] / la['kurs'] - 1) * 100:+.0f} %",
+                                  KORRIDOR_FARBE))
     if "wanderung" in linien_:                                                      # POC-Wanderung in der Zone von heute
         w_ = zonen.wanderung(e, la["beginn"]).reindex(d.index)
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(w_.to_numpy(float)) if not np.isnan(x))
@@ -310,6 +329,7 @@ def legende():
              "Kasten = Körper, Dochte blass · blass erledigt, kräftiger offen · gestrichelt bis rechts = offener Magnet 🪝"),
              (POC_FARBE, "POC je Zone · gestrichelt = nackter POC (seitdem nie berührt) · dicke Linie = Wanderung in der Zone"),
              (GRUEN, "POC-Treppe: grün = Wert steigt über die alte Wertzone, rot = fällt darunter, grau = überlappt"),
+             (KORRIDOR_FARBE, "Korridor: Raum zwischen dem nächsten nackten POC über und unter dem Kurs, mit Abstand in %"),
              (ZEIT_FARBE, "Profil rechts: links Zeit (Market Profile), rechts Volumen, seit Beginn des Impulses"),
              (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
              (GRUEN, "Phase: Farbe = Richtung (grün auf, rot ab) · kräftig = Impuls, mittel = Ausbruch 💥, blass = Zone in "
