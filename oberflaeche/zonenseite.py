@@ -118,18 +118,49 @@ def kopf(r):
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
-    """{"kopf": HTML, "charts": {Ebene: SVG}} – app.py setzt die Reiter dazwischen."""
-    import zonen
-    import zonenchart
+    """{"kopf": HTML, "r": Rechnung, "legende": HTML} – den Chart zeichnet app.py mit chart() (Durchschnitte und
+    eigener AVWAP nach Wahl, ohne neue Rechnung)."""
     r = rechnen(tk.upper().strip(), laufend)
+    import zonenchart
+    return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "r": r,
+            "legende": zonenchart.legende() + gestaltung.zeichen_legende()}
+
+
+def chart(r, ebene, gd=(), anker=()):
+    """Zonenchart einer Ebene aus der Rechnung von seite_zonen."""
+    import zonenchart
     f = r["fuehrte"]
     ew = r["ebenen"]["Woche"]
     woche = None
-    if f["lage"]["Woche"] and ew:
+    if ebene == "Tag" and f["lage"]["Woche"] and ew:
         w_start = (ew["pbd"] or {}).get("zone_start") or ew["struktur"]["balance_start"]
         woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
-    charts = {n: zonenchart.bild(r["ebenen"][n], f["lage"][n], r["hist"][n], f["trade"] if n == "Tag" else None,
-                                 r["laufend"] and n != "Woche", woche if n == "Tag" else None, r["rs"][n])
-              for n in zonen.EBENEN}
-    return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "charts": charts,
-            "legende": gestaltung.zeichen_legende()}
+    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
+                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker)
+
+
+# ── Eigener AVWAP (Micky 21.11.2026): Anker je Titel und Ebene, als Zeitpunkt gespeichert ─────────────────────────
+ANKER_DATEI = "avwap_anker.json"
+
+
+def _anker_pfad():
+    import os
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "daten", ANKER_DATEI)
+
+
+def anker_laden(tk, ebene):
+    """[Zeitpunkt oder None, Zeitpunkt oder None] – die zwei eigenen Anker."""
+    from dateien import json_lesen
+    w = ((json_lesen(_anker_pfad(), {}) or {}).get(tk.upper()) or {}).get(ebene) or [None, None]
+    return [pd.Timestamp(x) if x else None for x in (w + [None, None])[:2]]
+
+
+def anker_setzen(tk, ebene, k, tag):
+    """Anker k (0 oder 1) auf den Zeitpunkt tag setzen (None löscht ihn)."""
+    from dateien import json_lesen, json_schreiben
+    alle = json_lesen(_anker_pfad(), {}) or {}
+    w = (alle.setdefault(tk.upper(), {}).get(ebene) or [None, None]) + [None, None]
+    w = w[:2]
+    w[k] = f"{pd.Timestamp(tag):%Y-%m-%d %H:%M}" if tag is not None else None
+    alle[tk.upper()][ebene] = w
+    json_schreiben(_anker_pfad(), alle)

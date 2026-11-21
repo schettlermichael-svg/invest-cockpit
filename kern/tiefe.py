@@ -701,6 +701,7 @@ def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
     a = st_["atr"]
     fein, gruppe = {"Woche": (tage, "W"), "Tag": (d30, "D"), "Stunde": (d30, None)}[name]
     return {"name": name, "df": df, "struktur": st_, "atr": a, "alt": alte_balance(df, st_["anker_i"]),
+            "fein": d30 if name == "Stunde" else h1,
             "pbd": pbd(df, fein, a, gruppe),
             "wander": None if name == "Stunde" else wanderung(df, d30 if name == "Tag" else h1, "D" if name == "Tag" else "W", a)}
 

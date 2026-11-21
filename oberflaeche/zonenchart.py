@@ -26,7 +26,11 @@ ALT_FARBE = "#8B97A8"
 WOCHE_FARBE = "#7DB4FF"
 EINSTIEG_FARBE = "#E6EAF0"
 RS_HOCH_FARBE, RS_TIEF_FARBE = "#FFD166", "#FF6B6B"
-BAND = {"b": GELB, "o": GRUEN, "u": ROT}
+BAND = {"i+": (GRUEN, 1.0), "i-": (ROT, 1.0), "b": (GELB, 0.85), "a+": (GRUEN, 0.5), "a-": (ROT, 0.5),
+        "f": ("#F0883E", 0.9)}                                 # PbD: Impuls kräftig, Bauch gelb, Ausbruch blass, Scheitern orange
+GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}   # wie bisher im Cockpit
+GD_WAHL = (10, 20, 50, 150, 200)
+ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 
 
@@ -40,9 +44,22 @@ def _pfeil(r):
     return f"{z} {alt:.0f} → {neu:.0f}"
 
 
-def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None):
+def nummer(df, tag):
+    """Balkennummer von rechts (1 = letzte Kerze) zu einem Zeitpunkt der Ebene."""
+    return len(df) - int(df.index.searchsorted(pd.Timestamp(tag)))
+
+
+def zeitpunkt(df, nr):
+    """Zeitpunkt der Kerze mit Balkennummer nr (von rechts), oder None außerhalb."""
+    return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
+
+
+def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=()):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
-    woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None}."""
+    woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
+    gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
+    21.11.2026: selbst verankert; beide gesetzt = Zange)."""
+    import avwap
     import rueckenwind
     import zeichen
     import zonen
@@ -63,6 +80,10 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None):
     werte += [x for z in magnete for x in (z["val"], z["vah"])]
     if woche:
         werte += list(woche[0]["zone"])
+    linien = {g: df["Close"].rolling(g).mean().reindex(d.index) for g in gd}
+    eigene = [avwap.reihe(df, a_).reindex(d.index) if a_ is not None else None for a_ in anker]
+    for r_ in list(linien.values()) + [x for x in eigene if x is not None]:
+        werte += [float(x) for x in r_.dropna() if l.min() * 0.7 <= x <= h.max() * 1.3]   # Layout: wie LINIEN_SPIEL
     pmin, pmax = min(werte), max(werte)
     rand = (pmax - pmin) * RAND_SPIEL or 1
     pmin, pmax = pmin - rand, pmax + rand
@@ -113,21 +134,48 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None):
       f'stroke-width="1.4" stroke-dasharray="2 3"/>')                               # Layout
     etiketten += [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE), (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE),
                   (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+    def kurve(r_, farbe, dicke=1.6, strich=""):
+        pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
+        if pkt:
+            A(f'<polyline points="{pkt}" fill="none" stroke="{farbe}" stroke-width="{dicke}"{strich}/>')
+    for g, r_ in linien.items():                                                    # gewählte Durchschnitte
+        kurve(r_, GD_FARBE[g], 1.4)                                                 # Layout
+        w_ = r_.dropna()
+        if len(w_) and pmin <= w_.iloc[-1] <= pmax:
+            etiketten.append((Y(float(w_.iloc[-1])), f"GD{g} {zahl(float(w_.iloc[-1]))}", GD_FARBE[g]))
+    if len(eigene) == 2 and all(x is not None for x in eigene):                     # Zange schattiert
+        a_, b_ = eigene[0].to_numpy(float), eigene[1].to_numpy(float)
+        pkt = [(X(i), Y(p), Y(q)) for i, (p, q) in enumerate(zip(a_, b_)) if not (np.isnan(p) or np.isnan(q))]
+        if len(pkt) >= 2:
+            A('<polygon points="' + " ".join(f"{x:.1f},{p:.1f}" for x, p, _ in pkt) + " "
+              + " ".join(f"{x:.1f},{q:.1f}" for x, _, q in reversed(pkt)) + f'" fill="{ANKER_FARBE[0]}" fill-opacity="0.08"/>')  # Layout
+    for k, r_ in enumerate(eigene):                                                 # eigener AVWAP
+        if r_ is None:
+            continue
+        kurve(r_, ANKER_FARBE[k], 1.9)                                              # Layout
+        w_ = r_.dropna()
+        if len(w_):
+            etiketten.append((Y(float(w_.iloc[-1])), f"AVWAP {k + 1} {zahl(float(w_.iloc[-1]))}", ANKER_FARBE[k]))
     bw = max(1.0, breite / N * 0.6)                                                 # Layout: Kerzenbreite
+    n_ges = len(df)
     for i in range(N):
         f = GRUEN if c[i] >= o[i] else ROT
-        A(f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="{Y(h[i]):.1f}" y2="{Y(l[i]):.1f}" stroke="{f}"/>')
+        nr = n_ges - n0 - i                                                         # Balkennummer von rechts
+        A(f'<g><title>Balken {nr} · {d.index[i]:%d.%m.%Y{" %H:%M" if e["name"] == "Stunde" else ""}} · E {zahl(o[i])} · '
+          f'H {zahl(h[i])} · T {zahl(l[i])} · S {zahl(c[i])}</title>'
+          f'<rect x="{X(i) - halb:.1f}" y="{OBEN}" width="{2 * halb:.1f}" height="{KURS_H}" fill="#000" fill-opacity="0"/>'
+          f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="{Y(h[i]):.1f}" y2="{Y(l[i]):.1f}" stroke="{f}"/>')
         y1, y2 = sorted([Y(o[i]), Y(c[i])])
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
-          + (f'fill="none" stroke="{f}"/>' if hohl else f'fill="{f}"/>'))
+          + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
     if t:                                                                           # der Trade: Einstieg, Stopp, Ziel
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Einstieg"), (t["stopp"], ROT, "Stopp"),
                                   (t["ziel"], GRUEN, "Ziel")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}", farbe))
-    pr = e["struktur"]["profil"]                                                    # Volumenprofil seit dem Anker
+    pr = la["profil"]                                                               # Volumenprofil seit Beginn der Zone
     vmax_p = float(max(pr["volumen"])) or 1.0
     for a_, b_, w_ in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"]):
         if b_ < pmin or a_ > pmax:
@@ -136,18 +184,23 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None):
         poc_ = a_ <= pr["poc"] <= b_
         A(f'<rect x="{ende + 2}" y="{y1 + 0.3:.1f}" width="{max(1, (PROFIL_W - 6) * w_ / vmax_p):.1f}" '
           f'height="{max(1, y2 - y1 - 0.6):.1f}" fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else 0.45}"/>')  # Layout
-    A(f'<text x="{ende + 2}" y="{OBEN - 4}" fill="{TEXT_3}" font-size="10">Volumen seit {pd.Timestamp(pr["ab"]):%d.%m.}</text>')  # Layout
+    A(f'<text x="{ende + 2}" y="{OBEN - 4}" fill="{TEXT_3}" font-size="10">Volumen der Zone seit {pd.Timestamp(pr["ab"]):%d.%m.}</text>')  # Layout
     belegt = []
     for y_, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung
         while any(abs(y_ - b_) < 14 for b_ in belegt):                              # Layout: 14 px je Zeile
             y_ += 14                                                                # Layout
         belegt.append(y_)
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
-    band = zonen.phasenband(d, kaesten, la, zs)                                     # Phasenband
+    band = zonen.pbd_band(df, e["atr"])[n0:]                                       # Phasenband nach PbD
+    vorher = None
     for i, p_ in enumerate(band):
         if p_:
-            A(f'<rect x="{X(i) - halb:.1f}" y="{y_band}" width="{2 * halb + 0.3:.1f}" height="{BAND_H}" fill="{BAND[p_]}" '
-              f'fill-opacity="0.85"/>')                                             # Layout
+            farbe, deck = BAND[p_]
+            A(f'<rect x="{X(i) - halb:.1f}" y="{y_band}" width="{2 * halb + 0.3:.1f}" height="{BAND_H}" fill="{farbe}" '
+              f'fill-opacity="{deck}"/>')
+            if p_ in ("a+", "a-", "f") and p_ != vorher:                            # erster Ausbruch bzw. Scheitern
+                A(f'<text x="{X(i):.1f}" y="{y_band - 2}" font-size="11" text-anchor="middle">{"🦊" if p_ == "f" else "💥"}</text>')  # Layout
+        vorher = p_
     A(f'<text x="{ende + 2}" y="{y_band + BAND_H}" fill="{TEXT_3}" font-size="10">Phase</text>')  # Layout
     vmax = v.max() or 1
     schnitt = pd.Series(v).rolling(min(50, N)).mean().to_numpy()                    # Layout: 50 Kerzen Schnitt
@@ -201,3 +254,17 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None):
         letzter = schl
     A("</svg>")
     return "".join(s)
+
+
+def legende():
+    """Erklärung der Farben unter dem Chart (aufklappbar)."""
+    from gestaltung import t
+    teile = [(ZONE_FARBE, "Zone von heute (P, b, D) · POC grün gepunktet"), (ALT_FARBE, "Zonen der Vergangenheit: blass erledigt, "
+             "kräftiger offen · gestrichelt bis rechts = offener Magnet 🪝"), (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
+             (GRUEN, "Phase: kräftig = Impuls, blass = Ausbruch 💥 · rot ebenso abwärts"), (GELB, "Phase: Bauch (Balance)"),
+             ("#F0883E", "Phase: Scheitern 🦊"), (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
+             (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
+    return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:{TEXT_2}">'
+            + "".join(f'<span><span style="display:inline-block;width:14px;height:4px;background:{f};vertical-align:middle;'
+                      f'margin-right:6px"></span>{t(x)}</span>' for f, x in teile) + '</div></details>')

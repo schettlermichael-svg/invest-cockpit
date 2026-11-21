@@ -1085,6 +1085,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             teile = _gebaut("zonen", _codestand(), *args)
         _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
         st.markdown(teile["kopf"], unsafe_allow_html=True)
+        import zonenchart
+        import zonenseite
         k0, k1, k2, k3 = st.columns([4, 2, 2, 2])
         with k0:
             ebene = st.radio("Ebene", ["Woche", "Tag", "Stunde"], index=1, horizontal=True, key="zonen_ebene")
@@ -1094,7 +1096,24 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             st.link_button("TradingView ↗", titel.tv_link(ticker), use_container_width=True)
         with k3:
             watchlist_knopf(ticker)
-        st.markdown(gestaltung.seite(gestaltung.karte(teile["charts"][ebene] + teile["legende"]), oben=0, unten=12),
+        e_ = teile["r"]["ebenen"][ebene]
+        g0, g1, g2 = st.columns([6, 2, 2])
+        with g0:                                 # Durchschnitte nach Wahl (Micky 21.11.2026), in Kerzen der Ebene
+            gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
+                          format_func=lambda g: f"GD{g}", key="zonen_gd") or []
+        anker = zonenseite.anker_laden(ticker, ebene)
+        for k, spalte in enumerate((g1, g2)):    # eigener AVWAP: Balkennummer von rechts, gespeichert als Zeitpunkt
+            with spalte:
+                nr_jetzt = zonenchart.nummer(e_["df"], anker[k]) if e_ is not None and anker[k] is not None else 0
+                nr = st.number_input(f"AVWAP {k + 1} · Balken-Nr.", min_value=0, step=1, value=int(nr_jetzt),
+                                     key=f"zonen_anker_{ticker}_{ebene}_{k}",
+                                     help="Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den "
+                                          "Anker. Sind beide gesetzt, ist der Raum dazwischen die Zange.")
+                if e_ is not None and int(nr) != int(nr_jetzt):
+                    zonenseite.anker_setzen(ticker, ebene, k, zonenchart.zeitpunkt(e_["df"], nr) if nr else None)
+                    anker = zonenseite.anker_laden(ticker, ebene)
+        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.chart(teile["r"], ebene, sorted(gd), anker)
+                                                      + teile["legende"]), oben=0, unten=12),
                     unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
