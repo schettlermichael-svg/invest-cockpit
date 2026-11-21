@@ -116,14 +116,14 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     for z in kaesten:                                                               # Zonen der Vergangenheit
         x0 = X(pos(z["start"])) - halb if z["start"] >= d.index[0] else LINKS
         x1 = X(pos(z["ende"])) + halb
-        deck = 0.16 if z["offen"] else 0.07                                         # Layout
+        deck = 0.30 if z["offen"] else 0.16                                         # Layout: gut sichtbar (Micky 21.11.2026)
         A(f'<rect x="{x0:.1f}" y="{Y(z["docht_hoch"]):.1f}" width="{max(2, x1 - x0):.1f}" '
-          f'height="{max(1, Y(z["docht_tief"]) - Y(z["docht_hoch"])):.1f}" fill="{ALT_FARBE}" fill-opacity="0.04"/>')  # Layout: Dochte blass
+          f'height="{max(1, Y(z["docht_tief"]) - Y(z["docht_hoch"])):.1f}" fill="{ALT_FARBE}" fill-opacity="0.07"/>')  # Layout: Dochte blass
         A(f'<rect x="{x0:.1f}" y="{Y(z["hoch"]):.1f}" width="{max(2, x1 - x0):.1f}" height="{max(1, Y(z["tief"]) - Y(z["hoch"])):.1f}" '
-          f'fill="{ALT_FARBE}" fill-opacity="{deck}" stroke="{ALT_FARBE}" stroke-opacity="{deck * 3:.2f}">'  # Layout
+          f'fill="{ALT_FARBE}" fill-opacity="{deck}" stroke="{ALT_FARBE}" stroke-width="1.2" stroke-opacity="{min(1, deck * 3):.2f}">'  # Layout
           f'<title>{z["form"]}-Zone {z["start"]:%d.%m.%y}–{z["ende"]:%d.%m.%y}: Körper {zahl(z["tief"])}–{zahl(z["hoch"])} · '
           f'POC {zahl(z["poc"])} · {"offen – seitdem nie wieder angelaufen" if z["offen"] else "erledigt"}</title></rect>'
-          f'<text x="{x0 + 3:.1f}" y="{Y(z["docht_hoch"]) - 3:.1f}" fill="{ALT_FARBE}" font-size="10">{z["form"]}</text>')  # Layout
+          f'<text x="{x0 + 3:.1f}" y="{Y(z["docht_hoch"]) - 3:.1f}" fill="#C9D1DC" font-size="12" font-weight="700">{z["form"]}</text>')  # Layout
         if "poc" in linien_:
             A(f'<line x1="{x0:.1f}" x2="{x1:.1f}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{POC_FARBE}" '
               f'stroke-width="1.4" stroke-opacity="0.8"/>')                         # Layout
