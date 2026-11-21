@@ -1,18 +1,19 @@
 """Der Zonenchart (Micky 21.11.2026): wenig, aber aussagekräftig – dasselbe Bild für Woche, Tag und Stunde.
 
-Kursfeld: Kerzen; die Zone von heute als gelber Rahmen mit P, b oder D und ihr POC; die Zonen der Vergangenheit als
-Kästen (erledigt blass, offen kräftiger mit 🪝 und bis zum rechten Rand verlängert – der Magnet); im Tageschart die
-Wochenzone als feiner Rahmen; der Trade (Einstieg, Stopp, Ziel); rechts das Volumenprofil seit dem Anker als Silhouette.
-Darunter das Phasenband (gelb Balance, grün Ausbruch oben, rot unten), das Volumen und das Feld der relativen Stärke
-gegen den S&P 500 und gestrichelt gegen den Sektor (beide links bei 100, Punkte RS-Hoch bzw. RS-Tief vor Kurs).
-Kein Durchschnitt, kein AVWAP-Fächer, keine Kürzel im Bild."""
+Kursfeld: Kerzen; die Zone von heute als gelber Rahmen mit P, b oder D und ihr POC; die Zonen der Vergangenheit nach
+der PbD-Kette (zonen.kette) als Kästen von Körper zu Körper, die Dochte blass (erledigt blass, offen kräftiger mit 🪝 und
+bis zum rechten Rand verlängert – der Magnet); zuschaltbar ihre POCs, die nackten POCs bis rechts, die POC-Treppe und
+die Wanderung des POC in der Zone von heute; im Tageschart die Wochenzone als feiner Rahmen; der Trade (Einstieg,
+Stopp, Ziel); nach Wahl Durchschnitte und der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit
+und Volumen gespiegelt, ab Beginn des Impulses. Darunter das Phasenband nach PbD, das Volumen und das Feld der
+relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-Hoch bzw. RS-Tief vor Kurs)."""
 import numpy as np
 import pandas as pd
 
 from gestaltung import BLAU, GELB, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, zahl
 
 B = 1200                               # Layout: Breite des Bildes
-LINKS, RECHTS, PROFIL_W = 56, 150, 70  # Layout: Preisachse, Etiketten, Volumenprofil
+LINKS, RECHTS, PROFIL_W = 56, 150, 110  # Layout: Preisachse, Etiketten, Profil (Zeit links, Volumen rechts)
 OBEN, KURS_H = 16, 360                 # Layout: Kursfeld
 BAND_H, VOL_H, RS_H = 8, 60, 90        # Layout: Phasenband, Volumen, relative Stärke
 LUECKE = 14                            # Layout: Abstand zwischen den Feldern
@@ -31,6 +32,8 @@ BAND = {"i+": (GRUEN, 1.0), "i-": (ROT, 1.0), "b": (GELB, 0.85), "a+": (GRUEN, 0
 GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}   # wie bisher im Cockpit
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
+ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
+LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "treppe": "POC-Treppe", "wanderung": "Wanderung"}
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 
 
@@ -54,13 +57,14 @@ def zeitpunkt(df, nr):
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
 
 
-def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=()):
+def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=()):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange)."""
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL)."""
     import avwap
     import rueckenwind
+    import tiefe
     import zeichen
     import zonen
     if not e or not la:
@@ -75,7 +79,8 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
     lo, hi = la["zone"]
     kaesten = [z for z in hist if z["ende"] >= d.index[0]]
-    magnete = zonen.naechste(hist, la["kurs"])
+    magnete = zonen.naechste([z for z in hist if z["ende"] >= df.index[max(0, len(df) - 2 * ZEIGEN[e["name"]])]
+                              and d["Low"].min() <= z["poc"] <= d["High"].max()], la["kurs"])   # nur in Reichweite des Bildes
     werte = [h.max(), l.min(), lo, hi] + ([t["stopp"], t["ziel"]] if t else [])
     werte += [x for z in magnete for x in (z["val"], z["vah"])]
     if woche:
@@ -89,7 +94,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     pmin, pmax = pmin - rand, pmax + rand
     ende = B - RECHTS - PROFIL_W
     breite = ende - LINKS
-    X = lambda i: LINKS + breite * (i + 0.5) / N                                   # noqa: E731
+    X = lambda i: LINKS + breite * (i + 0.5) / N                                   # noqa: E731  # Layout
     Y = lambda y: OBEN + KURS_H * (1 - (y - pmin) / (pmax - pmin))                 # noqa: E731
     pos = lambda t_: min(max(int(d.index.searchsorted(pd.Timestamp(t_))), 0), N - 1)   # noqa: E731
     halb = breite / N / 2
@@ -99,7 +104,9 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
-         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>']
+         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
+         '<defs><marker id="spitze" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
+         'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>']
     A = s.append
     for k in range(5):                                                              # Layout: 5 Preislinien
         y_ = pmin + (pmax - pmin) * k / 4                                           # Layout
@@ -110,10 +117,23 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         x0 = X(pos(z["start"])) - halb if z["start"] >= d.index[0] else LINKS
         x1 = X(pos(z["ende"])) + halb
         deck = 0.16 if z["offen"] else 0.07                                         # Layout
+        A(f'<rect x="{x0:.1f}" y="{Y(z["docht_hoch"]):.1f}" width="{max(2, x1 - x0):.1f}" '
+          f'height="{max(1, Y(z["docht_tief"]) - Y(z["docht_hoch"])):.1f}" fill="{ALT_FARBE}" fill-opacity="0.04"/>')  # Layout: Dochte blass
         A(f'<rect x="{x0:.1f}" y="{Y(z["hoch"]):.1f}" width="{max(2, x1 - x0):.1f}" height="{max(1, Y(z["tief"]) - Y(z["hoch"])):.1f}" '
           f'fill="{ALT_FARBE}" fill-opacity="{deck}" stroke="{ALT_FARBE}" stroke-opacity="{deck * 3:.2f}">'  # Layout
-          f'<title>Zone {z["start"]:%d.%m.%y}–{z["ende"]:%d.%m.%y}: {zahl(z["tief"])}–{zahl(z["hoch"])} · '
-          f'{"offen – seitdem nie wieder angelaufen" if z["offen"] else "erledigt"}</title></rect>')
+          f'<title>{z["form"]}-Zone {z["start"]:%d.%m.%y}–{z["ende"]:%d.%m.%y}: Körper {zahl(z["tief"])}–{zahl(z["hoch"])} · '
+          f'POC {zahl(z["poc"])} · {"offen – seitdem nie wieder angelaufen" if z["offen"] else "erledigt"}</title></rect>'
+          f'<text x="{x0 + 3:.1f}" y="{Y(z["docht_hoch"]) - 3:.1f}" fill="{ALT_FARBE}" font-size="10">{z["form"]}</text>')  # Layout
+        if "poc" in linien_:
+            A(f'<line x1="{x0:.1f}" x2="{x1:.1f}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{POC_FARBE}" '
+              f'stroke-width="1.4" stroke-opacity="0.8"/>')                         # Layout
+        if "nackt" in linien_ and pmin <= z["poc"] <= pmax:                         # nackt bis rechts, sonst bis zur Berührung
+            x2 = ende if z["nackt"] else X(pos(z["beruehrt"]))
+            if x2 > x1:
+                A(f'<line x1="{x1:.1f}" x2="{x2:.1f}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{POC_FARBE}" '
+                  f'stroke-width="1.2" stroke-dasharray="4 3" stroke-opacity="{0.9 if z["nackt"] else 0.35}"/>')  # Layout
+                if z["nackt"]:
+                    etiketten.append((Y(z["poc"]), f"nackter POC {zahl(z['poc'])}", POC_FARBE))
     for z in magnete:                                                               # offene Zonen: Magnet bis rechts
         x0 = X(pos(z["ende"])) + halb if z["ende"] >= d.index[0] else LINKS
         A(f'<rect x="{x0:.1f}" y="{Y(z["vah"]):.1f}" width="{max(2, ende - x0):.1f}" height="{max(1, Y(z["val"]) - Y(z["vah"])):.1f}" '
@@ -134,7 +154,20 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
       f'stroke-width="1.4" stroke-dasharray="2 3"/>')                               # Layout
     etiketten += [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE), (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE),
                   (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
-    def kurve(r_, farbe, dicke=1.6, strich=""):
+    if "treppe" in linien_:                                                         # POC-Treppe: Wert steigt, fällt, überlappt
+        punkte = [((x0_ + x1_) / 2, z) for z in kaesten
+                  for x0_, x1_ in [(X(pos(z["start"])) - halb if z["start"] >= d.index[0] else LINKS, X(pos(z["ende"])) + halb)]]
+        punkte.append(((xz + ende) / 2, {"poc": la["poc"], "val": lo, "vah": hi}))
+        for (xa, za), (xb, zb) in zip(punkte[:-1], punkte[1:]):
+            farbe = GRUEN if zb["poc"] > za["vah"] else ROT if zb["poc"] < za["val"] else ALT_FARBE
+            A(f'<line x1="{xa:.1f}" y1="{Y(za["poc"]):.1f}" x2="{xb:.1f}" y2="{Y(zb["poc"]):.1f}" stroke="{farbe}" '
+              f'stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#spitze)" stroke-opacity="0.75"/>')  # Layout
+    if "wanderung" in linien_:                                                      # POC-Wanderung in der Zone von heute
+        w_ = zonen.wanderung(e, la["beginn"]).reindex(d.index)
+        pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(w_.to_numpy(float)) if not np.isnan(x))
+        if pkt:
+            A(f'<polyline points="{pkt}" fill="none" stroke="{POC_FARBE}" stroke-width="2.2" stroke-linejoin="round"/>')  # Layout
+    def kurve(r_, farbe, dicke=1.6, strich=""):  # Layout
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
         if pkt:
             A(f'<polyline points="{pkt}" fill="none" stroke="{farbe}" stroke-width="{dicke}"{strich}/>')
@@ -175,28 +208,37 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
                                   (t["ziel"], GRUEN, "Ziel")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}", farbe))
-    pr = la["profil"]                                                               # Volumenprofil seit Beginn der Zone
-    vmax_p = float(max(pr["volumen"])) or 1.0
-    for a_, b_, w_ in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"]):
+    pr = la["profil"]                                                               # das eine Profil: Zeit ◂ ▸ Volumen
+    mitte_x = ende + PROFIL_W / 2
+    halb_w = PROFIL_W / 2 - 4                                                       # Layout
+    vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
+    for a_, b_, w_, z_ in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"], pr["zeit"]):
         if b_ < pmin or a_ > pmax:
             continue
         y1, y2 = Y(min(b_, pmax)), Y(max(a_, pmin))
-        poc_ = a_ <= pr["poc"] <= b_
-        A(f'<rect x="{ende + 2}" y="{y1 + 0.3:.1f}" width="{max(1, (PROFIL_W - 6) * w_ / vmax_p):.1f}" '
-          f'height="{max(1, y2 - y1 - 0.6):.1f}" fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else 0.45}"/>')  # Layout
-    A(f'<text x="{ende + 2}" y="{OBEN - 4}" fill="{TEXT_3}" font-size="10">Volumen der Zone seit {pd.Timestamp(pr["ab"]):%d.%m.}</text>')  # Layout
+        hh = max(1, y2 - y1 - 0.6)  # Layout
+        poc_, tpoc_ = a_ <= pr["poc"] <= b_, a_ <= pr["tpoc"] <= b_
+        bz = max(1, halb_w * z_ / zmax_p)
+        A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{ZEIT_FARBE}" '  # Layout
+          f'fill-opacity="{0.9 if tpoc_ else 0.4}"/>')                              # Layout
+        A(f'<rect x="{mitte_x + 1:.1f}" y="{y1 + 0.3:.1f}" width="{max(1, halb_w * w_ / vmax_p):.1f}" height="{hh:.1f}" '  # Layout
+          f'fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else 0.45}"/>')  # Layout
+    A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3}" font-size="10" text-anchor="middle">Zeit ◂ ▸ Volumen seit '  # Layout
+      f'{pd.Timestamp(pr["ab"]):%d.%m.}</text>')                                    # Layout
+    if abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
+        etiketten.append((Y(pr["tpoc"]), f"Zeit-POC {zahl(pr['tpoc'])}", ZEIT_FARBE))
     belegt = []
     for y_, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung
         while any(abs(y_ - b_) < 14 for b_ in belegt):                              # Layout: 14 px je Zeile
             y_ += 14                                                                # Layout
         belegt.append(y_)
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
-    band = zonen.pbd_band(df, e["atr"])[n0:]                                       # Phasenband nach PbD
+    band = zonen.band(e)[n0:]                                                       # Phasenband nach PbD
     vorher = None
     for i, p_ in enumerate(band):
         if p_:
             farbe, deck = BAND[p_]
-            A(f'<rect x="{X(i) - halb:.1f}" y="{y_band}" width="{2 * halb + 0.3:.1f}" height="{BAND_H}" fill="{farbe}" '
+            A(f'<rect x="{X(i) - halb:.1f}" y="{y_band}" width="{2 * halb + 0.3:.1f}" height="{BAND_H}" fill="{farbe}" '  # Layout
               f'fill-opacity="{deck}"/>')
             if p_ in ("a+", "a-", "f") and p_ != vorher:                            # erster Ausbruch bzw. Scheitern
                 A(f'<text x="{X(i):.1f}" y="{y_band - 2}" font-size="11" text-anchor="middle">{"🦊" if p_ == "f" else "💥"}</text>')  # Layout
@@ -225,7 +267,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
             sp = (a1 - a0) * 0.08 or 1                                              # Layout
             a0, a1 = a0 - sp, a1 + sp
             YR = lambda y: y_rs + RS_H * (1 - (y - a0) / (a1 - a0))                 # noqa: E731
-            A(f'<text x="{LINKS}" y="{y_rs - 6}" fill="{TEXT_3}" font-size="11">Relative Stärke · '
+            A(f'<text x="{LINKS}" y="{y_rs - 6}" fill="{TEXT_3}" font-size="11">Relative Stärke · '  # Layout
               f'<tspan fill="{BLAU}">— gegen S&amp;P 500 {_pfeil(r_i)}</tspan>'
               + (f'  <tspan fill="{LILA}">- - gegen Sektor {_pfeil(r_s)}</tspan>' if r_s is not None else "")
               + f'  · <tspan fill="{RS_HOCH_FARBE}">● RS-Hoch vor Kurs</tspan> · <tspan fill="{RS_TIEF_FARBE}">● RS-Tief vor Kurs</tspan></text>')
@@ -247,7 +289,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
                         A(f'<circle cx="{X(i):.1f}" cy="{YR(r_i[i]):.1f}" r="3" fill="{farbe}"/>')  # Layout
     letzter = None
     for i, tag in enumerate(d.index):                                               # Zeitachse
-        schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())
+        schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())  # Layout
         if schl != letzter and letzter is not None and (e["name"] != "Stunde" or tag.dayofweek == 0):
             text = f"{tag:%d.%m.}" if e["name"] == "Stunde" else f"{tag:%m/%y}"
             A(f'<text x="{X(i):.1f}" y="{H - 6}" fill="{TEXT_3}" font-size="11">{text}</text>')  # Layout
@@ -259,8 +301,12 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
 def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
-    teile = [(ZONE_FARBE, "Zone von heute (P, b, D) · POC grün gepunktet"), (ALT_FARBE, "Zonen der Vergangenheit: blass erledigt, "
-             "kräftiger offen · gestrichelt bis rechts = offener Magnet 🪝"), (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
+    teile = [(ZONE_FARBE, "Zone von heute (P, b, D) · POC grün gepunktet"), (ALT_FARBE, "Zonen der Vergangenheit (PbD-Kette): "
+             "Kasten = Körper, Dochte blass · blass erledigt, kräftiger offen · gestrichelt bis rechts = offener Magnet 🪝"),
+             (POC_FARBE, "POC je Zone · gestrichelt = nackter POC (seitdem nie berührt) · dicke Linie = Wanderung in der Zone"),
+             (GRUEN, "POC-Treppe: grün = Wert steigt über die alte Wertzone, rot = fällt darunter, grau = überlappt"),
+             (ZEIT_FARBE, "Profil rechts: links Zeit (Market Profile), rechts Volumen, seit Beginn des Impulses"),
+             (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
              (GRUEN, "Phase: kräftig = Impuls, blass = Ausbruch 💥 · rot ebenso abwärts"), (GELB, "Phase: Bauch (Balance)"),
              ("#F0883E", "Phase: Scheitern 🦊"), (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]

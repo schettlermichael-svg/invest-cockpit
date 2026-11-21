@@ -447,11 +447,11 @@ def schwaenze(kerzen, schritt, gruppe="D"):
     return erg
 
 
-def impulse(df, atr_wert):
-    """Alle Impulse der letzten SUCHE Kerzen nach Vorwalds Zählung: (Start, Ende, aufwärts, Anzahl Schlüsse)."""
+def impulse(df, atr_wert, suche=SUCHE):
+    """Alle Impulse der letzten `suche` Kerzen nach Vorwalds Zählung: (Start, Ende, aufwärts, Anzahl Schlüsse)."""
     c = df["Close"].to_numpy(float)
     n, erg = len(c), []
-    s = max(1, n - SUCHE)
+    s = max(1, n - suche)
     while s < n - 1:
         bester = None
         for richt in (1, -1):

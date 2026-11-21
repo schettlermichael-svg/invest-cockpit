@@ -6,7 +6,6 @@ import gestaltung
 from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
 
 EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Zone", "Stunde": "Einstieg"}
-HIST_KERZEN = {"Woche": 208, "Tag": 252, "Stunde": 280}   # Zonen der Vergangenheit: so weit zurück gesucht (2 Bilder)
 
 
 def rechnen(tk, laufend=False):
@@ -49,9 +48,9 @@ def rechnen(tk, laufend=False):
         sektor = None
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
-    hist = {n: zonen.historie(e, max(0, len(e["df"]) - HIST_KERZEN[n])) if e else [] for n, e in ebenen.items()}
-    return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": zonen.fuehrte(ebenen), "cmf": tiefe.cmf(df)["wert"],
-            "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": hist}
+    f = zonen.fuehrte(ebenen)
+    return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": tiefe.cmf(df)["wert"],
+            "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
 
 
 def _stunde_bezug(symbol):
@@ -122,11 +121,11 @@ def seite_zonen(tk, laufend=False, _stand=None):
     eigener AVWAP nach Wahl, ohne neue Rechnung)."""
     r = rechnen(tk.upper().strip(), laufend)
     import zonenchart
-    return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "r": r,
+    return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "r": r,  # Layout
             "legende": zonenchart.legende() + gestaltung.zeichen_legende()}
 
 
-def chart(r, ebene, gd=(), anker=()):
+def chart(r, ebene, gd=(), anker=(), linien_=()):
     """Zonenchart einer Ebene aus der Rechnung von seite_zonen."""
     import zonenchart
     f = r["fuehrte"]
@@ -136,7 +135,7 @@ def chart(r, ebene, gd=(), anker=()):
         w_start = (ew["pbd"] or {}).get("zone_start") or ew["struktur"]["balance_start"]
         woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
-                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker)
+                           r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker, linien_)
 
 
 # ── Eigener AVWAP (Micky 21.11.2026): Anker je Titel und Ebene, als Zeitpunkt gespeichert ─────────────────────────

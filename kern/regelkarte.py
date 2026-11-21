@@ -703,6 +703,15 @@ BEREICHE = [
                "aus der Websuche.",
          messung=["strategen.pruefen", "strategen.rufen", "strategen.material"], pruefer=[],
          luecke="kein Prüfer – der Code prüft jede Antwort"),
+    dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Vorwald (PbD), Dalton, Micky 21.11.2026",
+         regel="Eine Regel für Woche, Tag und Stunde, die PbD-Kette: Impuls (3 Schlüsse, 2 ATR) → Zone von Körper zu Körper "
+               "→ Ausbruch oder Scheitern ab 2 Schlüssen draußen → nächster maßgeblicher Impuls. D-Zonen ohne Impuls: 3 "
+               "Körper unter 2 ATR, mindestens 5 Kerzen; nach einem Impuls mindestens 3. Offen = seit dem Ende nie wieder in "
+               "der Wertzone; nackter POC = seitdem nie berührt. Ein Profil je Ebene: Zeit und Volumen gespiegelt ab Beginn "
+               "des Impulses der Zone von heute. Ausbruch und Gegentrade frisch bis 5 Schlüsse.",
+         messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.band", "zonen.wanderung", "zonen.fuehrte",
+                  "zonenchart.bild"], pruefer=[],
+         luecke="kein Prüfer – Mindestlängen 3 und 5 gesetzt, ungemessen"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "
@@ -832,7 +841,7 @@ def elemente(bild):
 # Karte, wenn eine Messfunktion der Karte sie benutzt – direkt oder über Funktionen, die sie aufruft. Was keiner gehört,
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
-    "chart.ETIKETT": "Layout", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
+    "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
     "kartentisch.SICHTBAR": "Anzeige (wie viele Karten offen)", "kartentisch.TOP": "Anzeige",
     "chartpruefer.GRUPPEN": "Stichprobe des Prüfers", "chartpruefer.STICHPROBE": "Stichprobe des Prüfers",
     "chartpruefer.KOSTEN_JE_CHART": "Kostenschätzung", "setuppruefer.STICHPROBE": "Stichprobe des Prüfers",
@@ -848,7 +857,8 @@ TECHNIK = {
     "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
     **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS", "TSD_AB", "TAUSEND")},
 }
-VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE"}   # gleicher Name, verschiedene Begriffe
+VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE",
+               "LINKS", "RECHTS", "OBEN", "LUECKE"}   # Layout-Ränder je Bild bzw. verschiedene Begriffe (avwap.LUECKE = Kurslücke)   # gleicher Name, verschiedene Begriffe
 
 
 def _quellen():

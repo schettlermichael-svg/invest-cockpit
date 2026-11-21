@@ -28,17 +28,30 @@ Gesetzt (Claude, 21.11.2026, zur Bestätigung): „frisch“ = höchstens 5 Schl
 neuen Einstieg; Ausbruchsziel = Zonenhöhe (Messregel der Balance).
 Einigkeit: Richtung der Woche, Richtung des Trades und Richtung der Stunde – je Ebene, die mitzieht, ein Zeichen mehr
   (3 von 3 = 🦬🦬🦬). Ohne Trade die Einigkeit der Richtungen.
-Gedächtnis: alte Zonen (frühere Balancen ab 10 Kerzen, tiefe.alte_balance) – offen, solange der Kurs seit ihrem Ende
-  nie wieder in ihre Wertzone lief (Magnet), sonst erledigt. Muster: liegt die Tageszone innerhalb der Wochenzone, setzt
+Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde, die PbD-Kette, kette()):
+  Impuls → Zone → Ausbruch oder Scheitern → nächster Impuls. Maßgeblich ist ein Impuls wie in tiefe.pbd (ein späterer
+  löst ihn nur ab, wenn er per Schluss aus der Zone herausläuft). Die Zone beginnt am Impulsende und endet mit dem
+  letzten Schluss darin vor dem 2. Schluss draußen, sonst am Beginn des nächsten Impulses. Kasten = Kerzenkörper (faire
+  Zone, tiefe._zone), Dochte blass. Zwischen Ausbruch und nächstem Impuls und vor dem ersten Impuls: D-Zonen – 3 Kerzen,
+  deren Körper zusammen keine 2 ATR überspannen (kein Impuls), danach wie die faire Zone fortgeschrieben, Ende wieder
+  beim 2. Schluss draußen. Mindestlänge 3 Kerzen nach einem Impuls, 5 für eine D-Zone (ZONE_MIN, D_MIN, Claude
+  21.11.2026, ungemessen). Alle Maße in ATR der Ebene.
+  Offen, solange der Kurs seit ihrem Ende nie wieder in ihre Wertzone lief (Magnet), sonst erledigt; ihr POC ist nackt,
+  solange kein Docht ihn seitdem berührt hat.
+Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert
+  am Beginn des Impulses der Zone von heute (Stiel = Impuls, Bauch = Zone: das Profil zeigt den Buchstaben), ohne
+  Impuls am Beginn der Balance; aus den feineren Kerzen der Ebene. Sein POC ist der POC der Zone. Muster: liegt die Tageszone innerhalb der Wochenzone, setzt
   sich die Woche fort (innen), sonst darüber bzw. darunter.
 """
+import pandas as pd
+
 import tiefe
 
-FRISCH = 5                 # Ausbruch und Gegentrade gelten bis 5 Schlüsse draußen
-IMPULS_MIN = tiefe.IMPULS_SCHLUESSE   # Phasenband erst ab doppelt so vielen Kerzen wie ein Impuls braucht
+FRISCH_SCHLUESSE = 5                 # Ausbruch und Gegentrade gelten bis 5 Schlüsse draußen
+ZONE_MIN = 3               # eine Zone nach einem Impuls braucht mindestens 3 Kerzen (Claude 21.11.2026, ungemessen)
+D_MIN = 5                  # eine D-Zone ohne Impuls davor mindestens 5 (eine Rotation, wie avwap.BALANCE_BLOCK; ungemessen)
+D_ATR = tiefe.IMPULS_ATR   # D-Zone: 3 Körper überspannen zusammen weniger als ein Impuls (2 ATR) – eine Quelle
 GESCHEITERT = tiefe.GESCHEITERT    # 2 Schlüsse draußen (Vorwald) – eine Quelle
-ALTE_ZONEN = 3             # höchstens 3 alte Zonen je Ebene
-ALT_SUCHE_N = 8            # … gesucht unter den 8 Balancen davor
 STOPP_ATR = tiefe.STOPP_ATR        # ¼ ATR jenseits der Kante – eine Quelle
 HALB = 2                   # Mitte der Zone
 EBENEN = ("Woche", "Tag", "Stunde")
@@ -51,9 +64,8 @@ TRADE_ZEICHEN = {"pendel": "🟡", "ausbruch": "💥", "ruecktest": "🪝", "geg
 
 def _zone(e):
     """(tief, hoch, Profil, form, Beginn) der Ebene: faire Zone nach Vorwald, ohne Impuls der Rand der Balance. Das
-    Volumenprofil ist an der Zone verankert (Micky 21.11.2026: ihr Bauch) – aus den feineren Kerzen ab ihrem Beginn
-    (Tag und Woche: Stunden, Stunde: 30 Minuten), sonst aus den Kerzen der Ebene. Eine Zone, die schmaler als ¼ ATR ist
-    (erst eine Kerze), reicht über die Spanne ihrer ersten Kerze (Claude, 21.11.2026)."""
+    Profil hängt am Beginn des Impulses (profil_impuls). Eine Zone, die schmaler als ¼ ATR ist (erst eine Kerze), reicht
+    über die Spanne ihrer ersten Kerze (Claude, 21.11.2026)."""
     pb, st_, df = e.get("pbd"), e["struktur"], e["df"]
     if pb:
         lo, hi, form, beginn = pb["zone_tief"], pb["zone_hoch"], pb["form"], pb["zone_start"]
@@ -62,7 +74,61 @@ def _zone(e):
     i = min(int(df.index.searchsorted(beginn)), len(df) - 1)
     if pb and e["atr"] and hi - lo < e["atr"] * STOPP_ATR:
         lo, hi = min(lo, float(df["Low"].iloc[i])), max(hi, float(df["High"].iloc[i]))
-    return lo, hi, tiefe.profil_ab(df, e.get("fein"), i), form, df.index[i]
+    return lo, hi, profil_impuls(e), form, df.index[i]
+
+
+SPANNE = {"Woche": pd.Timedelta(days=7), "Tag": pd.Timedelta(days=1), "Stunde": pd.Timedelta(hours=1)}
+
+
+def _von_bis(e, t):
+    """Zeitraum der Kerze t der Ebene in feineren Kerzen: die Woche trägt den Freitag als Namen (W-FRI)."""
+    t = pd.Timestamp(t)
+    if e["name"] == "Woche":
+        return t - pd.Timedelta(days=6), t + pd.Timedelta(days=1)  # Technik: Montag bis Freitag
+    return t, t + SPANNE[e["name"]]
+
+
+def _doppel(teil, schritt):
+    """Volumen- und Zeitprofil (Market Profile: eine Marke je Kerze und berührter Stufe) auf denselben Stufen."""
+    pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
+    zp = tiefe.profil(teil["High"], teil["Low"], [1.0] * len(teil), schritt)
+    pr["zeit"], pr["tpoc"] = zp["volumen"], zp["poc"]
+    return pr
+
+
+def profil_impuls(e):
+    """Das eine Profil der Ebene: ab Beginn des Impulses der Zone von heute (ohne Impuls ab Beginn der Balance), aus den
+    feineren Kerzen, sonst aus denen der Ebene → tiefe.profil plus zeit, tpoc, ab, quelle."""
+    df, pb, fein = e["df"], e.get("pbd"), e.get("fein")
+    ab_ = pd.Timestamp(pb["impuls_tag"] if pb else e["struktur"]["balance_start"])
+    ab = _von_bis(e, ab_)[0]
+    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
+    f_ = fein[fein.index >= ab] if fein is not None and len(fein) else None
+    if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN and f_.index[0] <= ab + pd.Timedelta(days=tiefe.ZEIT_VERSATZ):
+        teil, quelle = f_, "fein"
+    else:
+        teil, quelle = df[df.index >= ab_], "Ebene"
+    pr = _doppel(teil, schritt)
+    pr["ab"], pr["quelle"] = ab_, quelle
+    return pr
+
+
+def wanderung(e, beginn):
+    """POC-Wanderung in der Zone von heute: POC des Volumens seit Beginn der Zone bis zu jeder Kerze (Serie), aus den
+    feineren Kerzen, sonst aus denen der Ebene."""
+    df, fein = e["df"], e.get("fein")
+    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
+    von = _von_bis(e, beginn)[0]
+    tage = df.index[df.index >= pd.Timestamp(beginn)]
+    f_ = fein[fein.index >= von] if fein is not None and len(fein) else None
+    if f_ is None or not len(f_) or f_.index[0] > von + pd.Timedelta(days=tiefe.ZEIT_VERSATZ):
+        f_ = None
+    werte = {}
+    for t in tage:
+        bis = f_[f_.index < _von_bis(e, t)[1]] if f_ is not None else df[(df.index >= pd.Timestamp(beginn)) & (df.index <= t)]
+        if len(bis):
+            werte[t] = tiefe.profil(bis["High"], bis["Low"], bis["Volume"], schritt)["poc"]
+    return pd.Series(werte, dtype=float)
 
 
 def lage(e):
@@ -110,7 +176,7 @@ def trade(e, la):
         tr = pb["d_long"] if pb["kante"] == "unten" else pb["d_short"]
         t = {"art": "pendel", "richtung": 1 if pb["kante"] == "unten" else -1, "einstieg": tr["einstieg"],
              "stopp": tr["stopp"], "ziel": tr["ziel"]}
-    elif la["phase"] in ("aus_auf", "aus_ab") and n <= FRISCH:
+    elif la["phase"] in ("aus_auf", "aus_ab") and n <= FRISCH_SCHLUESSE:
         r = 1 if la["phase"] == "aus_auf" else -1
         kante = hi if r > 0 else lo
         nah = pb["kantenabstand"]
@@ -122,7 +188,7 @@ def trade(e, la):
         else:
             t = {"art": "ausbruch", "richtung": r, "einstieg": kurs, "stopp": (lo + hi) / HALB,
                  "ziel": kante + r * (hi - lo)}
-    elif la["phase"] == "gescheitert" and n <= FRISCH:
+    elif la["phase"] == "gescheitert" and n <= FRISCH_SCHLUESSE:
         r = la["richtung"]
         t = {"art": "gegen", "richtung": r, "einstieg": kurs,
              "stopp": (hi + a * STOPP_ATR) if r < 0 else (lo - a * STOPP_ATR), "ziel": pb["impuls_kurs"]}
@@ -133,69 +199,119 @@ def trade(e, la):
     return t
 
 
-def alte_zonen(e):
-    """Frühere Balancen der Ebene mit Stand: offen = seit ihrem Ende nie wieder in ihrer Wertzone (Magnet), erledigt =
-    der Kurs lief wieder hinein. Gezeigt werden die nächste offene darüber und darunter (naechste())."""
-    if not e:
-        return []
-    df = e["df"]
-    aus, vor = [], e["struktur"]["anker_i"]
-    for _ in range(ALT_SUCHE_N):
-        b = tiefe.alte_balance(df, vor)
-        if not b:
-            break
-        nach = df.loc[df.index > b["ende"]]
-        offen = not ((nach["Low"] <= b["vah"]) & (nach["High"] >= b["val"])).any()
-        aus.append({"val": b["val"], "vah": b["vah"], "poc": b["poc"], "start": b["start"], "ende": b["ende"],
-                    "offen": bool(offen)})
-        vor = int(df.index.searchsorted(b["start"]))
-        if sum(x["offen"] for x in aus) >= ALTE_ZONEN:
-            break
-    return aus
+def _d_zonen(O, C, a, b, atr_wert, aus, band):
+    """D-Zonen zwischen den Kerzen a und b (einschließlich): 3 Kerzen, deren Körper zusammen keine 2 ATR überspannen,
+    danach fortgeschrieben wie die faire Zone; Ende beim 2. Schluss draußen. Kerzen ohne Zone tragen weiter, was sie
+    vorher trugen (Ausbruch, Scheitern oder nichts)."""
+    k = a
+    while k + ZONE_MIN - 1 <= b:
+        koerper = [x for j in range(k, k + ZONE_MIN) for x in (O[j], C[j])]
+        if max(koerper) - min(koerper) >= D_ATR * atr_wert:
+            k += 1
+            continue
+        zt, zh, letzte, zaehl = min(koerper), max(koerper), k + ZONE_MIN - 1, 0
+        j = letzte + 1
+        while j <= b:
+            if zt <= C[j] <= zh:
+                zt, zh, letzte, zaehl = min(zt, O[j], C[j]), max(zh, O[j], C[j]), j, 0
+            else:
+                zaehl += 1
+                if zaehl >= GESCHEITERT:
+                    break
+            j += 1
+        aus.append({"art": "D", "s": k, "e": letzte, "tief": zt, "hoch": zh, "auf": None,
+                    "aus": "oben" if j <= b and C[j] > zh else "unten" if j <= b else None})
+        for x in range(k, letzte + 1):
+            band[x] = "b"
+        k = letzte + 1
+
+
+def kette(df, atr_wert):
+    """Die PbD-Kette der Ebene (Regel im Kopf dieser Datei) → (Zonen, Band). Zone = {art P/b/D, s, e (Positionen),
+    tief, hoch (Körper), auf, aus (oben/unten/None)}; Band je Kerze: i+/i- Impuls, b Zone, a+/a- Ausbruch, f Scheitern."""
+    n = len(df)
+    band, aus = [None] * n, []
+    if atr_wert is None or not atr_wert > 0 or n < 2 * ZONE_MIN:
+        return aus, band
+    O, C, L, H = (df[k].to_numpy(float) for k in ("Open", "Close", "Low", "High"))
+    start_kurs = lambda i, auf: float(L[i] if auf else H[i])                       # noqa: E731
+    gilt, akt = [], None                                                            # maßgebliche Impulse wie tiefe.pbd
+    for imp in tiefe.impulse(df, atr_wert, suche=n):
+        if imp[1] > n - 2:
+            continue
+        if akt is not None:
+            if imp[0] <= akt[1]:
+                continue
+            zt, zh = tiefe._zone(O, C, start_kurs(akt[0], akt[2]), akt[1], akt[2], imp[0])[:2]
+            if not (C[imp[1]] > zh or C[imp[1]] < zt):
+                continue
+        akt = imp
+        gilt.append(imp)
+    _d_zonen(O, C, 0, (gilt[0][0] - 1) if gilt else n - 1, atr_wert, aus, band)
+    for k, (s_, e_, auf, _) in enumerate(gilt):
+        for j in range(s_, e_ + 1):
+            band[j] = "i+" if auf else "i-"
+        bis = gilt[k + 1][0] - 1 if k + 1 < len(gilt) else n - 1
+        ende, aus_seite = bis, None
+        for j in range(e_ + 1, bis + 1):
+            zaehl, seite = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, j)[4:6]  # Technik: Felder von tiefe._zone
+            if seite and zaehl >= GESCHEITERT:
+                ende, aus_seite = j - zaehl, seite
+                break
+        zt, zh = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, ende)[:2]
+        aus.append({"art": "P" if auf else "b", "s": e_, "e": ende, "tief": zt, "hoch": zh, "auf": auf, "aus": aus_seite})
+        for j in range(e_ + 1, ende + 1):
+            band[j] = "b"
+        if aus_seite:
+            mit = (aus_seite == "oben") == bool(auf)
+            for j in range(ende + 1, bis + 1):
+                band[j] = ("a+" if aus_seite == "oben" else "a-") if mit else "f"
+            _d_zonen(O, C, ende + 1, bis, atr_wert, aus, band)
+    aus.sort(key=lambda z: z["s"])
+    return aus, band
 
 
 def historie(e, ab):
-    """Alle Balancen der Ebene seit Kerze ab (Zonen der Vergangenheit, Micky 21.11.2026), älteste zuerst, je mit
-    Spanne (tief–hoch), Wertzone und Stand (offen = seit ihrem Ende nie wieder in ihrer Wertzone)."""
+    """Zonen der Vergangenheit der Ebene seit Kerze ab nach der PbD-Kette, älteste zuerst, ohne die Zone von heute –
+    je mit Körper (tief–hoch), Dochten, Volumenprofil (POC, Wertzone), offen und nackt."""
     if not e:
         return []
-    df = e["df"]
-    aus, vor = [], e["struktur"]["anker_i"]
-    while vor > ab:
-        b = tiefe.alte_balance(df, vor)
-        if not b or int(df.index.searchsorted(b["ende"])) < ab:
-            break
-        nach = df.loc[df.index > b["ende"]]
-        aus.append({"val": b["val"], "vah": b["vah"], "poc": b["poc"], "tief": b["tief"], "hoch": b["hoch"],
-                    "start": b["start"], "ende": b["ende"],
-                    "offen": not bool(((nach["Low"] <= b["vah"]) & (nach["High"] >= b["val"])).any())})
-        vor = int(df.index.searchsorted(b["start"]))
-    return aus[::-1]
-
-
-def pbd_band(df, atr_wert):
-    """Phase je Kerze nach PbD (Micky 21.11.2026): Impuls aufwärts 'i+' bzw. abwärts 'i-' (der Strich des P bzw. b),
-    danach der Bauch 'b' (Schluss in der fairen Zone oder erster Schluss draußen), Ausbruch 'a+'/'a-' ab 2 Schlüssen
-    draußen in Richtung des Impulses, Scheitern 'f' ab 2 Schlüssen auf der Gegenseite – bis zum nächsten Impuls.
-    Gezählt wie tiefe.pbd (tiefe._zone, Kerze für Kerze). → Liste je Kerze von df (None vor dem ersten Impuls)."""
-    n = len(df)
-    aus = [None] * n
-    if atr_wert is None or n < 2 * IMPULS_MIN:
-        return aus
-    O, C = df["Open"].to_numpy(float), df["Close"].to_numpy(float)
+    df, fein = e["df"], e.get("fein")
+    zonen_, _ = _kette(e)
+    pb = e.get("pbd")
+    heute = pd.Timestamp(pb["zone_start"]) if pb else pd.Timestamp(e["struktur"]["balance_start"])
+    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
     L, H = df["Low"].to_numpy(float), df["High"].to_numpy(float)
-    imp = tiefe.impulse(df, atr_wert)
-    for k, (s, e_, auf, _) in enumerate(imp):
-        for j in range(s, e_ + 1):
-            aus[j] = "i+" if auf else "i-"
-        bis = imp[k + 1][0] - 1 if k + 1 < len(imp) else n - 1
-        start_kurs = float(L[s] if auf else H[s])
-        for j in range(e_ + 1, bis + 1):
-            _, _, _, _, zaehl, seite, _ = tiefe._zone(O, C, start_kurs, e_, auf, j)
-            mit = (seite == "oben") == bool(auf)
-            aus[j] = ("a+" if seite == "oben" else "a-") if seite and zaehl >= GESCHEITERT and mit else \
-                     "f" if seite and zaehl >= GESCHEITERT else "b"
-    return aus
+    erg = []
+    for z in zonen_:
+        if z["e"] < ab or z["e"] - z["s"] + 1 < (D_MIN if z["art"] == "D" else ZONE_MIN) or df.index[z["s"]] >= heute:
+            continue
+        von, bis = _von_bis(e, df.index[z["s"]])[0], _von_bis(e, df.index[z["e"]])[1]
+        f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
+        teil = f_ if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN else df.iloc[z["s"]:z["e"] + 1]
+        pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
+        nach = slice(z["e"] + 1, len(df))
+        beruehrt = (L[nach] <= pr["poc"]) & (H[nach] >= pr["poc"])
+        erg.append({"form": z["art"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
+                    "docht_tief": float(L[z["s"]:z["e"] + 1].min()), "docht_hoch": float(H[z["s"]:z["e"] + 1].max()),
+                    "poc": float(pr["poc"]), "val": float(pr["val"]), "vah": float(pr["vah"]),
+                    "start": df.index[z["s"]], "ende": df.index[z["e"]], "aus": z["aus"],
+                    "offen": not bool(((L[nach] <= pr["vah"]) & (H[nach] >= pr["val"])).any()),
+                    "nackt": not bool(beruehrt.any()),
+                    "beruehrt": df.index[z["e"] + 1 + int(beruehrt.argmax())] if beruehrt.any() else None})
+    return erg
+
+
+def _kette(e):
+    """kette() der Ebene, einmal gerechnet."""
+    if "_kette" not in e:
+        e["_kette"] = kette(e["df"], e["atr"])
+    return e["_kette"]
+
+
+def band(e):
+    """Phase je Kerze der Ebene nach der PbD-Kette (Liste wie kette)."""
+    return _kette(e)[1]
 
 
 def naechste(alt, kurs):
@@ -220,7 +336,7 @@ def fuehrte(ebenen):
         (lo, hi), (wl, wh) = la["Tag"]["zone"], la["Woche"]["zone"]
         muster = "innen" if wl <= lo and hi <= wh else "darüber" if lo > wh else "darunter" if hi < wl else "überlappend"
     return {"lage": la, "trade": t, "einig": min(einig, len(EBENEN)), "richtung": bezug, "muster": muster,
-            "alt": {n: alte_zonen(ebenen.get(n)) for n in EBENEN}}
+            "alt": {n: historie(ebenen.get(n), 0) for n in EBENEN}}
 
 
 def einig_zeichen(f):

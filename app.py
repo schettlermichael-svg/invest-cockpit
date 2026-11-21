@@ -1097,10 +1097,13 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         with k3:
             watchlist_knopf(ticker)
         e_ = teile["r"]["ebenen"][ebene]
-        g0, g1, g2 = st.columns([6, 2, 2])
+        g0, g3, g1, g2 = st.columns([3, 3, 2, 2])
         with g0:                                 # Durchschnitte nach Wahl (Micky 21.11.2026), in Kerzen der Ebene
             gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
                           format_func=lambda g: f"GD{g}", key="zonen_gd") or []
+        with g3:                                 # POC-Linien der Zonen nach Wahl (Micky 21.11.2026)
+            poc_wahl = st.pills("POC-Linien", list(zonenchart.LINIEN_WAHL), selection_mode="multi", default=[],
+                                format_func=zonenchart.LINIEN_WAHL.get, key="zonen_poc") or []
         anker = zonenseite.anker_laden(ticker, ebene)
         for k, spalte in enumerate((g1, g2)):    # eigener AVWAP: Balkennummer von rechts, gespeichert als Zeitpunkt
             with spalte:
@@ -1112,7 +1115,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
                 if e_ is not None and int(nr) != int(nr_jetzt):
                     zonenseite.anker_setzen(ticker, ebene, k, zonenchart.zeitpunkt(e_["df"], nr) if nr else None)
                     anker = zonenseite.anker_laden(ticker, ebene)
-        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.chart(teile["r"], ebene, sorted(gd), anker)
+        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.chart(teile["r"], ebene, sorted(gd), anker, set(poc_wahl))
                                                       + teile["legende"]), oben=0, unten=12),
                     unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
