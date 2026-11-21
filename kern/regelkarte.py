@@ -710,6 +710,7 @@ BEREICHE = [
                "der Wertzone; nackter POC = seitdem nie berührt. Ein Profil je Ebene: Zeit und Volumen gespiegelt ab Beginn "
                "des Impulses der Zone von heute. Ausbruch und Gegentrade frisch bis 5 Schlüsse.",
          messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.band", "zonen.wanderung", "zonen.fuehrte",
+                  "zonen.profil_details", "zonen.korridor",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer – Mindestlänge 3 gesetzt, ungemessen"),
     dict(name="Gedächtnis: gleiche Lage früher (fraktal)", quelle="Micky 21.11.2026 (der Markt wiederholt seine Muster)",

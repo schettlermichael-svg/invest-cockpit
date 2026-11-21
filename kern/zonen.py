@@ -360,6 +360,42 @@ def band(e, la=None):
     return roh
 
 
+KNOTEN_ANTEIL = 0.5        # Knoten (HVN): Gipfel mit mindestens ½ des POC-Volumens (Claude 21.11.2026, ungemessen)
+KNOTEN_MAX = 3             # höchstens die 3 dicksten Knoten
+KNOTEN_GLAETTEN = 3        # Gipfel auf dem über 3 Stufen geglätteten Profil (gegen Zacken)
+
+
+def profil_details(pr):
+    """Profil-Details nach Dalton (Micky 21.11.2026): Wertzone (VAL–VAH, 70 %), Knoten (HVN: Gipfel ab ½ POC-Volumen,
+    voneinander durch eine dünne Stufe unter ⅓ getrennt), dünne Stellen (LVN, tiefe.zonen) und Einzeldrucke im
+    Zeitprofil (nur eine Kerze, mindestens 2 Stufen am Stück, tiefe.SCHWANZ_ZEILEN)."""
+    import numpy as np
+    p, k, m = np.asarray(pr["volumen"], float), pr["grenzen"], pr["mitte"]
+    top = p.max() or 1.0
+    glatt = np.convolve(p, np.ones(KNOTEN_GLAETTEN) / KNOTEN_GLAETTEN, mode="same")
+    gipfel = [i for i in range(len(p)) if p[i] >= KNOTEN_ANTEIL * top
+              and glatt[i] >= glatt[max(0, i - 1)] and glatt[i] >= glatt[min(len(p) - 1, i + 1)]]
+    knoten = []
+    for i in sorted(gipfel, key=lambda i: -p[i]):
+        if all((p[min(i, j):max(i, j) + 1] < tiefe.DUENN * top).any() for j in knoten):
+            knoten.append(i)
+        if len(knoten) >= KNOTEN_MAX:
+            break
+    einzel, z, i = [], np.asarray(pr["zeit"], float), 0
+    while i < len(z):
+        if z[i] != 1:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(z) and z[j + 1] == 1:
+            j += 1
+        if j - i + 1 >= tiefe.SCHWANZ_ZEILEN:
+            einzel.append((float(k[i]), float(k[j + 1])))
+        i = j + 1
+    return {"val": float(pr["wert_unten"]), "vah": float(pr["wert_oben"]), "knoten": sorted(float(m[i]) for i in knoten),
+            "duenn": tiefe.zonen(pr)["duenn"], "einzel": einzel}
+
+
 GEDAECHTNIS_MIN = 3        # unter 3 Treffern wird ohne den Bauch gesucht (Claude 21.11.2026, ungemessen)
 DRITTEL = tiefe.DRITTEL    # Bauch: POC im oberen, mittleren oder unteren Drittel der Zone – eine Quelle
 

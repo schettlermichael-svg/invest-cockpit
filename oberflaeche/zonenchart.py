@@ -34,7 +34,11 @@ GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
 LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "treppe": "POC-Treppe", "wanderung": "Wanderung",
-               "korridor": "Korridor", "gedaechtnis": "🧠 Gedächtnis"}
+               "korridor": "Korridor", "gedaechtnis": "🧠 Gedächtnis", "details": "Profil-Details"}
+WERT_FARBE = "#E6EAF0"                 # VAH, VAL
+DUENN_FARBE = "#7DB4FF"                # dünne Stellen (LVN)
+EINZEL_FARBE = "#FFFFFF"               # Einzeldrucke im Zeitprofil
+LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen beschriftet (die breitesten)
 GEDAECHTNIS_FARBE = "#FFD166"
 KREIS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 KORRIDOR_FARBE = "#7DB4FF"
@@ -249,6 +253,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     mitte_x = ende + PROFIL_W / 2
     halb_w = PROFIL_W / 2 - 4                                                       # Layout
     vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
+    det = zonen.profil_details(pr) if "details" in linien_ else None
     for a_, b_, w_, z_ in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"], pr["zeit"]):
         if b_ < pmin or a_ > pmax:
             continue
@@ -259,9 +264,28 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{ZEIT_FARBE}" '  # Layout
           f'fill-opacity="{0.9 if tpoc_ else 0.4}"/>')                              # Layout
         A(f'<rect x="{mitte_x + 1:.1f}" y="{y1 + 0.3:.1f}" width="{max(1, halb_w * w_ / vmax_p):.1f}" height="{hh:.1f}" '  # Layout
-          f'fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else 0.45}"/>')  # Layout
+          f'fill="{POC_FARBE if poc_ else ALT_FARBE}" fill-opacity="{0.9 if poc_ else (0.7 if det["val"] <= (a_ + b_) / 2 <= det["vah"] else 0.2) if det else 0.45}"/>')  # Layout
+        if det and z_ == 1 and any(e0 <= (a_ + b_) / 2 <= e1 for e0, e1 in det["einzel"]):   # Einzeldruck
+            A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{EINZEL_FARBE}"/>')  # Layout
     A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3 if profil is None else ANKER_FARBE[0]}" font-size="10" '  # Layout
       f'text-anchor="middle">Zeit ◂ ▸ Volumen seit {pd.Timestamp(pr["ab"]):%d.%m.}{" (eigener Anker)" if profil else ""}</text>')                                    # Layout
+    if det:                                                                         # Profil-Details
+        for wert, name in ((det["vah"], "VAH"), (det["val"], "VAL")):
+            if pmin <= wert <= pmax:
+                A(f'<line x1="{ende - 140}" x2="{ende + PROFIL_W}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{WERT_FARBE}" '  # Layout
+                  f'stroke-width="1.1" stroke-dasharray="5 3" stroke-opacity="0.8"/>')  # Layout: 140 px in den Chart
+                etiketten.append((Y(wert), f"{name} {zahl(wert)}", WERT_FARBE))
+        for wert in det["knoten"]:
+            if pmin <= wert <= pmax:
+                A(f'<text x="{ende + PROFIL_W - 2}" y="{Y(wert) + 4:.1f}" fill="{POC_FARBE}" font-size="11" text-anchor="end">◀</text>')  # Layout
+                etiketten.append((Y(wert), f"Knoten {zahl(wert)}", POC_FARBE))
+        for a_, b_ in det["duenn"]:
+            if b_ >= pmin and a_ <= pmax:
+                A(f'<rect x="{ende + 2}" y="{Y(min(b_, pmax)):.1f}" width="{PROFIL_W - 4}" height="{max(1, Y(max(a_, pmin)) - Y(min(b_, pmax))):.1f}" '  # Layout
+                  f'fill="{DUENN_FARBE}" fill-opacity="0.16"/>')                     # Layout
+        for a_, b_ in sorted(det["duenn"], key=lambda x: x[0] - x[1])[:LVN_ETIKETTEN]:
+            if b_ >= pmin and a_ <= pmax:
+                etiketten.append((Y((a_ + b_) / 2), f"dünn {zahl(a_, 0)}–{zahl(b_, 0)}", DUENN_FARBE))
     if profil is not None:                                                          # eigener Anker: sein POC
         etiketten.append((Y(pr["poc"]), f"Profil-POC {zahl(pr['poc'])}", POC_FARBE))
         A(f'<line x1="{LINKS}" x2="{ende}" y1="{Y(pr["poc"]):.1f}" y2="{Y(pr["poc"]):.1f}" stroke="{POC_FARBE}" '
@@ -348,6 +372,8 @@ def legende():
              (GRUEN, "POC-Treppe: grün = Wert steigt über die alte Wertzone, rot = fällt darunter, grau = überlappt"),
              (GEDAECHTNIS_FARBE, "🧠 Gedächtnis: gleiche Lage früher (Impuls davor, Treppe, POC im Bauch) mit ①②③ – "
               "Häufigkeit des Ausgangs, kein Urteil"),
+             (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
+              "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (KORRIDOR_FARBE, "Korridor: Raum zwischen dem nächsten nackten POC über und unter dem Kurs, mit Abstand in %"),
              (ZEIT_FARBE, "Profil rechts: links Zeit (Market Profile), rechts Volumen, seit Beginn des Impulses"),
              (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
