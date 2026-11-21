@@ -413,7 +413,8 @@ def rueckenwind_zeigen():
                                      "RS-Linie am Hoch vor dem Kurs zuerst, dann die Richtung der RS-Linie, dann der Rang "
                                      "als Kraft. Alle Titel, nichts gefiltert; Zeile anklicken → Knopf zur Titelseite."
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
-        df, tks = rw.liste(erg)
+        wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
+        df, tks = rw.liste(erg, nur_watchlist=wl_ != "Alle")
         wahl = st.dataframe(df, hide_index=True, use_container_width=True, height=560, on_select="rerun",  # Layout
                             selection_mode="single-row", key="rw_liste")
         reihen = wahl.selection.rows if wahl is not None else []

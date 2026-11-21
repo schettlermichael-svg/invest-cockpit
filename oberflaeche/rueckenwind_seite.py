@@ -292,11 +292,13 @@ def _ordnung(x):
     return (not x.get("rs_hoch_vor_kurs"), RICHTUNG.index(r) if r in RICHTUNG else len(RICHTUNG), -x["rang"])
 
 
-def liste(erg):
-    """Alle Titel des Reviers in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund.
-    → (DataFrame, Ticker in derselben Reihenfolge)."""
+def liste(erg, nur_watchlist=False):
+    """Alle Titel in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund. Umschalter
+    (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → (DataFrame, Ticker in derselben Reihenfolge)."""
     reihen, tks = [], []
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
+        if nur_watchlist and not x.get("watchlist"):
+            continue
         z = x.get("zahlen") or {}
         termin, warn = _termin(x, erg["stand"])
         ab = x.get("abstand_hoch")
@@ -318,6 +320,8 @@ def liste(erg):
             "Zahlen im Einzelnen": _punkte_text(x)})
         tks.append(tk)
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
+        if nur_watchlist and not o.get("watchlist"):
+            continue
         reihen.append({"Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Geld": PUNKT["grau"],
                        "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
         tks.append(o["tk"])
