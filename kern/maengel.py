@@ -261,7 +261,10 @@ PLAN = [
      "Gerät; getestet 5 von 5 Fällen (ohne, falsches, richtiges Passwort, nur Ausweis, falscher Ausweis)"),
     (30, "Titel-Analyse ins Cockpit übertragen (Micky 21.11.2026): Struktur nach Dalton, AVWAP-Zange, RS-Tabelle, "
          "Abgabetage, CMF, Sektor-Rang, PbD nach Vorwald, Zeitebenen Woche/Tag/Stunde, Wertwanderung, Zeichenliste, "
-         "Einschätzung mit Recherche", "Gesamtplan", "offen", ""),
+         "Einschätzung mit Recherche", "Gesamtplan", "behoben",
+     "63bdc0c: 7 von 8 Bausteinen übernommen (Einschätzung gebaut, Probe mit Guthaben offen); 1.473 Titel: graues Profil "
+     "504 am Zahlentag, 1.390 aus Stundenkerzen, POC im Median 0,9 % verschoben; Quetschung 25 → 41; PbD P 618, b 497, "
+     "D 358, 206 an der D-Kante; Inventur 0/0/0 in 465 Funktionen"),
 ]
 COMMIT = r"\b[0-9a-f]{7}\b"
 MESSUNG = r"\d"                           # eine Zahl (Messung) – bei reinen Anzeigen das Wort „Anzeige“

@@ -308,11 +308,11 @@ def quetschung(df, i0):
 def struktur(df, stunden, zahltag=None, zone_start=None):
     """Anker, Profil ab Anker, Rand der Balance als Pivot long und short mit Tests, Quetschung seit dem Anker."""
     a_serie = atr_modul.reihe(df)
-    i0, grund, ib, art = anker(df, zahltag, a_serie, zone_start)
-    ib = max(i0, ib)
+    i0, grund, ib_roh, art = anker(df, zahltag, a_serie, zone_start)
+    ib = max(i0, ib_roh)                         # Pivots ab dem Anker (Titel-Analyse)
     bal = df.iloc[ib:]
     hoch, tief = float(bal["High"].max()), float(bal["Low"].min())
-    return {"anker_i": i0, "anker": df.index[i0], "anker_grund": grund, "anker_art": art, "balance_i": ib, "balance_start": df.index[ib],
+    return {"anker_i": i0, "anker": df.index[i0], "anker_grund": grund, "anker_art": art, "balance_i": ib, "balance_roh": df.index[ib_roh], "balance_start": df.index[ib],
             "profil": profil_ab(df, stunden, i0), "kurs": float(df["Close"].iloc[-1]),
             "atr": float(a_serie.iloc[-1]) if a_serie.iloc[-1] == a_serie.iloc[-1] else None,
             "pivot": hoch, "pivot_tag": bal["High"].idxmax(),
