@@ -1097,7 +1097,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         with k3:
             watchlist_knopf(ticker)
         e_ = teile["r"]["ebenen"][ebene]
-        g0, g3, g1, g2 = st.columns([3, 3, 2, 2])
+        g0, g3 = st.columns([1, 1])
+        g1, g2, _ = st.columns([2, 2, 6])
         with g0:                                 # Durchschnitte nach Wahl (Micky 21.11.2026), in Kerzen der Ebene
             gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
                           format_func=lambda g: f"GD{g}", key="zonen_gd") or []
