@@ -22,8 +22,11 @@ Die vier Zonen-Trades (Tageszone; Micky 21.11.2026: nur diese):
   Rücktest    nach dem Ausbruch (2 Schlüsse draußen) läuft die Kerze bis an die gebrochene Kante zurück (Kantenabstand),
               der Schluss bleibt draußen → Einstieg an der Kante, Stopp ¼ ATR jenseits der Kante, Ziel das Extrem seit
               dem Ausbruch.
-  Gegentrade  Form gescheitert (2 bis 5 Schlüsse auf der Gegenseite) → Einstieg am Schluss, Stopp ¼ ATR jenseits der
-              anderen Kante, Ziel der Impulsbeginn (Vorwald).
+  Gegentrade  Form gescheitert (2 bis 5 Schlüsse auf der Gegenseite) → Einstieg am Schluss, Stopp ¼ ATR hinter der
+              gebrochenen Kante (Micky 21.11.2026, WST: läuft der Kurs zurück in die Zone, ist das Scheitern
+              gescheitert), Ziel der Impulsbeginn (Vorwald) – liegt er nicht mindestens 1 Risiko entfernt, der nächste
+              Bezug in Richtung des Trades mit 1 Risiko Abstand: nackter POC, Knoten des Profils, offene alte Zone.
+CRV-Ampel an jedem Trade (Micky 21.11.2026): 🟢 ab 2, 🟡 ab 1, 🔴 darunter – der Trade bleibt immer sichtbar.
 Gesetzt (Claude, 21.11.2026, zur Bestätigung): „frisch“ = höchstens 5 Schlüsse draußen, danach läuft der Trend ohne
 neuen Einstieg; Ausbruchsziel = Zonenhöhe (Messregel der Balance).
 Einigkeit: Richtung der Woche, Richtung des Trades und Richtung der Stunde – je Ebene, die mitzieht, ein Zeichen mehr
@@ -198,13 +201,42 @@ def trade(e, la):
                  "ziel": kante + r * (hi - lo)}
     elif la["phase"] == "gescheitert" and n <= FRISCH_SCHLUESSE:
         r = la["richtung"]
-        t = {"art": "gegen", "richtung": r, "einstieg": kurs,
-             "stopp": (hi + a * STOPP_ATR) if r < 0 else (lo - a * STOPP_ATR), "ziel": pb["impuls_kurs"]}
+        stopp = (lo + a * STOPP_ATR) if r < 0 else (hi - a * STOPP_ATR)            # hinter der gebrochenen Kante
+        risiko = abs(kurs - stopp)
+        ziel, grund = pb["impuls_kurs"], "Impulsbeginn"
+        if (ziel - kurs) * r < risiko:
+            bezug = _bezuege(e, la)
+            weiter = [(p, g) for p, g in bezug if (p - kurs) * r >= risiko]
+            if weiter:
+                ziel, grund = min(weiter, key=lambda x: abs(x[0] - kurs))
+        t = {"art": "gegen", "richtung": r, "einstieg": kurs, "stopp": stopp, "ziel": ziel, "ziel_grund": grund}
     if t:
         risiko = abs(t["einstieg"] - t["stopp"])
         t["crv"] = round(abs(t["ziel"] - t["einstieg"]) / risiko, 1) if risiko else None
+        t["ampel"] = crv_ampel(t["crv"])
         t["name"], t["zeichen"] = TRADE_NAME[t["art"]], TRADE_ZEICHEN[t["art"]]
     return t
+
+
+AMPEL_GRUEN, AMPEL_GELB = 2, 1  # CRV-Ampel der Zonen-Trades (Micky 21.11.2026): 🟢 ab 2, 🟡 ab 1, 🔴 darunter
+
+
+def crv_ampel(crv):
+    """Ampel zum Chance-Risiko-Verhältnis."""
+    return "⚪" if crv is None else "🟢" if crv >= AMPEL_GRUEN else "🟡" if crv >= AMPEL_GELB else "🔴"
+
+
+def _bezuege(e, la):
+    """Bezugspunkte für ein Ziel: nackte POCs der alten Zonen, Knoten des Profils, Kanten offener alter Zonen →
+    [(Preis, Grund)]."""
+    aus = []
+    for z in historie(e):
+        if z["nackt"]:
+            aus.append((z["poc"], "nackter POC"))
+        if z["offen"]:
+            aus += [(z["vah"], "offene Zone"), (z["val"], "offene Zone")]
+    aus += [(k, "Knoten") for k in profil_details(la["profil"])["knoten"]]
+    return aus
 
 
 def _d_zonen(O, C, a, b, atr_wert, aus, band):

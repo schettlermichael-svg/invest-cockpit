@@ -91,9 +91,10 @@ def kopf(r):
     tr = f["trade"]
     if tr:
         seite_ = "long" if tr["richtung"] > 0 else "short"
+        grund = f' ({t(tr["ziel_grund"])})' if tr.get("ziel_grund") else ""
         trade_html = (f'<div style="font-size:20px">{tr["zeichen"]} {t(tr["name"])} {seite_}</div>'
                       f'<div style="font-size:13px;color:{TEXT_2}">Einstieg {zahl(tr["einstieg"])} · Stopp '
-                      f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])} · CRV {zahl(tr["crv"] or 0, 1)}</div>')
+                      f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])}{grund} · {tr["ampel"]} CRV {zahl(tr["crv"] or 0, 1)}</div>')
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Zonen-Trade</div>'
     alt = zonen.naechste(f["alt"]["Tag"], kurs) + zonen.naechste(f["alt"]["Woche"], kurs)

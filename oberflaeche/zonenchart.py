@@ -248,7 +248,8 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Einstieg"), (t["stopp"], ROT, "Stopp"),
                                   (t["ziel"], GRUEN, "Ziel")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
-            etiketten.append((Y(wert), f"{name} {zahl(wert)}", farbe))
+            etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} CRV {zahl(t["crv"] or 0, 1)}'
+                                                                 if name == "Ziel" else ""), farbe))
     pr = profil or la["profil"]                                                     # das eine Profil: Zeit ◂ ▸ Volumen
     mitte_x = ende + PROFIL_W / 2
     halb_w = PROFIL_W / 2 - 4                                                       # Layout
