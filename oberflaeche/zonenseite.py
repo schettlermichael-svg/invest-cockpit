@@ -49,6 +49,7 @@ def rechnen(tk, laufend=False):
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
     f = zonen.fuehrte(ebenen)
+    f["gedaechtnis"] = {n: zonen.gedaechtnis(ebenen, f["lage"], n) for n in zonen.EBENEN}
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": tiefe.cmf(df)["wert"],
             "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
 
@@ -113,7 +114,9 @@ def kopf(r):
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>'
             f'<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:10px;font-size:14px;color:{TEXT_2}">'
-            f'<span>{muster}</span><span>{gedaechtnis}</span></div>')
+            f'<span>{muster}</span><span>{gedaechtnis}</span></div>'
+            f'<div style="margin-top:6px;font-size:14px;color:{TEXT_2}">{t(zonen.gedaechtnis_text(f["gedaechtnis"]["Tag"]))}'
+            f'<span style="color:{TEXT_3}"> · Tageszone, Häufigkeit der Vergangenheit, kein Urteil</span></div>')
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
@@ -137,7 +140,8 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
         woche = (f["lage"]["Woche"], pd.Timestamp(w_start) - pd.Timedelta(days=4))   # Technik: Montag der Woche
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", woche, r["rs"][ebene], gd, anker, linien_,
-                           zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None)
+                           zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
+                           f["gedaechtnis"][ebene])
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──

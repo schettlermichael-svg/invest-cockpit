@@ -34,7 +34,9 @@ GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
 LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "treppe": "POC-Treppe", "wanderung": "Wanderung",
-               "korridor": "Korridor"}
+               "korridor": "Korridor", "gedaechtnis": "🧠 Gedächtnis"}
+GEDAECHTNIS_FARBE = "#FFD166"
+KREIS = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
 KORRIDOR_FARBE = "#7DB4FF"
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 
@@ -59,12 +61,12 @@ def zeitpunkt(df, nr):
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
 
 
-def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None):
+def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, ged=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
-    am eigenen Anker (zonen.profil_seit) statt des Profils ab Impulsbeginn."""
+    am eigenen Anker (zonen.profil_seit) statt des Profils ab Impulsbeginn, ged = zonen.gedaechtnis der Ebene."""
     import avwap
     import rueckenwind
     import tiefe
@@ -169,6 +171,21 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
             farbe = {1: GRUEN, -1: ROT, 0: ALT_FARBE}[zonen.treppe(za, zb)]
             A(f'<line x1="{xa:.1f}" y1="{Y(za["poc"]):.1f}" x2="{xb:.1f}" y2="{Y(zb["poc"]):.1f}" stroke="{farbe}" '
               f'stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#spitze)" stroke-opacity="0.75"/>')  # Layout
+    if "gedaechtnis" in linien_ and ged:                                            # Gedächtnis: gleiche Lage früher
+        nr_ = 0
+        for g_ in ged["treffer"]:
+            if g_["ebene"] != e["name"] or g_["ende"] < d.index[0]:
+                continue
+            x0 = X(pos(g_["start"])) - halb if g_["start"] >= d.index[0] else LINKS
+            x1 = X(pos(g_["ende"])) + halb
+            A(f'<rect x="{x0:.1f}" y="{Y(g_["hoch"]):.1f}" width="{max(2, x1 - x0):.1f}" height="{max(1, Y(g_["tief"]) - Y(g_["hoch"])):.1f}" '
+              f'fill="none" stroke="{GEDAECHTNIS_FARBE}" stroke-width="1.6"/>'      # Layout
+              f'<text x="{(x0 + x1) / 2:.1f}" y="{Y(g_["tief"]) + 16:.1f}" fill="{GEDAECHTNIS_FARBE}" font-size="14" '  # Layout
+              f'text-anchor="middle">{KREIS[nr_] if nr_ < len(KREIS) else nr_ + 1}<title>{g_["start"]:%d.%m.%y}: danach '
+              f'{"↑" if g_["seite"] == "oben" else "↓"} {g_["weite"]:.1f} Zonenhöhen</title></text>')  # Layout
+            nr_ += 1
+        A(f'<text x="{LINKS + 6}" y="{OBEN + 14}" fill="{GEDAECHTNIS_FARBE}" font-size="12">'  # Layout
+          f'{zonen.gedaechtnis_text(ged).replace("&", "&amp;").replace("<", "&lt;")}</text>')   # Layout
     if any(korridor):                                                               # Korridor zwischen den nackten POCs
         oben_, unten_ = korridor
         ya = Y(oben_["poc"]) if oben_ else OBEN
@@ -329,6 +346,8 @@ def legende():
              "Kasten = Körper, Dochte blass · blass erledigt, kräftiger offen · gestrichelt bis rechts = offener Magnet 🪝"),
              (POC_FARBE, "POC je Zone · gestrichelt = nackter POC (seitdem nie berührt) · dicke Linie = Wanderung in der Zone"),
              (GRUEN, "POC-Treppe: grün = Wert steigt über die alte Wertzone, rot = fällt darunter, grau = überlappt"),
+             (GEDAECHTNIS_FARBE, "🧠 Gedächtnis: gleiche Lage früher (Impuls davor, Treppe, POC im Bauch) mit ①②③ – "
+              "Häufigkeit des Ausgangs, kein Urteil"),
              (KORRIDOR_FARBE, "Korridor: Raum zwischen dem nächsten nackten POC über und unter dem Kurs, mit Abstand in %"),
              (ZEIT_FARBE, "Profil rechts: links Zeit (Market Profile), rechts Volumen, seit Beginn des Impulses"),
              (WOCHE_FARBE, "Wochenzone (im Tageschart)"),

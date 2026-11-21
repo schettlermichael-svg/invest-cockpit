@@ -712,6 +712,13 @@ BEREICHE = [
          messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.band", "zonen.wanderung", "zonen.fuehrte",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer – Mindestlänge 3 gesetzt, ungemessen"),
+    dict(name="Gedächtnis: gleiche Lage früher (fraktal)", quelle="Micky 21.11.2026 (der Markt wiederholt seine Muster)",
+         regel="Fingerabdruck der Zone von heute unabhängig vom Preis: Impuls davor (auf, ab, keiner), Treppe zur Zone "
+               "davor (↑, ↓, =), POC im oberen, mittleren oder unteren Drittel. Gesucht in allen Zonen desselben Titels auf "
+               "Woche, Tag und Stunde; Ausgang = erster Schluss außerhalb des Körpers, Weite bis zur nächsten Zone in "
+               "Zonenhöhen. Unter 3 Treffern ohne den Bauch. Häufigkeit, kein Urteil.",
+         messung=["zonen.gedaechtnis", "zonen.gedaechtnis_text"], pruefer=[],
+         luecke="kein Prüfer – Schwelle 3 gesetzt, ungemessen"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "

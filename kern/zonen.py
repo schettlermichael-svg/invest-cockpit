@@ -304,7 +304,7 @@ def historie(e, ab=0):
         pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
         nach = slice(z["e"] + 1, len(df))
         beruehrt = (L[nach] <= pr["poc"]) & (H[nach] >= pr["poc"])
-        erg.append({"form": z["art"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
+        erg.append({"form": z["art"], "auf": z["auf"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
                     "docht_tief": float(L[z["s"]:z["e"] + 1].min()), "docht_hoch": float(H[z["s"]:z["e"] + 1].max()),
                     "poc": float(pr["poc"]), "val": float(pr["val"]), "vah": float(pr["vah"]),
                     "start": df.index[z["s"]], "ende": df.index[z["e"]], "aus": z["aus"],
@@ -358,6 +358,96 @@ def band(e, la=None):
                 roh[i] = "b+" if r > 0 else "b-"
         vor = z
     return roh
+
+
+GEDAECHTNIS_MIN = 3        # unter 3 Treffern wird ohne den Bauch gesucht (Claude 21.11.2026, ungemessen)
+DRITTEL = tiefe.DRITTEL    # Bauch: POC im oberen, mittleren oder unteren Drittel der Zone – eine Quelle
+
+
+def _abdruck(z, vor):
+    """Fingerabdruck einer Zone, unabhängig vom Preisniveau (Micky 21.11.2026): Impuls davor (1 auf, −1 ab, 0 keiner),
+    Treppe zur Zone davor (1, −1, 0) und Lage des POC im Körper (o, m, u)."""
+    imp = 1 if z.get("auf") is True else -1 if z.get("auf") is False else 0
+    h = z["hoch"] - z["tief"]
+    teil = (z["poc"] - z["tief"]) / h if h > 0 else 0.5            # Technik: ohne Höhe die Mitte
+    bauch = "o" if teil > (DRITTEL - 1) / DRITTEL else "u" if teil < 1 / DRITTEL else "m"
+    return imp, treppe(vor, z), bauch
+
+
+def _ausgang(e, hist, i):
+    """Wie Zone i ausging: erster Schluss außerhalb ihres Körpers (oben/unten) und wie weit der Kurs danach lief, bis die
+    nächste Zone begann – in Zonenhöhen (mindestens ¼ ATR je Höhe). → (Seite, Weite) oder (None, None)."""
+    df, z = e["df"], hist[i]
+    nach = df[df.index > z["ende"]]
+    if i + 1 < len(hist):
+        nach = nach[nach.index < hist[i + 1]["start"]]
+    if not len(nach):
+        return None, None
+    c = nach["Close"].to_numpy(float)
+    raus = [k for k, x in enumerate(c) if x > z["hoch"] or x < z["tief"]]
+    if not raus:
+        return None, None
+    seite = "oben" if c[raus[0]] > z["hoch"] else "unten"
+    h = max(z["hoch"] - z["tief"], (e["atr"] or 0) * STOPP_ATR) or 1.0
+    weite = (float(nach["High"].max()) - z["hoch"]) / h if seite == "oben" else (z["tief"] - float(nach["Low"].min())) / h
+    return seite, round(max(0.0, weite), 1)
+
+
+def gedaechtnis(ebenen, la_alle, name):
+    """Das Gedächtnis (Micky 21.11.2026: der Markt wiederholt seine Muster, auch auf anderem Niveau): dieselbe Lage wie
+    die Zone von heute der Ebene name – gleicher Fingerabdruck – in der Vergangenheit desselben Titels auf allen drei
+    Ebenen (fraktal), mit ihrem Ausgang. Unter 3 Treffern ohne den Bauch. Eine Häufigkeit, kein Urteil."""
+    e, la = ebenen.get(name), la_alle.get(name)
+    if not e or not la:
+        return None
+    hist = historie(e)
+    pb = e.get("pbd")
+    lo, hi = la["zone"]
+    jetzt = {"auf": pb["aufwaerts"] if pb else None, "tief": lo, "hoch": hi, "poc": la["poc"],
+             "val": la["profil"]["val"], "vah": la["profil"]["vah"]}
+    fp = _abdruck(jetzt, hist[-1] if hist else None)
+    kandidaten = []
+    for n in EBENEN:
+        h_ = historie(ebenen.get(n)) if ebenen.get(n) else []
+        for i, z in enumerate(h_):
+            seite, weite = _ausgang(ebenen[n], h_, i)
+            if seite:
+                kandidaten.append({"ebene": n, "start": z["start"], "ende": z["ende"], "tief": z["tief"], "hoch": z["hoch"],
+                                   "abdruck": _abdruck(z, h_[i - 1] if i else None), "seite": seite, "weite": weite})
+    treffer = [k for k in kandidaten if k["abdruck"] == fp]
+    locker = len(treffer) < GEDAECHTNIS_MIN
+    if locker:
+        treffer = [k for k in kandidaten if k["abdruck"][:2] == fp[:2]]
+    richt = fp[0]
+    oben = [k for k in treffer if k["seite"] == "oben"]
+    unten = [k for k in treffer if k["seite"] == "unten"]
+    mit, gegen = (oben, unten) if richt > 0 else (unten, oben) if richt < 0 else ([], [])
+    mittel = lambda xs: round(sum(k["weite"] for k in xs) / len(xs), 1) if xs else None   # noqa: E731
+    return {"abdruck": fp, "locker": locker, "n": len(treffer), "richtung": richt,
+            "je_ebene": {n: sum(1 for k in treffer if k["ebene"] == n) for n in EBENEN},
+            "mit": len(mit), "gegen": len(gegen), "weite_mit": mittel(mit), "weite_gegen": mittel(gegen),
+            "auf": len(oben), "ab": len(unten), "weite_auf": mittel(oben), "weite_ab": mittel(unten), "treffer": treffer}
+
+
+def gedaechtnis_text(g):
+    """Eine Zeile für Kopf und Chart."""
+    if not g:
+        return "🧠 Gedächtnis ungemessen"
+    imp, tr, bauch = g["abdruck"]
+    lage_ = (f'{"Impuls auf" if imp > 0 else "Impuls ab" if imp < 0 else "ohne Impuls"} · Treppe '
+             f'{"↑" if tr > 0 else "↓" if tr < 0 else "="}' + ("" if g["locker"] else
+             f' · POC {"oben" if bauch == "o" else "unten" if bauch == "u" else "Mitte"}'))
+    if not g["n"]:
+        return f"🧠 diese Lage ({lage_}) gab es noch nie"
+    wo = " · ".join(f"{v} {n}" for n, v in g["je_ebene"].items() if v)
+    if imp:
+        pf = "↑" if imp > 0 else "↓"
+        aus = (f'{g["mit"]}× 💥 weiter {pf}' + (f' (Ø {g["weite_mit"]:.1f} Zonenhöhen)'.replace(".", ",") if g["mit"] else "")
+               + f' · {g["gegen"]}× 🦊 gescheitert' + (f' (Ø {g["weite_gegen"]:.1f})'.replace(".", ",") if g["gegen"] else ""))
+    else:
+        aus = (f'{g["auf"]}× ↑' + (f' (Ø {g["weite_auf"]:.1f} Zonenhöhen)'.replace(".", ",") if g["auf"] else "")
+               + f' · {g["ab"]}× ↓' + (f' (Ø {g["weite_ab"]:.1f})'.replace(".", ",") if g["ab"] else ""))
+    return f'🧠 {g["n"]}× diese Lage ({lage_}; {wo}) → {aus}'
 
 
 def korridor(alt, kurs):
