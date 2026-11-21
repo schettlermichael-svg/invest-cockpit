@@ -229,7 +229,10 @@ def _rs_linie(x):
     return f(a) + (f" (davor {f(b)})" if b is not None else "")
 
 
-def _zufluss(z):
+def _zufluss(z, trocken=False):
+    """Volumen-Zufluss als Ampel; austrocknendes Volumen ist grün (Minervini: kaum noch Verkäufer, Micky 22.11.2026)."""
+    if trocken:
+        return "🟢 🏜️ trocken" + (f" · {zahl(z, 2)}-fach" if z else "")
     if not z:
         return ""
     return ("🟢 " if z >= ZUFLUSS[0] else "🔴 " if z < ZUFLUSS[1] else "🟡 ") + zahl(z, 2) + "-fach"
@@ -317,7 +320,7 @@ def liste(erg, nur_watchlist=False):
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
             "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}', "Stufe": x.get("stufe") or "",
-            "Volumen": _zufluss(x.get("zufluss")),
+            "Volumen": _zufluss(x.get("zufluss"), x.get("trocken")),
             "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
             "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',

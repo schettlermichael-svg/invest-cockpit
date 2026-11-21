@@ -45,6 +45,7 @@ VORNE = ("Führend", "Erstarkend")
 STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und größter Rückschlag (8 Wochen) ≤ 8 %
 ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
 STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
+from zeichen import TROCKEN_TAGE, TROCKEN_VERGLEICH  # noqa: E402  Volumen trocken: eine Quelle (zeichen)
 from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Maßstab für App, Chart und Zeichen (0,99)
 from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPANNE  # noqa: E402
 from masse import DATUM, JAHR_TAGE, MONAT_TAGE, QUARTALE_JAHR, VOL_TAGE, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
@@ -147,8 +148,8 @@ STEIGT = ("steigt schneller", "steigt", "dreht nach oben")
 
 
 def klasse(x):
-    """Klasse 1–5 aus Front (RS-Linie) und Truppen (Volumen-Zufluss), keine Punkte: 1 Garde = RS-Hoch vor Kurs mit
-    Zufluss · 2 Angriff = Linie steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt,
+    """Klasse 1–5 aus Front (RS-Linie) und Truppen (Volumen-Zufluss oder austrocknendes Volumen), keine Punkte: 1 Garde
+    = RS-Hoch vor Kurs mit Zufluss · 2 Angriff = Linie steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt,
     Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. None = ohne RS-Linie (zu wenig Daten)."""
     r = x.get("richtung") or richtung(x.get("rs_tempo"), x.get("rs_vortempo"))
     hoch = x.get("rs_hoch_vor_kurs")
@@ -157,9 +158,21 @@ def klasse(x):
     if not hoch and r not in STEIGT:
         return 5                          # Technik: Klassennummer (Rückzug)
     z = x.get("zufluss")
-    if z is not None and z >= ZUFLUSS[0]:
+    if x.get("trocken") or (z is not None and z >= ZUFLUSS[0]):   # trocken zählt wie Zufluss (Micky 22.11.2026)
         return 1 if hoch else 2
     return 4 if z is not None and z < ZUFLUSS[1] else 3   # Technik: Klassennummern (Ohne Nachschub, Vorhut)
+
+
+def _trocken(vol):
+    """Volumen trocknet aus (Minervini, letzte Kontraktion): in den letzten TROCKEN_TAGE Tagen der leiseste Tag seit
+    50 Tagen. Anders als das Zeichen auf der Titelseite (O'Neil: untere Hälfte der Spanne) ohne Lage in der Spanne –
+    Minervini sucht das Austrocknen nahe am Hoch; rechnen() wertet es nur bis HOCH_MITTEL unter dem Hoch (Micky
+    22.11.2026: positives Zeichen, nicht rot)."""
+    v = vol.dropna()
+    v = v[v > 0]
+    if len(v) <= TROCKEN_VERGLEICH + TROCKEN_TAGE:
+        return False
+    return any(v.iloc[i] <= v.iloc[i - TROCKEN_VERGLEICH:i + 1].min() for i in range(len(v) - TROCKEN_TAGE, len(v)))
 
 
 def abstand_wort(abstand):
@@ -416,10 +429,12 @@ def rechnen(netz=False):
         rs_tempo = float((rs.iloc[-1] / rs.iloc[-1 - WOCHEN4] - 1) * 100) if len(rs) > 2 * WOCHEN4 else None
         rs_vortempo = (float((rs.iloc[-1 - WOCHEN4] / rs.iloc[-1 - 2 * WOCHEN4] - 1) * 100)
                        if len(rs) > 2 * WOCHEN4 else None)
-        zufluss = _ud(c, V[tk].reindex(c.index))      # Volumen-Zufluss des Titels selbst (Akkumulation)
+        vol = V[tk].reindex(c.index)
+        zufluss = _ud(c, vol)                         # Volumen-Zufluss des Titels selbst (Akkumulation)
         kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-JAHR_TAGE:].max())
         abstand = float((1 - c.iloc[-1] / c.iloc[-JAHR_TAGE:].max()) * 100)
         stufe = _stufe(r, tempo, besch, a4)
+        trocken = abstand <= HOCH_MITTEL and _trocken(vol)   # nur in der Konsolidierung nahe am Hoch (Minervini: ≤ 25 %)
         if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
             stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
         sek, bra, th = sek_von.get(tk), bra_von.get(tk), thema_von.get(tk)
@@ -428,7 +443,7 @@ def rechnen(netz=False):
              "abstand_hoch": round(abstand, 1),
              "rs_tempo": round(rs_tempo, 1) if rs_tempo is not None else None,
              "rs_vortempo": round(rs_vortempo, 1) if rs_vortempo is not None else None,
-             "zufluss": round(zufluss, 2) if zufluss else None,
+             "zufluss": round(zufluss, 2) if zufluss else None, "trocken": trocken,
              "sektor_stabil": bool(sek and sek["stabil"]), "branche_stabil": bool(bra and bra["stabil"]),
              "kurs_ampel": {"Entsteht": "grün", "Läuft": "grün", "Ermüdet": "gelb", "Abfluss": "rot"}.get(stufe, "grau"),
              "sektor": sek["name"] if sek else (zusatz[tk]["sektor"] if tk in zusatz else rv.loc[tk, "sektor"]),

@@ -175,7 +175,8 @@ ZEICHEN_LISTE = (("🦬", "Käufer haben die Kontrolle (long)"), ("🐻", "Verk�
                  ("🟢", "Stärke"), ("🟡", "gemischt"), ("🔴", "Schwäche"), ("⚪", "ungemessen"),
                  ("⚔️", "Angriffspunkt – hier wird die Linie dünn"), ("🐴", "Schatten – Schreck der Masse an einer Festung "
                   "(Bukephalos)"), ("⚡", "Zeit und Volumen widersprechen sich"), ("🧠", "Gedächtnis – gleiche Lage früher"),
-                 ("🐺", "Einzelkämpfer – stark, aber die Branche liegt hinten"))
+                 ("🐺", "Einzelkämpfer – stark, aber die Branche liegt hinten"),
+                 ("🏜️", "Volumen trocknet aus – kaum noch Verkäufer (Minervini)"))
 ZEICHEN = tuple(z for z, _ in ZEICHEN_LISTE)
 
 
