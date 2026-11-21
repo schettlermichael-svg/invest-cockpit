@@ -27,8 +27,8 @@ ALT_FARBE = "#8B97A8"
 WOCHE_FARBE = "#7DB4FF"
 EINSTIEG_FARBE = "#E6EAF0"
 RS_HOCH_FARBE, RS_TIEF_FARBE = "#FFD166", "#FF6B6B"
-BAND = {"i+": (GRUEN, 1.0), "i-": (ROT, 1.0), "b": (GELB, 0.85), "a+": (GRUEN, 0.5), "a-": (ROT, 0.5),
-        "f": ("#F0883E", 0.9)}                                 # PbD: Impuls kräftig, Bauch gelb, Ausbruch blass, Scheitern orange
+BAND = {"i+": (GRUEN, 1.0), "i-": (ROT, 1.0), "a+": (GRUEN, 0.72), "a-": (ROT, 0.72), "b+": (GRUEN, 0.45),
+        "b-": (ROT, 0.45), "b": (GELB, 0.85), "f": ("#F0883E", 0.9)}   # Farbe = Richtung, Stärke = Phase (Micky 21.11.2026)
 GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}   # wie bisher im Cockpit
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
@@ -157,9 +157,9 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     if "treppe" in linien_:                                                         # POC-Treppe: Wert steigt, fällt, überlappt
         punkte = [((x0_ + x1_) / 2, z) for z in kaesten
                   for x0_, x1_ in [(X(pos(z["start"])) - halb if z["start"] >= d.index[0] else LINKS, X(pos(z["ende"])) + halb)]]
-        punkte.append(((xz + ende) / 2, {"poc": la["poc"], "val": lo, "vah": hi}))
+        punkte.append(((xz + ende) / 2, {"poc": la["poc"], "val": la["profil"]["val"], "vah": la["profil"]["vah"]}))
         for (xa, za), (xb, zb) in zip(punkte[:-1], punkte[1:]):
-            farbe = GRUEN if zb["poc"] > za["vah"] else ROT if zb["poc"] < za["val"] else ALT_FARBE
+            farbe = {1: GRUEN, -1: ROT, 0: ALT_FARBE}[zonen.treppe(za, zb)]
             A(f'<line x1="{xa:.1f}" y1="{Y(za["poc"]):.1f}" x2="{xb:.1f}" y2="{Y(zb["poc"]):.1f}" stroke="{farbe}" '
               f'stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#spitze)" stroke-opacity="0.75"/>')  # Layout
     if "wanderung" in linien_:                                                      # POC-Wanderung in der Zone von heute
@@ -233,7 +233,7 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
             y_ += 14                                                                # Layout
         belegt.append(y_)
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
-    band = zonen.band(e)[n0:]                                                       # Phasenband nach PbD
+    band = zonen.band(e, la)[n0:]                                                   # Phasenband nach PbD
     vorher = None
     for i, p_ in enumerate(band):
         if p_:
@@ -307,7 +307,8 @@ def legende():
              (GRUEN, "POC-Treppe: grün = Wert steigt über die alte Wertzone, rot = fällt darunter, grau = überlappt"),
              (ZEIT_FARBE, "Profil rechts: links Zeit (Market Profile), rechts Volumen, seit Beginn des Impulses"),
              (WOCHE_FARBE, "Wochenzone (im Tageschart)"),
-             (GRUEN, "Phase: kräftig = Impuls, blass = Ausbruch 💥 · rot ebenso abwärts"), (GELB, "Phase: Bauch (Balance)"),
+             (GRUEN, "Phase: Farbe = Richtung (grün auf, rot ab) · kräftig = Impuls, mittel = Ausbruch 💥, blass = Zone in "
+              "steigender bzw. fallender Treppe"), (GELB, "Phase: Zone ohne Richtung (überlappt die Zone davor)"),
              ("#F0883E", "Phase: Scheitern 🦊"), (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'

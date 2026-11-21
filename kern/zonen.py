@@ -37,7 +37,10 @@ Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde
   beim 2. Schluss draußen. Mindestlänge 3 Kerzen nach einem Impuls, 5 für eine D-Zone (ZONE_MIN, D_MIN, Claude
   21.11.2026, ungemessen). Alle Maße in ATR der Ebene.
   Offen, solange der Kurs seit ihrem Ende nie wieder in ihre Wertzone lief (Magnet), sonst erledigt; ihr POC ist nackt,
-  solange kein Docht ihn seitdem berührt hat.
+  solange kein Docht ihn seitdem berührt hat. Nach einem Ausbruch beginnt die Suche nach der nächsten Zone erst nach dem
+  bestätigenden Schluss – die Ausbruchskerzen bleiben Ausbruch.
+Phasenband (Micky 21.11.2026): Farbe = Richtung, Stärke = Phase – Impuls kräftig, Ausbruch mittel (💥), Zone blass in
+  der Richtung der Treppe (POC über bzw. unter der Wertzone der Zone davor), gelb nur ohne Richtung, Scheitern orange.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert
   am Beginn des Impulses der Zone von heute (Stiel = Impuls, Bauch = Zone: das Profil zeigt den Buchstaben), ohne
   Impuls am Beginn der Balance; aus den feineren Kerzen der Ebene. Sein POC ist der POC der Zone. Muster: liegt die Tageszone innerhalb der Wochenzone, setzt
@@ -219,11 +222,13 @@ def _d_zonen(O, C, a, b, atr_wert, aus, band):
                 if zaehl >= GESCHEITERT:
                     break
             j += 1
-        aus.append({"art": "D", "s": k, "e": letzte, "tief": zt, "hoch": zh, "auf": None,
-                    "aus": "oben" if j <= b and C[j] > zh else "unten" if j <= b else None})
+        seite = "oben" if j <= b and C[j] > zh else "unten" if j <= b else None
+        aus.append({"art": "D", "s": k, "e": letzte, "tief": zt, "hoch": zh, "auf": None, "aus": seite})
         for x in range(k, letzte + 1):
             band[x] = "b"
-        k = letzte + 1
+        for x in range(letzte + 1, b + 1):              # Ausbruch und Lauf danach, bis die nächste Zone beginnt
+            band[x] = ("a+" if seite == "oben" else "a-") if seite else band[x]
+        k = min(j, b) + 1 if seite else letzte + 1
 
 
 def kette(df, atr_wert):
@@ -252,11 +257,11 @@ def kette(df, atr_wert):
         for j in range(s_, e_ + 1):
             band[j] = "i+" if auf else "i-"
         bis = gilt[k + 1][0] - 1 if k + 1 < len(gilt) else n - 1
-        ende, aus_seite = bis, None
+        ende, aus_seite, bestaetigt = bis, None, bis
         for j in range(e_ + 1, bis + 1):
             zaehl, seite = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, j)[4:6]  # Technik: Felder von tiefe._zone
             if seite and zaehl >= GESCHEITERT:
-                ende, aus_seite = j - zaehl, seite
+                ende, aus_seite, bestaetigt = j - zaehl, seite, j
                 break
         zt, zh = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, ende)[:2]
         aus.append({"art": "P" if auf else "b", "s": e_, "e": ende, "tief": zt, "hoch": zh, "auf": auf, "aus": aus_seite})
@@ -264,18 +269,20 @@ def kette(df, atr_wert):
             band[j] = "b"
         if aus_seite:
             mit = (aus_seite == "oben") == bool(auf)
-            for j in range(ende + 1, bis + 1):
-                band[j] = ("a+" if aus_seite == "oben" else "a-") if mit else "f"
-            _d_zonen(O, C, ende + 1, bis, atr_wert, aus, band)
+            for j in range(ende + 1, bis + 1):          # Scheitern nur an den bestätigenden Kerzen, danach der Lauf
+                band[j] = "f" if not mit and j <= bestaetigt else ("a+" if aus_seite == "oben" else "a-")
+            _d_zonen(O, C, bestaetigt + 1, bis, atr_wert, aus, band)   # erst nach dem bestätigenden Schluss
     aus.sort(key=lambda z: z["s"])
     return aus, band
 
 
-def historie(e, ab):
+def historie(e, ab=0):
     """Zonen der Vergangenheit der Ebene seit Kerze ab nach der PbD-Kette, älteste zuerst, ohne die Zone von heute –
     je mit Körper (tief–hoch), Dochten, Volumenprofil (POC, Wertzone), offen und nackt."""
     if not e:
         return []
+    if "_hist" in e:
+        return [z for z in e["_hist"] if int(e["df"].index.searchsorted(z["ende"])) >= ab]
     df, fein = e["df"], e.get("fein")
     zonen_, _ = _kette(e)
     pb = e.get("pbd")
@@ -284,7 +291,7 @@ def historie(e, ab):
     L, H = df["Low"].to_numpy(float), df["High"].to_numpy(float)
     erg = []
     for z in zonen_:
-        if z["e"] < ab or z["e"] - z["s"] + 1 < (D_MIN if z["art"] == "D" else ZONE_MIN) or df.index[z["s"]] >= heute:
+        if z["e"] - z["s"] + 1 < (D_MIN if z["art"] == "D" else ZONE_MIN) or df.index[z["s"]] >= heute:
             continue
         von, bis = _von_bis(e, df.index[z["s"]])[0], _von_bis(e, df.index[z["e"]])[1]
         f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
@@ -299,7 +306,8 @@ def historie(e, ab):
                     "offen": not bool(((L[nach] <= pr["vah"]) & (H[nach] >= pr["val"])).any()),
                     "nackt": not bool(beruehrt.any()),
                     "beruehrt": df.index[z["e"] + 1 + int(beruehrt.argmax())] if beruehrt.any() else None})
-    return erg
+    e["_hist"] = erg
+    return historie(e, ab)
 
 
 def _kette(e):
@@ -309,9 +317,42 @@ def _kette(e):
     return e["_kette"]
 
 
-def band(e):
-    """Phase je Kerze der Ebene nach der PbD-Kette (Liste wie kette)."""
-    return _kette(e)[1]
+def treppe(vor, z):
+    """Richtung der Treppe von Zone vor zu Zone z: 1 Wert steigt (POC über der alten Wertzone), −1 fällt, 0 überlappt."""
+    if not vor:
+        return 0
+    return 1 if z["poc"] > vor["vah"] else -1 if z["poc"] < vor["val"] else 0
+
+
+def band(e, la=None):
+    """Phase und Richtung je Kerze (Micky 21.11.2026: Farbe = Richtung, Stärke = Phase): i+/i- Impuls, a+/a- Ausbruch
+    und Lauf danach, f Scheitern, b+/b- Zone in steigender bzw. fallender Treppe, b Zone ohne Richtung (überlappt oder
+    erste Zone). Jede Zone der Kette zählt, auch eine zu kurze für einen Kasten (ihr Wert dann aus den Kerzen der Ebene)."""
+    roh, df = list(_kette(e)[1]), e["df"]
+    bekannt = {z["start"]: z for z in historie(e)}
+    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
+    zonen_ = []
+    for z in _kette(e)[0]:
+        t0 = df.index[z["s"]]
+        if la and t0 >= la["beginn"]:
+            continue
+        if t0 not in bekannt:
+            teil = df.iloc[z["s"]:z["e"] + 1]
+            pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
+            bekannt[t0] = {"start": t0, "ende": df.index[z["e"]], "poc": pr["poc"], "val": pr["val"], "vah": pr["vah"]}
+        zonen_.append(bekannt[t0])
+    if la:
+        pr = la["profil"]
+        zonen_.append({"start": la["beginn"], "ende": df.index[-1], "poc": la["poc"], "val": pr["val"], "vah": pr["vah"]})
+    vor = None
+    for z in zonen_:
+        r = treppe(vor, z)
+        a, b_ = int(df.index.searchsorted(z["start"])), int(df.index.searchsorted(z["ende"]))
+        for i in range(a, min(b_, len(df) - 1) + 1):
+            if roh[i] == "b" and r:
+                roh[i] = "b+" if r > 0 else "b-"
+        vor = z
+    return roh
 
 
 def naechste(alt, kurs):
