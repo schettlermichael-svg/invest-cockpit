@@ -14,7 +14,6 @@ Ampel: grün ab 3 : 1, gelb ab 2 : 1 (Minervini: Stopp höchstens die Hälfte, b
 Minervini-Abgleich: der Stopp soll höchstens die Hälfte, besser ein Drittel des eigenen Durchschnittsgewinns betragen –
 aus den geschlossenen Trades im Depot (depot.bilanz), sobald mindestens MIN_TRADES vorliegen.
 """
-from depot import ATR_STOPP as B_ATR  # noqa: E402  eine Quelle für den Stopp (depot)
 from masse import GD150_TAGE, GD200_TAGE  # noqa: E402
 MIN_TRADES = 5
 FENSTER, JAHR = 10, 252       # Wendepunkt: höchstes Hoch ±10 Tage; Suche über 52 Wochen

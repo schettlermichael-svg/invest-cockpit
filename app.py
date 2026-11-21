@@ -56,10 +56,10 @@ div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
 .st-key-ansicht div[role="radiogroup"] label {{white-space:nowrap; flex:0 0 auto}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Setups", "Titelseite", "Analyse", "Depot", "Performance"]   # Rückenwind = Lagezentrum, Setups =
-# Aufklärung und Filter; Depot und Performance seit 16.11.2026
-# (12.11.2026); die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026 abgebaut
-ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Setups"}                       # alte Lesezeichen
+ansicht_liste = ["Rückenwind", "Titelseite", "Analyse", "Depot", "Performance"]   # Rückenwind = Lagezentrum; Depot und
+# Performance seit 16.11.2026; die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026
+# abgebaut, die Seite Setups am 21.11.2026 (Micky: Auswahl und Chart statt Setup-Listen)
+ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Rückenwind", "Setups": "Rückenwind"}   # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
 # ein Wechsel zwei Klicks.)
@@ -105,44 +105,6 @@ def _aktualisieren(tk):
     st.session_state.laufend = (tk, time.time())
 
 
-def chart_knoepfe(tk):
-    """Knöpfe direkt über dem Chart: Zeitebene, Ausschnitt, Kurse aktualisieren, TradingView, Watchlist, Position."""
-    k0, k1, k2, k7, k3, k4, k5, k6 = st.columns([2, 3, 2, 2, 2, 2, 2, 2])
-    with k0:
-        ebene = st.radio("Zeitebene", list(chart.EBENEN), horizontal=True, key="ebene_3",
-                         index=chart.EBENEN.index("Tag"))       # Woche, Tag, Stunde – Tag vorausgewählt (21.11.2026)
-    with k1:
-        wahl = list(chart.AUSSCHNITT[ebene])
-        aus = st.radio("Ausschnitt", wahl, horizontal=True, key=f"ausschnitt_{ebene}",
-                       index=wahl.index(chart.AUSSCHNITT_START[ebene]))
-    with k2:
-        zonen_ansicht = st.radio("Zonen", chart.ZONE_ANSICHT, horizontal=True, key="zonen_ansicht",
-                          help="Aktuell: nur das Setup jetzt (Zone, Vorgeschichte, Fahnenstange). Historie: dazu alle "
-                               "abgeschlossenen Basen und Flaggen mit ↑ am Ausbruch.")
-    with k7:
-        gd_kurz = st.checkbox("GD10 · GD20", key="gd_kurz", help="Kullamägis Linien (nur im Tageschart)")
-    with k3:
-        st.button("↻ Kurse aktualisieren", use_container_width=True, on_click=_aktualisieren, args=(tk,))
-    with k4:
-        st.link_button("TradingView ↗", titel.tv_link(tk), use_container_width=True)
-    with k5:
-        watchlist_knopf(tk)
-    with k6:
-        position_knopf(tk)
-    # AVWAP nach Shannon (10.11.2026): mehrere Anker, Zange = Hoch + Tief – auf jeder Zeitebene (21.11.2026)
-    zr = (kartentisch.eintrag_von(tk) or {}).get("reihe") == "zahlen"   # Zahlen-Reaktion: Zahlentag vorgewählt
-    avwap_wahl = st.pills("AVWAP-Anker", list(chart.AVWAP_KURZ), selection_mode="multi",
-                          default=chart.AVWAP_START + (["zahlen"] if zr else []), format_func=chart.AVWAP_KURZ.get,
-                          key="avwap_anker_z5" if zr else "avwap_anker5",     # Voreinstellung Zange und höheres Tief 16.11.2026
-                          help="Anker nach Brian Shannon, aus der Struktur (nie aus dem Kalender). Hoch des "
-                               "Rückgangs: der Gipfel, von dem die ganze Korrektur ausging. Letztes Hoch: das jüngste "
-                               "Hoch, das der Kurs nicht überschritten hat – bestätigt ab 8 % Rückgang (steht er über "
-                               "allen: der Ausbruchspunkt). Tief der Bewegung: das Tief, an dem der Trend zum letzten "
-                               "Hoch begann – mit dem letzten Hoch Shannons Zange. Letztes höheres Tief: das Tief des letzten "
-                               "Rückgangs ab 8 %, aus dem der Anstieg kam – darunter setzt Shannon den Stopp. Ereignis: der jüngste Zahlentag "
-                               "(Reaktion ab 3 %), die jüngste Lücke ab 4 % oder Volumenspitze (doppelter Schnitt, "
-                               "Bewegung ab 3 %).")
-    return ebene, aus, zonen_ansicht, gd_kurz, avwap_wahl
 
 
 def _fenster(titel_):
@@ -362,117 +324,31 @@ def _codestand(mit_watchlists=False):
     return max([code] + [os.path.getmtime(x) for x in daten if os.path.exists(x)])
 
 
-# ── Kartentisch auf der Übersicht: Karten mit Knöpfen, übrige Titel als Tabelle, Lagekarte im Pop-up ──
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @st.cache_resource(show_spinner=False, max_entries=2)
-def _tischplan(codestand):
-    """Kartentisch-Plan einmal je Code-/Datenstand (cache_resource: die großen Karten werden nicht kopiert)."""
-    return kartentisch.plan()
+def _lagekarte_html(codestand):
+    """Lagekarte nach Sektoren (Seite Rückenwind) einmal je Code-/Datenstand."""
+    return kartentisch.lagekarte_html()
 
 
-def _rgba(farbe):
-    """'#3FB95066' → 'rgba(63,185,80,0.4)' (die Tabelle versteht keine achtstelligen Farben)."""
-    h = farbe.lstrip("#")
-    a = int(h[6:8], 16) / 255 if len(h) == 8 else 1
-    return f"rgba({int(h[0:2], 16)},{int(h[2:4], 16)},{int(h[4:6], 16)},{a:.2f})"
-
-
-def _knopfleiste(tk, liste, schluessel):
-    a, b = st.columns(2)
-    with a:
-        watchlist_knopf(tk, schluessel)
-    with b:
-        st.link_button("Deep Dive →", f"?seite=Titelseite&t={tk}", use_container_width=True)
-
-
-_DIALOG = getattr(st, "dialog", None) or getattr(st, "experimental_dialog", None)
-
-
-def _karte_zeigen(tk, x, liste):
-    """Lagekarte eines Tabellen-Titels im Pop-up (✕ oben rechts schließt es), darunter dieselben Knöpfe."""
-    if x and x.get("karte"):
-        st.markdown(kartentisch.karte_html(x, kartentisch._marken(x) if liste else "", tk), unsafe_allow_html=True)
-    else:
-        st.markdown(f"**{tk}**: noch keine Lagekarte – sie wird im Abendlauf gerechnet.")
-    _knopfleiste(tk, liste, "dlg_")
-
-
-if _DIALOG:
-    try:                                    # ✕ löst einen Lauf aus: danach steht die Tabelle ohne Auswahl bereit
-        _karte_zeigen = _DIALOG("Lagekarte", width="large", on_dismiss="rerun")(_karte_zeigen)
-    except TypeError:                       # ältere Streamlit-Version
-        _karte_zeigen = _DIALOG("Lagekarte", width="large")(_karte_zeigen)
-
-
-def _tabelle(teil, nr):
-    """Die übrigen Titel eines Abschnitts als Tabelle, in derselben Rangfolge wie die Karten. Farbfeld links =
-    Rahmenstufe. Klick auf eine Zeile öffnet die Lagekarte im Pop-up."""
-    import pandas as pd
-    zeilen = teil["zeilen"]
-    if not zeilen:
-        return
-    df = pd.DataFrame([{" ": "", "Titel": z["tk"], "Zustand": z.get("Zustand", ""), "Liste": z.get("Stab", ""),
-                        "Setup": z["Setup"], "Befund": z["Befund"],
-                        "Abstand %": z["Abstand %"], "Was fehlt": z["Was fehlt"]} for z in zeilen])
-    farben = [_rgba(z["farbe"] + ("66" if z.get("blass") else "")) for z in zeilen]
-    stil = df.style.apply(lambda spalte: [f"background-color:{f}" for f in farben], subset=[" "])
-    zaehler = f"tab_n_{nr}"
-    n = st.session_state.setdefault(zaehler, 0)
-    # Zweite Stufe im Ausklappmenü des Abschnitts: Streamlit erlaubt kein Ausklappmenü im Ausklappmenü, daher ein
-    # Schalter, der genauso auf- und zuklappt (06.11.2026)
-    schalter = getattr(st, "toggle", st.checkbox)
-    if not schalter(f"▸ alle weiteren {len(zeilen)} als Liste · Zeile anklicken öffnet die Lagekarte", key=f"weitere_{nr}"):
-        return
-    ereignis = st.dataframe(stil, hide_index=True, use_container_width=True, on_select="rerun",
-                            selection_mode="single-row", key=f"tab_{nr}_{n}",
-                            height=min(420, 35 * (len(zeilen) + 1) + 3),
-                            column_config={" ": st.column_config.TextColumn(" ", width="small")})
-    reihen = ereignis.selection.rows if ereignis is not None else []
-    schluessel = f"tab_{nr}_{n}"
-    if st.session_state.get("tab_offen") == schluessel:
-        # Erster Lauf nach dem Pop-up (✕ oder ein Knopf darin): Auswahl verwerfen und die Tabelle sofort frisch
-        # aufbauen – der nächste Klick, auch auf dieselbe Zeile, öffnet das Pop-up mit einem Klick.
-        st.session_state.tab_offen = None
-        st.session_state[zaehler] = n + 1
-        st.rerun()
-    if reihen:
-        tk = zeilen[reihen[0]]["tk"]
-        st.session_state.tab_offen = schluessel
-        if _DIALOG:
-            _karte_zeigen(tk, teil["titel"].get(tk), teil["liste"])
-        else:
-            st.link_button(f"{tk}: Deep Dive →", f"?seite=Titelseite&t={tk}")
-
-
-def _kartentisch_zeigen(rollen=None, ohne=()):
-    """Teile des Kartentischs: rollen = nur diese (z. B. {"lagekarte"}), ohne = diese nicht; Abschnitte (Reihen,
-    Watchlist) haben die Rolle „reihe“."""
-    def html(h):
-        st.markdown(gestaltung.seite(h, oben=12, unten=12), unsafe_allow_html=True)
-    try:
-        huelle = st.container(key="kartentisch_" + "_".join(sorted(rollen or ())) + "_ohne_" + "_".join(sorted(ohne)))
-    except TypeError:                               # ältere Streamlit-Version ohne key
-        huelle = st.container()
-    with huelle:
-        for nr, teil in enumerate(_tischplan(_codestand(mit_watchlists=True))):
-            rolle = teil.get("rolle", "reihe")
-            if (rollen is not None and rolle not in rollen) or rolle in ohne:
-                continue
-            if teil["art"] == "html":
-                html(teil["html"])
-                continue
-            # Ausklappmenü je Setup (06.11.2026): zu Name, Zahl und Regel, aufgeklappt die Karten; alle zu, auch die Watchlist
-            kopf = f"**{teil['name']} · {teil['zahl']}** — {teil['text']}"
-            with st.expander(kopf, expanded=False):
-                if not (teil["karten"] or teil["zeilen"]):
-                    st.caption("zurzeit keine")
-                name = f"{nr}_{teil['liste'] or 'reihe'}"
-                karten = teil["karten"]
-                for i in range(0, len(karten), 3):
-                    for spalte, (tk, x, h) in zip(st.columns(3), karten[i:i + 3]):
-                        with spalte:
-                            st.markdown(h, unsafe_allow_html=True)
-                            _knopfleiste(tk, teil["liste"], f"k{name}_")
-                _tabelle(teil, name)
+def _lagekarte_zeigen():
+    st.markdown(gestaltung.seite(_lagekarte_html(_codestand(mit_watchlists=True)), oben=12, unten=12),
+                unsafe_allow_html=True)
 
 
 def _schrank_text(alt):
@@ -505,7 +381,7 @@ def zeigen(name, *args):
                 rueckenwind_zeigen()
             except Exception as e:  # noqa: BLE001
                 _fehler(e)
-            _kartentisch_zeigen(rollen={"lagekarte"})   # direkt unter der Wetterkarte (Micky 12.11.2026)
+            _lagekarte_zeigen()                         # direkt unter der Wetterkarte (Micky 12.11.2026)
             st.markdown(html["unten"], unsafe_allow_html=True)
         else:
             st.markdown(html, unsafe_allow_html=True)
@@ -534,44 +410,6 @@ def rueckenwind_zeigen():
             st.dataframe(rw.gruppen(erg, art), hide_index=True, use_container_width=True)
 
 
-def rueckenwind_titel_zeigen():
-    """Seite Setups, ③ Rückenwind je Titel (bis 12.11.2026 auf der Seite Rückenwind): dreifacher Rückenwind,
-    Titel nach Stufe, Logbuch."""
-    import rueckenwind as rw_kern
-    import rueckenwind_seite as rw
-    erg = rw_kern.laden()
-    if not erg:
-        return
-    with st.container(key="rueckenwind_titel"):
-        st.markdown(gestaltung.seite("<h3 style='margin:0'>Dreifacher Rückenwind · Kurs, Geld und Zahlen grün</h3>",
-                                     oben=16, unten=0), unsafe_allow_html=True)
-        st.markdown(rw.dreifach(erg), unsafe_allow_html=True)
-        st.markdown(gestaltung.seite("<h3 style='margin:0'>Titel nach Stufe</h3>", oben=16, unten=4),
-                    unsafe_allow_html=True)
-        st.caption("◆ = auf der Watchlist")
-        for nr, name in enumerate(list(rw_kern.STUFEN) + [None]):     # zuletzt: ohne Stufe (nichts weggelassen)
-            df, tks = rw.stufe(erg, name)
-            with st.expander(f"**{name or 'Ohne Stufe'} · {len(df)}** — {rw.STUFE_TEXT[name]}", expanded=False):
-                if not len(df):
-                    st.caption("zurzeit keine")
-                    continue
-                st.caption("Sortiert: Geld, dann Zahlen, dann Tempo · Zeile anklicken → Titelseite")
-                ereignis = st.dataframe(df, hide_index=True, use_container_width=True, on_select="rerun",
-                                        selection_mode="single-row", key=f"rw_tab_{nr}",
-                                        height=min(560, 35 * (len(df) + 1) + 3),
-                                        column_config={"Kreislauf": st.column_config.LineChartColumn(
-                                            "Kreislauf (1 Jahr)", help="Wochenschlüsse eines Jahres; die Farben der "
-                                            "Phasen zeigt die Titelseite")})
-                reihen = ereignis.selection.rows if ereignis is not None else []
-                if reihen:
-                    tk = tks[reihen[0]]
-                    st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
-        with st.expander("Logbuch · wann ein Titel in eine Stufe kam und wo er heute steht (Beobachtung, kein Urteil)"):
-            lb = rw.logbuch(erg)
-            if len(lb):
-                st.dataframe(lb, hide_index=True, use_container_width=True)
-            else:
-                st.caption("Das Logbuch beginnt mit dem ersten Nachtlauf.")
 
 
 ANLEITUNG_SCHLUESSEL = """**So legst du den API-Schlüssel an (einmalig, etwa 5 Minuten):**
@@ -622,355 +460,28 @@ def verbindungen_zeigen():
                 st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
 
 
-def setups_zeigen():
-    """Seite „Setups“ (12.11.2026, Micky): Aufklärung und Filter – ① Einsatzbereit (Trichter, Liste), ② Stellung
-    (grüne Setups, Reihen, Watchlist mit Marke 💥), ③ Rückenwind je Titel, ④ Termine."""
-    st.markdown(gestaltung.seite(
-        '<h1 style="margin:0;font-size:32px;font-weight:600">Setups · Aufklärung und Filter</h1>'
-        + gestaltung.sprungleiste(gestaltung.STATIONEN_SETUPS), oben=12, unten=0), unsafe_allow_html=True)
-    _kartentisch_zeigen(ohne={"lagekarte", "termine"})
-    st.markdown(gestaltung.seite(gestaltung.station("titel"), oben=16, unten=0), unsafe_allow_html=True)
-    try:
-        rueckenwind_titel_zeigen()
-    except Exception as e:  # noqa: BLE001
-        _fehler(e)
-    _kartentisch_zeigen(rollen={"termine"})
-    regelkarte_zeigen()
-    chartpruefer_zeigen()
-    setuppruefer_zeigen()
-    maengel_zeigen()
-    verbindungen_zeigen()
 
 
-def _pruefer_starten():
-    import chartpruefer
-    if chartpruefer.starten():
-        st.toast("Chart-Prüfer läuft – die Seite zeigt den Fortschritt")
-    else:
-        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
 
 
-def _setuppruefer_starten():
-    import setuppruefer
-    if setuppruefer.starten():
-        st.toast("Setup-Prüfer läuft – die Seite zeigt den Fortschritt")
-    else:
-        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
 
 
-def _setuppruefer_klein():
-    import setuppruefer
-    if setuppruefer.starten(setuppruefer.KLEIN):
-        st.toast(f"Setup-Prüfer läuft mit {setuppruefer.KLEIN} Titeln – die Seite zeigt den Fortschritt")
-    else:
-        st.toast("Es läuft schon ein Prüflauf (Chart- oder Setup-Prüfer)")
 
 
-def _chartpruefer_zeigen():
-    """Chart-Prüfer (14.11.2026): Prüfstand, kein Erkenner – eine Stichprobe von Charts gegen die Regeln der Meister;
-    gemeldet wird nur, wo der Prüfer der App widerspricht."""
-    import chartpruefer
-    import modell
-    _pruefer_kasten(chartpruefer, "🔎 Chart-Prüfer · Zonen, Pivots und Anker gegen die Regeln der Meister",
-                    "Die Erkennung bleibt Code (feste Regeln, immer dasselbe Ergebnis). Der Prüfer schaut sich etwa "
-                    f"{chartpruefer.STICHPROBE} Charts mit dem Auge von O'Neil, Minervini, Kullamägi, Shannon und Dalton "
-                    "an – die ganze Kette unserer drei Bilder: Zone, Zeichen, Zustand, Anker, dazu 20 Gruppen – und "
-                    "meldet Widersprüche. Echte Regelfehler kommen in den Code, strittige Fälle entscheidest du. "
-                    f"Etwa {chartpruefer.STICHPROBE * chartpruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf (Monatsdeckel {modell.DECKEL_USD:.0f} \\$). "
-                    "Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
-                    "pruefer", _pruefer_starten)
 
 
-def _setuppruefer_zeigen():
-    """Setup-Prüfer (Micky 14.11.2026): eigener Prüfstand nur für die Setups – Urteil, Wahl, Einstieg, Kaufzone, Stopp,
-    übersehene Setups gegen die Regeln der Meister."""
-    import modell
-    import setuppruefer
-    _pruefer_kasten(setuppruefer, "🎯 Setup-Prüfer · Urteil, Einstieg und Stopp gegen die Regeln der Meister",
-                    "Die Urteile bleiben Code. Der Prüfer schaut sich etwa "
-                    f"{setuppruefer.STICHPROBE} Titel an – jede Reihe des Kartentischs, grün und nicht grün, dazu "
-                    f"{setuppruefer.OHNE} Titel ohne Setup – und prüft mit dem Auge von Minervini, O'Neil, Kullamägi "
-                    "und Weinstein: Ist das Grün verdient? Sitzen Einstieg, Kaufzone und Stopp richtig? Ist ein Setup "
-                    f"übersehen? Etwa {setuppruefer.STICHPROBE * setuppruefer.KOSTEN_JE_CHART:.0f} \\$ je Lauf "
-                    f"(Monatsdeckel {modell.DECKEL_USD:.0f} \\$). Einen einzelnen Titel prüfst du mit dem Knopf unter dem Chart der Titelseite.",
-                    "setuppruefer", _setuppruefer_starten,
-                    klein=(f"Kleiner Lauf ({setuppruefer.KLEIN} Titel, etwa "
-                           f"{setuppruefer.KLEIN * setuppruefer.KOSTEN_JE_CHART:.0f} \\$)", _setuppruefer_klein))
 
 
-def _pruefer_kasten(mod, ueberschrift, beschreibung, key, starten, klein=None):
-    """Kasten eines Prüfers auf der Seite Setups: Start, Fortschritt, Auswertung, Bericht nach Element."""
-    from html import escape as esc
-    laeuft, p = mod.stand()
-    with st.expander(ueberschrift, expanded=laeuft):
-        st.caption(beschreibung)
-        st.button("Prüflauf starten", disabled=laeuft, on_click=starten, key=f"{key}_start")
-        if klein:                                # (Text, Funktion) – kleiner Lauf, wenn das Guthaben knapp ist
-            st.button(klein[0], disabled=laeuft, on_click=klein[1], key=f"{key}_klein")
-        if laeuft:
-            st.caption(f"Läuft seit {p['start'][-5:]} Uhr · {p.get('fertig', 0)} von {p.get('n')} geprüft")
-        elif p and p.get("ende"):
-            st.caption(f"Letzter Lauf {p['start']}–{p['ende'][-5:]} · {p.get('fertig')} geprüft · "
-                       f"{str(p.get('kosten', '')).replace('.', ',')} \\$")
-        b = mod.letzter_bericht()
-        if not b or not b.get("titel"):
-            return
-        a = b.get("auswertung")
-        if not laeuft and not a:
-            if st.button("Bericht auswerten (Befunde über die Regeln bündeln, wenige Cent)", key=f"{key}_auswerten"):
-                try:
-                    with st.spinner("Die Widersprüche werden gebündelt …"):
-                        a = mod.auswerten()
-                    import maengel
-                    maengel.aus_berichten()                # die Befunde kommen gleich in die Mängelliste
-                except Exception as x:  # noqa: BLE001
-                    st.error(f"Auswertung ging nicht: {x}")
-        if a:
-            farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
-                     "Prüfer irrt": "#8B949E"}
-            import maengel
-
-            def stand_(i_):                       # Stand aus der Mängelliste neben jedem Vorschlag (Gesamtplan 15.11.2026)
-                try:
-                    y = maengel.zu_lauf(key.replace("pruefer", ""), b["stand"], i_)
-                except Exception:  # noqa: BLE001
-                    y = None
-                if not y:
-                    return '<br><span style="color:#F85149">🔴 nicht in der Mängelliste</span>'
-                zeichen_ = {"behoben": "🟢 behoben", "entschieden": "🟢 entschieden", "offen": "🟡 offen"}[y["stand"]]
-                return f'<br><b>{zeichen_}</b>' + (f' · {esc(y["notiz"])}' if y.get("notiz") else "")
-            karten = "".join(
-                f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:6px 10px;margin:6px 0">'
-                f'<b>{esc(x["titel"])}</b> · {esc(x["art"])} · {esc(x["element"])} · {x["anzahl"]} Widersprüche '
-                f'({x["sicher"]} sicher) · z. B. {esc(", ".join(x["beispiele"][:5]))}<br>'
-                f'<span style="opacity:.85">{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: '
-                f'{esc(x["vorschlag"])}</span>{stand_(i_)}</div>' for i_, x in enumerate(a.get("befunde") or []))
-            st.markdown(f'<div style="font-size:13px"><b>Auswertung {esc(a.get("stand", ""))}</b> · '
-                        f'{esc(a.get("fazit", ""))}{karten}</div>', unsafe_allow_html=True)
-        alle = [(r["tk"], r.get("gruppe", ""), w) for r in b["titel"] for w in r.get("widersprueche") or []]
-        fehler = [r for r in b["titel"] if r.get("fehler")]
-        je = {}
-        for tk, g, w in alle:
-            je.setdefault(w["element"], []).append((tk, g, w))
-        st.markdown(f"**Bericht {b['stand']}** · {len(b['titel'])} Charts · {len(alle)} Widersprüche "
-                    f"({sum(1 for *_, w in alle if w['gewicht'] == 'sicher')} sicher) · ohne Widerspruch: "
-                    f"{sum(1 for r in b['titel'] if not r.get('widersprueche') and not r.get('fehler'))}"
-                    + (f" · {len(fehler)} nicht prüfbar" if fehler else ""))
-        for element in sorted(je, key=lambda k: -len(je[k])):
-            zeilen = "".join(
-                f'<tr><td style="padding:3px 8px">'
-                + (esc(tk) if ":" in tk else f'<a href="?seite=Titelseite&t={esc(tk)}" target="_blank">{esc(tk)}</a>')
-                + (
-                f'<br><span style="font-size:11px;opacity:.7">{esc(g)}</span></td>'
-                f'<td style="padding:3px 8px">{"●" if w["gewicht"] == "sicher" else "○"} {esc(w["befund"])}</td>'
-                f'<td style="padding:3px 8px">{esc(w["richtig"])}</td>'
-                f'<td style="padding:3px 8px;font-size:12px;opacity:.8">{esc(w["regel"])}</td></tr>')
-                for tk, g, w in je[element])
-            st.markdown(f'<details><summary style="cursor:pointer"><b>{esc(element)}</b> · {len(je[element])} '
-                        f'({sum(1 for *_, w in je[element] if w["gewicht"] == "sicher")} sicher)</summary>'
-                        f'<table style="font-size:13px;border-collapse:collapse"><tr><th>Titel</th><th>Befund</th>'
-                        f'<th>Richtig wäre</th><th>Regel</th></tr>{zeilen}</table></details>',
-                        unsafe_allow_html=True)
 
 
-chartpruefer_zeigen = _FRAGMENT(run_every=30)(_chartpruefer_zeigen) if _FRAGMENT else _chartpruefer_zeigen
-setuppruefer_zeigen = _FRAGMENT(run_every=30)(_setuppruefer_zeigen) if _FRAGMENT else _setuppruefer_zeigen
 
 
-def chart_pruefen(tk, teile):
-    """Knopf „🔎 Chart prüfen lassen“ unter dem Chart (14.11.2026): der Chart-Prüfer urteilt über diesen einen Titel –
-    Zone, Zeichen, Zustand, Anker nach den Regeln der Meister; einmal je Titel und Kurstag, danach aus dem Speicher."""
-    import chartpruefer
-    import zustandsbild
-    df = (teile.get("chart") or {}).get("df")
-    if df is None:
-        return
-    stand = f"{df.index[-1]:%Y-%m-%d}"
-    r = chartpruefer.einzeln_gespeichert(tk, stand)
-    if r is None:
-        if not st.button("🔎 Chart prüfen lassen", key=f"pruefen_{tk}",
-                         help="Der Chart-Prüfer schaut sich diesen Chart mit dem Auge der Meister an (O'Neil, Minervini, "
-                              "Kullamägi, Weinstein, Wyckoff, Shannon, Dalton) und meldet, wo er Zone, Zeichen, "
-                              "Zustand oder Anker der App widerspricht. Etwa 5 Cent, einmal je Titel und Kurstag."):
-            return
-        try:
-            with st.spinner("Der Chart-Prüfer schaut hin …"):
-                r = chartpruefer.einzeln(tk, stand, teile.get("chart"))
-        except Exception as x:  # noqa: BLE001
-            st.error(f"Chart-Prüfer ging nicht: {x}")
-            return
-    st.markdown(zustandsbild.pruef_karte(r), unsafe_allow_html=True)
 
 
-def regelkarte_zeigen():
-    """Regelkarte und Wachposten (Gefechtsordnung Schritt 1, 15.11.2026): jeder Kasten der drei Bilder und jedes Setup
-    mit Regel, führendem Meister, Messung im Code und Prüf-Element – die eine Quelle, aus der beide Prüfer ihre
-    Anleitung bekommen. Der Wachposten meldet Alarm, wenn Karte und Code nicht zusammenpassen."""
-    import regelkarte
-    from html import escape as esc
-    try:
-        m = regelkarte.wachposten()
-    except Exception as x:  # noqa: BLE001
-        st.error(f"🛡️ Wachposten nicht lesbar: {x}")
-        return
-    alarm = [x for x in m if x.get("alarm")]
-    z = regelkarte.zaehlen(m)
-    kurz = " · ".join(f"{n} {g - r - y}🟢 {y}🟡 {r}🔴" for n, (g, r, y) in
-                      (("Titel", z["titel"]), ("Gruppe", z["gruppe"]), ("Markt", z["markt"]), ("Setups", z["setup"])))
-    with st.expander(("🚨" if alarm else "🛡️") + f" Regelkarte · Wachposten · {kurz}", expanded=bool(alarm)):
-        st.caption("Die eine Dienstvorschrift für Code und Prüfer: jeder Kasten der drei Bilder (Titel, Gruppe, Markt), "
-                   "jedes Zeichen der Stärke und Schwäche und jedes Setup mit seiner Regel, dem führenden Meister, der Messung im Code und dem Element, unter "
-                   "dem der Prüfer ihn prüft. Beide Prüfer bekommen ihre Anleitung aus dieser Karte. 🟢 gemessen · "
-                   "🟡 erst teilweise · 🔴 noch nicht gemessen bzw. gebaut (geplant, mit Schritt). Alarm 🚨 heißt: "
-                   "Karte und Code passen nicht zusammen – etwas wurde vergessen.")
-        for x in alarm:
-            st.error(f"🔴 {x['art']} {x['name']} ({x['bild']}): {x['text']}")
-        try:
-            inv = regelkarte.inventur()
-            n_k = len(inv["konstanten"])
-            n_t = sum(1 for k in regelkarte.TECHNIK if tuple(k.split(".")) in inv["konstanten"])
-            st.caption(f"Inventur des Codes: {n_k} feste Regeln · {len(inv['abgedeckt'])} auf der Karte · {n_t} Technik "
-                       f"(Layout, Kosten, Datenpflege) · {len(inv['frei'])} blinde Flecken · {len(inv['kopien'])} doppelt · "
-                       f"{len(inv['ohne_namen'])} Zahlen ohne Namen in {inv['funktionen']} Regel-Funktionen "
-                       f"(Datenquellen ausgenommen: {', '.join(regelkarte.TECHNIK_MODULE)})")
-        except Exception as x_:  # noqa: BLE001
-            st.error(f"🔴 Inventur nicht lesbar: {x_}")
-        ampel = {"gemessen": "🟢", "teilweise": "🟡", "fehlt": "🔴"}
-        zelle = 'style="padding:3px 8px;vertical-align:top"'
-        for bild, titel_ in (("titel", "Titel · Kreislauf und Code Balance/Ungleichgewicht"),
-                             ("gruppe", "Gruppe · Geldfluss"), ("markt", "Markt")):
-            zeilen = "".join(
-                f'<tr><td {zelle}>{ampel[x["stand"]]}</td><td {zelle}><b>{esc(x["name"])}</b>'
-                + ('<br><span style="opacity:.6">Werkzeug</span>' if "fuehrt" not in x else "")
-                + f'</td><td {zelle}>{esc(x["regel"])}</td><td {zelle}>{esc(x.get("fuehrt", "–"))}</td>'
-                f'<td {zelle}>{esc(", ".join(x["messung"]) or "–")}</td><td {zelle}>{esc(", ".join(x["pruefer"]))}</td>'
-                f'<td {zelle}>{esc(x.get("luecke", ""))}</td></tr>'
-                for x in regelkarte.KAESTEN[bild] + regelkarte.WERKZEUGE[bild])
-            st.markdown(f'<details><summary style="cursor:pointer"><b>{esc(titel_)}</b></summary>'
-                        f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Kasten</th>'
-                        f'<th {zelle}>Regel</th><th {zelle}>führt</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th>'
-                        f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
-        zeilen = "".join(
-            f'<tr><td {zelle}>{"🟢" if b_["pruefer"] else "🟡"}</td><td {zelle}><b>{esc(b_["name"])}</b><br>'
-            f'<span style="opacity:.6">{esc(b_["quelle"])}</span></td><td {zelle}>{esc(b_["regel"])}</td>'
-            f'<td {zelle}>{esc(", ".join(b_["messung"]))}</td><td {zelle}>{esc(", ".join(b_["pruefer"]) or b_.get("luecke", ""))}</td></tr>'
-            for b_ in regelkarte.BEREICHE)
-        st.markdown(f'<details><summary style="cursor:pointer"><b>Weitere Bereiche · Setup-Wahl, Stopp, Depot, Rückenwind, '
-                    f'Zahlen …</b></summary><table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th>'
-                    f'<th {zelle}>Bereich</th><th {zelle}>Regel</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th></tr>'
-                    f'{zeilen}</table><span style="font-size:12px;opacity:.7">🟡 = kein Prüfer sieht diesen Bereich</span>'
-                    f'</details>', unsafe_allow_html=True)
-        zeilen = "".join(
-            f'<tr><td {zelle}>🟢</td><td {zelle}><b>{esc(z_["name"])}</b><br><span style="opacity:.6">{esc(z_["art"])}'
-            f'</span></td><td {zelle}>{esc(z_["regel"])}</td><td {zelle}>{esc(z_["meister"])}</td>'
-            f'<td {zelle}>{esc(", ".join(z_["messung"]))}</td><td {zelle}>{esc(", ".join(z_["pruefer"]))}</td></tr>'
-            for z_ in regelkarte.ZEICHEN)
-        st.markdown(f'<details><summary style="cursor:pointer"><b>Zeichen · Stärke und Schwäche (Titel)</b></summary>'
-                    f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Zeichen</th>'
-                    f'<th {zelle}>Regel</th><th {zelle}>Meister</th><th {zelle}>Messung</th><th {zelle}>Prüfer</th></tr>'
-                    f'{zeilen}</table><span style="font-size:12px;opacity:.7">{esc(regelkarte.ZEICHEN_GEWICHT)}</span>'
-                    f'</details>', unsafe_allow_html=True)
-        zeilen = "".join(
-            f'<tr><td {zelle}>{ampel[s_["stand"]]}</td><td {zelle}><b>{esc(s_["name"])}</b><br>'
-            f'<span style="opacity:.6">{esc(s_["lehrer"])}</span></td><td {zelle}>{esc(s_["weg"])}</td>'
-            f'<td {zelle}>{esc(s_["einstieg"])}</td><td {zelle}>{esc(s_["stopp"])}</td><td {zelle}>{esc(s_["widerlegt"])}</td>'
-            f'<td {zelle}>{esc(s_.get("luecke", ""))}</td></tr>' for s_ in regelkarte.SETUPS)
-        st.markdown(f'<details><summary style="cursor:pointer"><b>Setups · Wege durch den Kreislauf</b></summary>'
-                    f'<table style="font-size:12px;border-collapse:collapse"><tr><th {zelle}></th><th {zelle}>Setup</th>'
-                    f'<th {zelle}>Weg</th><th {zelle}>Einstieg</th><th {zelle}>Stopp</th><th {zelle}>widerlegt</th>'
-                    f'<th {zelle}>Lücke</th></tr>{zeilen}</table></details>', unsafe_allow_html=True)
 
 
-def maengel_zeigen():
-    """Mängelliste (Micky 14.11.2026): jeder Befund der Prüfer mit Stand (offen, behoben, entschieden) und der Verlauf
-    der Widersprüche je Chart über alle Läufe – ein behobener Befund muss dort sinken."""
-    import maengel
-    from html import escape as esc
-    try:
-        maengel.aus_berichten()
-    except Exception as x:  # noqa: BLE001
-        st.caption(f"Mängelliste: Berichte nicht lesbar ({x})")
-    alle = maengel.alle()
-    zahl = {s_: sum(1 for x in alle if x["stand"] == s_) for s_ in maengel.STAENDE}
-    with st.expander(f"📋 Mängelliste · {zahl['offen']} offen · {zahl['behoben']} behoben · "
-                     f"{zahl['entschieden']} entschieden", expanded=False):
-        st.caption("Die eine Liste aller offenen Punkte: jeder Befund aus den Auswertungen von Chart- und Setup-Prüfer "
-                   "und jeder Punkt des Gesamtplans (🗺️), mit Stand. Behoben = Regel im Code geändert (Notiz: Commit und "
-                   "Messung), entschieden = du hast entschieden (Notiz: wie). Jeder offene Befund nennt seinen Punkt im "
-                   "Gesamtplan (→ Plan N). Der Wachposten meldet, was dagegen verstößt; der Verlauf unten zeigt, ob ein "
-                   "behobener Befund im nächsten Lauf wirklich seltener wird.")
-        zeige = st.pills("Stand", maengel.STAENDE, selection_mode="multi", default=["offen"], key="maengel_stand")
-        farbe = {"Regelfehler": "#F85149", "Darstellung/Material": "#D29922", "Auslegung": "#A371F7",
-                 "Prüfer irrt": "#8B949E"}
-        for x in alle:
-            if x["stand"] not in (zeige or []):
-                continue
-            if x["quelle"] == "plan":
-                st.markdown(f'<div style="border-left:3px solid #58A6FF;padding:4px 10px;margin:8px 0 2px;font-size:13px">'
-                            f'<b>{esc(x["titel"])}</b> · 🗺️ Gesamtplan · {esc(x["element"])}'
-                            + (f'<br><span style="opacity:.7">{esc(x["notiz"])}</span>' if x.get("notiz") else "")
-                            + '</div>', unsafe_allow_html=True)
-                continue
-            st.markdown(
-                f'<div style="border-left:3px solid {farbe.get(x["art"], "#8B949E")};padding:4px 10px;margin:8px 0 2px;'
-                f'font-size:13px"><b>{esc(x["titel"])}</b> · {esc(maengel.QUELLEN[x["quelle"]][0])} · {esc(x["art"])} · '
-                f'{esc(x["element"])} · {x["anzahl"]} Widersprüche ({x["sicher"]} sicher) in {x["charts"]} Charts · '
-                f'Lauf {esc(x["lauf"])} · z. B. {esc(", ".join(x["beispiele"]))}<br><span style="opacity:.85">'
-                f'{esc(x["deutung"])}</span><br><span style="opacity:.85">Vorschlag: {esc(x["vorschlag"])}</span>'
-                + (f'<br><span style="opacity:.7">Notiz ({esc(x["geaendert"] or "")}): {esc(x["notiz"])}</span>'
-                   if x.get("notiz") else "") + '</div>', unsafe_allow_html=True)
-            if x["quelle"] == "plan":                # Stand des Gesamtplans steht im Code (maengel.PLAN), mit Commit
-                continue
-            c1, c2, c3 = st.columns([2, 6, 1])
-            stand = c1.selectbox("Stand", maengel.STAENDE, index=maengel.STAENDE.index(x["stand"]),
-                                 key=f"mg_s_{x['id']}", label_visibility="collapsed")
-            notiz = c2.text_input("Notiz", value=x.get("notiz", ""), key=f"mg_n_{x['id']}",
-                                  label_visibility="collapsed", placeholder="Commit und Messung bzw. deine Entscheidung")
-            if c3.button("Sichern", key=f"mg_b_{x['id']}"):
-                maengel.setzen(x["id"], stand, notiz)
-                st.rerun()
-        for q, (name, _) in maengel.QUELLEN.items():
-            try:
-                laeufe, tafel = maengel.verlauf(q)
-            except Exception:  # noqa: BLE001
-                continue
-            if not laeufe:
-                continue
-            kopf = "".join(f'<th style="padding:3px 8px">{esc(s_[:16])}<br>{n} Charts</th>' for s_, n in laeufe)
-            zeilen = "".join(
-                f'<tr><td style="padding:3px 8px">{esc(e)}</td>' + "".join(
-                    f'<td style="padding:3px 8px;text-align:right">'
-                    + (f'{w[0]:.2f} ({w[1]:.2f})'.replace(".", ",") if w else "–") + "</td>" for w in werte) + "</tr>"
-                for e, werte in sorted(tafel.items(), key=lambda kv: -(kv[1][-1] or (0, 0))[0]))
-            st.markdown(f'<details><summary style="cursor:pointer"><b>Verlauf {esc(name)}</b> · Widersprüche je Chart '
-                        f'(davon sicher) je Lauf</summary><table style="font-size:13px;border-collapse:collapse">'
-                        f'<tr><th style="padding:3px 8px">Element</th>{kopf}</tr>{zeilen}</table></details>',
-                        unsafe_allow_html=True)
 
 
-def setup_pruefen(tk, teile):
-    """Knopf „🎯 Setup prüfen lassen“ unter dem Chart (Micky 14.11.2026): der Setup-Prüfer urteilt über das Setup dieses
-    Titels – Urteil, Wahl, Einstieg, Kaufzone, Stopp, übersehen; einmal je Titel und Kurstag, danach aus dem Speicher."""
-    import setuppruefer
-    import zustandsbild
-    df = (teile.get("chart") or {}).get("df")
-    if df is None:
-        return
-    stand = f"{df.index[-1]:%Y-%m-%d}"
-    r = setuppruefer.einzeln_gespeichert(tk, stand)
-    if r is None:
-        if not st.button("🎯 Setup prüfen lassen", key=f"setup_pruefen_{tk}",
-                         help="Der Setup-Prüfer prüft das Setup dieses Titels mit dem Auge von Minervini, O'Neil, "
-                              "Kullamägi und Weinstein: Ist das Grün verdient, sitzen Einstieg, Kaufzone und Stopp, ist "
-                              "ein Setup übersehen? Etwa 13 Cent, einmal je Titel und Kurstag."):
-            return
-        try:
-            with st.spinner("Der Setup-Prüfer schaut hin …"):
-                r = setuppruefer.einzeln(tk, stand, teile.get("chart"))
-        except Exception as x:  # noqa: BLE001
-            st.error(f"Setup-Prüfer ging nicht: {x}")
-            return
-    st.markdown(zustandsbild.pruef_karte(r, "🎯 Setup-Prüfer"), unsafe_allow_html=True)
 
 
 def strategen_call(tk, teile):
@@ -1039,6 +550,12 @@ def datenstand_zeigen():
 
 if ansicht == "Rückenwind":                  # Lagezentrum: Lage, Strömung mit Lagekarte nach Sektoren, Truppe
     zeigen("uebersicht")
+    _, n_, w_ = st.columns([8, 2, 2])          # seit der Seite Setups (abgebaut 21.11.2026) hier: Tisch, Watchlists, Verbindungen
+    with n_:
+        tisch_knopf()
+    with w_:
+        watchlists_verwalten()
+    verbindungen_zeigen()
 elif ansicht == "Depot":                       # Depot (16.11.2026): Konto, Hitze, Positionen, Chart der Position
     try:
         depot_zeigen()
@@ -1047,18 +564,6 @@ elif ansicht == "Depot":                       # Depot (16.11.2026): Konto, Hitz
 elif ansicht == "Performance":                 # Performance (16.11.2026): Kurve, Hochrechnung, Unterwasser, Bilanz
     try:
         performance_zeigen()
-    except Exception as e:  # noqa: BLE001
-        _fehler(e)
-elif ansicht == "Setups":                      # Aufklärung und Filter (12.11.2026)
-    datenstand_zeigen()
-    _, n_, w_ = st.columns([8, 2, 2])
-    with n_:
-        tisch_knopf()
-    with w_:
-        watchlists_verwalten()
-    try:
-        _QUELLE["text"] = "Kartentisch des Frühlaufs"
-        setups_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 elif ansicht == "Analyse" and ticker:         # Tiefenanalyse (Micky 21.11.2026, aus der App Titel-Analyse)

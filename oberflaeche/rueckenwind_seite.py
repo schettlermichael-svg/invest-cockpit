@@ -31,18 +31,6 @@ def _fn(f):
 
 FELD_TEXT = {"Führend": "Führend · Geld ist drin", "Erstarkend": "Erstarkend · Geld fließt zu",
              "Ermüdend": "Schwächelnd · Geld fließt ab", "Abgehängt": "Zurückfallend · Geld ist weg"}
-STUFE_TEXT = {
-    "Entsteht": "RS-Rang 50–84, in 4 Wochen um mindestens 15 Punkte gestiegen und schneller als davor – oder die "
-                "RS-Linie steht am 52-Wochen-Hoch, der Kurs noch nicht, und der Rang steigt (dann ohne Ranggrenze). Der Trend am Anfang.",
-    "Läuft": "RS-Rang ab 85, das Tempo hält (höchstens 5 Punkte verloren in 4 Wochen).",
-    "Ermüdet": "RS-Rang noch ab 80, aber das Tempo bricht ein (Beschleunigung −15 oder schlechter, kaum noch "
-               "Vorrücken: höchstens +5) oder 10 Punkte verloren in 4 Wochen – früheste Warnung, das Geld beginnt abzufließen.",
-    "Abfluss": "Vor 4 Wochen ab 70, seitdem 20 Punkte oder mehr verloren – das Geld geht. Warnung für Halter, "
-               "Gebiet für Shorts.",
-    None: "Gerechnet, aber zurzeit in keiner Stufe – zur Vollständigkeit, nichts weggelassen. Unten grau die Titel, "
-          "die sich nicht rechnen lassen (mit Grund). „jung n M“ = weniger als 14 Monate an der Börse: RS-Rang aus den "
-          "vorhandenen Quartalen, RS-Hoch seit dem Börsengang.",
-}
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
 
 

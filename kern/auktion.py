@@ -30,7 +30,6 @@ ZUSTAENDE = ("Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewi
 # Farben aus dem Bild der Zustände: grau = Balance, rot = Ungleichgewicht entsteht/läuft, grün = zurück ins Gleichgewicht
 FARBE = {"Balance": "#8B949E", "Test am Rand": "#8B949E", "abgelehnt": "#3FB950", "angenommen": "#F85149",
          "Ungleichgewicht": "#F85149", "Ende des Laufs": "#3FB950", "Anlass": "#A371F7"}
-KRAEFTE = ("Gegner antwortet", "Antrieb erlischt", "Wert akzeptiert")
 
 MP_TAGE = 2            # angenommen aus dem Market Profile erst ab 2 Tagen mit dem Wert außerhalb (Plan 15)
 FRISCH = 10            # abgelehnt/angenommen: höchstens 10 Handelstage her (danach Ungleichgewicht bzw. zurück in der Balance)

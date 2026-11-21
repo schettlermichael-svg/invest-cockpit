@@ -27,7 +27,6 @@ sys.path.insert(0, HIER)
 import lagekarte                                      # noqa: E402
 import phase                                         # noqa: E402
 from dateien import json_lesen, json_schreiben  # noqa: E402
-from gestaltung import TERMIN_GELB  # noqa: E402  Zahlen in höchstens 14 Tagen: eine Termin-Regel
 SPEICHER = os.path.join(HIER, "..", "daten", "kartentisch")
 REIHEN = [("m_spitze", "💥 Base-Ausbruch · in der Kaufzone", "Base reif und eng (VCP), Trendvorlage, RS ab 70, Zahlen "
                                                           "wachsen – alle Regeln erfüllt, Kurs 5 % vor bis 5 % über dem "
@@ -67,7 +66,6 @@ REIHEN = [("m_spitze", "💥 Base-Ausbruch · in der Kaufzone", "Base reif und e
           ("k_bruch", "Bruch der Spanne · Short", "Eine Basis, Verteilung oder Balance in Phase 2 von mindestens 6 Wochen "
                                                   "bricht: Schluss mindestens 1 % unter ihrem Tief; grün bis 5 % "
                                                   "darunter")]
-WATCHLISTS_NACH = "m_spitze"
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -546,24 +544,8 @@ def scanner_text(x):
     return " · ".join(z for z in (x.get("scanner"), x.get("ausbruch")) if z)
 
 
-def _grundzeile(x):
-    """Ausbruch und Grund als kleine Zeile über der Karte (leer, wenn nichts zu sagen ist)."""
-    from gestaltung import TEXT_2, t
-    g = " · ".join(z for z in (scanner_text(x), lagekarte.grund(x)) if z)
-    return f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g else ""
 
 
-def stab_marke(x):
-    """Marke über jeder Karte (Seite Setups, 12.11.2026): 💥 auf der Liste „Einsatzbereit“ oder der Grund, warum nicht."""
-    from gestaltung import BLAU, TEXT_3, t
-    st_ = (x or {}).get("stab")
-    if not st_:
-        return ""
-    drin, grund = st_
-    if drin:
-        return (f'<span style="font-size:13px;color:{BLAU};font-weight:600">💥 einsatzbereit'
-                f'<span style="font-weight:400"> · {t(grund)}</span></span>')
-    return f'<span style="font-size:13px;color:{TEXT_3}">nicht auf der Liste · {t(grund)}</span>'
 
 
 def rueckenwind_zeichen(x):
@@ -616,36 +598,8 @@ def tiefe_zeichen(x):
     return " · ".join(teile)
 
 
-def karte_html(x, kopf="", tk=None):
-    """Lagekarte in der Rahmenstufe des Titels, darüber eine Zeile (Reihe-Marke im Watchlist-Abschnitt, sonst der
-    Grund, was fehlt), das Zeichen „Rückenwind“ und der Kreislauf (Mini-Kurve des Jahres und Phase, 13.11.2026)."""
-    from gestaltung import TEXT_2, t
-    kopf = stab_marke(x) + (kopf or _grundzeile(x))
-    rw = rueckenwind_zeichen(x)
-    rw = f'<span style="font-size:13px;color:{TEXT_2}">{t(rw)}</span>' if rw else ""
-    ti = tiefe_zeichen(x)
-    rw += f'<span style="font-size:13px;color:{TEXT_2}">{t(ti)}</span>' if ti else ""
-    return (f'<div style="display:flex;flex-direction:column;gap:6px">{kopf}{rw}{kreislauf_zeile(tk)}'
-            f'{lagekarte.faerben(x["karte"], x)}</div>')
 
 
-def kreislauf_zeile(tk):
-    """Mini-Kurve des Jahres nach Phasen gefärbt und die Phase in einem Wort; ein Klick öffnet die Titelseite."""
-    if not tk:
-        return ""
-    try:
-        import kreislaufbild
-        import zeichen
-        k = zeichen.von(tk)
-    except Exception:  # noqa: BLE001
-        return ""
-    if not k:
-        return ""
-    from gestaltung import TEXT_2, t
-    import zustandsbild                      # zuerst der Zustand (13.11.2026), die Phase als Unterzeile
-    return (f'<a href="?seite=Titelseite&t={t(tk)}" target="_self" style="display:flex;align-items:center;gap:8px;'
-            f'flex-wrap:wrap;text-decoration:none">{zustandsbild.pille(k.get("auktion"))}{kreislaufbild.mini(k)}'
-            f'<span style="font-size:13px;color:{TEXT_2}">{t(kreislaufbild.punkt_wort(k))}</span></a>')
 
 
 def zeile(tk, x):
@@ -682,14 +636,6 @@ def _phase_wort(tk):
         return ""
 
 
-def _klapp(titel, zeile_, inhalt):
-    """Karte zum Aufklappen (Übersicht kürzer): zu sieht man Titel und eine Zeile, aufgeklappt den Inhalt."""
-    from gestaltung import KARTE, RAND, TEXT_2, t
-    return (f'<details style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
-            f'<summary style="cursor:pointer;display:flex;gap:14px;align-items:baseline;flex-wrap:wrap">'
-            f'<span style="font-size:20px;font-weight:600">{t(titel)} ▾</span>'
-            f'<span style="font-size:15px;color:{TEXT_2}">{t(zeile_)}</span></summary>'
-            f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">{inhalt}</div></details>')
 
 
 def _ordnung(x):
@@ -704,204 +650,14 @@ def _kopf(name, zahl_, text, h=2):
             + (f'<span style="font-size:15px;color:{TEXT_2}">{t(text)}</span>' if text else "") + '</div>')
 
 
-def _abschnitt(name, text, liste, liste_name=None, fehlen=(), zahl_=None):
-    """Ein Abschnitt für app.py: Karten (die ersten SICHTBAR mit Lagekarte) und Tabelle der übrigen. app.py zeigt ihn
-    als Ausklappmenü (06.11.2026): zu sieht man Name, Zahl und Regel, aufgeklappt die Karten."""
-    zahl_ = len(liste) + len(fehlen) if zahl_ is None else zahl_
-    kopf = _kopf(name, zahl_, text)
-    sichtbar = [(tk, x) for tk, x in liste[:SICHTBAR] if x.get("karte")]
-    rest = liste[SICHTBAR:] + [(tk, x) for tk, x in liste[:SICHTBAR] if not x.get("karte")]
-    return {"art": "abschnitt", "kopf": kopf, "name": name, "zahl": zahl_, "text": text, "liste": liste_name,
-            "karten": [(tk, x, karte_html(x, _marken(x) if liste_name else "", tk)) for tk, x in sichtbar],
-            "zeilen": [zeile(tk, x) for tk, x in rest] + [zeile(tk, None) for tk in fehlen],
-            "titel": {tk: x for tk, x in rest}}
 
 
-def plan(tisch=None):
-    """Kartentisch für die Übersicht als Folge von Teilen: {"art": "html", "html": …} oder ein Abschnitt (siehe
-    _abschnitt). Watchlist-Zugehörigkeit immer aus den Listen der App (nicht aus dem Stand des Abendlaufs) – ein Titel,
-    der eben auf eine Liste kam, steht sofort im Watchlist-Abschnitt und nicht mehr in seiner Reihe."""
-    import watchlists
-    from gestaltung import KARTE, RAND, TEXT_2, TEXT_3, karte, station, t, zahl
-    tisch = tisch if tisch is not None else laden()
-    if not tisch:
-        return [{"art": "html", "html": karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Der Kartentisch wird '
-                                              f'im Abendlauf gerechnet. Noch liegt kein Ergebnis vor.</p>', "Kartentisch")}]
-    w = watchlists.laden()
-    try:                                          # Zeichen „Rückenwind“ aus dem Stand der Seite Rückenwind
-        import rueckenwind
-        rw = (rueckenwind.laden() or {}).get("titel") or {}
-    except Exception:  # noqa: BLE001
-        rw = {}
-
-    def _rw(tk):
-        r = rw.get(tk)
-        return {"rueckenwind": {"kurs": r["kurs_ampel"], "geld": r["geld_ampel"],
-                                "zahlen": (r.get("zahlen") or {}).get("ampel"), "stufe": r["stufe"]}} if r else {}
-
-    tisch = dict(tisch, titel={tk: dict(x, **_rw(tk), listen=[n for n, l in w.items() if tk in l],
-                                        # Tisch von vor dem VCP-Scanner: die alte Wertzonen-Flagge trägt keinen
-                                        # Scanner-Text und gehört nicht in die Reihe „Flagge · Scanner“
-                                        **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge"
-                                           and not x.get("scanner") else {}))
-                               for tk, x in tisch["titel"].items()})
-    try:                                          # Auswahl „Einsatzbereit“ (kern/auswahl.py, auch für die Wachen)
-        import depot
-        import rueckenwind_seite
-        import auswahl as auswahl_
-        rw_erg = rueckenwind.laden() or {}
-        drei = {tk for tk, _ in rueckenwind_seite.dreifach_liste(rw_erg)} if rw_erg else set()
-        pos = [p_["ticker"] for p_ in depot.laden().get("positionen", [])]
-        wl_ = set(w[watchlists.STANDARD])
-        akten, gruende, elite = auswahl_.auswahl(tisch["titel"], rw_erg.get("titel") or {}, drei, wl_, pos, mit_rest=True)
-        for tk, g in gruende.items():
-            if tk in tisch["titel"]:
-                tisch["titel"][tk]["stab"] = g
-    except Exception:  # noqa: BLE001 – ohne Auswahl steht der Tisch trotzdem
-        akten, gruende, drei, elite, wl_ = [], {}, set(), [], set()
-    b = tisch["barometer"]
-    if "m_gruen" in b:                            # ein System (12.11.2026): grüne Setups nach Richtung, „nur Muster“ nicht
-        gr = [lagekarte.richtung(x) for x in tisch["titel"].values() if x.get("gruen") and x.get("reihe") not in (None, "vcp")]
-        zahlen_ = f'{gr.count("long")} long · {gr.count("short")} short'
-    else:                                         # Tisch von vor den zwei Systemen
-        zahlen_ = f'{b.get("long_gruen", 0)} long · {b.get("short_gruen", 0)} short'
-    barometer = (
-        f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:16px 20px">'
-        f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:.06em;text-transform:uppercase">Grüne Setups · ohne „nur Muster“</div>'
-        f'<div style="font-size:24px;font-weight:600">{zahlen_}</div>'
-        f'<div style="font-size:14px;color:{TEXT_2}">unter {zahl(b["titel"], 0)} Titeln des Reviers</div></div>')
-    namen = {k: n for k, n, _ in REIHEN}
-    neu = tisch.get("neu") or []
-    chip = ('<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid {f};'
-            'border-radius:8px;padding:4px 10px;font-size:14px;color:inherit;text-decoration:none"><b>{tk}</b> '
-            '<span style="color:' + TEXT_2 + '">{text}</span></a>')
-    neu_html = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=t(text)) for tk, text in neu[:60])  # Layout
-                or f'<span style="color:{TEXT_2}">nichts Neues gegenüber dem letzten Lauf</span>')
-    termine = []
-    for tk, x in tisch["titel"].items():
-        z = ((x.get("kacheln") or {}).get("Nächste Zahlen") or ("", "", ""))
-        tage = 0 if z[1] == "heute" else 1 if z[1] == "morgen" else (int(z[1].split()[1]) if z[1].startswith("in ") else 99)  # Layout
-        if 0 <= tage <= TERMIN_GELB:          # vergangene Termine („in -1 Tagen“ älterer Tische) nicht mitzählen
-            termine.append((tage, tk, z[2].split(" ·")[0], "Watchlist" if x["listen"] else namen.get(x.get("reihe"), "")))
-    termine.sort()
-    earn = ("".join(chip.format(tk=t(tk), f=_farbe(tisch["titel"].get(tk)), text=f"{t(d)} · {t(r)}")
-                    for _, tk, d, r in termine)
-            or f'<span style="color:{TEXT_2}">keine Zahlen in den nächsten 14 Tagen</span>')
-    # ③ Stellung: Barometer, Lagekarte nach Sektoren, Reihen · ④ Termine (Seite Rückenwind seit 10.11.2026)
-    teile = [{"art": "html", "rolle": "auswahl", "html": station("auswahl") + auswahl_html(tisch, akten, gruende, drei, elite, wl_)},
-             {"art": "html", "rolle": "stellung", "html": station("stellung") + barometer},
-             {"art": "html", "rolle": "lagekarte", "html": lagebild(tisch)}]
-
-    def watchlist_abschnitte():
-        """Watchlist: jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe."""
-        liste = w[watchlists.STANDARD]
-        da = sorted(((tk, tisch["titel"][tk]) for tk in liste if tk in tisch["titel"]),
-                    key=lambda p: (-RANG.get(p[1].get("reihe"), 0), _ordnung(p[1])))
-        teile.append(_abschnitt("◆ Watchlist", "jeder Titel immer, egal welche Ampel – die Marke zeigt seine Reihe; "
-                                "unter jeder Karte der Knopf zum Herunternehmen",
-                                da, watchlists.STANDARD, [tk for tk in liste if tk not in tisch["titel"]], len(liste)))
-
-    for key, name, text in REIHEN:
-        liste = sorted(((tk, x) for tk, x in tisch["titel"].items() if x.get("reihe") == key and not x["listen"]),
-                       key=lambda p: _ordnung(p[1]))
-        teile.append(_abschnitt(name, text, liste))
-        if key == WATCHLISTS_NACH:             # Watchlist direkt nach 💥 Spitze (05.11.2026)
-            watchlist_abschnitte()
-    teile.append({"art": "html", "rolle": "termine", "html": station("termine")
-                  + _klapp("Neu seit gestern", f"{len(neu)} Veränderungen gegenüber dem letzten Lauf", neu_html)
-                  + _klapp("Earnings 14 Tage", f"{len(termine)} Termine in Reihen und Watchlist"
-                           + (f" · der nächste: {termine[0][1]} {termine[0][2]}" if termine else ""), earn)
-                  + f'<div style="font-size:13px;color:{TEXT_3}">Kartentisch gerechnet am {tisch["erzeugt"]} Uhr · '
-                    f'„Deep Dive →“ öffnet die Titelseite in einem neuen Tab</div>'})
-    return teile
 
 
-def auswahl_html(tisch, akten, gruende, drei, elite=(), wl=()):
-    """Trichter vom Revier zur Liste „Einsatzbereit“ und ihre Tabelle (Seite Setups, 12.11.2026; bis 13.11.2026 „Diese
-    Titel liest der Stab“) – was einsatzbereit ist, und warum."""
-    import auswahl as auswahl_
-    from gestaltung import AMPEL, BLAU, GRAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
-    tt = tisch["titel"]
-    n_revier = (tisch.get("barometer") or {}).get("titel") or len(tt)
-    in_reihe = [tk for tk, x in tt.items() if x.get("reihe") and not str(x.get("reihe")).endswith("_alt")]
-    gruen = [tk for tk in in_reihe if tt[tk].get("gruen")]
-    bereit = [tk for tk in gruen if gruende.get(tk) and (gruende[tk][0] or gruende[tk][1].startswith("Platz voll"))]
-    stufen = (("Revier", n_revier), ("in einer Reihe", len(in_reihe)), ("Setup grün", len(gruen)),
-              ("einsatzbereit", len(bereit)), ("auf der Liste", len(akten)))
-    trichter = "".join(
-        f'<div style="flex:1 1 130px;background:{KARTE};border:1px solid {BLAU if i == 4 else RAND};border-radius:10px;'  # Layout
-        f'padding:10px 14px"><div style="font-size:13px;color:{TEXT_3}">{n}</div>'
-        f'<div style="font-size:24px;font-weight:600;color:{BLAU if i == 4 else TEXT}">{zahl(z, 0)}</div></div>'  # Layout
-        for i, (n, z) in enumerate(stufen))
-    namen = {k: n for k, n, _ in REIHEN}
-    zeilen = ""
-    for tk in akten:
-        x = tt.get(tk) or {}
-        a_ = x.get("abstand_vz")
-        r = (x.get("rueckenwind") or {})
-        g_ = r.get("geld")
-        if g_ and lagekarte.richtung(x) == "short":       # Short: Abfluss ist Rückenwind (gespiegelt wie die Matrix)
-            g_ = auswahl_._GEGEN.get(g_, g_)
-        geld = AMPEL.get(g_, GRAU)
-        zeilen += (f'<tr><td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
-                   f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
-                   f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get(x.get("reihe"), "Depot" if not x else "—"))}'
-                   + '</td>'
-                   f'<td style="padding:4px 8px">{kreislauf_zeile(tk)}</td>'
-                   f'<td style="padding:6px 8px">{"—" if a_ is None else zahl(float(a_), 1) + " %"}</td>'
-                   f'<td style="padding:6px 8px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;'
-                   f'background:{geld}"></span></td>'
-                   f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (True, "Depot"))[1])}</td></tr>')
-    kopf = "".join(f'<th style="text-align:left;padding:6px 8px;font-size:13px;font-weight:500;color:{TEXT_3};'
-                   f'border-bottom:1px solid {RAND}">{k}</th>' for k in ("Titel", "Reihe", "Kreislauf", "zum Einstieg",
-                                                                         "Geld", "Warum dabei"))
-    regel = (f"Einsatzbereit = Setup grün und Kurs am Auslöser oder in der Kaufzone (long {zahl(auswahl_.ZONE_LONG[0], 0)} "
-             f"bis +{zahl(auswahl_.ZONE_LONG[1], 0)} % zum Einstieg des Setups, Short bis {zahl(auswahl_.ZONE_SHORT[0], 0)} % unter dem "
-             f"Einstieg, Volltreffer bis +{zahl(auswahl_.ZONE_VOLLTREFFER[1], 0)} %) · Depot immer · Rang: {auswahl_.RANG_TEXT} · je Reihe {auswahl_.AKTEN_JE_REIHE} Plätze vorab · höchstens {auswahl_.AKTEN_MAX}")
-    return (f'<div style="display:flex;flex-wrap:wrap;gap:10px">{trichter}</div>'
-            f'<div style="font-size:13px;color:{TEXT_3}">{t(regel)}</div>'
-            f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;overflow-x:auto">'
-            f'<div style="font-size:16px;font-weight:600;margin-bottom:6px">💥 Einsatzbereit · {len(akten)} Titel auf der Liste'
-            f'</div><table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><thead><tr>{kopf}'
-            f'</tr></thead><tbody>{zeilen or "<tr><td>keiner einsatzbereit</td></tr>"}</tbody></table>'
-            + _knapp_draussen(tt, gruende, [tk for tk in elite if tk not in akten], namen) + '</div>'
-            + _watchlist_kasten(tt, gruende, [tk for tk in elite if tk in wl], set(akten), namen))
 
 
-def _knapp_draussen(tt, gruende, rest, namen, n=10):  # Layout
-    """Die Grenze sichtbar: die ersten Einsatzbereiten ohne Platz, in derselben Rangfolge (12.11.2026 – so prüft man
-    mit einem Blick, ob draußen jemand Besseres steht als drinnen)."""
-    from gestaltung import TEXT_2, TEXT_3, t
-    if not rest:
-        return ""
-    teile = " · ".join(f'<b>{t(tk)}</b> {t(namen.get((tt.get(tk) or {}).get("reihe"), ""))} '
-                       f'<span style="color:{TEXT_3}">({t((gruende.get(tk) or (False, ""))[1])})</span>'
-                       for tk in rest[:n])
-    return (f'<div style="margin-top:10px;font-size:13px;color:{TEXT_2}">Knapp draußen – {len(rest)} weitere '
-            f'einsatzbereit, die ersten {min(n, len(rest))} in Rangfolge: {teile}</div>')
 
 
-def _watchlist_kasten(tt, gruende, liste, drin, namen):
-    """◆ Deine Watchlist · einsatzbereit (Micky 12.11.2026): die Auswahl ist neutral, die eigene Truppe
-    steht hier getrennt – dieselbe Rangfolge, je Titel 💥 auf der Liste oder der Grund. Die übrigen Watchlist-Titel zeigt
-    ② Stellung vollständig."""
-    from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, t, zahl
-    zeilen = "".join(
-        f'<tr><td style="padding:6px 8px;width:28px">{"💥" if tk in drin else ""}</td>'
-        f'<td style="padding:6px 8px"><a href="?seite=Titelseite&t={t(tk)}" target="_self" style="color:{BLAU};'
-        f'font-weight:600;text-decoration:none">{t(tk)}</a></td>'
-        f'<td style="padding:6px 8px;color:{TEXT_2}">{t(namen.get((tt.get(tk) or {}).get("reihe"), "—"))}</td>'
-        f'<td style="padding:6px 8px">{"—" if (tt.get(tk) or {}).get("abstand_vz") is None else zahl(float(tt[tk]["abstand_vz"]), 1) + " %"}</td>'
-        f'<td style="padding:6px 8px;color:{TEXT_2}">{t((gruende.get(tk) or (False, ""))[1])}</td></tr>'
-        for tk in liste)
-    n_drin = sum(1 for tk in liste if tk in drin)
-    return (f'<div style="margin-top:12px;background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'
-            f'overflow-x:auto"><div style="font-size:16px;font-weight:600;margin-bottom:2px">◆ Deine Watchlist · '
-            f'einsatzbereit · {len(liste)}, davon {n_drin} auf der Liste</div>'
-            f'<div style="font-size:13px;color:{TEXT_3};margin-bottom:6px">Dieselbe Rangfolge wie oben, nur deine Titel · '
-            f'💥 = auf der Liste, sonst der Grund · alle übrigen Watchlist-Titel stehen in ② Stellung</div>'
-            f'<table style="width:100%;border-collapse:collapse;font-size:14px;color:{TEXT}"><tbody>'
-            f'{zeilen or "<tr><td>zurzeit keiner deiner Titel einsatzbereit</td></tr>"}</tbody></table></div>')
 
 
 def _marken(x):
@@ -917,6 +673,23 @@ def _marken(x):
             f'border-radius:6px;padding:2px 8px;font-size:13px;color:{TEXT_2};align-self:flex-start">'
             f'{t(r or g or "noch keine Reihe")}</span>'
             + (f'<span style="font-size:13px;color:{TEXT_2}">{t(g)}</span>' if g and r else "") + '</span>')
+
+
+def lagekarte_html(tisch=None):
+    """Lagekarte nach Sektoren für die Seite Rückenwind (seit 21.11.2026 der einzige Teil des Kartentischs auf einer
+    Seite). Watchlist-Zugehörigkeit immer aus den Listen der App, nicht aus dem Stand des Abendlaufs."""
+    import watchlists
+    from gestaltung import TEXT_2, karte
+    tisch = tisch if tisch is not None else laden()
+    if not tisch:
+        return karte(f'<p style="margin:0;font-size:15px;color:{TEXT_2}">Die Lagekarte wird im Abendlauf gerechnet. '
+                     f'Noch liegt kein Ergebnis vor.</p>', "Lagekarte nach Sektoren")
+    w = watchlists.laden()
+    titel_ = {tk: dict(x, listen=[n for n, l in w.items() if tk in l],
+                       # Tisch von vor dem VCP-Scanner: die alte Wertzonen-Flagge trägt keinen Scanner-Text
+                       **({"reihe": "flagge_alt"} if x.get("reihe") == "flagge" and not x.get("scanner") else {}))
+              for tk, x in tisch["titel"].items()}
+    return lagebild(dict(tisch, titel=titel_))
 
 
 # ── Lagekarte nach Sektoren (4.11.2026, neu geordnet 6.11.2026) ──

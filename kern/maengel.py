@@ -12,7 +12,6 @@ from dateien import json_lesen, json_schreiben
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "daten", "maengel.json")
-STAENDE = ["offen", "behoben", "entschieden"]
 # Stand der Befunde, die vor der Mängelliste bearbeitet wurden (14.11.2026) – wird beim Übernehmen gesetzt, solange der
 # Befund noch keinen eigenen Stand hat: (Quelle, Lauf, Stück des Titels, Stand, Notiz)
 VORGABE_STEMPEL = "Vorgabe"
@@ -307,11 +306,6 @@ def alle():
     return laden()["befunde"] + plan()
 
 
-def zu_lauf(quelle, lauf, i):
-    """Stand des i-ten Befunds (ab 0) der Auswertung eines Laufs → Befund oder None (für „✅ behoben …“ neben dem
-    Vorschlag der Auswertung)."""
-    bid = f"{quelle}-{lauf.replace('-', '').replace(' ', '-').replace(':', '')}-{i + 1}"
-    return next((x for x in laden()["befunde"] if x["id"] == bid), None)
 
 
 def pruefen():

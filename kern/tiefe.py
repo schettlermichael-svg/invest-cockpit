@@ -29,7 +29,7 @@ import pandas as pd
 
 import atr as atr_modul
 from marketprofile import WERT  # noqa: E402  Wertzone 70 % (Dalton) – eine Quelle
-from masse import MONAT_TAGE, VOL_TAGE, WOCHE
+from masse import MONAT_TAGE, WOCHE
 
 # ── Struktur nach Dalton ──────────────────────────────────────────────────────────────────────────────────────────
 STUFE_PCT = 0.0025           # Preisstufe des Profils ≈ 0,25 % des Kurses, auf glatte Werte gerundet
@@ -119,9 +119,6 @@ def leistung(c):
     return d
 
 
-def vol_faktor(df, i):
-    vorher = df["Volume"].iloc[max(0, i - VOL_TAGE):i]
-    return None if not len(vorher) or vorher.mean() == 0 else round(float(df["Volume"].iloc[i] / vorher.mean()), 2)
 
 
 def woche(df):

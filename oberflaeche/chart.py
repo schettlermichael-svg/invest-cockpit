@@ -54,7 +54,6 @@ RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
 INDEX_SCHATTEN = "#9AA3AF"   # S&P 500 im Kurschart, gestrichelt, am linken Rand auf den Kurs gelegt
 KAUFZONE_FARBE = GRUEN
 ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
-ZONE_ANSICHT = ["Aktuell", "Historie"]   # Knopf über dem Chart: nur das Setup jetzt oder alle Zonen
 
 # Ausschnitte je Zeitebene: Knopf → Zahl der Balken (feste Knöpfe statt Regler)
 AUSSCHNITT = {"Tag": {"3 M": 63, "6 M": 126, "1 J": 252, "2 J": 504},

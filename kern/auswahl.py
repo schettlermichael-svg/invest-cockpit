@@ -14,8 +14,6 @@ from masse import DATUM  # noqa: E402
 AKTEN_MAX = 30
 
 
-RANG_TEXT = ("Zahlen in höchstens 7 Tagen nach hinten, dann Volltreffer, 💥 in der Kaufzone, Geld in Richtung des "
-             "Setups (Short: Abfluss), RS-Rang (Short: der schwächere zuerst) – die Watchlist gibt keinen Vorteil")
 
 
 AKTEN_JE_REIHE = 2

@@ -86,15 +86,11 @@ def feld_name(f):
 STATIONEN = (("lage", "①", "Lage", "Darf ich angreifen?"),          # Seite Rückenwind = Lagezentrum (12.11.2026)
              ("wind", "②", "Rückenwind", "Wohin fließt das Geld, wo sammeln sich die Angriffe?"),
              ("truppe", "③", "Eigene Truppe", "Wie stehen meine Positionen?"))
-STATIONEN_SETUPS = (("auswahl", "①", "Einsatzbereit", "Was ist jetzt am Auslöser – und warum?"),   # Seite Setups
-                    ("stellung", "②", "Stellung", "Wer steht am Auslöser? (Setups long und short)"),
-                    ("titel", "③", "Rückenwind je Titel", "Wer hat Kurs, Geld und Zahlen hinter sich?"),
-                    ("termine", "④", "Termine", "Was hat sich bewegt, was steht an?"))
 
 
 def station(anker):
     """Überschrift einer Station der Übersicht (Trichter: breit oben, schmal auf der Titelseite) mit Sprungmarke."""
-    _, nr, name, frage = next(x for x in STATIONEN + STATIONEN_SETUPS if x[0] == anker)
+    _, nr, name, frage = next(x for x in STATIONEN if x[0] == anker)
     return (f'<div id="st-{anker}" style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;'
             f'border-bottom:1px solid {RAND};padding:8px 0 10px;margin-top:8px;scroll-margin-top:60px">'
             f'<h2 style="margin:0;font-size:28px;font-weight:600">{(nr + " " + t(name)).strip()}</h2>'

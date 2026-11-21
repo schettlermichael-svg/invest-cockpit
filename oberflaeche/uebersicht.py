@@ -1,12 +1,11 @@
 """Teile der Seite Rückenwind, die früher die Übersicht „Lageeinschätzung“ waren (zusammengelegt am 10.11.2026):
   ① Lage           Markt (Indizes und Hochs/Tiefs), Moral der Truppe, Wirtschaftswetter; aufklappbar das
                    Wirtschaftswetter im Einzelnen (Dalio-Quad mit Spur, Instrumente, Abgleich mit den Sektoren)
-  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, dreifacher Rückenwind, Stufen, Logbuch)
-  ③ Stellung       Barometer, Lagekarte nach Sektoren, Reihen long und short, Watchlist (kartentisch.plan)
-  ④ Termine        Neu seit gestern, Earnings 14 Tage (kartentisch.plan)
-  ⑤ Eigene Truppe  Depotleiste mit Depot-Hitze
+  ② Rückenwind     rueckenwind_seite.py (Wetterkarte, Gruppen nach Geldfluss), darunter die Lagekarte nach Sektoren
+                   (kartentisch.lagekarte_html; die übrigen Teile des Kartentischs standen bis 21.11.2026 auf der Seite Setups)
+  ③ Eigene Truppe  Verweis auf die Seite Depot
 Die Vier-Felder-Tafel der Sektoren und die Themen-Gruppen der früheren Frontkarte zeigt die Wetterkarte (Ebene Sektor,
-Thema); app.py setzt ② bis ④ zwischen „lage“ und „unten“."""
+Thema); app.py setzt ② zwischen „lage“ und „unten“."""
 import os
 import sys
 import time
