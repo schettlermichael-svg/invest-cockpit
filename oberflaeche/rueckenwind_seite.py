@@ -300,10 +300,19 @@ def _ordnung(x):
             -x["rang"])
 
 
+def _link(tk, text):
+    """Titel als Verweis auf seine Titelseite (Micky 22.11.2026: Titel anklicken → Titelseite); die App zeigt nach
+    TITEL_TEXT nur den Text hinter „&z=“."""
+    return f"?seite=Titelseite&t={tk}&z={text}"
+
+
+TITEL_TEXT = r"&z=(.*)$"
+
+
 def liste(erg, nur_watchlist=False):
     """Alle Titel in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund. Umschalter
-    (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → (DataFrame, Ticker in derselben Reihenfolge)."""
-    reihen, tks = [], []
+    (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → DataFrame."""
+    reihen = []
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
         if nur_watchlist and not x.get("watchlist"):
             continue
@@ -315,7 +324,7 @@ def liste(erg, nur_watchlist=False):
         k = klasse(x)
         reihen.append({
             "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
-            "Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
+            "Titel": _link(tk, tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
             "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
@@ -328,11 +337,9 @@ def liste(erg, nur_watchlist=False):
             "Zahlen": PUNKT[z.get("ampel") or "grau"], "letzte Zahlen": _reaktion(x),
             "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin,
             "Zahlen im Einzelnen": _punkte_text(x)})
-        tks.append(tk)
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur_watchlist and not o.get("watchlist"):
             continue
-        reihen.append({"Klasse": "–", "Titel": o["tk"] + (" ◆" if o.get("watchlist") else ""), "Geld": PUNKT["grau"],
+        reihen.append({"Klasse": "–", "Titel": _link(o["tk"], o["tk"] + (" ◆" if o.get("watchlist") else "")), "Geld": PUNKT["grau"],
                        "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
-        tks.append(o["tk"])
-    return pd.DataFrame(reihen), tks
+    return pd.DataFrame(reihen)

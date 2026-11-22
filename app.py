@@ -373,16 +373,12 @@ def rueckenwind_zeigen():
                                      "Front (RS-Linie) und Truppen (Volumen; 🏜️ trocken zählt wie Zufluss): 1 Garde = 🦈 mit Zufluss · 2 Angriff = Linie "
                                      "steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt, "
                                      "Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. In der Klasse: 🦈, Geld der "
-                                     "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert; Zeile anklicken → Knopf zur Titelseite."
+                                     "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert; Titel anklicken → Titelseite."
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
         wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
-        df, tks = rw.liste(erg, nur_watchlist=wl_ != "Alle")
-        wahl = st.dataframe(df, hide_index=True, use_container_width=True, height=560, on_select="rerun",  # Layout
-                            selection_mode="single-row", key="rw_liste")
-        reihen = wahl.selection.rows if wahl is not None else []
-        if reihen:
-            tk = tks[reihen[0]]
-            st.link_button(f"{tk}: Titelseite →", f"?seite=Titelseite&t={tk}")
+        df = rw.liste(erg, nur_watchlist=wl_ != "Alle")
+        st.dataframe(df, hide_index=True, use_container_width=True, height=560,  # Layout
+                     column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)})
 
 
 
