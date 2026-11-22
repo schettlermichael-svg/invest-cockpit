@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 
-from rueckenwind import KLASSEN, ZUFLUSS, abstand_wort, klasse, richtung  # noqa: E402  eine Quelle (rueckenwind)
+from rueckenwind import ANGRIFF_KLASSEN, KLASSEN, ZUFLUSS, abstand_wort, klasse, richtung  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
@@ -39,13 +39,12 @@ def _chip(text, farbe):
 
 
 def kopf(erg, titel=True):
-    """Kopf des Rückenwinds: Stand, Zähler je Stufe, dreifacher Rückenwind. titel=False: ohne eigene Überschrift
+    """Kopf des Rückenwinds: Stand, Zähler je Klasse der Schlachtordnung, dreifacher Rückenwind. titel=False: ohne eigene Überschrift
     (Seite Rückenwind mit Übersicht seit 10.11.2026 – die Überschrift steht dort ganz oben)."""
     from collections import Counter
-    n = Counter(x["stufe"] for x in erg["titel"].values())
+    n = Counter(klasse(x) for x in erg["titel"].values())
     drei = len(dreifach_liste(erg))
     felder = Counter(g["feld"] for g in erg["gruppen"] if g["art"] == "Branche")
-    zeile = " · ".join(f"{s} {n.get(s, 0)}" for s in ("Entsteht", "Läuft", "Ermüdet", "Abfluss"))
     return seite(
         '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px">'
         + (f'<h1 style="margin:0;font-size:30px;color:{TEXT}">Rückenwind</h1>' if titel else '<span></span>')
@@ -61,11 +60,11 @@ def kopf(erg, titel=True):
         + "".join(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
                   f'min-width:150px"><div style="color:{TEXT_2};font-size:13px">{k}</div>'
                   f'<div style="color:{f};font-size:26px;font-weight:600">{v}</div></div>'
-                  for k, v, f in (("Dreifacher Rückenwind", drei, GRUEN), ("Entsteht", n.get("Entsteht", 0), BLAU),
-                                  ("Läuft", n.get("Läuft", 0), GRUEN), ("Ermüdet", n.get("Ermüdet", 0), GELB),
-                                  ("Abfluss", n.get("Abfluss", 0), ROT)))
+                  for k, v, f in (("Dreifacher Rückenwind", drei, GRUEN),
+                                  *((f"{i} · {name}", n.get(i, 0), KLASSEN_FARBE[i - 1])
+                                    for i, name in enumerate(KLASSEN, 1))))
         + f'</div><p style="color:{TEXT_3};font-size:13px;margin:10px 0 0">Branchen: '
-        + " · ".join(f"{FELD_TEXT[k].split(' · ')[0]} {felder.get(k, 0)}" for k in FELD_TEXT) + f' · Titel: {zeile}</p>', oben=KOPF_SCHRIFT, unten=KOPF_ABSTAND)
+        + " · ".join(f"{FELD_TEXT[k].split(' · ')[0]} {felder.get(k, 0)}" for k in FELD_TEXT) + '</p>', oben=KOPF_SCHRIFT, unten=KOPF_ABSTAND)
 
 
 def _name(g):
@@ -104,7 +103,7 @@ def setups():
 
 
 def _mitglieder(erg, art, g, setup, drei):
-    """Die Titel einer Gruppe als aufklappbare Liste (10.11.2026): nach RS-Rang, mit Stufe, Tempo, Setup und Link.
+    """Die Titel einer Gruppe als aufklappbare Liste (10.11.2026): nach RS-Rang, mit Klasse, Tempo, Setup und Link.
     Knapp gehalten (Stil einmal in MITGLIEDER_STIL), damit die Wetterkarte mit allen Titeln schnell lädt."""
     feld = {"Sektor": "sektor", "Branche": "branche", "Thema": "thema"}[art]
     liste = sorted(((tk, x) for tk, x in erg["titel"].items() if x.get(feld) == g["name"]), key=lambda p: -p[1]["rang"])
@@ -112,25 +111,25 @@ def _mitglieder(erg, art, g, setup, drei):
         return '<div class="mg"><i>keine Titel mit Daten</i></div>'
     zeilen = []
     for tk, x in liste:
-        stufe = x.get("stufe")
+        k = klasse(x)
         s_ = setup.get(tk)
         zeilen.append(f'<div><b>{"◆ " if x.get("watchlist") else ""}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
-                      f'<span class="s{STUFEN_KURZ.get(stufe, "")}">{stufe or "–"}</span><span>{x["rang"]}</span>'
+                      f'<span class="k{k or ""}">{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</span><span>{x["rang"]}</span>'
                       f'<span>{"+" if x["tempo"] >= 0 else ""}{x["tempo"]}</span>'
                       f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Setup"}</span>'
                       f'<a href="?seite=Titelseite&t={tk}" target="_blank">Titelseite →</a></div>')
-    return ('<div class="mg"><div class="k"><span>Titel</span><span>Stufe</span><span>RS-Rang</span><span>Tempo</span>'
+    return ('<div class="mg"><div class="k"><span>Titel</span><span>Klasse</span><span>RS-Rang</span><span>Tempo</span>'
             '<span>Setup (Kartentisch)</span><span></span></div>' + "".join(zeilen)
             + '<p>nach RS-Rang · Tempo = RS-Rang heute gegen vor 4 Wochen · ◆ Watchlist · ▲▲▲ dreifacher Rückenwind</p></div>')
 
 
-STUFEN_KURZ = {"Entsteht": "e", "Läuft": "l", "Ermüdet": "m", "Abfluss": "a"}
+KLASSEN_FARBE = (GRUEN, GRUEN, GELB, ROT, ROT)   # Garde, Angriff grün · Vorhut gelb · Ohne Nachschub, Rückzug rot
 MITGLIEDER_STIL = (
     f"<style>.mg{{margin:4px 0 12px 12px;padding:8px 12px;border-left:2px solid {RAND};font-size:13px}}"
-    f".mg>div{{display:grid;grid-template-columns:110px 90px 70px 80px 1fr 90px;gap:8px;align-items:center;"
+    f".mg>div{{display:grid;grid-template-columns:110px 140px 70px 80px 1fr 90px;gap:8px;align-items:center;"
     f"padding:3px 0;border-bottom:1px dotted {RAND};color:{TEXT_2}}}"
     f".mg>div.k{{font-size:11px;color:{TEXT_3};border:0}}.mg b{{color:{TEXT}}}.mg a{{color:{BLAU};text-decoration:none}}"
-    f".mg .se{{color:{BLAU}}}.mg .sl{{color:{GRUEN}}}.mg .sm{{color:{GELB}}}.mg .sa{{color:{ROT}}}.mg .o,.mg i{{color:{TEXT_3}}}"
+    + "".join(f".mg .k{i}{{color:{f}}}" for i, f in enumerate(KLASSEN_FARBE, 1)) + f".mg .o,.mg i{{color:{TEXT_3}}}"
     f".mg p{{color:{TEXT_3};font-size:12px;margin:6px 0 0}}.wk summary{{list-style:none}}"
     f".wk summary::-webkit-details-marker{{display:none}}</style>")
 
@@ -240,7 +239,7 @@ def _zufluss(z, trocken=False):
 
 def dreifach_liste(erg):
     return [(tk, x) for tk, x in erg["titel"].items()
-            if x["stufe"] in ("Entsteht", "Läuft") and x["geld_ampel"] == "grün"
+            if klasse(x) in ANGRIFF_KLASSEN and x["geld_ampel"] == "grün"
             and (x.get("zahlen") or {}).get("ampel") == "grün"]
 
 
@@ -319,7 +318,7 @@ def liste(erg, nur_watchlist=False):
             "Titel": tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else ""),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
-            "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}', "Stufe": x.get("stufe") or "",
+            "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
             "Volumen": _zufluss(x.get("zufluss"), x.get("trocken")),
             "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
             "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),

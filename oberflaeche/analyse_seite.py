@@ -312,9 +312,11 @@ def geld_zeilen(rang, sek, rw, cmf_liste):
     import tiefe
     z = []
     if rw:
-        stufe_ = rw.get("stufe") or "ohne Stufe"
-        z.append(({"Läuft": "🌞", "Entsteht": "🌞", "Ermüdet": "❄️", "Abfluss": "❄️"}.get(stufe_, "🟡"),
-                  f"Rückenwind (das Urteil des Cockpits): {stufe_}" + (f" · RS-Rang {rw['rang']}" if rw.get("rang") is not None else "")
+        import rueckenwind
+        k_ = rueckenwind.klasse(rw)                  # Schlachtordnung statt Stufe (22.11.2026)
+        z.append(("🌞" if k_ in rueckenwind.ANGRIFF_KLASSEN else "❄️" if k_ in (4, 5) else "🟡",  # Technik: Klassennummern
+                  "Rückenwind (das Urteil des Cockpits): "
+                  + (f"{k_} · {rueckenwind.KLASSEN[k_ - 1]}" if k_ else "ohne Klasse") + (f" · RS-Rang {rw['rang']}" if rw.get("rang") is not None else "")
                   + (f" · Tempo {rw['tempo']:+d} in 4 Wochen" if isinstance(rw.get("tempo"), int) else "")))
     else:
         z.append(("⚪", "Rückenwind: noch kein Stand des Nachtlaufs für diesen Titel"))

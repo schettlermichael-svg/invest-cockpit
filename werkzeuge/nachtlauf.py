@@ -155,12 +155,11 @@ def main(nur_tisch=False):
         import rueckenwind
         e = rueckenwind.rechnen(netz=True)
         from collections import Counter
-        n = Counter(x["stufe"] for x in e["titel"].values())
-        return (f"Stand {e['stand']}: Entsteht {n.get('Entsteht', 0)}, Läuft {n.get('Läuft', 0)}, "
-                f"Ermüdet {n.get('Ermüdet', 0)}, Abfluss {n.get('Abfluss', 0)}")
+        n = Counter(x.get("klasse") for x in e["titel"].values())
+        return f"Stand {e['stand']}: " + ", ".join(f"{k} {n.get(i, 0)}" for i, k in enumerate(rueckenwind.KLASSEN, 1))
 
     def schrank():
-        """Titelseiten der Rückenwind-Titel mit Stufe und der Watchlist vorbauen (09.11.2026), damit jeder Klick aus
+        """Titelseiten der Rückenwind-Titel in Garde, Angriff und Vorhut und der Watchlist vorbauen (09.11.2026), damit jeder Klick aus
         Rückenwind sofort öffnet. Die Titel des Kartentischs baut der Schritt Kartentisch schon."""
         from concurrent.futures import ProcessPoolExecutor
         import kartentisch
@@ -168,7 +167,8 @@ def main(nur_tisch=False):
         import titel
         import watchlists
         e = rueckenwind.laden() or {}
-        liste = sorted({tk for tk, x in (e.get("titel") or {}).items() if x.get("stufe")} | set(watchlists.alle()))
+        liste = sorted({tk for tk, x in (e.get("titel") or {}).items() if x.get("klasse") in rueckenwind.VORNE_KLASSEN}
+                       | set(watchlists.alle()))
         grenze = titel.ablage_grenze()
         liste = [tk for tk in liste if not titel.frisch(tk, grenze)]
         n = 0

@@ -32,6 +32,7 @@ import system_minervini                               # noqa: E402
 import vcp_zone  # noqa: E402
 import system_kullamaegi                              # noqa: E402
 import fuehrer_rang                                   # noqa: E402
+import rueckenwind                                    # noqa: E402
 from masse import GD50_TAGE, JAHR_TAGE, MONAT_TAGE   # noqa: E402
 import basen                                         # noqa: E402
 import rudel                                         # noqa: E402
@@ -376,12 +377,13 @@ def _k_staerke(regel, setup, k, rang, rw=None, short=False):
     best = max((v for v in (fr or {}).values() if v == v), default=None)
     # „oberste x %“ (10.11.2026): „besser als 92,6 %“ in Rot wirkte widersinnig
     oben = f"oberste {zahl(max(0.1, 100 - best), 1 if best >= 90 else 0)} %" if best is not None else None  # Layout
-    zeile = (f'Rückenwind: {rw["stufe"] or "keine Stufe"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
+    k_ = rueckenwind.klasse(rw) if rw else None
+    zeile = (f'Rückenwind: {f"{k_} · {rueckenwind.KLASSEN[k_ - 1]}" if k_ else "keine Klasse"} · RS-Rang {rw["rang_vor4"]} → {rw["rang"]} '
              f'({rw["tempo"]:+d} in 4 Wo.)' if rw else "")
     hilfe = ("RS-Rang 1–99 wie das RS-Rating von IBD (12 Monate, jüngstes Quartal doppelt), verglichen mit unserem "
              "Revier – kein Listenplatz: 16 heißt, nur 16 % der Titel liefen schwächer.\nFührer: bester Kursanstieg über "
-             f"1, 3 und 6 Monate ({fuehrer_rang.text(fr)}).\nRückenwind: die Stufe aus der Seite Rückenwind – Entsteht = "
-             "früh, das Geld beginnt zu fließen, auch wenn der RS-Rang noch unter 70 liegt.")
+             f"1, 3 und 6 Monate ({fuehrer_rang.text(fr)}).\nRückenwind: die Klasse der Schlachtordnung (Seite Rückenwind) "
+             "aus Front (RS-Linie) und Truppen (Volumen) – 1 Garde, 2 Angriff, 3 Vorhut, 4 Ohne Nachschub, 5 Rückzug.")
     if regel == "fuehrer2":
         x = (k["fuehrer_ampel"], oben) if oben else ("grau", "–")
         return _urteil("Stärke", regel, setup, x, zeile, hilfe)
@@ -693,7 +695,7 @@ def _lagezeile(tk, rw, stellung):
     """Leiste unter dem Kopf (10.11.2026): dreifacher Rückenwind, Volltreffer, Reihe im Kartentisch, gebrochene
     Stellung – die wichtigsten Aussagen der Seite auf einen Blick."""
     chips = []
-    drei = bool(rw and rw.get("stufe") in ("Entsteht", "Läuft") and rw.get("geld_ampel") == "grün"
+    drei = bool(rw and rueckenwind.klasse(rw) in rueckenwind.ANGRIFF_KLASSEN and rw.get("geld_ampel") == "grün"
                 and (rw.get("zahlen") or {}).get("ampel") == "grün")
     e = _eintrag(tk) or {}
     reihe = None
@@ -917,7 +919,6 @@ from depot import ATR_STOPP  # noqa: E402  Stopp 1,5 ATR vom Einstieg – eine Q
 
 def _rueckenwind(tk):
     """Eintrag des Titels im Rückenwind-Stand des Nachtlaufs (Stufe, Tempo, Geld) oder None; je Stand einmal gelesen."""
-    import rueckenwind
     try:
         pfad = rueckenwind._pfad("stand.json")
         schluessel = (pfad, os.path.getmtime(pfad))
@@ -934,7 +935,6 @@ _RW_CACHE = {}
 def _zahlenkarte(tk, fund, fd):
     """Karte „Zahlen“ (09.11.2026): die neun Punkte wie in Rückenwind (eine Zahlen-Ampel für die ganze App), darunter
     die Zeichen der Gewinnqualität und S · Angebot (CAN SLIM S, nicht in den neun)."""
-    import rueckenwind
     try:
         z = rueckenwind._zahlen(tk, rueckenwind._tv())
     except Exception:  # noqa: BLE001

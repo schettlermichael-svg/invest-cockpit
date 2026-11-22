@@ -12,9 +12,8 @@ Je Titel des Reviers drei Rückenwinde als Ampeln, dazu Earnings:
          fallende Tage, 50 Tage).
   Zahlen Fundament-Ampeln (fundament.ampeln, Minervini/O'Neil) aus dem Zwischenspeicher; Termin der nächsten Zahlen,
          Reaktion auf die letzten.
-Stufen (Ampel, keine Punktzahl): Entsteht · Läuft · Ermüdet · Abfluss.
-Rangfolge der Titel (Micky 21.11.2026): RS-Hoch vor Kurs, dann die Richtung der RS-Linie (richtung), dann der Rang als
-Kraft; dazu Abstand zum 52-Wochen-Hoch (nah · mittel · fern) und das Zeichen Einzelkämpfer (stark, Branche hinten).
+Schlachtordnung statt Stufen (Micky 21./22.11.2026): Klasse 1–5 aus Front (RS-Linie) und Truppen (Volumen-Zufluss,
+austrocknendes Volumen), in der Klasse RS-Hoch vor Kurs, Geld der Branche, Zahlen, Rang als Kraft; dazu Abstand zum 52-Wochen-Hoch (nah · mittel · fern) und das Zeichen Einzelkämpfer (stark, Branche hinten).
 Alles aus den Massive-Tagesdateien des Nachtlaufs, gespeichert in daten/rueckenwind/.
 """
 import json
@@ -32,19 +31,10 @@ SPEICHER = os.path.join(HIER, "..", "daten", "rueckenwind")
 MARKT = "SPY"
 TAGE = 320                     # 12 Monate RS-Rang + 8 Wochen zurück
 WOCHEN4 = 20                   # Handelstage in 4 Wochen
-# Schwellen der Stufen (Probelauf 09.11.2026, siehe LIESMICH)
-STARK = 85                     # Läuft: Rang ab 85
-MITTEL = (50, 85)              # Entsteht: Rang 50 bis unter 85 …
-TEMPO_HOCH = 15                # … mit mindestens +15 Rangpunkten in 4 Wochen und positiver Beschleunigung
-TEMPO_HAELT = -5               # Läuft: Tempo nicht schlechter als −5
-ERMUEDET = (80, -10, -15, 5)   # Ermüdet: Rang ab 80, Tempo −10 oder schlechter – oder das Tempo bricht ein
-                               # (Beschleunigung −15 oder schlechter) und der Titel rückt kaum noch vor (Tempo höchstens
-                               # +5); Micky 09.11.2026, früheste Warnung
-ABFLUSS = (70, -20)            # Abfluss: vor 4 Wochen ab 70, seitdem 20 Rangpunkte oder mehr verloren
+STARK = 85                     # Anführer einer Gruppe: Rang ab 85 (IBD: Ø 87 vor den großen Läufen)
 VORNE = ("Führend", "Erstarkend")
 STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und größter Rückschlag (8 Wochen) ≤ 8 %
 ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
-STUFEN = ("Entsteht", "Läuft", "Ermüdet", "Abfluss")
 from zeichen import TROCKEN_TAGE, TROCKEN_VERGLEICH  # noqa: E402  Volumen trocken: eine Quelle (zeichen)
 from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Maßstab für App, Chart und Zeichen (0,99)
 from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPANNE  # noqa: E402
@@ -119,18 +109,6 @@ def _zusatz(rv):
     return aus, wl
 
 
-def _stufe(r, t, b, r4):
-    if r4 is not None and r4 >= ABFLUSS[0] and t <= ABFLUSS[1]:
-        return "Abfluss"
-    if r >= ERMUEDET[0] and (t <= ERMUEDET[1] or (b <= ERMUEDET[2] and t <= ERMUEDET[3])):
-        return "Ermüdet"
-    if r >= STARK and t >= TEMPO_HAELT:
-        return "Läuft"
-    if MITTEL[0] <= r < MITTEL[1] and t >= TEMPO_HOCH and b > 0:
-        return "Entsteht"
-    return None
-
-
 def richtung(jetzt, davor):
     """Richtung der RS-Linie aus ihrer Steigung in 4 Wochen (jetzt) und den 4 Wochen davor → steigt schneller, dreht
     nach oben, steigt, dreht nach unten, fällt oder None (Micky 21.11.2026)."""
@@ -144,6 +122,8 @@ def richtung(jetzt, davor):
 
 
 KLASSEN = ("Garde", "Angriff", "Vorhut", "Ohne Nachschub", "Rückzug")   # Schlachtordnung (Micky 21.11.2026)
+ANGRIFF_KLASSEN = (1, 2)       # Garde und Angriff: Front und Truppen vorn
+VORNE_KLASSEN = (1, 2, 3)      # dazu die Vorhut: die Linie steigt, der Nachschub ist offen
 STEIGT = ("steigt schneller", "steigt", "dreht nach oben")
 
 
@@ -433,19 +413,15 @@ def rechnen(netz=False):
         zufluss = _ud(c, vol)                         # Volumen-Zufluss des Titels selbst (Akkumulation)
         kurs_hoch = bool(len(c) >= JUNG_MIN and c.iloc[-1] >= KURS_NAH * c.iloc[-JAHR_TAGE:].max())
         abstand = float((1 - c.iloc[-1] / c.iloc[-JAHR_TAGE:].max()) * 100)
-        stufe = _stufe(r, tempo, besch, a4)
         trocken = abstand <= HOCH_MITTEL and _trocken(vol)   # nur in der Konsolidierung nahe am Hoch (Minervini: ≤ 25 %)
-        if stufe is None and rs_hoch and not kurs_hoch and tempo > 0:
-            stufe = "Entsteht"                      # RS-Linie am Hoch vor dem Kurs: das stärkste frühe Zeichen
         sek, bra, th = sek_von.get(tk), bra_von.get(tk), thema_von.get(tk)
         x = {"rang": int(r), "rang_vor4": int(a4), "tempo": int(tempo), "beschleunigung": int(besch),
-             "rs_hoch_vor_kurs": rs_hoch and not kurs_hoch, "stufe": stufe,
+             "rs_hoch_vor_kurs": rs_hoch and not kurs_hoch,
              "abstand_hoch": round(abstand, 1),
              "rs_tempo": round(rs_tempo, 1) if rs_tempo is not None else None,
              "rs_vortempo": round(rs_vortempo, 1) if rs_vortempo is not None else None,
              "zufluss": round(zufluss, 2) if zufluss else None, "trocken": trocken,
              "sektor_stabil": bool(sek and sek["stabil"]), "branche_stabil": bool(bra and bra["stabil"]),
-             "kurs_ampel": {"Entsteht": "grün", "Läuft": "grün", "Ermüdet": "gelb", "Abfluss": "rot"}.get(stufe, "grau"),
              "sektor": sek["name"] if sek else (zusatz[tk]["sektor"] if tk in zusatz else rv.loc[tk, "sektor"]),
              "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else (zusatz[tk]["branche"] if tk in zusatz else rv.loc[tk, "branche"]),
@@ -453,42 +429,42 @@ def rechnen(netz=False):
              "watchlist": tk in wl, "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
-        if stufe and netz:                       # neue Zahlen holen nur für Titel mit Stufe …
+        x["richtung"] = richtung(x["rs_tempo"], x["rs_vortempo"])
+        x["klasse"] = klasse(x)                  # Schlachtordnung statt Stufe (Micky 22.11.2026)
+        if x["klasse"] in VORNE_KLASSEN and netz:   # neue Zahlen holen nur für Garde, Angriff und Vorhut …
             try:
                 import quellen
                 quellen.laden(tk)
             except Exception:  # noqa: BLE001 – dann ohne Zahlen
                 pass
-        z = _zahlen(tk, tv)                      # … gelesen für alle (Prüf-Agent 13.11.2026: Short-Titel ohne Stufe
-        if z:                                    # standen ohne Zahlen da)
+        z = _zahlen(tk, tv)                      # … gelesen für alle (Prüf-Agent 13.11.2026: Short-Titel standen
+        if z:                                    # sonst ohne Zahlen da)
             z["reaktion"] = _reaktion(tk, z.pop("letzte"), (C, O, H, V))
         x["zahlen"] = z
-        x["richtung"] = richtung(x["rs_tempo"], x["rs_vortempo"])
-        # Einzelkämpfer (Micky 21.11.2026): stark (Stufe Entsteht/Läuft oder RS-Hoch vor Kurs), die Branche hinten
-        x["einzelkaempfer"] = bool((stufe in ("Entsteht", "Läuft") or x["rs_hoch_vor_kurs"])
+        # Einzelkämpfer (Micky 21.11.2026): stark (Garde oder Angriff), die Branche hinten
+        x["einzelkaempfer"] = bool(x["klasse"] in ANGRIFF_KLASSEN
                                    and bra and bra["feld"] not in VORNE)
         titel[tk] = x
     for g in gruppen:                            # Anführer und Verfolger je Gruppe: folgen die Schwestern?
         anfuehrer_verfolger(g, titel)
     stand = f"{C.index[-1]:%Y-%m-%d}"
-    erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten,
-           "schwellen": {"stark": STARK, "mittel": MITTEL, "tempo_hoch": TEMPO_HOCH, "ermuedet": ERMUEDET,
-                         "abfluss": ABFLUSS}}
+    erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten}
     json_schreiben(_pfad("stand.json"), erg, ensure_ascii=False)
     return erg
 
 
 def anfuehrer_verfolger(g, titel, n=ANFUEHRER_ZAHL):
-    """Anführer = höchster RS-Rang in Stufe Läuft (bei Gleichstand mehr Zufluss); Verfolger = Stufe Entsteht, größtes
-    Tempo zuerst. Je Gruppe (13.11.2026; bis 13.11.2026 über alle Titel für den Stab). Zählt auch, wie viele der
-    Mitglieder vorne sind (Entsteht oder Läuft)."""
+    """Je Gruppe (22.11.2026 auf die Schlachtordnung umgestellt): Anführer = Garde oder Angriff mit Rang ab STARK,
+    höchster Rang zuerst (bei Gleichstand mehr Zufluss); Verfolger = Garde oder Angriff mit Rang darunter, größtes
+    Tempo zuerst. „vorne“ zählt Garde und Angriff gegen alle Mitglieder."""
     m = [(tk, titel[tk]) for tk in g.get("mitglieder", []) if tk in titel]
-    anf = sorted(((tk, x) for tk, x in m if x.get("stufe") == "Läuft"),
+    vorn = [(tk, x) for tk, x in m if x.get("klasse") in ANGRIFF_KLASSEN]
+    anf = sorted(((tk, x) for tk, x in vorn if x["rang"] >= STARK),
                  key=lambda p: (-p[1]["rang"], -(p[1].get("zufluss") or 0)))
-    ver = sorted(((tk, x) for tk, x in m if x.get("stufe") == "Entsteht"), key=lambda p: -p[1]["tempo"])
+    ver = sorted(((tk, x) for tk, x in vorn if x["rang"] < STARK), key=lambda p: -p[1]["tempo"])
     g["anfuehrer"] = [tk for tk, _ in anf[:n]]
     g["verfolger"] = [tk for tk, _ in ver[:n]]
-    g["vorne"] = [len(anf) + len(ver), len(m)]
+    g["vorne"] = [len(vorn), len(m)]
     return g
 
 

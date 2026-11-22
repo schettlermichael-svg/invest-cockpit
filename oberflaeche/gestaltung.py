@@ -74,8 +74,8 @@ def karte(inhalt, titel=None, rand=RAND):
 
 
 # Namen der vier Felder auf dem Bildschirm (10.11.2026, Micky): intern bleiben die Schlüssel „Ermüdend“ und „Abgehängt“,
-# gezeigt wird überall „Schwächelnd“ und „Zurückfallend“ – „Ermüd…“ gehört allein der Stufe „Ermüdet“ und dem
-# Short-Setup „Ermüdung nach Überdehnung“.
+# gezeigt wird überall „Schwächelnd“ und „Zurückfallend“ – „Ermüd…“ gehörte der Stufe „Ermüdet“ (bis 22.11.2026)
+# und dem Short-Setup „Ermüdung nach Überdehnung“.
 FELD_NAME = {"Führend": "Führend", "Erstarkend": "Erstarkend", "Ermüdend": "Schwächelnd", "Abgehängt": "Zurückfallend"}
 
 
