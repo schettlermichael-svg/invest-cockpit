@@ -706,8 +706,8 @@ BEREICHE = [
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Festungen", quelle="Micky 21.11.2026",
-         regel="Umkehrpreise (2 Wendepunkte innerhalb ¼ ATR, Fenster 3 Kerzen, einer mit Volumen über dem 50er-Schnitt), "
-               "gebrochene Kanten alter Zonen, AVWAP Zahlen/Hoch/Tief; je Richtung 2, näher als ½ ATR verschmolzen. "
+         regel="Gebrochene Kanten alter Basen (O'Neil: Overhead Supply, Dalton), AVWAP Zahlen/Hoch/Tief (Shannon); je "
+               "Richtung 2, näher als ½ ATR verschmolzen. Umkehrpreise (2× gedreht) am 22.11.2026 entfernt – keine Quelle. "
                "Lagebeurteilung, Szenarien, Schatten und Gedächtnis am 22.11.2026 entfernt (reagieren statt antizipieren).",
          messung=["zonen.festungen"], pruefer=[],
          luecke="kein Prüfer – alle Schwellen gesetzt"),

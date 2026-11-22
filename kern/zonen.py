@@ -25,6 +25,7 @@ Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel 
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
   Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
 Alte Zonen (POC je Zone, nackte POCs, gebrochene Kanten): die abgeschlossenen Basen (vcp_zone.verlauf) auf Woche und Tag.
+Festungen: gebrochene Kanten alter Basen und AVWAP großer Ereignisse (Shannon), je Richtung die 2 nächsten.
 """
 import numpy as np
 import pandas as pd
@@ -257,39 +258,12 @@ def profil_details(pr):
 
 
 
-UMKEHR_FENSTER = 3         # Wendepunkt: höchstes Hoch bzw. tiefstes Tief von 3 Kerzen davor und danach (ungemessen)
-UMKEHR_MIN = 2             # bewährt: mindestens 2 Wendepunkte am selben Preis
 FESTUNGEN_JE_SEITE = 2     # je Richtung die 2 nächsten Festungen (Micky 21.11.2026)
-UMKEHR_VOL_SCHNITT = 50    # Volumen am Wendepunkt über dem 50-Kerzen-Schnitt
-AVWAP_GROSS = {"zahlen": "AVWAP Zahlen", "hoch": "AVWAP Hoch", "gipfel": "AVWAP Hoch",
+AVWAP_GROSS = {"zahlen": "AVWAP Zahlen", "hoch": "AVWAP Hoch", "gipfel": "AVWAP Gipfel",
                "tief": "AVWAP Tief"}   # große Ereignisse nach Shannon (Micky 21.11.2026)
 FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sonst stehen Stunden-Festungen dicht an dicht)
 
 
-def _umkehrpreise(e):
-    """Bewährte Umkehrpreise der Ebene: mindestens 2 Wendepunkte innerhalb ¼ ATR, einer davon mit Volumen über dem
-    Schnitt → [(Preis, Grund)]."""
-    df, a = e["df"], e["atr"]
-    if a is None or len(df) < 2 * UMKEHR_FENSTER + 1:
-        return []
-    H, L, V = (df[k].to_numpy(float) for k in ("High", "Low", "Volume"))
-    schnitt = pd.Series(V).rolling(UMKEHR_VOL_SCHNITT, min_periods=1).mean().to_numpy()
-    k = UMKEHR_FENSTER
-    punkte = []
-    for i in range(k, len(df) - k):
-        if H[i] >= H[i - k:i + k + 1].max():
-            punkte.append((H[i], V[i] > schnitt[i]))
-        if L[i] <= L[i - k:i + k + 1].min():
-            punkte.append((L[i], V[i] > schnitt[i]))
-    punkte.sort()
-    aus, gruppe = [], []
-    for p_, v_ in punkte + [(np.inf, False)]:
-        if gruppe and p_ - gruppe[0][0] > a * STOPP_ATR:
-            if len(gruppe) >= UMKEHR_MIN and any(x[1] for x in gruppe):
-                aus.append((float(np.mean([x[0] for x in gruppe])), f"{len(gruppe)}× gedreht"))
-            gruppe = []
-        gruppe.append((p_, v_))
-    return aus
 
 
 def _gebrochene_kanten(e, hist):
@@ -314,13 +288,13 @@ def _gebrochene_kanten(e, hist):
 
 
 def festungen(e, la, avwaps=(), hist=()):
-    """Die Festungen der Lagekarte (Micky 21.11.2026): bewährte Umkehrpreise, gebrochene Kanten alter Zonen und AVWAP
-    großer Ereignisse – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
+    """Die Festungen (Micky 21.11.2026; ohne Umkehrpreise seit 22.11.2026 – keine Quelle): gebrochene Kanten alter Basen
+    (O'Neil: Overhead Supply, Dalton: alte Wertzone) und AVWAP großer Ereignisse (Shannon) – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
     Gründen. avwaps = tiefe.avwap_liste(Tageskurse)[0]. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
     if not e or not la:
         return {"oben": [], "unten": []}
     kurs, a = la["kurs"], e["atr"] or 0
-    roh = _umkehrpreise(e) + _gebrochene_kanten(e, hist) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
+    roh = _gebrochene_kanten(e, hist) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
                                                       if x["anker"] in AVWAP_GROSS]
     aus = {}
     for seite, auswahl in (("oben", [x for x in roh if x[0] > kurs]), ("unten", [x for x in roh if x[0] < kurs])):
