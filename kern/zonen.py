@@ -24,8 +24,8 @@ Die drei Trades (Tageszone, Micky 22.11.2026):
 Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
   Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
-Alte Zonen (für die gebrochenen Kanten): die abgeschlossenen Basen (vcp_zone.verlauf) auf Woche und Tag.
-Festungen: gebrochene Kanten alter Basen und AVWAP großer Ereignisse (Shannon), je Richtung die 2 nächsten.
+Festungen (Micky 22.11.2026): alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss
+darunter (Wendepunkte ab 2 ATR), überwundene Kanten mit getauschter Rolle; je Richtung die 2 nächsten.
 """
 import numpy as np
 import pandas as pd
@@ -86,7 +86,7 @@ def profil_seit(e, ab_):
 
 
 def basis(df):
-    """Die Base des Titels aus Tageskerzen für Woche und Tag (vcp_zone): {"z", "enge", "ausbruch", "jetzt", "verlauf"}
+    """Die Base des Titels aus Tageskerzen für Woche und Tag (vcp_zone): {"z", "enge", "ausbruch", "jetzt", "bruch"}
     – z datiert (Index → Datum), oder None, wenn der Kurs am Hoch läuft."""
     df = df.dropna(subset=["High", "Low", "Close"])
     jetzt = vcp_zone.zone(df)
@@ -100,12 +100,7 @@ def basis(df):
     else:
         b = jetzt if jetzt.get("start_i") is not None else None
         en = vcp_zone.enge(df, jetzt) if jetzt.get("zone") else {}
-    try:
-        alt = [vcp_zone.datiert(df, x) for x in vcp_zone.verlauf(df)]
-    except Exception:  # noqa: BLE001 – Technik: ohne Historie keine alten Zonen
-        alt = []
-    return {"z": vcp_zone.datiert(df, b) if b else None, "enge": en or {}, "ausbruch": a, "jetzt": jetzt, "df": df,
-            "verlauf": alt, "bruch": bruch}
+    return {"z": vcp_zone.datiert(df, b) if b else None, "enge": en or {}, "ausbruch": a, "jetzt": jetzt, "df": df, "bruch": bruch}
 
 
 def _volumen_hoch(df):
@@ -188,15 +183,6 @@ def trade(e, la, ba):
     return t
 
 
-def historie(e, ba):
-    """Abgeschlossene Basen (vcp_zone.verlauf) als alte Zonen der Ebene, älteste zuerst – je mit Kanten und Ende (Tag
-    des Ausbruchs); für die gebrochenen Kanten unter den Festungen."""
-    if not e or ba is None or e["name"] == "Stunde":
-        return []
-    return [{"name": b["name"], "tief": float(b["unten"]), "hoch": float(b["oben"]), "start": pd.Timestamp(b["start_t"]),
-             "ende": pd.Timestamp(b["ende_t"])} for b in sorted(ba["verlauf"], key=lambda x: x["start_t"])]
-
-
 KNOTEN_ANTEIL = 0.5        # Knoten (HVN): Gipfel mit mindestens ½ des POC-Volumens (Claude 21.11.2026, ungemessen)
 KNOTEN_MAX = 3             # höchstens die 3 dicksten Knoten
 KNOTEN_GLAETTEN = 3        # Gipfel auf dem über 3 Stufen geglätteten Profil (gegen Zacken)
@@ -243,43 +229,39 @@ def profil_details(pr):
 
 
 FESTUNGEN_JE_SEITE = 2     # je Richtung die 2 nächsten Festungen (Micky 21.11.2026)
-AVWAP_GROSS = {"zahlen": "AVWAP Zahlen", "hoch": "AVWAP Hoch", "gipfel": "AVWAP Gipfel",
-               "tief": "AVWAP Tief"}   # große Ereignisse nach Shannon (Micky 21.11.2026)
 FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sonst stehen Stunden-Festungen dicht an dicht)
 
 
 
 
-def _gebrochene_kanten(e, hist):
-    """Kanten alter Basen, die der Kurs durchbrochen hat und seitdem nicht per Schluss zurück durchquert: die alte Decke
-    wird Boden, der alte Boden Decke (Dalton) → [(Preis, Grund)]."""
-    C = e["df"]["Close"]
+def _swing_kanten(e):
+    """Festungen aus Swing-Hochs und Swing-Tiefs der Ebene (Micky 22.11.2026; Wendepunkte ab 2 ATR wie die Base,
+    vcp_zone.zigzag, ohne den letzten unbestätigten): ein Swing-Hoch ohne Schluss darüber ist eine alte Decke (O'Neil,
+    Minervini: Overhead Supply), ein Swing-Tief ohne Schluss darunter ein alter Boden; per Schluss überwunden und
+    seitdem nicht zurück, tauscht die Kante die Rolle (Decke → Boden, Boden → Decke). → [(Preis, Grund)]."""
+    df = e["df"]
+    if len(df) < vcp_zone.ATR_TAGE + 2:
+        return []
+    C = df["Close"].to_numpy(float)
     aus = []
-    for z in hist:
-        nach = C[C.index > z["ende"]]
-        if not len(nach):
-            continue
-        raus = nach[(nach > z["hoch"]) | (nach < z["tief"])]
-        if not len(raus):
-            continue
-        oben = float(raus.iloc[0]) > z["hoch"]
-        kante = z["hoch"] if oben else z["tief"]
-        danach = nach[nach.index > raus.index[0]]
-        zurueck = (danach < kante).any() if oben else (danach > kante).any()
-        if not zurueck:
-            aus.append((kante, "alte Decke" if oben else "alter Boden"))
+    for i, p_, art in vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]:
+        nach = C[i + 1:]
+        durch = np.flatnonzero(nach > p_) if art == "H" else np.flatnonzero(nach < p_)
+        if not len(durch):
+            aus.append((float(p_), "alte Decke" if art == "H" else "alter Boden"))
+        elif not ((nach[durch[0] + 1:] < p_) if art == "H" else (nach[durch[0] + 1:] > p_)).any():
+            aus.append((float(p_), "Decke → Boden" if art == "H" else "Boden → Decke"))
     return aus
 
 
-def festungen(e, la, avwaps=(), hist=()):
-    """Die Festungen (Micky 21.11.2026; ohne Umkehrpreise seit 22.11.2026 – keine Quelle): gebrochene Kanten alter Basen
-    (O'Neil: Overhead Supply, Dalton: alte Wertzone) und AVWAP großer Ereignisse (Shannon) – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
-    Gründen. avwaps = tiefe.avwap_liste(Tageskurse)[0]. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
+def festungen(e, la):
+    """Die Festungen (Micky 22.11.2026: nur alte Decke und alter Boden): Kanten aus Swing-Hochs und Swing-Tiefs
+    (_swing_kanten) – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
+    Gründen. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
     if not e or not la:
         return {"oben": [], "unten": []}
     kurs, a = la["kurs"], e["atr"] or 0
-    roh = _gebrochene_kanten(e, hist) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
-                                                      if x["anker"] in AVWAP_GROSS]
+    roh = _swing_kanten(e)
     aus = {}
     for seite, auswahl in (("oben", [x for x in roh if x[0] > kurs]), ("unten", [x for x in roh if x[0] < kurs])):
         auswahl.sort(key=lambda x: abs(x[0] - kurs))
@@ -297,11 +279,10 @@ def festungen(e, la, avwaps=(), hist=()):
     return aus
 
 
-def fuehrte(ebenen, avwaps=()):
-    """Alles für Kopfzeile und Chart: die Base (Woche und Tag), Lage je Ebene, alte Zonen, Festungen, der Trade."""
+def fuehrte(ebenen):
+    """Alles für Kopfzeile und Chart: die Base (Woche und Tag), Lage je Ebene, Festungen, der Trade."""
     tag = ebenen.get("Tag")
     ba = basis(tag["df"]) if tag else None
     la = {n: lage(ebenen.get(n), None if n == "Stunde" else ba) for n in EBENEN}
-    alt = {n: historie(ebenen.get(n), ba) for n in EBENEN}
-    fest = {n: festungen(ebenen.get(n), la[n], avwaps, alt[n]) for n in EBENEN}
-    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "alt": alt, "basis": ba}
+    fest = {n: festungen(ebenen.get(n), la[n]) for n in EBENEN}
+    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba}

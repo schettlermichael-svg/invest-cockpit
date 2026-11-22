@@ -49,11 +49,7 @@ def rechnen(tk, laufend=False):
         sektor = None
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
-    try:
-        avwaps = tiefe.avwap_liste(df, zt)[0]
-    except Exception:  # noqa: BLE001 – Technik: ohne AVWAP keine AVWAP-Festung
-        avwaps = []
-    f = zonen.fuehrte(ebenen, avwaps)
+    f = zonen.fuehrte(ebenen)
     cmf = tiefe.cmf(df)["wert"]
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
             "laufend": bool(df.attrs.get("laufend")), "rs": rs}

@@ -309,8 +309,8 @@ def legende():
     from gestaltung import t
     teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · "
               "Linie darin = Pivot unter der Oberkante · POC grün gepunktet"),
-             (FESTUNG_FARBE, "Festung ▲▼: gebrochene Kante einer alten Base (alte Decke, alter Boden) oder AVWAP eines großen "
-              "Ereignisses (letztes Hoch, Gipfel der Korrektur, Tief, Zahlen) – je Richtung die 2 nächsten, mit Abstand; + = mehrere Gründe"),
+             (FESTUNG_FARBE, "Festung ▲▼: alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss "
+              "darunter (Wendepunkte ab 2 ATR); überwunden tauschen sie die Rolle (Decke → Boden) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Zeit (lila) ◂ ▸ Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "

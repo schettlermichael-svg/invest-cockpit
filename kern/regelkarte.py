@@ -702,15 +702,15 @@ BEREICHE = [
                "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
                "Ebene ab Beginn der Zone. PbD-Kette nach Vorwald am 22.11.2026 entfernt.",
-         messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.historie", "zonen.fuehrte", "zonen.profil_details",
+         messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.fuehrte", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Festungen", quelle="Micky 21.11.2026",
-         regel="Gebrochene Kanten alter Basen (O'Neil: Overhead Supply, Dalton), AVWAP Zahlen/Hoch/Tief (Shannon); je "
-               "Richtung 2, näher als ½ ATR verschmolzen. Umkehrpreise (2× gedreht) am 22.11.2026 entfernt – keine Quelle. "
-               "Lagebeurteilung, Szenarien, Schatten und Gedächtnis am 22.11.2026 entfernt (reagieren statt antizipieren).",
+    dict(name="Festungen", quelle="O'Neil, Minervini (Overhead Supply), Micky 22.11.2026",
+         regel="Alte Decke = Swing-Hoch (Wendepunkt ab 2 ATR, vcp_zone.zigzag) ohne Schluss darüber, alter Boden = Swing-"
+               "Tief ohne Schluss darunter; per Schluss überwunden und seitdem nicht zurück, tauscht die Kante die Rolle. "
+               "Je Richtung die 2 nächsten, näher als ½ ATR verschmolzen. Umkehrpreise und AVWAP am 22.11.2026 entfernt.",
          messung=["zonen.festungen"], pruefer=[],
-         luecke="kein Prüfer – alle Schwellen gesetzt"),
+         luecke="kein Prüfer"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "
