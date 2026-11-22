@@ -534,15 +534,23 @@ BEREICHE = [
                "(Spalte Bahn), Rückenwind-Zeile und Kopf der Titelseite.",
          messung=["zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Morgenmeldung: Zonen-Trades", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
-         regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Ausbruch- oder Rücktest-Trade der Tagesebene in "
-               "Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Bruch mit Volumen; Rückzug zuerst), je Titel "
-               "Klasse, Trade, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Keim des Zirkels; ohne Trade sagt die Meldung das.",
+    dict(name="Morgenmeldung: Setups", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
+         regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest am Pivot, im "
+               "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
+               "Fortsetzung abwärts; Rückzug zuerst), je Titel Klasse, Setup, Einstieg, Stopp mit Risiko-Ampel, ✈️ und "
+               "Keim des Zirkels; ohne Setup sagt die Meldung das.",
          messung=["zirkel.heisse", "zirkel.trade_wort"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
+    dict(name="Setup aus dem Zirkel", quelle="Micky 22.11.2026 (unser Setup ergibt sich aus unserem Zirkel)",
+         regel="Setup = Phase des Zirkels (Woche) + Zone (Tag), bestätigt durch Stärke bzw. Schwäche (Stärke = Widerstand "
+               "überwinden, Druck aushalten; ein Keim zählt nur gemessen): 1 Basis + Ausbruch/Pivot + 🌱 oder Wechsel 1→2 = "
+               "Aufbruch · 2 Aufwärts + Ausbruch/Pivot ohne 🍂 = Fortsetzung · Rücktest in 2 bzw. 1→2 = Rücktest · 3 "
+               "Verteilung + Bruch mit Volumen + 🍂 oder Wechsel 3→4 = Abbruch · 4 Abwärts + Bruch ohne 🌱 = Fortsetzung "
+               "abwärts; junge Titel ohne Zirkel: Aufbruch/Rücktest. Gegen den Zirkel kein Setup, nicht gezeigt.",
+         messung=["zirkel.setup", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
-         regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Zonen-Trade der "
-               "Tagesebene mit derselben Regel wie Titelseite und Chart, 52-Wochen-Hoch bzw. -Tief für O'Neils Markt-Ampel "
-               "(Hochs gegen Tiefs). Gruppen-Listen und Spalte „Trade“ der Liste lesen daraus.",
+         regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Zone der "
+               "Tagesebene im Einklang mit dem Zirkel (Setup), 52-Wochen-Hoch bzw. -Tief für O'Neils Markt-Ampel "
+               "(Hochs gegen Tiefs). Gruppen-Listen und Spalte „Setup“ der Liste lesen daraus.",
          messung=["zirkel.rechnen", "zirkel.feld", "zirkel.barometer", "rueckenwind_seite.setups"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",

@@ -4,7 +4,7 @@ Aufruf im Ordner InvestCockpit:
     python3 werkzeuge/tpo_laden.py              Abendlauf: neuer Tag über Yahoo (Minuten), dann Massive in Durchgängen für
                                                 Lücken und neue Titel (abbrechen und neu starten jederzeit)
     python3 werkzeuge/tpo_laden.py fortsetzen   nur der neue Tag über Yahoo
-    python3 werkzeuge/tpo_laden.py zirkel       nur Tageskurse und Zirkel (Kreislauf, Zonen-Trades)
+    python3 werkzeuge/tpo_laden.py zirkel       nur Tageskurse und Zirkel (Kreislauf, Setups)
 
 Massive liefert je Anfrage höchstens 50.000 Minuten – bei großen Titeln rund 2 Monate. Ein Durchgang macht eine Anfrage je
 Titel und füllt jeweils die jüngste Lücke; nach dem ersten Durchgang hat jeder Titel die letzten Wochen (genug für Wertzone,

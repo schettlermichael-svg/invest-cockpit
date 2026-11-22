@@ -3,7 +3,7 @@ allgemeines Blabla. Auftrag des Snipers: die Ineffizienz und Disbalance finden, 
 lässt – oder sagen, dass es keinen Schuss gibt.
 
 Material (seit 22.11.2026 dasselbe wie Titelseite und Chart): Zirkel, Zone und Phase auf Woche, Tag und Stunde, der
-Zonen-Trade, Festungen und freie Bahn, Schlachtordnung und Geld, Tiefenanalyse – jedes Feld mit einer Nummer (F1, F2 …).
+Setup, Festungen und freie Bahn, Schlachtordnung und Geld, Tiefenanalyse – jedes Feld mit einer Nummer (F1, F2 …).
 Die Kette, an der der Stratege entlanggeht:
     Zirkel → Zone und Phase → Trade → Reibung (Festungen, freie Bahn) → Truppe (Klasse, Geld) → wo wartet die Gegenseite.
 Antwort über ein festes Formular: Schuss (long/short/kein), Disbalance, höchstens 3 Belege mit Feldnummer, Auslöser
@@ -31,7 +31,8 @@ WETTBEWERBER = 5                # höchstens 5 Wettbewerber
 SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
 als nummerierte Felder (F1, F2 …): den Zirkel (Phase 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
 die ihn tragen, und dem Keim des Gegenteils), Zone und Phase auf Woche, Tag und Stunde (Base nach Minervini/O'Neil, in
-der Stunde die Balance), den Zonen-Trade der App, die Festungen (alte Decke, alter Boden) und die freie Bahn, die
+der Stunde die Balance), das Setup der App (Zone im Einklang mit dem Zirkel: Aufbruch, Fortsetzung, Rücktest, Abbruch,
+Fortsetzung abwärts), die Festungen (alte Decke, alter Boden) und die freie Bahn, die
 Schlachtordnung (Klasse 1 Garde bis 5 Rückzug), Rückenwind und Geldfluss, den Markt und die Tiefenanalyse. Für Kurse,
 Zonen, Volumen, RS und Geldfluss gilt nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
 Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11.2026, aus der Titel-Analyse):
@@ -51,7 +52,7 @@ entlang der Linie des geringsten Widerstands – freie Bahn ohne Festung darübe
 
 Dein Auftrag: Finde die eine Disbalance, die den Kurs aus der Zone treibt – wer ist am Rand stärker, und warum ist die
 Gegenseite schwach, leer oder gefangen? Geh die Kette entlang: Zirkel → Zone und Phase (stimmen die Ebenen überein?) →
-Trade → Reibung → Truppe → wo wartet die Gegenseite → eigen oder geliehen.
+Setup → Reibung → Truppe → wo wartet die Gegenseite → eigen oder geliehen.
 
 Regeln:
 1. Kein Weichmacher. Kein „könnte“, „möglicherweise“, „man sollte beobachten“. Du urteilst.
@@ -101,7 +102,7 @@ def _z(x, f=".2f"):
     return format(x, f).replace(".", ",")
 
 
-def material(tk, r, kurs, atr=None, rw=None, markt=None, setup=None, termin=None, tiefe=None):
+def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None):
     """Nummerierte Felder → (Text, {F-Nummer: Text}); r = zonenseite.rechnen (dieselbe Fährte wie Titelseite und Chart)."""
     import zeichen
     felder = []
@@ -134,10 +135,8 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, setup=None, termin=None
         f("Freie Bahn: keine Festung " + ("über" if fr.get("oben") else "unter") + " dem Kurs (Tageschart, zwei Jahre)")
     t = fu.get("trade")
     if t:
-        f(f"Zonen-Trade der App: {t['name']}, Einstieg {_z(t['einstieg'])} $, Stopp {_z(t['stopp'])} $, Risiko "
+        f(f"Setup der App (Zirkel und Zone): {t['name']}, Einstieg {_z(t['einstieg'])} $, Stopp {_z(t['stopp'])} $, Risiko "
           f"{_z(t['risiko'], '.1f')} %" + (" – wartet auf den Auslöser" if t["wartet"] else ""))
-    if setup:
-        f(f"Zonen-Trade (Nachtlauf): {setup}")
     if rw:
         import rueckenwind
         kl = rw.get("klasse")

@@ -2,8 +2,8 @@
 Reviers und der Watchlist aus den gespeicherten Tageskursen
 
   · den Kreislauf (Phase 1–4, Zeichen der Stärke und Schwäche, Keime – zeichen.fuer_titel),
-  · den Zonen-Trade der Tagesebene mit derselben Regel wie Titelseite und Chart (zonen.basis, lage, trade):
-    Ausbruch long, Rücktest, Short am Bruch – oder keinen,
+  · das Setup: Zonen-Trade der Tagesebene (zonen.basis, lage, trade) im Einklang mit dem Zirkel (setup) –
+    Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – oder keines,
   · ob der Titel heute am 52-Wochen-Hoch oder -Tief steht (für O'Neils Markt-Ampel: Hochs gegen Tiefs).
 
 Abgelegt mit dem Kreislauf in daten/kreislauf/<stand>.json (zeichen.ablegen): {"titel": Kreisläufe, "feld": je Titel
@@ -59,7 +59,7 @@ def _titel(tk, start=None):
             k = None
         e = {"name": "Tag", "df": df, "atr": atr_modul.wert(df)}
         la = zonen.lage(e, ba, profil=False)
-        t = zonen.trade(e, la, ba)
+        t = setup(zonen.trade(e, la, ba), zeichen.zirkel(k))
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         feld = {"phase": la["phase"] if la else None,
                 "trade": {x: t[x] for x in TRADE_FELDER} if t else None,
@@ -84,14 +84,15 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     feld = {tk: f for tk, _, f in erg}
     barometer = {"hochs": sum(f["hoch52"] for f in feld.values()), "tiefs": sum(f["tief52"] for f in feld.values()),
                  "titel": len(feld)}
-    try:                                            # Stand = Kurstag (Datenstand-Wache), nicht der Tag des Laufs
-        stand = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
+    stand = pd.Timestamp.now().strftime("%Y-%m-%d")   # Datei je Lauftag: die jüngste gilt (zeichen.laden)
+    try:                                            # Kurstag für die Datenstand-Wache
+        kurstag = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
     except Exception:  # noqa: BLE001
-        stand = pd.Timestamp.now().strftime("%Y-%m-%d")
-    zeichen.ablegen(stand, {tk: k for tk, k, _ in erg if k}, feld=feld, barometer=barometer)
+        kurstag = None
+    zeichen.ablegen(stand, {tk: k for tk, k, _ in erg if k}, feld=feld, barometer=barometer, kurstag=kurstag)
     trades = sum(1 for f in feld.values() if f["trade"])
-    melden(f"  {len(feld)} Titel in {time.time() - beginn:.0f} s, {trades} mit Trade")
-    return {"stand": stand, "titel": len(feld), "trades": trades, "barometer": barometer}
+    melden(f"  {len(feld)} Titel in {time.time() - beginn:.0f} s, {trades} mit Setup")
+    return {"stand": stand, "kurstag": kurstag, "titel": len(feld), "trades": trades, "barometer": barometer}
 
 
 def feld(tk=None):
@@ -106,17 +107,58 @@ def barometer():
     return zeichen.laden().get("barometer") or {}
 
 
+# ── Das Setup ergibt sich aus dem Zirkel (Micky 22.11.2026): Phase des Zirkels (Woche) + Zone (Tag), bestätigt durch
+# Stärke bzw. Schwäche nach unserer Definition (Stärke = Widerstand überwinden und Druck aushalten; ein Keim zählt nur,
+# wenn er gemessen ist). Ein Zonen-Trade gegen den Zirkel ist kein Setup und wird nicht gezeigt.
+#   1 Basis      + Ausbruch/am Pivot  + 🌱 gemessen (Widerstand überwunden, Rücksetzer gehalten)  → Aufbruch (long)
+#   2 Aufwärts   + Ausbruch/am Pivot  + kein 🍂                                                    → Fortsetzung (long)
+#   1→2 oder 2   + Rücktest des Pivots                                                             → Rücktest (long)
+#   3 Verteilung + Bruch mit Volumen  + 🍂 gemessen (Stützen geben unter Druck nach)               → Abbruch (short)
+#   4 Abwärts    + Bruch mit Volumen  + kein 🌱                                                    → Fortsetzung abwärts (short)
+# Junge Titel ohne Zirkel (unter einem Jahr Kurse): Ausbruch und Rücktest als Aufbruch bzw. Rücktest (IPO-Base).
+SETUP = {"aufbruch": ("💥", "Aufbruch"), "fortsetzung": ("💥", "Fortsetzung"), "ruecktest": ("🪝", "Rücktest"),
+         "abbruch": ("🐻", "Abbruch"), "abwaerts": ("🐻", "Fortsetzung abwärts")}
+P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
+
+
+def setup(t, zk):
+    """Zonen-Trade t (zonen.trade) und Zirkel zk (zeichen.zirkel) → der Trade als Setup (Name und Zeichen des Setups)
+    oder None, wenn die Zone gegen den Zirkel steht bzw. die Bedingung fehlt."""
+    if not t:
+        return None
+    p = (zk or {}).get("phase") or 0
+    keim = bool((zk or {}).get("keim"))
+    ziel = (zk or {}).get("ziel")
+    art = None
+    if t["art"] == "ausbruch":
+        if p == 0 or (p == P_BASIS and (keim or ziel == P_AUF)):
+            art = "aufbruch"
+        elif p == P_AUF and not keim:
+            art = "fortsetzung"
+    elif t["art"] == "ruecktest":
+        if p in (0, P_AUF) or (p == P_BASIS and ziel == P_AUF):
+            art = "ruecktest"
+    elif t["art"] == "short":
+        if p == P_VERTEILUNG and (keim or ziel == P_AB):
+            art = "abbruch"
+        elif p == P_AB and not keim:
+            art = "abwaerts"
+    if not art:
+        return None
+    return dict(t, art=art, zeichen=SETUP[art][0], name=SETUP[art][1])
+
+
 HEISS = ("kante", "ausbruch", "ruecktest", "bruch")   # Morgenmeldung: am Pivot, frischer Ausbruch, Rücktest, Bruch
 
 
 def trade_wort(f):
-    """Trade eines Titels aus dem Feld in Worten, mit der Phase der Base: „💥 Ausbruch · am Pivot“, „💥 Ausbruch ·
-    Base im Aufbau“, „💥 Ausbruch · läuft“, „🐻 Bruch der Unterkante“; ohne Trade ""."""
+    """Setup eines Titels aus dem Feld in Worten, mit der Phase der Base: „💥 Fortsetzung · am Pivot“, „💥 Aufbruch ·
+    Base im Aufbau“, „💥 Fortsetzung · läuft“, „🐻 Abbruch“; ohne Setup ""."""
     import zonen
     t = (f or {}).get("trade")
     if not t:
         return ""
-    if t["art"] != "ausbruch":
+    if t["art"] not in ("aufbruch", "fortsetzung"):
         return f'{t["zeichen"]} {t["name"]}'
     return f'{t["zeichen"]} {t["name"]} · ' + ("läuft" if not t["wartet"] else zonen.PHASE[f["phase"]][1])
 
@@ -152,6 +194,6 @@ def heisse(n=MELDUNG_JE_SEITE):
                   key=lambda tk: (klasse_nr(tk), -((rw.get(tk) or {}).get("rang") or 0)))[:n]
     kurz = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] < 0),
                   key=lambda tk: (-klasse_nr(tk), (rw.get(tk) or {}).get("rang") or 0))[:n]
-    zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Titel am Pivot, im Ausbruch oder Rücktest"]) + \
-             ([zeile(tk, "🐻") for tk in kurz] or ["⚪ Short: heute kein Bruch mit Volumen"])
+    zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Setup am Pivot, im Ausbruch oder Rücktest"]) + \
+             ([zeile(tk, "🐻") for tk in kurz] or ["⚪ Short: heute kein Abbruch und keine Fortsetzung abwärts"])
     return "\n".join(zeilen), len(lang) + len(kurz)

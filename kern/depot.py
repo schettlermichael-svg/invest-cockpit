@@ -277,9 +277,9 @@ def _nach_dem_kauf(p, df):
         i = int(lo.argmin())
         if i < len(lo) - 1 and lo[i] < e * TENNIS_RUECK and k > hi[:i + 1].max() and len(lo) - 1 - i <= TENNIS_TAGE:
             aus.append(("grün", "Tennisball: nach dem Rücksetzer schnell auf neues Hoch – Zeichen von Stärke (Minervini)"))
-    import zirkel                                      # Pivot des Zonen-Trades (Zirkel-Lauf, 22.11.2026)
+    import zirkel                                      # Pivot des Setups (Zirkel-Lauf, 22.11.2026)
     t_ = zirkel.feld(p.get("ticker", "")).get("trade") or {}
-    piv = t_.get("einstieg") if t_.get("richtung", 0) > 0 and t_.get("art") == "ausbruch" else None
+    piv = t_.get("einstieg") if t_.get("richtung", 0) > 0 and t_.get("art") in ("aufbruch", "fortsetzung") else None
     if lang and piv and e >= piv * RESET_NAH and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))

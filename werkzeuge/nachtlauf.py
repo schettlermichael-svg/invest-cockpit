@@ -12,8 +12,8 @@ Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weit
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlist, Positionen, Gesamtmarkt) und Wechselkurse (Yahoo)
   5. samstags (nach dem Freitag) Revier-Pflege; TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login)
-  6. Rückenwind, Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs je Titel; löst am 22.11.2026 den
-     Kartentisch ab), Lage (Seite Rückenwind), Schrank; danach die Morgenmeldung (Schlachtordnung, Zonen-Trades)
+  6. Rückenwind, Zirkel (Kreislauf, Setup, Hochs/Tiefs je Titel; löst am 22.11.2026 den
+     Kartentisch ab), Lage (Seite Rückenwind), Schrank; danach die Morgenmeldung (Schlachtordnung, Setups)
   7. Datenstand-Wache: Kurstag jedes Teils ins Protokoll (rot, wenn sie verschiedene Tage haben)
   8. Massive-Durchgänge für Lücken der
      30-Minuten-Kerzen bis 11:30 Uhr (Erstbefüllung, neue Titel)
@@ -124,7 +124,7 @@ def main():
         import zirkel
         z_ = zirkel.rechnen(sorted(set(alle) | set(watchlists.alle())), melden=lambda x: print(x, flush=True))
         b_ = z_["barometer"]
-        return f"{z_['titel']} Titel, {z_['trades']} mit Zonen-Trade · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs"
+        return f"{z_['titel']} Titel, {z_['trades']} mit Setup · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs"
 
     def revier():
         import revier_pflege
@@ -170,7 +170,7 @@ def main():
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("Zahlen nach den Terminen neu laden", zahlen_nach_terminen)
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Zirkel: die Meldung liest beide
-    schritt("Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs)", zirkel_)
+    schritt("Zirkel (Kreislauf, Setup, Hochs/Tiefs)", zirkel_)
     schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Zirkel: liest Hochs und Tiefs
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
     p["datenstand"] = datenstand()
@@ -180,10 +180,10 @@ def main():
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     if fehler:                                    # Micky 17.11.2026: kein „Lage steht“ mehr – aufs Handy nur die heißen
         _mitteilung(f"🔴 gescheitert: {', '.join(fehler)}", True)   # Titel und Fehler des Laufs
-    try:                                          # Morgenmeldung: Zonen-Trades nach Schlachtordnung (22.11.2026)
+    try:                                          # Morgenmeldung: Setups nach Schlachtordnung (22.11.2026)
         import zirkel
         text_, n_ = zirkel.heisse()
-        _mitteilung(text_, titel=f"Zonen-Trades: {n_}", seite="Rückenwind")
+        _mitteilung(text_, titel=f"Setups: {n_}", seite="Rückenwind")
     except Exception as e:  # noqa: BLE001 – ohne Liste läuft der Lauf weiter
         print(f"Heiße Titel: {e}", flush=True)
 
@@ -211,10 +211,10 @@ def main():
 
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
     "Massive-Tageskurse": "Rückenwind (RS-Rang, Klassen, Momentum, ✈️), Rudel, Breite",
-    "Yahoo-Tageskurse": "Charts, Zirkel, Zonen-Trades, Morgenmeldung",
+    "Yahoo-Tageskurse": "Charts, Zirkel, Setups, Morgenmeldung",
     "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
     "Rückenwind": "Schlachtordnung, Geldfluss, dreifacher Rückenwind",
-    "Zirkel": "Kreislauf, Zonen-Trades, Hochs/Tiefs der Markt-Ampel",
+    "Zirkel": "Kreislauf, Setups, Hochs/Tiefs der Markt-Ampel",
 }
 
 
@@ -248,9 +248,9 @@ def datenstand():
         aus["Rückenwind"] = (rueckenwind.laden() or {}).get("stand")
     except Exception:  # noqa: BLE001
         aus["Rückenwind"] = None
-    try:                                        # Zirkel-Lauf (Kreislauf, Zonen-Trades) aus den Yahoo-Tageskursen
+    try:                                        # Zirkel-Lauf (Kreislauf, Setups) aus den Yahoo-Tageskursen
         import zeichen
-        aus["Zirkel"] = (zeichen.laden() or {}).get("stand") if (zeichen.laden() or {}).get("feld") else None
+        aus["Zirkel"] = (zeichen.laden() or {}).get("kurstag")
     except Exception:  # noqa: BLE001
         aus["Zirkel"] = None
     return aus

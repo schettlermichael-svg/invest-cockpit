@@ -1,5 +1,5 @@
 """Titelseite des schlanken Cockpits (Micky 21./22.11.2026): Kopfzeile mit Rückenwind und den drei Ebenen (Base nach
-Minervini/O'Neil in Woche und Tag, Balance in der Stunde), der eine Trade, darunter der Zonenchart mit Reitern Woche ·
+Minervini/O'Neil in Woche und Tag, Balance in der Stunde), das eine Setup (Zone im Einklang mit dem Zirkel), darunter der Zonenchart mit Reitern Woche ·
 Tag · Stunde. Wenig Text, das Bild führt."""
 import os
 import time
@@ -55,6 +55,9 @@ def rechnen(tk, laufend=False):
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
     f = zonen.fuehrte(ebenen)
+    import zeichen
+    import zirkel                                   # das Setup ergibt sich aus dem Zirkel (Micky 22.11.2026)
+    f["trade"] = zirkel.setup(f["trade"], zeichen.zirkel(zeichen.von(tk)))
     cmf = tiefe.cmf(df)["wert"]
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
             "laufend": bool(df.attrs.get("laufend")), "rs": rs}
@@ -148,7 +151,7 @@ def kopf(r):
                       f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
                       f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>')
     else:
-        trade_html = '<div style="font-size:20px">⚪ kein Trade</div>'
+        trade_html = '<div style="font-size:20px">⚪ kein Setup</div>'
     import rueckenwind_seite
     wind = rueckenwind_seite.titel_zeile(r["tk"])
     wind_html = (f'<div style="margin-top:10px;font-size:15px;color:{TEXT}">Rückenwind: '
@@ -165,7 +168,7 @@ def kopf(r):
             f'{wind_html}{zirkel_html(r["tk"])}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
-            f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>')
+            f'<div style="font-size:12px;color:{TEXT_3}">Setup</div>{trade_html}</div></div>')
 
 
 def seite_zonen(tk, laufend=False, _stand=None):

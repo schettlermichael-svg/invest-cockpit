@@ -487,10 +487,9 @@ def strategen_call(tk, teile):
             rw = titel._rueckenwind(tk) or {}
             mm = titel.maerkte() or {}
             import analyse_seite
-            import zirkel
             with st.spinner("Recherche im Netz und Einschätzung (1–3 Minuten) …"):
                 erg = strategen.rufen(tk, stand, r, float(df["Close"].iloc[-1]), atr=tag["atr"], rw=rw,
-                                      markt=mm.get("auktion"), setup=zirkel.trade_wort(zirkel.feld(tk)) or "kein Zonen-Trade",
+                                      markt=mm.get("auktion"),
                                       termin=((rw.get("zahlen") or {}).get("termin")), tiefe=analyse_seite.material(tk))
         except Exception as x:  # noqa: BLE001
             st.error(f"Strategen-Call ging nicht: {x}")
