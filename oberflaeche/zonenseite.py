@@ -4,7 +4,7 @@ Tag · Stunde. Wenig Text, das Bild führt."""
 import pandas as pd
 
 import gestaltung
-from gestaltung import BLAU, KARTE, RAND, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
+from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
 
 EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Zone", "Stunde": "Einstieg"}
 
@@ -87,6 +87,45 @@ def _karte_ebene(name, la, aktiv=False):
             + '</div>')
 
 
+def zirkel_html(tk):
+    """Der Zirkel des Titels (Micky 22.11.2026): Leiste Basis → Aufwärts → Verteilung → Abwärts mit der laufenden Phase,
+    darunter die Zeichen, die die Phase tragen, und die Keime des Gegenteils (gespeicherter Kreislauf des Nachtlaufs)."""
+    import zeichen
+    k = zeichen.von(tk)
+    z = zeichen.zirkel(k)
+    if not z:
+        return (f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Zirkel: noch kein Kreislauf aus dem '
+                f'Nachtlauf</div>')
+    farbe = {1: TEXT_2, 2: GRUEN, 3: GELB, 4: ROT}
+    teile = []
+    for p_ in farbe:                                  # die vier Phasen in ihrer Reihenfolge
+        an = p_ == z["phase"]
+        teile.append(f'<div style="flex:1;text-align:center;padding:6px 4px;border-radius:8px;'
+                     f'border:{2 if an else 1}px solid {farbe[p_] if an else RAND};'
+                     f'color:{farbe[p_] if an else TEXT_3};font-size:{14 if an else 13}px">'  # Layout
+                     f'{p_} · {zeichen.PHASE_NAME[p_]}'
+                     + (f'<br><span style="font-size:12px">{z["wochen"]} Wo.</span>' if an and z["wochen"] else "")
+                     + (f'<br><span style="font-size:12px">→ {z["ziel"]} zeichnet sich ab</span>'
+                        if an and z["ziel"] else "") + '</div>')
+    leiste = ('<div style="display:flex;gap:6px;align-items:stretch">' + '<span style="align-self:center">→</span>'.join(teile)
+              + '<span style="align-self:center;color:' + TEXT_3 + '">↻</span></div>')
+    if not z["phase"]:
+        leiste = f'<div style="font-size:14px;color:{TEXT_2}">jung – noch keine Phase (unter 300 Handelstagen)</div>'
+    keim_z = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
+
+    def spalte(titel, liste, zeichen_):
+        inhalt = "".join(f'<div style="margin:2px 0">{zeichen_} {t(x)}</div>' for x in liste) or (
+            f'<div style="color:{TEXT_3}">–</div>')
+        return (f'<div style="flex:1;min-width:260px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:2px">'
+                f'{titel}</div><div style="font-size:13px;color:{TEXT_2}">{inhalt}</div></div>')
+    traeger_z = "🍂" if keim_z == "🌱" else "🌱"
+    return (f'<div style="margin-top:12px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:4px">Zirkel · Stand '
+            f'{k.get("stand", "")}</div>{leiste}'
+            f'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">'
+            + spalte(z["rolle"][0], z["traegt"], traeger_z if z["phase"] else "•")
+            + (spalte(z["rolle"][1], z["keim"], keim_z) if z["phase"] else "") + '</div></div>')
+
+
 def kopf(r):
     """Kopfzeile: Titel, Kurs, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Zone und Phase; der Trade.
     Aufgeräumt 22.11.2026: ohne Lagebeurteilung, Gedächtnis, PbD, Einigkeit und Muster."""
@@ -116,7 +155,7 @@ def kopf(r):
             f'<span style="font-size:18px;color:{TEXT}">{zahl(kurs)} $</span>'
             f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
-            f'{wind_html}'
+            f'{wind_html}{zirkel_html(r["tk"])}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>')

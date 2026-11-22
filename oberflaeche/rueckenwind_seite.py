@@ -317,8 +317,29 @@ def titel_zeile(tk):
             "Volumen " + (_zufluss(x.get("zufluss"), x.get("trocken")) or "–"),
             *([f"Hoch {HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %"] if wort else []),
             "Geld " + PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
+            *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
             "Zahlen " + PUNKT[z.get("ampel") or "grau"]
             + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else "")]
+
+
+def _momentum(x):
+    """Momentum nach Kullamägi: Rendite über 1, 3, 6 Monate; 🚀 = unter den besten 2 % des Reviers."""
+    m = x.get("momentum") or {}
+    return " · ".join(f'{"🚀 " if top else ""}{k} {"+" if r > 0 else ""}{zahl(r, 0)} %' for k, (r, top) in m.items())
+
+
+def _zirkel(tk, kreis):
+    """(Phase, Keim) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden)."""
+    import zeichen
+    z = zeichen.zirkel((kreis.get("titel") or {}).get(tk))
+    if not z:
+        return "–", ""
+    phase = (f'{z["phase"]} {z["name"]}' + (f' · {z["wochen"]} Wo.' if z["wochen"] else "")
+             + (f' → {z["ziel"]}' if z["ziel"] else "")) if z["phase"] else "jung"
+    if not z["keim"]:
+        return phase, ""
+    zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
+    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:3]))
 
 
 def _link(tk, text):
@@ -333,7 +354,8 @@ TITEL_TEXT = r"&z=(.*)$"
 def liste(erg, nur_watchlist=False):
     """Alle Titel in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund. Umschalter
     (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → DataFrame."""
-    reihen = []
+    import zeichen
+    reihen, kreis = [], zeichen.laden()
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
         if nur_watchlist and not x.get("watchlist"):
             continue
@@ -343,12 +365,14 @@ def liste(erg, nur_watchlist=False):
         wort = abstand_wort(ab)
         r = _richtung(x)
         k = klasse(x)
+        phase, keim = _zirkel(tk, kreis)
         reihen.append({
             "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
             "Titel": _link(tk, tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
+            "Phase": phase, "Keim": keim,
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
-            "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
+            "Momentum": _momentum(x), "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
             "Volumen": _zufluss(x.get("zufluss"), x.get("trocken")),
             "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
             "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),

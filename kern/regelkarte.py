@@ -705,6 +705,13 @@ BEREICHE = [
          messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.fuehrte", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer"),
+    dict(name="Zirkel: Stärke, Schwäche, Momentum, Balance und Disbalance", quelle="Weinstein, Wyckoff, Dalton, Kullamägi, Micky 22.11.2026",
+         regel="Vier Phasen je Woche (Basis, Aufwärts, Verteilung, Abwärts); jede trägt den Keim des Gegenteils: in Basis "
+               "und Abwärts keimt die Stärke, in Aufwärts und Verteilung die Schwäche. Titelseite: Leiste und Zeichen "
+               "„trägt“ / „Keim“; Liste: Phase, Keim (🌱/🍂). Momentum nach Kullamägi: Rendite über 22, 67, 126 Tage, die "
+               "besten 2 % des Reviers je Fenster = 🚀.",
+         messung=["zeichen.zirkel", "zeichen.kurz", "rueckenwind.rechnen"], pruefer=[],
+         luecke="kein Prüfer"),
     dict(name="Festungen", quelle="O'Neil, Minervini (Overhead Supply), Micky 22.11.2026",
          regel="Alte Decke = Swing-Hoch (Wendepunkt ab 2 ATR, vcp_zone.zigzag) ohne Schluss darüber, alter Boden = Swing-"
                "Tief ohne Schluss darunter; per Schluss überwunden und seitdem nicht zurück, tauscht die Kante die Rolle. "

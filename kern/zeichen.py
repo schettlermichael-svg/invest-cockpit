@@ -1001,6 +1001,45 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
             "wechsel_wochen": wechsel_wochen}
 
 
+# ── Der Zirkel (Micky 22.11.2026): Stärke, Schwäche, Momentum, Balance und Disbalance ──────────────────────────────
+# Jede Phase trägt den Keim des Gegenteils: in der Basis (1) und im Abwärts (4) keimt die Stärke, im Aufwärts (2) und in
+# der Verteilung (3) die Schwäche. „trägt“ sind die Zeichen der herrschenden Seite, „Keim“ die des kommenden Wechsels.
+KEIM_SEITE = {1: "stärke", 2: "schwäche", 3: "schwäche", 4: "stärke"}
+ZIRKEL_ROLLE = {1: ("hält die Basis", "Keim des Aufbruchs"), 2: ("trägt den Aufwärts", "Keim der Schwäche"),
+                3: ("hält die Verteilung", "Keim des Abstiegs"), 4: ("trägt den Abwärts", "Keim der Stärke")}
+KURZ_KLAMMER = 30           # Technik: Klammer am Ende als Kurzform, wenn sie so kurz ist …
+KURZ_MIN = 8                # … und nicht bloß „(Woche)“
+
+
+def kurz(text):
+    """Kurzform eines Zeichens für die Liste: die Klammer am Ende („hält in der Schwäche“), sonst der Text vor dem
+    Doppelpunkt bzw. vor der ersten Zahl („erstes höheres Tief“, „Zahlen“, „Pocket Pivot“)."""
+    import re
+    m = re.search(r"\(([^()]{" + str(KURZ_MIN) + "," + str(KURZ_KLAMMER) + r"})\)\s*$", text)
+    if m and not re.search(r"\d", m.group(1)):
+        return m.group(1)
+    text = text.split(":")[0].split(", während")[0]
+    text = re.split(r"\s[−+\-]?\d(?![\d,.]*-)", text)[0]     # „52-Wochen-Hoch“ bleibt stehen
+    return re.sub(r"\s(am|seit dem|seit)$", "", text.strip())
+
+
+def zirkel(k):
+    """Der Zirkel eines Titels aus dem gespeicherten Kreislauf → {phase, name, wochen, ziel, wort, traegt, keim,
+    rolle} – traegt/keim: Texte der Zeichen (stärkste zuerst); None ohne Kreislauf."""
+    if not k:
+        return None
+    p = k.get("phase") or 0
+    st_, sw_ = k.get("staerke") or [], k.get("schwaeche") or []
+    if p not in KEIM_SEITE:
+        return {"phase": p, "name": PHASE_NAME.get(p, "jung"), "wochen": None, "ziel": None, "wort": k.get("wort"),
+                "traegt": st_ + sw_, "keim": [], "rolle": ("Zeichen", "")}
+    keim = st_ if KEIM_SEITE[p] == "stärke" else sw_
+    traegt = sw_ if KEIM_SEITE[p] == "stärke" else st_
+    ph = k.get("phasen") or []
+    return {"phase": p, "name": PHASE_NAME[p], "wochen": _lauf(ph) if ph else None, "ziel": k.get("ziel"),
+            "wort": k.get("wort"), "traegt": traegt, "keim": keim, "rolle": ZIRKEL_ROLLE[p]}
+
+
 # ── Speicher: der Frühlauf rechnet den Kreislauf aller Titel mit dem Kartentisch (daten/kreislauf/<stand>.json) ───
 SPEICHER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "daten", "kreislauf")
 _START, _GELADEN = {}, {}

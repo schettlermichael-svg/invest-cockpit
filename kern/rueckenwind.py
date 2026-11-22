@@ -121,6 +121,8 @@ def richtung(jetzt, davor):
     return "dreht nach unten" if davor is not None and davor > 0 else "fällt"
 
 
+MOMENTUM_FENSTER = {"1M": 22, "3M": 67, "6M": 126}   # Kullamägi: Scanner über 1, 3 und 6 Monate (Handelstage)
+MOMENTUM_SPITZE = 0.98         # Kullamägi: die besten 1–2 % des Reviers in einem Fenster = 🚀
 KLASSEN = ("Garde", "Angriff", "Vorhut", "Ohne Nachschub", "Rückzug")   # Schlachtordnung (Micky 21.11.2026)
 ANGRIFF_KLASSEN = (1, 2)       # Garde und Angriff: Front und Truppen vorn
 VORNE_KLASSEN = (1, 2, 3)      # dazu die Vorhut: die Linie steigt, der Nachschub ist offen
@@ -393,6 +395,9 @@ def rechnen(netz=False):
             g["nr"] = th.get("nr")
             gruppen.append(g)
             thema_von.update({t: g for t in th["mitglieder"]})
+    # Momentum (Kullamägi, 22.11.2026): Rendite über 1, 3, 6 Monate; die besten 2 % des Reviers je Fenster = 🚀
+    mom = {k: C.iloc[-1] / C.iloc[-1 - n] - 1 for k, n in MOMENTUM_FENSTER.items()}
+    spitze = {k: float(r_.reindex(rv.index).quantile(MOMENTUM_SPITZE)) for k, r_ in mom.items()}
     # Titel
     titel = {}
     spy = C[MARKT]
@@ -418,6 +423,8 @@ def rechnen(netz=False):
         x = {"rang": int(r), "rang_vor4": int(a4), "tempo": int(tempo), "beschleunigung": int(besch),
              "rs_hoch_vor_kurs": rs_hoch and not kurs_hoch,
              "abstand_hoch": round(abstand, 1),
+             "momentum": {k: [round(float(mom[k][tk]) * 100, 1), bool(mom[k][tk] >= spitze[k])]
+                          for k in MOMENTUM_FENSTER if tk in mom[k] and mom[k][tk] == mom[k][tk]},
              "rs_tempo": round(rs_tempo, 1) if rs_tempo is not None else None,
              "rs_vortempo": round(rs_vortempo, 1) if rs_vortempo is not None else None,
              "zufluss": round(zufluss, 2) if zufluss else None, "trocken": trocken,
