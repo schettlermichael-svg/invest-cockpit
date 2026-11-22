@@ -389,7 +389,7 @@ def schrank_liste():
 
 
 def seiten(prozesse=None):
-    """Schrank neu füllen (06.11.2026): Nach einer Programm- oder Depotänderung gelten die abgelegten Titelseiten
+    """Schrank neu füllen (06.11.2026), beim ersten Start ohne Zirkel-Lauf vorher den Zirkel: Nach einer Programm- oder Depotänderung gelten die abgelegten Titelseiten
     nicht mehr. Dieser Lauf baut sie neu (Watchlist zuerst) – mit den vorhandenen Kursen. Startet ein Nachtlauf, hört
     er auf (der füllt den Schrank ohnehin)."""
     from concurrent.futures import ProcessPoolExecutor
@@ -400,10 +400,16 @@ def seiten(prozesse=None):
             uebersicht.ablegen(uebersicht.seite_uebersicht())
         except Exception:  # noqa: BLE001
             traceback.print_exc()
-    liste = schrank_liste()
-    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid(), "zahl": len(liste),
-         "fertig": 0}
+    p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid(), "zahl": 0, "fertig": 0}
     _schreiben(p, SEITEN_PROTOKOLL)
+    import zirkel
+    if not zirkel.feld():                        # noch kein Zirkel-Lauf (erster Start nach dem Umbau 22.11.2026)
+        import tpo_laden
+        import watchlists
+        zirkel.rechnen(sorted(set(tpo_laden.titel()) | set(watchlists.alle())), prozesse=prozesse)
+        uebersicht.ablegen(uebersicht.seite_uebersicht())   # Markt-Ampel mit Hochs und Tiefs
+    liste = schrank_liste()
+    p["zahl"] = len(liste)
     ex = ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1))
     try:
         for _ in ex.map(titel.vorbauen, liste):
@@ -424,7 +430,8 @@ def seiten_lauf_starten():
     if _gross_laeuft() or _laeuft(SEITEN_PROTOKOLL, 6)[0]:
         return False
     import uebersicht
-    if not uebersicht.veraltet() and not schrank_liste():
+    import zirkel
+    if not uebersicht.veraltet() and zirkel.feld() and not schrank_liste():
         return False
     os.makedirs(os.path.dirname(SEITEN_LOG), exist_ok=True)
     log = open(SEITEN_LOG, "w", encoding="utf-8")
