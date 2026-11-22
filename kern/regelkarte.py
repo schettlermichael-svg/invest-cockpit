@@ -201,17 +201,6 @@ KAESTEN = {
 }
 
 # Regeln, die für ein ganzes Bild gelten (stehen in der Anleitung, sind kein Kasten)
-GRUNDSATZ = {
-    "titel": "Zustände der App: Balance, Test am Rand, abgelehnt, angenommen, Ungleichgewicht, Ende des Laufs. Ende des "
-             "Laufs hat drei Kräfte: Gegner antwortet, Antrieb erlischt, Wert akzeptiert. Weinsteins Stufen sind der "
-             "Rahmen: der Kreislauf läuft in jeder Stufe neu ab.",
-    "gruppe": "Meister: O'Neil und Weinstein führen – die führenden Aktien kommen aus führenden Gruppen, eine Gruppe ist "
-              "stark, wenn die ganze Truppe vorrückt (Gruppen-RS, Breite, Zufluss); Kullamägis Führer-Rang (die stärksten "
-              "2 %) benennt die Anführer nur als Zeichen. Felder der Rotationskarte: RS-Stärke und Schwung je um 100 "
-              "(über 100 = besser als der Markt bzw. steigend).",
-    "markt": "Regel der App (Micky, Regel 8): die Haltung des Marktes gilt für den Markt, nicht für den Titel – kein "
-             "Titel wird wegen des Marktes verworfen.",
-}
 
 # ── Werkzeuge ───────────────────────────────────────────────────────────────────────────────────────────────────
 WERKZEUGE = {
@@ -418,10 +407,6 @@ ZEICHEN = [
          regel="Steigung des GD50 über 20 Tage und Abstand des Kurses zum GD50, in % – als Zahl neben der Phase.",
          messung=["zeichen.trendqualitaet"], pruefer=["Kreislauf/Phase"]),
 ]
-ZEICHEN_GEWICHT = ("Die Zeichen werden gewogen: Struktur, Volumen, RS und Ereignis. Wer am Rand stärker ist, zeigt das "
-                   "Gewicht beider Seiten. Ein Wechsel der Phase zeichnet sich erst ab, wenn ein Zeichen der Struktur UND "
-                   "eines aus Volumen oder RS auf derselben Seite stehen und die Seite klar überwiegt (Gewicht mindestens 4 "
-                   "und doppelt so schwer wie die Gegenseite).")
 
 # ── Setups als Wege durch den Kreislauf ─────────────────────────────────────────────────────────────────────────
 SETUPS = [
@@ -633,14 +618,9 @@ BEREICHE = [
                   "fundament.ampeln", "fundament.angebot", "fundament.institutionen"],
          pruefer=[], luecke="kein Prüfer – die Zahlen kommen aus den Quellen, gerechnet wird nur"),
     dict(name="Termine der Zahlen", quelle="Micky (Zahlen nicht im Trade überraschen lassen)",
-         regel="Nächste Zahlen in höchstens 7 Tagen rot, 8–14 Tage gelb, später grün; in der Auswahl rücken Titel mit "
-               "Zahlen in höchstens 7 Tagen nach hinten.",
-         messung=["gestaltung.termin_ampel", "auswahl.auswahl"], pruefer=[],
+         regel="Nächste Zahlen in höchstens 7 Tagen rot, 8–14 Tage gelb, später grün.",
+         messung=["gestaltung.termin_ampel"], pruefer=[],
          luecke="kein Prüfer – eine Kalenderregel"),
-    dict(name="Auswahl der Akten", quelle="Micky 12.11.2026 (Klasse statt Masse)",
-         regel="Depot immer; dazu Setups grün und am Auslöser oder in der Kaufzone (long −5 bis +5 % zum Pivot, short bis 5 % "
-               "unter der Unterkante, Volltreffer bis 10 % darüber), je Reihe bis 2 Plätze vorab, höchstens 30.",
-         messung=["auswahl.auswahl"], pruefer=[], luecke="kein Prüfer – eine Sortierregel"),
     dict(name="Kopf und Kacheln der Titelseite", quelle="O'Neil (Basen, Reaktion), Minervini (Trendvorlage, RS), Micky",
          regel="Kachel Base: Nr. 1–2 grün (früh), Nr. 3 gelb (handelbar), ab Nr. 4 rot (spät). Kachel Trend: Trendvorlage "
                "alle Punkte grün, ab 5 von 7 gelb. Kachel Stärke: RS-Rang ab 70 grün, 60–69 gelb (Short gespiegelt). Kopf: "
@@ -725,11 +705,17 @@ BEREICHE = [
                "(Spalte Bahn), Rückenwind-Zeile und Kopf der Titelseite.",
          messung=["zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
-         regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
-               "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "
-               "einsatzbereites Setup sagt die Meldung das.",
-         messung=["auswahl.heisse"], pruefer=[], luecke="kein Prüfer – eine Auswahl aus der Liste"),
+    dict(name="Morgenmeldung: Zonen-Trades", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
+         regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Ausbruch- oder Rücktest-Trade der Tagesebene in "
+               "Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Bruch mit Volumen; Rückzug zuerst), je Titel "
+               "Klasse, Trade, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Keim des Zirkels; ohne Trade sagt die Meldung das.",
+         messung=["zirkel.heisse", "zirkel.trade_wort"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
+    dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
+         regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Zonen-Trade der "
+               "Tagesebene mit derselben Regel wie Titelseite und Chart, 52-Wochen-Hoch bzw. -Tief für O'Neils Markt-Ampel "
+               "(Hochs gegen Tiefs). Gruppen-Listen und Spalte „Trade“ der Liste lesen daraus.",
+         messung=["zirkel.rechnen", "zirkel.feld", "zirkel.barometer", "rueckenwind_seite.setups"], pruefer=[],
+         luecke="kein Prüfer"),
     dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",
          regel="Pfeil = Bewegung der letzten 5 Wochen; unter 0,5 Punkten gilt eine Achse als unverändert.",
          messung=["frontkarte.richtung"], pruefer=["Feld (Rotation)"]),
@@ -741,80 +727,13 @@ BEREICHE = [
 ]
 
 # ── Meister (recherchiert 14.11.2026) ───────────────────────────────────────────────────────────────────────────
-MEISTER = [
-    ("O'Neil",
-     "Tasse 7–65 Wochen, 12–33 % tief (im Bärenmarkt bis 40–50 %). Der Henkel liegt in der oberen Hälfte der Base, "
-     "höchstens etwa 12–15 % tief, sein Hoch höchstens 15 % unter dem Hoch der linken Seite. Pivot = Hoch des Henkels, "
-     "ohne Henkel das Hoch der linken Seite. Doppelboden: das zweite Tief unterschreitet das erste, Pivot = die Spitze in "
-     "der Mitte des W. Flache Base ab 5 Wochen, höchstens etwa 15 % tief. Ausbruch mit Volumen über dem Schnitt; "
-     "Fehlausbruch: zurück unter den Pivot. Distributionstage: fallender Schluss bei höherem Volumen als am Vortag.",
-     "Kauf am Pivot mit Volumen deutlich über dem Schnitt, nicht mehr als 5 % darüber; Verlust höchstens 7–8 %."),
-    ("Minervini",
-     "VCP: 2–6 Kontraktionen, jede grob halb so tief wie die vorige, das Volumen trocknet aus; Pivot = Hoch der letzten "
-     "Kontraktion. Low Cheat im unteren Drittel, Cheat im mittleren, Henkel im oberen Drittel. Nach einer gescheiterten "
-     "Tasse bildet sich eine neue Base.",
-     "VCP mit mindestens 2 Kontraktionen, jede kleiner, Volumen trocknet aus; Kauf beim Ausbruch über den Pivot mit "
-     "steigendem Volumen, bis 5 % darüber; Stopp unter dem Tief der letzten Kontraktion, höchstens etwa 8 % (absolut "
-     "10 %). Kauf nur in Stufe 2."),
-    ("Kullamägi",
-     "Flagge: großer Anstieg von 30–100 % in den letzten 1–3 Monaten, der ein paar Tage bis ein paar Wochen dauert "
-     "(Fahnenstange), danach 1–8 Wochen enges Seitwärts mit steigenden Tiefs. Episodic "
-     "Pivot: Lücke mit sehr hohem Volumen auf eine Nachricht.",
-     "Breakout nach einem Lauf von 30–100 % in den letzten 1–3 Monaten (ein paar Tage bis ein paar Wochen lang), geordnete Pause mit höheren Tiefs, enger werdend, am "
-     "10er/20er, 2 Wochen bis 2 Monate; Einstieg über dem Hoch der Eröffnungsspanne oder Ausbruch im Tageschart, nicht "
-     "vorweggenommen; Stopp am Tagestief, nie weiter als eine durchschnittliche Tagesspanne. EP: Lücke ab 10 % bei "
-     "riesigem Volumen auf eine Nachricht, Einstieg Hoch der Eröffnungsspanne, Stopp am Tagestief. Short: Stopp am "
-     "Tageshoch."),
-    ("Weinstein",
-     "Phasen: 1 Basis seitwärts um die flache 30-Wochen-Linie, 2 Aufwärts über der steigenden Linie, 3 Verteilung "
-     "seitwärts, die Linie flacht ab, 4 Abwärts unter der fallenden Linie.",
-     "Short nur in Stufe 4 bzw. beim Bruch aus Stufe 3 (Kurs unter der fallenden 30-Wochen-Linie)."),
-    ("Wyckoff",
-     "Spring = Tief kurz unter der Unterkante der Spanne, schnell zurückgekauft; Upthrust = Hoch kurz über der "
-     "Oberkante, Schluss zurück in der Spanne. Kraft ohne Weg: viel Volumen, wenig Kursweg.", ""),
-    ("Morales/Kacher",
-     "Pocket Pivot: Volumen des Anstiegstags über dem höchsten Volumen der Abwärtstage der letzten 10 Tage.", ""),
-    ("Einquetschung", "Steigende Tiefs gegen eine flache Oberkante (aufsteigendes Dreieck).", ""),
-    ("Homma/Nison",
-     "Umkehrkerzen (Hammer, Shooting Star, Engulfing, Morning/Evening Star) sind kein Signal für sich: nur nach einem "
-     "Trend und an einer Marke, bestätigt durch den nächsten Tag.", ""),
-    ("Shannon",
-     "AVWAP: Ein Hoch wird erst durch den Rückgang danach zum Anker. Anker sind das Pivot-Tief, das einen Trend "
-     "startete, das jüngste große Hoch, der Tag der Zahlen bzw. eine Kurslücke, der Börsengang bei jungen Aktien; "
-     "mehrere übereinander. Stopp unter dem jüngsten maßgeblichen höheren Tief. Zange (Pinch): AVWAP vom Hoch und "
-     "vom Tief laufen zusammen; nach dem Ausbruch daraus die AVWAP ab dem Ausbruch als neue Stütze (Handoff).", ""),
-    ("Dalton",
-     "Der Markt geht von Balance zu Balance; Balance = überlappender Wert; das Profil fasst die laufende Balance. Exzess "
-     "= scharfe Ablehnung am Extrem (Auktion dort beendet); flache Kante (schwaches Hoch/Tief) = Auktion unfertig.", ""),
-]
 
 
 # ── Anleitungen für die Prüfer ──────────────────────────────────────────────────────────────────────────────────
-def _kasten_zeile(k):
-    m = k["fuehrt"] + (f"; Zeichen: {k['zeichen']}" if k.get("zeichen") else "")
-    s = "" if k["stand"] == "gemessen" else f" [App: {'noch nicht gemessen' if k['stand'] == 'fehlt' else 'erst teilweise gemessen'}" \
-                                            f"{' – ' + k['luecke'] if k.get('luecke') else ''}]"
-    return f"- {k['name']}: {k['regel']} (führt: {m}){s}"
 
 
-def block_kaesten(bild):
-    """Die Kästen eines Bildes als Abschnitt der Anleitung – genau so in der App gezeichnet und gemessen."""
-    zeilen = [_kasten_zeile(k) for k in KAESTEN[bild]]
-    w = [f"- {x['name']}: {x['regel']}" + ("" if x["stand"] == "gemessen" else
-                                           f" [App: erst teilweise – {x.get('luecke', '')}]") for x in WERKZEUGE[bild]]
-    teil = ["Die Kästen (Regelkarte der App – jeder Kasten genau einmal; fehlt ein Kasten, den die Zahlen oder das Bild "
-            "zeigen, melde ihn):"] + zeilen + [GRUNDSATZ[bild]]
-    if w:
-        teil += ["", "Wie die App misst (damit du die Absicht kennst; prüfe trotzdem gegen die Meister):"] + w
-    if bild == "titel":
-        teil += ["", "Die Zeichen der App (Stärke und Schwäche, je mit Spiegelbild):"] \
-            + [f"- {z['name']} ({z['art']}, {z['meister']}): {z['regel']}" for z in ZEICHEN] + [ZEICHEN_GEWICHT]
-    return "\n".join(teil)
 
 
-def block_meister(wofuer="chart"):
-    """Die Regeln der Meister: „chart“ für den Chart-Prüfer, „setup“ für den Setup-Prüfer."""
-    return "\n".join(f"- {n}: {c if wofuer == 'chart' else st}" for n, c, st in MEISTER if (c if wofuer == "chart" else st))
 
 
 def block_setups():
@@ -857,17 +776,13 @@ TECHNIK = {
     "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
     "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
     "kartentisch.SICHTBAR": "Anzeige (wie viele Karten offen)", "kartentisch.TOP": "Anzeige",
-    "chartpruefer.GRUPPEN": "Stichprobe des Prüfers", "chartpruefer.STICHPROBE": "Stichprobe des Prüfers",
-    "chartpruefer.KOSTEN_JE_CHART": "Kostenschätzung", "setuppruefer.STICHPROBE": "Stichprobe des Prüfers",
-    "setuppruefer.OHNE": "Stichprobe des Prüfers", "setuppruefer.KLEIN": "Stichprobe des Prüfers",
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
     "revier_pflege.REVIER_KURS": "Datenpflege (Grenze des Reviers)",
     "revier_pflege.REVIER_UMSATZ": "Datenpflege (Grenze des Reviers)", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
-    "datenpruefung.GENAU": "Datenprüfung", "wachen.STICHPROBE": "Gleichlauf-Prüfung", "wachen.TOL_EINSTIEG": "Gleichlauf-Prüfung",
-    "wachen.TOL_KURS": "Gleichlauf-Prüfung", "wachen.TOL_GD50": "Gleichlauf-Prüfung",
+    "datenpruefung.GENAU": "Datenprüfung",
     "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
     **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS", "TSD_AB", "TAUSEND")},
 }
@@ -965,7 +880,7 @@ GD_LAENGEN = {10, 20, 30, 40, 50, 150, 200}
 PHASE_NAMEN = {"p", "ph", "phase", "ziel", "p_", "pa", "pn", "phl", "phasen", "alt", "neu"}
 TECHNIK_MODULE = {"massive": "Datenquelle", "quellen": "Datenquelle", "daten": "Datenquelle", "marktdaten": "Datenquelle",
                   "tpo_daten": "Datenquelle", "tv_kennzahlen": "Datenquelle", "modell": "Schnittstelle (Anthropic)",
-                  "strategen": "Schnittstelle (Anthropic)", "meldung": "Versand (ntfy)", "maengel": "Mängelliste",
+                  "strategen": "Schnittstelle (Anthropic)", "meldung": "Versand (ntfy)",
                   "regelkarte": "Prüfwerkzeug"}      # Abrufe, Wartezeiten, Börsenzeiten, Schnittstellen – keine Regel
 MARKE_FREI = ("Layout", "Technik")   # Zeile mit „# Layout“ bzw. „# Technik“: Pixel, Schrift, Fenster der Anzeige, Abruf
 
@@ -1110,63 +1025,6 @@ def wachposten():
                 melde("rot", "Zustand", "titel", z, "Zustand der App ohne Kasten auf der Regelkarte")
     except Exception as e:  # noqa: BLE001
         melde("rot", "Zustand", "titel", "auktion", f"nicht lesbar: {e}")
-    # Die Prüfer arbeiten mit genau den Elementen der Karte
-    for mod_name, bilder in (("chartpruefer", (("ELEMENTE", "titel"), ("ELEMENTE_GRUPPE", "gruppe"),
-                                               ("ELEMENTE_MARKT", "markt"))), ("setuppruefer", (("ELEMENTE", "setup"),))):
-        try:
-            mod = importlib.import_module(mod_name)
-            for feld, bild in bilder:
-                if list(getattr(mod, feld)) != elemente(bild):
-                    melde("rot", "Prüfer", bild, mod_name, f"{feld} weicht von der Regelkarte ab")
-        except Exception as e:  # noqa: BLE001
-            melde("rot", "Prüfer", "-", mod_name, f"nicht lesbar: {e}")
-        try:
-            mod = importlib.import_module(mod_name)
-            for name in ("SYSTEM", "SYSTEM_GRUPPE", "SYSTEM_MARKT") if mod_name == "chartpruefer" else ("SYSTEM",):
-                bild = {"SYSTEM": "titel", "SYSTEM_GRUPPE": "gruppe", "SYSTEM_MARKT": "markt"}[name] \
-                    if mod_name == "chartpruefer" else "setup"
-                text = getattr(mod, name)
-                namen = [s["name"] for s in SETUPS] if bild == "setup" else [k["name"] for k in KAESTEN[bild]] \
-                    + ([z["name"] for z in ZEICHEN] if bild == "titel" else [])
-                for n in namen:
-                    if f"- {n}" not in text:
-                        melde("rot", "Prüfer", bild, n, f"fehlt in der Anleitung {mod_name}.{name}")
-        except Exception as e:  # noqa: BLE001
-            melde("rot", "Prüfer", "-", mod_name, f"Anleitung nicht lesbar: {e}")
-    # Setups: jede Reihe des Kartentischs steht auf der Karte, jede Karte hat ihre Messung
-    try:
-        import kartentisch
-        auf_karte = {r for s in SETUPS for r in s["reihen"]}
-        for r, name, _ in kartentisch.REIHEN:
-            if r not in auf_karte:
-                melde("rot", "Setup", "setup", name, f"Reihe {r} des Kartentischs steht nicht auf der Regelkarte")
-        for r in auf_karte - {r for r, _, _ in kartentisch.REIHEN}:
-            melde("rot", "Setup", "setup", r, "auf der Regelkarte, aber keine Reihe des Kartentischs")
-    except Exception as e:  # noqa: BLE001
-        melde("rot", "Setup", "setup", "kartentisch", f"nicht lesbar: {e}")
-    try:                                           # Kacheln: jede Regel des Katalogs hat ihr Urteil in der Titelseite
-        import titel
-        for s in SETUPS:
-            if set(s.get("kacheln", {})) != set(KACHELN):
-                melde("rot", "Setup", "setup", s["name"], "Kacheln der Titelseite nicht vollständig im Katalog")
-            for n, r in s.get("kacheln", {}).items():
-                if r is not None and r not in KACHEL_REGELN:
-                    melde("rot", "Setup", "setup", s["name"], f"Kachel {n}: Regel {r} unbekannt")
-        if set(KACHEL_REGELN) != set(titel.URTEILE):
-            melde("rot", "Setup", "setup", "Kacheln", "Regeln des Katalogs und Urteile der Titelseite weichen ab: "
-                  + ", ".join(sorted(set(KACHEL_REGELN) ^ set(titel.URTEILE))))
-    except Exception as e:  # noqa: BLE001
-        melde("rot", "Setup", "setup", "Kacheln", f"nicht lesbar: {e}")
-    for s in SETUPS:
-        for m in s["messung"]:
-            if not _gibt_es(m):
-                melde("rot", "Setup", "setup", s["name"], f"Messfunktion {m} fehlt im Code")
-        if s["stand"] == "fehlt":
-            melde("rot", "Setup", "setup", s["name"], "nicht gebaut" + (f" – {s['luecke']}" if s.get("luecke") else ""),
-                  alarm=False)
-        elif s["stand"] == "teilweise":
-            melde("gelb", "Setup", "setup", s["name"], "erst teilweise" + (f" – {s['luecke']}" if s.get("luecke") else ""),
-                  alarm=False)
     for b in BEREICHE:
         for m in b["messung"]:
             if not _gibt_es(m):
@@ -1174,13 +1032,6 @@ def wachposten():
         if not b.get("pruefer"):
             melde("gelb", "Bereich", "bereich", b["name"], "kein Prüfer sieht diesen Bereich" +
                   (f" – {b['luecke']}" if b.get("luecke") else ""), alarm=False)
-    # Mängelliste: jeder Punkt mit Stand, behoben mit Commit und Messung, jeder offene Befund im Gesamtplan
-    try:
-        import maengel
-        for amp, name, text in maengel.pruefen():
-            melde(amp, "Mängelliste", "maengel", name, text, alarm=(amp == "rot"))
-    except Exception as e:  # noqa: BLE001
-        melde("rot", "Mängelliste", "maengel", "maengel", f"nicht lesbar: {e}")
     # Inventur: jede feste Regel des Codes gehört der Karte, keine Regel steht doppelt
     try:
         inv = inventur()

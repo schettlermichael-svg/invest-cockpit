@@ -1040,7 +1040,7 @@ def zirkel(k):
             "wort": k.get("wort"), "traegt": traegt, "keim": keim, "rolle": ZIRKEL_ROLLE[p]}
 
 
-# ── Speicher: der Frühlauf rechnet den Kreislauf aller Titel mit dem Kartentisch (daten/kreislauf/<stand>.json) ───
+# ── Speicher: der Frühlauf rechnet den Kreislauf aller Titel im Schritt Zirkel (zirkel.py, daten/kreislauf/<stand>.json) ─
 SPEICHER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "daten", "kreislauf")
 _START, _GELADEN = {}, {}
 
@@ -1081,7 +1081,8 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     return k
 
 
-def ablegen(stand, alle, behalten=ABLAGE_BEHALTEN):
+def ablegen(stand, alle, behalten=ABLAGE_BEHALTEN, **mehr):
+    """Kreisläufe {tk: kreislauf} des Tages ablegen; mehr = weitere Teile des Zirkel-Laufs (feld, barometer)."""
     from dateien import json_schreiben
     os.makedirs(SPEICHER, exist_ok=True)
     for f in sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))[:-behalten]:
@@ -1089,7 +1090,7 @@ def ablegen(stand, alle, behalten=ABLAGE_BEHALTEN):
             os.remove(os.path.join(SPEICHER, f))
         except OSError:
             pass
-    json_schreiben(os.path.join(SPEICHER, f"{stand}.json"), {"stand": stand, "titel": alle}, ensure_ascii=False)
+    json_schreiben(os.path.join(SPEICHER, f"{stand}.json"), {"stand": stand, "titel": alle, **mehr}, ensure_ascii=False)
 
 
 def laden():

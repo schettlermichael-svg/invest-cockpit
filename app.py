@@ -38,9 +38,6 @@ header[data-testid="stHeader"], footer, #MainMenu, [data-testid="stToolbar"],
 .block-container {{max-width:1440px; padding:16px 0 0 0 !important}}
 div[data-testid="stHorizontalBlock"] {{max-width:1392px; margin:0 auto; padding:0 24px; align-items:end}}
 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padding:0; max-width:none; align-items:center}}
-[class*="st-key-kartentisch"] div[data-testid="stHorizontalBlock"] {{align-items:flex-start}}
-[class*="st-key-kartentisch"] div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{align-items:center}}
-[class*="st-key-kartentisch"] [data-testid="stExpander"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
 [class*="st-key-rueckenwind"] [data-testid="stExpander"], [class*="st-key-rueckenwind"] [data-testid="stHorizontalBlock"],
 [class*="st-key-rueckenwind"] [data-testid="stRadio"] {{max-width:1392px; margin:0 auto; padding:0 24px}}
 .stTextInput input, .stSelectbox div[data-baseweb="select"] > div {{background:{KARTE}; color:{TEXT};
@@ -290,10 +287,9 @@ def _codestand(mit_watchlists=False):
                for f in os.listdir(os.path.join(hier, d)) if f.endswith(".py"))
     daten = [os.path.join(hier, "daten", "tv", "revier.csv")]
     daten += [depot.DATEI] + ([watchlists.DATEI] if mit_watchlists else [])   # Depot geändert: Seiten neu bauen;
-    # Watchlists nur für den Kartentisch (Übersicht und Titelseiten hängen nicht von ihnen ab)
-    tisch = os.path.join(hier, "daten", "kartentisch")
-    if os.path.isdir(tisch):                     # neuer Kartentisch aus dem Abendlauf: Übersicht neu bauen
-        daten += [os.path.join(tisch, f) for f in os.listdir(tisch) if f.endswith(".json")]
+    kreis = os.path.join(hier, "daten", "kreislauf")
+    if os.path.isdir(kreis):                     # neuer Zirkel-Lauf (Hochs/Tiefs der Markt-Ampel): Seiten neu bauen
+        daten += [os.path.join(kreis, f) for f in os.listdir(kreis) if f.endswith(".json")]
     return max([code] + [os.path.getmtime(x) for x in daten if os.path.exists(x)])
 
 
@@ -488,12 +484,11 @@ def strategen_call(tk, teile):
         try:
             rw = titel._rueckenwind(tk) or {}
             mm = titel.maerkte() or {}
-            su = erk.get("setup_info") or {}
             import analyse_seite
-            import kartentisch
+            import zirkel
             with st.spinner("Recherche im Netz und Einschätzung (1–3 Minuten) …"):
                 erg = strategen.rufen(tk, stand, e, float(df["Close"].iloc[-1]), atr=erk.get("atr"), rw=rw,
-                                      markt=mm.get("auktion"), setup=kartentisch.NAME.get(su.get("reihe")),
+                                      markt=mm.get("auktion"), setup=zirkel.trade_wort(zirkel.feld(tk)) or "kein Zonen-Trade",
                                       termin=((rw.get("zahlen") or {}).get("termin")), tiefe=analyse_seite.material(tk))
         except Exception as x:  # noqa: BLE001
             st.error(f"Strategen-Call ging nicht: {x}")

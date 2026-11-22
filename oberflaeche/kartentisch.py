@@ -163,8 +163,6 @@ NAME = {"m_spitze": "Base-Ausbruch 💥", "m_weitere": "Base-Ausbruch", "vcp": "
         "k_ermuedung": "Ermüdung (Short)", "k_baerenflagge": "Bärenflagge (Short)", "k_bruch": "Bruch der Spanne (Short)",
         "w_spring": "Spring", "w_upthrust": "Upthrust (Short)"}
 from system_kullamaegi import SHORTS, short_von   # noqa: E402  Reihe → Feld in k (Ermüdung, Bärenflagge, Bruch)
-LEHRER = {"m_spitze": "M", "m_weitere": "M", "vcp": "M", "flagge": "K", "k_breakout": "K", "k_ep": "K", "zahlen": "K",
-          "k_ermuedung": "K", "k_baerenflagge": "K", "k_bruch": "K", "w_spring": "M", "w_upthrust": "K"}      # aus wessen Regeln die Kacheln urteilen (Meister als Lehrer)
 
 
 def setup_feststellen(df, m, k, zr, scan):

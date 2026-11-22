@@ -1434,3 +1434,14 @@ nicht bestätigt), die Kontraktionen der Enge als „−20 %“ unter ihrem Tief
 ✈️/✈️↓ freie Bahn als Etikett, darunter die Zeichenleiste (💥 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisestes Volumen seit 50
 Kerzen, ⚡ Kraft ohne Weg nach Wyckoff, 🌱/🍂 Keim des Zirkels an der letzten Kerze) und Momentum 🚀 am Ende der
 RS-Linie. Je Zeichen ein Hinweistext beim Darüberfahren; Legende ergänzt.
+
+## Zirkel-Lauf statt Kartentisch (22.11.2026, Stufe A)
+Nachtlauf-Schritt „Zirkel“ (`kern/zirkel.py`) für Revier und Watchlist: Kreislauf (Phase, Zeichen, Keime), Zonen-Trade
+der Tagesebene (dieselbe Regel wie Titelseite und Chart: `zonen.basis`, `lage(…, profil=False)`, `trade`) und 52-Wochen-
+Hoch/-Tief. Abgelegt mit dem Kreislauf in `daten/kreislauf/<stand>.json` (`titel`, `feld`, `barometer`). Leser: Markt-Ampel
+(Hochs/Tiefs), Gruppen-Listen und Spalte „Trade“ der Liste (`rueckenwind_seite.setups`), Morgenmeldung (`zirkel.heisse`:
+bis 5 Long am Pivot/im Ausbruch/im Rücktest aus Garde, Angriff, Vorhut; bis 5 Short am Bruch), Stratege (Trade statt
+Setup-Reihe). Entfernt: Kartentisch-Schritt, Wachen, Auswahl „Einsatzbereit“, Chart- und Setup-Prüfer, Mängelliste
+(Werkstatt, Entscheidung 21.11.). Schrank als eigener Schritt (`nachtlauf.schrank_liste`, `titel.vorbauen`).
+Stufe B offen: Stratege und Depot-Plan lesen noch die alte Titel-Maschine (`titel.seite_titel` mit
+`kartentisch.setup_feststellen`); danach fallen `kartentisch.py` und die alte Titelseite weg.

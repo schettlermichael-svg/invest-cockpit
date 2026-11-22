@@ -83,23 +83,11 @@ def _wochenfeld(punkt):
     return sektoren.feld(punkt[0], punkt[1])
 
 
-_SETUPS = {}
-
-
 def setups():
-    """Reihe jedes Titels im jüngsten Kartentisch als Klartext ({Ticker: „VCP · Enge grün“}); einmal je Tisch gelesen."""
-    import kartentisch
-    try:
-        neu = max((f for f in os.listdir(kartentisch.SPEICHER) if f.endswith(".json")), default=None)
-        stempel = (neu, os.path.getmtime(os.path.join(kartentisch.SPEICHER, neu))) if neu else None
-    except OSError:
-        return {}
-    if _SETUPS.get("stempel") != stempel:
-        namen = {k: n for k, n, _ in kartentisch.REIHEN} | kartentisch.ALTE_REIHEN
-        tisch = kartentisch.laden() or {}
-        _SETUPS.update(stempel=stempel, werte={tk: namen.get(x.get("reihe"), x.get("reihe"))
-                                               for tk, x in (tisch.get("titel") or {}).items() if x.get("reihe")})
-    return _SETUPS["werte"]
+    """Zonen-Trade jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🚀 Ausbruch long · am Auslöser“});
+    die Tagesebene mit derselben Regel wie Titelseite und Chart (Micky 22.11.2026, statt der alten Setup-Reihen)."""
+    import zirkel
+    return {tk: zirkel.trade_wort(f) for tk, f in zirkel.feld().items() if f.get("trade")}
 
 
 def _mitglieder(erg, art, g, setup, drei):
@@ -116,10 +104,10 @@ def _mitglieder(erg, art, g, setup, drei):
         zeilen.append(f'<div><b>{"◆ " if x.get("watchlist") else ""}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
                       f'<span class="k{k or ""}">{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</span><span>{x["rang"]}</span>'
                       f'<span>{"+" if x["tempo"] >= 0 else ""}{x["tempo"]}</span>'
-                      f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Setup"}</span>'
+                      f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Trade"}</span>'
                       f'<a href="?seite=Titelseite&t={tk}" target="_blank">Titelseite →</a></div>')
     return ('<div class="mg"><div class="k"><span>Titel</span><span>Klasse</span><span>RS-Rang</span><span>Tempo</span>'
-            '<span>Setup (Kartentisch)</span><span></span></div>' + "".join(zeilen)
+            '<span>Zonen-Trade (Tag)</span><span></span></div>' + "".join(zeilen)
             + '<p>nach RS-Rang · Tempo = RS-Rang heute gegen vor 4 Wochen · ◆ Watchlist · ▲▲▲ dreifacher Rückenwind</p></div>')
 
 
@@ -362,6 +350,7 @@ def liste(erg, nur_watchlist=False):
     (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → DataFrame."""
     import zeichen
     reihen, kreis = [], zeichen.laden()
+    trades = setups()
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
         if nur_watchlist and not x.get("watchlist"):
             continue
@@ -375,7 +364,7 @@ def liste(erg, nur_watchlist=False):
         reihen.append({
             "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
             "Titel": _link(tk, tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
-            "Phase": phase, "Keim": keim,
+            "Phase": phase, "Keim": keim, "Trade": trades.get(tk, ""),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
             "Momentum": _momentum(x), "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',

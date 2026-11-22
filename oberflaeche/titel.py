@@ -1079,6 +1079,15 @@ def ablegen(tk, teile):
     os.replace(tmp, pfad)
 
 
+def vorbauen(tk):
+    """Titelseite bauen und in den Schrank legen (Nachtlauf, Schrank-Lauf) → True, wenn abgelegt."""
+    try:
+        ablegen(tk, seite_titel(tk))
+        return True
+    except Exception:  # noqa: BLE001 – ein Titel scheitert, der Schrank steht trotzdem
+        return False
+
+
 ALTER_MAX = 30 * 3600            # abgelegte Seiten gelten höchstens 30 Stunden (der Nachtlauf baut sie täglich neu)
 
 
@@ -1119,12 +1128,12 @@ _SPEICHER = {}
 
 
 def maerkte():
-    """Die eine Markt-Ampel (O'Neil, marktklima.py), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Kartentisch."""
+    """Die eine Markt-Ampel (O'Neil, marktklima.py), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Zirkel-Lauf."""
     schluessel = pd.Timestamp.now().strftime("%Y%m%d%H")
     if _SPEICHER.get("markt", (None,))[0] != schluessel:
         try:
-            import kartentisch
-            b = (kartentisch.laden() or {}).get("barometer") or {}
+            import zirkel
+            b = zirkel.barometer()
             mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))
         except Exception:  # noqa: BLE001
             mm = None

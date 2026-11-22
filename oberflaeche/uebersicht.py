@@ -142,8 +142,8 @@ def seite_uebersicht():
         pendel_ampel = schlimmste if pendel_ampel == "grün" or schlimmste == "rot" else pendel_ampel
     if p["ampel"] == "grün" and gegen:
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
-    import kartentisch
-    b = ((kartentisch.laden() or {}).get("barometer")) or {}
+    import zirkel
+    b = zirkel.barometer()
     import marktklima
     try:
         mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))

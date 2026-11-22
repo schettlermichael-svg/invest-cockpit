@@ -4,7 +4,7 @@ Aufruf im Ordner InvestCockpit:
     python3 werkzeuge/tpo_laden.py              Abendlauf: neuer Tag über Yahoo (Minuten), dann Massive in Durchgängen für
                                                 Lücken und neue Titel (abbrechen und neu starten jederzeit)
     python3 werkzeuge/tpo_laden.py fortsetzen   nur der neue Tag über Yahoo
-    python3 werkzeuge/tpo_laden.py kartentisch  nur Tageskurse und Kartentisch für die Übersicht
+    python3 werkzeuge/tpo_laden.py zirkel       nur Tageskurse und Zirkel (Kreislauf, Zonen-Trades)
 
 Massive liefert je Anfrage höchstens 50.000 Minuten – bei großen Titeln rund 2 Monate. Ein Durchgang macht eine Anfrage je
 Titel und füllt jeweils die jüngste Lücke; nach dem ersten Durchgang hat jeder Titel die letzten Wochen (genug für Wertzone,
@@ -38,14 +38,13 @@ def _neuester(t):
 def main():
     tpo_daten._mehr_dateien()
     alle = titel()
-    if len(sys.argv) > 1 and sys.argv[1] == "kartentisch":   # nur Tageskurse und Kartentisch (z. B. tagsüber)
+    if len(sys.argv) > 1 and sys.argv[1] == "zirkel":   # nur Tageskurse und Zirkel (z. B. tagsüber)
         sys.path.insert(0, os.path.join(HIER, "..", "oberflaeche"))
         import daten  # noqa: E402
-        import kartentisch  # noqa: E402
+        import zirkel  # noqa: E402
         print(f"Tageskurse für {len(alle)} Titel …", flush=True)
         print(f"  {daten.kurse_viele(alle + [daten.INDEX])} Titel aktualisiert", flush=True)
-        tisch = kartentisch.rechnen(alle)
-        print(f"fertig: {len(tisch['titel'])} Titel in Reihen, {len(tisch['neu'])} Neuigkeiten")
+        print(f"fertig: {zirkel.rechnen(alle)}")
         return
     if len(sys.argv) > 1 and sys.argv[1] == "fortsetzen":
         mit = [t for t in alle if tpo_daten.lesen(t) is not None or tpo_daten.auslaendisch(t)]
@@ -63,19 +62,18 @@ def main():
             print(f"  {sum(1 for k in erg.values() if k > 0)} Titel ergänzt", flush=True)
         except Exception as e:                   # ohne Yahoo holt Massive den Tag in den Durchgängen
             print(f"  Yahoo nicht erreichbar ({e}) – Massive übernimmt", flush=True)
-    # Tageskurse aller Titel (Pakete zu 50) und dann der Kartentisch für die Übersicht – vor den langen Massive-Durchgängen,
-    # damit die Übersicht morgens steht, auch wenn die Erstbefüllung noch Stunden läuft
+    # Tageskurse aller Titel (Pakete zu 50) und dann der Zirkel – vor den langen Massive-Durchgängen,
+    # damit die Seiten morgens stehen, auch wenn die Erstbefüllung noch Stunden läuft
     sys.path.insert(0, os.path.join(HIER, "..", "oberflaeche"))
     import daten  # noqa: E402
-    import kartentisch  # noqa: E402
+    import zirkel  # noqa: E402
     print(f"Tageskurse für {len(alle)} Titel …", flush=True)
     try:
         print(f"  {daten.kurse_viele(alle + [daten.INDEX])} Titel aktualisiert", flush=True)
-        print("Kartentisch rechnen …", flush=True)
-        tisch = kartentisch.rechnen(alle)
-        print(f"  fertig: {len(tisch['titel'])} Titel in Reihen, {len(tisch['neu'])} Neuigkeiten", flush=True)
-    except Exception as e:                       # der Kartentisch darf die Erstbefüllung nicht aufhalten
-        print(f"  Kartentisch nicht gerechnet: {e}", flush=True)
+        print("Zirkel rechnen …", flush=True)
+        print(f"  fertig: {zirkel.rechnen(alle)}", flush=True)
+    except Exception as e:                       # der Zirkel darf die Erstbefüllung nicht aufhalten
+        print(f"  Zirkel nicht gerechnet: {e}", flush=True)
     durchgang = 0
     while True:
         kal = tpo_daten._kalender()

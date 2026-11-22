@@ -114,8 +114,9 @@ def _volumen_hoch(df):
     return bool(schnitt.iloc[-1] == schnitt.iloc[-1] and v.iloc[-1] > schnitt.iloc[-1])
 
 
-def lage(e, ba=None):
-    """Zone, Phase und Richtung einer Ebene → dict. Woche und Tag aus der Base ba (basis()), die Stunde aus der Balance."""
+def lage(e, ba=None, profil=True):
+    """Zone, Phase und Richtung einer Ebene → dict. Woche und Tag aus der Base ba (basis()), die Stunde aus der Balance.
+    profil=False (Zirkel-Lauf über alle Titel, nur Tageskurse): ohne Volumenprofil, poc und profil sind None."""
     if not e:
         return None
     df = e["df"]
@@ -130,9 +131,10 @@ def lage(e, ba=None):
         z, en, a = ba["z"], ba["enge"], ba["ausbruch"]
         if z is None:                              # Kurs läuft am Hoch: keine Zone, das Profil ab dem Anker der Balance
             z_, w_ = PHASE["hoch"]
-            pr = profil_seit(e, e["struktur"]["balance_start"])
+            pr = profil_seit(e, e["struktur"]["balance_start"]) if profil else None
             return {"zone": None, "phase": "hoch", "zeichen": z_, "wort": w_, "richtung": 0, "pfeil": "→", "kurs": kurs,
-                    "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]), "profil": pr, "beginn": None}
+                    "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]) if pr else None, "profil": pr,
+                    "beginn": None}
         lo, hi, beginn = float(z["unten"]), float(z["oben"]), pd.Timestamp(z["start_t"])
         pivot = float(a["pivot"]) if a else vcp_zone.rand(z, en) if en.get("pivot") else hi
         td = ba["df"]
@@ -155,10 +157,10 @@ def lage(e, ba=None):
         if a and not a["fehl"]:
             teile.append(f'Ausbruch vor {a["tage_her"]} T. ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
         info = " · ".join(teile)
-    pr = profil_seit(e, beginn)
+    pr = profil_seit(e, beginn) if profil else None
     z_, w_ = PHASE[phase]
     r = RICHTUNG.get(phase, 0)
-    return {"zone": (lo, hi), "pivot": pivot, "poc": float(pr["poc"]), "profil": pr, "beginn": beginn, "name": name,
+    return {"zone": (lo, hi), "pivot": pivot, "poc": float(pr["poc"]) if pr else None, "profil": pr, "beginn": beginn, "name": name,
             "info": info, "phase": phase, "zeichen": z_, "wort": w_, "richtung": r,
             "pfeil": {1: "↗", -1: "↘", 0: "→"}[r], "kurs": kurs}
 

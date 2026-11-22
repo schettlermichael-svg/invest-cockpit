@@ -12,7 +12,8 @@ Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weit
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlist, Positionen, Gesamtmarkt) und Wechselkurse (Yahoo)
   5. samstags (nach dem Freitag) Revier-Pflege; TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login)
-  6. RS-Rang, Führer-Rang, Rückenwind, Kartentisch, Lage (Seite Rückenwind), Schrank (der Konferenzraum wurde am 13.11.2026 abgebaut)
+  6. RS-Rang, Führer-Rang, Rückenwind, Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs je Titel; löst am 22.11.2026 den
+     Kartentisch ab), Lage (Seite Rückenwind), Schrank; danach die Morgenmeldung (Schlachtordnung, Zonen-Trades)
   7. Datenstand-Wache: Kurstag jedes Teils ins Protokoll (rot, wenn sie verschiedene Tage haben)
   8. Massive-Durchgänge für Lücken der
      30-Minuten-Kerzen bis 11:30 Uhr (Erstbefüllung, neue Titel)
@@ -33,7 +34,6 @@ sys.path.insert(0, HIER)
 from dateien import json_schreiben  # noqa: E402
 
 PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "protokoll.json")
-TISCH_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "tisch_lauf.json")   # Knopf in der Übersicht
 SEITEN_PROTOKOLL = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.json")   # Schrank nach Änderungen
 SEITEN_LOG = os.path.join(HIER, "..", "daten", "nachtlauf", "seiten_lauf.log")
 SCHLUSS = (11, 30)            # Massive-Durchgänge für Lücken enden vormittags (Frühlauf ab 6:05, seit 12.11.2026)
@@ -58,13 +58,11 @@ def _mitteilung(text, wichtig=False, titel="Invest Cockpit", seite=None):
             pass
 
 
-def main(nur_tisch=False):
-    """nur_tisch (Knopf „Kartentisch neu rechnen“ in der Übersicht): nur Ränge, Kartentisch und Lage mit den
-    vorhandenen Kursen – eigenes Protokoll, die Datenampel des Nachtlaufs bleibt unberührt."""
+def main():
     import tpo_daten
     import tpo_laden
     tpo_daten._mehr_dateien()
-    datei = TISCH_PROTOKOLL if nur_tisch else PROTOKOLL
+    datei = PROTOKOLL
     p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "schritte": [], "pid": os.getpid()}
     _schreiben(p, datei)
 
@@ -121,12 +119,12 @@ def main(nur_tisch=False):
         uebersicht.ablegen(uebersicht.seite_uebersicht())   # die App zeigt sie morgens sofort
         return "Übersicht gebaut"
 
-    def tisch():
-        import kartentisch
-        t_ = kartentisch.rechnen(alle, melden=lambda x: print(x, flush=True))
-        p["neu"] = len(t_["neu"])
-        p["reihen"] = {k: sum(1 for x in t_["titel"].values() if x.get("reihe") == k) for k in ("m_spitze", "m_weitere", "k_breakout", "k_ep", "zahlen", "k_ermuedung", "k_baerenflagge", "k_bruch", "vcp", "flagge")}
-        return f"{len(t_['titel'])} Titel auf dem Tisch, {len(t_['neu'])} Neuigkeiten"
+    def zirkel_():
+        import watchlists
+        import zirkel
+        z_ = zirkel.rechnen(sorted(set(alle) | set(watchlists.alle())), melden=lambda x: print(x, flush=True))
+        b_ = z_["barometer"]
+        return f"{z_['titel']} Titel, {z_['trades']} mit Zonen-Trade · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs"
 
     def raenge():
         import fuehrer_rang
@@ -159,45 +157,16 @@ def main(nur_tisch=False):
         return f"Stand {e['stand']}: " + ", ".join(f"{k} {n.get(i, 0)}" for i, k in enumerate(rueckenwind.KLASSEN, 1))
 
     def schrank():
-        """Titelseiten der Rückenwind-Titel in Garde, Angriff und Vorhut und der Watchlist vorbauen (09.11.2026), damit jeder Klick aus
-        Rückenwind sofort öffnet. Die Titel des Kartentischs baut der Schritt Kartentisch schon."""
+        """Titelseiten der Rückenwind-Titel in Garde, Angriff und Vorhut und der Watchlist vorbauen (09.11.2026), damit
+        jeder Klick aus Rückenwind sofort öffnet."""
         from concurrent.futures import ProcessPoolExecutor
-        import kartentisch
-        import rueckenwind
         import titel
-        import watchlists
-        e = rueckenwind.laden() or {}
-        liste = sorted({tk for tk, x in (e.get("titel") or {}).items() if x.get("klasse") in rueckenwind.VORNE_KLASSEN}
-                       | set(watchlists.alle()))
-        grenze = titel.ablage_grenze()
-        liste = [tk for tk in liste if not titel.frisch(tk, grenze)]
+        liste = schrank_liste()
         n = 0
         with ProcessPoolExecutor(max(1, (os.cpu_count() or 2) - 1)) as ex:
-            for _, karte, _ in ex.map(kartentisch._stufe2, liste, chunksize=4):
-                n += karte is not None
+            for ok in ex.map(titel.vorbauen, liste, chunksize=4):
+                n += ok
         return f"{n} von {len(liste)} Titelseiten abgelegt"
-
-    def wachen_():
-        """Wachen (12.11.2026): rot = Fehler der App → Schritt rot und Warnung; gelb = Hinweise (Gegenprobe)."""
-        import wachen
-        w = wachen.pruefen()
-        rot = [t for a, t in w["zeichen"] if a == "rot"]
-        gelb = [t for a, t in w["zeichen"] if a == "gelb"]
-        p["wachen"] = {"ampel": w["ampel"], "rot": len(rot), "gelb": len(gelb)}
-        if rot:
-            _mitteilung(f"🔴 Wachen: {len(rot)} Fehler der App – " + " · ".join(rot[:3]), True)
-            raise RuntimeError(f"{len(rot)} Fehler: " + " · ".join(rot[:3]))
-        return f"{w['akten']} Akten geprüft · " + ("alles im Gleichlauf" if not gelb else f"{len(gelb)} Hinweise")
-
-    if nur_tisch:
-        schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
-        schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
-        schritt("Kartentisch", tisch)
-        schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)
-        p["datenstand"] = datenstand()
-        p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
-        _schreiben(p, datei)
-        return
 
     schritt("Massive: Tageskurse und Splits", massive_tage)
     schritt("Rudel, Kursverwandte, Themen-Gruppen", rudel_neu)
@@ -208,11 +177,10 @@ def main(nur_tisch=False):
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
     schritt("Zahlen nach den Terminen neu laden", zahlen_nach_terminen)
-    schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Tisch: Titelseiten lesen ihn
-    schritt("Kartentisch", tisch)
-    schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Tisch: liest dessen Barometer
+    schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Zirkel: die Meldung liest beide
+    schritt("Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs)", zirkel_)
+    schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Zirkel: liest Hochs und Tiefs
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
-    schritt("Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView", wachen_)
     p["datenstand"] = datenstand()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p)
@@ -220,10 +188,10 @@ def main(nur_tisch=False):
     fehler = [s["name"] for s in p["schritte"] if not s["ok"]]
     if fehler:                                    # Micky 17.11.2026: kein „Lage steht“ mehr – aufs Handy nur die heißen
         _mitteilung(f"🔴 gescheitert: {', '.join(fehler)}", True)   # Titel und Fehler des Laufs
-    try:                                          # die heißesten Titel aus „Einsatzbereit“ (Micky 17.11.2026)
-        import auswahl
-        text_, n_ = auswahl.heisse()
-        _mitteilung(text_, titel=f"Heiße Titel: {n_} einsatzbereit", seite="Setups")
+    try:                                          # Morgenmeldung: Zonen-Trades nach Schlachtordnung (22.11.2026)
+        import zirkel
+        text_, n_ = zirkel.heisse()
+        _mitteilung(text_, titel=f"Zonen-Trades: {n_}", seite="Rückenwind")
     except Exception as e:  # noqa: BLE001 – ohne Liste läuft der Lauf weiter
         print(f"Heiße Titel: {e}", flush=True)
 
@@ -251,10 +219,10 @@ def main(nur_tisch=False):
 
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
     "Massive-Tageskurse": "Rückenwind, RS-Rang, Führer-Rang, Rudel, Breite",
-    "Yahoo-Tageskurse": "Charts, Kartentisch, Auswahl einsatzbereit",
+    "Yahoo-Tageskurse": "Charts, Zirkel, Zonen-Trades, Morgenmeldung",
     "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
     "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
-    "RS-Rang": "RS-Rang (IBD-Formel) im Kartentisch",
+    "RS-Rang": "RS-Rang (IBD-Formel)",
     "Führer-Rang": "Kullamägi-Führer (oberste 1–2 %)",
 }
 
@@ -363,9 +331,6 @@ def stand():
     ampel, ds = datenstand_zeile(p.get("datenstand"))
     if ampel in ("rot", "gelb"):
         return ampel, f"Nachtlauf {p['start']}–{p['ende'][-5:]} · {ds}"
-    if (p.get("wachen") or {}).get("gelb"):
-        return "gelb", (f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig · {ds} · Wachen: "
-                        f"{p['wachen']['gelb']} Hinweise")
     return "grün", f"Nachtlauf {p['start']}–{p['ende'][-5:]} vollständig · {ds}"
 
 
@@ -407,70 +372,59 @@ def _gruende(p):
 
 
 def _gross_laeuft():
-    return _laeuft(PROTOKOLL, 12)[0] or _laeuft(TISCH_PROTOKOLL, 3)[0]
+    return _laeuft(PROTOKOLL, 12)[0]
+
+
+def schrank_liste():
+    """Die Titel des Schranks: Rückenwind in Garde, Angriff und Vorhut und die Watchlist, Watchlist zuerst, nur die
+    nicht frisch abgelegten."""
+    import rueckenwind
+    import titel
+    import watchlists
+    wl = set(watchlists.alle())
+    e = rueckenwind.laden() or {}
+    vorne = {tk for tk, x in (e.get("titel") or {}).items() if x.get("klasse") in rueckenwind.VORNE_KLASSEN}
+    grenze = titel.ablage_grenze()
+    return sorted((tk for tk in vorne | wl if not titel.frisch(tk, grenze)), key=lambda tk: (tk not in wl, tk))
 
 
 def seiten(prozesse=None):
     """Schrank neu füllen (06.11.2026): Nach einer Programm- oder Depotänderung gelten die abgelegten Titelseiten
-    nicht mehr. Dieser Lauf baut sie für alle Titel des Kartentischs neu (Watchlist zuerst) und schreibt Lagekarte und
-    Kacheln in den Tisch zurück – mit den vorhandenen Kursen, ohne neue Reihen. Startet ein Nacht- oder Tischlauf,
-    hört er auf (die füllen den Schrank ohnehin)."""
+    nicht mehr. Dieser Lauf baut sie neu (Watchlist zuerst) – mit den vorhandenen Kursen. Startet ein Nachtlauf, hört
+    er auf (der füllt den Schrank ohnehin)."""
     from concurrent.futures import ProcessPoolExecutor
-    import kartentisch
     import titel
-    import watchlists
     import uebersicht
     if uebersicht.veraltet():                    # Übersicht nach einer Programmänderung sofort neu ablegen
         try:
             uebersicht.ablegen(uebersicht.seite_uebersicht())
         except Exception:  # noqa: BLE001
             traceback.print_exc()
-    tisch = kartentisch.laden()
-    if not tisch:
-        return
-    grenze = titel.ablage_grenze()
-    wl = set(watchlists.alle())
-    liste = sorted((tk for tk in tisch["titel"] if not titel.frisch(tk, grenze)), key=lambda tk: (tk not in wl, tk))
+    liste = schrank_liste()
     p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid(), "zahl": len(liste),
          "fertig": 0}
     _schreiben(p, SEITEN_PROTOKOLL)
-    neu = {}
     ex = ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1))
     try:
-        for tk, karte, kacheln in ex.map(kartentisch._stufe2, liste):
-            neu[tk] = (karte, kacheln)
+        for _ in ex.map(titel.vorbauen, liste):
             p["fertig"] += 1
             if p["fertig"] % 10 == 0:
                 _schreiben(p, SEITEN_PROTOKOLL)
                 if _gross_laeuft():
-                    p["abbruch"] = "Nacht- oder Tischlauf gestartet"
+                    p["abbruch"] = "Nachtlauf gestartet"
                     break
     finally:
         ex.shutdown(cancel_futures=True)
-    jetzt = kartentisch.laden()
-    if jetzt and jetzt.get("erzeugt") == tisch.get("erzeugt") and not _gross_laeuft():
-        for tk, (karte, kacheln) in neu.items():
-            if karte is not None and tk in jetzt["titel"]:
-                jetzt["titel"][tk].update(karte=karte, kacheln=kacheln)
-        pfad = os.path.join(kartentisch.SPEICHER, f'{jetzt["stand"]}.json')
-        json.dump(jetzt, open(pfad + ".neu", "w", encoding="utf-8"), ensure_ascii=False)
-        os.replace(pfad + ".neu", pfad)
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
     _schreiben(p, SEITEN_PROTOKOLL)
 
 
-
-
 def seiten_lauf_starten():
     """Startet `nachtlauf.py --seiten`, wenn Titelseiten veraltet sind und kein anderer Lauf rechnet."""
-    import kartentisch
-    import titel
     if _gross_laeuft() or _laeuft(SEITEN_PROTOKOLL, 6)[0]:
         return False
     import uebersicht
-    tisch = kartentisch.laden()
-    grenze = titel.ablage_grenze()
-    if not uebersicht.veraltet() and (not tisch or all(titel.frisch(tk, grenze) for tk in tisch["titel"])):
+    if not uebersicht.veraltet() and not schrank_liste():
         return False
     os.makedirs(os.path.dirname(SEITEN_LOG), exist_ok=True)
     log = open(SEITEN_LOG, "w", encoding="utf-8")
@@ -480,16 +434,9 @@ def seiten_lauf_starten():
 
 
 def laeuft_etwas():
-    """Läuft ein Knopf-Lauf (Kartentisch)? Für das Update-Skript des Servers: dann kein Neustart."""
-    try:                                          # auch Chart- und Setup-Prüfer (14.11.2026)
-        sys.path.insert(0, os.path.join(HIER, "..", "kern"))
-        import chartpruefer
-        import setuppruefer
-        if chartpruefer.stand()[0] or setuppruefer.stand()[0]:
-            return True
-    except Exception:  # noqa: BLE001
-        pass
-    return _laeuft(TISCH_PROTOKOLL, 6)[0]
+    """Läuft ein Schrank-Lauf, den die App gestartet hat? Für das Update-Skript des Servers: dann kein Neustart (er
+    hängt an der App; der Nachtlauf hat einen eigenen Dienst)."""
+    return _laeuft(SEITEN_PROTOKOLL, 6)[0]
 
 
 if __name__ == "__main__":
@@ -498,4 +445,4 @@ if __name__ == "__main__":
     elif "--seiten" in sys.argv:
         seiten()
     else:
-        main(nur_tisch="--tisch" in sys.argv)
+        main()
