@@ -16,6 +16,8 @@ TEXT = f"""**Der Zirkel – alles fließt, und jedes trägt sein Gegenteil.** Ni
 | Widerstand | was dagegen steht, formt die Stärke | Marc Aurels Hindernis | O'Neil, Minervini | Festungen, Enge |
 | Reibung | Kraft ohne Weg; der geringste Widerstand | Laozis Wasser, das Flugzeug | Livermore, Wyckoff | ✈️ freie Bahn, 🏜️ |
 
-Zirkel: 1 Basis (Keim 🌱 Stärke) → 2 Aufwärts (Keim 🍂 Schwäche) → 3 Verteilung (🍂) → 4 Abwärts (🌱) → 1 Basis.
+Zirkel: 1 Basis → 2 Aufwärts → 3 Verteilung → 4 Abwärts → 1 Basis. Ein Keim keimt nicht von selbst: Stärke trägt den
+Keim der Schwäche (🍂) erst, wenn sie Widerstand nicht mehr überwindet oder Druck nicht mehr aushält; Schwäche trägt den
+Keim der Stärke (🌱) erst, wenn sie überwunden wird. Das Cockpit zeigt einen Keim nur, wenn es ihn misst.
 
 [Ganzes Handbuch öffnen]({LINK})"""
