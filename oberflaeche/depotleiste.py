@@ -91,7 +91,7 @@ def positionsmarken(p, df, erk=None):
 
 
 def _deepdive(tk, lang):
-    """Derselbe Knopf wie auf dem Kartentisch: „Deep Dive →“, neuer Tab, Rahmen long grün / short rot."""
+    """Knopf „Deep Dive →“ zur Titelseite, neuer Tab, Rahmen long grün / short rot."""
     return (f'<a href="?seite=Titelseite&t={tk}" target="_blank" rel="noopener" style="border:1px solid '
             f'{GRUEN if lang else ROT};border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600;color:{TEXT};'
             f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')

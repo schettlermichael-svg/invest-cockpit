@@ -135,7 +135,7 @@ def main():
         return tv_kennzahlen.aktualisieren(alle)
 
     def zahlen_nach_terminen():
-        """Zahlen neu für alle Titel, deren Termin seit dem letzten Laden vorbei ist – vor Rückenwind und Kartentisch,
+        """Zahlen neu für alle Titel, deren Termin seit dem letzten Laden vorbei ist – vor Rückenwind und Zirkel,
         damit beide (und die Titelseite) dieselben Zahlen lesen (12.11.2026)."""
         import quellen
         import watchlists
@@ -352,7 +352,7 @@ def _laeuft(datei, stunden):
 
 
 def _gruende(p):
-    """Gescheiterte Schritte mit Grund, kurz: „Kartentisch (TypeError: …)“ – damit man nicht im Dunkeln steht."""
+    """Gescheiterte Schritte mit Grund, kurz: „Zirkel (TypeError: …)“ – damit man nicht im Dunkeln steht."""
     return "; ".join(f"{s['name'].split(' (')[0]} ({s['text'][:110]})" for s in p.get("schritte", []) if not s["ok"])
 
 

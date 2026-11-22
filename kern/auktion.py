@@ -618,23 +618,6 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
 
 
 
-def fuer_titel(tk, df, k, idx=None, mp=None, br=None, zone=None, gewinne=None):
-    """titel() mit Verankerung (Zahltag, Profil) und 30-Minuten-Kerzen – für Kartentisch und Titelseite gleich."""
-    zahltag = profil = roh = None
-    try:
-        import avwap
-        import volumenprofil
-        zahltag = avwap.zahlentag(df, gewinne) if gewinne is not None else None
-        profil = volumenprofil.verankert(df, zahltag, (zone.get("start_t") or zone.get("start")) if zone and zone.get("zone")
-                                         else None)
-    except Exception:  # noqa: BLE001
-        pass
-    try:
-        import erkennung
-        roh = erkennung._ROH.get(tk)
-    except Exception:  # noqa: BLE001
-        pass
-    return titel(df, k, idx, mp, br, zone, profil, zahltag, roh)
 
 
 # ── Gruppe ──────────────────────────────────────────────────────────────────────────────────────────────────────

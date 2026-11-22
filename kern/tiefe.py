@@ -463,7 +463,7 @@ def wanderung(df, fein, gruppe, atr_wert):
             "heute": t_heute, "poc_heute": p1, "vah_vor": h0, "val_vor": v0}
 
 
-# ── Je Zeitebene und für den Kartentisch ──────────────────────────────────────────────────────────────────────────
+# ── Je Zeitebene ──────────────────────────────────────────────────────────────────────────
 def _freitag(index):
     """Freitag der Woche je Zeitpunkt – der Schlüssel der Wochenkerzen (W-FRI)."""
     return index.normalize() + pd.to_timedelta((FREITAG - index.dayofweek) % WOCHENTAGE, unit="D")
@@ -497,17 +497,3 @@ def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
             "wander": None if name == "Stunde" else wanderung(df, d30 if name == "Tag" else h1, "D" if name == "Tag" else "W", a)}
 
 
-def kurz(df, d30, zahltag, index, zone_start=None):
-    """Was der Kartentisch je Titel zeigt (Micky 21.11.2026): Quetschung, CMF, Stärke in der
-    Schwäche, Wertwanderung (Tagesebene)."""
-    a = atr_modul.wert(df)
-    if a is None:
-        return None
-    i0 = anker(df, zahltag, zone_start=zone_start)[0]
-    w = wanderung(df, d30, "D", a)
-    s = staerke_in_schwaeche(df, index)
-    q = quetschung(df, i0)
-    return {"quetsch": q["art"] if q else None, "cmf": cmf(df)["wert"],
-            "sis": [int(s["besser"]), int(s["n"])] if s else None,
-            "wander": {"treppe": [int(w["treppe"][0]), int(w["treppe"][1])], "ballen": bool(w["ballen"]),
-                       "abtasten": w["abtasten"]} if w else None}

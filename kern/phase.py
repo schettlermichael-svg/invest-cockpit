@@ -25,7 +25,6 @@ import numpy as np
 import pandas as pd
 from masse import P_ABWAERTS  # noqa: E402
 
-REGEL = "2026-11-16"   # Stand der Phasenregeln (Schritt 8) – Kartentisch vergleicht Phasen nur bei gleicher Regel
 RUECKSETZER = 22      # Phase 2 · Rücksetzer als Wochencode (Kreislaufbild, Bruch der Spanne)
 STEIGT = 0.005        # GD40W über 4 Wochen um mehr als 0,5 % gestiegen
 FAELLT = -0.005

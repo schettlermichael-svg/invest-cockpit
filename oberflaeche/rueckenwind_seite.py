@@ -50,8 +50,8 @@ def kopf(erg, titel=True):
         + (f' · {len(erg.get("ohne_daten") or [])} ohne Daten' if erg.get("ohne_daten") else "")
         + '</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 14px">Kurs, Geld und Zahlen: RS-Dynamik des Titels, '
-        f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne und keine schwächelnd = grün), Fundament – eigenes Setup der Strömung, '
-        f'getrennt von den Setups des Kartentischs. '
+        f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne und keine schwächelnd = grün), Fundament – die Strömung, '
+        f'die Trades der Zonen stehen in der Spalte „Trade“. '
         f'Ampeln, nichts gefiltert.</p>'
         f'<div style="display:flex;flex-wrap:wrap;gap:12px">'
         + "".join(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
