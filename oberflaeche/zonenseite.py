@@ -57,6 +57,7 @@ def rechnen(tk, laufend=False):
     f = zonen.fuehrte(ebenen)
     import zeichen
     import zirkel                                   # das Setup ergibt sich aus dem Zirkel (Micky 22.11.2026)
+    f["zone"] = f["trade"]                          # der Trade der Zone: der Chart zeichnet ihn immer (Micky 22.11.2026)
     f["trade"] = zirkel.setup(f["trade"], zeichen.zirkel(zeichen.von(tk)))
     cmf = tiefe.cmf(df)["wert"]
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
@@ -250,7 +251,8 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     la_tag = f["lage"]["Tag"]
     if ebene == "Stunde" and la_tag and la_tag["zone"]:
         rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
-    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" else None,
+    linie = f["trade"] or (f.get("zone") and dict(f["zone"], kein_setup=True))   # immer Linien (Micky 22.11.2026)
+    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], linie if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
                            f["festungen"][ebene], f["basis"], r["tk"])

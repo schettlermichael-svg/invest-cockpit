@@ -1457,6 +1457,6 @@ Tagesebene ein Setup – nur im Einklang mit der Phase des Zirkels und bestätig
 Widerstand überwinden, Druck aushalten; ein Keim zählt nur gemessen): 1 Basis + Ausbruch/Pivot + 🌱 oder Wechsel 1→2 =
 Aufbruch · 2 Aufwärts ohne 🍂 = Fortsetzung · Rücktest in 2 bzw. 1→2 = Rücktest · 3 Verteilung + Bruch mit Volumen + 🍂
 oder Wechsel 3→4 = Abbruch · 4 Abwärts + Bruch ohne 🌱 = Fortsetzung abwärts; junge Titel ohne Zirkel: Aufbruch/Rücktest.
-Gegen den Zirkel: kein Setup, nicht gezeigt (Titelseite „kein Setup“, keine Linien im Chart, nicht in Liste und Meldung).
+Gegen den Zirkel: kein Setup, nicht gezeigt (Titelseite „kein Setup“, der Chart zeichnet die Linien der Zone trotzdem, beschriftet „kein Setup“, nicht in Liste und Meldung).
 Mac 04.11., 304 Titel: 174 Zonen-Trades → 42 Setups (19 Aufbruch, 21 Fortsetzung, 2 Abbruch).
 Zirkel-Datei je Lauftag (`daten/kreislauf/<Lauftag>.json`, die jüngste gilt), Kurstag darin für die Datenstand-Wache.

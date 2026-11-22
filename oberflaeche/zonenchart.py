@@ -225,12 +225,13 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         if not fest.get("unten"):
             etiketten.append((OBEN + KURS_H - 4, "✈️↓ freie Bahn", ROT))   # Layout: ganz unten
     if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
+        gegen = " · kein Setup" if t.get("kein_setup") else ""                         # Zone gegen den Zirkel: Linien bleiben
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} Risiko {zahl(t["risiko"], 1)} %'
-                                                                 if name == "Stopp" else ""), farbe))
+                                                                 if name == "Stopp" else gegen), farbe))
     mitte_x = ende + PROFIL_W / 2
     halb_w = PROFIL_W / 2 - 4                                                       # Layout
     vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
