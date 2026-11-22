@@ -572,11 +572,6 @@ def tiefe_zeichen(x):
         return ""
     from gestaltung import zahl
     teile = []
-    p = ti.get("pbd")
-    if p:
-        f = {"P": "🦬", "b": "🐻", "D": "🟡"}[p["form"]]
-        teile.append(f"{f} PbD {p['form']}" + (" gescheitert" if p["gescheitert"] else "")
-                     + ({"unten": " · 🦬 D-Long an der Unterkante", "oben": " · 🐻 D-Short an der Oberkante"}.get(p["kante"], "")))
     if ti.get("quetsch"):
         teile.append("🦈 Quetschung" + (" nach unten" if ti["quetsch"] == "absteigend" else ""))
     c = ti.get("cmf")

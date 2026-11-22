@@ -1,87 +1,48 @@
-"""Zonen, Phasen, Strömung – das schlanke Cockpit (Micky 21.11.2026).
+"""Zonen, Phasen, Strömung – das schlanke Cockpit (Micky 21./22.11.2026).
 
-Grundsatz: Eine Zone ist das Gerüst im Chart (der Nordstern). Der Markt pendelt in ihr (Balance) oder bricht aus ihr
-aus (Disbalance). Drei Ebenen: die Woche zeigt die Strömung, der Tag die Zone, die Stunde den Einstieg. Gehandelt
-werden nur vier Zonen-Trades; die Wahrscheinlichkeit zeigt die Einigkeit der Ebenen (Zeichen, keine Zahl).
+Grundsatz: Eine Zone ist das Gerüst im Chart (der Nordstern). Reagieren statt antizipieren: gehandelt wird der
+Ausbruch aus der Zone, der Rücktest an die gebrochene Kante und der Bruch der Unterkante – sonst nichts.
 
-Die Zone je Ebene ist die faire Zone nach Tom Vorwald (tiefe.pbd: Impuls, Zone aus Kerzenkörpern, Schlusskurszählung);
-ohne Impuls der Rand der Balance (tiefe.struktur). POC = meistgehandelter Preis seit Impulsbeginn bzw. seit dem Anker.
-
-Phase je Ebene (Zeichenliste):
-  ⚪ ungemessen · 🟡 Balance (Kurs in der Zone, nicht an der Kante) · 💥 an der Kante (Test) bzw. erster Schluss
-  draußen · 🦬/🐻 Ausbruch (2 Schlüsse draußen in Richtung des Impulses) · 🦊 gescheitert (2 Schlüsse draußen auf der
-  Gegenseite: die Form ist gescheitert, Vorwald).
-Richtung je Ebene: ↗ aufwärts, ↘ abwärts, → offen – der Impuls, nach einem Scheitern umgekehrt; in Balance ohne
-  Ausbruch offen, außer die Form zeigt (P aufwärts, b abwärts).
-
-Die vier Zonen-Trades (Tageszone; Micky 21.11.2026: nur diese):
-  Pendel      Kurs an der Kante der Zone, Schluss darin → Einstieg an der Kante, Stopp eine Stufe hinter dem
-              abgelehnten Docht (mindestens ¼ ATR, tiefe._d_trade), Ziel die Gegenkante.
-  Ausbruch    2 bis 5 Schlüsse außerhalb in Richtung des Impulses → Einstieg am Schluss, Stopp in der Mitte der Zone,
-              Ziel die Höhe der Zone nach außen abgetragen.
-  Rücktest    nach dem Ausbruch (2 Schlüsse draußen) läuft die Kerze bis an die gebrochene Kante zurück (Kantenabstand),
-              der Schluss bleibt draußen → Einstieg an der Kante, Stopp ¼ ATR jenseits der Kante, Ziel das Extrem seit
-              dem Ausbruch.
-  Gegentrade  Form gescheitert (2 bis 5 Schlüsse auf der Gegenseite) → Einstieg am Schluss, Stopp ¼ ATR hinter der
-              gebrochenen Kante (Micky 21.11.2026, WST: läuft der Kurs zurück in die Zone, ist das Scheitern
-              gescheitert), Ziel der Impulsbeginn (Vorwald) – liegt er nicht mindestens 1 Risiko entfernt, die nächste
-              Festung in Richtung des Trades mit 1 Risiko Abstand (festungen()).
-CRV-Ampel an jedem Trade (Micky 21.11.2026): 🟢 ab 2, 🟡 ab 1, 🔴 darunter – der Trade bleibt immer sichtbar.
-Gesetzt (Claude, 21.11.2026, zur Bestätigung): „frisch“ = höchstens 5 Schlüsse draußen, danach läuft der Trend ohne
-neuen Einstieg; Ausbruchsziel = Zonenhöhe (Messregel der Balance).
-Einigkeit: Richtung der Woche, Richtung des Trades und Richtung der Stunde – je Ebene, die mitzieht, ein Zeichen mehr
-  (3 von 3 = 🦬🦬🦬). Ohne Trade die Einigkeit der Richtungen.
-Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde, die PbD-Kette, kette()):
-  Impuls → Zone → Ausbruch oder Scheitern → nächster Impuls. Maßgeblich ist ein Impuls wie in tiefe.pbd (ein späterer
-  löst ihn nur ab, wenn er per Schluss aus der Zone herausläuft). Die Zone beginnt am Impulsende und endet mit dem
-  letzten Schluss darin vor dem 2. Schluss draußen, sonst am Beginn des nächsten Impulses. Kasten = Kerzenkörper (faire
-  Zone, tiefe._zone), Dochte blass. Zwischen Ausbruch und nächstem Impuls und vor dem ersten Impuls: D-Zonen – 3 Kerzen,
-  deren Körper zusammen keine 2 ATR überspannen (kein Impuls), danach wie die faire Zone fortgeschrieben, Ende wieder
-  beim 2. Schluss draußen. Mindestlänge 3 Kerzen für jede Zone (ZONE_MIN, Claude 21.11.2026, ungemessen). Der Impuls
-  beginnt so spät wie möglich (tiefe._spaet). Alle Maße in ATR der Ebene.
-  Offen, solange der Kurs seit ihrem Ende nie wieder in ihre Wertzone lief (Magnet), sonst erledigt; ihr POC ist nackt,
-  solange kein Docht ihn seitdem berührt hat. Nach einem Ausbruch beginnt die Suche nach der nächsten Zone erst nach dem
-  bestätigenden Schluss – die Ausbruchskerzen bleiben Ausbruch.
-Buchstabe (Micky 21.11.2026, Steidlmayer/Dalton): die Form des Profils der Formation (ab Impulsbeginn, ohne Impuls die
-  Zone) – POC im oberen Drittel P, unteren b, sonst D; widerspricht das Zeitprofil, ein Blitz ⚡ (tiefe.profilform). Die
-  Impulsrichtung steht als Pfeil daneben. In der Balance zeigt die Form die Richtung (P auf, b ab, D offen).
-Aufgeräumt 22.11.2026: ohne Phasenband, POC-Treppe, Wanderung, Korridor, Gedächtnis und Lagebeurteilung.
-Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert
-  am Beginn des Impulses der Zone von heute (Stiel = Impuls, Bauch = Zone: das Profil zeigt den Buchstaben), ohne
-  Impuls am Beginn der Balance; aus den feineren Kerzen der Ebene. Sein POC ist der POC der Zone. Muster: liegt die Tageszone innerhalb der Wochenzone, setzt
-  sich die Woche fort (innen), sonst darüber bzw. darunter.
+Die Zone je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
+  Woche und Tag  die Base nach Minervini und O'Neil (vcp_zone.zone): Oberkante = letztes Swing-Hoch ohne Schluss
+                 darüber, Unterkante = tiefstes Tief seitdem; Name Base, Flagge (Kullamägi) oder Konsolidierung (nach
+                 einem Absturz); Pivot = Hoch der letzten Enge, wenn es am Rand liegt, sonst die Oberkante
+                 (vcp_zone.rand). Beide Ebenen zeigen dieselbe Base – die Woche im großen Bild, der Tag im Detail.
+                 Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Base, aus der er kam.
+  Stunde         die Balance nach Dalton (tiefe.struktur): höchstes Hoch und tiefstes Tief seit dem Anker – die
+                 Feinzeichnung für den Einstieg.
+Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Rücksetzer läuft (Zone noch offen) · 💥 am Pivot (bis 3 % darunter) ·
+  💥 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Base
+  (Kurs läuft am Hoch).
+Die drei Trades (Tageszone, Micky 22.11.2026):
+  Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = Tief der letzten
+              Kontraktion, höchstens 8 % (Minervini, system_minervini.MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
+  Rücktest    nach dem Ausbruch zurück an den Pivot (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
+              Einstieg am Pivot, Stopp ¼ ATR darunter.
+  Short       Bruch der Unterkante: Schluss unter der Unterkante der fertigen Base von gestern, mit Volumen über dem
+              50-Tage-Schnitt; Stopp ¼ ATR über der gebrochenen Kante (ein laufender Rücksetzer bricht nichts).
+Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
+Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
+  Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
+Alte Zonen (POC je Zone, nackte POCs, gebrochene Kanten): die abgeschlossenen Basen (vcp_zone.verlauf) auf Woche und Tag.
 """
+import numpy as np
 import pandas as pd
 
 import tiefe
+import vcp_zone
+from system_minervini import MAX_STOPP  # eine Quelle (Minervini: höchstens 8 % Risiko)
+from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quelle
+from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
 
-FRISCH_SCHLUESSE = 5                 # Ausbruch und Gegentrade gelten bis 5 Schlüsse draußen
-ZONE_MIN = 3               # jede Zone braucht mindestens 3 Kerzen (Claude 21.11.2026, ungemessen; Micky: auch die D-Zone)
-D_ATR = tiefe.IMPULS_ATR   # D-Zone: 3 Körper überspannen zusammen weniger als ein Impuls (2 ATR) – eine Quelle
-GESCHEITERT = tiefe.GESCHEITERT    # 2 Schlüsse draußen (Vorwald) – eine Quelle
-STOPP_ATR = tiefe.STOPP_ATR        # ¼ ATR jenseits der Kante – eine Quelle
-HALB = 2                   # Mitte der Zone
 EBENEN = ("Woche", "Tag", "Stunde")
-PHASE = {"leer": ("⚪", "ungemessen"), "balance": ("🟡", "Balance"), "kante": ("💥", "an der Kante"),
-         "test": ("💥", "erster Schluss draußen"), "aus_auf": ("🦬", "Ausbruch"), "aus_ab": ("🐻", "Ausbruch"),
-         "gescheitert": ("🦊", "gescheitert")}
-TRADE_NAME = {"pendel": "Pendel", "ausbruch": "Ausbruch", "ruecktest": "Rücktest", "gegen": "Gegentrade"}
-TRADE_ZEICHEN = {"pendel": "🟡", "ausbruch": "💥", "ruecktest": "🪝", "gegen": "🦊"}
-
-
-def _zone(e):
-    """(tief, hoch, Profil, form, Beginn) der Ebene: faire Zone nach Vorwald, ohne Impuls der Rand der Balance. Das
-    Profil hängt am Beginn des Impulses (profil_impuls). Eine Zone, die schmaler als ¼ ATR ist (erst eine Kerze), reicht
-    über die Spanne ihrer ersten Kerze (Claude, 21.11.2026)."""
-    pb, st_, df = e.get("pbd"), e["struktur"], e["df"]
-    if pb:
-        lo, hi, form, beginn = pb["zone_tief"], pb["zone_hoch"], pb["form"], pb["zone_start"]
-    else:
-        lo, hi, form, beginn = st_["short_pivot"], st_["pivot"], "D", st_["balance_start"]
-    i = min(int(df.index.searchsorted(beginn)), len(df) - 1)
-    if pb and e["atr"] and hi - lo < e["atr"] * STOPP_ATR:
-        lo, hi = min(lo, float(df["Low"].iloc[i])), max(hi, float(df["High"].iloc[i]))
-    return lo, hi, profil_impuls(e), form, df.index[i]
+PHASE = {"aufbau": ("🟡", "Base im Aufbau"), "ruecksetzer": ("🟡", "Rücksetzer läuft"), "kante": ("💥", "am Pivot"),
+         "ausbruch": ("💥", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
+         "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Base – Kurs läuft am Hoch"),
+         "balance": ("🟡", "Balance"), "rand_oben": ("💥", "am oberen Rand"), "rand_unten": ("💥", "am unteren Rand")}
+RICHTUNG = {"ausbruch": 1, "ruecktest": 1, "fehl": -1, "bruch": -1}
+TRADE_NAME = {"ausbruch": "Ausbruch", "ruecktest": "Rücktest", "short": "Bruch der Unterkante"}
+TRADE_ZEICHEN = {"ausbruch": "💥", "ruecktest": "🪝", "short": "🐻"}
 
 
 SPANNE = {"Woche": pd.Timedelta(days=7), "Tag": pd.Timedelta(days=1), "Stunde": pd.Timedelta(hours=1)}
@@ -106,12 +67,6 @@ def _doppel(teil, schritt):
     return pr
 
 
-def profil_impuls(e):
-    """Das eine Profil der Ebene: ab Beginn des Impulses der Zone von heute (ohne Impuls ab Beginn der Balance)."""
-    pb = e.get("pbd")
-    return profil_seit(e, pb["impuls_tag"] if pb else e["struktur"]["balance_start"])
-
-
 def profil_seit(e, ab_):
     """Zeit- und Volumenprofil ab Kerze ab_ der Ebene bis heute (auch am eigenen Anker, Micky 21.11.2026), aus den
     feineren Kerzen, sonst aus denen der Ebene → tiefe.profil plus zeit, tpoc, ab, quelle."""
@@ -129,216 +84,132 @@ def profil_seit(e, ab_):
     return pr
 
 
+def basis(df):
+    """Die Base des Titels aus Tageskerzen für Woche und Tag (vcp_zone): {"z", "enge", "ausbruch", "jetzt", "verlauf"}
+    – z datiert (Index → Datum), oder None, wenn der Kurs am Hoch läuft."""
+    df = df.dropna(subset=["High", "Low", "Close"])
+    jetzt = vcp_zone.zone(df)
+    a = vcp_zone.ausbruch(df, jetzt=jetzt)
+    gestern = vcp_zone.zone(df.iloc[:-1]) if len(df) > 1 else {}
+    bruch = bool(not a and gestern.get("zone") and float(df["Close"].iloc[-1]) < gestern["unten"])
+    if bruch:                                    # Bruch der Unterkante einer fertigen Base: die Base von gestern
+        b, en = gestern, {}
+    elif a:
+        b, en = a["zone"], a["enge"]
+    else:
+        b = jetzt if jetzt.get("start_i") is not None else None
+        en = vcp_zone.enge(df, jetzt) if jetzt.get("zone") else {}
+    try:
+        alt = [vcp_zone.datiert(df, x) for x in vcp_zone.verlauf(df)]
+    except Exception:  # noqa: BLE001 – Technik: ohne Historie keine alten Zonen
+        alt = []
+    return {"z": vcp_zone.datiert(df, b) if b else None, "enge": en or {}, "ausbruch": a, "jetzt": jetzt, "df": df,
+            "verlauf": alt, "bruch": bruch}
 
 
-def lage(e):
-    """Zone, Phase und Richtung einer Ebene (tiefe.ebene) → dict oder None."""
+def _volumen_hoch(df):
+    v = df["Volume"].astype(float)
+    schnitt = v.rolling(VOL_TAGE, min_periods=VOL_TAGE // 2).mean().shift()   # Technik: halbe Länge reicht zum Start
+    return bool(schnitt.iloc[-1] == schnitt.iloc[-1] and v.iloc[-1] > schnitt.iloc[-1])
+
+
+def lage(e, ba=None):
+    """Zone, Phase und Richtung einer Ebene → dict. Woche und Tag aus der Base ba (basis()), die Stunde aus der Balance."""
     if not e:
         return None
-    lo, hi, pr, _, beginn = _zone(e)
-    form, blitz = tiefe.profilform(pr)                 # Micky 21.11.2026: Buchstabe aus der Form des Profils
-    poc = pr["poc"]
-    pb, df = e.get("pbd"), e["df"]
+    df = e["df"]
     kurs = float(df["Close"].iloc[-1])
-    phase, richt = "balance", 0
-    if pb:
-        auf = pb["aufwaerts"]
-        richt = 1 if auf else -1
-        if pb["gescheitert"]:
-            phase, richt = "gescheitert", -richt
-        elif pb["seite"] and pb["zaehl"] >= GESCHEITERT:
-            phase = "aus_auf" if pb["seite"] == "oben" else "aus_ab"
-        elif pb["seite"]:
-            phase = "test"
-        elif pb["kante"]:
+    if e["name"] == "Stunde" or ba is None:
+        st_ = e["struktur"]
+        lo, hi, beginn = float(st_["short_pivot"]), float(st_["pivot"]), pd.Timestamp(st_["balance_start"])
+        nah = (e["atr"] or 0) * STOPP_ATR
+        phase = "rand_oben" if kurs >= hi - nah else "rand_unten" if kurs <= lo + nah else "balance"
+        name, pivot, info = "Balance", hi, f"seit {beginn:%d.%m. %H:%M}"
+    else:
+        z, en, a = ba["z"], ba["enge"], ba["ausbruch"]
+        if z is None:                              # Kurs läuft am Hoch: keine Zone, das Profil ab dem Anker der Balance
+            z_, w_ = PHASE["hoch"]
+            pr = profil_seit(e, e["struktur"]["balance_start"])
+            return {"zone": None, "phase": "hoch", "zeichen": z_, "wort": w_, "richtung": 0, "pfeil": "→", "kurs": kurs,
+                    "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]), "profil": pr, "beginn": None}
+        lo, hi, beginn = float(z["unten"]), float(z["oben"]), pd.Timestamp(z["start_t"])
+        pivot = float(a["pivot"]) if a else vcp_zone.rand(z, en) if en.get("pivot") else hi
+        td = ba["df"]
+        if a and a["fehl"]:
+            phase = "fehl"
+        elif a:
+            phase = "ruecktest" if a["ruecktest"] else "ausbruch"
+        elif ba["bruch"]:
+            phase = "bruch"
+        elif not ba["jetzt"].get("zone"):
+            phase = "ruecksetzer"
+        elif float(td["Close"].iloc[-1]) >= pivot * (1 - vcp_zone.RAND_PCT / 100):
             phase = "kante"
-        if phase in ("balance", "kante"):              # in der Balance zeigt die Form, wer das Feld hält
-            richt = {"P": 1, "b": -1, "D": 0}[form]
-    elif kurs >= hi or kurs <= lo:
-        phase = "kante"
-    z, wort = PHASE[phase]
-    return {"zone": (float(lo), float(hi)), "poc": float(poc), "profil": pr, "beginn": beginn, "form": form,
-            "blitz": blitz, "impuls": ("↗" if pb["aufwaerts"] else "↘") if pb else "",
-            "phase": phase, "zeichen": z,
-            "wort": wort, "richtung": richt, "pfeil": {1: "↗", -1: "↘", 0: "→"}[richt], "kurs": kurs,
-            "zaehl": pb["zaehl"] if pb else 0, "seite": pb["seite"] if pb else None, "kante": pb["kante"] if pb else None}
-
-
-def trade(e, la, fest=None):
-    """Der eine Zonen-Trade der Tagesebene jetzt → {art, richtung (1/−1), einstieg, stopp, ziel, crv} oder None."""
-    pb = e.get("pbd") if e else None
-    if not pb or not la:
-        return None
-    df, a = e["df"], e["atr"]
-    lo, hi = la["zone"]
-    kurs = la["kurs"]
-    n = pb["zaehl"]
-    t = None
-    if la["phase"] in ("balance", "kante") and pb["kante"] and not pb["seite"]:
-        tr = pb["d_long"] if pb["kante"] == "unten" else pb["d_short"]
-        t = {"art": "pendel", "richtung": 1 if pb["kante"] == "unten" else -1, "einstieg": tr["einstieg"],
-             "stopp": tr["stopp"], "ziel": tr["ziel"]}
-    elif la["phase"] in ("aus_auf", "aus_ab") and n <= FRISCH_SCHLUESSE:
-        r = 1 if la["phase"] == "aus_auf" else -1
-        kante = hi if r > 0 else lo
-        nah = pb["kantenabstand"]
-        rueck = (float(df["Low"].iloc[-1]) <= kante + nah) if r > 0 else (float(df["High"].iloc[-1]) >= kante - nah)
-        seit = df.iloc[len(df) - n:]
-        if rueck:
-            t = {"art": "ruecktest", "richtung": r, "einstieg": kante, "stopp": kante - r * a * STOPP_ATR,
-                 "ziel": float(seit["High"].max() if r > 0 else seit["Low"].min())}
         else:
-            t = {"art": "ausbruch", "richtung": r, "einstieg": kurs, "stopp": (lo + hi) / HALB,
-                 "ziel": kante + r * (hi - lo)}
-    elif la["phase"] == "gescheitert" and n <= FRISCH_SCHLUESSE:
-        r = la["richtung"]
-        stopp = (lo + a * STOPP_ATR) if r < 0 else (hi - a * STOPP_ATR)            # hinter der gebrochenen Kante
-        risiko = abs(kurs - stopp)
-        ziel, grund = pb["impuls_kurs"], "Impulsbeginn"
-        if (ziel - kurs) * r < risiko:                 # sonst die nächste Festung mit 1 Risiko Abstand
-            weiter = [x for x in (fest or {}).get("oben" if r > 0 else "unten", []) if (x["preis"] - kurs) * r >= risiko]
-            if weiter:
-                ziel, grund = weiter[0]["preis"], "Festung: " + " · ".join(weiter[0]["grund"])
-        t = {"art": "gegen", "richtung": r, "einstieg": kurs, "stopp": stopp, "ziel": ziel, "ziel_grund": grund}
+            phase = "aufbau"
+        name = z.get("name") or "Rücksetzer"
+        teile = [f'{z["wochen"]:.0f} Wo.', f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
+        if en.get("zahl"):
+            teile.append(f'{en["zahl"]} Kontr. {en["folge"]} %')
+        if a and not a["fehl"]:
+            teile.append(f'Ausbruch vor {a["tage_her"]} T. ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
+        info = " · ".join(teile)
+    pr = profil_seit(e, beginn)
+    z_, w_ = PHASE[phase]
+    r = RICHTUNG.get(phase, 0)
+    return {"zone": (lo, hi), "pivot": pivot, "poc": float(pr["poc"]), "profil": pr, "beginn": beginn, "name": name,
+            "info": info, "phase": phase, "zeichen": z_, "wort": w_, "richtung": r,
+            "pfeil": {1: "↗", -1: "↘", 0: "→"}[r], "kurs": kurs}
+
+
+def trade(e, la, ba):
+    """Der eine Trade der Tagesebene → {art, richtung, einstieg, stopp, risiko, ampel, wartet, name, zeichen} oder None."""
+    if not e or not la or la.get("zone") is None or ba is None or ba["z"] is None:
+        return None
+    a, en, z = ba["ausbruch"], ba["enge"], ba["z"]
+    atr = e["atr"] or 0
+    kurs, pivot, lo = la["kurs"], la["pivot"], la["zone"][0]
+    t = None
+    if la["phase"] in ("ausbruch", "kante", "aufbau") and (a or z.get("laenge") == "ok"):
+        einst = vcp_zone.einstiege(z, en, cheat=False)
+        struktur = einst[-1]["struktur"] if einst else None
+        stopp = max(struktur, pivot * (1 - MAX_STOPP)) if struktur is not None else pivot * (1 - MAX_STOPP)
+        if la["phase"] != "ausbruch" or a.get("kaufzone"):
+            t = {"art": "ausbruch", "richtung": 1, "einstieg": pivot, "stopp": stopp, "wartet": la["phase"] != "ausbruch"}
+    elif la["phase"] == "ruecktest":
+        t = {"art": "ruecktest", "richtung": 1, "einstieg": pivot, "stopp": pivot - atr * STOPP_ATR, "wartet": False}
+    elif la["phase"] == "bruch" and _volumen_hoch(ba["df"]):
+        t = {"art": "short", "richtung": -1, "einstieg": kurs, "stopp": lo + atr * STOPP_ATR, "wartet": False}
     if t:
-        risiko = abs(t["einstieg"] - t["stopp"])
-        t["crv"] = round(abs(t["ziel"] - t["einstieg"]) / risiko, 1) if risiko else None
-        t["ampel"] = crv_ampel(t["crv"])
+        t["risiko"] = round(abs(t["einstieg"] - t["stopp"]) / t["einstieg"] * 100, 1)
+        t["ampel"] = "🟢" if t["risiko"] <= MAX_STOPP * 100 else "🔴"
         t["name"], t["zeichen"] = TRADE_NAME[t["art"]], TRADE_ZEICHEN[t["art"]]
     return t
 
 
-AMPEL_GRUEN, AMPEL_GELB = 2, 1  # CRV-Ampel der Zonen-Trades (Micky 21.11.2026): 🟢 ab 2, 🟡 ab 1, 🔴 darunter
-
-
-def crv_ampel(crv):
-    """Ampel zum Chance-Risiko-Verhältnis."""
-    return "⚪" if crv is None else "🟢" if crv >= AMPEL_GRUEN else "🟡" if crv >= AMPEL_GELB else "🔴"
-
-
-def _d_zonen(O, C, a, b, atr_wert, aus, band):
-    """D-Zonen zwischen den Kerzen a und b (einschließlich): 3 Kerzen, deren Körper zusammen keine 2 ATR überspannen,
-    danach fortgeschrieben wie die faire Zone; Ende beim 2. Schluss draußen. Kerzen ohne Zone tragen weiter, was sie
-    vorher trugen (Ausbruch, Scheitern oder nichts)."""
-    k = a
-    while k + ZONE_MIN - 1 <= b:
-        koerper = [x for j in range(k, k + ZONE_MIN) for x in (O[j], C[j])]
-        if max(koerper) - min(koerper) >= D_ATR * atr_wert:
-            k += 1
-            continue
-        zt, zh, letzte, zaehl = min(koerper), max(koerper), k + ZONE_MIN - 1, 0
-        j = letzte + 1
-        while j <= b:
-            if zt <= C[j] <= zh:
-                zt, zh, letzte, zaehl = min(zt, O[j], C[j]), max(zh, O[j], C[j]), j, 0
-            else:
-                zaehl += 1
-                if zaehl >= GESCHEITERT:
-                    break
-            j += 1
-        seite = "oben" if j <= b and C[j] > zh else "unten" if j <= b else None
-        aus.append({"art": "D", "s": k, "e": letzte, "tief": zt, "hoch": zh, "auf": None, "aus": seite})
-        for x in range(k, letzte + 1):
-            band[x] = "b"
-        for x in range(letzte + 1, b + 1):              # Ausbruch und Lauf danach, bis die nächste Zone beginnt
-            band[x] = ("a+" if seite == "oben" else "a-") if seite else band[x]
-        k = min(j, b) + 1 if seite else letzte + 1
-
-
-def kette(df, atr_wert):
-    """Die PbD-Kette der Ebene (Regel im Kopf dieser Datei) → (Zonen, Band). Zone = {art P/b/D, s, e (Positionen),
-    tief, hoch (Körper), auf, aus (oben/unten/None)}; Band je Kerze: i+/i- Impuls, b Zone, a+/a- Ausbruch, f Scheitern."""
-    n = len(df)
-    band, aus = [None] * n, []
-    if atr_wert is None or not atr_wert > 0 or n < 2 * ZONE_MIN:
-        return aus, band
-    O, C, L, H = (df[k].to_numpy(float) for k in ("Open", "Close", "Low", "High"))
-    start_kurs = lambda i, auf: float(L[i] if auf else H[i])                       # noqa: E731
-    gilt, akt = [], None                                                            # maßgebliche Impulse wie tiefe.pbd
-    for imp in tiefe.impulse(df, atr_wert, suche=n):
-        if imp[1] > n - 2:
-            continue
-        if akt is not None:
-            if imp[0] <= akt[1]:
-                continue
-            zt, zh = tiefe._zone(O, C, start_kurs(akt[0], akt[2]), akt[1], akt[2], imp[0])[:2]
-            if not (C[imp[1]] > zh or C[imp[1]] < zt):
-                continue
-        akt = imp
-        gilt.append(imp)
-    _d_zonen(O, C, 0, (gilt[0][0] - 1) if gilt else n - 1, atr_wert, aus, band)
-    for k, (s_, e_, auf, _) in enumerate(gilt):
-        for j in range(s_, e_ + 1):
-            band[j] = "i+" if auf else "i-"
-        bis = gilt[k + 1][0] - 1 if k + 1 < len(gilt) else n - 1
-        ende, aus_seite, bestaetigt = bis, None, bis
-        for j in range(e_ + 1, bis + 1):
-            zaehl, seite = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, j)[4:6]  # Technik: Felder von tiefe._zone
-            if seite and zaehl >= GESCHEITERT:
-                ende, aus_seite, bestaetigt = j - zaehl, seite, j
-                break
-        zt, zh = tiefe._zone(O, C, start_kurs(s_, auf), e_, auf, ende)[:2]
-        aus.append({"art": "P" if auf else "b", "s": e_, "e": ende, "tief": zt, "hoch": zh, "auf": auf, "aus": aus_seite,
-                    "imp_s": s_})
-        for j in range(e_ + 1, ende + 1):
-            band[j] = "b"
-        if aus_seite:
-            mit = (aus_seite == "oben") == bool(auf)
-            for j in range(ende + 1, bis + 1):          # Scheitern nur an den bestätigenden Kerzen, danach der Lauf
-                band[j] = "f" if not mit and j <= bestaetigt else ("a+" if aus_seite == "oben" else "a-")
-            _d_zonen(O, C, bestaetigt + 1, bis, atr_wert, aus, band)   # erst nach dem bestätigenden Schluss
-    aus.sort(key=lambda z: z["s"])
-    return aus, band
-
-
-def historie(e, ab=0):
-    """Zonen der Vergangenheit der Ebene seit Kerze ab nach der PbD-Kette, älteste zuerst, ohne die Zone von heute –
-    je mit Körper (tief–hoch), Dochten, Volumenprofil (POC, Wertzone), offen und nackt."""
-    if not e:
+def historie(e, ba):
+    """Abgeschlossene Basen (vcp_zone.verlauf) als alte Zonen der Ebene, älteste zuerst – je mit Kanten, POC (Profil
+    der Base aus den feineren Kerzen), nackt (seitdem nie berührt) und Ende (Tag des Ausbruchs)."""
+    if not e or ba is None or e["name"] == "Stunde":
         return []
-    if "_hist" in e:
-        return [z for z in e["_hist"] if int(e["df"].index.searchsorted(z["ende"])) >= ab]
     df, fein = e["df"], e.get("fein")
-    zonen_, _ = _kette(e)
-    pb = e.get("pbd")
-    heute = pd.Timestamp(pb["zone_start"]) if pb else pd.Timestamp(e["struktur"]["balance_start"])
     schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
     L, H = df["Low"].to_numpy(float), df["High"].to_numpy(float)
     erg = []
-    for z in zonen_:
-        if z["e"] - z["s"] + 1 < ZONE_MIN or df.index[z["s"]] >= heute:
-            continue
-        von, bis = _von_bis(e, df.index[z["s"]])[0], _von_bis(e, df.index[z["e"]])[1]
+    for b in sorted(ba["verlauf"], key=lambda x: x["start_t"]):
+        von, bis = _von_bis(e, b["start_t"])[0], _von_bis(e, b["ende_t"])[1]
         f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
-        teil = f_ if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN else df.iloc[z["s"]:z["e"] + 1]
+        teil = f_ if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN else df[(df.index >= von) & (df.index < bis)]
+        if not len(teil):
+            continue
         pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
-        a0 = z.get("imp_s", z["s"])                    # Formation: ab Impulsbeginn (D: die Zone selbst) – ihr Buchstabe
-        v0 = _von_bis(e, df.index[a0])[0]
-        f0 = fein[(fein.index >= v0) & (fein.index < bis)] if fein is not None and len(fein) else None
-        t0 = f0 if f0 is not None and len(f0) >= tiefe.STUNDEN_MIN else df.iloc[a0:z["e"] + 1]
-        form, blitz = tiefe.profilform(_doppel(t0, schritt))
-        nach = slice(z["e"] + 1, len(df))
-        beruehrt = (L[nach] <= pr["poc"]) & (H[nach] >= pr["poc"])
-        erg.append({"form": form, "blitz": blitz, "auf": z["auf"], "tief": float(z["tief"]), "hoch": float(z["hoch"]),
-                    "docht_tief": float(L[z["s"]:z["e"] + 1].min()), "docht_hoch": float(H[z["s"]:z["e"] + 1].max()),
-                    "poc": float(pr["poc"]), "val": float(pr["val"]), "vah": float(pr["vah"]),
-                    "start": df.index[z["s"]], "ende": df.index[z["e"]], "aus": z["aus"],
-                    "offen": not bool(((L[nach] <= pr["vah"]) & (H[nach] >= pr["val"])).any()),
+        k = int(df.index.searchsorted(pd.Timestamp(bis)))
+        beruehrt = (L[k:] <= pr["poc"]) & (H[k:] >= pr["poc"])
+        erg.append({"name": b["name"], "tief": float(b["unten"]), "hoch": float(b["oben"]), "poc": float(pr["poc"]),
+                    "start": pd.Timestamp(b["start_t"]), "ende": pd.Timestamp(b["ende_t"]),
                     "nackt": not bool(beruehrt.any()),
-                    "beruehrt": df.index[z["e"] + 1 + int(beruehrt.argmax())] if beruehrt.any() else None})
-    e["_hist"] = erg
-    return historie(e, ab)
-
-
-def _kette(e):
-    """kette() der Ebene, einmal gerechnet."""
-    if "_kette" not in e:
-        e["_kette"] = kette(e["df"], e["atr"])
-    return e["_kette"]
-
-
-
-
+                    "beruehrt": df.index[k + int(beruehrt.argmax())] if beruehrt.any() else None})
+    return erg
 
 
 KNOTEN_ANTEIL = 0.5        # Knoten (HVN): Gipfel mit mindestens ½ des POC-Volumens (Claude 21.11.2026, ungemessen)
@@ -350,7 +221,6 @@ def profil_details(pr):
     """Profil-Details nach Dalton (Micky 21.11.2026): Wertzone (VAL–VAH, 70 %), Knoten (HVN: Gipfel ab ½ POC-Volumen,
     voneinander durch eine dünne Stufe unter ⅓ getrennt), dünne Stellen (LVN, tiefe.zonen) und Einzeldrucke im
     Zeitprofil (nur eine Kerze, mindestens 2 Stufen am Stück, tiefe.SCHWANZ_ZEILEN)."""
-    import numpy as np
     p, k, m = np.asarray(pr["volumen"], float), pr["grenzen"], pr["mitte"]
     top = p.max() or 1.0
     glatt = np.convolve(p, np.ones(KNOTEN_GLAETTEN) / KNOTEN_GLAETTEN, mode="same")
@@ -377,7 +247,6 @@ def profil_details(pr):
             "duenn": tiefe.zonen(pr)["duenn"], "einzel": einzel}
 
 
-DRITTEL = tiefe.DRITTEL    # Bauch: POC im oberen, mittleren oder unteren Drittel der Zone – eine Quelle
 
 
 
@@ -400,7 +269,6 @@ FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sons
 def _umkehrpreise(e):
     """Bewährte Umkehrpreise der Ebene: mindestens 2 Wendepunkte innerhalb ¼ ATR, einer davon mit Volumen über dem
     Schnitt → [(Preis, Grund)]."""
-    import numpy as np
     df, a = e["df"], e["atr"]
     if a is None or len(df) < 2 * UMKEHR_FENSTER + 1:
         return []
@@ -424,13 +292,12 @@ def _umkehrpreise(e):
     return aus
 
 
-def _gebrochene_kanten(e):
-    """Kanten alter Zonen, die der Kurs durchbrochen hat und seitdem nicht per Schluss zurück durchquert: die alte Decke
+def _gebrochene_kanten(e, hist):
+    """Kanten alter Basen, die der Kurs durchbrochen hat und seitdem nicht per Schluss zurück durchquert: die alte Decke
     wird Boden, der alte Boden Decke (Dalton) → [(Preis, Grund)]."""
-    df = e["df"]
-    C = df["Close"]
+    C = e["df"]["Close"]
     aus = []
-    for z in historie(e):
+    for z in hist:
         nach = C[C.index > z["ende"]]
         if not len(nach):
             continue
@@ -446,14 +313,14 @@ def _gebrochene_kanten(e):
     return aus
 
 
-def festungen(e, la, avwaps=()):
+def festungen(e, la, avwaps=(), hist=()):
     """Die Festungen der Lagekarte (Micky 21.11.2026): bewährte Umkehrpreise, gebrochene Kanten alter Zonen und AVWAP
     großer Ereignisse – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
     Gründen. avwaps = tiefe.avwap_liste(Tageskurse)[0]. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
     if not e or not la:
         return {"oben": [], "unten": []}
     kurs, a = la["kurs"], e["atr"] or 0
-    roh = _umkehrpreise(e) + _gebrochene_kanten(e) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
+    roh = _umkehrpreise(e) + _gebrochene_kanten(e, hist) + [(x["wert"], AVWAP_GROSS[x["anker"]]) for x in avwaps
                                                       if x["anker"] in AVWAP_GROSS]
     aus = {}
     for seite, auswahl in (("oben", [x for x in roh if x[0] > kurs]), ("unten", [x for x in roh if x[0] < kurs])):
@@ -472,33 +339,11 @@ def festungen(e, la, avwaps=()):
     return aus
 
 
-
-
-
-
-
-
-
-
 def fuehrte(ebenen, avwaps=()):
-    """Alles für Kopfzeile und Chart: Lage je Ebene, Festungen, der Trade des Tages, Einigkeit, Muster, alte Zonen."""
-    la = {n: lage(ebenen.get(n)) for n in EBENEN}
-    fest = {n: festungen(ebenen.get(n), la[n], avwaps) for n in EBENEN}
-    t = trade(ebenen.get("Tag"), la["Tag"], fest["Tag"])
-    bezug = t["richtung"] if t else (la["Tag"] or {}).get("richtung", 0)
-    einig = sum(1 for n in EBENEN if la[n] and bezug and la[n]["richtung"] == bezug) if bezug else 0
-    if t and la["Tag"] and la["Tag"]["richtung"] != bezug:
-        einig += 1                                   # der Trade selbst zählt für den Tag (Pendel gegen die Form)
-    muster = None
-    if la["Tag"] and la["Woche"]:
-        (lo, hi), (wl, wh) = la["Tag"]["zone"], la["Woche"]["zone"]
-        muster = "innen" if wl <= lo and hi <= wh else "darüber" if lo > wh else "darunter" if hi < wl else "überlappend"
-    return {"lage": la, "trade": t, "einig": min(einig, len(EBENEN)), "richtung": bezug, "muster": muster, "festungen": fest,
-            "alt": {n: historie(ebenen.get(n), 0) for n in EBENEN}}
-
-
-def einig_zeichen(f):
-    """Zeichen der Einigkeit: 🦬 bzw. 🐻 so oft, wie Ebenen mitziehen; ohne Richtung 🟡."""
-    if not f["richtung"]:
-        return "🟡"
-    return ("🦬" if f["richtung"] > 0 else "🐻") * max(1, f["einig"])
+    """Alles für Kopfzeile und Chart: die Base (Woche und Tag), Lage je Ebene, alte Zonen, Festungen, der Trade."""
+    tag = ebenen.get("Tag")
+    ba = basis(tag["df"]) if tag else None
+    la = {n: lage(ebenen.get(n), None if n == "Stunde" else ba) for n in EBENEN}
+    alt = {n: historie(ebenen.get(n), ba) for n in EBENEN}
+    fest = {n: festungen(ebenen.get(n), la[n], avwaps, alt[n]) for n in EBENEN}
+    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "alt": alt, "basis": ba}

@@ -1,5 +1,6 @@
-"""Titelseite des schlanken Cockpits (Micky 21.11.2026): Kopfzeile mit den drei Ebenen als Zeichen, der eine
-Zonen-Trade mit Einigkeit, darunter der Zonenchart mit Reitern Woche · Tag · Stunde. Wenig Text, das Bild führt."""
+"""Titelseite des schlanken Cockpits (Micky 21./22.11.2026): Kopfzeile mit Rückenwind und den drei Ebenen (Base nach
+Minervini/O'Neil in Woche und Tag, Balance in der Stunde), der eine Trade, darunter der Zonenchart mit Reitern Woche ·
+Tag · Stunde. Wenig Text, das Bild führt."""
 import pandas as pd
 
 import gestaltung
@@ -72,57 +73,57 @@ def _stunde_bezug(symbol):
 
 
 def _karte_ebene(name, la, aktiv=False):
+    rahmen = (f'background:{KARTE};border:{2 if aktiv else 1}px solid {BLAU if aktiv else RAND};border-radius:10px;'
+              f'padding:10px 12px')
+    kopf_ = f'<div style="font-size:12px;color:{TEXT_3}">{name} · {EBENE_ROLLE[name]}</div>'
     if not la:
-        return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
-                f'<div style="font-size:12px;color:{TEXT_3}">{name} · {EBENE_ROLLE[name]}</div>'
-                f'<div style="font-size:18px">⚪</div></div>')
-    lo, hi = la["zone"]
-    return (f'<div style="background:{KARTE};border:{2 if aktiv else 1}px solid {BLAU if aktiv else RAND};border-radius:10px;'
-            f'padding:10px 12px"><div style="font-size:12px;color:{TEXT_3}">{name} · {EBENE_ROLLE[name]}</div>'
+        return f'<div style="{rahmen}">{kopf_}<div style="font-size:18px">⚪</div></div>'
+    zeile2 = ""
+    if la["zone"]:
+        lo, hi = la["zone"]
+        zeile2 = (f'{zahl(lo)} – {zahl(hi)}' + (f' · Pivot {zahl(la["pivot"])}' if la.get("pivot") and la["pivot"] < hi else "")
+                  + f' · POC {zahl(la["poc"])}')
+    return (f'<div style="{rahmen}">{kopf_}'
             f'<div style="font-size:20px;margin:2px 0">{la["pfeil"]} {la["zeichen"]} <span style="font-size:15px">'
-            f'{t(la["wort"])} · {la["form"]}{"⚡" if la.get("blitz") else ""}'
-            f'{(" nach " + la["impuls"]) if la.get("impuls") else ""}</span></div>'
-            f'<div style="font-size:13px;color:{TEXT_2}">{zahl(lo)} – {zahl(hi)} · POC {zahl(la["poc"])}</div></div>')
+            f'{t(la["wort"])}{(" · " + t(la["name"])) if la["name"] else ""}</span></div>'
+            f'<div style="font-size:13px;color:{TEXT_2}">{zeile2}</div>'
+            + (f'<div style="font-size:12px;color:{TEXT_3};margin-top:2px">{t(la["info"])}</div>' if la.get("info") else "")
+            + '</div>')
 
 
 def kopf(r):
-    """Kopfzeile: Titel, Kurs, Einigkeit, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Phase und Zone; der
-    Trade; das Muster der Ebenen. Aufgeräumt 22.11.2026: ohne Lagebeurteilung und Gedächtnis."""
+    """Kopfzeile: Titel, Kurs, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Zone und Phase; der Trade.
+    Aufgeräumt 22.11.2026: ohne Lagebeurteilung, Gedächtnis, PbD, Einigkeit und Muster."""
+    import tiefe
     import zonen
     f, df = r["fuehrte"], r["df"]
     kurs = float(df["Close"].iloc[-1])
     c = r["cmf"]
-    import tiefe
     geld = "🌞" if c is not None and c > tiefe.CMF_GRENZE else "❄️" if c is not None and c < -tiefe.CMF_GRENZE else "🟡"
     tr = f["trade"]
     if tr:
         seite_ = "long" if tr["richtung"] > 0 else "short"
-        grund = f' ({t(tr["ziel_grund"])})' if tr.get("ziel_grund") else ""
         trade_html = (f'<div style="font-size:20px">{tr["zeichen"]} {t(tr["name"])} {seite_}</div>'
-                      f'<div style="font-size:13px;color:{TEXT_2}">Einstieg {zahl(tr["einstieg"])} · Stopp '
-                      f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])}{grund} · {tr["ampel"]} CRV {zahl(tr["crv"] or 0, 1)}</div>')
+                      f'<div style="font-size:13px;color:{TEXT_2}">{"Auslöser" if tr["wartet"] else "Einstieg"} '
+                      f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
+                      f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>')
     else:
-        trade_html = '<div style="font-size:20px">⚪ kein Zonen-Trade</div>'
+        trade_html = '<div style="font-size:20px">⚪ kein Trade</div>'
     import rueckenwind_seite
     wind = rueckenwind_seite.titel_zeile(r["tk"])
     wind_html = (f'<div style="margin-top:10px;font-size:15px;color:{TEXT}">Rückenwind: '
                  + ' <span style="color:{0}">·</span> '.format(TEXT_3).join(t(w) for w in wind) + '</div>') if wind else (
         f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Rückenwind: noch kein Stand des Nachtlaufs</div>')
-    muster = {"innen": "🟢 Tageszone in der Wochenzone", "darüber": "🦬 Tageszone über der Wochenzone",
-              "darunter": "🐻 Tageszone unter der Wochenzone", "überlappend": "🟡 Tageszone am Rand der Wochenzone",
-              None: "⚪ Muster ungemessen"}[f["muster"]]
     zellen = "".join(_karte_ebene(n, f["lage"][n], n == "Tag") for n in zonen.EBENEN)
     return (f'<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">'
             f'<span style="font-size:28px;font-weight:600">{t(r["tk"])}</span>'
             f'<span style="font-size:18px;color:{TEXT}">{zahl(kurs)} $</span>'
-            f'<span style="font-size:22px" title="Einigkeit der Ebenen">{zonen.einig_zeichen(f)}</span>'
             f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
             f'{wind_html}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
-            f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>'
-            f'<div style="margin-top:8px;font-size:13px;color:{TEXT_3}">{muster}</div>')
+            f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>')
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
@@ -139,11 +140,10 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     import zonen
     import zonenchart
     f = r["fuehrte"]
-    hoeher = {"Tag": "Woche", "Stunde": "Tag"}.get(ebene)             # die Front der höheren Ebene als Rahmen
-    rahmen = None
-    if hoeher and f["lage"][hoeher] and r["ebenen"][hoeher]:
-        beginn = pd.Timestamp(f["lage"][hoeher]["beginn"])
-        rahmen = (f["lage"][hoeher], beginn - pd.Timedelta(days=4) if hoeher == "Woche" else beginn, hoeher)  # Technik: Montag
+    rahmen = None                                                     # in der Stunde die Base des Tages als Rahmen
+    la_tag = f["lage"]["Tag"]
+    if ebene == "Stunde" and la_tag and la_tag["zone"]:
+        rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,

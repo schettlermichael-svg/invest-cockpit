@@ -14,9 +14,6 @@ from gestaltung import TEXT_2, karte, seite, t, zeilen
 # ── Feste Regeln der Anzeige ─────────────────────────────────────────────────────────────────────────────────────────
 WANDER_LETZTE = 5            # Wertwanderung: die letzten 5 Kerzen
 WANDER_SEITE = 4             # … ab 4 von 5 höher bzw. tiefer: 🦬 bzw. 🐻
-RUECK_ZEIGEN = 3             # Rückläufe: die letzten 3 nennen
-PENDEL_ZEIGEN = 4            # Läufe von Kante zu Kante: die letzten 4 nennen
-SCHWANZ_ZEIGEN = 3           # Schwänze: die letzten 3 je Art
 SIS_ZEIGEN = 4               # Stärke in der Schwäche: die letzten 4 Abgabetage nennen
 RS_UNTER_HOCH = -10          # RS-Linie bis 10 % unter ihrem Hoch: gemischt (🟡), darunter Schwäche (🔴)
 PFEIL_TAGE = ("1W", "1M", "3M")   # RS gegen den Index über 1W, 1M, 3M
@@ -113,88 +110,6 @@ def fallen_texte(df):
 
 
 # ── PbD nach Tom Vorwald ─────────────────────────────────────────────────────────────────────────────────────────
-def pbd_zeilen(pb, kurs, kurz=False, einheit="Kerzen"):
-    import tiefe
-    if pb is None:
-        return [("⚪", f"Kein Impuls nach Vorwalds Zählung in den letzten {tiefe.SUCHE} {einheit} (mindestens "
-                       f"{tiefe.IMPULS_SCHLUESSE} Schlüsse in Folge, zusammen {gestaltung.zahl(tiefe.IMPULS_ATR, 0)} ATR) – "
-                       "keine P- oder b-Formation")]
-    zp = []
-    richt = "auf" if pb["aufwaerts"] else "ab"
-    namen = {"P": "P – Käufer trieben hoch, oben fair", "b": "b – Verkäufer trieben runter, unten fair",
-             "D": "D – größeres Balance-Spiel (wiederholt in die Zone zurückgelaufen)"}
-    f = pb["form"]
-    zp.append(({"P": "🦬", "b": "🐻", "D": "🟡"}[f],
-               f"Form {namen[f]}: Impuls {richt}wärts {_d(pb['impuls_tag'])} {_k(pb['impuls_kurs'])} → "
-               f"{_d(pb['impuls_ende_tag'])} {_k(pb['impuls_ende_kurs'])} ({pb['impuls_schluesse']} Schlüsse, "
-               f"{gestaltung.zahl(pb['impuls_atr'], 1)} ATR), Zone seit {_d(pb['zone_start'])}"))
-    soll = "P" if pb["aufwaerts"] else "b"
-    lage = lambda x: f"{round(x * 100)} %"                                   # noqa: E731
-    if not kurz:
-        if pb["form_zeit"] is None:
-            zp.append(("🟢" if pb["form_vol"] == soll else "🟡",
-                       f"Profil seit Impulsbeginn: Volumen {'bestätigt' if pb['form_vol'] == soll else 'bestätigt nicht'} "
-                       f"(POC bei {lage(pb['lage_vol'])} der Spanne {_k(pb['fenster_tief'])}–{_k(pb['fenster_hoch'])}); "
-                       "Zeitprofil ungemessen (keine feineren Kerzen für das Fenster)"))
-        else:
-            beide = pb["form_vol"] == soll and pb["form_zeit"] == soll
-            zp.append(("🟢" if beide else "🟡",
-                       f"Profil seit Impulsbeginn: Zeit {pb['form_zeit']} (POC bei {lage(pb['lage_zeit'])}), Volumen "
-                       f"{pb['form_vol']} (POC bei {lage(pb['lage_vol'])}) – "
-                       + ("bestätigen die Form" if beide else "bestätigen nicht beide – schwache Akzeptanz")))
-    zaehl = ("Kurs schließt in der Zone" if not pb["seite"] else
-             f"{pb['zaehl']} Schluss{'kurse' if pb['zaehl'] > 1 else 'kurs'} in Folge "
-             f"{'über' if pb['seite'] == 'oben' else 'unter'} der Zone")
-    zp.append(("💥" if pb["zaehl"] >= tiefe.GESCHEITERT else "🟡",
-               f"Faire Zone aus Kerzenkörpern {_k(pb['zone_tief'])} ({_d(pb['zone_tag_tief'])}) – {_k(pb['zone_hoch'])} "
-               f"({_d(pb['zone_tag_hoch'])}); {zaehl}"))
-    if pb["rueck"] and not kurz:
-        zp.append(("🪝", f"Rückläufe in die Zone nach Schlüssen außerhalb: {len(pb['rueck'])} ("
-                         + ", ".join(f"{_d(x['tag'])} von {x['von']}" for x in pb["rueck"][-RUECK_ZEIGEN:]) + ")"
-                         + (" – nach Vorwald größeres Balance-Spiel, Gegentrades" if len(pb["rueck"]) >= tiefe.RUECKLAEUFE_D else "")))
-    if pb["warnung"]:
-        zp.append(("🪝", f"Erster Schluss {'unter' if pb['aufwaerts'] else 'über'} der Zone – die Form ist erst mit dem "
-                         f"zweiten gescheitert; zurück in die Zone = Fehlausbruch, dann wieder "
-                         f"{'aufwärts' if pb['aufwaerts'] else 'abwärts'} wahrscheinlich"))
-    if pb["gescheitert"]:
-        zp.append(("🐻" if pb["aufwaerts"] else "🦬",
-                   f"Form gescheitert: Schluss {'unter' if pb['aufwaerts'] else 'über'} der Zone – Ziel nach Vorwald "
-                   f"{'unter' if pb['aufwaerts'] else 'über'} dem Impulsbeginn {_k(pb['impuls_kurs'])} ({_d(pb['impuls_tag'])})"))
-    if not kurz and pb["schwanz_ebene"]:
-        kauf = [x for x in pb["schwaenze"] if x["art"] == "Kaufschwanz"]
-        verk = [x for x in pb["schwaenze"] if x["art"] == "Verkaufsschwanz"]
-        liste = lambda xs: ", ".join(f"{_d(x['tag'])} {_k(x['von'])}–{_k(x['bis'])}" for x in xs[-SCHWANZ_ZEIGEN:])  # noqa: E731
-        if not pb["zeit_quelle"]:
-            zp.append(("⚪", "Wer dominiert: ungemessen (keine feineren Kerzen)"))
-        elif kauf or verk:
-            zp.append(("🦬" if len(kauf) > len(verk) else "🐻" if len(verk) > len(kauf) else "🟡",
-                       f"Wer dominiert (Schwänze der letzten {tiefe.SCHWANZ_LETZTE} Kerzen): {len(kauf)} Kaufschwänze"
-                       + (f" ({liste(kauf)})" if kauf else "") + f", {len(verk)} Verkaufsschwänze"
-                       + (f" ({liste(verk)})" if verk else "")))
-        else:
-            zp.append(("🟡", f"Wer dominiert: keine Schwänze in den letzten {tiefe.SCHWANZ_LETZTE} Kerzen – keine "
-                             "aggressive Seite erkennbar"))
-    if pb["zaehl"] >= tiefe.GESCHEITERT:
-        zp.append(("⚪", "D-Trade von Kante zu Kante ruht: 2 Schlüsse außerhalb – die Zone ist verlassen"))
-        return zp
-    pe = pb["pendel"]
-    if not kurz:
-        zp.append(("🟢" if pe["laeufe"] >= tiefe.RUECKLAEUFE_D else "🟡",
-                   f"D-Spiel: {pe['laeufe']} {'Lauf' if pe['laeufe'] == 1 else 'Läufe'} von Kante zu Kante seit dem Impulsende"
-                   + (" (" + ", ".join(f"{_d(w['tag'])} → {w['nach']}" for w in pe["wechsel"][-PENDEL_ZEIGEN:]) + ")"
-                      if pe["wechsel"] else "")
-                   + (f"; zuletzt an der {'Unter' if pe['zuletzt'] == 'unten' else 'Ober'}kante" if pe["zuletzt"] else "")))
-    for seite_, tr, zei, kante_ in (("long", pb["d_long"], "🦬", "unten"), ("short", pb["d_short"], "🐻", "oben")):
-        jetzt = pb["kante"] == kante_
-        if kurz and not jetzt:
-            continue
-        zp.append((zei if jetzt else "🟡",
-                   f"D-{seite_.capitalize()} {'jetzt ' if jetzt else ''}an der {'Unter' if kante_ == 'unten' else 'Ober'}kante "
-                   f"{_k(tr['einstieg'])}: Stopp {_k(tr['stopp'])} (hinter dem Docht {_k(tr['docht'])}), Ziel "
-                   f"{'Ober' if kante_ == 'unten' else 'Unter'}kante {_k(tr['ziel'])}, CRV {gestaltung.zahl(tr['crv'] or 0, 1)}"
-                   + (f" – Kurs {_k(abs(kurs - tr['einstieg']))} $ von der Kante (≤ {_k(pb['kantenabstand'])} $)" if jetzt else "")
-                   + (" – gilt erst wieder mit Schluss zurück in der Zone" if pb["seite"] else "")))
-    return zp
 
 
 # ── Wertwanderung ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -428,13 +343,6 @@ def seite_analyse(tk):
         st_ = et["struktur"]
         teile.append(karte(zeilen(struktur_zeilen(st_, et["alt"], r["fallen"], r["enge"], kurs)),
                            "Struktur nach Dalton"))
-        pb = ['<div style="font-weight:600;margin-top:4px">Tag</div>' + zeilen(pbd_zeilen(et["pbd"], kurs, einheit="Tagen"))]
-        for n, einh in (("Woche", "Wochen"), ("Stunde", "Stunden")):
-            e = r["ebenen"][n]
-            pb.append(f'<div style="font-weight:600;margin-top:10px">{n}</div>'
-                      + zeilen(pbd_zeilen(e["pbd"], kurs, kurz=True, einheit=einh) if e else
-                               [("⚪", f"{n}: zu wenige Kerzen – ungemessen")]))
-        teile.append(karte("".join(pb), "PbD nach Tom Vorwald"))
         ew = r["ebenen"]["Woche"]
         teile.append(karte('<div style="font-weight:600">je Tag</div>'
                            + zeilen(wander_zeilen(et["wander"], kurs, "Tag", "30-Minuten-Kerzen"))
@@ -476,10 +384,6 @@ def material(tk):
     z = []
     if et:
         z += struktur_zeilen(et["struktur"], et["alt"], r["fallen"], r["enge"], kurs)
-        z += pbd_zeilen(et["pbd"], kurs, einheit="Tagen")
-        for n, einh in (("Woche", "Wochen"), ("Stunde", "Stunden")):
-            e = r["ebenen"][n]
-            z += [(a, f"{n}: {b}") for a, b in (pbd_zeilen(e["pbd"], kurs, kurz=True, einheit=einh) if e else [])]
         z += wander_zeilen(et["wander"], kurs, "Tag", "30-Minuten-Kerzen")
         z += avwap_zeilen(r["avwap"], r["zange"], et["struktur"]["profil"])
     try:

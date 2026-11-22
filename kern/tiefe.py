@@ -22,7 +22,7 @@ Quelle: TitelAnalyse/kern/rechnen.py (Stand 20.11.2026), dort mit Herkunft. Übe
                      Sitzungen besser als der Index – neben zeichen.tage_gegen_markt.
   Geldfluss          Rückenwind bleibt das Urteil; dazu die Rangtabelle der 11 Sektor-ETFs über 1M/3M/6M.
   CMF                Chaikin Money Flow 20 Tage: Geldfluss je Kerze = ((C−L)−(H−C))/(H−L) × Volumen, mit den Treibern.
-PbD nach Tom Vorwald und die Wertwanderung (POC je Kerze) siehe dort. ATR: die eine ATR der App (atr.reihe).
+Die Wertwanderung (POC je Kerze) siehe dort. ATR: die eine ATR der App (atr.reihe).
 """
 import numpy as np
 import pandas as pd
@@ -62,32 +62,11 @@ RANG_SONNE = 3.5             # Sektor im Mittel der Ränge 1M/3M/6M bis 3,5 von 
 RANG_SCHNEE = 8              # … ab 8: Geld fließt ab (❄️)
 RANG_SEITE = 3               # „fließt in … / kommt aus …“: die 3 vordersten und hintersten
 
-# ── PbD nach Tom Vorwald ──────────────────────────────────────────────────────────────────────────────────────────
-# Quellen (Transkripte gelesen am 20.11.2026, Titel-Analyse):
-#   [V1] Tom Vorwald, „PbD: The World's BEST trading strategy“ (YouTube).
-#   [V2] Tom Vorwald, „Die einfachste Daytrading-Strategie für Anfänger (Pbd Methode)“ (YouTube Q3ya0x2mKcU).
-#   P und b beschleunigen den Markt, D ist Balance (rund 70 % der Zeit): oben short, unten long [V1, V2]. Impuls:
-#   geradlinig, höhere Schlüsse, Ende beim ersten tieferen Schluss [V2]. Zone über Körper, Dochte sind Ablehnung [V2].
-#   Fortsetzung per Schluss außerhalb; gescheitertes P → Ziel unter dem Impulsbeginn [V1]; wieder und wieder zurück
-#   in die Zone → größeres Balance-Spiel [V2]. Zeitprofil zeigt, wer dominiert (Schwänze) [V1, V2].
-# Gesetzt (die Videos nennen keine Zahl): Impuls mindestens 3 Schlüsse, zusammen 2 ATR, ein Gegenschluss bis ½ ATR
-#   beendet ihn nicht (Micky 20.11.2026); „wieder und wieder“ ab 2 Rückläufen; gescheitert ab 2 Schlüssen auf der
-#   Gegenseite (1 = Warnung); Form nach POC-Lage (oberes Drittel P, unteres b); Schwanz ab 2 Zeilen mit einer Marke;
-#   D-Kante 1 ATR, bei schmaler Zone ¼ ihrer Höhe; D-Stopp eine Stufe hinter dem Docht, mindestens ¼ ATR (Micky).
-IMPULS_SCHLUESSE = 3
-IMPULS_ATR = 2.0
-RUECKLAUF_ATR = 0.5
-SUCHE = 130                  # Impulse in den letzten 130 Kerzen der Ebene
-FORM_DRITTEL = 1 / 3
-RUECKLAEUFE_D = 2            # ab 2 Rückläufen in die Zone: Form D
-GESCHEITERT = 2              # 2 Schlüsse in Folge auf der Gegenseite: gescheitert (1 = Warnung)
+# ── Feste Maße der Ebenen (die PbD-Kette nach Tom Vorwald ist am 22.11.2026 entfernt) ─────────────────────────────
+IMPULS_SCHLUESSE = 3         # Mindestlänge einer Ebene: 2 × 3 Kerzen plus die alte Balance
 SCHWANZ_ZEILEN = 2           # Schwanz: mindestens 2 Preiszeilen mit nur einer Zeitmarke
-SCHWANZ_KERZEN = 4           # Schwanz erst ab 4 feineren Kerzen je Kerze der Ebene
-SCHWANZ_LETZTE = 10          # Schwänze der letzten 10 Kerzen
-KANTE_VIERTEL = 4            # D-Kante bei schmaler Zone: ¼ ihrer Höhe
-STOPP_ATR = 0.25             # D-Stopp mindestens ¼ ATR hinter der Kante
-ZEIT_MIN = 26                # Zeitprofil erst ab 26 feineren Kerzen (2 Tage zu 13)
-ZEIT_VERSATZ = 3             # … die feineren Kerzen beginnen höchstens 3 Tage nach dem Impulsbeginn
+STOPP_ATR = 0.25             # Stopp ¼ ATR hinter der Kante (Rücktest, Bruch der Unterkante; Micky)
+ZEIT_VERSATZ = 3             # die feineren Kerzen beginnen höchstens 3 Tage nach dem Beginn des Profils
 
 # ── Wertwanderung (POC je Kerze) ──────────────────────────────────────────────────────────────────────────────────
 # Dalton: wo sich Wert bildet, trennt Akzeptanz vom Ausflug. Vergleich jeder Wertzone mit der vorigen in 6 Klassen
@@ -409,239 +388,28 @@ def sektor_rang(sektoren_df):
     return tab
 
 
-# ── PbD nach Tom Vorwald ──────────────────────────────────────────────────────────────────────────────────────────
-def profilform(pr):
-    """Buchstabe aus der Form des Profils (Micky 21.11.2026, Steidlmayer/Dalton): POC im oberen Drittel der Spanne P,
-    im unteren b, sonst D – das Volumen entscheidet; widerspricht das Zeitprofil (zeit, tpoc), ist es ein Blitz ⚡.
-    → (Buchstabe, Widerspruch)."""
-    tief, hoch = float(pr["grenzen"][0]), float(pr["grenzen"][-1])
-    f_vol = _form(pr, tief, hoch)[0]
-    if pr.get("tpoc") is None:
-        return f_vol, False
-    f_zeit = _form({"poc": pr["tpoc"]}, tief, hoch)[0]
-    return f_vol, f_zeit != f_vol
 
 
-def _form(pr, tief, hoch):
-    lage = (pr["poc"] - tief) / (hoch - tief) if hoch > tief else 0.5               # Technik: ohne Spanne die Mitte
-    return ("P" if lage >= 1 - FORM_DRITTEL else "b" if lage <= FORM_DRITTEL else "D"), round(lage, 2)
 
 
-def zeitprofil(kerzen, schritt):
-    """Market Profile: jede Kerze setzt eine Zeitmarke in jede Preiszeile, die ihre Spanne berührt."""
-    return profil(kerzen["High"], kerzen["Low"], [1.0] * len(kerzen), schritt) if len(kerzen) else None
 
 
-def schwaenze(kerzen, schritt, gruppe="D"):
-    """Je Kerze der Ebene (D = Tag aus 30-Minuten-Kerzen, W = Woche aus Tageskerzen): Kaufschwanz (einzelne Marken am
-    Tief) und Verkaufsschwanz (am Hoch), mindestens 2 Zeilen. Woche: Schlüssel ist ihr Freitag."""
-    erg = []
-    schl = kerzen.index.normalize() if gruppe == "D" else _freitag(kerzen.index)
-    for tag, k in kerzen.groupby(schl):
-        if len(k) < SCHWANZ_KERZEN:
-            continue
-        lo, hi = np.floor(k["Low"].min() / schritt) * schritt, np.ceil(k["High"].max() / schritt) * schritt
-        kanten = np.arange(lo, hi + schritt / 2, schritt)                        # Technik: halbe Stufe gegen Rundung
-        marken = np.array([int(((k["High"] > a) & (k["Low"] < b)).sum()) for a, b in zip(kanten[:-1], kanten[1:])])
-        unten = 0
-        while unten < len(marken) and marken[unten] == 1:
-            unten += 1
-        oben = 0
-        while oben < len(marken) and marken[-1 - oben] == 1:
-            oben += 1
-        if unten >= SCHWANZ_ZEILEN:
-            erg.append({"tag": tag, "art": "Kaufschwanz", "von": float(kanten[0]), "bis": float(kanten[unten])})
-        if oben >= SCHWANZ_ZEILEN:
-            erg.append({"tag": tag, "art": "Verkaufsschwanz", "von": float(kanten[-1 - oben]), "bis": float(kanten[-1])})
-    return erg
 
 
-def impulse(df, atr_wert, suche=SUCHE):
-    """Alle Impulse der letzten `suche` Kerzen nach Vorwalds Zählung: (Start, Ende, aufwärts, Anzahl Schlüsse)."""
-    c = df["Close"].to_numpy(float)
-    n, erg = len(c), []
-    s = max(1, n - suche)
-    while s < n - 1:
-        bester = None
-        for richt in (1, -1):
-            ext, zahl, gegen, k = s, 0, 0, s + 1
-            while k < n:
-                d = (c[k] - c[k - 1]) * richt
-                if d > 0:
-                    gegen = 0
-                    if (c[k] - c[ext]) * richt > 0:
-                        ext, zahl = k, zahl + 1
-                elif gegen == 0 and -d <= RUECKLAUF_ATR * atr_wert:
-                    gegen = 1
-                else:
-                    break
-                k += 1
-            if zahl >= IMPULS_SCHLUESSE and (c[ext] - c[s]) * richt >= IMPULS_ATR * atr_wert:
-                bester = _spaet(c, s + int(np.argmin(c[s:ext + 1] * richt)), ext, richt, atr_wert)
-        if bester:
-            erg.append(bester)
-            s = bester[1]
-        else:
-            s += 1
-    return erg
 
 
-def _spaet(c, start, ext, richt, atr_wert):
-    """Der Impuls beginnt so spät wie möglich (Micky 21.11.2026, HWM Woche Sept./Okt.): der Anfang rückt vor, solange der
-    Rest bis zum Extrem noch 3 neue Schlüsse und 2 ATR hat – die kleinen Schritte davor gehören zur Zone, nicht zum
-    Sturm. → (Start, Ende, aufwärts, Anzahl Schlüsse)."""
-    def schluesse(a):
-        ext_, n_ = a, 0
-        for k in range(a + 1, ext + 1):
-            if (c[k] - c[ext_]) * richt > 0:
-                ext_, n_ = k, n_ + 1
-        return n_
-    s_ = start
-    while s_ + 1 < ext and schluesse(s_ + 1) >= IMPULS_SCHLUESSE and (c[ext] - c[s_ + 1]) * richt >= IMPULS_ATR * atr_wert:
-        s_ += 1
-    return s_, ext, richt > 0, schluesse(s_)
 
 
-def _zone(O, C, imp_kurs, i_end, aufwaerts, bis):
-    """Faire Zone nach einem Impuls bis Kerze bis: eine Kante = Schluss am Impulsende; der Rücklauf danach (gegen die
-    Richtung, solange er die Impulshälfte hält) grenzt die andere über die Körper ein; danach zählt jeder Schluss
-    innerhalb zur Zone, jeder außerhalb wird gezählt."""
-    z_tief = z_hoch = float(C[i_end])
-    t_tief = t_hoch = i_end
-    mitte = (imp_kurs + C[i_end]) / 2
-    richt = 1 if aufwaerts else -1
-    zaehl, seite, rueck, ruecklauf = 0, None, [], True
-    for k in range(i_end + 1, bis + 1):
-        lo, hi = min(O[k], C[k]), max(O[k], C[k])
-        haelt = (C[k] - mitte) * richt >= 0
-        if ruecklauf and (k == i_end + 1 or (C[k] - C[k - 1]) * richt <= 0) and haelt:
-            if lo < z_tief:
-                z_tief, t_tief = lo, k
-            if hi > z_hoch:
-                z_hoch, t_hoch = hi, k
-            continue
-        ruecklauf = False
-        s_ = "oben" if C[k] > z_hoch else "unten" if C[k] < z_tief else None
-        if s_ is None:
-            if seite:
-                rueck.append({"k": k, "von": seite, "schluesse": zaehl})
-            zaehl, seite = 0, None
-            if lo < z_tief:
-                z_tief, t_tief = lo, k
-            if hi > z_hoch:
-                z_hoch, t_hoch = hi, k
-        elif seite and s_ != seite:
-            zaehl, seite = 1, s_
-        else:
-            zaehl, seite = zaehl + 1, s_
-    return z_tief, z_hoch, t_tief, t_hoch, zaehl, seite, rueck
 
 
-def kantenabstand(z_tief, z_hoch, atr_wert):
-    """Wie nah der Kurs an einer Kante sein muss: 1 ATR, bei schmaler Zone höchstens ¼ ihrer Höhe."""
-    return min(atr_wert, (z_hoch - z_tief) / KANTE_VIERTEL)
 
 
-def _pendel(df, t_start, z_tief, z_hoch, atr_wert):
-    """Läufe von Kante zu Kante seit dem Impulsende (Micky 20.11.2026: das D von Kante zu Kante traden)."""
-    nah = kantenabstand(z_tief, z_hoch, atr_wert)
-    zuletzt, wechsel = None, []
-    for k in range(t_start + 1, len(df)):
-        unten, oben = float(df["Low"].iloc[k]) <= z_tief + nah, float(df["High"].iloc[k]) >= z_hoch - nah
-        if unten and oben:
-            continue
-        kante = "unten" if unten else "oben" if oben else None
-        if kante and kante != zuletzt:
-            if zuletzt:
-                wechsel.append({"tag": df.index[k], "nach": kante})
-            zuletzt = kante
-    return {"laeufe": len(wechsel), "wechsel": wechsel, "zuletzt": zuletzt}
 
 
-def _d_trade(df, t_start, z_tief, z_hoch, atr_wert, richt):
-    """Einstieg an der Kante, Ziel die Gegenkante, Stopp eine Preisstufe hinter dem äußersten abgelehnten Docht,
-    mindestens ¼ ATR hinter der Kante (Micky 20.11.2026)."""
-    teil = df.iloc[t_start + 1:]
-    drin = teil[(teil["Close"] >= z_tief) & (teil["Close"] <= z_hoch)]
-    puffer = stufe(float(df["Close"].iloc[-1]))
-    if richt == "long":
-        docht = float(drin["Low"].min()) if len(drin) else z_tief
-        stopp, ein, ziel = min(docht - puffer, z_tief - atr_wert * STOPP_ATR), z_tief, z_hoch
-    else:
-        docht = float(drin["High"].max()) if len(drin) else z_hoch
-        stopp, ein, ziel = max(docht + puffer, z_hoch + atr_wert * STOPP_ATR), z_hoch, z_tief
-    risiko = abs(ein - stopp)
-    return {"einstieg": float(ein), "stopp": float(stopp), "ziel": float(ziel), "docht": float(docht),
-            "crv": round(abs(ziel - ein) / risiko, 1) if risiko else None}
 
 
-def _silhouette(pr):
-    """Profil für den Chart: Unterkante, Oberkante, Anteil am Maximum je Stufe."""
-    m = float(max(pr["volumen"])) or 1.0
-    return [[round(float(a), 2), round(float(b), 2), round(float(v) / m, 3)]
-            for a, b, v in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"])]
 
 
-def pbd(df, fein, atr_wert, gruppe="D"):
-    """PbD-Lage einer Ebene: maßgeblicher Impuls (ein späterer löst ihn nur ab, wenn er per Schluss aus der Zone
-    herausläuft), faire Zone, Schlusskurszählung, Rückläufe, Profilbestätigung (Zeit, Volumen), Schwänze, Ziel bei
-    gescheiterter Form, D-Trade an den Kanten. None ohne Impuls. fein = feinere Kerzen (Zeitprofil, Schwänze)."""
-    if atr_wert is None or not atr_wert > 0 or len(df) < IMPULS_SCHLUESSE + 2:
-        return None
-    n = len(df)
-    O, C, L, H = (df[k].to_numpy(float) for k in ("Open", "Close", "Low", "High"))
-    start_kurs = lambda i, auf: float(L[i] if auf else H[i])                       # noqa: E731
-    akt = None
-    for imp in impulse(df, atr_wert):
-        if imp[1] > n - 2:
-            continue
-        if akt is None:
-            akt = imp
-            continue
-        if imp[0] <= akt[1]:
-            continue
-        zt, zh = _zone(O, C, start_kurs(akt[0], akt[2]), akt[1], akt[2], imp[0])[:2]
-        if C[imp[1]] > zh or C[imp[1]] < zt:
-            akt = imp
-    if akt is None:
-        return None
-    i_imp, i_end, aufwaerts, zahl = akt
-    impuls_kurs = start_kurs(i_imp, aufwaerts)
-    kurs = float(C[-1])
-    schritt = stufe(kurs)
-    z_tief, z_hoch, t_tief, t_hoch, zaehl, seite, rueck = _zone(O, C, impuls_kurs, i_end, aufwaerts, n - 1)
-    rueck = [{"tag": df.index[x["k"]], "von": x["von"], "schluesse": x["schluesse"]} for x in rueck]
-    fenster = df.iloc[i_imp:]
-    tief, hoch = float(fenster["Low"].min()), float(fenster["High"].max())
-    vp = profil(fenster["High"], fenster["Low"], fenster["Volume"], schritt)
-    f_vol, lage_vol = _form(vp, tief, hoch)
-    f_zeit = lage_zeit = zp = None
-    ab = df.index[i_imp].normalize()
-    k_ = fein[fein.index.normalize() >= ab] if fein is not None and len(fein) else None
-    if k_ is not None and len(k_) >= ZEIT_MIN and k_.index[0].normalize() <= ab + pd.Timedelta(days=ZEIT_VERSATZ):
-        zp = zeitprofil(k_, schritt)
-        f_zeit, lage_zeit = _form(zp, tief, hoch)
-    sw = [x for x in (schwaenze(k_, schritt, gruppe) if gruppe and k_ is not None and len(k_) else [])
-          if x["tag"] >= df.index[max(0, n - SCHWANZ_LETZTE)].normalize()]
-    gegen = (aufwaerts and seite == "unten") or ((not aufwaerts) and seite == "oben")
-    nah = kantenabstand(z_tief, z_hoch, atr_wert)
-    kante = None
-    if z_tief <= kurs <= z_hoch:
-        kante = "unten" if kurs - z_tief <= nah else "oben" if z_hoch - kurs <= nah else None
-    return {"form": f_vol,                                 # Micky 21.11.2026: der Buchstabe ist die Form des Profils
-            "form_vol": f_vol, "lage_vol": lage_vol, "form_zeit": f_zeit, "lage_zeit": lage_zeit,
-            "aufwaerts": aufwaerts, "impuls_tag": df.index[i_imp], "impuls_kurs": impuls_kurs,
-            "impuls_ende_tag": df.index[i_end], "impuls_ende_kurs": float(C[i_end]), "impuls_schluesse": zahl,
-            "impuls_atr": round(abs(C[i_end] - C[i_imp]) / atr_wert, 1),
-            "fenster_tief": tief, "fenster_hoch": hoch, "zone_tief": float(z_tief), "zone_hoch": float(z_hoch),
-            "zone_tag_tief": df.index[t_tief], "zone_tag_hoch": df.index[t_hoch], "zone_start": df.index[i_end],
-            "zaehl": zaehl, "seite": seite, "rueck": rueck, "schwaenze": sw,
-            "gescheitert": gegen and zaehl >= GESCHEITERT, "warnung": gegen and 0 < zaehl < GESCHEITERT,
-            "kante": kante, "kantenabstand": nah, "zeit_quelle": f_zeit is not None, "schwanz_ebene": bool(gruppe),
-            "pendel": _pendel(df, i_end, z_tief, z_hoch, atr_wert),
-            "d_long": _d_trade(df, i_end, z_tief, z_hoch, atr_wert, "long"),
-            "d_short": _d_trade(df, i_end, z_tief, z_hoch, atr_wert, "short"),
-            "profil_vol": _silhouette(vp), "profil_zeit": _silhouette(zp) if zp else None, "poc": float(vp["poc"])}
 
 
 # ── Wertwanderung ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -714,7 +482,7 @@ def ebene_zeit(df, tag, name):
 
 def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
     """Bausteine einer Zeitebene mit denselben Regeln (Micky 20.11.2026, Titel-Analyse), gezählt in Kerzen der Ebene:
-    Struktur (Anker, Profil, Pivots, Quetschung), alte Wertzone, PbD, Wertwanderung. df = Kerzen der Ebene, d30 =
+    Struktur (Anker, Profil, Pivots, Quetschung), alte Wertzone, Wertwanderung (PbD entfernt 22.11.2026). df = Kerzen der Ebene, d30 =
     30-Minuten-Kerzen, tage = Tageskerzen (für die Woche). Woche: Zeitprofil und Schwänze aus Tageskerzen,
     Profil und Wanderung aus Stundenkerzen; Tag: Profil aus Stunden-, Zeitprofil, Schwänze und Wanderung aus
     30-Minuten-Kerzen; Stunde: Profil und Zeitprofil aus 30-Minuten-Kerzen, ohne Schwänze und Wanderung."""
@@ -724,28 +492,22 @@ def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
     st_ = struktur(df, d30 if name == "Stunde" else h1, ebene_zeit(df, zahltag, name),
                    zone_start if name == "Tag" else None)
     a = st_["atr"]
-    fein, gruppe = {"Woche": (tage, "W"), "Tag": (d30, "D"), "Stunde": (d30, None)}[name]
     return {"name": name, "df": df, "struktur": st_, "atr": a, "alt": alte_balance(df, st_["anker_i"]),
             "fein": d30 if name == "Stunde" else h1,
-            "pbd": pbd(df, fein, a, gruppe),
             "wander": None if name == "Stunde" else wanderung(df, d30 if name == "Tag" else h1, "D" if name == "Tag" else "W", a)}
 
 
 def kurz(df, d30, zahltag, index, zone_start=None):
-    """Was der Kartentisch je Titel zeigt (Micky 21.11.2026): PbD-Form und D-Kante, Quetschung, CMF, Stärke in der
+    """Was der Kartentisch je Titel zeigt (Micky 21.11.2026): Quetschung, CMF, Stärke in der
     Schwäche, Wertwanderung (Tagesebene)."""
     a = atr_modul.wert(df)
     if a is None:
         return None
     i0 = anker(df, zahltag, zone_start=zone_start)[0]
-    p = pbd(df, d30, a, "D")
     w = wanderung(df, d30, "D", a)
     s = staerke_in_schwaeche(df, index)
     q = quetschung(df, i0)
-    return {"pbd": {"form": p["form"], "kante": p["kante"], "aufwaerts": bool(p["aufwaerts"]),
-                    "gescheitert": bool(p["gescheitert"]),
-                    "zone": [round(float(p["zone_tief"]), 2), round(float(p["zone_hoch"]), 2)]} if p else None,
-            "quetsch": q["art"] if q else None, "cmf": cmf(df)["wert"],
+    return {"quetsch": q["art"] if q else None, "cmf": cmf(df)["wert"],
             "sis": [int(s["besser"]), int(s["n"])] if s else None,
             "wander": {"treppe": [int(w["treppe"][0]), int(w["treppe"][1])], "ballen": bool(w["ballen"]),
                        "abtasten": w["abtasten"]} if w else None}

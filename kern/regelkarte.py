@@ -671,15 +671,6 @@ BEREICHE = [
          messung=["tiefe.struktur", "tiefe.anker", "tiefe.profil_ab", "tiefe.zonen", "tiefe.alte_balance",
                   "volumenprofil.verankert", "analyse_seite.struktur_zeilen"], pruefer=[],
          luecke="kein Prüfer – neu aus der Titel-Analyse"),
-    dict(name="Tiefenanalyse: PbD nach Tom Vorwald", quelle="Vorwald (Videos PbD, gelesen 20.11.2026), Micky 20.11.2026",
-         regel="Impuls: mindestens 3 Schlüsse in Richtung, zusammen 2 ATR, ein Gegenschluss bis ½ ATR beendet ihn nicht; "
-               "ein späterer Impuls gilt erst, wenn er per Schluss aus der Zone läuft. Faire Zone aus Kerzenkörpern; ab 2 "
-               "Rückläufen Form D, gescheitert ab 2 Schlüssen auf der Gegenseite (1 = Warnung), Ziel unter bzw. über dem "
-               "Impulsbeginn. Form nach POC-Lage (oberes Drittel P, unteres b), Schwanz ab 2 Zeilen mit einer Marke. "
-               "D-Trade von Kante zu Kante: Kante 1 ATR (schmale Zone ¼), Stopp eine Stufe hinter dem Docht, mindestens "
-               "¼ ATR. Je Ebene Woche, Tag, Stunde mit denselben Regeln.",
-         messung=["tiefe.pbd", "tiefe.ebene", "tiefe.kurz", "analyse_seite.pbd_zeilen", "kartentisch.tiefe_zeichen"],
-         pruefer=[], luecke="kein Prüfer – neu aus der Titel-Analyse"),
     dict(name="Tiefenanalyse: Wertwanderung", quelle="Dalton (überlappender Wert), Titel-Analyse",
          regel="POC und Wertzone je Kerze aus feineren Kerzen (Tag aus 30 Minuten, Woche aus Stunden), 6 Klassen zur "
                "vorigen; Treppe ab 3 POCs in Folge, Ballen = letzte 5 POCs innerhalb 1 ATR, Abtasten = Schluss außerhalb "
@@ -703,15 +694,17 @@ BEREICHE = [
                "aus der Websuche.",
          messung=["strategen.pruefen", "strategen.rufen", "strategen.material"], pruefer=[],
          luecke="kein Prüfer – der Code prüft jede Antwort"),
-    dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Vorwald (PbD), Dalton, Micky 21.11.2026",
-         regel="Eine Regel für Woche, Tag und Stunde, die PbD-Kette: Impuls (3 Schlüsse, 2 ATR) → Zone von Körper zu Körper "
-               "→ Ausbruch oder Scheitern ab 2 Schlüssen draußen → nächster maßgeblicher Impuls. D-Zonen ohne Impuls: 3 "
-               "Körper unter 2 ATR; jede Zone mindestens 3 Kerzen; der Impuls beginnt so spät wie möglich. Offen = seit dem Ende nie wieder in "
-               "der Wertzone; nackter POC = seitdem nie berührt. Ein Profil je Ebene: Zeit und Volumen gespiegelt ab Beginn "
-               "des Impulses der Zone von heute. Ausbruch und Gegentrade frisch bis 5 Schlüsse.",
-         messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.fuehrte", "zonen.profil_details",
+    dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Minervini, O'Neil, Kullamägi, Dalton, Micky 22.11.2026",
+         regel="Woche und Tag: die Base nach Minervini/O'Neil (vcp_zone.zone – Oberkante = letztes Swing-Hoch ohne Schluss "
+               "darüber, Unterkante = tiefstes Tief seitdem; Base, Flagge, Konsolidierung; Pivot = Hoch der Enge am Rand, "
+               "sonst die Oberkante), während eines Ausbruchs (bis 20 Tage) die Base, aus der er kam. Stunde: die Balance "
+               "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp Tief der letzten Kontraktion, "
+               "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
+               "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
+               "Ebene ab Beginn der Zone. PbD-Kette nach Vorwald am 22.11.2026 entfernt.",
+         messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.historie", "zonen.fuehrte", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
-         luecke="kein Prüfer – Mindestlänge 3 gesetzt, ungemessen"),
+         luecke="kein Prüfer"),
     dict(name="Festungen", quelle="Micky 21.11.2026",
          regel="Umkehrpreise (2 Wendepunkte innerhalb ¼ ATR, Fenster 3 Kerzen, einer mit Volumen über dem 50er-Schnitt), "
                "gebrochene Kanten alter Zonen, AVWAP Zahlen/Hoch/Tief; je Richtung 2, näher als ½ ATR verschmolzen. "

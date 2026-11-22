@@ -1,8 +1,8 @@
 """Der Zonenchart (Micky 21.11.2026): wenig, aber aussagekräftig – dasselbe Bild für Woche, Tag und Stunde.
 
-Kursfeld: Kerzen; die Zone von heute als gelber Rahmen mit P, b oder D und ihr POC; zuschaltbar die POCs der Zonen der
-Vergangenheit nach der PbD-Kette (zonen.kette) und die nackten POCs bis rechts; im Tageschart die Wochenzone als feiner
-Rahmen; Festungen und Schluchten quer über das Gelände; der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
+Kursfeld: Kerzen; die Zone von heute (Base nach Minervini/O'Neil, in der Stunde die Balance) als gelber Rahmen mit
+Namen, Pivot und POC; zuschaltbar die POCs der abgeschlossenen Basen und die nackten POCs bis rechts; in der Stunde die
+Base des Tages als feiner Rahmen; Festungen und Schluchten quer über das Gelände; der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
 Impulses. Darunter das Volumen und das Feld der
 relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-Hoch bzw. RS-Tief vor Kurs)."""
@@ -65,9 +65,9 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
-    am eigenen Anker (zonen.profil_seit) statt des Profils ab Impulsbeginn, fest = zonen.festungen der Ebene; woche =
-    (Lage, Beginn, Name) der höheren Ebene als Rahmen. Aufgeräumt 22.11.2026: ohne Phasenband, Szenarien, Gedächtnis,
-    Treppe, Wanderung, Korridor und alte Zonen-Kästen."""
+    am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
+    (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
+    ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen."""
     import avwap
     import rueckenwind
     import tiefe
@@ -77,15 +77,14 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         return f'<p style="color:{TEXT_2}">ungemessen – zu wenige Kerzen</p>'
     df = e["df"]
     n0 = max(0, len(df) - ZEIGEN[e["name"]])
-    pb = e.get("pbd")
-    if pb:                                         # die ganze Formation im Bild (Impulsbeginn)
-        n0 = min(n0, int(df.index.searchsorted(pb["impuls_tag"])))
+    if la.get("beginn") is not None:               # die ganze Zone im Bild
+        n0 = min(n0, int(df.index.searchsorted(la["beginn"])))
     d = df.iloc[n0:]
     N = len(d)
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
-    lo, hi = la["zone"]
+    lo, hi = la["zone"] or (None, None)
     kaesten = [z for z in hist if z["ende"] >= d.index[0]]
-    werte = [h.max(), l.min(), lo, hi] + ([t["stopp"], t["ziel"]] if t else [])
+    werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else [])
     spanne_bild = float(h.max() - l.min())
     burgen = [(x, seite_) for seite_ in ("oben", "unten") for x in (fest or {}).get(seite_, [])
               if l.min() - spanne_bild <= x["preis"] <= h.max() + spanne_bild]          # Layout: höchstens eine Bildhöhe weit
@@ -155,16 +154,21 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         x0 = X(pos(woche[1])) - halb if woche[1] >= d.index[0] else LINKS
         A(f'<rect x="{x0:.1f}" y="{Y(wh):.1f}" width="{ende - x0:.1f}" height="{max(2, Y(wl) - Y(wh)):.1f}" fill="none" '
           f'stroke="{WOCHE_FARBE}" stroke-width="1.2" stroke-opacity="0.7"/>'                                    # Layout
-          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Wochenzone" if woche[2] == "Woche" else "Tageszone"} {woche[0]["form"]}</text>')  # Layout: unter dem Rahmen
-    zs = pd.Timestamp(pb["zone_start"]) if pb else pd.Timestamp(e["struktur"]["balance_start"])
-    xz = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
-    A(f'<rect x="{xz:.1f}" y="{Y(hi):.1f}" width="{ende - xz:.1f}" height="{max(2, Y(lo) - Y(hi)):.1f}" fill="{ZONE_FARBE}" '
-      f'fill-opacity="0.10" stroke="{ZONE_FARBE}" stroke-width="1.8" stroke-dasharray="6 3"/>'  # Layout
-      f'<text x="{xz + 6:.1f}" y="{Y(hi) - 6:.1f}" fill="{ZONE_FARBE}" font-size="20" font-weight="700">{la["form"]}{"⚡" if la.get("blitz") else ""}</text>')  # Layout
-    A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["poc"]):.1f}" y2="{Y(la["poc"]):.1f}" stroke="{POC_FARBE}" '
-      f'stroke-width="1.4" stroke-dasharray="2 3"/>')                               # Layout
-    etiketten += [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE), (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE),
-                  (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Wochenzone" if woche[2] == "Woche" else "Tageszone"} {woche[0]["name"]}</text>')  # Layout: unter dem Rahmen
+    if la["zone"]:                                                                  # die Zone von heute
+        zs = pd.Timestamp(la["beginn"])
+        xz = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
+        A(f'<rect x="{xz:.1f}" y="{Y(hi):.1f}" width="{ende - xz:.1f}" height="{max(2, Y(lo) - Y(hi)):.1f}" fill="{ZONE_FARBE}" '
+          f'fill-opacity="0.10" stroke="{ZONE_FARBE}" stroke-width="1.8" stroke-dasharray="6 3"/>'  # Layout
+          f'<text x="{xz + 6:.1f}" y="{Y(hi) - 6:.1f}" fill="{ZONE_FARBE}" font-size="16" font-weight="700">{la["name"]}</text>')  # Layout
+        A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["poc"]):.1f}" y2="{Y(la["poc"]):.1f}" stroke="{POC_FARBE}" '
+          f'stroke-width="1.4" stroke-dasharray="2 3"/>')                           # Layout
+        etiketten += [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE), (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE),
+                      (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+        if la["pivot"] is not None and abs(la["pivot"] - hi) > (e["atr"] or 0) * STOPP_BAND and pmin <= la["pivot"] <= pmax:
+            A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["pivot"]):.1f}" y2="{Y(la["pivot"]):.1f}" stroke="{ZONE_FARBE}" '
+              f'stroke-width="1.6"/>')                                              # Layout: Pivot unter der Oberkante
+            etiketten.append((Y(la["pivot"]), f"Pivot {zahl(la['pivot'])}", ZONE_FARBE))
     def kurve(r_, farbe, dicke=1.6, strich=""):  # Layout
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
         if pkt:
@@ -200,13 +204,13 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
-    if t:                                                                           # der Trade: Einstieg, Stopp, Ziel
+    if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
-        for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Einstieg"), (t["stopp"], ROT, "Stopp"),
-                                  (t["ziel"], GRUEN, "Ziel")):
+        for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
+                                  (t["stopp"], ROT, "Stopp")):
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
-            etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} CRV {zahl(t["crv"] or 0, 1)}'
-                                                                 if name == "Ziel" else ""), farbe))
+            etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} Risiko {zahl(t["risiko"], 1)} %'
+                                                                 if name == "Stopp" else ""), farbe))
     mitte_x = ende + PROFIL_W / 2
     halb_w = PROFIL_W / 2 - 4                                                       # Layout
     vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
@@ -317,7 +321,8 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
 def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
-    teile = [(ZONE_FARBE, "Front: Zone von heute (P, b, D aus der Form des Profils, ⚡ = Zeit widerspricht) · POC grün gepunktet"),
+    teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · "
+              "Linie darin = Pivot unter der Oberkante · POC grün gepunktet"),
              (FESTUNG_FARBE, "Festung ▲▼: bewährter Umkehrpreis, gebrochene Kante einer alten Zone oder AVWAP eines großen "
               "Ereignisses – je Richtung die 2 nächsten, mit Abstand"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
@@ -325,7 +330,7 @@ def legende():
              (POC_FARBE, "POC je Zone · gestrichelt = nackter POC (seitdem nie berührt)"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
-             (WOCHE_FARBE, "Rahmen: Front der höheren Ebene (im Tag die Wochenzone, in der Stunde die Tageszone)"),
+             (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'

@@ -849,10 +849,9 @@ def _tiefe_grenzen(t):
     """Preise der Tiefenanalyse, die in die Skala gehören (die alte Wertzone immer, Titel-Analyse 18.11.2026)."""
     if not t:
         return []
-    st_, pb, alt = t["struktur"], t.get("pbd"), t.get("alt")
+    st_, alt = t["struktur"], t.get("alt")
     w = [st_["pivot"], st_["short_pivot"], st_["profil"]["val"], st_["profil"]["vah"]]
     w += [alt["val"], alt["vah"]] if alt else []
-    w += [pb["zone_tief"], pb["zone_hoch"], pb["impuls_kurs"]] if pb else []
     return w
 
 
@@ -887,13 +886,12 @@ def _tiefe_flaechen(t, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax, profil_
 
 
 def _tiefe_linien(t, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax):
-    """Linien und PbD (Micky 21.11.2026, aus der Titel-Analyse): POC grün gepunktet, Pivot long rot und Pivot short
+    """Linien (Micky 21.11.2026, aus der Titel-Analyse): POC grün gepunktet, Pivot long rot und Pivot short
     violett gestrichelt (Rand der Balance), POC je Kerze als weißer Strich, nackte POCs weiß gepunktet bis zum rechten
-    Rand; PbD nach Vorwald: Impuls als gelber Strich, faire Zone gelb gestrichelt mit dem Buchstaben, Ziel am
-    Impulsbeginn bei gescheiterter Form, rechts neben dem Chart Zeit- und Volumenprofil seit Impulsbeginn."""
+    Rand (PbD entfernt 22.11.2026)."""
     if not t:
         return
-    st_, pb, w = t["struktur"], t.get("pbd"), t.get("wander")
+    st_, w = t["struktur"], t.get("wander")
     N = len(d)
     halb = (X(1) - X(0)) / 2 if N > 1 else 4  # Layout
     for y_, farbe, strich, text in ((st_["profil"]["poc"], WERT_FARBE, "2 3", f"POC {zahl(st_['profil']['poc'])}"),  # Layout
@@ -916,44 +914,7 @@ def _tiefe_linien(t, d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax):
                 A(f'<line x1="{X(pos(tag)):.1f}" x2="{ENDE:.1f}" y1="{Y(poc):.1f}" y2="{Y(poc):.1f}" stroke="{POC_KERZE}" '  # Layout
                   f'stroke-opacity="0.55" stroke-dasharray="1 3"><title>nackter POC {zahl(poc)} ({tag:%d.%m.}) – nie wieder '  # Layout
                   f'erreicht</title></line>')
-    if not pb:
-        return
-    i0, i1 = pos(pb["impuls_tag"]), pos(pb["impuls_ende_tag"])
-    if pb["impuls_tag"] >= d.index[0]:  # Layout
-        A(f'<line x1="{X(i0):.1f}" y1="{Y(pb["impuls_kurs"]):.1f}" x2="{X(i1):.1f}" y2="{Y(pb["impuls_ende_kurs"]):.1f}" '  # Layout
-          f'stroke="{PBD_FARBE}" stroke-width="2.5"><title>PbD-Impuls {pb["impuls_tag"]:%d.%m.} → '  # Layout
-          f'{pb["impuls_ende_tag"]:%d.%m.}</title></line>')
-    zs = pd.Timestamp(pb["zone_start"])
-    xl = (X(pos(zs)) - halb) if zs >= d.index[0] else X(0) - halb  # Layout
-    yo, yu = Y(min(pb["zone_hoch"], pmax)), Y(max(pb["zone_tief"], pmin))
-    A(f'<rect x="{xl:.1f}" y="{yo:.1f}" width="{max(2, ENDE - xl):.1f}" height="{max(1, yu - yo):.1f}" fill="none" '  # Layout
-      f'stroke="{PBD_FARBE}" stroke-width="1.8" stroke-dasharray="6 3"><title>PbD: Form {pb["form"]} · faire Zone '  # Layout
-      f'{zahl(pb["zone_tief"])}–{zahl(pb["zone_hoch"])}</title></rect>')
-    spaete.append(f'<text x="{xl + 4:.1f}" y="{(yu + 20) if pb["form"] == "b" else (yo - 5):.1f}" fill="{PBD_FARBE}" '  # Layout
-                  f'font-size="20" font-weight="700">{pb["form"]}</text>')  # Layout
-    if pb["gescheitert"] and pmin <= pb["impuls_kurs"] <= pmax:
-        A(f'<line x1="{X(0) - halb:.1f}" x2="{ENDE:.1f}" y1="{Y(pb["impuls_kurs"]):.1f}" y2="{Y(pb["impuls_kurs"]):.1f}" '  # Layout
-          f'stroke="{PBD_FARBE}" stroke-width="1.4" stroke-dasharray="1 3"><title>Ziel am Impulsbeginn '  # Layout
-          f'{zahl(pb["impuls_kurs"])}</title></line>')
-    # Zeit- und Volumenprofil seit Impulsbeginn rechts neben dem Chart (Spalten nach den Etiketten)
-    x_sp = B + 4  # Layout
-    breite_ = (SEITE_PROFIL - 12) / 2  # Layout
-    for j, (name, sil, farbe) in enumerate((("Zeit", pb.get("profil_zeit"), ZEIT_FARBE),
-                                           ("Volumen", pb.get("profil_vol"), DUENN_FARBE))):
-        x0 = x_sp + j * (breite_ + 4)  # Layout
-        A(f'<text x="{x0:.1f}" y="26" fill="{TEXT_3}" font-size="10">{name}</text>'  # Layout
-          f'<line x1="{x0:.1f}" x2="{x0:.1f}" y1="30" y2="430" stroke="{RAND}"/>')  # Layout
-        if not sil:
-            A(f'<text x="{x0 + 2:.1f}" y="230" fill="{TEXT_3}" font-size="10">ungemessen</text>')  # Layout
-            continue
-        poc = st_["profil"]["poc"]
-        for lo, hi, anteil in sil:
-            if hi < pmin or lo > pmax:
-                continue
-            y1, y2 = Y(min(hi, pmax)), Y(max(lo, pmin))
-            A(f'<rect x="{x0:.1f}" y="{y1 + 0.5:.1f}" width="{max(1, anteil * breite_):.1f}" height="{max(1, y2 - y1 - 1):.1f}" '  # Layout
-              f'fill="{farbe}" fill-opacity="{0.95 if lo <= poc <= hi else 0.5}"/>')  # Layout
-    A(f'<text x="{x_sp:.1f}" y="446" fill="{PBD_FARBE}" font-size="10">Form {pb["form"]} seit {pb["impuls_tag"]:%d.%m.}</text>')  # Layout
+
 
 def legende(ebene="Tag", gd_kurz=False):
     from gestaltung import t
