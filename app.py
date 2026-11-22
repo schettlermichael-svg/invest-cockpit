@@ -356,8 +356,7 @@ def rueckenwind_zeigen():
     import rueckenwind_seite as rw
     erg = rw_kern.laden()
     if not erg:
-        st.markdown(gestaltung.seite("<p>Noch kein Stand – der Rückenwind wird im Nachtlauf (oder mit „Kartentisch neu "
-                                     "rechnen“) gerechnet.</p>"), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite("<p>Noch kein Stand – der Rückenwind wird im Nachtlauf gerechnet.</p>"), unsafe_allow_html=True)
         return
     with st.container(key="rueckenwind"):
         st.markdown(rw.kopf(erg, titel=False), unsafe_allow_html=True)
@@ -375,7 +374,16 @@ def rueckenwind_zeigen():
                                      "Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. In der Klasse: 🦈, Geld der "
                                      "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert; Titel anklicken → Titelseite."
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
-        wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
+        w1_, w2_ = st.columns([8, 2])               # Layout
+        with w1_:
+            wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
+        with w2_:                                   # Titel neu rechnen (Micky 22.11.2026): ohne neuen Download
+            if st.button("↻ Titel neu rechnen", use_container_width=True,
+                         help="Rechnet den Rückenwind aller Titel neu – mit den Kursen und Zahlen des letzten Nachtlaufs, "
+                              "ohne neuen Download (etwa 1 Minute)."):
+                with st.spinner("Rechne den Rückenwind aller Titel neu …"):
+                    rw_kern.rechnen(netz=False)
+                st.rerun()
         df = rw.liste(erg, nur_watchlist=wl_ != "Alle")
         st.dataframe(df, hide_index=True, use_container_width=True, height=560,  # Layout
                      column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)})
