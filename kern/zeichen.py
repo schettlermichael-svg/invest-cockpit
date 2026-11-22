@@ -1016,7 +1016,7 @@ def kurz(text):
     Doppelpunkt bzw. vor der ersten Zahl („erstes höheres Tief“, „Zahlen“, „Pocket Pivot“)."""
     import re
     m = re.search(r"\(([^()]{" + str(KURZ_MIN) + "," + str(KURZ_KLAMMER) + r"})\)\s*$", text)
-    if m and not re.search(r"\d", m.group(1)):
+    if m and not re.search(r"[\d,/]", m.group(1)):          # nicht „(nicht bestätigt, Homma/Nison)“
         return m.group(1)
     text = text.split(":")[0].split(", während")[0]
     text = re.split(r"\s[−+\-]?\d(?![\d,.]*-)", text)[0]     # „52-Wochen-Hoch“ bleibt stehen
