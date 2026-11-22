@@ -1427,3 +1427,10 @@ Langfassung als Doc (https://claude.ai/artifact/Kb2mfjctjSSbq5AADEA8WU): je Wort
 Leben und Sport, die Meister, das Zeichen im Cockpit – Stärke, Schwäche, Momentum, Trend, Balance, Disbalance,
 Widerstand, Reibung, Zirkel. Kurzfassung als Tabelle in `oberflaeche/handbuch.py`, auf der Seite Rückenwind
 aufklappbar („📖 Handbuch: Der Zirkel“), und im Konzept-Doc.
+
+## Der Zirkel im Chart (22.11.2026)
+`zonenchart.bild` zeigt zusätzlich: Wendepunkte (Livermores Pivotal Points, `vcp_zone.zigzag` ab 2 ATR; hohl = noch
+nicht bestätigt), die Kontraktionen der Enge als „−20 %“ unter ihrem Tief (Woche und Tag, aus `zonen.basis`),
+✈️/✈️↓ freie Bahn als Etikett, darunter die Zeichenleiste (💥 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisestes Volumen seit 50
+Kerzen, ⚡ Kraft ohne Weg nach Wyckoff, 🌱/🍂 Keim des Zirkels an der letzten Kerze) und Momentum 🚀 am Ende der
+RS-Linie. Je Zeichen ein Hinweistext beim Darüberfahren; Legende ergänzt.

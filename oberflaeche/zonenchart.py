@@ -15,6 +15,7 @@ B = 1200                               # Layout: Breite des Bildes
 LINKS, RECHTS, PROFIL_W = 56, 190, 110  # Layout: Preisachse, Etiketten, Profil (Zeit links, Volumen rechts)
 OBEN, KURS_H = 16, 360                 # Layout: Kursfeld
 VOL_H, RS_H = 60, 90                   # Layout: Volumen, relative Stärke
+ZEICHEN_H = 22                         # Layout: Zeichenleiste unter dem Volumen
 LUECKE = 14                            # Layout: Abstand zwischen den Feldern
 ZEIGEN = {"Woche": 104, "Tag": 126, "Stunde": 140}   # Kerzen im Bild (2 Jahre, 6 Monate, 20 Handelstage)
 JAHR = {"Woche": 52, "Tag": 252, "Stunde": 252 * 7}  # Kerzen je Jahr (RS-Hoch vor Kurs)
@@ -38,6 +39,8 @@ EINZEL_FARBE = "#FFFFFF"               # Einzeldrucke im Zeitprofil
 LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen beschriftet (die breitesten)
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
+WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Livermores Pivotal Points)
+ENGE_FARBE = "#5DCAA5"                 # Kontraktionen der Base
 
 
 def _pfeil(r):
@@ -60,14 +63,19 @@ def zeitpunkt(df, nr):
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
 
 
-def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None):
+def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None,
+         ba=None, tk=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
-    ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen."""
+    ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
+    Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Livermores Pivotal Points, vcp_zone.zigzag) als Punkte,
+    die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
+    Zeichenleiste (💥 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
+    Keim des Zirkels) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
     import avwap
     import rueckenwind
     import tiefe
@@ -105,7 +113,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     pos = lambda t_: min(max(int(d.index.searchsorted(pd.Timestamp(t_))), 0), N - 1)   # noqa: E731
     halb = breite / NZ / 2
     y_vol = OBEN + KURS_H + LUECKE
-    y_rs = y_vol + VOL_H + LUECKE + 14                                              # Layout: Platz für die Überschrift
+    y_zei = y_vol + VOL_H + 4                                                       # Layout: Zeichenleiste
+    y_rs = y_zei + ZEICHEN_H + LUECKE + 14                                          # Layout: Platz für die Überschrift
     H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
@@ -190,6 +199,31 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
+    import vcp_zone
+    zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
+    for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Pivotal Points)
+        j = i_ - n0
+        if 0 <= j < N:
+            y_ = Y(p_) - 6 if art == "H" else Y(p_) + 6                             # Layout: über dem Hoch, unter dem Tief
+            letzt = k_ == len(zz) - 1
+            A(f'<circle cx="{X(j):.1f}" cy="{y_:.1f}" r="3" fill="{"none" if letzt else WENDE_FARBE}" stroke="{WENDE_FARBE}">'
+              f'<title>Wendepunkt {"Hoch" if art == "H" else "Tief"} {zahl(p_)}{" (noch nicht bestätigt)" if letzt else ""}'
+              f'</title></circle>')                                                 # Layout
+    if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
+        bdf = ba["df"]
+        for k_ in (ba.get("enge") or {}).get("kontraktionen") or []:
+            t_ = bdf.index[k_["tief_i"]]
+            if t_ < d.index[0]:
+                continue
+            j = pos(t_)
+            A(f'<text x="{X(j):.1f}" y="{Y(k_["tief"]) + 22:.1f}" fill="{ENGE_FARBE}" font-size="12" text-anchor="middle">'  # Layout
+              f'−{zahl(k_["tiefe"], 0)} %<title>Kontraktion {bdf.index[k_["hoch_i"]]:%d.%m.} → {t_:%d.%m.}: '
+              f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}</title></text>')            # Layout: unter dem Tief
+    if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
+        if not fest.get("oben"):
+            etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
+        if not fest.get("unten"):
+            etiketten.append((OBEN + KURS_H - 4, "✈️↓ freie Bahn", ROT))   # Layout: ganz unten
     if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
@@ -258,6 +292,33 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_vol + VOL_H - hv:.1f}" width="{bw:.1f}" height="{hv:.1f}" '
           f'fill="{GRUEN if c[i] >= o[i] else ROT}" fill-opacity="{0.85 if hoch else 0.35}"/>')  # Layout
     A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen</text>')   # Layout
+    leiste = {}                                                                     # Zeichenleiste: Kerze → [(Zeichen, Text)]
+    vv = df["Volume"].astype(float).to_numpy()
+    for i in range(N):                                                              # 🏜️ leisester Tag seit 50 Kerzen
+        g = n0 + i
+        if g >= zeichen.TROCKEN_VERGLEICH and 0 < vv[g] <= vv[g - zeichen.TROCKEN_VERGLEICH:g + 1].min():
+            leiste.setdefault(i, []).append(("🏜️", "leisestes Volumen seit 50 Kerzen – kaum noch Verkäufer (Minervini)"))
+    for x in zeichen.kraft_ohne_weg(df, tage=len(df), oben=hi, unten=lo, alle=True) or []:   # ⚡ Kraft ohne Weg
+        if x["tag"] >= d.index[0]:
+            leiste.setdefault(pos(x["tag"]), []).append(
+                ("⚡", f'Kraft ohne Weg an {x["marke"]}: {zahl(x["volumen"], 1)}-faches Volumen, enge Spanne '
+                       f'({"Verkäufer schlucken die Nachfrage" if x["rand"] == "oben" else "Käufer schlucken das Angebot"}, Wyckoff)'))
+    a_b = (ba or {}).get("ausbruch") if e["name"] != "Stunde" else None
+    if a_b:                                                                         # 💥 Ausbruch, 🦊 Fehlausbruch
+        for tag_, z_, text in ((a_b["tag"], "💥", "Ausbruch über den Pivot"
+                                + (" mit Volumen" if a_b["mit_volumen"] else " ohne Volumen")),
+                               (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot")):
+            if tag_ is not None and (z_ == "💥" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
+                leiste.setdefault(pos(tag_), []).append((z_, text))
+    if tk and e["name"] != "Stunde":                                                # 🌱/🍂 Keim des Zirkels: jetzt
+        zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
+        if zk and zk["keim"]:
+            zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂"
+            leiste.setdefault(N - 1, []).append((zeichen_, "Keim im Zirkel: " + ", ".join(zk["keim"][:3])))
+    for i, liste_ in leiste.items():
+        A(f'<text x="{X(i):.1f}" y="{y_zei + 15}" font-size="13" text-anchor="middle">{"".join(dict.fromkeys(z for z, _ in liste_))}'  # Layout
+          f'<title>{" · ".join(x for _, x in liste_)}</title></text>')              # Layout
+    A(f'<text x="{ende + 16}" y="{y_zei + 15}" fill="{TEXT_3}" font-size="10">Zeichen</text>')   # Layout: neben dem Zeichen der letzten Kerze
     if rs and rs.get("index") is not None:                                          # relative Stärke
         def relativ(bezug):
             bx = bezug.reindex(df.index, method="ffill")
@@ -282,6 +343,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                 if r_ is not None:
                     A('<polyline points="' + " ".join(f"{X(i):.1f},{YR(x):.1f}" for i, x in enumerate(r_) if not np.isnan(x))
                       + f'" fill="none" stroke="{farbe}" stroke-width="1.6"{strich}/>')  # Layout
+            mom = ((rueckenwind.laden() or {}).get("titel") or {}).get(tk, {}).get("momentum") if tk else None
+            if mom:                                                                 # Momentum 🚀 (Kullamägi)
+                text = " · ".join(f'{"🚀 " if top else ""}{k} {"+" if round(r) > 0 else ""}{zahl(round(r) or 0, 0)} %' for k, (r, top) in mom.items())
+                g_ = np.flatnonzero(~np.isnan(r_i))
+                A(f'<text x="{ende + 6}" y="{YR(r_i[g_[-1]]) + 4:.1f}" fill="{TEXT_2}" font-size="12">Momentum {text}'  # Layout
+                  f'<title>Rendite über 1, 3, 6 Monate; 🚀 = unter den besten 2 % des Reviers (Kullamägi)</title></text>')   # Layout
             jahr = JAHR[e["name"]]
             cl = df["Close"]
             hoch_ = (rv >= zeichen.RS_HOCH * rv.rolling(jahr, min_periods=jahr).max()) & \
@@ -317,6 +384,11 @@ def legende():
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
+             (WENDE_FARBE, "● Wendepunkte (Livermores Pivotal Points, ab 2 ATR) – hohl = noch nicht bestätigt"),
+             (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
+             (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
+             (TEXT_2, "Zeichenleiste: 💥 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
+              "🌱/🍂 Keim des Zirkels (rechts, jetzt) · Momentum 🚀 am Ende der RS-Linie"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
             f'<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:{TEXT_2}">'
