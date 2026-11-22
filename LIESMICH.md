@@ -1421,3 +1421,9 @@ Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg. Festungen und ✈️ blicken zw
 reichen die Massive-Tage), damit Chart, Liste und Titelseite dieselben Festungen sehen. Liste: Spalte „Bahn“
 (`rueckenwind.rechnen` → `frei`, aus `massive.kursmatrix` mit mehreren Spalten in einem Durchgang); Titelseite: im Kopf,
 live gerechnet. Stand Mac 04.11.: 133 Titel ✈️, 20 ✈️↓ von 1.868.
+
+## Handbuch „Der Zirkel" (22.11.2026)
+Langfassung als Doc (https://claude.ai/artifact/Kb2mfjctjSSbq5AADEA8WU): je Wort Herkunft, Geschichte und Psychologie,
+Leben und Sport, die Meister, das Zeichen im Cockpit – Stärke, Schwäche, Momentum, Trend, Balance, Disbalance,
+Widerstand, Reibung, Zirkel. Kurzfassung als Tabelle in `oberflaeche/handbuch.py`, auf der Seite Rückenwind
+aufklappbar („📖 Handbuch: Der Zirkel“), und im Konzept-Doc.

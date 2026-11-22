@@ -360,6 +360,9 @@ def rueckenwind_zeigen():
         return
     with st.container(key="rueckenwind"):
         st.markdown(rw.kopf(erg, titel=False), unsafe_allow_html=True)
+        import handbuch
+        with st.expander("📖 Handbuch: Der Zirkel"):
+            st.markdown(handbuch.TEXT)
         st.markdown(gestaltung.seite("<h3 style='margin:0'>Wetterkarte der Strömung · wohin das Geld fließt</h3>", oben=8,
                                      unten=0), unsafe_allow_html=True)
         art = st.radio("Ebene", ["Sektor", "Branche", "Thema"], horizontal=True, key="rw_ebene", index=1)
