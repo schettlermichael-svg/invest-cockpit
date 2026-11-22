@@ -56,7 +56,7 @@ def rechnen(tk, laufend=False):
     f = zonen.fuehrte(ebenen, avwaps)
     cmf = tiefe.cmf(df)["wert"]
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
-            "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
+            "laufend": bool(df.attrs.get("laufend")), "rs": rs}
 
 
 def _stunde_bezug(symbol):
@@ -144,7 +144,7 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     la_tag = f["lage"]["Tag"]
     if ebene == "Stunde" and la_tag and la_tag["zone"]:
         rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
-    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
+    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
                            f["festungen"][ebene])

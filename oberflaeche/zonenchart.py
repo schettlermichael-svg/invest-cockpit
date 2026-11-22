@@ -1,7 +1,7 @@
 """Der Zonenchart (Micky 21.11.2026): wenig, aber aussagekräftig – dasselbe Bild für Woche, Tag und Stunde.
 
 Kursfeld: Kerzen; die Zone von heute (Base nach Minervini/O'Neil, in der Stunde die Balance) als gelber Rahmen mit
-Namen, Pivot und POC; zuschaltbar die POCs der abgeschlossenen Basen und die nackten POCs bis rechts; in der Stunde die
+Namen, Pivot und POC; in der Stunde die
 Base des Tages als feiner Rahmen; Festungen und Schluchten quer über das Gelände; der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
 Impulses. Darunter das Volumen und das Feld der
@@ -29,7 +29,7 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"poc": "POC je Zone", "nackt": "Nackte POCs", "details": "Profil-Details"}
+LINIEN_WAHL = {"details": "Profil-Details"}
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -60,8 +60,8 @@ def zeitpunkt(df, nr):
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
 
 
-def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None):
-    """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, hist = zonen.historie, t = zonen.trade (nur Tag),
+def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None):
+    """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
@@ -83,7 +83,6 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
     N = len(d)
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
     lo, hi = la["zone"] or (None, None)
-    kaesten = [z for z in hist if z["ende"] >= d.index[0]]
     werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else [])
     spanne_bild = float(h.max() - l.min())
     burgen = [(x, seite_) for seite_ in ("oben", "unten") for x in (fest or {}).get(seite_, [])
@@ -119,19 +118,6 @@ def bild(e, la, hist, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(
         A(f'<line x1="{LINKS}" x2="{ende}" y1="{Y(y_):.1f}" y2="{Y(y_):.1f}" stroke="{RAND}"/>'
           f'<text x="{LINKS - 6}" y="{Y(y_) + 4:.1f}" fill="{TEXT_3}" font-size="11" text-anchor="end">{y_:.0f}</text>')  # Layout
     etiketten = []                                                                  # (y, Text, Farbe) rechts
-    for z in kaesten:                                                               # Zonen der Vergangenheit
-        x0 = X(pos(z["start"])) - halb if z["start"] >= d.index[0] else LINKS
-        x1 = X(pos(z["ende"])) + halb
-        if "poc" in linien_:
-            A(f'<line x1="{x0:.1f}" x2="{x1:.1f}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{POC_FARBE}" '
-              f'stroke-width="1.4" stroke-opacity="0.8"/>')                         # Layout
-        if "nackt" in linien_ and pmin <= z["poc"] <= pmax:                         # nackt bis rechts, sonst bis zur Berührung
-            x2 = ende if z["nackt"] else X(pos(z["beruehrt"]))
-            if x2 > x1:
-                A(f'<line x1="{x1:.1f}" x2="{x2:.1f}" y1="{Y(z["poc"]):.1f}" y2="{Y(z["poc"]):.1f}" stroke="{POC_FARBE}" '
-                  f'stroke-width="1.2" stroke-dasharray="4 3" stroke-opacity="{0.9 if z["nackt"] else 0.35}"/>')  # Layout
-                if z["nackt"]:
-                    etiketten.append((Y(z["poc"]), f"nackter POC {zahl(z['poc'])}", POC_FARBE))
     pr = profil or la["profil"]                                                     # das eine Profil (auch für das Gelände)
     det_g = zonen.profil_details(pr)
     for a_, b_ in det_g["duenn"]:                                                   # Schluchten quer über das Gelände
@@ -327,7 +313,6 @@ def legende():
               "Ereignisses (letztes Hoch, Gipfel der Korrektur, Tief, Zahlen) – je Richtung die 2 nächsten, mit Abstand; + = mehrere Gründe"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Zeit (lila) ◂ ▸ Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen"),
-             (POC_FARBE, "POC je Zone · gestrichelt = nackter POC (seitdem nie berührt)"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),

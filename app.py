@@ -562,13 +562,13 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         with g0:                                 # Durchschnitte nach Wahl (Micky 21.11.2026), in Kerzen der Ebene
             gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
                           format_func=lambda g: f"GD{g}", key="zonen_gd") or []
-        with g3:                                 # POC-Linien der Zonen nach Wahl (Micky 21.11.2026)
-            poc_wahl = st.pills("POC-Linien", list(zonenchart.LINIEN_WAHL), selection_mode="multi", default=[],
+        with g3:                                 # Profil-Details nach Wahl (Micky 21.11.2026; POC-Linien raus 22.11.)
+            poc_wahl = st.pills("Profil", list(zonenchart.LINIEN_WAHL), selection_mode="multi", default=[],
                                 format_func=zonenchart.LINIEN_WAHL.get, key="zonen_poc") or []
         anker = zonenseite.anker_laden(ticker, ebene)
         hilfe = ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den Anker. Sind beide gesetzt, ist "
                  "der Raum dazwischen die Zange.",) * 2 + ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze): Zeit- "
-                 "und Volumenprofil ab dieser Kerze. 0 = automatisch ab Beginn des Impulses.",)
+                 "und Volumenprofil ab dieser Kerze. 0 = automatisch ab Beginn der Zone.",)
         for k, spalte in enumerate((g1, g2, g4)):   # eigene Anker: Balkennummer von rechts, gespeichert als Zeitpunkt
             with spalte:
                 nr_jetzt = zonenchart.nummer(e_["df"], anker[k]) if e_ is not None and anker[k] is not None else 0

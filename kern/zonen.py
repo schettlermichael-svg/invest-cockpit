@@ -24,7 +24,7 @@ Die drei Trades (Tageszone, Micky 22.11.2026):
 Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
   Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
-Alte Zonen (POC je Zone, nackte POCs, gebrochene Kanten): die abgeschlossenen Basen (vcp_zone.verlauf) auf Woche und Tag.
+Alte Zonen (für die gebrochenen Kanten): die abgeschlossenen Basen (vcp_zone.verlauf) auf Woche und Tag.
 Festungen: gebrochene Kanten alter Basen und AVWAP großer Ereignisse (Shannon), je Richtung die 2 nächsten.
 """
 import numpy as np
@@ -189,28 +189,12 @@ def trade(e, la, ba):
 
 
 def historie(e, ba):
-    """Abgeschlossene Basen (vcp_zone.verlauf) als alte Zonen der Ebene, älteste zuerst – je mit Kanten, POC (Profil
-    der Base aus den feineren Kerzen), nackt (seitdem nie berührt) und Ende (Tag des Ausbruchs)."""
+    """Abgeschlossene Basen (vcp_zone.verlauf) als alte Zonen der Ebene, älteste zuerst – je mit Kanten und Ende (Tag
+    des Ausbruchs); für die gebrochenen Kanten unter den Festungen."""
     if not e or ba is None or e["name"] == "Stunde":
         return []
-    df, fein = e["df"], e.get("fein")
-    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
-    L, H = df["Low"].to_numpy(float), df["High"].to_numpy(float)
-    erg = []
-    for b in sorted(ba["verlauf"], key=lambda x: x["start_t"]):
-        von, bis = _von_bis(e, b["start_t"])[0], _von_bis(e, b["ende_t"])[1]
-        f_ = fein[(fein.index >= von) & (fein.index < bis)] if fein is not None and len(fein) else None
-        teil = f_ if f_ is not None and len(f_) >= tiefe.STUNDEN_MIN else df[(df.index >= von) & (df.index < bis)]
-        if not len(teil):
-            continue
-        pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
-        k = int(df.index.searchsorted(pd.Timestamp(bis)))
-        beruehrt = (L[k:] <= pr["poc"]) & (H[k:] >= pr["poc"])
-        erg.append({"name": b["name"], "tief": float(b["unten"]), "hoch": float(b["oben"]), "poc": float(pr["poc"]),
-                    "start": pd.Timestamp(b["start_t"]), "ende": pd.Timestamp(b["ende_t"]),
-                    "nackt": not bool(beruehrt.any()),
-                    "beruehrt": df.index[k + int(beruehrt.argmax())] if beruehrt.any() else None})
-    return erg
+    return [{"name": b["name"], "tief": float(b["unten"]), "hoch": float(b["oben"]), "start": pd.Timestamp(b["start_t"]),
+             "ende": pd.Timestamp(b["ende_t"])} for b in sorted(ba["verlauf"], key=lambda x: x["start_t"])]
 
 
 KNOTEN_ANTEIL = 0.5        # Knoten (HVN): Gipfel mit mindestens ½ des POC-Volumens (Claude 21.11.2026, ungemessen)
