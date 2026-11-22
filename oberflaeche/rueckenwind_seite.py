@@ -322,10 +322,10 @@ def titel_zeile(tk):
             + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else "")]
 
 
-def bahn(fr):
+def bahn(fr, wort=" freie Bahn"):
     """✈️ freie Bahn (Livermore: Linie des geringsten Widerstands) aus zonen.frei: keine Festung über dem Kurs,
-    ✈️↓ keine darunter; sonst leer."""
-    return " ".join(w for w, ja in (("✈️ freie Bahn", (fr or {}).get("oben")), ("✈️↓ freie Bahn", (fr or {}).get("unten"))) if ja)
+    ✈️↓ keine darunter; sonst leer. In der Liste ohne Wort (wort=""), die Spalte heißt schon „Bahn“."""
+    return " ".join(z + wort for z, ja in (("✈️", (fr or {}).get("oben")), ("✈️↓", (fr or {}).get("unten"))) if ja)
 
 
 def _momentum(x):
@@ -381,7 +381,7 @@ def liste(erg, nur_watchlist=False):
             "Momentum": _momentum(x), "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
             "Volumen": _zufluss(x.get("zufluss"), x.get("trocken")),
             "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
-            "Bahn": bahn(x.get("frei")),
+            "Bahn": bahn(x.get("frei"), ""),
             "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
             "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
             "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
