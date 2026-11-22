@@ -14,7 +14,6 @@ Scalable („Agentic Investing“, MCP): sobald verbunden, schreibt Claude die P
 und Knock-out-Daten bleiben erhalten, wenn der Titel schon geführt wird.
 """
 import json
-import math
 import os
 import time
 from dateien import json_schreiben  # noqa: E402
@@ -25,7 +24,6 @@ LEER = {"konto": None, "risiko_pct": 1.0, "hitze_max_pct": 6.0, "quelle": "Hand"
 WAEHRUNG = {".DE": "EUR", ".F": "EUR", ".MI": "EUR", ".PA": "EUR", ".AS": "EUR", ".BR": "EUR", ".MC": "EUR",
             ".HE": "EUR", ".L": "GBp", ".SW": "CHF", ".ST": "SEK", ".CO": "DKK", ".OL": "NOK"}
 VERLUSTGRENZE = 0.08
-KLUMPEN = 25.0               # Positionswert über 25 % des Kontos: Klumpen (Minervini: höchstens 20–25 % je Titel)
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
@@ -151,18 +149,6 @@ def risiko_euro(d=None):
     return d["konto"] * d["risiko_pct"] / 100 if d.get("konto") else None
 
 
-def stueckzahl(ticker, einstieg, stopp, bezug=None, d=None):
-    """Stückzahl (Aktie oder Knock-out mit Bezugsverhältnis) für das Risiko je Trade. dict oder None."""
-    d = d or laden()
-    r = risiko_euro(d)
-    k = fx(waehrung(ticker))
-    if not r or not k or not einstieg or not stopp or einstieg == stopp:
-        return None
-    je = abs(einstieg - stopp) * (bezug or 1)                 # Verlust je Stück in Titelwährung
-    n = math.floor(r * k / je)
-    wert = n * einstieg / k if not bezug else None
-    return {"stueck": n, "risiko": n * je / k, "wert": wert,
-            "anteil": (wert / d["konto"] * 100) if wert and d.get("konto") else None, "fx": k}
 
 
 def offenes_risiko(p, k=None):
@@ -208,201 +194,29 @@ def _deutsch(text):
     return re.sub(r"(?<!\.\d)(?<!\.\d\d)(\d)\.(\d+)(?![\d.])", r"\1,\2", text)
 
 
-ATR_STOPP = 1.5                                  # ein Stopp für alle Systeme: 1,5 ATR vom Einstieg (Micky, 09.11.2026)
 
 
-def einstieg_setup(su, m, k, zr=None, kurs=None):
-    """Einstieg des EINEN Setups eines Titels (12.11.2026 – vorher nahm der Chart immer die alte Kette Sprung →
-    Base-Ausbruch → Momentum-Ausbruch: HWM stand in Zahlen-Reaktion long bei 224 $, der Chart zeichnete den Pivot
-    einer alten Base und den Stopp 247,93 $ über dem Kurs). → (Seite, Einstieg, Quelle) oder (None, None, "").
-      Sprung (EP)          Hoch des Sprungtags (Pivot des EP)
-      Zahlen-Reaktion      AVWAP ab dem Reaktionstag, Seite der Reaktion
-      Spring / Upthrust    Unterkante (long) bzw. Oberkante (short) der Zone – der Schluss zurück löst aus
-      Ermüdung, Bärenflagge, Bruch der Spanne  Unterkante (short)
-      Base-Ausbruch        Pivot der Base (sonst Pivot des letzten Ausbruchs)
-      Momentum-Ausbruch    Pivot der Konsolidierung
-      Flagge, nur Muster   Pivot des Scanners (aus dem Abstand des Kartentischs)"""
-    su, m, k, zr = su or {}, m or {}, k or {}, zr or {}
-    r = su.get("reihe")
-    if r == "k_ep" and (k.get("ep") or {}).get("pivot"):
-        return "long", float(k["ep"]["pivot"]), "Sprung (EP)"
-    if r == "zahlen" and zr.get("avwap"):
-        return zr.get("seite", "long"), float(zr["avwap"]), "AVWAP ab dem Reaktionstag"
-    import system_kullamaegi
-    if r == "w_spring" and (k.get("spring") or {}).get("einstieg"):
-        return "long", float(k["spring"]["einstieg"]), "Spring: Schluss zurück über der Unterkante"
-    if r in system_kullamaegi.SHORT_REIHEN:
-        em = system_kullamaegi.short_von(k, r) or {}
-        ein_ = em.get("einstiege") or []
-        if len(ein_) > 1 and kurs:                 # Bruch der Spanne vor dem Bruch: der Einstieg, der jetzt gilt
-            import vcp_zone
-            x = ein_[vcp_zone.naechster(ein_, float(kurs), seite="short")]
-            return "short", float(x["wert"]), x["quelle"]
-        if em.get("einstieg"):
-            return "short", float(em["einstieg"]), ("Upthrust: Schluss zurück unter der Oberkante" if r == "w_upthrust"
-                                                    else "Unterkante")
-    if r in ("m_spitze", "m_weitere"):
-        e = m.get("pivot") or (m.get("ausbruch") or {}).get("pivot")
-        ein_ = m.get("einstiege") or []
-        q_ = ein_[m["einstieg_nr"]]["quelle"] if len(ein_) > 1 and m.get("einstieg_nr") is not None else "Pivot der Base"
-        return ("long", float(e), q_) if e else (None, None, "")
-    if r == "k_breakout" and (k.get("breakout") or {}).get("pivot"):
-        return "long", float(k["breakout"]["pivot"]), "Pivot der Konsolidierung"
-    if r in ("flagge", "vcp") and su.get("pivot_scanner"):
-        q_ = next((x["quelle"] for x in su.get("einstiege") or [] if x["wert"] == su["pivot_scanner"]),
-                  "Pivot des Scanners")
-        return "long", float(su["pivot_scanner"]), q_
-    if r in ("flagge", "vcp") and su.get("abstand_vz") is not None and kurs:   # Tische vor dem 13.11.2026
-        return "long", float(kurs) / (1 + float(su["abstand_vz"]) / 100), "Pivot des Scanners"
-    return None, None, ""
 
 
-def einstiege(su, m, k, zr=None, kurs=None):
-    """Alle Einstiege DES Setups (Gefechtsordnung Schritt 2): Base-Ausbruch und VCP mit Cheat früh am Cheat und am
-    Ausbruch über die Oberkante, sonst der eine aus einstieg_setup. → [(Seite, Einstieg, Quelle, gilt)] aufsteigend;
-    gilt = der Einstieg, der jetzt gilt (vcp_zone.naechster: noch nicht ausgelöst oder in seiner Kaufzone)."""
-    su, m = su or {}, m or {}
-    r = su.get("reihe")
-    import system_kullamaegi
-    kurz = r in system_kullamaegi.SHORT_REIHEN
-    liste = (m.get("einstiege") if r in ("m_spitze", "m_weitere") else su.get("einstiege") if r == "vcp"
-             else (system_kullamaegi.short_von(k, r) or {}).get("einstiege") if kurz else None) or []
-    if len(liste) > 1 and kurs:                    # long aufsteigend; short (Bruch der Spanne vor dem Bruch) absteigend
-        import vcp_zone
-        i_ = vcp_zone.naechster(liste, float(kurs), seite="short" if kurz else "long")
-        return [("short" if kurz else "long", x["wert"], x["quelle"], j == i_) for j, x in enumerate(liste)]
-    seite, e, quelle = einstieg_setup(su, m, k, zr, kurs)
-    return [(seite, e, quelle, True)] if e else []
 
 
-SCHNELL = ("flagge", "k_breakout")       # schnelle Setups (Kullamägi): Stopp am Tagestief des Einstiegstags
 
 
-def struktur_stopp(su, m, k, zr, df, seite, e):
-    """Struktur-Stopp mit Prüfung der Seite: liegt die Struktur nicht jenseits des Einstiegs (der Kurs ist mit einer Lücke
-    über den Auslöser gesprungen bzw. darunter gefallen – Tief des Ausbruchstags über, Hoch des Auslösetags unter dem
-    Einstieg), gilt der weiteste erlaubte Stopp: Einstieg ∓ eine Tagesspanne (ADR 20 Tage)."""
-    x = _struktur(su, m, k, zr, df, seite, e)
-    if not x:
-        return None
-    lang = seite != "short"
-    if (x["stopp"] >= e) if lang else (x["stopp"] <= e):
-        adr = (k or {}).get("adtr")
-        if not adr:
-            return None
-        return {"stopp": e - adr if lang else e + adr, "zu_weit": False, "grenze": x["grenze"],
-                "regel": f"{x['regel']} liegt {'über' if lang else 'unter'} dem Einstieg (Lücke) – Einstieg "
-                         f"{'−' if lang else '+'} 1 Tagesspanne"}
-    return x
 
 
-def _struktur(su, m, k, zr, df, seite, e):
-    """Struktur-Stopp DES Setups (Gefechtsordnung Schritt 3, Micky 14./15.11.2026): der Kurs, an dem der Weg widerlegt ist.
-      Base-Ausbruch, VCP   unter dem Tief der letzten Kontraktion – weiter als 8 % = rot (Minervini nimmt ihn nicht)
-      Flagge, Momentum     Tief des Ausbruchstags; bis dahin Einstieg − 1 Tagesspanne (ADR 20 Tage) – weiter als eine
-                           Tagesspanne = rot (Kullamägi nimmt ihn nicht)
-      Sprung (EP)          Tief des Sprungtags (Gefechtsordnung: ohne Grenze der Tagesspanne)
-      Zahlen-Reaktion      Tief (short: Hoch) des Reaktionstags
-      Spring / Upthrust    Tief bzw. Hoch des Fehlausbruchs (Wyckoff)
-      Shorts               Hoch des Auslösetags
-    → {stopp, regel, zu_weit, grenze} oder None. Nie gekappt: der Stopp steht an der Struktur, die Ampel sagt, ob er zu
-    weit ist."""
-    su, m, k, zr = su or {}, m or {}, k or {}, zr or {}
-    r = su.get("reihe")
-    if not (r and e):
-        return None
-    import system_minervini
-    adr = k.get("adtr")
-    lang = seite != "short"
-    if r in ("m_spitze", "m_weitere", "vcp"):
-        liste = (m.get("einstiege") if r != "vcp" else su.get("einstiege")) or m.get("einstiege") or []
-        x = next((x for x in liste if x["wert"] == e), None)
-        s_ = (x or {}).get("struktur")
-        grenze = e * (1 - system_minervini.MAX_STOPP)
-        if s_ is None:
-            return {"stopp": grenze, "regel": "8 % unter dem Einstieg (keine Kontraktion)", "zu_weit": False,
-                    "grenze": "8 %"}
-        return {"stopp": s_, "regel": "unter dem Tief der letzten Kontraktion", "zu_weit": s_ < grenze, "grenze": "8 %"}
-    if r in SCHNELL and adr:
-        tag = None
-        if df is not None and len(df) > 1:
-            import vcp_zone
-            c, lo = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
-            for i in range(len(c) - 1, max(0, len(c) - 1 - vcp_zone.AUSBRUCH_TAGE), -1):
-                if c[i] > e >= c[i - 1]:
-                    tag = i
-                    break
-        if tag is not None:
-            s_ = float(df["Low"].iloc[tag])
-            regel = f"Tief des Ausbruchstags {df.index[tag]:%d.%m.}"
-        else:
-            s_ = e - adr
-            regel = "Einstieg − 1 Tagesspanne (bis zum Ausbruchstag, dann dessen Tief)"
-        return {"stopp": s_, "regel": regel, "zu_weit": e - s_ > adr, "grenze": "eine Tagesspanne"}
-    if r == "k_ep" and (k.get("ep") or {}).get("stopp"):
-        s_ = float(k["ep"]["stopp"])
-        return {"stopp": s_, "regel": "Tief des Sprungtags", "zu_weit": False, "grenze": "eine Tagesspanne"}
-    if r == "w_spring" and (k.get("spring") or {}).get("stopp"):
-        return {"stopp": float(k["spring"]["stopp"]), "regel": "Tief des Fehlausbruchs", "zu_weit": False, "grenze": ""}
-    if r == "zahlen" and zr.get("tief") is not None:
-        s_ = float(zr["tief"] if lang else zr["hoch"])
-        return {"stopp": s_, "regel": "Tief des Reaktionstags" if lang else "Hoch des Reaktionstags", "zu_weit": False,
-                "grenze": ""}
-    import system_kullamaegi
-    em = system_kullamaegi.short_von(k, r) if r in system_kullamaegi.SHORTS else None
-    if em and em.get("vor_bruch"):                    # Bruch der Spanne vor dem Bruch: über dem Hoch der Gegenbewegung
-        x = next((x for x in em.get("einstiege") or [] if x["wert"] == e), None)
-        return {"stopp": float((x or {}).get("struktur") or em["stopp"]), "regel": "Hoch der letzten Gegenbewegung",
-                "zu_weit": False, "grenze": ""}
-    if em and em.get("stopp"):
-        return {"stopp": float(em["stopp"]), "regel": "Hoch des Fehlausbruchs" if r == "w_upthrust" else "Hoch des Auslösetags",
-                "zu_weit": False, "grenze": ""}
-    return None
 
 
-def plaene(erk, df=None):
-    """Plan je Einstieg mit beiden Stopps (Schritt 3: Struktur und 1,5 ATR nebeneinander, Micky wählt je Trade):
-    [{seite, einstieg, quelle, gilt, stopps: [{art, stopp, regel, zu_weit}]}]."""
-    sy = erk.get("systeme") or {}
-    su = erk.get("setup_info")
-    a = erk.get("atr")
-    aus = []
-    for s_, e, q, g in einstiege(su, sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"), erk.get("kurs")):
-        stopps = []
-        st_ = struktur_stopp(su, sy.get("m"), sy.get("k"), erk.get("zahlen_reaktion"), df, s_, e)
-        if st_:
-            stopps.append({"art": "Struktur", **st_})
-        if a:
-            stopps.append({"art": f"{zahl_kurz(ATR_STOPP)} ATR", "stopp": e + ATR_STOPP * a if s_ == "short" else e - ATR_STOPP * a,
-                           "regel": f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart", "zu_weit": False, "grenze": ""})
-        if stopps:
-            aus.append({"seite": s_, "einstieg": e, "quelle": q, "gilt": g, "stopps": stopps})
-    return aus
 
 
-def plan(erk):
-    """Einstieg und Stopp DES Setups wie im Chart: (Seite, Einstieg, Stopp, Stopp-Regel) oder None. Einstieg aus
-    einstieg_setup (das eine Setup, kartentisch.setup_feststellen), Stopp 1,5 ATR vom Einstieg (long darunter, short
-    darüber). Ohne Setup oder ATR kein Plan. (Bis 12.11.2026 eine eigene Kette Sprung → Ermüdung → Base → Momentum;
-    der Prüf-Agent fand sie als zweite Quelle neben dem Setup.)"""
-    sy = erk.get("systeme") or {}
-    m, k = sy.get("m") or {}, sy.get("k") or {}
-    a = erk.get("atr")
-    seite, e, _ = einstieg_setup(erk.get("setup_info"), m, k, erk.get("zahlen_reaktion"), erk.get("kurs"))
-    if not e or not a:
-        return None
-    return seite, e, (e + ATR_STOPP * a if seite == "short" else e - ATR_STOPP * a), f"{zahl_kurz(ATR_STOPP)} ATR wie im Chart"
 
 
-def zahl_kurz(x):
-    return f"{x:g}".replace(".", ",")
 
 
-def nach_dem_kauf(p, df, erk=None):
-    return [(a, _deutsch(t)) for a, t in _nach_dem_kauf(p, df, erk)]
+def nach_dem_kauf(p, df):
+    return [(a, _deutsch(t)) for a, t in _nach_dem_kauf(p, df)]
 
 
-def _nach_dem_kauf(p, df, erk=None):
+def _nach_dem_kauf(p, df):
     """Zeichen nach dem Kauf als Liste (Ampel, Text) – ein System für alle Positionen (Gefechtsordnung Schritt 5,
     Micky 16.11.2026; vorher je System M/K getrennt):
     Stopp: bis Tag 3 der Anfangsstopp, danach folgt er dem 10er bzw. 20er (reiten.nachgezogen), Schluss jenseits heißt
@@ -426,9 +240,7 @@ def _nach_dem_kauf(p, df, erk=None):
         aus.append(("rot", "kein Stopp gesetzt – jede Position braucht einen Stopp vor dem Kauf (Minervini; Kullamägi: "
                            "am Tagestief des Einstiegstags)"))
     else:
-        a_ = (erk or {}).get("auktion") or {}
-        ende = reiten.ende_zeichen(df, p.get("seite", "long"), a_.get("messung") if a_ else None,
-                                   ((erk or {}).get("profil") or {}).get("verankert") if erk else None)
+        ende = reiten.ende_zeichen(df, p.get("seite", "long"))
         nz = reiten.nachgezogen(df, p.get("datum"), e, float(s), p.get("seite", "long"), ende)
         if nz and nz.get("stopp"):                 # die Zeichen unten messen am Stopp, der jetzt gilt
             s = nz["stopp"]
@@ -453,14 +265,6 @@ def _nach_dem_kauf(p, df, erk=None):
         aus.append(("rot", f"Verlustgrenze: {g:.1f} % – höchstens 8 % Verlust, ohne Ausnahme (Minervini, O'Neil)"))
     if s and r_mult is not None and r_mult >= NACHZIEHEN_R and ((s < e) if lang else (s > e)):
         aus.append(("gelb", f"Stopp nachziehen: {r_mult:.1f}R Gewinn – Stopp mindestens auf Einstand {e:.2f} (Minervini)"))
-    w = (erk or {}).get("werte") or {}
-    if erk and erk.get("mp") and "start_index" in w and s:
-        z_beginn = df.index[w["start_index"]]
-        neue_kante = w.get("val") if lang else w.get("vah")
-        if z_beginn > pd.Timestamp(p.get("datum") or df.index[0]) and neue_kante and \
-                ((neue_kante > s) if lang else (neue_kante < s)):
-            aus.append(("gelb", f"Zeichen Auktion: neue Wertzone seit {z_beginn:%d.%m.} – Schluss {'unter VAL' if lang else 'über VAH'} "
-                                f"{neue_kante:.2f} wäre ein enger Nachzieh-Stopp (Market Profile)"))
     if len(seit) >= 1 and len(seit) <= 4 and lang:
         t = seit.iloc[0]
         spanne = float(t["High"] - t["Low"]) or 1
@@ -473,8 +277,9 @@ def _nach_dem_kauf(p, df, erk=None):
         i = int(lo.argmin())
         if i < len(lo) - 1 and lo[i] < e * TENNIS_RUECK and k > hi[:i + 1].max() and len(lo) - 1 - i <= TENNIS_TAGE:
             aus.append(("grün", "Tennisball: nach dem Rücksetzer schnell auf neues Hoch – Zeichen von Stärke (Minervini)"))
-    pl_ = plan(erk) if erk else None                 # Einstieg des Setups (Prüf-Agent 12.11.2026)
-    piv = pl_[1] if pl_ and pl_[0] == "long" else None
+    import zirkel                                      # Pivot des Zonen-Trades (Zirkel-Lauf, 22.11.2026)
+    t_ = zirkel.feld(p.get("ticker", "")).get("trade") or {}
+    piv = t_.get("einstieg") if t_.get("richtung", 0) > 0 and t_.get("art") == "ausbruch" else None
     if lang and piv and e >= piv * RESET_NAH and k < piv and (not s or k > s):
         aus.append(("gelb", f"Reset beobachten: Kurs zurück unter dem Pivot {piv:.2f} – hält der Stopp, kann sich eine "
                             "neue Base bilden (Minervini)"))

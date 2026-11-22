@@ -4,7 +4,7 @@ Ausnahme – mit Protokoll.
 Start auf dem Server über den Timer nachtlauf.timer (werkzeuge/server/nachtlauf.timer, Di–Sa 6:05 Uhr Berlin; der
 Server übernimmt ihn selbst aus dem Speicher) oder von Hand:  python3 werkzeuge/nachtlauf.py
 Warum morgens: Massive gibt im kostenlosen Plan einen Handelstag erst nach Mitternacht New York (6 Uhr Berlin) heraus.
-Abends um 22:45 rechneten Rückenwind, RS-Rang und Führer-Rang deshalb mit dem Vortag, Charts und Akten (Yahoo) mit dem
+Abends um 22:45 rechneten Rückenwind und die Ränge deshalb mit dem Vortag, Charts und Akten (Yahoo) mit dem
 neuen Tag. Morgens haben beide Quellen denselben abgeschlossenen Handelstag; die Datenstand-Wache prüft das.
 Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weiter und das Protokoll meldet ihn):
   1. Massive: Tageskurse aller US-Aktien des letzten Handelstags (bis 30 Min warten, bis Massive ihn freigibt), Splits
@@ -12,7 +12,7 @@ Schritte (jeder für sich abgesichert; scheitert einer, laufen die übrigen weit
   3. 30-Minuten-Kerzen des neuen Tages über Yahoo (Wertzonen), Ausland inklusive
   4. Tageskurse aller Titel (Revier, Watchlist, Positionen, Gesamtmarkt) und Wechselkurse (Yahoo)
   5. samstags (nach dem Freitag) Revier-Pflege; TradingView-Kennzahlen (Screener-Schnittstelle, ohne Login)
-  6. RS-Rang, Führer-Rang, Rückenwind, Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs je Titel; löst am 22.11.2026 den
+  6. Rückenwind, Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs je Titel; löst am 22.11.2026 den
      Kartentisch ab), Lage (Seite Rückenwind), Schrank; danach die Morgenmeldung (Schlachtordnung, Zonen-Trades)
   7. Datenstand-Wache: Kurstag jedes Teils ins Protokoll (rot, wenn sie verschiedene Tage haben)
   8. Massive-Durchgänge für Lücken der
@@ -126,13 +126,6 @@ def main():
         b_ = z_["barometer"]
         return f"{z_['titel']} Titel, {z_['trades']} mit Zonen-Trade · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs"
 
-    def raenge():
-        import fuehrer_rang
-        import rs_rang
-        r_, stand_ = rs_rang.raenge()
-        f_, _ = fuehrer_rang.raenge()               # vor dem Kartentisch: die Prozesse lesen dann nur die Datei
-        return f"RS-Rang {len(r_)}, Führer-Rang {len(f_)} Titel (Stand {stand_})"
-
     def revier():
         import revier_pflege
         return revier_pflege.pflegen()
@@ -160,11 +153,11 @@ def main():
         """Titelseiten der Rückenwind-Titel in Garde, Angriff und Vorhut und der Watchlist vorbauen (09.11.2026), damit
         jeder Klick aus Rückenwind sofort öffnet."""
         from concurrent.futures import ProcessPoolExecutor
-        import titel
+        import zonenseite
         liste = schrank_liste()
         n = 0
         with ProcessPoolExecutor(max(1, (os.cpu_count() or 2) - 1)) as ex:
-            for ok in ex.map(titel.vorbauen, liste, chunksize=4):
+            for ok in ex.map(zonenseite.vorbauen, liste, chunksize=4):
                 n += ok
         return f"{n} von {len(liste)} Titelseiten abgelegt"
 
@@ -175,7 +168,6 @@ def main():
     if datetime.now().weekday() == 5:            # samstags früh (nach dem Freitag): Revier-Pflege
         schritt("Revier-Pflege", revier)
     schritt("TradingView-Kennzahlen", tradingview)
-    schritt("RS-Rang, Führer-Rang (Kullamägi)", raenge)
     schritt("Zahlen nach den Terminen neu laden", zahlen_nach_terminen)
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Zirkel: die Meldung liest beide
     schritt("Zirkel (Kreislauf, Zonen-Trade, Hochs/Tiefs)", zirkel_)
@@ -218,12 +210,11 @@ def main():
 
 
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
-    "Massive-Tageskurse": "Rückenwind, RS-Rang, Führer-Rang, Rudel, Breite",
+    "Massive-Tageskurse": "Rückenwind (RS-Rang, Klassen, Momentum, ✈️), Rudel, Breite",
     "Yahoo-Tageskurse": "Charts, Zirkel, Zonen-Trades, Morgenmeldung",
     "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
-    "Rückenwind": "Stufen, Geldfluss, dreifacher Rückenwind",
-    "RS-Rang": "RS-Rang (IBD-Formel)",
-    "Führer-Rang": "Kullamägi-Führer (oberste 1–2 %)",
+    "Rückenwind": "Schlachtordnung, Geldfluss, dreifacher Rückenwind",
+    "Zirkel": "Kreislauf, Zonen-Trades, Hochs/Tiefs der Markt-Ampel",
 }
 
 
@@ -257,13 +248,11 @@ def datenstand():
         aus["Rückenwind"] = (rueckenwind.laden() or {}).get("stand")
     except Exception:  # noqa: BLE001
         aus["Rückenwind"] = None
-    for teil, modul in (("RS-Rang", "rs_rang"), ("Führer-Rang", "fuehrer_rang")):
-        try:
-            m = __import__(modul)
-            d = pd.read_csv(m.DATEI, nrows=1, keep_default_na=False) if os.path.exists(m.DATEI) else None
-            aus[teil] = str(d["stand"].iloc[0]) if d is not None and len(d) else None
-        except Exception:  # noqa: BLE001
-            aus[teil] = None
+    try:                                        # Zirkel-Lauf (Kreislauf, Zonen-Trades) aus den Yahoo-Tageskursen
+        import zeichen
+        aus["Zirkel"] = (zeichen.laden() or {}).get("stand") if (zeichen.laden() or {}).get("feld") else None
+    except Exception:  # noqa: BLE001
+        aus["Zirkel"] = None
     return aus
 
 
@@ -379,13 +368,13 @@ def schrank_liste():
     """Die Titel des Schranks: Rückenwind in Garde, Angriff und Vorhut und die Watchlist, Watchlist zuerst, nur die
     nicht frisch abgelegten."""
     import rueckenwind
-    import titel
     import watchlists
+    import zonenseite
     wl = set(watchlists.alle())
     e = rueckenwind.laden() or {}
     vorne = {tk for tk, x in (e.get("titel") or {}).items() if x.get("klasse") in rueckenwind.VORNE_KLASSEN}
-    grenze = titel.ablage_grenze()
-    return sorted((tk for tk in vorne | wl if not titel.frisch(tk, grenze)), key=lambda tk: (tk not in wl, tk))
+    grenze = zonenseite.ablage_grenze()
+    return sorted((tk for tk in vorne | wl if not zonenseite.frisch(tk, grenze)), key=lambda tk: (tk not in wl, tk))
 
 
 def seiten(prozesse=None):
@@ -393,8 +382,8 @@ def seiten(prozesse=None):
     nicht mehr. Dieser Lauf baut sie neu (Watchlist zuerst) – mit den vorhandenen Kursen. Startet ein Nachtlauf, hört
     er auf (der füllt den Schrank ohnehin)."""
     from concurrent.futures import ProcessPoolExecutor
-    import titel
     import uebersicht
+    import zonenseite
     if uebersicht.veraltet():                    # Übersicht nach einer Programmänderung sofort neu ablegen
         try:
             uebersicht.ablegen(uebersicht.seite_uebersicht())
@@ -412,7 +401,7 @@ def seiten(prozesse=None):
     p["zahl"] = len(liste)
     ex = ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1))
     try:
-        for _ in ex.map(titel.vorbauen, liste):
+        for _ in ex.map(zonenseite.vorbauen, liste):
             p["fertig"] += 1
             if p["fertig"] % 10 == 0:
                 _schreiben(p, SEITEN_PROTOKOLL)

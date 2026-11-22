@@ -79,8 +79,7 @@ und höchstens 40 % Breite bricht nach unten – Schluss mindestens 1 % unter ih
 """
 import numpy as np
 import pandas as pd
-from masse import JAHR_TAGE, PHASE_VERTEILUNG, VOL_MIN_TAGE, WOCHE  # noqa: E402
-from phase import RUECKSETZER  # noqa: E402  Rücksetzer in Phase 2 – eine Quelle (phase)
+from masse import JAHR_TAGE, VOL_MIN_TAGE, WOCHE  # noqa: E402
 
 ATR_TAGE = 14
 GROB = 2.0
@@ -108,13 +107,6 @@ VERLAUF_TAGE = 600      # Historie: die letzten 600 Handelstage
 VERLAUF_START = 120     # … frühestens ab Tag 120 (Zonen brauchen Vorlauf)
 NEUES_HOCH_TAGE = 5     # Ausbruch nur an einem Tag mit Schluss über den 5 Schlüssen davor
 MIN_DATEN = 80          # Ausbruch/Ermüdung ab 80 Handelstagen Daten
-MIN_DATEN_BF = 120      # Bärenflagge ab 120 Handelstagen Daten
-BF_GD50_TAGE = 20       # Bärenflagge: GD50 fällt (gegen 20 Tage vorher)
-BF_DRIFT_TIEF_TAGE = 5  # Bärenflagge: Tief des Driftens der letzten 5 Tage
-BF_RUECKHOL = 0.5       # Bärenflagge: holt höchstens die Hälfte des Falls zurück
-MIN_DATEN_PHASE = 300   # Bruch der Spanne ab 300 Handelstagen (Phase braucht sie)
-WOCHE_RAND_TAGE = 6     # Beginn der Phase: Wochenbeginn (6 Kalendertage vor dem Wochenschluss)
-SPANNE_BRUCH = 0.99     # Bruch der Spanne: Schluss 1 % unter ihrem Tief
 
 
 def atr(df, n=ATR_TAGE):
@@ -509,16 +501,6 @@ def einstiege(z, e, cheat=True):
     return aus
 
 
-def naechster(liste, kurs, kaufzone=None, seite="long"):
-    """Der Einstieg, der jetzt gilt: der unterste, über dem der Kurs noch nicht hinaus ist – noch nicht ausgelöst oder
-    in seiner Kaufzone (bis kaufzone % darüber); über allen der oberste (ausgedehnt). → Stelle in liste oder None."""
-    if not liste:
-        return None
-    kaufzone = KAUFZONE if kaufzone is None else kaufzone
-    for i, x in enumerate(liste):                  # long aufsteigend, short absteigend (der früheste zuerst)
-        if (kurs <= x["wert"] * (1 + kaufzone / 100)) if seite == "long" else (kurs >= x["wert"] * (1 - kaufzone / 100)):
-            return i
-    return len(liste) - 1
 
 
 def _einordnen(fertig, jetzt):
@@ -669,7 +651,6 @@ def ausbruch_text(a):
     return f"{'🟢' if a['mit_volumen'] else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · {ab}, {lage}"
 
 
-ERM_TAGE = 5                   # Bruch höchstens 5 Handelstage her
 
 
 SU_TAGE = 10                 # Spring/Upthrust gilt bis 10 Handelstage nach dem Schluss zurück (Micky 15.11.2026)
@@ -734,52 +715,8 @@ def spring_upthrust(df, tage=SU_TAGE):
     return None
 
 
-def ermuedung(df, tage=ERM_TAGE):
-    """Short-Setup Ermüdung nach Überdehnung oder None. Zone und Flagge so, wie sie am Vortag des Bruchs standen."""
-    df = df.dropna(subset=["High", "Low", "Close"])
-    n = len(df)
-    if n < MIN_DATEN:
-        return None
-    c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
-    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
-    for t in range(n - tage, n):
-        if c[t] >= l[t - FLAGGE_MIN_W * WOCHE:t].min():     # Vorprüfung: ohne Schluss unter den Tiefs der Woche kein Bruch
-            continue
-        z = zone(df.iloc[:t])
-        f = z if z.get("name") == "Flagge" else z.get("innen")
-        if not f or f["laenge"] != "ok" or c[t] >= f["unten"]:
-            continue
-        stopp = h[t]
-        if t < n - 1 and h[t + 1:].max() > stopp:                # Stopp erreicht: Setup vorbei
-            continue
-        unter = c[-1] < f["unten"]
-        vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
-        st = f["stange"]
-        datum = df.index[t]
-        regeln = [("Fahnenstange ab 30 % in höchstens 13 Wochen", True,
-                   f"+{st['prozent']:.0f} % in {st['wochen']:.0f} Wochen"),
-                  ("Flagge 1–8 Wochen, höchstens 25 % tief", True, f"{_de(f['wochen'], '.1f')} Wochen, {f['tiefe']:.0f} %"),
-                  ("Schluss unter der Unterkante", True, f"{datum:%d.%m.} · {_de(c[t])} unter {_de(f['unten'])}"),
-                  ("Kurs noch unter der Unterkante", unter, f"heute {_de(c[-1])}"),
-                  ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
-                   f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
-        return {"art": "Ermüdung nach Überdehnung", "ampel": "grün" if unter else "gelb", "regeln": regeln,
-                "tag": datum, "tage_her": n - 1 - t, "oben": f["oben"], "unten": f["unten"], "einstieg": float(f["unten"]),
-                "stopp": float(stopp),
-                "stange": st["prozent"], "volumen": vol, "start": f["start"]}
-    return None
 
 
-def enge_datiert(df, z):
-    """enge() mit Datum zu jedem Index (für den Chart)."""
-    df = df.dropna(subset=["High", "Low", "Close"])
-    ix = df.index
-    e = enge(df, z)
-    if e.get("kontraktionen"):
-        e["kontraktionen"] = [dict(k, hoch_t=ix[k["hoch_i"]], tief_t=ix[k["tief_i"]]) for k in e["kontraktionen"]]
-        e["pivot_t"] = ix[e["pivot_i"]]
-    return e
 
 
 def datiert(df, b):
@@ -797,184 +734,22 @@ def datiert(df, b):
     return b
 
 
-def alles(df):
-    """Für den Chart: Zone jetzt, abgeschlossene Zonen, grobes ZigZag – Lage als Datum (passt zu Tag und Woche)."""
-    df = df.dropna(subset=["High", "Low", "Close"])
-    ix = df.index
-
-    def datiert_(b):
-        return datiert(df, b)
-
-    jetzt = zone(df)
-    e = enge_datiert(df, jetzt)
-    return {"jetzt": datiert_(jetzt), "enge": e, "verlauf": [datiert_(b) for b in verlauf(df)],
-            "zigzag": [(ix[i], p) for i, p, _ in zigzag(df, GROB)]}
 
 
 BF_FALL, BF_FALL_TAGE, BF_DRIFT = 0.15, 30, (3, 25)     # Bärenflagge: Fall ab 15 % in höchstens 30 Tagen, Driften 3–25 Tage
-SPANNE_WOCHEN = 6                                      # Bruch der Spanne: Phase 1 oder 3 mindestens 6 Wochen …
-SPANNE_BREIT = 0.40                                    # … und höchstens 40 % breit (sonst ist es keine Balance)
 
 
-def _de(x, fmt=".2f"):
-    return format(x, fmt).replace(".", ",")
 
 
-def _short_dict(df, art, t, oben, unten, regeln, start):
-    """Gemeinsame Form der Shorts (wie ermuedung): grün unter der Unterkante, gelb zurück darüber, None nach dem Stopp."""
-    c, h = df["Close"].to_numpy(float), df["High"].to_numpy(float)
-    n = len(df)
-    stopp = h[t]
-    if t < n - 1 and h[t + 1:].max() > stopp:                # Stopp erreicht: Setup vorbei
-        return None
-    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
-    vol = v[t] / v50[t] if v50[t] == v50[t] and v50[t] else None
-    unter = c[-1] < unten
-    regeln = regeln + [("Schluss unter der Unterkante", True, f"{df.index[t]:%d.%m.} · {_de(c[t])} unter {_de(unten)}"),
-                       ("Kurs noch unter der Unterkante", unter, f"heute {_de(c[-1])}"),
-                       ("Volumen am Bruch über dem Schnitt (Zeichen)", bool(vol and vol > 1),
-                        f"{_de(vol, '.1f')}-fach" if vol else "kein Volumen")]
-    return {"art": art, "ampel": "grün" if unter else "gelb", "regeln": regeln,
-            "tag": df.index[t], "tage_her": n - 1 - t, "oben": float(oben), "unten": float(unten), "einstieg": float(unten),
-            "stopp": float(stopp), "volumen": vol, "start": start}
 
 
-def baerenflagge(df, tage=ERM_TAGE):
-    """Echte Bärenflagge (steiler Fall, schwaches Driften nach oben, Bruch) oder None."""
-    df = df.dropna(subset=["High", "Low", "Close"])
-    n = len(df)
-    if n < MIN_DATEN_BF:
-        return None
-    c, h, l = df["Close"].to_numpy(float), df["High"].to_numpy(float), df["Low"].to_numpy(float)
-    v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)
-    g50 = pd.Series(c).rolling(50).mean().to_numpy()
-    for t in range(n - tage, n):
-        if not g50[t] < g50[t - BF_GD50_TAGE]:
-            continue
-        b = t - BF_DRIFT[1] + int(np.argmin(l[t - BF_DRIFT[1]:t - BF_DRIFT[0] + 1]))     # Tief des Falls
-        a = b - BF_FALL_TAGE + int(np.argmax(h[b - BF_FALL_TAGE:b]))                       # Hoch vor dem Fall
-        fall = h[a] - l[b]
-        if fall / h[a] < BF_FALL:
-            continue
-        unten = l[t - BF_DRIFT_TIEF_TAGE:t].min()
-        oben = h[b:t].max()
-        if not (unten > l[b] and oben - l[b] <= BF_RUECKHOL * fall and c[t - 1] > l[b]):
-            continue
-        ruhig = np.nanmean(v[b:t]) < np.nanmean(v[a:b + 1]) if b > a else False
-        if not ruhig or c[t] >= unten or c[t - 1] < unten:
-            continue
-        regeln = [("Steiler Fall ab 15 % in höchstens 30 Tagen", True,
-                   f"−{fall / h[a] * 100:.0f} % vom {df.index[a]:%d.%m.} bis {df.index[b]:%d.%m.}"),
-                  ("Schwaches Driften nach oben, leiser", True,
-                   f"{t - b} Tage, holt {(oben - l[b]) / fall * 100:.0f} % des Falls zurück"),
-                  ("GD50 fällt", True, "")]
-        return _short_dict(df, "Bärenflagge", t, oben, unten, regeln, df.index[b])
-    return None
 
 
-def _spannen_phasen(ph, zu):
-    """Phase je Woche für den Bruch der Spanne: Rücksetzer-Wochen in Phase 2 eigens (phase.RUECKSETZER) – eine Balance in
-    Phase 2 ist eine Spanne wie Basis und Verteilung (Schritt 8, Micky 16.11.2026: der Bruch gilt auch dort, als Short
-    gegen die Stufe höchstens gelb)."""
-    import phase as phase_mod
-    return ph.where(~((ph == 2) & (zu == "Rücksetzer")), phase_mod.RUECKSETZER)
 
 
-def _spannen_lauf(werte, p):
-    """Wochen der laufenden Spanne: Basis = Wochen in Phase 1; Verteilung und Balance in Phase 2 = Wochen in Phase 3 oder
-    Rücksetzer zusammen, kürzere Rückkehr ins volle Phase-2-Bild (unter NEUSTART_WOCHEN) überbrückt – wie die Verteilung
-    vor Schritt 8, die erst nach 4 Wochen Phase-2-Bild endete."""
-    import phase as phase_mod
-    teil = {1} if p == 1 else {PHASE_VERTEILUNG, RUECKSETZER}
-    n = luecke = 0
-    for x in reversed(werte):
-        if int(x) in teil:
-            n, luecke = n + luecke + 1, 0
-        elif p != 1 and int(x) == 2 and luecke + 1 < phase_mod.NEUSTART_WOCHEN:
-            luecke += 1
-        else:
-            break
-    return n
 
 
-SPANNE_NAME = {1: "Basis (Phase 1)", PHASE_VERTEILUNG: "Verteilung (Phase 3)", RUECKSETZER: "Balance in Phase 2 (Rücksetzer)"}
 
 
-def spannenbruch(df, tage=ERM_TAGE):
-    """Bruch der Spanne: Schluss mindestens 1 % unter dem Tief einer Spanne von mindestens 6 Wochen – Basis (Phase 1),
-    Verteilung (Phase 3) oder Balance in Phase 2 (Rücksetzer) –, oder None."""
-    import phase as phase_mod
-    df = df.dropna(subset=["High", "Low", "Close"])
-    n = len(df)
-    if n < MIN_DATEN_PHASE:
-        return None
-    c, l = df["Close"].to_numpy(float), df["Low"].to_numpy(float)
-    try:
-        ph_, zu_, _ = phase_mod.rechnen(df)
-        ph = _spannen_phasen(ph_, zu_)
-    except Exception:  # noqa: BLE001
-        return None
-    for t in range(n - tage, n):
-        fertig = ph[ph.index < df.index[t]]      # nur Wochen, deren Freitag vor dem Bruchtag liegt
-        if not len(fertig) or int(fertig.iloc[-1]) not in SPANNE_NAME:
-            continue
-        p = int(fertig.iloc[-1])
-        lauf = _spannen_lauf(fertig.to_numpy(), p)
-        if lauf < SPANNE_WOCHEN:
-            continue
-        von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
-        maske = (df.index > von) & (df.index < df.index[t])
-        unten = float(l[maske].min())
-        oben = float(df["High"].to_numpy(float)[maske].max())
-        if not (c[t] < unten * SPANNE_BRUCH and c[t - 1] >= unten * SPANNE_BRUCH) or oben / unten - 1 > SPANNE_BREIT:
-            continue
-        regeln = [(f"{SPANNE_NAME[p]} mindestens 6 Wochen, höchstens 40 % breit", True,
-                   f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)")]
-        return _short_dict(df, "Bruch der Spanne", t, oben, unten, regeln, df.index[maske][0])
-    return _vor_dem_bruch(df, ph)
 
 
-def _vor_dem_bruch(df, ph):
-    """Bruch der Spanne VOR dem Bruch (Gefechtsordnung Schritt 2 gespiegelt, Micky 15.11.2026): eine Verteilung (Phase 3)
-    oder Balance in Phase 2 (Rücksetzer, Schritt 8) von mindestens 6 Wochen, höchstens 40 % breit, die noch nicht gebrochen ist – wie der Base-Ausbruch vor dem Ausbruch.
-    Einstieg an der Unterkante; liegt das Tief der letzten Gegenbewegung (Schwungtief vor dem letzten Anstieg in der
-    Spanne) mehr als RAND_PCT über der Unterkante, ist ein Schluss darunter der frühe Short. Struktur-Stopp über dem Hoch
-    der letzten Gegenbewegung (ohne Gegenbewegung: Oberkante der Spanne)."""
-    n = len(df)
-    c = df["Close"].to_numpy(float)
-    fertig = ph[ph.index < df.index[-1]]
-    if not len(fertig) or int(fertig.iloc[-1]) not in (PHASE_VERTEILUNG, RUECKSETZER):
-        return None
-    p = int(fertig.iloc[-1])
-    lauf = _spannen_lauf(fertig.to_numpy(), p)
-    if lauf < SPANNE_WOCHEN:
-        return None
-    von = fertig.index[-lauf] - pd.Timedelta(days=WOCHE_RAND_TAGE)
-    maske = df.index > von
-    unten = float(df["Low"].to_numpy(float)[maske].min())
-    oben = float(df["High"].to_numpy(float)[maske].max())
-    if oben / unten - 1 > SPANNE_BREIT or c[-1] < unten * SPANNE_BRUCH:
-        return None
-    i0 = int(np.argmax(maske))
-    pkt = [q for q in zigzag(df, GROB) if q[0] >= i0]
-    paar = next(((t_, h_) for t_, h_ in zip(pkt[-2::-1], pkt[::-1]) if t_[2] == "T" and h_[2] == "H" and t_[0] < h_[0]),
-                None)                                  # jüngste Gegenbewegung: Schwungtief → Schwunghoch
-    tief_g, hoch_g = (float(paar[0][1]), float(paar[1][1])) if paar else (None, None)
-    stopp = hoch_g if hoch_g else oben
-    frueh = tief_g is not None and tief_g > unten * (1 + RAND_PCT / 100)
-    einst = ([{"art": "cheat", "wort": "früher Short", "wert": tief_g, "struktur": stopp,
-               "quelle": "früher Short: Schluss unter dem Tief der letzten Gegenbewegung"}] if frueh else []) + \
-        [{"art": "ausbruch", "wort": "Bruch", "wert": unten, "struktur": stopp, "quelle": "Bruch der Unterkante"}]
-    ab = (c[-1] / unten - 1) * 100
-    regeln = [(f"{SPANNE_NAME[p]} mindestens 6 Wochen, höchstens 40 % breit", True,
-               f"{lauf} Wochen, Spanne {_de(unten)}–{_de(oben)} $ ({oben / unten * 100 - 100:.0f} %)"),
-              ("Bruch der Unterkante (Schluss 1 % darunter)", False, f"noch {_de(ab, '.1f')} % darüber")]
-    ausgeloest = frueh and c[-1] < tief_g             # früher Short ausgelöst: Schluss unter dem Tief der Gegenbewegung
-    if frueh:
-        regeln.append(("Früher Short: Schluss unter dem Tief der letzten Gegenbewegung", bool(ausgeloest),
-                       f"Tief {_de(tief_g)} $, Hoch {_de(hoch_g)} $"))
-    return {"art": "Bruch der Spanne", "vor_bruch": True, "ampel": "grün" if ausgeloest else "gelb", "regeln": regeln,
-            "tag": None,
-            "ab": df.index[paar[0][0]] if paar else df.index[i0], "tage_her": None, "oben": oben, "unten": unten,
-            "einstieg": unten, "stopp": float(stopp), "volumen": None, "start": df.index[i0], "einstiege": einst}

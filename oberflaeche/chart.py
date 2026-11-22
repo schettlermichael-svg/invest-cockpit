@@ -104,25 +104,13 @@ def _woche(df):
                                      "Close": "last", "Volume": "sum"}).dropna()
 
 
-def reaktionen(df, gewinne):
-    """Kursreaktion am ersten Handelstag nach jeder Gewinnmeldung: Liste (Datum, Prozent)."""
-    aus = []
-    if gewinne is None or gewinne.empty:
-        return aus
-    for tag, z in gewinne.iterrows():
-        pos = int(df.index.searchsorted(tag))
-        if z.get("nach_schluss", 0):
-            pos += 1 if pos < len(df) and df.index[pos] == tag else 0
-        if 0 < pos < len(df):
-            aus.append((df.index[pos], (df["Close"].iloc[pos] / df["Close"].iloc[pos - 1] - 1) * 100))
-    return aus
 
 
 
 def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", zonen=None,
           zonen_ansicht="Aktuell", gd_kurz=False, marken=None, avwap_wahl=None, tiefe_=None):
     """Kerzen mit GD, Zonen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT.
-    marken (titel._chartmarken, 09.11.2026): Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short.
+    marken: Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short.
     ebene „Stunde“: df, index und sektor sind Stundenkerzen. tiefe_ (tiefe.ebene, Micky 21.11.2026): Dalton-Flächen
     und -Linien, PbD auf den Kerzen mit Zeit- und Volumenprofil rechts, POC je Kerze und nackte POCs."""
     marken = marken or {}

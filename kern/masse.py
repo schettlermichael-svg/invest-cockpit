@@ -10,8 +10,6 @@ JAHR_WOCHEN = 52           # Wochen je Jahr
 QUARTALE_JAHR = 4          # Quartale je Jahr (Vorjahresquartal, Summe der letzten 4 Quartale)
 VORJAHR_ZURUECK = 5        # Quartalsreihe: der 5. Wert zurück = Vorjahresquartal
 ZWEI_JAHRE_ZURUECK = 9     # Quartalsreihe: der 9. Wert zurück = vor zwei Jahren
-GD50_TAGE = 50             # GD50
-GD150_TAGE = 150           # GD150
 GD200_TAGE = 200           # GD200
 ATR_N = 14                 # ATR über 14 Tage (die eine ATR: atr.reihe)
 VOL_TAGE = 50              # Volumen gegen den Schnitt der 50 Tage

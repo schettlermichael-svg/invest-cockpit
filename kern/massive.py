@@ -178,16 +178,3 @@ def kursmatrix(ticker, n=260, spalte="Close"):
     return aus[spalte] if isinstance(spalte, str) else aus
 
 
-def schlusskurse(ticker, tage=5):
-    """Gegenprobe ohne Anfrage: die letzten Schlusskurse eines Titels aus den gespeicherten Tagesdateien."""
-    if not os.path.isdir(SPEICHER):
-        return pd.Series(dtype=float)
-    dateien = sorted(d for d in os.listdir(SPEICHER) if d[:4].isdigit() and d.endswith(".csv"))[-tage:]
-    name = ticker.upper().replace("-", ".")
-    werte = {}
-    for d in dateien:
-        df = tag(d[:10])                                  # liest nur die gespeicherte Datei
-        treffer = df.loc[df["Ticker"] == name, "Close"] if not df.empty else []
-        if len(treffer):
-            werte[pd.Timestamp(d[:10])] = float(treffer.iloc[0])
-    return pd.Series(werte, dtype=float)

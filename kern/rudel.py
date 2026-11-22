@@ -26,7 +26,7 @@ import pandas as pd
 import massive
 import sektoren
 from dateien import json_lesen, json_schreiben  # noqa: E402
-from masse import DATUM, GD200_TAGE, JAHR_TAGE, JAHR_ZIFFERN, MONAT_TAGE  # noqa: E402
+from masse import DATUM, GD200_TAGE, JAHR_TAGE, JAHR_ZIFFERN  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 SPEICHER = os.path.join(HIER, "..", "daten", "rudel")
@@ -34,7 +34,6 @@ REVIER = os.path.join(HIER, "..", "einstellungen", "revier.csv")
 MARKT = "SPY"
 TAGE, MIN_TAGE = 260, 120
 LANG = 495                       # Branchen-Index für Phase und Stimmungskurve (Phase braucht mehr als 300 Tage)
-ENG, MITTEL = 0.50, 0.35
 THEMA_SCHWELLE, THEMA_MIN, RUDEL_MIN = 0.40, 5, 5
 NAHE_HOCH = 0.85
 WOLF_ANTEIL = 1 / 3
@@ -43,7 +42,6 @@ WOLF_ANTEIL = 1 / 3
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 BRANCHEN_ZAHL = 3         # Rudel: die 3 häufigsten Branchen
 GD200_STEIGT_TAGE = 20    # GD200 steigt: höher als vor 20 Tagen
-VERWANDTE_ZAHL = 5        # Kursverwandte: die 5 ähnlichsten Titel
 DREI_MONATE_ZURUECK = 64  # Platz im Rudel: Kurs gegen vor 63 Handelstagen (64. Wert zurück)
 RUDEL_GRUEN = 0.6         # Rudel grün: mindestens 60 % der Mitglieder im Trend
 
@@ -57,16 +55,6 @@ def _pfad(name):
     return os.path.join(SPEICHER, name)
 
 
-def mansfield(kurs, markt):
-    """Mansfield-RS heute, Veränderung in 4 Wochen und Ampel; None bei weniger als 200 Tagen."""
-    rs = (kurs / markt.reindex(kurs.index).ffill()).dropna()
-    m = (rs / rs.rolling(JAHR_TAGE, min_periods=GD200_TAGE).mean() - 1) * 100
-    m = m.dropna()
-    if len(m) < 21:
-        return None
-    wert, richtung = float(m.iloc[-1]), float(m.iloc[-1] - m.iloc[-MONAT_TAGE])
-    ampel = "grün" if wert > 0 and richtung > 0 else "rot" if wert < 0 and richtung < 0 else "gelb"
-    return {"wert": round(wert, 1), "richtung": round(richtung, 1), "ampel": ampel}
 
 
 def _zusammenfassen(S, schwelle):
@@ -179,24 +167,6 @@ def stand():
     return pd.Timestamp(_laden()["meta"]["stand"])
 
 
-def kursverwandte(tk, n=VERWANDTE_ZAHL):
-    """Die n engsten Kursverwandten: Liste von Dicts (ticker, name, branche, wert, grad). None = zu kurze Historie."""
-    c = _laden()
-    if tk not in c["idx"]:
-        return None
-    zeile = c["A"][c["idx"][tk]].astype(float)
-    zeile[c["idx"][tk]] = np.nan
-    ordnung = np.argsort(np.nan_to_num(zeile, nan=-2))[::-1][:n]
-    aus = []
-    for i in ordnung:
-        w = zeile[i]
-        if np.isnan(w) or w < MITTEL:
-            break
-        t = c["meta"]["ticker"][i]
-        z = c["rv"].loc[t] if t in c["rv"].index else {"name": t, "branche": ""}
-        aus.append({"ticker": t, "name": z["name"], "branche": z["branche"],
-                    "wert": round(float(w), 2), "grad": "eng" if w >= ENG else "mittel"})
-    return aus
 
 
 def themen():
@@ -259,11 +229,6 @@ def kurse():
     return c["C"]
 
 
-def gruppenkurs(mitglieder):
-    """Gleichgewichteter Kursindex einer Gruppe (Start 100) aus den Tagesrenditen der Mitglieder."""
-    C = kurse()
-    r = C[[m for m in mitglieder if m in C.columns]].pct_change(fill_method=None).iloc[1:].mean(axis=1, skipna=True)
-    return 100 * (1 + r).cumprod()
 
 
 def branche_kurse(branche):
@@ -278,5 +243,3 @@ def branche_kurse(branche):
     return pd.DataFrame({"Open": c, "High": c, "Low": c, "Close": c, "Volume": v[branche].reindex(c.index)})
 
 
-def gruppen_mansfield(mitglieder):
-    return mansfield(gruppenkurs(mitglieder), kurse()[MARKT])

@@ -94,22 +94,22 @@ def abgelegt():
     import gzip
     import pickle
     import depot
-    import titel
+    import zonenseite
     try:
         zeit = os.path.getmtime(ABLAGE)
         if time.time() - zeit > 30 * 3600 or (os.path.exists(depot.DATEI) and zeit < os.path.getmtime(depot.DATEI)):  # Layout
             return None
         with gzip.open(ABLAGE, "rb") as f:
-            return pickle.load(f), zeit < titel.codezeit()
+            return pickle.load(f), zeit < zonenseite.codezeit()
     except Exception:  # noqa: BLE001
         return None
 
 
 def veraltet():
     """Fehlt die abgelegte Übersicht oder ist sie älter als das Programm?"""
-    import titel
+    import zonenseite
     try:
-        return os.path.getmtime(ABLAGE) < titel.ablage_grenze()
+        return os.path.getmtime(ABLAGE) < zonenseite.ablage_grenze()
     except OSError:
         return True
 

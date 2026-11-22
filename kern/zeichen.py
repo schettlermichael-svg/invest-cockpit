@@ -151,10 +151,6 @@ def _atr(df, n=ATR_N):
     return atr_.reihe(df, n)
 
 
-def lage_ok(df, i):
-    """Schluss in der oberen Hälfte der Tagesspanne."""
-    h, l, c = df["High"].iloc[i], df["Low"].iloc[i], df["Close"].iloc[i]
-    return h > l and (c - l) / (h - l) >= LAGE_MITTE
 
 
 # ── Dow-Struktur ──────────────────────────────────────────────────────────────────────────────────────────────────

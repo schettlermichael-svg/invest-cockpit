@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(HIER, "kern"))
 from gestaltung import BLAU, KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
 import chart  # noqa: E402
 import titel  # noqa: E402
+import zonenseite  # noqa: E402
 import uebersicht  # noqa: E402
 import gestaltung  # noqa: E402
 import watchlists  # noqa: E402
@@ -85,8 +86,8 @@ def _gebaut(name, codestand, *args):
     nach einer Änderung nie eine alte Seite gezeigt wird."""
     import analyse_seite
     import zonenseite
-    return {"uebersicht": uebersicht.seite_uebersicht, "titel": titel.seite_titel,
-            "analyse": analyse_seite.seite_analyse, "zonen": zonenseite.seite_zonen}[name](*args)
+    return {"uebersicht": uebersicht.seite_uebersicht, "analyse": analyse_seite.seite_analyse,
+            "zonen": zonenseite.seite_zonen}[name](*args)
 
 
 def _fehler(e):
@@ -175,7 +176,7 @@ def _schrank_fuellen(grenze):
         return False
 
 
-_schrank_fuellen(titel.ablage_grenze())
+_schrank_fuellen(zonenseite.ablage_grenze())
 
 
 def konto_knopf():
@@ -223,7 +224,7 @@ def depot_zeigen():
     st.markdown(gestaltung.seite(gestaltung.karte(
         f'<div style="color:{TEXT_2};font-size:14px;margin-bottom:6px">Chart der Position · GD10 orange, GD20 rosa · '
         f'Einstieg blau, Anfangsstopp grau, Stopp jetzt rot, Ende-Zeichen gelb</div>' + svg, f"{tk} · Chart der Position")
-        + depotleiste.titelkarte(tk, df, {}), oben=0, unten=12), unsafe_allow_html=True)
+        + depotleiste.titelkarte(tk, df), oben=0, unten=12), unsafe_allow_html=True)
 
 
 def performance_zeigen():
@@ -463,15 +464,16 @@ def verbindungen_zeigen():
 
 
 def strategen_call(tk, teile):
-    """Knopf „Strategen-Call“ unter dem Kreislaufbild (Micky 13.11.2026): auf Wunsch die Deutung eines Strategen aus
-    dem Material der App; einmal je Titel und Kurstag, danach aus dem Speicher."""
+    """Knopf „Strategen-Call“ auf der Seite Analyse (Micky 13.11.2026): auf Wunsch die Deutung eines Strategen aus
+    dem Material der App – seit 22.11.2026 dieselbe Fährte wie Titelseite und Chart (teile = zonenseite.seite_zonen);
+    einmal je Titel und Kurstag, danach aus dem Speicher."""
     import strategen
     import zustandsbild
-    z = teile.get("chart") or {}
-    erk, df = z.get("erk") or {}, z.get("df")
-    e = erk.get("auktion")
-    if e is None or df is None:
+    r = teile.get("r") or {}
+    tag = (r.get("ebenen") or {}).get("Tag")
+    if not tag:
         return
+    df = tag["df"]
     stand = f"{df.index[-1]:%Y-%m-%d}"
     erg = strategen.gespeichert(tk, stand)
     if erg is None:
@@ -487,7 +489,7 @@ def strategen_call(tk, teile):
             import analyse_seite
             import zirkel
             with st.spinner("Recherche im Netz und Einschätzung (1–3 Minuten) …"):
-                erg = strategen.rufen(tk, stand, e, float(df["Close"].iloc[-1]), atr=erk.get("atr"), rw=rw,
+                erg = strategen.rufen(tk, stand, r, float(df["Close"].iloc[-1]), atr=tag["atr"], rw=rw,
                                       markt=mm.get("auktion"), setup=zirkel.trade_wort(zirkel.feld(tk)) or "kein Zonen-Trade",
                                       termin=((rw.get("zahlen") or {}).get("termin")), tiefe=analyse_seite.material(tk))
         except Exception as x:  # noqa: BLE001
@@ -534,8 +536,7 @@ elif ansicht == "Analyse" and ticker:         # Tiefenanalyse (Micky 21.11.2026,
         with st.spinner("Lade und rechne …"):
             st.markdown(_gebaut("analyse", _codestand(), ticker), unsafe_allow_html=True)
         _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
-        ab = titel.abgelegt(ticker)              # der Stratege braucht den Zustand der Titelseite
-        teile = ab[0] if ab is not None else _gebaut("titel", _codestand(), ticker)
+        teile = _gebaut("zonen", _codestand(), ticker)   # der Stratege liest dieselbe Fährte wie die Titelseite
         st.markdown(gestaltung.seite("<h2 style='margin:0;font-size:20px;font-weight:600'>Einschätzung</h2>", oben=8,
                                      unten=0), unsafe_allow_html=True)
         strategen_call(ticker, teile)
@@ -547,9 +548,13 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
     args = (ticker, True, lauf[1]) if lauf and lauf[0] == ticker else (ticker,)
     try:
         t0 = time.time()
-        with st.spinner("Lade und rechne …"):
-            teile = _gebaut("zonen", _codestand(), *args)
-        _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
+        teile = zonenseite.abgelegt(ticker) if not lauf else None   # vom Nachtlauf vorgebaut: sofort da
+        if teile is not None:
+            _QUELLE["text"] = "aus dem Schrank"
+        else:
+            with st.spinner("Lade und rechne …"):
+                teile = _gebaut("zonen", _codestand(), *args)
+            _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
         st.markdown(teile["kopf"], unsafe_allow_html=True)
         import zonenchart
         import zonenseite

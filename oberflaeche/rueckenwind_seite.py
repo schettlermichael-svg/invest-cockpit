@@ -33,9 +33,6 @@ FELD_TEXT = {"Führend": "Führend · Geld ist drin", "Erstarkend": "Erstarkend 
 PUNKT = {"grün": "🟢", "gelb": "🟡", "rot": "🔴", "grau": "⚪"}
 
 
-def _chip(text, farbe):
-    return (f'<span style="display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid {farbe};'
-            f'color:{farbe};font-size:13px;margin:2px 4px 2px 0">{t(text)}</span>')
 
 
 def kopf(erg, titel=True):

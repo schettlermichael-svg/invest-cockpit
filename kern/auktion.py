@@ -26,7 +26,6 @@ Messungen der Lücken (13.11.2026) – nur hier, für alle drei Ebenen:
 import numpy as np
 import pandas as pd
 
-ZUSTAENDE = ("Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewicht", "Ende des Laufs")
 # Farben aus dem Bild der Zustände: grau = Balance, rot = Ungleichgewicht entsteht/läuft, grün = zurück ins Gleichgewicht
 FARBE = {"Balance": "#8B949E", "Test am Rand": "#8B949E", "abgelehnt": "#3FB950", "angenommen": "#F85149",
          "Ungleichgewicht": "#F85149", "Ende des Laufs": "#3FB950", "Anlass": "#A371F7"}
@@ -40,7 +39,6 @@ KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15
 MAUER_NAH = 3.0        # Gegner antwortet: Kurs höchstens 3 % vor Mauer bzw. Stütze
 EIGEN_PCT = 5.0        # eigen: RS-Linie in 20 Tagen mindestens 5 % in Laufrichtung; geliehen: höchstens 1 %
 PFEIL = {"aufwärts": "↑", "abwärts": "↓", None: ""}
-UNGLEICH = ("angenommen", "Ungleichgewicht", "Ende des Laufs")   # Zustände ohne laufende Balance (Profil: verlassen)
 # Die Stufe gibt dem Kasten den Namen (Schritt 8, Micky 16.11.2026): Balance in Stufe 1 ist die Basis, in Stufe 2 die
 # Fortsetzung, in Stufe 3 die Verteilung, in Stufe 4 die Pause im Fall; ein Lauf aus Stufe 1 ist der Beginn, in Stufe 2
 # die Fortsetzung – die übrigen Läufe nach dem, was sie in ihrer Stufe sind
@@ -618,17 +616,6 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     return e
 
 
-def speicherbar(e):
-    """Für JSON: Zeitstempel als Datum, Zahlen als float, Tupel als Listen."""
-    if isinstance(e, dict):
-        return {k: speicherbar(v) for k, v in e.items()}
-    if isinstance(e, (list, tuple)):
-        return [speicherbar(v) for v in e]
-    if isinstance(e, pd.Timestamp):
-        return f"{e:%Y-%m-%d}"
-    if isinstance(e, (np.floating, np.integer)):
-        return e.item()
-    return e
 
 
 def fuer_titel(tk, df, k, idx=None, mp=None, br=None, zone=None, gewinne=None):

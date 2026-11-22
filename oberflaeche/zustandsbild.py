@@ -130,12 +130,5 @@ def strategen_karte(erg):
             f'padding:12px 14px;margin:8px 0">{"".join(zeilen)}</div>')
 
 
-def kopfzeile(e):
-    """Eine Zeile unter dem Kopf der Titelseite: der Zustand zuerst, die alten Wörter dahinter."""
-    if not e:
-        return ""
-    return (f'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 2px">'
-            f'<span style="font-size:12px;color:{TEXT_3}">Zustand</span>{pille(e)}'
-            f'<span style="font-size:13px;color:{TEXT_3}">{t(e.get("unterzeile") or "")}</span></div>')
 
 

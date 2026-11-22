@@ -9,6 +9,7 @@ import pandas as pd
 from masse import QUARTALE_JAHR, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 
 GRUEN, GELB, ROT, GRAU = "grün", "gelb", "rot", "grau"
+MIO = 1e6                # eine Million (Anzeige)
 UMSATZ_KRAEFTIG = 15.0
 UEBERRASCHUNG_DEUTLICH = 3.0
 BESCHLEUNIGT_AB = 1.0       # Umsatzrate muss um mindestens 1 Prozentpunkt steigen (sonst Rauschen)
@@ -26,7 +27,6 @@ JAHRESGEWINN_GRUEN = 20  # Jahresgewinn grün: neues Hoch und mindestens +20 % (
 GAAP_HAELFTE = 0.5       # Gewinnqualität schwach: GAAP-Gewinn unter der Hälfte des bereinigten
 INSTITUTE_MIN = 20       # Institutionen grün: 20 bis 90 % Anteil und die Großen stocken auf …
 INSTITUTE_MAX = 90       # … über 90 % überbesetzt (gelb)
-MIO = 1e6                # eine Million (Anzeige)
 UMSATZ_SCHWACH = 2     # Umsatz rot: letztes Wachstum höchstens 2 %
 QUALITAET_SCHWACH = 2  # Gewinnqualität schwach: mindestens 2 der letzten 4 Quartale
 ABBAU_ROT = 2          # Institutionen rot: die Großen bauen mehr als 2 % ab
@@ -207,28 +207,6 @@ def ampeln(daten):
 
 
 # ── S und I nach CAN SLIM (Schritt 7, 04.11.2026) – Zeichen neben den sieben Prüfpunkten, nicht in deren Zählung ──
-def angebot(tv):
-    """S – Angebot und Nachfrage (O'Neil): frei handelbare Aktien und Rückkäufe (TradingView, daten/tv/revier.csv).
-    grün: Rückkauf (Aktienzahl sinkt); rot: Verwässerung über 2 % (Aktienzahl steigt); sonst gelb."""
-    if tv is None:
-        return ("grau", "keine Daten (TradingView führt den Titel nicht im Revier)")
-    try:
-        ges, frei, rk = (float(tv.get(k)) if tv.get(k) == tv.get(k) and tv.get(k) is not None else None
-                         for k in ("total_shares_outstanding", "float_shares_outstanding", "share_buyback_ratio_fq"))
-    except (TypeError, ValueError):
-        return ("grau", "keine Daten")
-    teile = []
-    if ges:
-        teile.append(f"{ges / MIO:,.0f} Mio. Aktien".replace(",", "."))
-    if ges and frei:
-        teile.append(f"frei handelbar {frei / ges * 100:.0f} %")
-    if rk is None:
-        return ("grau" if not teile else "gelb", " · ".join(teile + ["Rückkäufe unbekannt"]))
-    teile.append(f"Rückkauf {rk:+.1f} % der Aktien".replace(".", ",") if rk else "Aktienzahl unverändert")
-    ampel = "grün" if rk > 0 else "rot" if rk < -2 else "gelb"
-    if rk < 0:
-        teile[-1] = f"Verwässerung {-rk:.1f} %".replace(".", ",")
-    return (ampel, " · ".join(teile) + " (O'Neil: Rückkäufe verknappen das Angebot)")
 
 
 def institutionen(df):

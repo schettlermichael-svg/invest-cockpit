@@ -12,9 +12,6 @@ from gestaltung import GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, ampelzeile
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 BEZUG_STELLEN = 3  # Bezugsverhältnis mit 3 Stellen zeigen
 KO_PUFFER = 3      # Abstand Stopp → Knock-out mindestens 3 % (grün)
-KO_BEZUG = 0.1     # Knock-out: Bezugsverhältnis 0,1
-KO_UNTER = 0.97    # Knock-out-Schwelle long 3 % unter dem Stopp …
-KO_UEBER = 1.03    # … short 3 % über dem Stopp
 
 
 def _datum(x):
@@ -100,11 +97,12 @@ def _deepdive(tk, lang):
             f'text-decoration:none;background:{KARTE};white-space:nowrap;text-align:center">Deep Dive →</a>')
 
 
-def titelkarte(tk, df, erk):
-    """Titelseite: gehaltene Position mit Nach-dem-Kauf-Zeichen, sonst Stückzahl für das Setup."""
-    d = depot.laden()
+def titelkarte(tk, df):
+    """Seite Depot: die gehaltene Position mit Risiko und Nach-dem-Kauf-Zeichen ("" ohne Position)."""
     p = depot.position(tk)
     w = depot.zeichen_w(depot.waehrung(tk))
+    if not p:
+        return ""
     if p:
         lang = p.get("seite", "long") == "long"
         ko = p.get("ko") or {}
@@ -125,54 +123,8 @@ def titelkarte(tk, df, erk):
             kopf += ampelzeile(st_[1].replace("vom Einstieg", "vom Kurs"), st_[0],
                                f"ATR (14 Tage) {zahl(a_)} {w}: übliche Tagesbewegung – unter 1 × ATR liegt der Stopp im "
                                f"Rauschen")
-        return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df, erk)),
+        return karte(kopf + "".join(ampelzeile(x, a) for a, x in depot.nach_dem_kauf(p, df)),
                      "Position und Risiko · nach dem Kauf")
-    plaene = depot.plaene(erk, df)
-    if not d.get("konto"):
-        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Konto eingetragen (Seite Depot oben, „⚙ Konto und '
-                     f'Risiko“) – dann steht hier die Stückzahl für das Setup.</div>', "Position und Risiko")
-    if not plaene:
-        return karte(f'<div style="color:{TEXT_2};font-size:15px">Kein Setup mit Einstieg und Stopp – keine Stückzahl. '
-                     f'Risiko je Trade {zahl(depot.risiko_euro(d), 0)} €.</div>', "Position und Risiko")
-    teile = []
-    for pl in plaene:                    # je Einstieg (Schritt 2) und je Stopp (Schritt 3: Struktur und 1,5 ATR) eine Stückzahl
-        if len(plaene) > 1:
-            teile.append(f'<div style="font-size:14px;font-weight:600;margin:10px 0 2px">{t(pl["quelle"])}'
-                         + (" ← gilt jetzt" if pl["gilt"] else "") + "</div>")
-        for st_ in pl["stopps"]:
-            teil = _stueck(tk, d, df, w, pl["seite"], pl["einstieg"], st_["stopp"], st_["regel"])
-            if st_.get("zu_weit"):
-                teil += ampelzeile(f'Stopp weiter als {st_["grenze"]} – die Meister nehmen den Trade so nicht', "rot",
-                                   "Der Stopp steht an der Struktur, wo der Weg widerlegt ist; liegt sie weiter weg als die "
-                                   "Grenze des Meisters, ist das Setup zu locker")
-            teile.append(f'<div style="font-size:13px;color:{TEXT_2};margin-top:6px">Stopp {t(st_["art"])}</div>' + teil)
-    return karte("".join(teile), "Position und Risiko · Stückzahl für das Setup")
 
 
-def _stueck(tk, d, df, w, seite_, e, s, regel):
-    """Stückzahl, Knock-out und Depot-Hitze für einen Einstieg."""
-    a = depot.stueckzahl(tk, e, s)
-    ko = depot.stueckzahl(tk, e, s, bezug=KO_BEZUG)
-    if not a:
-        return f'<div style="color:{TEXT_2}">Kein Wechselkurs für {depot.waehrung(tk)} – Stückzahl offen.</div>'
-    schwelle = s * (KO_UNTER if seite_ == "long" else KO_UEBER)
-    text = (f'<p style="margin:0;font-size:16px;line-height:1.65">{seite_.capitalize()} bei {zahl(e)} {w}, Stopp '
-            f'{zahl(s)} {w} ({t(regel)}, {zahl(abs(s / e - 1) * 100, 1)} %). Risiko je Trade '
-            f'{zahl(depot.risiko_euro(d), 0)} € ({zahl(d["risiko_pct"], 2)} %).</p>')
-    import atr
-    st_ = atr.stopp(e, s, atr.wert(df))
-    zeilen = (ampelzeile(st_[1], st_[0], "ATR (14 Tage): übliche Tagesbewegung – unter 1 × ATR liegt der Stopp im "
-                                         "Rauschen") if st_ else "")
-    zeilen += ampelzeile(f'Aktie: {a["stueck"]} Stück', "gelb" if (a.get("anteil") or 0) > depot.KLUMPEN else "grün",
-                        f'Positionswert {zahl(a["wert"], 0)} € = {zahl(a["anteil"], 0)} % des Kontos'
-                        + (" – Klumpen (Minervini: höchstens 20–25 % je Titel)" if (a.get("anteil") or 0) > depot.KLUMPEN
-                           else "") + f' · Risiko {zahl(a["risiko"], 0)} €')
-    zeilen += ampelzeile(f'Knock-out (Bezug 0,1): {ko["stueck"]} Stück', "blau",
-                         f'Schwelle {"unter" if seite_ == "long" else "über"} {zahl(schwelle)} {w} wählen (mindestens 3 % '
-                         f'hinter dem Stopp) · Risiko {zahl(ko["risiko"], 0)} € · bei anderem Bezug: Stück × 0,1 / Bezug')
-    h = depot.hitze(d)
-    if h["pct"] is not None:
-        nachher = h["pct"] + a["risiko"] / d["konto"] * 100
-        zeilen += ampelzeile(f'Depot-Hitze danach {zahl(nachher, 1)} %', "grün" if nachher <= h["max"] else "rot",
-                             f'heute {zahl(h["pct"], 1)} %, Grenze {zahl(h["max"], 0)} %')
-    return text + zeilen
+

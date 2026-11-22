@@ -114,7 +114,7 @@ KAESTEN = {
         dict(name="Neue Balance", zustand="Balance",
              regel="Der Kreislauf beginnt neu, mit Gedächtnis (O'Neil: Basenzählung, späte Basen sind gefährlicher).",
              fuehrt="O'Neil (Basenzählung)", zeichen="",
-             messung=["basen.zaehlen"], stand="gemessen", pruefer=["Neue Balance/Basenzählung"]),
+             messung=[], stand="gemessen", pruefer=["Neue Balance/Basenzählung"]),
     ],
     "gruppe": [
         dict(name="Anlass: neue Information", zustand=None,
@@ -138,7 +138,7 @@ KAESTEN = {
         dict(name="Anführer bricht aus", zustand="Test am Rand",
              regel="Folgen die Schwestern? (App: Feld Erstarkend, Anführer genannt)",
              fuehrt="O'Neil (das „L“: der Führer)", zeichen="Kullamägi (Führer-Rang: die Speerspitze als Zeichen)",
-             messung=["auktion.gruppe", "fuehrer_rang.von"], stand="gemessen", pruefer=["Anführer bricht aus"]),
+             messung=["auktion.gruppe"], stand="gemessen", pruefer=["Anführer bricht aus"]),
         dict(name="Gruppe folgt nicht", zustand="abgelehnt",
              regel="Das Geld rotiert zurück → Fehlausbruch der Gruppe, zurück in die Mitte (App: Erstarkend kippt zurück "
                    "nach Abgehängt = abgelehnt).",
@@ -230,8 +230,7 @@ WERKZEUGE = {
                                                "Ausbruch, nicht als eigene Base und steht im Zustand als innere Rotation. "
                                                "In der Historie zeigt die App dieselbe Schlacht nur einmal (überlappende "
                                                "Zonen, die innerhalb von 5 Tagen ausbrechen: die größere).",
-             messung=["vcp_zone.cheat", "vcp_zone.drittel", "vcp_zone.ausbruch", "vcp_zone.verlauf", "basen.zaehlen",
-                      "auktion.titel"],
+             messung=["vcp_zone.cheat", "vcp_zone.drittel", "vcp_zone.ausbruch", "vcp_zone.verlauf", "auktion.titel"],
              stand="gemessen", pruefer=["Zone: Name", "abgelehnt/angenommen", "Neue Balance/Basenzählung"]),
         dict(name="ATR (eine Rechnung)", regel="Die ATR ist das Mittel der True Range der letzten 14 Tage (Lücken zum Vortag "
                                                 "eingeschlossen) – eine Rechnung für Stopp, Zonen, Anker, Zeichen und Zustand.",
@@ -261,11 +260,8 @@ WERKZEUGE = {
                                             "Fortsetzung, 3 = Verteilung, 4 = Pause im Fall; Lauf aus Stufe 1 = Beginn, "
                                             "in Stufe 2 = Fortsetzung. Ein Setup gegen die Stufe (Long in Phase 4, Short in "
                                             "Phase 2) trägt ein Gegenzeichen und wird höchstens gelb – nie gefiltert.",
-             messung=["auktion.stufe_name", "kartentisch.setup_feststellen"], stand="gemessen",
+             messung=["auktion.stufe_name"], stand="gemessen",
              pruefer=["Kreislauf/Phase"]),
-        dict(name="Short-Form", regel="Ermüdung, Bärenflagge, Bruch der Spanne (siehe Setups).",
-             messung=["vcp_zone.ermuedung", "vcp_zone.baerenflagge", "vcp_zone.spannenbruch"], stand="gemessen",
-             pruefer=["Short-Form"]),
         dict(name="AVWAP letztes Hoch", regel="Letztes Hoch = jüngstes Hoch, das der Kurs nicht überschritten hat und "
                                               "das bestätigt ist (Rückgang ab 8 % danach oder Wochen-Schwunghoch mit 2 "
                                               "fertige Wochen davor und danach tiefer). Steht der Kurs über allen bestätigten Hochs, "
@@ -409,179 +405,21 @@ ZEICHEN = [
 ]
 
 # ── Setups als Wege durch den Kreislauf ─────────────────────────────────────────────────────────────────────────
-SETUPS = [
-    dict(name="Base-Ausbruch", reihen=["m_spitze", "m_weitere", "vcp"], lehrer="Minervini",
-         weg="Balance → Test am Rand → angenommen",
-         regel="Trendvorlage (Kurs über GD150/200, GD150 über GD200, GD200 steigt seit einem Monat, GD50 über GD150/200, "
-               "Kurs über GD50, mindestens 30 % über dem 52-Wochen-Tief, höchstens 25 % unter dem Hoch), RS ab 70, Zahlen "
-               "wachsen, reife Base (fertig, Länge ok, höchstens 50 % tief), Enge (2 bis 6 Kontraktionen, jede "
-               "höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser und unter dem 50-Tage-Schnitt – Plan 9, "
-               "Micky 16.11.2026). 💥 = grün und Kurs bis 5 % unter bzw. "
-               "über dem Pivot. Pivot = Hoch der letzten Kontraktion. Nach einem Ausbruch gilt das Setup 4 Wochen weiter. "
-               "Nur Muster: die Zone hat eine grüne Enge, aber die Systemregeln (Trendvorlage, Zahlen) fehlen.",
-         einstieg="Zwei Einstiege, wenn das Hoch der letzten Enge mehr als 3 % unter der Oberkante liegt: früh beim Schluss "
-                  "über dem Hoch der Enge (Low Cheat, Cheat – Drittel der Base) und am Ausbruch über die Oberkante; sonst "
-                  "einer, der Pivot. Es gilt der unterste, über den der Kurs noch nicht hinaus ist (noch nicht ausgelöst "
-                  "oder in seiner Kaufzone bis 5 %). Am laufenden Tag zeigt der Plan aus den 30-Minuten-Kerzen, seit wann "
-                  "der Kurs über dem Auslöser steht – vorläufig, es zählt der Schluss. Flagge und schnelle Setups: ein Einstieg.",
-         stopp="Struktur: unter dem Tief der letzten Kontraktion (je Einstieg); weiter als 8 % = rot, nicht gekappt. "
-               "Daneben 1,5 ATR", widerlegt="„abgelehnt“ (Schluss zurück in der Zone)",
-         abweichung="Base bis 50 % tief zählt als reif, grün nur bis 33 % (Micky: tiefe Korrekturen sind Konsolidierung)",
-         messung=["system_minervini.pruefen", "vcp_zone.enge", "vcp_zone.einstiege", "vcp_zone.naechster", "depot.einstiege",
-                  "depot.plaene", "depot.struktur_stopp", "titel._heute_ueber"], stand="gemessen",
-         kacheln=dict(Trend="trendvorlage", Stärke="rs70", Fundament="zahlen_wachsen", Enge="vcp")),
-    dict(name="Flagge", reihen=["flagge"], lehrer="Kullamägi", weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
-         regel="Fahnenstange ab 30 % in höchstens 6 Wochen direkt davor (Kullamägi: der Anstieg dauert „ein paar Tage bis ein paar Wochen“ – Micky 16.11.2026, vorher 13 Wochen) (nach einem Rücksetzer über 25 % beginnt sie erst an "
-               "dessen Tief), Flagge 1–8 Wochen und kürzer als die Stange, höchstens 25 % tief, im Aufwärtstrend "
-               "(Kurs über steigendem GD50), Volumen in der Flagge leiser als in der Stange, steigende Tiefs (das Tief der "
-               "zweiten Hälfte höchstens 0,5 ATR unter dem der ersten – sonst heißt die Zone nicht Flagge); Pivot = Oberkante.",
-         einstieg="Ausbruch über die Oberkante", stopp="Struktur: Tief des Ausbruchstags; bis dahin Einstieg − 1 "
-                                                     "Tagesspanne (ADR 20 Tage); weiter als eine Tagesspanne = rot. Daneben 1,5 ATR",
-         widerlegt="Schluss zurück in der Flagge", abweichung="",
-         messung=["vcp_zone.zone", "vcp_zone.tiefs_fallen", "kartentisch.flagge_im_trend", "depot.struktur_stopp"],
-         stand="gemessen",
-         kacheln=dict(Trend="gd50_steigt", Stärke="rs70", Fundament=None, Enge="flagge")),
-    dict(name="Momentum-Ausbruch", reihen=["k_breakout"], lehrer="Kullamägi",
-         weg="eine kleine Balance mitten im Ungleichgewicht → angenommen",
-         regel="Führer (oberste 2 % nach 1, 3 oder 6 Monaten), Pause 1–3 Wochen nach einem Schub, hält den GD20, Kurs "
-               "davor 3 Wochen über dem GD50; Pivot = Oberkante der Pause.",
-         einstieg="Ausbruch über die Oberkante der Pause", stopp="Struktur: Tief des Ausbruchstags; bis dahin Einstieg − 1 "
-                                                              "Tagesspanne; weiter als eine Tagesspanne = rot. Daneben 1,5 ATR",
-         widerlegt="Schluss zurück in der Pause", abweichung="",
-         messung=["system_kullamaegi.breakout", "depot.struktur_stopp"], stand="gemessen",
-         kacheln=dict(Trend="gd50_3w", Stärke="fuehrer2", Fundament=None, Enge="pause")),
-    dict(name="Sprung (EP)", reihen=["k_ep"], lehrer="Kullamägi", weg="Anlass „neue Information“ → direkt angenommen",
-         regel="Tagesgewinn ab 10 %, Eröffnung über dem Vortageshoch, Volumen ab 3-fach (10-fach ideal), in den letzten "
-               "10 Tagen, Kurs hält das Tief des Sprungtags; Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und "
-               "Schluss im oberen Drittel.",
-         einstieg="Hoch des Sprungtags", stopp="Struktur: unter dem Tief des Sprungtags (ohne Grenze der Tagesspanne); "
-                                              "daneben 1,5 ATR", widerlegt="Schluss unter dem Tief des Sprungtags",
-         abweichung="", messung=["system_kullamaegi.episodic_pivot"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke="rs70", Fundament="nachricht", Enge="sprungtief")),
-    dict(name="Zahlen-Reaktion", reihen=["zahlen"], lehrer="Micky (Drift nach den Zahlen, Shannons Anker am Ereignistag)",
-         weg="Anlass „neue Information“ → direkt angenommen",
-         regel="Reaktion ab 3 % in den letzten 20 Tagen, Volumen über dem Schnitt, Schluss im oberen Drittel (short: "
-               "unteren), seitdem kein Schluss unter dem Tief und dem AVWAP ab dem Reaktionstag, Kurs über dem GD50 (short "
-               "gespiegelt).",
-         einstieg="AVWAP ab dem Reaktionstag, Zone bis 5 % darüber", stopp="Struktur: unter dem Tief (short: über dem Hoch) des "
-                                                                           "Reaktionstags; daneben 1,5 ATR",
-         widerlegt="Schluss unter dem Tief bzw. dem AVWAP ab dem Reaktionstag", abweichung="",
-         messung=["zahlen_reaktion.pruefen"], stand="gemessen",
-         kacheln=dict(Trend="gd50", Stärke="rs70", Fundament=None, Enge="zahlentief")),
-    dict(name="Ermüdung (Short)", reihen=["k_ermuedung"], lehrer="Kullamägi", weg="gespiegelt: Ende des Laufs → abgelehnt",
-         regel="Flagge nach Stange ab 30 % bricht nach unten (Schluss unter der Unterkante, letzte 5 Tage).",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
-         widerlegt="Schluss zurück in der Flagge", abweichung="", messung=["vcp_zone.ermuedung"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
-    dict(name="Bärenflagge (Short)", reihen=["k_baerenflagge"], lehrer="Kullamägi",
-         weg="gespiegelt: kleine Balance im Ungleichgewicht abwärts → angenommen abwärts",
-         regel="Fall ab 15 % in höchstens 30 Tagen, Driften 3–25 Tage mit steigenden Tiefs, holt höchstens die Hälfte "
-               "zurück, GD50 fällt, Bruch unter das Tief des Driftens.",
-         einstieg="Unterkante; grün nur bis 5 % darunter", stopp="Struktur: über dem Hoch des Auslösetags; daneben 1,5 ATR",
-         widerlegt="Schluss zurück im Driften", abweichung="", messung=["vcp_zone.baerenflagge"], stand="gemessen",
-         kacheln=dict(Trend="gd50_faellt", Stärke="rs70", Fundament=None, Enge=None)),
-    dict(name="Bruch der Spanne (Short)", reihen=["k_bruch"], lehrer="Weinstein", weg="gespiegelt: Balance → angenommen abwärts",
-         regel="Basis, Verteilung oder Balance in Phase 2 (Rücksetzer; Short gegen die Stufe, höchstens gelb – Schritt 8, "
-               "Micky 16.11.2026) ab 6 Wochen, höchstens 40 % breit, Schluss 1 % unter ihrem Tief. Eine Verteilung "
-               "(Phase 3) oder Balance in Phase 2 steht schon vor dem Bruch in der Reihe, wie der Base-Ausbruch vor dem Ausbruch (gelb, im "
-               "Vorrang hinten wie „weiter weg“; mit ausgelöstem frühen Short grün bei den Shorts; Micky 15.11.2026).",
-         einstieg="Unterkante; grün nur bis 5 % darunter. Vor dem Bruch zwei Einstiege, wenn das Tief der letzten "
-                  "Gegenbewegung mehr als 3 % über der Unterkante liegt: früh beim Schluss darunter (früher Short, grün), "
-                  "sonst der Bruch der Unterkante. Es gilt der oberste, unter den der Kurs noch nicht hinaus ist.",
-         stopp="Struktur: über dem Hoch des Auslösetags; vor dem Bruch über dem Hoch der letzten Gegenbewegung; daneben 1,5 ATR",
-         widerlegt="Schluss zurück in der Spanne", abweichung="",
-         messung=["vcp_zone.spannenbruch", "vcp_zone._vor_dem_bruch", "vcp_zone.naechster"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
-    dict(name="Spring / Upthrust", reihen=["w_spring", "w_upthrust"], lehrer="Wyckoff", weg="abgelehnt → Lauf zum anderen Rand",
-         regel="An der Zone des Scanners, wie sie am Vortag stand: Tief höchstens 1 ATR unter der Unterkante (Upthrust: Hoch "
-               "höchstens 1 ATR über der Oberkante), Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach "
-               "(ein Fehlausbruch zählt auch). Gilt bis 10 Handelstage nach dem Schluss zurück, solange der Stopp hält und "
-               "der andere Rand nicht erreicht ist; 💥 bis 5 % jenseits des Einstiegs. Volumen und Phase sind Zeichen. "
-               "Vorrang: nach Sprung und Zahlen-Reaktion, vor den Shorts und dem Base-Ausbruch.",
-         einstieg="beim Schluss zurück in der Zone (Auslöser: Unterkante bzw. Oberkante)",
-         stopp="Struktur: unter dem Tief bzw. über dem Hoch des Fehlausbruchs; daneben 1,5 ATR",
-         widerlegt="Kurs jenseits des Stopps", abweichung="Ziel der andere Rand (kein fester Gewinn, Stopp nachziehen)",
-         messung=["vcp_zone.spring_upthrust", "system_kullamaegi.pruefen", "kartentisch.setup_feststellen",
-                  "depot.struktur_stopp"], stand="gemessen",
-         kacheln=dict(Trend=None, Stärke="rs70", Fundament=None, Enge=None)),
-]
 
 # Kacheln der Titelseite je Setup (Micky 16.11.2026: „die Setups werden nach unseren Kriterien gemessen, nicht nach den
 # Meistern“): jede Kachel urteilt mit der Regel, die der Katalog dem Setup gibt; None = das Setup hat dort keine Regel,
 # die Kachel zeigt den Wert als Zeichen (grauer Punkt). Ohne Setup gilt der Maßstab des Base-Ausbruchs. Stärke: der
 # RS-Rang gilt für alle Setups außer dem Momentum-Ausbruch (Führer) – Micky 16.11.2026, Plan 24.
-KACHELN = ("Trend", "Stärke", "Fundament", "Enge")
-KACHEL_REGELN = {
-    "trendvorlage": "Trendvorlage, sieben Punkte zu Kurs und Durchschnitten: grün 7 von 7, gelb ab 5, sonst rot",
-    "gd50_steigt": "Kurs über dem steigenden GD50 (GD50 höher als vor 20 Tagen)",
-    "gd50_3w": "Kurs vor der Pause 3 Wochen über dem GD50",
-    "gd50": "Kurs über dem GD50 (short: darunter)",
-    "gd50_faellt": "GD50 fällt (tiefer als vor 20 Tagen)",
-    "rs70": "RS-Rang ab 70 grün, 60–69 gelb, darunter rot; beim Short gespiegelt: bis 30 grün, 31–40 gelb",
-    "fuehrer2": "Führer: in 1, 3 oder 6 Monaten unter den obersten 2 % grün, oberste 5 % gelb",
-    "zahlen_wachsen": "Zahlen wachsen: Quartalsgewinn und Umsatz zum Vorjahr nicht rot, beide grün = grün",
-    "nachricht": "Nachricht: Zahlen am Sprungtag, sonst ab 5-fach Volumen und Schluss im oberen Drittel",
-    "vcp": "Enge (VCP): 2 bis 6 Kontraktionen, jede höchstens 70 % der vorigen, letzte höchstens 10 %, Volumen leiser",
-    "flagge": "Flagge 1–8 Wochen und kürzer als die Stange, höchstens 25 % tief, Volumen leiser als in der Stange (sonst gelb)",
-    "pause": "Pause 1–3 Wochen nach einem Schub, hält den GD20 (gelb bis 8 Wochen)",
-    "sprungtief": "Kurs hält das Tief des Sprungtags",
-    "zahlentief": "Kurs hält Tief und AVWAP des Reaktionstags (short: Hoch und AVWAP)",
-}
-KEIN_SETUP = "Base-Ausbruch"
 
 
-def kachel_regel(reihe, kachel):
-    """Schlüssel der Regel, mit der die Kachel für das Setup der Reihe urteilt, oder None (nur Zeichen)."""
-    s = next((x for x in SETUPS if reihe in x["reihen"]), None) or next(x for x in SETUPS if x["name"] == KEIN_SETUP)
-    return s["kacheln"][kachel]
 
 
 # Für alle Setups (Gefechtsordnung, Micky 14.11.2026)
-SETUP_GRUNDSATZ = [
-    "Stopp: die App zeigt beide – den Struktur-Stopp (Base: unter der letzten Kontraktion; schnelles Setup: Tief des "
-    "Ausbruchstags, bis dahin Einstieg − 1 Tagesspanne; Sprung: Tief des Sprungtags; Zahlen-Reaktion: Tief bzw. Hoch des "
-    "Reaktionstags; Shorts: Hoch des Auslösetags) und 1,5 ATR; der Nutzer wählt je Trade (Gefechtsordnung Schritt 3). Der "
-    "Struktur-Stopp wird nie gekappt: liegt er weiter weg als die Grenze des Meisters (Base 8 %, schnelles Setup eine "
-    "Tagesspanne), zeigt die App ihn mit Ampel rot. Prüfe, ob der Struktur-Stopp dort sitzt, wo der Weg widerlegt ist.",
-    "Ausstieg: der Stopp folgt dem 10er (schnelle Titel) bzw. 20er; Mauer, Kraft ohne Weg und Klimax ziehen ihn enger.",
-    "Daltons Annahme (der Wert folgt dem Kurs) ist ein Zeichen zum Halten oder Nachkaufen, keine Bedingung.",
-    "Ausbruchsvolumen ist ein Zeichen, keine Pflicht – über dem 50-Tage-Schnitt reicht (Entscheidung des Nutzers, "
-    "O'Neils 1,4-fach ist ihm zu streng); wenig Volumen ist kein Widerspruch, höchstens ein schwaches Zeichen.",
-    "Überall: Fehlausbruch oder Rücktest → nicht grün; Kurs steht still (Tagesspanne unter 0,5 %) → nicht grün.",
-    "Markt (Regel 8): die Haltung des Marktes gilt für den Markt, nicht für den Titel – ein Setup wird nie wegen des "
-    "Marktes verworfen; Stärke in der Schwäche ist ein Vorteil.",
-    "Gruppe: die ganze Truppe misst (Gruppen-RS, Breite, Zufluss); prüfe, ob das Setup Rückenwind der Gruppe hat, und "
-    "melde es als Zeichen, nicht als Fehler.",
-]
-VORRANG = ("Sprung (EP) → Zahlen-Reaktion → Spring/Upthrust → Ermüdung/Bärenflagge/Bruch der Spanne → Base-Ausbruch 💥 (Kaufzone) → "
-           "Flagge → Momentum-Ausbruch → Base-Ausbruch → nur Muster → Bruch der Spanne vor dem Bruch; „auch“ nennt die übrigen")
 
 # ── Weitere Bereiche der App (Generalinventur 15.11.2026) ────────────────────────────────────────────────────────
 # Regeln außerhalb der drei Bilder und der Setups: Rückenwind, Depot und Risiko, Fundament, Stopps, Kartentisch,
 # Erkennung, Rudel. pruefer leer = noch kein Prüfer sieht den Bereich (gelb, Micky entscheidet).
 BEREICHE = [
-    dict(name="Wahl des Setups", quelle="Micky 12.11.2026 (ein System, ein Urteil je Titel)",
-         regel=f"Vorrang: {VORRANG}. Kurs steht still (ATR unter 0,5 % des Kurses) → kein handelbares Setup; "
-               "VCP-Reihe nur bis 5 % unter bzw. über dem Pivot; 💥 = Minervinis Kaufzone (bis 5 % unter bis 5 % über "
-               "dem Pivot).",
-         messung=["kartentisch.setup_feststellen", "kartentisch._scannerfeld", "kartentisch._stufe1"],
-         pruefer=["Wahl des Setups", "Kaufzone/Abstand"]),
-    dict(name="Seite long/short und Warnungen", quelle="Weinstein (Short in Phase 3 und 4), Market Profile",
-         regel="Die Seite eines Titels folgt der aktiven Wertzone des Market Profile (↑ long, ↓ short), ohne sie der Phase "
-               "(Short beim Bruch aus Phase 3 und in Phase 4). Warnungen im Kopf: Daten gestört, Klimax, Übernahme.",
-         messung=["erkennung.erkenne"], pruefer=["Short"]),
-    dict(name="Einstieg, Stopp und CRV", quelle="Micky 09.11.2026 (1,5 ATR), 14./15.11.2026 (Struktur daneben), "
-                                                "Weinstein/AMT (Hürde), Minervini (CRV)",
-         regel="Zwei Stopps nebeneinander, Stückzahl je Stopp: Struktur des Setups (depot.struktur_stopp, nie gekappt, "
-               "weiter als die Grenze des Meisters = rot) und 1,5 ATR vom Einstieg; im Chart Struktur durchgezogen, 1,5 ATR "
-               "gestrichelt. Stopp unter 1 ATR = im Tagesrauschen (rot), bis "
-               "1,5 gelb. CRV 1 = Weg bis zur ersten Hürde (altes Hoch der 52 Wochen, fallender GD150/200 oder "
-               "Volumenknoten) ÷ Stoppabstand, CRV 2 = eigener Durchschnittsgewinn ÷ Stoppabstand ab 5 Trades; Ampel "
-               "grün ab 3 : 1, gelb ab 2 : 1. Zu weit gelaufen: über 2 ATR jenseits des Pivots rot (nicht nachjagen). "
-               "Kullamägi: Stopp nie weiter als eine Tagesspanne (ADR, 20 Tage).",
-         messung=["depot.plan", "depot.plaene", "depot.struktur_stopp", "stopps.linien", "stopps.widerstand", "stopps.zeichen", "atr.stopp", "atr.nachjagen", "atr.enge",
-                  "atr.ueberdehnung", "system_kullamaegi.adtr"],
-         pruefer=["Stopp", "Einstieg/Pivot", "Kaufzone/Abstand"]),
     dict(name="Nach dem Kauf und Depot", quelle="Kullamägi (10er/20er, Teilgewinn), Micky 14./16.11.2026 (Schritt 5), "
                                                 "O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
          regel="Ein System für alle Positionen: bis Tag 3 gilt der Anfangsstopp, danach folgt der Stopp dem 10er (solange "
@@ -591,7 +429,7 @@ BEREICHE = [
                "Verlustgrenze 8 % vom Einstieg ohne Ausnahme; ab 2R Gewinn Stopp mindestens auf Einstand; Positionswert "
                "über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = Zeichen, das Risiko je Trade zu "
                "halbieren; Depot-Hitze höchstens 6 % des Kontos.",
-         messung=["depot._nach_dem_kauf", "reiten.nachgezogen", "reiten.ende_zeichen", "depot.verlustbremse",
+         messung=["depot._nach_dem_kauf", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen", "depot.verlustbremse",
                   "depotleiste.titelkarte", "depotleiste.positionsmarken"], pruefer=[],
          luecke="kein Prüfer – die Regeln sind fest, gemessen wird am eigenen Depot"),
     dict(name="Performance", quelle="Micky 16.11.2026 (Excel-Liste „Trading Performance Tracker“), Minervini (Verlustbremse)",
@@ -600,7 +438,7 @@ BEREICHE = [
                "Wochenziel)^Woche; Unterwasser = Abstand zum bisherigen Hoch, ab 10 % rot wie die Verlustbremse.",
          messung=["performance.rechnen"], pruefer=[],
          luecke="kein Prüfer – gerechnet wird am eigenen Konto"),
-    dict(name="Rückenwind: Stufen der Titel", quelle="O'Neil/IBD (RS-Rang), Micky 09.11.2026 (Stufen)",
+    dict(name="Rückenwind: Schlachtordnung der Titel", quelle="O'Neil/IBD (RS-Rang), Micky 09.11.2026 (Stufen)",
          regel="RS-Rang 1–99 wie IBD (letztes Quartal 40 %, die drei davor je 20 %). Läuft: Rang ab 85 und Tempo nicht "
                "schlechter als −5 in 4 Wochen; Entsteht: Rang 50 bis unter 85, mindestens +15 in 4 Wochen und "
                "positive Beschleunigung; Ermüdet: Rang ab 80 und Tempo −10 oder schlechter – oder Beschleunigung −15 "
@@ -614,21 +452,12 @@ BEREICHE = [
     dict(name="Fundament (Zahlen)", quelle="Minervini (Regelkatalog Kap. 7–8), O'Neil",
          regel="Gewinn je Quartal und Beschleunigung, Umsatz kräftig ab 15 % (Rate muss um mindestens 1 Punkt steigen), "
                "Überraschung deutlich ab 3 %, Marge, Gewinnqualität – als Ampeln.",
-         messung=["fundament.umsatz", "fundament.ueberraschung", "fundament.beschleunigung", "fundament.quartalsgewinn",
-                  "fundament.ampeln", "fundament.angebot", "fundament.institutionen"],
+         messung=["fundament.umsatz", "fundament.ueberraschung", "fundament.beschleunigung", "fundament.quartalsgewinn", "fundament.ampeln", "fundament.institutionen"],
          pruefer=[], luecke="kein Prüfer – die Zahlen kommen aus den Quellen, gerechnet wird nur"),
     dict(name="Termine der Zahlen", quelle="Micky (Zahlen nicht im Trade überraschen lassen)",
          regel="Nächste Zahlen in höchstens 7 Tagen rot, 8–14 Tage gelb, später grün.",
          messung=["gestaltung.termin_ampel"], pruefer=[],
          luecke="kein Prüfer – eine Kalenderregel"),
-    dict(name="Kopf und Kacheln der Titelseite", quelle="O'Neil (Basen, Reaktion), Minervini (Trendvorlage, RS), Micky",
-         regel="Kachel Base: Nr. 1–2 grün (früh), Nr. 3 gelb (handelbar), ab Nr. 4 rot (spät). Kachel Trend: Trendvorlage "
-               "alle Punkte grün, ab 5 von 7 gelb. Kachel Stärke: RS-Rang ab 70 grün, 60–69 gelb (Short gespiegelt). Kopf: "
-               "Rückgang vom 52-Wochen-Hoch ab 10 % genannt. Reaktion auf die Zahlen: Tag 1 ab ±3 % grün/rot, danach 9 Tage; "
-               "ein Absturz ab 15 % ist ein großes Problem (Plan 22, 17.11.2026: vorher Zahlen ohne Namen in der Anzeige).",
-         messung=["titel._kopf", "titel._k_base", "titel._k_trend", "titel._k_staerke", "titel._reaktion_zeilen",
-                  "titel._weinstein_ausbruch", "titel._ereignis", "titel.planzeile"],
-         pruefer=[], luecke="kein Prüfer – Anzeige der Kachel-Regeln"),
     dict(name="Pendel der Übersicht", quelle="Marks (Pendel), Levy (Überdehnung)",
          regel="Kreditrisiko und Angstindex (gespiegelt): Rang ab 60 von 100 grün, ab 30 gelb. Marktbreite: ab 60 % über "
                "GD200 grün, ab 40 % gelb. Überdehnung (Levy): S&P 500 ab 10 % über dem 26-Wochen-Schnitt gelb, darunter "
@@ -639,7 +468,7 @@ BEREICHE = [
                "Änderung der letzten 10 Tage (Wochenchart 3 Wochen), ↗/↘ ab 1 Punkt, ↑/↓ ab 3 Punkten. Dow-Schwungpunkte "
                "mit 5 Tagen links und rechts. RS-Hoch vor dem Kurs: RS-Linie am Jahreshoch, Kurs mehr als 3 % darunter "
                "(wie Rückenwind). Lagekarte: Rahmen einer Flagge nur, wenn ihre Oberkante bis 0,5 % am Pivot liegt.",
-         messung=["chart.chart", "chart._signale", "lagekarte._zone"], pruefer=[],
+         messung=["chart.chart", "chart._signale"], pruefer=[],
          luecke="kein Prüfer – Zeichnung"),
     dict(name="Tiefenanalyse: Struktur nach Dalton", quelle="Dalton (Mind Over Markets), Titel-Analyse, Micky 21.11.2026",
          regel="Anker: der Zahlentag, wenn sein Schluss mindestens 1 ATR vom Vortag lag und die Balance daraus hervorging "
@@ -722,7 +551,7 @@ BEREICHE = [
     dict(name="Rudel und Kursverwandte", quelle="eigene Messung (Gleichlauf nach Abzug des Marktes)",
          regel="Kursverwandte: die 5 Titel mit dem engsten Gleichlauf – eng ab 0,50, mittel ab 0,35; Themen-Gruppen ab "
                "0,40 und 5 Titeln.",
-         messung=["rudel.kursverwandte", "rudel._rechnen", "rudel.rudel", "rudel.mansfield"], pruefer=[],
+         messung=["rudel._rechnen", "rudel.rudel"], pruefer=[],
          luecke="kein Prüfer – Zeichen am Rand, kein Urteil"),
 ]
 
@@ -736,36 +565,8 @@ BEREICHE = [
 
 
 
-def block_setups():
-    """Die Setups der App mit Regel und Weg durch den Kreislauf – für den Setup-Prüfer."""
-    teil = [f"Die Setups der App (ein eigenes System, die Meister sind Lehrer; Vorrang bei mehreren: {VORRANG}):"]
-    for s in SETUPS:
-        stand = "" if s["stand"] == "gemessen" else \
-            f" [App: {'noch nicht gebaut' if s['stand'] == 'fehlt' else 'erst teilweise'} – {s.get('luecke', '')}]"
-        teil.append(f"- {s['name']} (Lehrer {s['lehrer']}): {s['regel']} Weg: {s['weg']}. Einstieg: {s['einstieg']}. "
-                    f"Stopp des Weges: {s['stopp']}. Widerlegt: {s['widerlegt']}."
-                    + (f" Eigene Abweichung: {s['abweichung']}." if s.get("abweichung") else "")
-                    + " Kacheln: " + "; ".join(f"{n} {KACHEL_REGELN[r] if r else 'nur Zeichen'}"
-                                               for n, r in s["kacheln"].items()) + "." + stand)
-    teil += ["", "Die Gefechtsordnung der App (Micky 14.11.2026) – jedes Setup ist ein Weg durch den Kreislauf "
-                 "Balance → Test am Rand → abgelehnt/angenommen → Ungleichgewicht → Ende des Laufs → neue Balance:"]
-    teil += [f"- {g}" for g in SETUP_GRUNDSATZ]
-    return "\n".join(teil)
 
 
-def elemente(bild):
-    """Formularfelder des Prüfers: jedes Prüf-Element der Karte genau einmal, in Kartenreihenfolge, dazu „Sonstiges“."""
-    if bild == "setup":
-        return ["Urteil: grün zu Unrecht", "Urteil: zu streng (Regeln erfüllt, nicht grün)", "Regel falsch gemessen",
-                "Wahl des Setups", "Einstieg/Pivot", "Kaufzone/Abstand", "Stopp", "Übersehen (kein Setup, aber eins da)",
-                "Short", "Sonstiges"]
-    aus = []
-    erst = {"titel": ["Zustand", "Anlass"], "gruppe": ["Zustand der Gruppe", "Anlass"], "markt": ["Zustand des Marktes", "Anlass"]}[bild]
-    for e in erst + [p for x in KAESTEN[bild] + WERKZEUGE[bild] + (ZEICHEN if bild == "titel" else [])
-                     for p in x["pruefer"]]:
-        if e not in aus:
-            aus.append(e)
-    return aus + ["Sonstiges"]
 
 
 # ── Inventur: jede feste Regel im Code gehört einem Eintrag der Karte (Generalinventur, Micky 15.11.2026) ──────────
@@ -775,7 +576,6 @@ def elemente(bild):
 TECHNIK = {
     "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
     "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
-    "kartentisch.SICHTBAR": "Anzeige (wie viele Karten offen)", "kartentisch.TOP": "Anzeige",
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
@@ -783,7 +583,7 @@ TECHNIK = {
     "revier_pflege.REVIER_UMSATZ": "Datenpflege (Grenze des Reviers)", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
     "datenpruefung.GENAU": "Datenprüfung",
-    "zeichen.ABLAGE_BEHALTEN": "Datenpflege",
+    "zeichen.ABLAGE_BEHALTEN": "Datenpflege", "fundament.MIO": "Anzeige (Millionen)",
     **{f"performance_seite.{n_}": "Layout" for n_ in ("B", "H", "UW", "KURVE_LINKS", "KURVE_RECHTS", "TSD_AB", "TAUSEND")},
 }
 VERSCHIEDEN = {"FENSTER", "JAHR", "MITTEL", "STICHPROBE", "STUFE", "TAGE",
@@ -955,7 +755,7 @@ def alle_messungen():
     for b in list(KAESTEN.values()) + list(WERKZEUGE.values()):
         for x in b:
             aus.update(x["messung"])
-    for x in ZEICHEN + SETUPS + BEREICHE:
+    for x in ZEICHEN + BEREICHE:
         aus.update(x["messung"])
     return aus
 
@@ -1017,14 +817,6 @@ def wachposten():
                     melde("rot", "Zeichen", "titel", f.name, f"zeichen.{f.name} setzt Zeichen, steht aber nicht auf der Karte")
     except Exception as e:  # noqa: BLE001
         melde("rot", "Zeichen", "titel", "zeichen.py", f"nicht lesbar: {e}")
-    # Jeder Zustand der App hat einen Kasten
-    try:
-        import auktion
-        for z in auktion.ZUSTAENDE:
-            if not any(k.get("zustand") == z for k in KAESTEN["titel"]):
-                melde("rot", "Zustand", "titel", z, "Zustand der App ohne Kasten auf der Regelkarte")
-    except Exception as e:  # noqa: BLE001
-        melde("rot", "Zustand", "titel", "auktion", f"nicht lesbar: {e}")
     for b in BEREICHE:
         for m in b["messung"]:
             if not _gibt_es(m):
@@ -1058,7 +850,4 @@ def zaehlen(meldungen=None):
         rot = {x["name"] for x in m if x["bild"] == bild and x["ampel"] == "rot"}
         gelb = {x["name"] for x in m if x["bild"] == bild and x["ampel"] == "gelb"} - rot
         aus[bild] = (len(namen), len(rot), len(gelb))
-    rot = {x["name"] for x in m if x["bild"] == "setup" and x["ampel"] == "rot"}
-    gelb = {x["name"] for x in m if x["bild"] == "setup" and x["ampel"] == "gelb"} - rot
-    aus["setup"] = (len(SETUPS), len(rot), len(gelb))
     return aus

@@ -1443,5 +1443,10 @@ Hoch/-Tief. Abgelegt mit dem Kreislauf in `daten/kreislauf/<stand>.json` (`titel
 bis 5 Long am Pivot/im Ausbruch/im Rücktest aus Garde, Angriff, Vorhut; bis 5 Short am Bruch), Stratege (Trade statt
 Setup-Reihe). Entfernt: Kartentisch-Schritt, Wachen, Auswahl „Einsatzbereit“, Chart- und Setup-Prüfer, Mängelliste
 (Werkstatt, Entscheidung 21.11.). Schrank als eigener Schritt (`nachtlauf.schrank_liste`, `titel.vorbauen`).
-Stufe B offen: Stratege und Depot-Plan lesen noch die alte Titel-Maschine (`titel.seite_titel` mit
-`kartentisch.setup_feststellen`); danach fallen `kartentisch.py` und die alte Titelseite weg.
+Stufe B (22.11.2026, erledigt): Der Stratege liest dieselbe Fährte wie Titelseite und Chart (`strategen.material(tk,
+r, …)` mit Zirkel, Zone/Phase je Ebene, Festungen, ✈️, Trade, Klasse); der Schrank legt die heutige Titelseite ab
+(`zonenseite.vorbauen/abgelegt`, `daten/schrank/`). Entfernt: `kartentisch.py`, die alte Titelseite (`titel.seite_titel`
+mit Kacheln und Setup-Reihen), `lagekarte`, `rudelkarte`, `kreislaufbild`, `stopps`, `basen`, `datenpruefung`,
+`system_minervini`, `system_kullamaegi`, `rs_rang`, `fuehrer_rang` (Nachtlauf-Schritt „RS-Rang, Führer-Rang“ – niemand las
+die Dateien mehr), dazu die toten Funktionen (Short-Formen, Setup-Einstiege, alte Kacheln). `titel.py` hält nur noch
+TradingView-Link, Rückenwind-Eintrag und Markt-Ampel. Datenstand-Wache: Teil „Zirkel“ (Kurstag des Zirkel-Laufs).

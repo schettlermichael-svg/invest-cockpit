@@ -16,7 +16,7 @@ Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Rücksetzer läuft (Zone noch 
   (Kurs läuft am Hoch).
 Die drei Trades (Tageszone, Micky 22.11.2026):
   Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = Tief der letzten
-              Kontraktion, höchstens 8 % (Minervini, system_minervini.MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
+              Kontraktion, höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
   Rücktest    nach dem Ausbruch zurück an den Pivot (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
               Einstieg am Pivot, Stopp ¼ ATR darunter.
   Short       Bruch der Unterkante: Schluss unter der Unterkante der fertigen Base von gestern, mit Volumen über dem
@@ -36,7 +36,7 @@ import pandas as pd
 
 import tiefe
 import vcp_zone
-from system_minervini import MAX_STOPP  # eine Quelle (Minervini: höchstens 8 % Risiko)
+MAX_STOPP = 0.08           # Minervini: höchstens 8 % Risiko je Trade (der Stopp wird nie weiter gesetzt)
 from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quelle
 from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
 

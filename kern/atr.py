@@ -10,22 +10,13 @@ des Titels statt in festen Prozent. Alles hier sind Zeichen, keine Filter.
 Die Schwellen sind unsere Setzung, nicht aus den Büchern.
 """
 import numpy as np
-from masse import GD50_TAGE  # noqa: E402
 
 TAGE = 14
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 STOPP_GELB = 1.5     # Stopp im Rauschen: unter 1 ATR rot, bis 1,5 gelb, darüber grün
-ENGE_TAGE = 5        # Enge: Spannen der letzten 5 Tage …
-ENGE_TAGE_HEUTE = 4  # … (die 4 jüngsten nach dem Bezugstag)
-ENGE_GRUEN = 0.6     # … unter 0,6 ATR grün (eng)
-ENGE_GELB = 0.9      # … bis 0,9 gelb
-UEBERDEHNT_ROT = 6   # Überdehnung: ab 6 ATR vom GD50 rot
-UEBERDEHNT_GELB = 4  # … ab 4 gelb
 STOPP_ROT = 1       # Stopp unter 1 × ATR vom Einstieg: im Tagesrauschen (rot)
-NACH_NAH = 1        # nachjagen: bis 1 × ATR über dem Pivot nah am Einstieg (grün) …
-NACH_UNTERWEGS = 2  # … bis 2 × ATR schon unterwegs (gelb), darüber zu weit
 
 
 def _tr(df):
@@ -69,44 +60,7 @@ def stopp(einstieg, stopp_, a):
     return "grün", f"Stopp {_z(x)} × ATR vom Einstieg → außerhalb des Tagesrauschens"
 
 
-def nachjagen(kurs, pivot, a, seite="long"):
-    """None, solange der Kurs den Pivot noch nicht überschritten hat."""
-    if not (a and pivot):
-        return None
-    x = (kurs - pivot) / a if seite == "long" else (pivot - kurs) / a
-    if x < 0:
-        return None
-    wo = "über dem Pivot" if seite == "long" else "unter dem Auslöser"
-    if x <= NACH_NAH:
-        return "grün", f"{_z(x)} × ATR {wo} → nah am Einstieg"
-    if x <= NACH_UNTERWEGS:
-        return "gelb", f"{_z(x)} × ATR {wo} → schon unterwegs"
-    return "rot", f"{_z(x)} × ATR {wo} → zu weit gelaufen, nicht nachjagen"
 
 
-def enge(df):
-    tr = _tr(df)
-    n = len(tr) - 1
-    a = wert(df, n - ENGE_TAGE)
-    if not a:
-        return None
-    x = float(np.mean(tr[n - ENGE_TAGE_HEUTE:])) / a
-    if x < ENGE_GRUEN:
-        return "grün", f"Spannen der letzten 5 Tage {_z(x)} × ATR → eng, Ruhe vor dem Ausbruch"
-    if x <= ENGE_GELB:
-        return "gelb", f"Spannen der letzten 5 Tage {_z(x)} × ATR → beruhigt sich"
-    return "rot", f"Spannen der letzten 5 Tage {_z(x)} × ATR → unruhig, keine Enge"
 
 
-def ueberdehnung(df, a=None):
-    a = a or wert(df)
-    c = df["Close"].to_numpy(float)
-    if not a or len(c) < 50:
-        return None
-    x = (c[-1] - float(np.mean(c[-GD50_TAGE:]))) / a
-    lage = "über" if x >= 0 else "unter"
-    if abs(x) >= UEBERDEHNT_ROT:
-        return "rot", f"{_z(abs(x))} × ATR {lage} dem GD50 → überdehnt", x
-    if abs(x) >= UEBERDEHNT_GELB:
-        return "gelb", f"{_z(abs(x))} × ATR {lage} dem GD50 → weit gespannt", x
-    return "grün", f"{_z(abs(x))} × ATR {lage} dem GD50 → im üblichen Rahmen", x

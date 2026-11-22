@@ -1,10 +1,15 @@
 """Titelseite des schlanken Cockpits (Micky 21./22.11.2026): Kopfzeile mit Rückenwind und den drei Ebenen (Base nach
 Minervini/O'Neil in Woche und Tag, Balance in der Stunde), der eine Trade, darunter der Zonenchart mit Reitern Woche ·
 Tag · Stunde. Wenig Text, das Bild führt."""
+import os
+import time
+
 import pandas as pd
 
 import gestaltung
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
+
+HIER = os.path.dirname(os.path.abspath(__file__))
 
 EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Zone", "Stunde": "Einstieg"}
 
@@ -170,6 +175,67 @@ def seite_zonen(tk, laufend=False, _stand=None):
     import zonenchart
     return {"kopf": seite(karte(kopf(r)), oben=8, unten=0), "r": r,  # Layout
             "legende": zonenchart.legende() + gestaltung.zeichen_legende()}
+
+
+# ── Schrank (06.11.2026, seit 22.11.2026 für diese Titelseite): der Nachtlauf baut die Titelseiten der Rückenwind-Titel
+# in Garde, Angriff und Vorhut und der Watchlist vor und legt sie ab, damit ein Klick sofort öffnet. Gültig, solange
+# danach weder Programm noch Depot geändert wurden und höchstens 30 Stunden; „Kurse aktualisieren“ rechnet neu.
+ABLAGE = os.path.join(HIER, "..", "daten", "schrank")
+ALTER_MAX = 30 * 3600            # abgelegte Seiten gelten höchstens 30 Stunden (der Nachtlauf baut sie täglich neu)
+
+
+def codezeit():
+    """Jüngste Änderungszeit der Programmdateien (kern, oberflaeche)."""
+    return max(os.path.getmtime(os.path.join(HIER, "..", d, f)) for d in ("kern", "oberflaeche")
+               for f in os.listdir(os.path.join(HIER, "..", d)) if f.endswith(".py"))
+
+
+def ablage_grenze():
+    """Abgelegte Titelseiten älter als das Programm oder das Depot gelten als veraltet."""
+    import depot
+    return max([codezeit()] + ([os.path.getmtime(depot.DATEI)] if os.path.exists(depot.DATEI) else []))
+
+
+def _pfad(tk):
+    return os.path.join(ABLAGE, f"{tk.upper()}.pkl.gz")
+
+
+def vorbauen(tk):
+    """Titelseite bauen und in den Schrank legen (Nachtlauf, Schrank-Lauf) → True, wenn abgelegt."""
+    import gzip
+    import pickle
+    try:
+        teile = seite_zonen(tk)
+        os.makedirs(ABLAGE, exist_ok=True)
+        tmp = f"{_pfad(tk)}.{os.getpid()}.neu"        # App und Hintergrundlauf können gleichzeitig ablegen
+        with gzip.open(tmp, "wb", compresslevel=3) as f:  # Layout
+            pickle.dump(teile, f, protocol=pickle.HIGHEST_PROTOCOL)
+        os.replace(tmp, _pfad(tk))
+        return True
+    except Exception:  # noqa: BLE001 – ein Titel scheitert, der Schrank steht trotzdem
+        return False
+
+
+def frisch(tk, grenze=None):
+    """Liegt eine gültige Titelseite im Schrank (jünger als Programm, Depot und 30 Stunden)?"""
+    try:
+        zeit = os.path.getmtime(_pfad(tk))
+    except OSError:
+        return False
+    return zeit >= (grenze or ablage_grenze()) and time.time() - zeit < ALTER_MAX
+
+
+def abgelegt(tk):
+    """Gültige Titelseite aus dem Schrank oder None (dann wird gerechnet)."""
+    import gzip
+    import pickle
+    if not frisch(tk):
+        return None
+    try:
+        with gzip.open(_pfad(tk), "rb") as f:
+            return pickle.load(f)
+    except Exception:  # noqa: BLE001 – dann wird gerechnet
+        return None
 
 
 def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):

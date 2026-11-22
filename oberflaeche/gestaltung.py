@@ -113,30 +113,10 @@ def klapp(titel, zeile_, inhalt):
             f'<div style="margin-top:14px">{inhalt}</div></details>')
 
 
-MITSCHRIFT = None             # dict, solange die Kacheln einer Titelseite gebaut werden
 
 
-def kachel(beschriftung, ampel, wert, zeile="", hilfe="", ganz=False):
-    """Kachel der Leiste „Lage in fünf Sekunden“: feste Höhe, ein Wert, eine Zeile; die Erklärung als Hinweis
-    (Maus darauf, kleines ⓘ). ganz=True: die Zeile wird nie abgeschnitten (Kacheln des Setups)."""
-    if MITSCHRIFT is not None:                   # die Lagekarte liest Ampel, Wert und Zeile jeder Kachel mit
-        MITSCHRIFT[beschriftung] = (ampel, str(wert), str(zeile))
-    titel = f' title="{t(hilfe).replace(chr(10), "&#10;")}"' if hilfe else ""  # Layout
-    zeile = str(zeile).replace(" %", "\u00a0%").replace(" $", "\u00a0$").replace(" Mio.", "\u00a0Mio.")  # Zahl und Einheit nie getrennt
-    zeichen = f'<span style="float:right;color:{TEXT_3};text-transform:none">ⓘ</span>' if hilfe else ""
-    return (f'<div{titel} style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;'
-            f'display:flex;flex-direction:column;gap:6px;{"min-height" if ganz else "height"}:136px;box-sizing:border-box;'
-            f'{"" if ganz else "overflow:hidden"}">'
-            f'<div style="font-size:13px;color:{TEXT_3};letter-spacing:0.06em;text-transform:uppercase">{t(beschriftung)}{zeichen}</div>'
-            f'<div style="display:flex;align-items:center;gap:10px;min-width:0">{punkt(ampel)}'
-            f'<span style="font-size:22px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{t(wert)}</span></div>'
-            + (f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4">{t(zeile)}</div></div>' if ganz else
-               f'<div style="font-size:14px;color:{TEXT_2};line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;'
-               f'-webkit-box-orient:vertical;overflow:hidden">{t(zeile)}</div></div>'))
 
 
-SYSTEM_SHORT = False  # Setup des Titels ist ein Short: Markt und Geld gespiegelt (Gegenwind für long = Rückenwind)
-_GEGEN = {"grün": "rot", "rot": "grün", "gelb": "gelb", "grau": "grau"}
 TERMIN_ROT, TERMIN_GELB = 7, 14     # Zahlen nah: eine Regel für die ganze App (Prüf-Agent 12.11.2026: vorher 7/10/14)
 
 
@@ -147,8 +127,6 @@ def termin_ampel(tage):
     return "rot" if tage <= TERMIN_ROT else "gelb" if tage <= TERMIN_GELB else "grün"
 
 
-TERMIN_TEXT = ("Zahlen in höchstens 7 Tagen = rot, in 8–14 Tagen = gelb: ein Ausbruch kurz vor den Zahlen ist ein "
-               "Würfelwurf (O'Neil, Minervini).")
 
 
 def ampelzeile(name, ampel, text="", hilfe=""):

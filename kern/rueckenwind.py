@@ -1,7 +1,7 @@
 """Rückenwind (Konzept: KONZEPT_RUECKENWIND.md, 09.11.2026) – eigene Seite, getrennt von den Setups.
 
 Je Titel des Reviers drei Rückenwinde als Ampeln, dazu Earnings:
-  Kurs   RS-Dynamik: Stärke (RS-Rang 1–99 wie IBD, rs_rang.wert), Tempo (Veränderung des Rangs in 4 Wochen),
+  Kurs   RS-Dynamik: Stärke (RS-Rang 1–99 wie IBD, der IBD-Formel), Tempo (Veränderung des Rangs in 4 Wochen),
          Beschleunigung (Tempo gegen das Tempo der 4 Wochen davor); Zeichen: RS-Linie am 52-Wochen-Hoch, der Kurs noch
          nicht (O'Neil/Minervini).
   Zeichen dazu: Steigung der RS-Linie in 4 Wochen (und davor), Volumen-Zufluss des Titels selbst (Volumen an
@@ -38,7 +38,11 @@ STABIL_WOCHEN, STABIL_RUECKSCHLAG = 8, 8.0   # stabil: führt seit 8 Wochen und 
 ZUFLUSS = (1.1, 0.9)           # Volumen an steigenden ÷ fallenden Tagen: ab 1,1 Zufluss, unter 0,9 Abfluss
 from zeichen import TROCKEN_TAGE, TROCKEN_VERGLEICH  # noqa: E402  Volumen trocken: eine Quelle (zeichen)
 from zeichen import RS_HOCH as RS_MASS   # noqa: E402  RS-Linie am Hoch: ein Maßstab für App, Chart und Zeichen (0,99)
-from rs_rang import GEWICHT_FRUEHER, GEWICHT_LETZTES, Q3, Q4, QUARTAL, RANG_SPANNE  # noqa: E402
+QUARTAL = 63           # RS-Rang wie das RS-Rating von IBD: ein Quartal in Handelstagen,
+Q3, Q4 = 3, 4          # das dritte und vierte Quartal zurück,
+GEWICHT_LETZTES = 0.4  # das letzte Quartal zählt 40 % …
+GEWICHT_FRUEHER = 0.2  # … die drei davor je 20 %;
+RANG_SPANNE = 98       # Rang 1 bis 99
 from masse import DATUM, JAHR_TAGE, MONAT_TAGE, QUARTALE_JAHR, VOL_TAGE, VORJAHR_ZURUECK, ZWEI_JAHRE_ZURUECK  # noqa: E402
 KURS_NAH = 0.97                         # Kurs „am Hoch“: höchstens 3 % darunter (wie der Chart)
 HOCH_MITTEL = 25.0                      # Abstand zum 52-Wochen-Hoch: bis 25 % „mittel“ (Minervini), darüber „fern“
@@ -69,7 +73,7 @@ JUNG_MIN = QUARTAL + 2 * 20      # junge Titel ab einem Quartal plus 8 Wochen R�
 
 def _wert(C):
     """RS-Wert nach IBD (letztes Quartal 40 %, die drei davor je 20 %) – bei jungen Titeln nur aus den Quartalen, die
-    sie haben, Gewichte darauf verteilt. Bei voller Historie genau rs_rang.wert."""
+    sie haben, Gewichte darauf verteilt. Bei voller Historie genau der IBD-Formel."""
     letzt = C.iloc[-1]
     summe, gewicht = 0 * letzt.fillna(0), 0 * letzt.fillna(0)
     for k, w in ((1, GEWICHT_LETZTES), (2, GEWICHT_FRUEHER), (Q3, GEWICHT_FRUEHER), (Q4, GEWICHT_FRUEHER)):
@@ -219,7 +223,8 @@ def _geld_ampel(sek, bra, th=None):
 
 ROE_MIN = 17.0                 # Eigenkapitalrendite ab 17 % (O'Neil)
 JAHR_MIN = 25.0                # Jahresgewinne: drei Jahre je ab +25 %
-from system_kullamaegi import EP_SPRUNG, EP_VOLUMEN  # noqa: E402  Episodic Pivot – eine Quelle (System Kullamägi)
+EP_SPRUNG = 10.0           # Episodic Pivot (Kullamägi): Kurssprung ab 10 % …
+EP_VOLUMEN = 3.0           # … mit mindestens 3-fachem Volumen (Micky 05.11.2026: grün ab 3-fach)
 LUECKE_VOLUMEN = 1.5           # Lücke nach oben mit Volumen
 ABVERKAUF = -3.0               # Abverkauf nach den Zahlen ab −3 %
 

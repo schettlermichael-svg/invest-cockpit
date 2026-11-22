@@ -84,7 +84,10 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     feld = {tk: f for tk, _, f in erg}
     barometer = {"hochs": sum(f["hoch52"] for f in feld.values()), "tiefs": sum(f["tief52"] for f in feld.values()),
                  "titel": len(feld)}
-    stand = pd.Timestamp.now().strftime("%Y-%m-%d")
+    try:                                            # Stand = Kurstag (Datenstand-Wache), nicht der Tag des Laufs
+        stand = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
+    except Exception:  # noqa: BLE001
+        stand = pd.Timestamp.now().strftime("%Y-%m-%d")
     zeichen.ablegen(stand, {tk: k for tk, k, _ in erg if k}, feld=feld, barometer=barometer)
     trades = sum(1 for f in feld.values() if f["trade"])
     melden(f"  {len(feld)} Titel in {time.time() - beginn:.0f} s, {trades} mit Trade")

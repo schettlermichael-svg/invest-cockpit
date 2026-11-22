@@ -2,9 +2,10 @@
 allgemeines Blabla. Auftrag des Snipers: die Ineffizienz und Disbalance finden, die den Kurs aus der Zone ausbrechen
 lässt – oder sagen, dass es keinen Schuss gibt.
 
-Material: nur der Zustand aus kern/auktion.py (Code für Balance und Ungleichgewicht) und Felder der App, jedes mit
-einer Nummer (F1, F2 …). Die Kette, an der der Stratege entlanggeht:
-    Zustand → Anlass → wer ist am Rand stärker → angenommen oder abgelehnt → wo wartet die Gegenseite → eigen oder geliehen.
+Material (seit 22.11.2026 dasselbe wie Titelseite und Chart): Zirkel, Zone und Phase auf Woche, Tag und Stunde, der
+Zonen-Trade, Festungen und freie Bahn, Schlachtordnung und Geld, Tiefenanalyse – jedes Feld mit einer Nummer (F1, F2 …).
+Die Kette, an der der Stratege entlanggeht:
+    Zirkel → Zone und Phase → Trade → Reibung (Festungen, freie Bahn) → Truppe (Klasse, Geld) → wo wartet die Gegenseite.
 Antwort über ein festes Formular: Schuss (long/short/kein), Disbalance, höchstens 3 Belege mit Feldnummer, Auslöser
 (Kurs und Bedingung), widerlegt bei (Kurs und Bedingung), Gegenzeuge mit Feldnummer.
 
@@ -27,10 +28,12 @@ KURS_SPANNE = 0.4               # Prüfung: Zahlen bis 40 % um den Kurs in Fazit
 KURS_GENAU = 0.005              # … und müssen auf 0,5 % genau im Material stehen
 WETTBEWERBER = 5                # höchstens 5 Wettbewerber
 
-SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels:
-den Zustand im Code für Balance und Ungleichgewicht, die Tiefenanalyse (Struktur nach Dalton, PbD, Wertwanderung, AVWAP,
-relative Stärke, Geldfluss) und nummerierte Felder der App (F1, F2 …). Für Kurse, Zonen, Volumen, RS und Geldfluss gilt
-nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
+SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
+als nummerierte Felder (F1, F2 …): den Zirkel (Phase 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
+die ihn tragen, und dem Keim des Gegenteils), Zone und Phase auf Woche, Tag und Stunde (Base nach Minervini/O'Neil, in
+der Stunde die Balance), den Zonen-Trade der App, die Festungen (alte Decke, alter Boden) und die freie Bahn, die
+Schlachtordnung (Klasse 1 Garde bis 5 Rückzug), Rückenwind und Geldfluss, den Markt und die Tiefenanalyse. Für Kurse,
+Zonen, Volumen, RS und Geldfluss gilt nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
 Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11.2026, aus der Titel-Analyse):
   Unternehmen: Geschäftsmodell, Burggraben und was ihn bedroht, Wachstumstreiber.
   Quartal: Umsatz organisch, EPS bereinigt gegen den Konsens, Margen, stärkstes Segment, Prognose alt → neu,
@@ -41,14 +44,14 @@ Jede Zeile in Unternehmen und Quartal beginnt mit genau einem Zeichen, immer in 
   🔥 Beschleunigung · 💥 Auslöser · 🦊 Falle · 🌞 Rückenwind/Geldzufluss · ❄️ Gegenwind/Geldabfluss ·
   🪝 Widerstand/Unterstützung · sonst 🟢 Stärke, 🟡 gemischt, 🔴 Schwäche · ⚪ ungemessen. Veränderungen als vorher → heute.
 
-Der Code: Ein Anlass (Information, leere Verteidiger, Zwang gefangener Händler) bringt die Balance an den Rand. Am Rand
-wird getestet. Wird der Ausbruch abgelehnt, läuft der Kurs zurück zum anderen Rand. Wird er angenommen, entsteht ein
-Ungleichgewicht, das läuft, bis eine von drei Kräften es beendet: der Gegner antwortet (Mauer, Kraft ohne Weg, Exzess),
-der Antrieb erlischt (Klimax, Wechsel der Phase, Rückschlag), der Wert wird akzeptiert (neue Wertzone).
+Das System: Alles läuft im Zirkel, jede Phase trägt den Keim der nächsten. Ein Trend bleibt in Bewegung, bis eine
+Gegenkraft ihn bremst (Dow, Newton). In der Zone (Balance) sind Käufer und Verkäufer einig; am Pivot kippt die Waage
+(Livermores Pivotal Point). Reibung frisst Kraft: alte Decken mit wartenden Verkäufern, Kraft ohne Weg. Der Kurs läuft
+entlang der Linie des geringsten Widerstands – freie Bahn ohne Festung darüber, trockenes Volumen, Zufluss.
 
 Dein Auftrag: Finde die eine Disbalance, die den Kurs aus der Zone treibt – wer ist am Rand stärker, und warum ist die
-Gegenseite schwach, leer oder gefangen? Geh die Kette entlang: Zustand → Anlass → wer ist am Rand stärker → angenommen
-oder abgelehnt → wo wartet die Gegenseite → eigen oder geliehen.
+Gegenseite schwach, leer oder gefangen? Geh die Kette entlang: Zirkel → Zone und Phase (stimmen die Ebenen überein?) →
+Trade → Reibung → Truppe → wo wartet die Gegenseite → eigen oder geliehen.
 
 Regeln:
 1. Kein Weichmacher. Kein „könnte“, „möglicherweise“, „man sollte beobachten“. Du urteilst.
@@ -98,8 +101,9 @@ def _z(x, f=".2f"):
     return format(x, f).replace(".", ",")
 
 
-def material(tk, e, kurs, atr=None, rw=None, markt=None, setup=None, termin=None, tiefe=None):
-    """Nummerierte Felder → (Text, {F-Nummer: Text})."""
+def material(tk, r, kurs, atr=None, rw=None, markt=None, setup=None, termin=None, tiefe=None):
+    """Nummerierte Felder → (Text, {F-Nummer: Text}); r = zonenseite.rechnen (dieselbe Fährte wie Titelseite und Chart)."""
+    import zeichen
     felder = []
 
     def f(text):
@@ -107,27 +111,40 @@ def material(tk, e, kurs, atr=None, rw=None, markt=None, setup=None, termin=None
             felder.append(str(text))
 
     f(f"Titel {tk}, Kurs {_z(kurs)} $" + (f", ATR (14 Tage) {_z(atr)} $" if atr else ""))
-    if e:
-        import auktion
-        f(f"Zustand: {auktion.wort(e)} · {e.get('unterzeile', '')}")
-        if e.get("oben") and e.get("unten"):
-            f(f"Ränder der Balance: unten {_z(e['unten'])} $, oben {_z(e['oben'])} $")
-        for x in e.get("anlass") or []:
-            f(f"Anlass – {x}")
-        for platz, x in e.get("belege") or []:
-            f(f"{platz} – {x}")
-        for x in e.get("ende") or []:
-            f(f"Ende des Laufs – {x}")
-        for x in e.get("gegenseite") or []:
-            f(f"Gegenseite – {x}")
-        if e.get("kraft"):
-            f(f"Eigen oder geliehen – {e['kraft']['text']}")
+    zk = zeichen.zirkel(zeichen.von(tk))
+    if zk:
+        f(f"Zirkel: Phase {zk['phase']} {zk['name']}" + (f" seit {zk['wochen']} Wochen" if zk.get("wochen") else ""))
+        for x in zk["traegt"][:3]:
+            f(f"Zirkel trägt – {x}")
+        for x in zk["keim"][:3]:
+            f(f"Keim des Gegenteils – {x}")
+    fu = (r or {}).get("fuehrte") or {}
+    for eb, la in (fu.get("lage") or {}).items():
+        if not la:
+            continue
+        rand = (f", Zone {_z(la['zone'][0])}–{_z(la['zone'][1])} $" if la.get("zone") else "") + \
+               (f", Pivot {_z(la['pivot'])} $" if la.get("pivot") else "")
+        f(f"{eb}: {la['name'] or 'keine Zone'} – {la['wort']}{rand}" + (f" · {la['info']}" if la.get("info") else ""))
+        for x in ((fu.get("festungen") or {}).get(eb) or {}).get("oben", []):
+            f(f"{eb}: Festung über dem Kurs {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
+        for x in ((fu.get("festungen") or {}).get(eb) or {}).get("unten", []):
+            f(f"{eb}: Festung unter dem Kurs {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
+    fr = fu.get("frei") or {}
+    if fr.get("oben") or fr.get("unten"):
+        f("Freie Bahn: keine Festung " + ("über" if fr.get("oben") else "unter") + " dem Kurs (Tageschart, zwei Jahre)")
+    t = fu.get("trade")
+    if t:
+        f(f"Zonen-Trade der App: {t['name']}, Einstieg {_z(t['einstieg'])} $, Stopp {_z(t['stopp'])} $, Risiko "
+          f"{_z(t['risiko'], '.1f')} %" + (" – wartet auf den Auslöser" if t["wartet"] else ""))
     if setup:
-        f(f"Setup der App: {setup}")
+        f(f"Zonen-Trade (Nachtlauf): {setup}")
     if rw:
-        f(f"Rückenwind: RS-Rang {rw.get('rang_vor4')} → {rw.get('rang')} in 4 Wochen, Stufe {rw.get('stufe') or 'keine'}, "
-          f"Sektor {rw.get('sektor')} ({rw.get('sektor_feld') or '–'}), Branche {rw.get('branche')} "
-          f"({rw.get('branche_feld') or '–'}), Geld-Ampel {rw.get('geld_ampel')}")
+        import rueckenwind
+        kl = rw.get("klasse")
+        f(f"Rückenwind: Klasse {f'{kl} {rueckenwind.KLASSEN[kl - 1]}' if kl else 'keine'}, RS-Rang {rw.get('rang_vor4')} → "
+          f"{rw.get('rang')} in 4 Wochen, RS-Linie {rw.get('richtung') or '–'}, Sektor {rw.get('sektor')} "
+          f"({rw.get('sektor_feld') or '–'}), Branche {rw.get('branche')} ({rw.get('branche_feld') or '–'}), "
+          f"Geld-Ampel {rw.get('geld_ampel')}")
     if markt:
         import auktion
         f(f"Markt: {auktion.wort(markt)} · {markt.get('unterzeile', '')}")
@@ -206,13 +223,13 @@ def gespeichert(tk, stand):
     return json_lesen(_pfad(tk, stand), None)
 
 
-def rufen(tk, stand, e, kurs, **kw):
+def rufen(tk, stand, r, kurs, **kw):
     """Ein Call (oder der gespeicherte des Tages) → {antwort, pruefung, material, stand, kosten}."""
     alt = gespeichert(tk, stand)
     if alt:
         return alt
     import modell
-    text, nummern = material(tk, e, kurs, **kw)
+    text, nummern = material(tk, r, kurs, **kw)
     vorher = modell.kosten()["usd"]
     antwort = modell._formular(SYSTEM, f"Material zu {tk} (Kurstag {stand}):\n{text}\n\nRecherchiere Unternehmen, Quartal "
                                "und Wettbewerber im Netz und schreibe Einschätzung und Fazit aus dem Material.",
