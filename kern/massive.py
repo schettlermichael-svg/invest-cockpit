@@ -139,35 +139,43 @@ def splits_zeitraum(von, bis):
 
 
 def kursmatrix(ticker, n=260, spalte="Close"):
-    """Kurse (oder Volumen) aller gespeicherten Tage als Tabelle, über Splits hinweg vergleichbar.
+    """Kurse (oder Volumen) aller gespeicherten Tage als Tabelle, über Splits hinweg vergleichbar. spalte als Liste
+    (z. B. ["High", "Low", "Close"]) liest jede Tagesdatei nur einmal und gibt {spalte: Tabelle} zurück.
 
     Massive liefert jeden Tag bereits um alle Splits BIS ZUM ABRUFTAG bereinigt (adjusted=true). Ein Split
     nach dem Abruf eines Tages fehlt in dessen Datei – nur dieser wird nachgerechnet: Datei von Tag d,
     abgerufen am Datum a (Dateizeit), Split am Tag s mit a < s und d < s  →  Kurs × Faktor, Volumen ÷ Faktor.
     Ein zweites Bereinigen bereits bereinigter Tage (Fehler 01.11.2026: NFLX ×10) ist damit ausgeschlossen."""
     namen = {tk: tk.replace("-", ".") for tk in ticker}
+    liste = [spalte] if isinstance(spalte, str) else list(spalte)
     dateien = sorted(d for d in os.listdir(SPEICHER) if d[:4].isdigit() and d.endswith(".csv"))
-    spalten, abruf = {}, {}
+    spalten, abruf = {s_: {} for s_ in liste}, {}
     for d in reversed(dateien):                                # von hinten, bis n Handelstage beisammen sind
-        if len(spalten) == n:
+        if len(abruf) == n:
             break
         df = tag(d[:10])
         if df.empty:
             continue
         t = pd.Timestamp(d[:10])
-        spalten[t] = df.drop_duplicates("Ticker").set_index("Ticker")[spalte]
+        df = df.drop_duplicates("Ticker").set_index("Ticker")
+        for s_ in liste:
+            spalten[s_][t] = df[s_]
         abruf[t] = pd.Timestamp(os.path.getmtime(os.path.join(SPEICHER, d)), unit="s").normalize()
-    m = pd.DataFrame(spalten).T.sort_index().reindex(columns=list(namen.values())).astype(float)
-    if len(m):
-        for s_tag, tk, faktor in splits_zeitraum(m.index[0], m.index[-1]):   # spätere Splits betreffen noch keinen Tag
-            name = tk.replace("-", ".")
-            if name not in m.columns:
-                continue
-            betroffen = [t for t in m.index if t < s_tag and abruf[t] < s_tag]
-            if betroffen:
-                m.loc[betroffen, name] *= faktor if spalte != "Volume" else 1 / faktor
-    m.columns = list(namen.keys())
-    return m
+    aus, tage_ = {}, sorted(abruf)
+    sp = splits_zeitraum(tage_[0], tage_[-1]) if tage_ else []   # spätere Splits betreffen noch keinen Tag
+    for s_ in liste:
+        m = pd.DataFrame(spalten[s_]).T.sort_index().reindex(columns=list(namen.values())).astype(float)
+        if len(m):
+            for s_tag, tk, faktor in sp:
+                name = tk.replace("-", ".")
+                if name not in m.columns:
+                    continue
+                betroffen = [t for t in m.index if t < s_tag and abruf[t] < s_tag]
+                if betroffen:
+                    m.loc[betroffen, name] *= faktor if s_ != "Volume" else 1 / faktor
+        m.columns = list(namen.keys())
+        aus[s_] = m
+    return aus[spalte] if isinstance(spalte, str) else aus
 
 
 def schlusskurse(ticker, tage=5):

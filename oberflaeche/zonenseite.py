@@ -154,6 +154,8 @@ def kopf(r):
             f'<span style="font-size:28px;font-weight:600">{t(r["tk"])}</span>'
             f'<span style="font-size:18px;color:{TEXT}">{zahl(kurs)} $</span>'
             f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
+            f'<span style="font-size:15px;color:{TEXT}" title="keine Festung über (✈️) bzw. unter (✈️↓) dem Kurs – '
+            f'Livermores Linie des geringsten Widerstands">{rueckenwind_seite.bahn(f.get("frei"))}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
             f'{wind_html}{zirkel_html(r["tk"])}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'

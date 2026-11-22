@@ -25,7 +25,11 @@ Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel 
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
   Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
 Festungen (Micky 22.11.2026): alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss
-darunter (Wendepunkte ab 2 ATR), überwundene Kanten mit getauschter Rolle; je Richtung die 2 nächsten.
+darunter (Wendepunkte ab 2 ATR), überwundene Kanten mit getauschter Rolle; je Richtung die 2 nächsten; zwei Jahre
+zurück (so weit reichen die Massive-Tage der Liste – Chart, Liste und Zeichen sehen dieselben Festungen).
+Freie Bahn ✈️ (Micky 22.11.2026, Livermores Linie des geringsten Widerstands): über dem Kurs steht im Tageschart keine
+Festung mehr – niemand wartet oben auf seinen Einstand (O'Neil: kein Overhead Supply); ✈️↓ gespiegelt für den Short.
+Reines Zeichen ohne Schwelle: wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg.
 """
 import numpy as np
 import pandas as pd
@@ -37,6 +41,7 @@ from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quel
 from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
 
 EBENEN = ("Woche", "Tag", "Stunde")
+BAHN_JAHRE = 2              # Festungen und ✈️: zwei Jahre zurück
 PHASE = {"aufbau": ("🟡", "Base im Aufbau"), "ruecksetzer": ("🟡", "Rücksetzer läuft"), "kante": ("💥", "am Pivot"),
          "ausbruch": ("💥", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
          "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Base – Kurs läuft am Hoch"),
@@ -243,8 +248,11 @@ def _swing_kanten(e):
     if len(df) < vcp_zone.ATR_TAGE + 2:
         return []
     C = df["Close"].to_numpy(float)
+    ab = int(df.index.searchsorted(df.index[-1] - pd.DateOffset(years=BAHN_JAHRE)))
     aus = []
     for i, p_, art in vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]:
+        if i < ab:
+            continue
         nach = C[i + 1:]
         durch = np.flatnonzero(nach > p_) if art == "H" else np.flatnonzero(nach < p_)
         if not len(durch):
@@ -279,10 +287,18 @@ def festungen(e, la):
     return aus
 
 
+def frei(e):
+    """✈️ freie Bahn der Ebene: {"oben": keine Festung über dem Schluss, "unten": keine darunter} oder None (zu kurz)."""
+    if not e or len(e["df"]) < vcp_zone.ATR_TAGE + 2:
+        return None
+    kurs, k = float(e["df"]["Close"].iloc[-1]), _swing_kanten(e)
+    return {"oben": not any(p_ > kurs for p_, _ in k), "unten": not any(p_ < kurs for p_, _ in k)}
+
+
 def fuehrte(ebenen):
     """Alles für Kopfzeile und Chart: die Base (Woche und Tag), Lage je Ebene, Festungen, der Trade."""
     tag = ebenen.get("Tag")
     ba = basis(tag["df"]) if tag else None
     la = {n: lage(ebenen.get(n), None if n == "Stunde" else ba) for n in EBENEN}
     fest = {n: festungen(ebenen.get(n), la[n]) for n in EBENEN}
-    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba}
+    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba, "frei": frei(tag)}

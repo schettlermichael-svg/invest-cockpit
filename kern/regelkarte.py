@@ -715,8 +715,15 @@ BEREICHE = [
     dict(name="Festungen", quelle="O'Neil, Minervini (Overhead Supply), Micky 22.11.2026",
          regel="Alte Decke = Swing-Hoch (Wendepunkt ab 2 ATR, vcp_zone.zigzag) ohne Schluss darüber, alter Boden = Swing-"
                "Tief ohne Schluss darunter; per Schluss überwunden und seitdem nicht zurück, tauscht die Kante die Rolle. "
-               "Je Richtung die 2 nächsten, näher als ½ ATR verschmolzen. Umkehrpreise und AVWAP am 22.11.2026 entfernt.",
+               "Je Richtung die 2 nächsten, näher als ½ ATR verschmolzen; zwei Jahre zurück. Umkehrpreise und AVWAP am "
+               "22.11.2026 entfernt.",
          messung=["zonen.festungen"], pruefer=[],
+         luecke="kein Prüfer"),
+    dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), O'Neil (Overhead Supply), Micky 22.11.2026",
+         regel="✈️ = im Tageschart keine Festung über dem Kurs (zwei Jahre zurück), ✈️↓ = keine darunter. Reines Zeichen "
+               "ohne Schwelle; wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg. Liste "
+               "(Spalte Bahn), Rückenwind-Zeile und Kopf der Titelseite.",
+         messung=["zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "

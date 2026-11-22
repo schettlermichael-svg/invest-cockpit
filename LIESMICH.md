@@ -1413,3 +1413,11 @@ Quelle: TitelAnalyse/LIESMICH.md und kern/rechnen.py, bericht.py, chart.py (Stan
 Wo: Seite **Analyse** (alle Aussagezeilen, Einschätzung darunter), **Chart** der Titelseite mit Reitern Woche/Tag/Stunde (Tag
 vorausgewählt; der Stundenchart der letzten 10 Tage entfällt) und Dalton-Flächen, PbD, POC je Kerze, nackten POCs;
 **Kartentisch** mit einer Zeile Zeichen je Titel (PbD-Form und D-Kante, Quetschung, CMF, Abgabetage, Wanderung).
+
+## Freie Bahn ✈️ (22.11.2026)
+Livermores Linie des geringsten Widerstands als Zeichen: ✈️ = im Tageschart keine Festung (alte Decke, Boden → Decke)
+über dem Kurs, ✈️↓ = keine darunter (`zonen.frei`). Reines Zeichen ohne Schwelle – wie leicht der Kurs läuft, zeigen
+Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg. Festungen und ✈️ blicken zwei Jahre zurück (`zonen.BAHN_JAHRE`; so weit
+reichen die Massive-Tage), damit Chart, Liste und Titelseite dieselben Festungen sehen. Liste: Spalte „Bahn“
+(`rueckenwind.rechnen` → `frei`, aus `massive.kursmatrix` mit mehreren Spalten in einem Durchgang); Titelseite: im Kopf,
+live gerechnet. Stand Mac 04.11.: 133 Titel ✈️, 20 ✈️↓ von 1.868.

@@ -24,6 +24,7 @@ import pandas as pd
 
 import massive
 import sektoren
+import zonen
 from dateien import json_lesen, json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
@@ -350,6 +351,12 @@ def _themenname(g, rang):
     return ", ".join(top) + " · " + ", ".join(b for b, _ in g.get("branchen", [])[:3])
 
 
+def _frei(B, tk):
+    """✈️ freie Bahn aus den Massive-Tagen (zonen.frei, dieselbe Regel wie Chart und Titelseite) oder None."""
+    d = pd.DataFrame({k: m[tk] for k, m in B.items()}).dropna() if tk in B["Close"].columns else None
+    return zonen.frei({"df": d}) if d is not None and len(d) else None
+
+
 def rechnen(netz=False):
     """Alles rechnen und speichern; Ergebnis als dict. netz=True (Nachtlauf): Fundamentdaten der Titel in einer Stufe
     holen, wenn älter als 12 Stunden (quellen.laden)."""
@@ -361,6 +368,7 @@ def rechnen(netz=False):
     V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
     O = massive.kursmatrix(alle, 100, "Open")     # letzte Zahlen höchstens ein Quartal her
     H = massive.kursmatrix(alle, 100, "High")
+    B = massive.kursmatrix(alle, zonen.BAHN_JAHRE * JAHR_TAGE, ["High", "Low", "Close"])   # Festungen für ✈️
     tv = _tv()
     titel_, ohne_daten = [], []
     for t in alle:
@@ -435,7 +443,8 @@ def rechnen(netz=False):
              "branche_feld": bra["feld"] if bra else None,
              "watchlist": tk in wl, "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
-             "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
+             "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2),
+             "frei": _frei(B, tk)}
         x["richtung"] = richtung(x["rs_tempo"], x["rs_vortempo"])
         x["klasse"] = klasse(x)                  # Schlachtordnung statt Stufe (Micky 22.11.2026)
         if x["klasse"] in VORNE_KLASSEN and netz:   # neue Zahlen holen nur für Garde, Angriff und Vorhut …
