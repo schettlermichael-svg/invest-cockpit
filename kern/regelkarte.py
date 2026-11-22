@@ -709,27 +709,15 @@ BEREICHE = [
                "Körper unter 2 ATR; jede Zone mindestens 3 Kerzen; der Impuls beginnt so spät wie möglich. Offen = seit dem Ende nie wieder in "
                "der Wertzone; nackter POC = seitdem nie berührt. Ein Profil je Ebene: Zeit und Volumen gespiegelt ab Beginn "
                "des Impulses der Zone von heute. Ausbruch und Gegentrade frisch bis 5 Schlüsse.",
-         messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.band", "zonen.wanderung", "zonen.fuehrte",
-                  "zonen.profil_details", "zonen.korridor",
+         messung=["zonen.lage", "zonen.trade", "zonen.historie", "zonen.fuehrte", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer – Mindestlänge 3 gesetzt, ungemessen"),
-    dict(name="Gedächtnis: gleiche Lage früher (fraktal)", quelle="Micky 21.11.2026 (der Markt wiederholt seine Muster)",
-         regel="Fingerabdruck der Zone von heute unabhängig vom Preis: Impuls davor (auf, ab, keiner), Treppe zur Zone "
-               "davor (↑, ↓, =), POC im oberen, mittleren oder unteren Drittel. Gesucht in allen Zonen desselben Titels auf "
-               "Woche, Tag und Stunde; Ausgang = erster Schluss außerhalb des Körpers, Weite bis zur nächsten Zone in "
-               "Zonenhöhen. Unter 3 Treffern ohne den Bauch. Häufigkeit, kein Urteil.",
-         messung=["zonen.gedaechtnis", "zonen.gedaechtnis_text"], pruefer=[],
-         luecke="kein Prüfer – Schwelle 3 gesetzt, ungemessen"),
-    dict(name="Lagebeurteilung nach Alexander: 7 Fragen, Szenarien, Festungen", quelle="Micky 21.11.2026",
-         regel="Großes Heer (Richtung der höheren Ebene), Schlachtfeld (Form P/b/D), Front (POC-Wanderung über 5 Kerzen, ab "
-               "1 Stufe), Druck (Tiefs und Hochs der drei Drittel), Truppen (Käuferanteil über 55 % bzw. unter 45 %, sonst "
-               "CMF), Moral (RS gegen den Index über 10 Kerzen ab 1 %), Geschichte (Gedächtnis ab 3 Treffern) – je 🦬/🐻/⚪, "
-               "gleich gewichtet; Hauptszenario Mehrheit, bei Gleichstand die Woche. Festungen: Umkehrpreise (2 Wendepunkte "
-               "innerhalb ¼ ATR, Fenster 3 Kerzen, einer mit Volumen über dem 50er-Schnitt), gebrochene Kanten alter Zonen, "
-               "AVWAP Zahlen/Hoch/Tief; je Richtung 2, näher als ½ ATR verschmolzen. Schatten: Docht in eine Festung mit "
-               "Volumen, Schluss zurück, letzte 3 Kerzen.",
-         messung=["zonen.lagebeurteilung", "zonen.lagebericht", "zonen.festungen"], pruefer=[],
-         luecke="kein Prüfer – alle Schwellen gesetzt, ungemessen; der Prüfstand misst die Trefferquote"),
+    dict(name="Festungen", quelle="Micky 21.11.2026",
+         regel="Umkehrpreise (2 Wendepunkte innerhalb ¼ ATR, Fenster 3 Kerzen, einer mit Volumen über dem 50er-Schnitt), "
+               "gebrochene Kanten alter Zonen, AVWAP Zahlen/Hoch/Tief; je Richtung 2, näher als ½ ATR verschmolzen. "
+               "Lagebeurteilung, Szenarien, Schatten und Gedächtnis am 22.11.2026 entfernt (reagieren statt antizipieren).",
+         messung=["zonen.festungen"], pruefer=[],
+         luecke="kein Prüfer – alle Schwellen gesetzt"),
     dict(name="Heiße Titel am Morgen", quelle="Micky 17.11.2026",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: die ersten 5 Long und 5 Short der Liste „Einsatzbereit“ in "
                "ihrer Rangfolge (ohne Depot-Plätze), je Titel Setup, 💥, Einstieg mit Abstand und RS-Rang; ohne "

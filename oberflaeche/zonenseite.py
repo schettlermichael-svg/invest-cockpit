@@ -53,9 +53,7 @@ def rechnen(tk, laufend=False):
     except Exception:  # noqa: BLE001 – Technik: ohne AVWAP keine AVWAP-Festung
         avwaps = []
     f = zonen.fuehrte(ebenen, avwaps)
-    f["gedaechtnis"] = {n: zonen.gedaechtnis(ebenen, f["lage"], n) for n in zonen.EBENEN}
     cmf = tiefe.cmf(df)["wert"]
-    f["beurteilung"] = {n: zonen.lagebeurteilung(ebenen, f, rs[n], cmf, n) for n in zonen.EBENEN}
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
             "laufend": bool(df.attrs.get("laufend")), "rs": rs, "hist": f["alt"]}
 
@@ -88,7 +86,8 @@ def _karte_ebene(name, la, aktiv=False):
 
 
 def kopf(r):
-    """Kopfzeile: Titel, Kurs, Einigkeit, Geld; je Ebene Phase und Zone; der Trade; Muster und Gedächtnis."""
+    """Kopfzeile: Titel, Kurs, Einigkeit, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Phase und Zone; der
+    Trade; das Muster der Ebenen. Aufgeräumt 22.11.2026: ohne Lagebeurteilung und Gedächtnis."""
     import zonen
     f, df = r["fuehrte"], r["df"]
     kurs = float(df["Close"].iloc[-1])
@@ -104,11 +103,11 @@ def kopf(r):
                       f'{zahl(tr["stopp"])} · Ziel {zahl(tr["ziel"])}{grund} · {tr["ampel"]} CRV {zahl(tr["crv"] or 0, 1)}</div>')
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Zonen-Trade</div>'
-    bu = f["beurteilung"]["Tag"]
-    satz, szen = zonen.lagebericht(bu, f["lage"]["Tag"])
-    zeichen_ = "".join(f'<span title="{q}" style="margin-right:10px;white-space:nowrap">'
-                       f'{ {1: "🦬", -1: "🐻", 0: "⚪"}[bu["antworten"][q]]} <span style="font-size:12px;color:{TEXT_3}">{q}</span></span>'
-                       for q in zonen.FRAGEN) if bu else ""
+    import rueckenwind_seite
+    wind = rueckenwind_seite.titel_zeile(r["tk"])
+    wind_html = (f'<div style="margin-top:10px;font-size:15px;color:{TEXT}">Rückenwind: '
+                 + ' <span style="color:{0}">·</span> '.format(TEXT_3).join(t(w) for w in wind) + '</div>') if wind else (
+        f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Rückenwind: noch kein Stand des Nachtlaufs</div>')
     muster = {"innen": "🟢 Tageszone in der Wochenzone", "darüber": "🦬 Tageszone über der Wochenzone",
               "darunter": "🐻 Tageszone unter der Wochenzone", "überlappend": "🟡 Tageszone am Rand der Wochenzone",
               None: "⚪ Muster ungemessen"}[f["muster"]]
@@ -119,16 +118,11 @@ def kopf(r):
             f'<span style="font-size:22px" title="Einigkeit der Ebenen">{zonen.einig_zeichen(f)}</span>'
             f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
+            f'{wind_html}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Trade</div>{trade_html}</div></div>'
-            f'<div style="margin-top:12px;font-size:18px;color:{TEXT}">{t(satz)}</div>'
-            f'<div style="margin-top:4px;font-size:14px;color:{TEXT_2}">{t(szen)}</div>'
-            f'<div style="display:flex;flex-wrap:wrap;margin-top:8px;font-size:16px">{zeichen_}'
-            f'<span style="font-size:13px;color:{TEXT_3};align-self:center">{muster}</span></div>'
-            f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">{t(zonen.gedaechtnis_text(f["gedaechtnis"]["Tag"]))}'
-            f'<span style="color:{TEXT_3}"> · Tageszone, Häufigkeit der Vergangenheit, kein Urteil · Lagebeurteilung '
-            f'gleich gewichtet, bis der Prüfstand gemessen hat</span></div>')
+            f'<div style="margin-top:8px;font-size:13px;color:{TEXT_3}">{muster}</div>')
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
@@ -153,7 +147,7 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], r["hist"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
-                           f["gedaechtnis"][ebene], f["festungen"][ebene], f["beurteilung"][ebene])
+                           f["festungen"][ebene])
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──

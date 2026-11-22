@@ -45,8 +45,7 @@ Zonen der Vergangenheit (Micky 21.11.2026: eine Regel für Woche, Tag und Stunde
 Buchstabe (Micky 21.11.2026, Steidlmayer/Dalton): die Form des Profils der Formation (ab Impulsbeginn, ohne Impuls die
   Zone) – POC im oberen Drittel P, unteren b, sonst D; widerspricht das Zeitprofil, ein Blitz ⚡ (tiefe.profilform). Die
   Impulsrichtung steht als Pfeil daneben. In der Balance zeigt die Form die Richtung (P auf, b ab, D offen).
-Phasenband (Micky 21.11.2026): Farbe = Richtung, Stärke = Phase – Impuls kräftig, Ausbruch mittel (💥), Zone blass in
-  der Richtung der Treppe (POC über bzw. unter der Wertzone der Zone davor), gelb nur ohne Richtung, Scheitern orange.
+Aufgeräumt 22.11.2026: ohne Phasenband, POC-Treppe, Wanderung, Korridor, Gedächtnis und Lagebeurteilung.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert
   am Beginn des Impulses der Zone von heute (Stiel = Impuls, Bauch = Zone: das Profil zeigt den Buchstaben), ohne
   Impuls am Beginn der Balance; aus den feineren Kerzen der Ebene. Sein POC ist der POC der Zone. Muster: liegt die Tageszone innerhalb der Wochenzone, setzt
@@ -130,22 +129,6 @@ def profil_seit(e, ab_):
     return pr
 
 
-def wanderung(e, beginn):
-    """POC-Wanderung in der Zone von heute: POC des Volumens seit Beginn der Zone bis zu jeder Kerze (Serie), aus den
-    feineren Kerzen, sonst aus denen der Ebene."""
-    df, fein = e["df"], e.get("fein")
-    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
-    von = _von_bis(e, beginn)[0]
-    tage = df.index[df.index >= pd.Timestamp(beginn)]
-    f_ = fein[fein.index >= von] if fein is not None and len(fein) else None
-    if f_ is None or not len(f_) or f_.index[0] > von + pd.Timedelta(days=tiefe.ZEIT_VERSATZ):
-        f_ = None
-    werte = {}
-    for t in tage:
-        bis = f_[f_.index < _von_bis(e, t)[1]] if f_ is not None else df[(df.index >= pd.Timestamp(beginn)) & (df.index <= t)]
-        if len(bis):
-            werte[t] = tiefe.profil(bis["High"], bis["Low"], bis["Volume"], schritt)["poc"]
-    return pd.Series(werte, dtype=float)
 
 
 def lage(e):
@@ -354,42 +337,8 @@ def _kette(e):
     return e["_kette"]
 
 
-def treppe(vor, z):
-    """Richtung der Treppe von Zone vor zu Zone z: 1 Wert steigt (POC über der alten Wertzone), −1 fällt, 0 überlappt."""
-    if not vor:
-        return 0
-    return 1 if z["poc"] > vor["vah"] else -1 if z["poc"] < vor["val"] else 0
 
 
-def band(e, la=None):
-    """Phase und Richtung je Kerze (Micky 21.11.2026: Farbe = Richtung, Stärke = Phase): i+/i- Impuls, a+/a- Ausbruch
-    und Lauf danach, f Scheitern, b+/b- Zone in steigender bzw. fallender Treppe, b Zone ohne Richtung (überlappt oder
-    erste Zone). Jede Zone der Kette zählt, auch eine zu kurze für einen Kasten (ihr Wert dann aus den Kerzen der Ebene)."""
-    roh, df = list(_kette(e)[1]), e["df"]
-    bekannt = {z["start"]: z for z in historie(e)}
-    schritt = tiefe.stufe(float(df["Close"].iloc[-1]))
-    zonen_ = []
-    for z in _kette(e)[0]:
-        t0 = df.index[z["s"]]
-        if la and t0 >= la["beginn"]:
-            continue
-        if t0 not in bekannt:
-            teil = df.iloc[z["s"]:z["e"] + 1]
-            pr = tiefe.profil(teil["High"], teil["Low"], teil["Volume"], schritt)
-            bekannt[t0] = {"start": t0, "ende": df.index[z["e"]], "poc": pr["poc"], "val": pr["val"], "vah": pr["vah"]}
-        zonen_.append(bekannt[t0])
-    if la:
-        pr = la["profil"]
-        zonen_.append({"start": la["beginn"], "ende": df.index[-1], "poc": la["poc"], "val": pr["val"], "vah": pr["vah"]})
-    vor = None
-    for z in zonen_:
-        r = treppe(vor, z)
-        a, b_ = int(df.index.searchsorted(z["start"])), int(df.index.searchsorted(z["ende"]))
-        for i in range(a, min(b_, len(df) - 1) + 1):
-            if roh[i] == "b" and r:
-                roh[i] = "b+" if r > 0 else "b-"
-        vor = z
-    return roh
 
 
 KNOTEN_ANTEIL = 0.5        # Knoten (HVN): Gipfel mit mindestens ½ des POC-Volumens (Claude 21.11.2026, ungemessen)
@@ -428,94 +377,15 @@ def profil_details(pr):
             "duenn": tiefe.zonen(pr)["duenn"], "einzel": einzel}
 
 
-GEDAECHTNIS_MIN = 3        # unter 3 Treffern wird ohne den Bauch gesucht (Claude 21.11.2026, ungemessen)
 DRITTEL = tiefe.DRITTEL    # Bauch: POC im oberen, mittleren oder unteren Drittel der Zone – eine Quelle
 
 
-def _abdruck(z, vor):
-    """Fingerabdruck einer Zone, unabhängig vom Preisniveau (Micky 21.11.2026): Impuls davor (1 auf, −1 ab, 0 keiner),
-    Treppe zur Zone davor (1, −1, 0) und Lage des POC im Körper (o, m, u)."""
-    imp = 1 if z.get("auf") is True else -1 if z.get("auf") is False else 0
-    h = z["hoch"] - z["tief"]
-    teil = (z["poc"] - z["tief"]) / h if h > 0 else 0.5            # Technik: ohne Höhe die Mitte
-    bauch = "o" if teil > (DRITTEL - 1) / DRITTEL else "u" if teil < 1 / DRITTEL else "m"
-    return imp, treppe(vor, z), bauch
 
 
-def _ausgang(e, hist, i):
-    """Wie Zone i ausging: erster Schluss außerhalb ihres Körpers (oben/unten) und wie weit der Kurs danach lief, bis die
-    nächste Zone begann – in Zonenhöhen (mindestens ¼ ATR je Höhe). → (Seite, Weite) oder (None, None)."""
-    df, z = e["df"], hist[i]
-    nach = df[df.index > z["ende"]]
-    if i + 1 < len(hist):
-        nach = nach[nach.index < hist[i + 1]["start"]]
-    if not len(nach):
-        return None, None
-    c = nach["Close"].to_numpy(float)
-    raus = [k for k, x in enumerate(c) if x > z["hoch"] or x < z["tief"]]
-    if not raus:
-        return None, None
-    seite = "oben" if c[raus[0]] > z["hoch"] else "unten"
-    h = max(z["hoch"] - z["tief"], (e["atr"] or 0) * STOPP_ATR) or 1.0
-    weite = (float(nach["High"].max()) - z["hoch"]) / h if seite == "oben" else (z["tief"] - float(nach["Low"].min())) / h
-    return seite, round(max(0.0, weite), 1)
 
 
-def gedaechtnis(ebenen, la_alle, name):
-    """Das Gedächtnis (Micky 21.11.2026: der Markt wiederholt seine Muster, auch auf anderem Niveau): dieselbe Lage wie
-    die Zone von heute der Ebene name – gleicher Fingerabdruck – in der Vergangenheit desselben Titels auf allen drei
-    Ebenen (fraktal), mit ihrem Ausgang. Unter 3 Treffern ohne den Bauch. Eine Häufigkeit, kein Urteil."""
-    e, la = ebenen.get(name), la_alle.get(name)
-    if not e or not la:
-        return None
-    hist = historie(e)
-    pb = e.get("pbd")
-    lo, hi = la["zone"]
-    jetzt = {"auf": pb["aufwaerts"] if pb else None, "tief": lo, "hoch": hi, "poc": la["poc"],
-             "val": la["profil"]["val"], "vah": la["profil"]["vah"]}
-    fp = _abdruck(jetzt, hist[-1] if hist else None)
-    kandidaten = []
-    for n in EBENEN:
-        h_ = historie(ebenen.get(n)) if ebenen.get(n) else []
-        for i, z in enumerate(h_):
-            seite, weite = _ausgang(ebenen[n], h_, i)
-            if seite:
-                kandidaten.append({"ebene": n, "start": z["start"], "ende": z["ende"], "tief": z["tief"], "hoch": z["hoch"],
-                                   "abdruck": _abdruck(z, h_[i - 1] if i else None), "seite": seite, "weite": weite})
-    treffer = [k for k in kandidaten if k["abdruck"] == fp]
-    locker = len(treffer) < GEDAECHTNIS_MIN
-    if locker:
-        treffer = [k for k in kandidaten if k["abdruck"][:2] == fp[:2]]
-    richt = fp[0]
-    oben = [k for k in treffer if k["seite"] == "oben"]
-    unten = [k for k in treffer if k["seite"] == "unten"]
-    mit, gegen = (oben, unten) if richt > 0 else (unten, oben) if richt < 0 else ([], [])
-    mittel = lambda xs: round(sum(k["weite"] for k in xs) / len(xs), 1) if xs else None   # noqa: E731
-    return {"abdruck": fp, "locker": locker, "n": len(treffer), "richtung": richt,
-            "je_ebene": {n: sum(1 for k in treffer if k["ebene"] == n) for n in EBENEN},
-            "mit": len(mit), "gegen": len(gegen), "weite_mit": mittel(mit), "weite_gegen": mittel(gegen),
-            "auf": len(oben), "ab": len(unten), "weite_auf": mittel(oben), "weite_ab": mittel(unten), "treffer": treffer}
 
 
-def gedaechtnis_text(g):
-    """Eine Zeile für Kopf und Chart."""
-    if not g:
-        return "🧠 Gedächtnis ungemessen"
-    imp, tr, bauch = g["abdruck"]
-    lage_ = (f'{"Impuls auf" if imp > 0 else "Impuls ab" if imp < 0 else "ohne Impuls"} · Treppe '
-             f'{"↑" if tr > 0 else "↓" if tr < 0 else "="}' + ("" if g["locker"] else
-             f' · POC {"oben" if bauch == "o" else "unten" if bauch == "u" else "Mitte"}'))
-    if not g["n"]:
-        return f"🧠 diese Lage ({lage_}) gab es noch nie"
-    wo = " · ".join(f"{v} {n}" for n, v in g["je_ebene"].items() if v)
-    if imp:
-        pf = "↑" if imp > 0 else "↓"
-        aus = (f'{g["mit"]}× 💥 weiter {pf}' + (f' (Ø {g["weite_mit"]:.1f} Zonenhöhen)'.replace(".", ",") if g["mit"] else "")
-               + f' · {g["gegen"]}× 🦊 gescheitert' + (f' (Ø {g["weite_gegen"]:.1f})'.replace(".", ",") if g["gegen"] else ""))
-    else:
-        aus = (f'{g["auf"]}× ↑' + (f' (Ø {g["weite_auf"]:.1f} Zonenhöhen)'.replace(".", ",") if g["auf"] else "")
-               + f' · {g["ab"]}× ↓' + (f' (Ø {g["weite_ab"]:.1f})'.replace(".", ",") if g["ab"] else ""))
-    return f'🧠 {g["n"]}× diese Lage ({lage_}; {wo}) → {aus}'
 
 
 UMKEHR_FENSTER = 3         # Wendepunkt: höchstes Hoch bzw. tiefstes Tief von 3 Kerzen davor und danach (ungemessen)
@@ -602,137 +472,12 @@ def festungen(e, la, avwaps=()):
     return aus
 
 
-WANDER_N = 5               # Wanderung: POC heute gegen vor 5 Kerzen der Zone
-GLEICH = 0.5               # Truppen: Gleichstand von Käufern und Verkäufern …
-KAUF_GRENZE = 0.05         # … über 55 % bzw. unter 45 % Käufer zählt
-RS_N = 10                  # Moral: RS-Linie über die letzten 10 Kerzen …
-RS_SCHWELLE = 0.01         # … um mindestens 1 % gestiegen bzw. gefallen (wie der RS-Pfeil im Chart)
-SCHATTEN_N = 3             # Schatten: in den letzten 3 Kerzen
-FRAGEN = ("Großes Heer", "Schlachtfeld", "Front", "Druck", "Truppen", "Moral", "Geschichte")
-HOEHER = {"Woche": "Woche", "Tag": "Woche", "Stunde": "Tag"}
 
 
-def lagebeurteilung(ebenen, f, rs=None, cmf=None, name="Tag"):
-    """Die Lagebeurteilung nach Alexander (Micky 21.11.2026): sieben Fragen je 🦬 (1), 🐻 (−1) oder ⚪ (0) –
-    Großes Heer (Richtung der höheren Ebene, auf der Woche ihre Treppe), Schlachtfeld (Form P/b/D), Front (Wanderung
-    des POC in der Zone), Druck (Tiefs und Hochs der drei Drittel der Zone, Quetschung), Truppen (Käuferanteil im
-    Profil, sonst CMF), Moral (RS gegen den Index über 10 Kerzen), Geschichte (🧠 Gedächtnis ab 3 Treffern). Haupt-
-    szenario = Mehrheit, bei Gleichstand die Woche; Ziel die nächste Festung in seiner Richtung, widerlegt jenseits der
-    Kante der Zone; das Gegenszenario spiegelbildlich. Angriffspunkt: Front und Druck zeigen auf dieselbe Kante wie das
-    Hauptszenario, solange der Kurs in der Zone steht. Schatten 🐴 (Bukephalos): ein Docht sticht mindestens ¼ ATR
-    durch eine Festung, mit Volumen über dem Schnitt, der Schluss kehrt zurück (letzte 3 Kerzen). Gleich gewichtet, bis der
-    Prüfstand gemessen hat."""
-    import numpy as np
-    e, la = ebenen.get(name), f["lage"].get(name)
-    if not e or not la:
-        return None
-    df = e["df"]
-    lo, hi = la["zone"]
-    kurs = la["kurs"]
-    schritt = tiefe.stufe(kurs)
-    antw = {}
-    hl = f["lage"].get(HOEHER[name])
-    if name == "Woche":
-        h_ = historie(e)
-        antw["Großes Heer"] = treppe(h_[-1], {"poc": la["poc"]}) if h_ else 0
-    else:
-        antw["Großes Heer"] = hl["richtung"] if hl else 0
-    antw["Schlachtfeld"] = {"P": 1, "b": -1, "D": 0}[la["form"]]
-    w_ = wanderung(e, la["beginn"])
-    d_ = float(w_.iloc[-1] - w_.iloc[max(0, len(w_) - 1 - WANDER_N)]) if len(w_) > 1 else 0.0
-    antw["Front"] = 0 if abs(d_) < schritt else int(np.sign(d_))
-    i0 = int(df.index.searchsorted(la["beginn"]))
-    dr = tiefe.drittel(df, i0)
-    druck = 0
-    if dr:
-        tiefs, hochs = dr
-        druck = 1 if tiefs[2] > tiefs[0] and hochs[2] >= hochs[0] else -1 if hochs[2] < hochs[0] and tiefs[2] <= tiefs[0] else 0
-    antw["Druck"] = druck
-    pr = la["profil"]
-    anteil = float(np.sum(pr["kauf"]) / np.sum(pr["volumen"])) if np.sum(pr["volumen"]) else GLEICH
-    truppen = 1 if anteil > GLEICH + KAUF_GRENZE else -1 if anteil < GLEICH - KAUF_GRENZE else 0
-    if not truppen and cmf is not None:
-        truppen = 1 if cmf > tiefe.CMF_GRENZE else -1 if cmf < -tiefe.CMF_GRENZE else 0
-    antw["Truppen"] = truppen
-    moral = 0
-    idx = (rs or {}).get("index")
-    if idx is not None:
-        rel = (df["Close"] / idx.reindex(df.index, method="ffill")).dropna()
-        if len(rel) > RS_N:
-            p_ = float(rel.iloc[-1] / rel.iloc[-1 - RS_N] - 1)
-            moral = 1 if p_ >= RS_SCHWELLE else -1 if p_ <= -RS_SCHWELLE else 0
-    antw["Moral"] = moral
-    g = (f.get("gedaechtnis") or {}).get(name)
-    antw["Geschichte"] = 0 if not g or g["n"] < GEDAECHTNIS_MIN or g["auf"] == g["ab"] else (1 if g["auf"] > g["ab"] else -1)
-    summe = sum(antw.values())
-    wl = f["lage"].get("Woche")
-    haupt = int(np.sign(summe)) or ((wl or {}).get("richtung") or 0)
-    dafuer = sum(1 for v in antw.values() if haupt and v == haupt)
-    fe = f["festungen"].get(name) or {"oben": [], "unten": []}
-
-    def szenario(r):
-        if not r:
-            return None
-        ziele = fe["oben" if r > 0 else "unten"]
-        juengst = df.iloc[-WANDER_N:]                  # außerhalb der Zone gegen die Richtung: das jüngste Extrem
-        if lo <= kurs <= hi:
-            kante = lo if r > 0 else hi
-        elif kurs > hi:
-            kante = hi if r > 0 else float(juengst["High"].max())
-        else:
-            kante = float(juengst["Low"].min()) if r > 0 else lo
-        return {"richtung": r, "ziel": ziele[0] if ziele else None, "falsch": float(kante),
-                "haeufig": (g["auf"] if r > 0 else g["ab"]) if g and g["n"] else None, "n": g["n"] if g else 0}
-    angriff = None
-    if haupt and lo <= kurs <= hi and antw["Front"] == haupt and antw["Druck"] == haupt:   # nur in der Zone
-        angriff = hi if haupt > 0 else lo
-    schatten = None                                    # der Docht sticht mindestens ¼ ATR durch die Festung
-    tief_ = (e["atr"] or 0) * STOPP_ATR
-    vs = df["Volume"].rolling(UMKEHR_VOL_SCHNITT, min_periods=1).mean().shift(1)
-    for i in range(max(1, len(df) - SCHATTEN_N), len(df)):
-        k = df.iloc[i]
-        if not float(k["Volume"]) > float(vs.iloc[i]):
-            continue
-        for x in fe["unten"]:
-            if k["Low"] <= x["preis"] - tief_ and k["Close"] > x["preis"]:
-                schatten = {"richtung": 1, "preis": x["preis"], "tag": df.index[i]}
-        for x in fe["oben"]:
-            if k["High"] >= x["preis"] + tief_ and k["Close"] < x["preis"]:
-                schatten = {"richtung": -1, "preis": x["preis"], "tag": df.index[i]}
-    return {"antworten": antw, "haupt": haupt, "dafuer": dafuer, "fragen": len(FRAGEN),
-            "szenario": szenario(haupt), "gegen": szenario(-haupt) if haupt else None,
-            "angriff": angriff, "schatten": schatten}
 
 
-def lagebericht(b, la):
-    """Ein Satz zur Lage und die beiden Szenarien – für Kopf und Chart."""
-    if not b or not la:
-        return "⚪ Lage ungemessen", ""
-    z = "🦬" if b["haupt"] > 0 else "🐻" if b["haupt"] < 0 else "🟡"
-    wer = {1: "Käufer", -1: "Verkäufer"}.get(b["haupt"], "Keiner")
-    satz = (f'{z} {wer} {"führen" if b["haupt"] else "führt"} – {b["dafuer"]} von {b["fragen"]} Fragen'
-            f'{" · ⚔️ Angriffspunkt " + format(b["angriff"], ".2f").replace(".", ",") if b["angriff"] else ""}'
-            f'{" · 🐴 Schatten bei " + format(b["schatten"]["preis"], ".2f").replace(".", ",") if b["schatten"] else ""}')
-    teile = []
-    for s_, wort in ((b["szenario"], "Haupt"), (b["gegen"], "Gegen")):
-        if not s_:
-            continue
-        pf = "↑" if s_["richtung"] > 0 else "↓"
-        ziel = (f'{s_["ziel"]["preis"]:.2f} ({s_["ziel"]["grund"][0]})'.replace(".", ",", 1) if s_["ziel"]
-                else "freies Gelände")
-        haeufig = f' · Gedächtnis {s_["haeufig"]} von {s_["n"]}' if s_["haeufig"] is not None else ""
-        teile.append(f'{wort} {pf} {ziel}{haeufig} · falsch {"unter" if s_["richtung"] > 0 else "über"} '
-                     f'{s_["falsch"]:.2f}'.replace(".", ","))
-    return satz, " — ".join(teile)
 
 
-def korridor(alt, kurs):
-    """(nächster nackter POC über dem Kurs, nächster darunter) – je Zone oder None (Micky 21.11.2026: der Raum zwischen
-    zwei Magneten ist der wahrscheinliche Korridor der nächsten Bewegung, Dalton: von Bezug zu Bezug)."""
-    nackt = [z for z in alt if z.get("nackt")]
-    oben = min((z for z in nackt if z["poc"] > kurs), key=lambda z: z["poc"] - kurs, default=None)
-    unten = min((z for z in nackt if z["poc"] < kurs), key=lambda z: kurs - z["poc"], default=None)
-    return oben, unten
 
 
 def fuehrte(ebenen, avwaps=()):

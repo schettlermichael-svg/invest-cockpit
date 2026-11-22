@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 
-from rueckenwind import ANGRIFF_KLASSEN, KLASSEN, ZUFLUSS, abstand_wort, klasse, richtung  # noqa: E402  eine Quelle (rueckenwind)
+from rueckenwind import ANGRIFF_KLASSEN, KLASSEN, ZUFLUSS, abstand_wort, klasse, laden, richtung  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
@@ -298,6 +298,27 @@ def _ordnung(x):
     return (k or len(KLASSEN) + 1, not x.get("rs_hoch_vor_kurs"), AMPEL_ORDNUNG.get(x.get("geld_ampel"), len(AMPEL_ORDNUNG)),
             bool(x.get("einzelkaempfer")), AMPEL_ORDNUNG.get((x.get("zahlen") or {}).get("ampel"), len(AMPEL_ORDNUNG)),
             -x["rang"])
+
+
+def titel_zeile(tk):
+    """Rückenwind eines Titels für den Kopf der Titelseite (Micky 22.11.2026): dieselben Zeichen wie in der Liste,
+    als Liste von Teilen; leer ohne Stand des Nachtlaufs."""
+    erg = laden() or {}
+    x = (erg.get("titel") or {}).get(tk)
+    if not x:
+        return []
+    k, r, ab = klasse(x), _richtung(x), x.get("abstand_hoch")
+    wort, z = abstand_wort(ab), x.get("zahlen") or {}
+    termin, warn = _termin(x, erg["stand"])
+    return [f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse",
+            *(["🦈 RS-Hoch vor Kurs"] if x.get("rs_hoch_vor_kurs") else []),
+            f'RS-Linie {PFEIL.get(r, "")} {r or "–"} {_rs_linie(x)}'.strip(),
+            f'Rang {x["rang_vor4"]} → {x["rang"]}',
+            "Volumen " + (_zufluss(x.get("zufluss"), x.get("trocken")) or "–"),
+            *([f"Hoch {HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %"] if wort else []),
+            "Geld " + PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
+            "Zahlen " + PUNKT[z.get("ampel") or "grau"]
+            + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else "")]
 
 
 def _link(tk, text):
