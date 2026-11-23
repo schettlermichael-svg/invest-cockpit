@@ -81,7 +81,7 @@ def _wochenfeld(punkt):
 
 
 def setups():
-    """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „💥 Fortsetzung · am Pivot“}): Zone der
+    """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🦬 Fortsetzung · am Pivot“}): Zone der
     Tagesebene im Einklang mit dem Zirkel, dieselbe Regel wie Titelseite und Chart (Micky 22.11.2026)."""
     import zirkel
     return {tk: zirkel.trade_wort(f) for tk, f in zirkel.feld().items() if f.get("trade")}

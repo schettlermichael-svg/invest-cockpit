@@ -42,7 +42,7 @@ Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11
   Dazu 3–5 direkte Wettbewerber als US-Börsenkürzel. Primärquellen zuerst: Quartalsbericht, 8-K/10-Q bei der SEC.
 Jede Zeile in Unternehmen und Quartal beginnt mit genau einem Zeichen, immer in derselben Bedeutung:
   🦬 Käufer haben die Kontrolle · 🐻 Verkäufer haben die Kontrolle · 🦈 früher Vorteil, den die Masse noch nicht sieht ·
-  🔥 Beschleunigung · 💥 Auslöser · 🦊 Falle · 🌞 Rückenwind/Geldzufluss · ❄️ Gegenwind/Geldabfluss ·
+  🔥 Beschleunigung · 🦊 Falle · 🌞 Rückenwind/Geldzufluss · ❄️ Gegenwind/Geldabfluss ·
   🪝 Widerstand/Unterstützung · sonst 🟢 Stärke, 🟡 gemischt, 🔴 Schwäche · ⚪ ungemessen. Veränderungen als vorher → heute.
 
 Das System: Alles läuft im Zirkel, jede Phase trägt den Keim der nächsten. Ein Trend bleibt in Bewegung, bis eine

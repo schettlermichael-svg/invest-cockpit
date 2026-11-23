@@ -148,7 +148,7 @@ def ampelzeile(name, ampel, text="", hilfe=""):
 # einem Zeichen, immer in derselben Bedeutung; Bildzeichen sparsam, sonst die Ampel.
 ZEICHEN_LISTE = (("🦬", "Käufer haben die Kontrolle (long)"), ("🐻", "Verkäufer haben die Kontrolle (short)"),
                  ("🦈", "früher Vorteil – ein Signal, das die Masse noch nicht sieht"),
-                 ("🔥", "Beschleunigung (Gewinn, Umsatz, Volumen ab 1,5-fach)"), ("💥", "Auslöser"), ("🦊", "Falle"),
+                 ("🔥", "Beschleunigung (Gewinn, Umsatz, Volumen ab 1,5-fach)"), ("🦊", "Falle"),
                  ("🌞", "Rückenwind, Geldzufluss"), ("❄️", "Gegenwind, Geldabfluss"), ("🪝", "Widerstand oder Unterstützung"),
                  ("🟢", "Stärke"), ("🟡", "gemischt"), ("🔴", "Schwäche"), ("⚪", "ungemessen"),
                  ("⚡", "Zeit und Volumen widersprechen sich"),

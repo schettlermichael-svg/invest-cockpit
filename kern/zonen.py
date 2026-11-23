@@ -11,8 +11,8 @@ Die Zone je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
                  Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Base, aus der er kam.
   Stunde         die Balance nach Dalton (tiefe.struktur): höchstes Hoch und tiefstes Tief seit dem Anker – die
                  Feinzeichnung für den Einstieg.
-Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Rücksetzer läuft (Zone noch offen) · 💥 am Pivot (bis 3 % darunter) ·
-  💥 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Base
+Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Rücksetzer läuft (Zone noch offen) · 🦬 am Pivot (bis 3 % darunter) ·
+  🦬 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Base
   (Kurs läuft am Hoch).
 Die drei Trades (Tageszone, Micky 22.11.2026):
   Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = Tief der letzten
@@ -42,13 +42,13 @@ from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Mick
 
 EBENEN = ("Woche", "Tag", "Stunde")
 BAHN_JAHRE = 2              # Festungen und ✈️: zwei Jahre zurück
-PHASE = {"aufbau": ("🟡", "Base im Aufbau"), "ruecksetzer": ("🟡", "Rücksetzer läuft"), "kante": ("💥", "am Pivot"),
-         "ausbruch": ("💥", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
+PHASE = {"aufbau": ("🟡", "Base im Aufbau"), "ruecksetzer": ("🟡", "Rücksetzer läuft"), "kante": ("🦬", "am Pivot"),
+         "ausbruch": ("🦬", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
          "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Base – Kurs läuft am Hoch"),
-         "balance": ("🟡", "Balance"), "rand_oben": ("💥", "am oberen Rand"), "rand_unten": ("💥", "am unteren Rand")}
+         "balance": ("🟡", "Balance"), "rand_oben": ("🦬", "am oberen Rand"), "rand_unten": ("🐻", "am unteren Rand")}
 RICHTUNG = {"ausbruch": 1, "ruecktest": 1, "fehl": -1, "bruch": -1}
 TRADE_NAME = {"ausbruch": "Ausbruch", "ruecktest": "Rücktest", "short": "Bruch der Unterkante"}
-TRADE_ZEICHEN = {"ausbruch": "💥", "ruecktest": "🪝", "short": "🐻"}
+TRADE_ZEICHEN = {"ausbruch": "🦬", "ruecktest": "🪝", "short": "🐻"}
 
 
 SPANNE = {"Woche": pd.Timedelta(days=7), "Tag": pd.Timedelta(days=1), "Stunde": pd.Timedelta(hours=1)}

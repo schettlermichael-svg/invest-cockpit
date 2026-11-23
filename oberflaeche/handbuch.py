@@ -12,7 +12,7 @@ TEXT = f"""**Der Zirkel – alles fließt, und jedes trägt sein Gegenteil.** Ni
 | Momentum | Masse × Geschwindigkeit | Sunzis Wildbach | Kullamägi | 🚀, Volumen-Spur |
 | Trend | ein Körper in Bewegung bleibt in Bewegung | Newtons Trägheit | Dow, Livermore | Zirkel Phase 2, RS-Richtung |
 | Balance | die Waage mit zwei Schalen (*bilanx*) | Heraklits Bogen | Steidlmayer, Dalton | Zone, Balance der Stunde, 🏜️ |
-| Disbalance | eine Schale wiegt schwerer | Kanōs gebrochenes Gleichgewicht | Livermore, Minervini | 💥 Ausbruch, Trade |
+| Disbalance | eine Schale wiegt schwerer | Kanōs gebrochenes Gleichgewicht | Livermore, Minervini | 🦬 Ausbruch, Trade |
 | Widerstand | was dagegen steht, formt die Stärke | Marc Aurels Hindernis | O'Neil, Minervini | Festungen, Enge |
 | Reibung | Kraft ohne Weg; der geringste Widerstand | Laozis Wasser, das Flugzeug | Livermore, Wyckoff | ✈️ freie Bahn, 🏜️ |
 

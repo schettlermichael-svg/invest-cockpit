@@ -1407,7 +1407,7 @@ Quelle: TitelAnalyse/LIESMICH.md und kern/rechnen.py, bericht.py, chart.py (Stan
 | Stärke in der Schwäche | beide: an den Distributionstagen des S&P 500 besser als der Index, dazu die Cockpit-Regel |
 | Geldfluss | Rückenwind bleibt; neu die Rangtabelle der 11 Sektoren und CMF 20 |
 | Wertwanderung | beide Treppen (Tages-POCs, Wochen-Wertzone), 6 Klassen (innen ▬, außen ◇ getrennt) |
-| Zeichenliste | im ganzen Cockpit (`gestaltung.ZEICHEN_LISTE`): ★ → 💥, 🎯 → 💥 bzw. 🦬/🐻 in der Meldung, ⚡ → 🔥, ⚑ → 🌞, ✓/✗ → 🟢/🔴, ⚠ → 🟡/🔴/🦊 |
+| Zeichenliste | im ganzen Cockpit (`gestaltung.ZEICHEN_LISTE`): ★ → 💥, 🎯 → 💥 bzw. 🦬/🐻 in der Meldung, ⚡ → 🔥, ⚑ → 🌞, ✓/✗ → 🟢/🔴, ⚠ → 🟡/🔴/🦊 | · seit 23.11.2026: 💥 → 🦬 (Micky: der Bulle statt des Knalls; am unteren Rand der Balance 🐻)
 | Einschätzung | Stratege mit Websuche (höchstens 8 Suchen): long, short, abwarten mit Tendenz, kein Schuss; Unternehmen, Quartal, Wettbewerber, Fazit, Quellen; der Code prüft jede Antwort |
 
 Wo: Seite **Analyse** (alle Aussagezeilen, Einschätzung darunter), **Chart** der Titelseite mit Reitern Woche/Tag/Stunde (Tag
@@ -1431,7 +1431,7 @@ aufklappbar („📖 Handbuch: Der Zirkel“), und im Konzept-Doc.
 ## Der Zirkel im Chart (22.11.2026)
 `zonenchart.bild` zeigt zusätzlich: Wendepunkte (Livermores Pivotal Points, `vcp_zone.zigzag` ab 2 ATR; hohl = noch
 nicht bestätigt), die Kontraktionen der Enge als „−20 %“ unter ihrem Tief (Woche und Tag, aus `zonen.basis`),
-✈️/✈️↓ freie Bahn als Etikett, darunter die Zeichenleiste (💥 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisestes Volumen seit 50
+✈️/✈️↓ freie Bahn als Etikett, darunter die Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisestes Volumen seit 50
 Kerzen, ⚡ Kraft ohne Weg nach Wyckoff, 🌱/🍂 Keim des Zirkels an der letzten Kerze) und Momentum 🚀 am Ende der
 RS-Linie. Je Zeichen ein Hinweistext beim Darüberfahren; Legende ergänzt.
 

@@ -104,7 +104,8 @@ def strategen_karte(erg):
     if li:
         zeilen.append(f'<ul style="margin:6px 0 0 18px;padding:0;color:{TEXT_2};font-size:13px">{li}</ul>')
     if s != "kein":
-        zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">💥 Auslöser: '
+        seite_z = "🦬" if s == "long" else "🐻" if s == "short" else "🟡"
+        zeilen.append(f'<div style="margin-top:6px;font-size:13px;color:{TEXT_2}">{seite_z} Auslöser: '
                       f'{t(str(a.get("ausloeser_kurs", "")).replace(".", ","))} $ – {t(a.get("ausloeser", ""))}<br>'
                       f'Widerlegt bei: {t(str(a.get("widerlegt_kurs", "")).replace(".", ","))} $ – '
                       f'{t(a.get("widerlegt", ""))}</div>')

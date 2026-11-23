@@ -55,11 +55,11 @@ def struktur_zeilen(st_, alt, fallen, enge, kurs):
         z.append(("🔴", f"Docht oben {_k(pr['docht_oben'][0])}–{_k(pr['docht_oben'][1])}: dort abverkauft"))
     z.append(("🟡", f"Balance seit {_d(st_['balance_roh'])} (überlappender Wert, Regel des Cockpits) · Pivots ab "
                     f"{_d(st_['balance_start'])}"))
-    z.append(("💥", f"Pivot long am Rand der Balance {_k(st_['pivot'])} ({_d(st_['pivot_tag'])}, "
+    z.append(("🦬", f"Pivot long am Rand der Balance {_k(st_['pivot'])} ({_d(st_['pivot_tag'])}, "
                     f"{_tests(st_['tests_oben'])}: {', '.join(_d(x) for x in st_['tests_oben'])}) · Pivot short "
                     f"{_k(st_['short_pivot'])} ({_d(st_['short_pivot_tag'])}, {_tests(st_['tests_unten'])})"))
     if enge and enge.get("pivot"):
-        z.append(("💥", f"Pivot der Enge (VCP) {_k(enge['pivot'])}" + (f" · Unterkante der Zone {_k(enge['unten'])}"
+        z.append(("🦬", f"Pivot der Enge (VCP) {_k(enge['pivot'])}" + (f" · Unterkante der Zone {_k(enge['unten'])}"
                                                                           if enge.get("unten") else "")))
     q = st_["quetsch"]
     if q and q["art"] == "aufsteigend":

@@ -116,7 +116,7 @@ def barometer():
 #   3 Verteilung + Bruch mit Volumen  + 🍂 gemessen (Stützen geben unter Druck nach)               → Abbruch (short)
 #   4 Abwärts    + Bruch mit Volumen  + kein 🌱                                                    → Fortsetzung abwärts (short)
 # Junge Titel ohne Zirkel (unter einem Jahr Kurse): Ausbruch und Rücktest als Aufbruch bzw. Rücktest (IPO-Base).
-SETUP = {"aufbruch": ("💥", "Aufbruch"), "fortsetzung": ("💥", "Fortsetzung"), "ruecktest": ("🪝", "Rücktest"),
+SETUP = {"aufbruch": ("🦬", "Aufbruch"), "fortsetzung": ("🦬", "Fortsetzung"), "ruecktest": ("🪝", "Rücktest"),
          "abbruch": ("🐻", "Abbruch"), "abwaerts": ("🐻", "Fortsetzung abwärts")}
 P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
 
@@ -152,8 +152,8 @@ HEISS = ("kante", "ausbruch", "ruecktest", "bruch")   # Morgenmeldung: am Pivot,
 
 
 def trade_wort(f):
-    """Setup eines Titels aus dem Feld in Worten, mit der Phase der Base: „💥 Fortsetzung · am Pivot“, „💥 Aufbruch ·
-    Base im Aufbau“, „💥 Fortsetzung · läuft“, „🐻 Abbruch“; ohne Setup ""."""
+    """Setup eines Titels aus dem Feld in Worten, mit der Phase der Base: „🦬 Fortsetzung · am Pivot“, „🦬 Aufbruch ·
+    Base im Aufbau“, „🦬 Fortsetzung · läuft“, „🐻 Abbruch“; ohne Setup ""."""
     import zonen
     t = (f or {}).get("trade")
     if not t:

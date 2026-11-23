@@ -74,7 +74,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Livermores Pivotal Points, vcp_zone.zigzag) als Punkte,
     die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
-    Zeichenleiste (💥 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
+    Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
     Keim des Zirkels) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
     import avwap
     import rueckenwind
@@ -305,11 +305,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                 ("⚡", f'Kraft ohne Weg an {x["marke"]}: {zahl(x["volumen"], 1)}-faches Volumen, enge Spanne '
                        f'({"Verkäufer schlucken die Nachfrage" if x["rand"] == "oben" else "Käufer schlucken das Angebot"}, Wyckoff)'))
     a_b = (ba or {}).get("ausbruch") if e["name"] != "Stunde" else None
-    if a_b:                                                                         # 💥 Ausbruch, 🦊 Fehlausbruch
-        for tag_, z_, text in ((a_b["tag"], "💥", "Ausbruch über den Pivot"
+    if a_b:                                                                         # 🦬 Ausbruch, 🦊 Fehlausbruch
+        for tag_, z_, text in ((a_b["tag"], "🦬", "Ausbruch über den Pivot"
                                 + (" mit Volumen" if a_b["mit_volumen"] else " ohne Volumen")),
                                (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot")):
-            if tag_ is not None and (z_ == "💥" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
+            if tag_ is not None and (z_ == "🦬" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
     if tk and e["name"] != "Stunde":                                                # 🌱/🍂 Keim des Zirkels: jetzt
         zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
@@ -388,7 +388,7 @@ def legende():
              (WENDE_FARBE, "● Wendepunkte (Livermores Pivotal Points, ab 2 ATR) – hohl = noch nicht bestätigt"),
              (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
-             (TEXT_2, "Zeichenleiste: 💥 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
+             (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "🌱/🍂 Keim des Zirkels (rechts, jetzt) · Momentum 🚀 am Ende der RS-Linie"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
