@@ -488,7 +488,7 @@ def _volumen_zeichen(x):
 
 TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 140, "Phase": 130, "Setup": 170, "Keim": 200, "RS": 95, "Momentum": 80, "Volumen": 75,   # Layout:
+BREITE = {"Titel": 130, "Phase": 120, "Setup": 150, "Keim": 190, "RS": 95, "Momentum": 80, "Volumen": 75,   # Layout:
           "Geld": 55, "Zahlen": 95, "Hoch": 70, "Bahn": 50}   # px je Spalte – Setup und Keim lesbar, alles auf einen Blick
 SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch", "Bahn")
 SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
