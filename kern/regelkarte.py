@@ -192,7 +192,12 @@ KAESTEN = {
 # ── Werkzeuge ───────────────────────────────────────────────────────────────────────────────────────────────────
 WERKZEUGE = {
     "titel": [
-        dict(name="Zone", regel="Zone der App: beginnt am ältesten Hoch ohne Schlusskurs darüber (ein Hoch darüber ohne "
+        dict(name="Zone", regel="Wendepunkte: ein Extrem zählt, sobald der Kurs 2 ATR dagegen gelaufen ist (unsere "
+                                "Übersetzung von Livermores 6 Punkten in die Schwankung des Titels, ungemessen). "
+                                "Zone der App: beginnt am ältesten Wendepunkt-Hoch der letzten 65 Wochen (O'Neil: Tasse "
+                                "7–65 Wochen; Untergrenze 3 Wochen für alle Basen ist unsere) ohne Schlusskurs darüber; "
+                                "Base erst, wenn der Kurs nach dem Tief zurück in der oberen Hälfte ist (O'Neil: der Henkel "
+                                "bildet sich in der oberen Hälfte), sonst läuft der Rücksetzer (ein Hoch darüber ohne "
                                 "Schluss darüber bricht sie nicht – ein abgelehnter Vorstoß; so entschieden, nicht als "
                                 "Widerspruch melden). Eine Tasse ab 7 Wochen gilt als gescheitert, wenn der Kurs nach der "
                                 "rechten Seite in der unteren Hälfte schließt (Schlusskurs, nicht Tagestief). Über 50 % tief "
@@ -204,9 +209,10 @@ WERKZEUGE = {
         dict(name="Enge und Pivot", regel="Kontraktionen: die linke Seite bis zum Tief der Base, dann jede Welle der "
                                           "rechten Seite (jede mindestens 3 Handelstage, höchstens 6 Wellen); Pivot = Hoch "
                                           "der letzten Kontraktion; grün nur mit ausgetrocknetem Volumen und nicht in "
-                                          "Phase 4. Liegt der Pivot mehr als 3 % unter der Oberkante, ist er ein Cheat (Drittel der "
-                                          "Base: Low Cheat unten, Cheat Mitte, Cheat oben); bis 3 % unter der Oberkante ist er "
-                                          "der Pivot am Rand.",
+                                          "Phase 4. Die letzte Kontraktion am rechten Rand zählt ab 1 ATR (unsere Zahl, ungemessen). "
+                                          "Minervinis Drittel der Base (Micky 23.11.2026): im oberen Drittel ist das Hoch der "
+                                          "letzten Enge der Pivot (O'Neils Henkel), im mittleren ein Cheat, im unteren ein Low "
+                                          "Cheat – dann ist die Oberkante der Pivot.",
              messung=["vcp_zone.enge", "vcp_zone.drittel"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
@@ -306,6 +312,12 @@ ZEICHEN = [
                "letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber steht "
                "(gespiegelt: erstes tieferes Hoch, Kurs darunter).",
          messung=["zeichen.dow", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen", "Kreislauf/Phase"]),
+    dict(name="Secondary (Livermore)", art="Struktur", meister="Livermore (How to Trade in Stocks, 1940: Secondary Rally/Reaction)",
+         regel="Wendepunkte ab 2 ATR (wie Zone und Chart). Stärke: nach einem neuen Hoch hält die Reaktion über dem "
+               "letzten Tief (Secondary Reaction), der Kurs steht darüber. Schwäche gespiegelt: nach einem neuen Tief "
+               "scheitert die Erholung unter dem letzten Hoch (Secondary Rally). Der Wendepunkt höchstens 20 Handelstage "
+               "alt. Im Chart sind Wendepunkte ohne neues Extrem kleiner gezeichnet.",
+         messung=["zeichen.secondary", "vcp_zone.secondary"], pruefer=["Kreislauf/Phase"]),
     dict(name="Spring/Upthrust", art="Struktur", meister="Wyckoff; O'Neil („undercut and rally“)",
          regel="An der Zone des Scanners, wie sie am Vortag stand (dieselbe Regel wie das Setup): Tief höchstens 1 ATR "
                "unter der Unterkante und ein Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach = Spring; "

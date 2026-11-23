@@ -1,7 +1,8 @@
 """VCP-Scanner, Baustein 1: die Zone, Baustein 2: die Enge am rechten Rand (06.11.2026).
 
 Die Zone ist die ruhige Phase vor dem rechten Rand – die Base im Sinne Minervinis, ohne den Lauf oder Absturz davor.
-Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14).
+Alles auf Tageskerzen, Wendepunkte über ein ZigZag nach ATR (grob = 2 × ATR 14) – Livermores Kursbuch (ein Extrem zählt
+nach einem Gegenlauf von 6 Punkten) in der Schwankung des Titels; die 2 und die 1 ATR sind unsere Zahlen, ungemessen.
 
   Oberkante  = grobes Swing-Hoch, über dem seitdem kein Schlusskurs lag
                (von mehreren solchen das älteste, dessen Zone die Erholungsregel erfüllt)
@@ -44,7 +45,8 @@ Baustein 2 – die Enge (Minervini, VCP), nur innerhalb der Zone:
   schrumpfend = grob halbiert: jede höchstens 70 % so tief wie die vorige (Minervinis Faustregel)
   Enge        = die letzte Kontraktion; höchstens 10 % tief; ihr Hoch ist der Pivot
   Lage        = Drittel der Base, in dem der Pivot liegt (Minervini): unteres = Low Cheat, mittleres = Cheat,
-                oberes = Pivot (O'Neils Henkel) – 14.11.2026
+                oberes = Pivot (O'Neils Henkel) – 14.11.2026; seit 23.11.2026 gilt das auch im Code (vorher Cheat schon
+                ab 3 % unter der Oberkante)
   Volumen     = Ø Volumen vom Pivot bis heute (ohne Tage über dem Pivot, am 50-Tage-Schnitt gemessen) leiser als
                 in der ersten Kontraktion – das Volumen schrumpft mit den Kontraktionen
   Tiefs       = steigend als Zeichen, keine Pflicht (Shakeout erlaubt)
@@ -149,6 +151,17 @@ def zigzag(df, faktor):
     if richtung:
         punkte.append((ext_i, h[ext_i] if richtung == 1 else l[ext_i], "H" if richtung == 1 else "T"))
     return punkte
+
+
+def secondary(punkte):
+    """Livermores Secondary (How to Trade in Stocks, 1940): Wendepunkte ohne neues Extrem – ein Hoch unter dem vorigen
+    Hoch (Secondary Rally), ein Tief über dem vorigen Tief (Secondary Reaction). → Menge der Indizes in punkte."""
+    aus, letzt = set(), {}
+    for k, (_, p_, art) in enumerate(punkte):
+        if art in letzt and ((p_ < letzt[art]) if art == "H" else (p_ > letzt[art])):
+            aus.add(k)
+        letzt[art] = p_
+    return aus
 
 
 def _vorgeschichte(df, top_i, top):
@@ -432,7 +445,7 @@ def enge(df, z):
     folge = " → ".join(f"{t:.0f}" for t in tiefen)
     hoehe_z = z["oben"] - z["unten"]
     anteil = (pivot - z["unten"]) / hoehe_z if hoehe_z > 0 else 1.0
-    lage = drittel(z, pivot) or "Pivot am Rand"   # eine Cheat-Regel (Drittel der Base, mehr als RAND_PCT unter der Oberkante)
+    lage = drittel(z, pivot) or "Pivot (oberes Drittel)"   # eine Cheat-Regel (Minervinis Drittel der Base)
     return {"ampel": ampel, "kontraktionen": kontr, "zahl": len(kontr), "folge": folge, "schrumpft": schrumpft,
             "lage": lage, "lage_anteil": anteil,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
@@ -443,15 +456,15 @@ def enge(df, z):
                     + (f" · fehlt: {', '.join(fehlt)}" if fehlt else "")}
 
 
-RAND_PCT = 3.0              # Rand einer Zone: bis 3 % von der Oberkante (Test am Rand, Cheat-Grenze) – eine Quelle
+RAND_PCT = 3.0              # Rand einer Zone: bis 3 % von der Oberkante (Test am Rand, „am Pivot“) – eine Quelle
 DOPPELT_TAGE = 5            # zwei Zonen, die innerhalb von 5 Tagen ausbrechen und sich überlappen: dieselbe Schlacht
 
 
 def cheat(gross, b, pivot):
     """Die eine Cheat-Regel der App (Gefechtsordnung, Micky 14./15.11.2026): ein Ausbruch über `pivot` aus der Zone b
     ist ein früher Einstieg (Cheat) und kein Ausbruch, wenn b jünger ist als die größere Zone `gross`, die noch läuft,
-    und der Pivot mehr als RAND_PCT unter deren Oberkante liegt – der Kurs bricht aus einer Pause in der Balance, nicht
-    aus der Balance. → „Low Cheat (unteres Drittel)“ / „Cheat (mittleres Drittel)“ / „Cheat (oberes Drittel)“ oder None.
+    und der Pivot im unteren oder mittleren Drittel liegt – der Kurs bricht aus einer Pause in der Balance, nicht aus
+    der Balance. → „Low Cheat (unteres Drittel)“ / „Cheat (mittleres Drittel)“ oder None.
     Benutzt von: ausbruch (zählt ihn nicht als Ausbruch), verlauf (Historie: Cheat statt eigener Zone), basen (zählt
     ihn nicht), auktion (innere Rotation)."""
     if not (gross and gross.get("zone") and b and gross.get("oben") and gross.get("unten") is not None):
@@ -461,29 +474,32 @@ def cheat(gross, b, pivot):
     return drittel(gross, pivot)
 
 
+from tiefe import DRITTEL   # noqa: E402  Minervini: die Base in Dritteln – unten Low Cheat, Mitte Cheat, oben der Henkel
+
+
 def drittel(z, pivot):
-    """Lage eines Pivots in der Zone z: mehr als RAND_PCT unter der Oberkante und über der Unterkante ist es ein Cheat
-    (Minervini: Drittel der Base) → „Low Cheat (unteres Drittel)“ / „Cheat (mittleres Drittel)“ / „Cheat (oberes
-    Drittel)“; am Rand (bis RAND_PCT unter der Oberkante) oder außerhalb None."""
+    """Lage eines Pivots in der Zone z nach Minervinis Dritteln (Micky 23.11.2026, vorher: Cheat schon ab 3 % unter der
+    Oberkante): im unteren Drittel „Low Cheat (unteres Drittel)“, im mittleren „Cheat (mittleres Drittel)“; im oberen
+    Drittel ist es O'Neils Henkel – der Pivot selbst – und außerhalb der Zone: None."""
     if not (z and z.get("oben") and z.get("unten") is not None and pivot):
         return None
-    if pivot >= z["oben"] * (1 - RAND_PCT / 100) or pivot <= z["unten"]:
+    if pivot >= z["oben"] or pivot <= z["unten"]:
         return None
     anteil = (pivot - z["unten"]) / (z["oben"] - z["unten"])
-    return ("Low Cheat (unteres Drittel)" if anteil < 1 / 3 else "Cheat (mittleres Drittel)" if anteil < 2 / 3
-            else "Cheat (oberes Drittel)")
+    return ("Low Cheat (unteres Drittel)" if anteil < 1 / DRITTEL else "Cheat (mittleres Drittel)" if anteil < 2 / DRITTEL
+            else None)
 
 
 def rand(z, e):
-    """Der Auslöser des Ausbruchs (Entscheidung 6): das Hoch der Enge, wenn es höchstens RAND_PCT unter der Oberkante
-    liegt, sonst die Oberkante – dieselbe Regel wie ausbruch()."""
+    """Der Auslöser des Ausbruchs (Entscheidung 6): das Hoch der Enge, wenn es im oberen Drittel der Base liegt (O'Neils
+    Henkel, Minervini), sonst die Oberkante – dieselbe Regel wie ausbruch()."""
     p = (e or {}).get("pivot")
     return float(z["oben"] if drittel(z, p) else (p or z["oben"]))
 
 
 def einstiege(z, e, cheat=True):
-    """Die Einstiege einer Base (Gefechtsordnung Schritt 2, Micky 14./15.11.2026): liegt das Hoch der letzten Enge mehr
-    als RAND_PCT unter der Oberkante, gibt es zwei – früh beim Schluss über der Enge (Cheat) und am Ausbruch über die
+    """Die Einstiege einer Base (Gefechtsordnung Schritt 2, Micky 14./15.11.2026): liegt das Hoch der letzten Enge im
+    unteren oder mittleren Drittel, gibt es zwei – früh beim Schluss über der Enge (Cheat) und am Ausbruch über die
     Oberkante; sonst einen am Rand (rand()). cheat=False (Flagge, keine Base): nur der eine am Rand. Struktur-Stopp je
     Einstieg (Schritt 3): Tief der letzten Kontraktion. → [{art, wort, wert, quelle, struktur}], aufsteigend."""
     if not (z and z.get("zone")):
@@ -566,7 +582,7 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
     gelten lässt (Minervini, 12.11.2026: NIQ brach über eine 61 % tiefe Base aus, gerechnet wurde mit der Flagge darin –
     Text +9,0 %, Abstand +2,9 % zu zwei verschiedenen Pivots).
     Ein Ausbruch aus einer Pause innerhalb der noch laufenden größeren Zone ist ein Cheat (cheat()) und zählt nicht,
-    ebenso ein Schluss über einem Hoch der Enge, das mehr als RAND_PCT unter der Oberkante liegt (drittel()) – der
+    ebenso ein Schluss über einem Hoch der Enge im unteren oder mittleren Drittel (drittel()) – der
     Ausbruch ist dann der Schluss über der Oberkante; mit cheats=True liefert die Funktion genau diesen Cheat (mit
     „cheat“: Drittel) – für Zustand und frühen Einstieg."""
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -587,9 +603,9 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
             if b.get("laenge") != "ok" or (passt and not passt(b)):
                 continue
             e = enge(vor, b)
-            # Gefechtsordnung Schritt 2 / Entscheidung 6: der Ausbruch geschieht am Rand – am Hoch der Enge, wenn es höchstens
-            # RAND_PCT unter der Oberkante liegt, sonst an der Oberkante; ein Schluss über einem tieferen Hoch der Enge ist
-            # der frühe Einstieg (Cheat, Drittel der Zone)
+            # Gefechtsordnung Schritt 2 / Entscheidung 6: der Ausbruch geschieht am Pivot – am Hoch der Enge, wenn es im
+            # oberen Drittel liegt (Henkel), sonst an der Oberkante; ein Schluss über einem Hoch der Enge im unteren oder
+            # mittleren Drittel ist der frühe Einstieg (Cheat, Minervinis Drittel)
             w_enge = drittel(b, e.get("pivot"))
             pivot = float(e["pivot"]) if (cheats and w_enge) else rand(b, e)
             if c[t] <= pivot:

@@ -63,6 +63,8 @@ DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem le
 DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
 STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
 SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
+SECONDARY_TAGE = 20         # Livermores Secondary: der Wendepunkt höchstens 20 Handelstage alt
+SECONDARY_PUNKTE = 4        # Technik: Hoch, Tief, neues Extrem, Secondary – die letzten vier Wendepunkte
 VOLUMEN_TAGE = 20           # Kauf- und Abgabetage: die letzten 20 Tage
 PP_TAGE = 5                 # Pocket Pivot in den letzten 5 Tagen
 PP_GD10_MAX = 1.04          # Pocket Pivot: höchstens 4 % über dem GD10 (Morales/Kacher)
@@ -214,6 +216,33 @@ def trendqualitaet(df):
 
 
 # ── Spring und Upthrust ───────────────────────────────────────────────────────────────────────────────────────────
+def secondary(df, tage=SECONDARY_TAGE):
+    """Livermores Secondary im Trend (Micky 23.11.2026; Wendepunkte ab 2 ATR wie Zone und Chart, vcp_zone.zigzag):
+    Stärke – nach einem neuen Hoch hielt die Reaktion über dem letzten Tief (Secondary Reaction), der Kurs steht darüber:
+    der Gegner kommt nicht mehr durch. Schwäche gespiegelt – nach einem neuen Tief scheiterte die Erholung unter dem
+    letzten Hoch (Secondary Rally), der Kurs steht darunter. Der Wendepunkt höchstens `tage` Handelstage alt.
+    → [Zeichen]."""
+    import vcp_zone
+    if df is None or len(df) <= vcp_zone.ATR_TAGE + 1:
+        return []
+    zz = vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]                       # nur bestätigte Wendepunkte
+    if len(zz) < SECONDARY_PUNKTE:
+        return []
+    (_, a, _), (_, b, _), (_, m, _), (i_l, l_, art_l) = zz[-SECONDARY_PUNKTE:]
+    kurs, n = float(df["Close"].iloc[-1]), len(df)
+    if n - 1 - i_l > tage:
+        return []
+    if art_l == "T" and m > a and l_ > b and kurs > l_:
+        return [_zeichen("stärke", "struktur", f"Secondary Reaction (Livermore): nach dem neuen Hoch {_z(m, '.2f')} $ hielt "
+                         f"die Reaktion am {df.index[i_l]:%d.%m.} bei {_z(l_, '.2f')} $ über dem letzten Tief "
+                         f"{_z(b, '.2f')} $ – der Gegner kommt nicht mehr durch", tag=df.index[i_l])]
+    if art_l == "H" and m < a and l_ < b and kurs < l_:
+        return [_zeichen("schwäche", "struktur", f"Secondary Rally (Livermore): nach dem neuen Tief {_z(m, '.2f')} $ scheiterte "
+                         f"die Erholung am {df.index[i_l]:%d.%m.} bei {_z(l_, '.2f')} $ unter dem letzten Hoch "
+                         f"{_z(b, '.2f')} $ – die Käufer kommen nicht mehr durch", tag=df.index[i_l])]
+    return []
+
+
 def spring(df, tage=SPRING_TAGE):
     """Spring (Stärke) bzw. Upthrust (Schwäche) an der Zone des Scanners in den letzten `tage` Tagen → Zeichen oder None.
     Eine Regel mit Zustand und Setup: vcp_zone.spring_upthrust (Gefechtsordnung Schritt 4, Micky 15.11.2026 – bis dahin
@@ -833,7 +862,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         for i in range(len(phl)):                 # Rücksetzer in Phase 2 (die Linie steigt noch) – eigene Farbe
             if phl[i] == 2 and zu_w.iloc[i] == "Rücksetzer" and (i < len(phl) - 1 or zusatz == "Rücksetzer"):
                 phl[i] = RUECKSETZER
-    zs = []
+    zs = secondary(df)
     dt, dw = dow(df, DOW_N_TAG), dow(w, 2)
     if dt and dt.get("signal"):
         zs.append(_zeichen(dt["richtung"], "struktur", dt["signal"]))

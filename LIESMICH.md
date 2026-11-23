@@ -1487,3 +1487,18 @@ Druck-Tage des Index (O'Neils Distributionstage) bleiben nur als Messung der St�
 Entfernt: `marktrichtung.py`, `marktklima.py`, `auktion.markt`, der Kasten „Zustand des Marktes“, `marktdaten.yahoo_ohlc`.
 Mac 04.11.: S&P 500 Phase 2 ohne Keim = 🟢 Angriff; Nasdaq Phase 2 · Rücksetzer mit 🍂 (Evening Star, 5 Abgabetage) = 🟡.
 
+
+## Wendepunkte, Pivot und Base an den Quellen geprüft (23.11.2026)
+- **Wendepunkte** (`vcp_zone.zigzag`): ein Extrem zählt, sobald der Kurs 2 ATR dagegen gelaufen ist – Livermores
+  Kursbuch (Natural Rally/Reaction ab etwa 6 Punkten) in der Schwankung des Titels; in der Wissenschaft „Directional
+  Change“. Die 2 ATR und die 1 ATR der letzten Kontraktion sind unsere Zahlen, ungemessen, so gekennzeichnet.
+- **Pivot nach Minervinis Dritteln** (`vcp_zone.drittel`, Micky 23.11.2026): liegt das Hoch der letzten Enge im oberen
+  Drittel der Base, ist es der Pivot (O'Neils Henkel – der Kaufpunkt liegt fast immer unter dem Hoch der Base); im
+  mittleren Drittel Cheat, im unteren Low Cheat – dann ist die Oberkante der Pivot. Vorher galt die Enge nur bis 3 %
+  unter der Oberkante. Mac 04.11., 300 Titel: 150 Basen mit Enge, bei 11 rückt der Pivot an den Henkel (z. B. ABNB
+  179,13 statt 193,45).
+- **Belegt:** obere Hälfte (O'Neil: Henkel in der oberen Hälfte), 65 Wochen (O'Neil: Tasse 7–65 Wochen); die
+  Untergrenze von 3 Wochen für alle Basen ist unsere.
+- **Livermores Secondary:** Wendepunkte ohne neues Extrem zeichnet der Chart kleiner und blasser
+  (`vcp_zone.secondary`); als Zeichen (`zeichen.secondary`, Wendepunkt höchstens 20 Tage alt): nach einem neuen Hoch
+  hält die Reaktion über dem letzten Tief = Stärke, gespiegelt Schwäche. Mac: 42 Stärke, 48 Schwäche in 300 Titeln.

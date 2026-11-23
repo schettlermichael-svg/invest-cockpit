@@ -206,14 +206,19 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
+    sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
             y_ = Y(p_) - 6 if art == "H" else Y(p_) + 6                             # Layout: über dem Hoch, unter dem Tief
             letzt = k_ == len(zz) - 1
-            A(f'<circle cx="{X(j):.1f}" cy="{y_:.1f}" r="3" fill="{"none" if letzt else WENDE_FARBE}" stroke="{WENDE_FARBE}">'
-              f'<title>Wendepunkt {"Hoch" if art == "H" else "Tief"} {zahl(p_)}{" (noch nicht bestätigt)" if letzt else ""}'
-              f'</title></circle>')                                                 # Layout
+            s_ = k_ in sek
+            A(f'<circle cx="{X(j):.1f}" cy="{y_:.1f}" r="{2 if s_ else 3}" '                  # Layout: Secondary kleiner
+              f'fill="{"none" if letzt else WENDE_FARBE}" '
+              f'stroke="{WENDE_FARBE}" fill-opacity="{0.55 if s_ else 1}">'          # Layout: Secondary kleiner und blasser
+              f'<title>Wendepunkt {"Hoch" if art == "H" else "Tief"} {zahl(p_)}'
+              + (f' · Secondary (Livermore): {"kein neues Hoch" if art == "H" else "kein neues Tief"}' if s_ else "")
+              + f'{" (noch nicht bestätigt)" if letzt else ""}</title></circle>')    # Layout
     if la.get("pivot") is not None and la.get("beginn") is not None:                # der eine Pivot: sein Wendepunkt
         seit_z = (d.index >= pd.Timestamp(la["beginn"])) & (np.abs(h - la["pivot"]) <= la["pivot"] * PIVOT_GLEICH)
         if seit_z.any():
@@ -399,8 +404,9 @@ def legende():
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
-             (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR – hohl = noch nicht bestätigt; aus ihnen "
-              "entstehen Zone, Enge und Festungen"),
+             (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
+              "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Zone, Enge und "
+              "Festungen"),
              (ZONE_FARBE, "◆ Pivot: der eine Wendepunkt, an dem die Waage kippt – das Hoch der letzten Enge am Rand, sonst "
               "die Oberkante (in der Stunde das Hoch der Balance)"),
              (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
