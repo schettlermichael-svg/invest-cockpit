@@ -1,6 +1,5 @@
 #!/bin/bash
-# Holt neuen Code aus GitHub und startet die App neu – aber NICHT, solange ein Knopf-Lauf
-# (Kartentisch neu rechnen oder Konferenz) läuft: der Neustart würde ihn abschießen. Dann beim nächsten Mal (5 Min).
+# Holt neuen Code aus GitHub und startet die App neu (spätestens 5 Minuten nach dem Hochladen).
 # Aufgerufen von /usr/local/bin/invest-aktualisieren (Timer invest-update, alle 5 Minuten).
 cd /opt/invest-cockpit || exit 0
 # Zeitplan des Laufs aus dem Speicher übernehmen (12.11.2026: Frühlauf Di–Sa 6:05), sobald er sich unterscheidet
@@ -37,10 +36,9 @@ fi
 [ -f werkzeuge/server/ausweis.sh ] && bash werkzeuge/server/ausweis.sh
 git fetch -q origin main 2>/dev/null || exit 0
 [ "$(git rev-parse HEAD 2>/dev/null)" = "$(git rev-parse origin/main)" ] && exit 0
-if .venv/bin/python werkzeuge/nachtlauf.py --laeuft 2>/dev/null; then
-  echo "$(date '+%d.%m.%Y %H:%M') neuer Code wartet – es läuft gerade ein Lauf" >> /var/log/invest-cockpit-update.log
-  exit 0
-fi
+# Kein Warten mehr auf den Schrank-Lauf (Micky 23.11.2026): er baut mit altem Code Seiten, die nach dem Update ohnehin
+# veraltet sind; der Neustart beendet ihn, die App füllt den Schrank mit dem neuen Code neu. Der Nachtlauf hat einen
+# eigenen Dienst und läuft weiter.
 git reset -q --hard origin/main
 chown -R cockpit:cockpit /opt/invest-cockpit
 systemctl restart invest-cockpit

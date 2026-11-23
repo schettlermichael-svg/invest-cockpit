@@ -429,16 +429,8 @@ def seiten_lauf_starten():
     return True
 
 
-def laeuft_etwas():
-    """Läuft ein Schrank-Lauf, den die App gestartet hat? Für das Update-Skript des Servers: dann kein Neustart (er
-    hängt an der App; der Nachtlauf hat einen eigenen Dienst)."""
-    return _laeuft(SEITEN_PROTOKOLL, 6)[0]
-
-
 if __name__ == "__main__":
-    if "--laeuft" in sys.argv:                   # Update-Skript: Exit 0 = es läuft etwas, bitte nicht neu starten
-        sys.exit(0 if laeuft_etwas() else 1)
-    elif "--seiten" in sys.argv:
+    if "--seiten" in sys.argv:
         seiten()
     else:
         main()
