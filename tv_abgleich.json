@@ -1,5 +1,5 @@
 {
- "stand": "23.11.2026 22:15",
+ "stand": "23.11.2026 23:14",
  "listen": {
   "Watchlist": [
    "AAOI",
@@ -181,6 +181,17 @@
    "XEL",
    "XMTR",
    "XPO"
+  ],
+  "Trade": [
+   "ANT",
+   "BNY",
+   "CAT",
+   "FDX",
+   "HWM",
+   "LUV",
+   "NVDA",
+   "TTWO",
+   "WST"
   ]
  }
 }
