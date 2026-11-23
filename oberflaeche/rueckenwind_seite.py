@@ -364,11 +364,19 @@ def _ordnung(x):
             -x["rang"])
 
 
+def front_ampel(x):
+    """⚔️ Front: 🟢 Garde oder Angriff, 🟡 Vorhut, 🔴 Ohne Nachschub oder Rückzug, ⚪ ohne Klasse – eine Regel für Liste
+    und Titelseite."""
+    import rueckenwind
+    k = klasse(x)
+    return ("grau" if not k else "grün" if k in rueckenwind.ANGRIFF_KLASSEN
+            else "gelb" if k in rueckenwind.VORNE_KLASSEN else "rot")
+
+
 def titel_karten(tk):
     """Rückenwind eines Titels für den Kopf der Titelseite (Micky 23.11.2026: statt einer langen Zeile drei Karten, je
     eine Frage mit eigener Ampel und einer Angabe pro Zeile – drei Mal grün ist ▲▲▲; nichts weggelassen):
     ⚔️ Front (Kurs), 💰 Nachschub (Geld), 📊 Fundament (Zahlen). → [(Titel, Ampel, [Zeilen])]; leer ohne Stand."""
-    import rueckenwind
     erg = laden() or {}
     x = (erg.get("titel") or {}).get(tk)
     if not x:
@@ -376,8 +384,6 @@ def titel_karten(tk):
     k, r, ab = klasse(x), _richtung(x), x.get("abstand_hoch")
     wort, z = abstand_wort(ab), x.get("zahlen") or {}
     termin, warn = _termin(x, erg["stand"])
-    front_ampel = ("grau" if not k else "grün" if k in rueckenwind.ANGRIFF_KLASSEN
-                   else "gelb" if k in rueckenwind.VORNE_KLASSEN else "rot")
     b_ = bahn(x.get("frei"))
     front = [(f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse") + (" · 🦈 RS-Hoch vor Kurs" if x.get("rs_hoch_vor_kurs") else ""),
              f'{PFEIL.get(r, "")} RS-Linie {r or "–"} {_rs_linie(x)}'.strip(),
@@ -394,7 +400,7 @@ def titel_karten(tk):
     fundament = [*([f'📅 nächste Zahlen {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}'] if termin else []),
                  *([f"letzte Zahlen {r_}"] if (r_ := _reaktion(x)) else []),
                  *([f"im Einzelnen: {p_}"] if (p_ := _punkte_text(x)) else [])] or ["keine Zahlen gemessen"]
-    return [("⚔️ Front · Wie stark ist der Kurs?", front_ampel, front),
+    return [("⚔️ Front · Wie stark ist der Kurs?", front_ampel(x), front),
             ("💰 Nachschub · Fließt Geld hinein?", x["geld_ampel"], nachschub),
             ("📊 Fundament · Tragen die Zahlen?", z.get("ampel") or "grau", fundament)]
 
@@ -488,16 +494,19 @@ def _volumen_zeichen(x):
 
 TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 130, "Phase": 120, "Setup": 150, "Keim": 190, "RS": 95, "Momentum": 80, "Volumen": 75,   # Layout:
-          "Geld": 55, "Zahlen": 95, "Hoch": 70, "Bahn": 50}   # px je Spalte – Setup und Keim lesbar, alles auf einen Blick
-SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch", "Bahn")
+BREITE = {"Titel": 130, "Phase": 120, "Setup": 150, "Keim": 180, "⚔️ Front": 60, "RS": 95, "Momentum": 75,   # Layout:
+          "Hoch": 70, "Bahn": 45, "💰 Nachschub": 75, "Volumen": 75, "📊 Fundament": 110}   # px je Spalte
+SPALTEN = ("Titel", "Phase", "Setup", "Keim", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+           "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
 SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
                  "Momentum": "1M · 3M · 6M: ↑ im Plus, ↓ im Minus · 🚀 unter den besten 2 % des Reviers (Kullamägi)",
                  "Volumen": "Zufluss: Volumen der Aufwärtstage gegen Abwärtstage · 🟢 ab 1,1× · 🔴 unter 0,9× · 🏜️ "
                             "trocken (kaum noch Verkäufer, Minervini)",
-                 "Geld": "Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · 🐺 Einzelkämpfer",
-                 "Zahlen": "Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
+                 "⚔️ Front": "Wie stark ist der Kurs? 🟢 Garde oder Angriff · 🟡 Vorhut · 🔴 Ohne Nachschub oder Rückzug",
+                 "💰 Nachschub": "Fließt Geld hinein? Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · "
+                                "🐺 Einzelkämpfer",
+                 "📊 Fundament": "Tragen die Zahlen? Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
                  "Keim": "🍂/🌱 der Riss gegen die Phase · 🪨 Zahl der Zeichen, die sie tragen",
                  "Hoch": "Abstand zum 52-Wochen-Hoch",
                  "Bahn": "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ keine darunter) – Livermores Linie des "
@@ -529,14 +538,16 @@ def liste(erg, nur=None):
         abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Keim": keim,
-            "RS": _rs(x), "Momentum": _momentum_zeichen(x), "Volumen": _volumen_zeichen(x),
-            "Geld": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
-            "Zahlen": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
+            "⚔️ Front": PUNKT[front_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
+            "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
+            "Volumen": _volumen_zeichen(x),
+            "📊 Fundament": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
             "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–", "Bahn": bahn(x.get("frei"), "")})
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur and o["tk"] not in wl[nur]:
             continue
         abschnitte["ohne Daten"].append({"Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Phase": o["grund"],
-                                         "Geld": PUNKT["grau"], "Zahlen": PUNKT["grau"]})
+                                         "⚔️ Front": PUNKT["grau"], "💰 Nachschub": PUNKT["grau"],
+                                         "📊 Fundament": PUNKT["grau"]})
     return {n: pd.DataFrame(r, columns=SPALTEN) for n, r in abschnitte.items() if r}
 

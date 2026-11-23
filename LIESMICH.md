@@ -1573,3 +1573,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Rücksetzer nacheinander, je 10–20 % tief (`AUF_TIEFE`, `AUF_ZAHL`), jedes Tief und Hoch über dem vorigen. Dann im Chart
   „🟢 Aufsteigende Base (O'Neil)“ an der Zone und die Wellen grün, wenn ihr Tief über dem vorigen liegt (sonst rot); die
   VCP-Prüfung gilt für alle anderen Basen unverändert. Quelle: O'Neil, How to Make Money in Stocks (IBD).
+- Titelliste nach den drei Fragen geordnet (24.11.2026): Titel | Phase | Setup | Keim ‖ ⚔️ Front (Ampel) | RS | Momentum |
+  Hoch | Bahn ‖ 💰 Nachschub (Geld-Ampel, 🐺) | Volumen ‖ 📊 Fundament (Zahlen-Ampel, 📅). `front_ampel` eine Regel für
+  Liste und Titelseite.
