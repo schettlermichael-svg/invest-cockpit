@@ -145,8 +145,8 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
           f"({rw.get('sektor_feld') or '–'}), Branche {rw.get('branche')} ({rw.get('branche_feld') or '–'}), "
           f"Geld-Ampel {rw.get('geld_ampel')}")
     if markt:
-        import auktion
-        f(f"Markt: {auktion.wort(markt)} · {markt.get('unterzeile', '')}")
+        import zirkel
+        f(f"Markt-Ampel (Zirkel des {markt['fuehrt']}): {markt['wort']} · " + " · ".join(zirkel.markt_text(markt)))
     if termin:
         f(f"Nächste Zahlen: {termin}")
     for x in tiefe or []:                         # Aussagezeilen der Seite Analyse (Tiefenanalyse, 21.11.2026)

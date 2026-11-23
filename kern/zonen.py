@@ -166,7 +166,8 @@ def lage(e, ba=None, profil=True):
 
 
 def trade(e, la, ba):
-    """Der eine Trade der Tagesebene → {art, richtung, einstieg, stopp, risiko, ampel, wartet, name, zeichen} oder None."""
+    """Der eine Trade der Tagesebene → {art, richtung, einstieg, stopp, pivot, risiko, ampel, wartet, name, zeichen} oder
+    None; pivot = die Kante, die der Trade überwinden bzw. brechen muss (long der Pivot, short die Unterkante)."""
     if not e or not la or la.get("zone") is None or ba is None or ba["z"] is None:
         return None
     a, en, z = ba["ausbruch"], ba["enge"], ba["z"]
@@ -184,6 +185,7 @@ def trade(e, la, ba):
     elif la["phase"] == "bruch" and _volumen_hoch(ba["df"]):
         t = {"art": "short", "richtung": -1, "einstieg": kurs, "stopp": lo + atr * STOPP_ATR, "wartet": False}
     if t:
+        t["pivot"] = pivot if t["richtung"] > 0 else lo
         t["risiko"] = round(abs(t["einstieg"] - t["stopp"]) / t["einstieg"] * 100, 1)
         t["ampel"] = "🟢" if t["risiko"] <= MAX_STOPP * 100 else "🔴"
         t["name"], t["zeichen"] = TRADE_NAME[t["art"]], TRADE_ZEICHEN[t["art"]]

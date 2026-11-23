@@ -1,15 +1,13 @@
 """Hilfen rund um einen Titel (seit 22.11.2026; die alte Titelseite mit Kacheln und Setup-Reihen ist abgebaut, die
-Titelseite ist zonenseite.py): TradingView-Link, Rückenwind-Eintrag und die Markt-Ampel nach O'Neil."""
+Titelseite ist zonenseite.py): TradingView-Link, Rückenwind-Eintrag und die Markt-Ampel aus dem Zirkel des Index."""
 import os
 import sys
 
-import pandas as pd
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 sys.path.insert(0, HIER)
 
-import marktklima                                     # noqa: E402
 import rueckenwind                                    # noqa: E402
 import tv_kennzahlen                                  # noqa: E402
 
@@ -45,18 +43,10 @@ def _rueckenwind(tk):
     return _RW_CACHE["titel"].get(tk.upper())
 
 
-_SPEICHER = {}
-
-
 def maerkte():
-    """Die eine Markt-Ampel (O'Neil, marktklima.py), einmal je Stunde gerechnet; Hochs/Tiefs aus dem letzten Zirkel-Lauf."""
-    schluessel = pd.Timestamp.now().strftime("%Y%m%d%H")
-    if _SPEICHER.get("markt", (None,))[0] != schluessel:
-        try:
-            import zirkel
-            b = zirkel.barometer()
-            mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))
-        except Exception:  # noqa: BLE001
-            mm = None
-        _SPEICHER["markt"] = (schluessel, mm)
-    return _SPEICHER["markt"][1]
+    """Die eine Markt-Ampel aus dem Zirkel des Index (zirkel.markt, Micky 23.11.2026; vorher O'Neil) oder None."""
+    try:
+        import zirkel
+        return zirkel.markt()
+    except Exception:  # noqa: BLE001
+        return None

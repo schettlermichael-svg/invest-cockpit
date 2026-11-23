@@ -18,7 +18,7 @@ Quelle: TitelAnalyse/kern/rechnen.py (Stand 20.11.2026), dort mit Herkunft. Übe
   Fehlausbruch
   AVWAP              Anker des Cockpits (avwap.anker); dazu Shannons Zange gemessen: Abstand der AVWAP vom letzten Hoch
                      und vom Tief der Bewegung vor 5 Tagen → heute, Kurs über, unter oder zwischen den Linien.
-  Stärke in Schwäche beide: an den Distributionstagen des S&P 500 (O'Neil, die Regel aus marktrichtung) der letzten 25
+  Stärke in Schwäche beide: an den Druck-Tagen des S&P 500 (O'Neils Distributionstage) der letzten 25
                      Sitzungen besser als der Index – neben zeichen.tage_gegen_markt.
   Geldfluss          Rückenwind bleibt das Urteil; dazu die Rangtabelle der 11 Sektor-ETFs über 1M/3M/6M.
   CMF                Chaikin Money Flow 20 Tage: Geldfluss je Kerze = ((C−L)−(H−C))/(H−L) × Volumen, mit den Treibern.
@@ -342,13 +342,17 @@ def avwap_liste(df, zahltag=None):
 
 
 # ── Relative Stärke und Geldfluss ─────────────────────────────────────────────────────────────────────────────────
+DRUCK_SCHWELLE = -0.2   # Druck-Tag des Index (O'Neils Distributionstag): Schluss mindestens 0,2 % tiefer bei höherem
+DRUCK_FENSTER = 25      # Volumen als am Vortag, in den letzten 25 Sitzungen
+
+
 def abgabetage(index):
-    """Distributionstage des Index nach O'Neil in den letzten 25 Sitzungen – die Regel aus marktrichtung."""
-    import marktrichtung as mr
+    """Druck-Tage des Index in den letzten 25 Sitzungen (O'Neils Distributionstage) – dort zeigt sich, wer Druck
+    aushält (Stärke in der Schwäche)."""
     c, v = index["Close"], index["Volume"]
     n = len(c)
-    return [c.index[i] for i in range(max(1, n - mr.DT_FENSTER), n)
-            if (c.iloc[i] / c.iloc[i - 1] - 1) * 100 <= mr.DT_SCHWELLE and v.iloc[i] > v.iloc[i - 1]]
+    return [c.index[i] for i in range(max(1, n - DRUCK_FENSTER), n)
+            if (c.iloc[i] / c.iloc[i - 1] - 1) * 100 <= DRUCK_SCHWELLE and v.iloc[i] > v.iloc[i - 1]]
 
 
 def staerke_in_schwaeche(df, index):

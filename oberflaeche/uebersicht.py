@@ -143,16 +143,18 @@ def seite_uebersicht():
     if p["ampel"] == "grün" and gegen:
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
     import zirkel
-    b = zirkel.barometer()
-    import marktklima
-    try:
-        mm = marktklima.markt(b.get("hochs"), b.get("tiefs"))
+    try:                                         # Markt-Ampel aus dem Zirkel des Index (Micky 23.11.2026)
+        mm = zirkel.markt()
     except Exception:  # noqa: BLE001
         mm = None
+    markt_mehr = "".join(ampelzeile(f'{n}: {x["name"]} ({x["wort"]})', x["ampel"],
+                                    " · ".join([f"trägt – {y}" for y in x.get("traegt") or []]
+                                               + [f"Keim – {y}" for y in x.get("keim") or []]) or "keine Zeichen gemessen")
+                         for n, x in ((mm or {}).get("indizes") or {}).items())
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
-        _kachel("Markt", mm["ampel"], mm["wort"], "", f'O\'Neil: {mm["zustand"]} seit {mm["seit"]} · {mm["text"]}'
-                + (f' · Zeichen: {mm["zeichen"]}' if mm["zeichen"] else "")) if mm else "",   # eine Ampel (Micky 12.11.2026):
+        _kachel("Markt", mm["ampel"], mm["wort"], "", " · ".join(zirkel.markt_text(mm)), markt_mehr)
+        if mm else "",   # eine Ampel (Micky 12.11.2026), seit 23.11.2026 aus dem Zirkel des Index
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
@@ -186,10 +188,5 @@ def seite_uebersicht():
     einzeln = klapp("Wirtschaftswetter im Einzelnen", f"Dalio-Quad mit Spur, Instrumenten und Abgleich mit den Sektoren · "
                     f"heute Quad {q['quad']} · {q['name']}", quad_bild + abgleich)
     # Seite Rückenwind (22.11.2026): ① Lage hier, ② Rückenwind (Strömung und Titel) aus rueckenwind_seite über app.py.
-    try:                                         # Zustand des Marktes zuerst (13.11.2026), die Ampeln darunter
-        import zustandsbild
-        zustand = zustandsbild.box((mm or {}).get("auktion"), "Zustand des Marktes")
-    except Exception:  # noqa: BLE001
-        zustand = ""
-    return {"lage": seite(kopf + sprungleiste() + station("lage") + zustand + leiste + '<div style="height:12px"></div>' + einzeln,
+    return {"lage": seite(kopf + sprungleiste() + station("lage") + leiste + '<div style="height:12px"></div>' + einzeln,
                           unten=12)}  # Layout

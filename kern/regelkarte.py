@@ -166,37 +166,24 @@ KAESTEN = {
              regel="Die Rotation geht weiter.", fuehrt="O'Neil/Weinstein", zeichen="",
              messung=["sektoren.rotation"], stand="gemessen", pruefer=["Neue Balance"]),
     ],
-    "markt": [
-        dict(name="Anlass", zustand=None,
-             regel="Was den Markt an den Rand bringt (Zins, Wirtschaftswetter, Ereignis).", fuehrt="O'Neil", zeichen="Quad",
-             messung=[], stand="fehlt", luecke="der Zustand des Marktes nennt keinen Anlass", pruefer=["Anlass"]),
-        dict(name="Balance", zustand="Balance",
-             regel="Wertzonen von S&P 500 und Nasdaq.", fuehrt="Dalton (Wertzonen)", zeichen="O'Neil",
-             messung=["auktion.markt", "marktrichtung.zonen_bruch"], stand="gemessen", pruefer=["Balance (Wertzonen)"]),
-        dict(name="Test am Rand", zustand="Test am Rand",
-             regel="Erholungsversuch in der Korrektur.", fuehrt="O'Neil (Erholungsversuch)", zeichen="",
-             messung=["auktion.markt", "marktrichtung.verlauf"], stand="gemessen", pruefer=["Test am Rand (Erholungsversuch)"]),
-        dict(name="angenommen", zustand="angenommen",
-             regel="Follow-Through-Day ab Tag 4 des Erholungsversuchs mit deutlichem Plus bei höherem Volumen.",
-             fuehrt="O'Neil (Follow-Through-Day)", zeichen="", messung=["marktrichtung.verlauf"], stand="gemessen",
-             pruefer=["Follow-Through-Day/angenommen"]),
-        dict(name="abgelehnt", zustand="abgelehnt",
-             regel="Erholungsversuch gescheitert: Schluss unter dem Tief des Versuchs.", fuehrt="O'Neil", zeichen="",
-             messung=["marktrichtung.verlauf"], stand="gemessen", pruefer=["abgelehnt"]),
-        dict(name="Ungleichgewicht", zustand="Ungleichgewicht",
-             regel="Bestätigter Aufwärtstrend bzw. Korrektur ohne Erholungsversuch.", fuehrt="O'Neil", zeichen="",
-             messung=["auktion.markt"], stand="gemessen", pruefer=["Zustand des Marktes"]),
+    "markt": [                                   # seit 23.11.2026 aus dem Zirkel des Index (vorher O'Neil)
+        dict(name="Zirkel des Index", zustand=None,
+             regel="Phase 1–4 und Keim von S&P 500 (SPY) und Nasdaq (QQQ) aus ihrem eigenen Kreislauf – ohne die "
+                   "Zeichen relativ zum Markt, denn der Index misst sich nicht an sich selbst.",
+             fuehrt="Micky (Zirkel), Weinstein (Phasen)", zeichen="🌱/🍂",
+             messung=["zirkel.indizes", "zeichen.zirkel_index"], stand="gemessen", pruefer=["Markt-Ampel"]),
+        dict(name="Markt-Ampel", zustand=None,
+             regel="Der S&P 500 bestimmt, der Nasdaq steht daneben. 🟢 Angriff: Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw. "
+                   "Wechsel 1 → 2 · 🟡 Vorsicht: Phase 2 mit 🍂, Phase 1 ohne 🌱, Phase 3 ohne 🍂, Phase 4 mit 🌱 · "
+                   "🔴 Rückzug: Phase 3 mit 🍂 bzw. Wechsel 3 → 4, Phase 4 ohne 🌱.",
+             fuehrt="Micky 23.11.2026 (Zirkel ersetzt O'Neil)", zeichen="🟢/🟡/🔴",
+             messung=["zirkel.markt_ampel", "zirkel.markt"], stand="gemessen", pruefer=["Markt-Ampel"]),
+        dict(name="Hochs gegen Tiefs", zustand=None,
+             regel="Neue 52-Wochen-Hochs gegen Tiefs im Revier – Zeichen unter der Ampel, ohne Urteil.",
+             fuehrt="O'Neil (Zeichen)", zeichen="", messung=["zirkel.rechnen"], stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Folgen die Schwestern", zustand=None,
              regel="Die Breite (Anteil der Titel über dem GD50) – trägt die Truppe den Markt?", fuehrt="Breite", zeichen="",
              messung=["lage.pendel"], stand="gemessen", pruefer=["Folgen die Schwestern (Breite)"]),
-        dict(name="Ende: Gegner antwortet", zustand="Ende des Laufs",
-             regel="Distributionstage (fallender Schluss bei höherem Volumen als am Vortag, 5–6 in 4–5 Wochen = unter "
-                   "Druck), Abgabe am Rand.",
-             fuehrt="O'Neil (Distributionstage)", zeichen="", messung=["marktrichtung.verlauf"], stand="gemessen",
-             pruefer=["Distributionstage", "Ende des Laufs"]),
-        dict(name="Ende: Antrieb erlischt", zustand="Ende des Laufs",
-             regel="Überhitzung, Topbildung, Kapitulation (Marktzonen).", fuehrt="O'Neil", zeichen="",
-             messung=["lage.pendel"], stand="gemessen", pruefer=["Ende des Laufs"]),
     ],
 }
 
@@ -420,17 +407,18 @@ ZEICHEN = [
 # Regeln außerhalb der drei Bilder und der Setups: Rückenwind, Depot und Risiko, Fundament, Stopps, Kartentisch,
 # Erkennung, Rudel. pruefer leer = noch kein Prüfer sieht den Bereich (gelb, Micky entscheidet).
 BEREICHE = [
-    dict(name="Nach dem Kauf und Depot", quelle="Kullamägi (10er/20er, Teilgewinn), Micky 14./16.11.2026 (Schritt 5), "
-                                                "O'Neil (8 %), Minervini (Einstand ab 2R, Klumpen, Verlustbremse)",
-         regel="Ein System für alle Positionen: bis Tag 3 gilt der Anfangsstopp, danach folgt der Stopp dem 10er (solange "
-               "seit Tag 3 kein Schluss darunter lag) bzw. dem 20er, er steigt nur, Schluss darunter heißt raus; Mauer "
-               "(höchstens 3 % über dem Kurs), Kraft ohne Weg am oberen Rand und Kauf-Klimax ziehen ihn sofort unter das "
-               "Tief jenes Tages (Stopp im Markt); short gespiegelt. Teilgewinn Tag 3–5 (Kullamägi). "
-               "Verlustgrenze 8 % vom Einstieg ohne Ausnahme; ab 2R Gewinn Stopp mindestens auf Einstand; Positionswert "
-               "über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = Zeichen, das Risiko je Trade zu "
-               "halbieren; Depot-Hitze höchstens 6 % des Kontos.",
-         messung=["depot._nach_dem_kauf", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen", "depot.verlustbremse",
-                  "depotleiste.titelkarte", "depotleiste.positionsmarken"], pruefer=[],
+    dict(name="Nach dem Kauf und Depot", quelle="Micky 23.11.2026 (nur noch Zirkel und nachgezogener Stopp), Kullamägi "
+                                                "(10er/20er), Minervini (Klumpen, Verlustbremse)",
+         regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Pivot wird gemerkt). Ab Tag 3 folgt der "
+               "Stopp dem 10er (solange seit Tag 3 kein Schluss darunter lag) bzw. dem 20er, er steigt nur, Schluss "
+               "darunter heißt raus. Reibung: Mauer (höchstens 3 % über dem Kurs), Kraft ohne Weg am oberen Rand und "
+               "Kauf-Klimax ziehen ihn sofort unter das Tief jenes Tages (Stopp im Markt). Zirkel: 🟢 Phase 2 (bzw. "
+               "Wechsel 1 → 2) ohne 🍂 – laufen lassen; 🟡 🍂 gemessen in Phase 2 – Stopp eng unter das Tagestief; 🔴 "
+               "Wechsel 2 → 3 läuft oder Phase 3/4 – raus; 🔴 Schluss zurück unter dem Pivot – raus. Short gespiegelt. "
+               "Kriegskasse: Positionswert über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = "
+               "Zeichen, das Risiko je Trade zu halbieren; Depot-Hitze höchstens 6 % des Kontos.",
+         messung=["depot._nach_dem_kauf", "depot.aus_setup", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen",
+                  "depot.verlustbremse", "depotleiste.titelkarte", "depotleiste.positionsmarken"], pruefer=[],
          luecke="kein Prüfer – die Regeln sind fest, gemessen wird am eigenen Depot"),
     dict(name="Performance", quelle="Micky 16.11.2026 (Excel-Liste „Trading Performance Tracker“), Minervini (Verlustbremse)",
          regel="Wochenrendite = (Depotwert − Vorwoche − Einzahlung) / Vorwoche; Ø Wochenrendite geometrisch aus den echten "
@@ -549,9 +537,11 @@ BEREICHE = [
          messung=["zirkel.setup", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
          regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Zone der "
-               "Tagesebene im Einklang mit dem Zirkel (Setup), 52-Wochen-Hoch bzw. -Tief für O'Neils Markt-Ampel "
-               "(Hochs gegen Tiefs). Gruppen-Listen und Spalte „Setup“ der Liste lesen daraus.",
-         messung=["zirkel.rechnen", "zirkel.feld", "zirkel.barometer", "rueckenwind_seite.setups"], pruefer=[],
+               "Tagesebene im Einklang mit dem Zirkel (Setup), 52-Wochen-Hoch bzw. -Tief (Hochs gegen Tiefs) und der "
+               "Zirkel der Indizes für die Markt-Ampel; dazu die Positionen des Depots. Gruppen-Listen und Spalte "
+               "„Setup“ der Liste lesen daraus.",
+         messung=["zirkel.rechnen", "zirkel.liste", "zirkel.feld", "zirkel.barometer", "rueckenwind_seite.setups"],
+         pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Rotationskarte (Pfeile)", quelle="Rotation der Sektoren (Feld × Schwung)",
          regel="Pfeil = Bewegung der letzten 5 Wochen; unter 0,5 Punkten gilt eine Achse als unverändert.",

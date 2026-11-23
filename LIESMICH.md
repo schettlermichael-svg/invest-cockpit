@@ -15,7 +15,7 @@ und Deutung – entscheiden tust du.
   - `lage.py` – Marktampel, Dalio-Quadrant, Marks-Pendel (Lageleiste); `marktdaten.py` – FRED, Yahoo, Marktbreite
   - `sektoren.py` – elf Sektor-ETFs gegen SPY als Rotationsbild (RS-Stärke = RS zum 26-Wochen-Schnitt, geglättet; Schwung = Veränderung in 6 Wochen), Abgleich mit dem Quad, Sektor je Titel
   - `datenpruefung.py` – Datenampel (Lücken, Split-Verdacht, Volumen null, veraltet); in die Mustererkennung eingebaut
-  - `marktrichtung.py` – Marktrichtung nach O'Neil: Distributionstage, Erholungsversuch, Follow-Through-Day (S&P 500 und Nasdaq, Gegenprobe des Volumens mit Massive)
+  - `zirkel.py` – der Zirkel je Titel, das Setup aus dem Zirkel und seit 23.11.2026 die Markt-Ampel aus dem Zirkel des Index (`marktrichtung.py` und `marktklima.py` nach O'Neil sind entfernt)
   - `rudel.py` – Rudel (Branchen-Breite), Kursverwandte, Themen-Gruppen, Mansfield-RS (Speicher in `daten/rudel/`)
   - `massive.py` – Tageskurse aller US-Aktien von Massive (eine Anfrage je Tag, Speicher in `daten/massive/`)
   - SIC-13 (Mickys Raster) und Fonds-Fußabdruck: am 11.11.2026 entfernt (`_to_delete/sic13_2026-11-11`); TradingView-Kennzahlen je Titel liest `tv_kennzahlen.zeile()` aus `daten/tv/revier.csv`
@@ -1460,3 +1460,30 @@ oder Wechsel 3→4 = Abbruch · 4 Abwärts + Bruch ohne 🌱 = Fortsetzung abwä
 Gegen den Zirkel: kein Setup, nicht gezeigt (Titelseite „kein Setup“, der Chart zeichnet die Linien der Zone trotzdem, beschriftet „kein Setup“, nicht in Liste und Meldung).
 Mac 04.11., 304 Titel: 174 Zonen-Trades → 42 Setups (19 Aufbruch, 21 Fortsetzung, 2 Abbruch).
 Zirkel-Datei je Lauftag (`daten/kreislauf/<Lauftag>.json`, die jüngste gilt), Kurstag darin für die Datenstand-Wache.
+
+## Die ganze App auf dem Zirkel: Führung und Markt-Ampel (23.11.2026)
+Micky: „Zirkel ersetzt alles“ (Führung) und „Zirkel ersetzt O'Neil“ (Markt). Damit läuft die Kette Markt → Strömung →
+Zirkel → Zone → Setup → Führung ganz über unseren Zirkel.
+
+**Führung nach dem Kauf** (`depot._nach_dem_kauf`, long; short gespiegelt):
+- Stopp beim Kauf = der Stopp des Setups. Das Formular „＋ Position“ gibt Seite, Einstieg und Stopp aus dem Setup vor
+  (`depot.aus_setup`); die Position merkt sich den Pivot des Setups (short: die Unterkante, `zonen.trade` → `pivot`).
+- Ab Tag 3 folgt der Stopp dem 10er bzw. 20er (`reiten.nachgezogen`), Schluss darunter = raus.
+- Reibung: Mauer, Kraft ohne Weg und Klimax ziehen ihn unter das Tief jenes Tages.
+- Zirkel: 🟢 Phase 2 (bzw. Wechsel 1 → 2) ohne 🍂 – laufen lassen · 🟡 🍂 gemessen in Phase 2 – Stopp eng unter das
+  Tagestief · 🔴 Wechsel 2 → 3 läuft oder Phase 3/4 – raus · 🔴 Basis bricht (Phase 1 → 4) – raus · grau ohne Zirkel.
+- Pivot: 🔴 Schluss zurück unter dem Pivot – der Widerstand ist nicht überwunden, raus.
+- Entfernt: Teilgewinn Tag 3–5, 8-%-Verlustgrenze, Einstand ab 2R, Squat, Tennisball, Reset, „Führer +20 %“.
+  Kriegskasse bleibt: 1 % Risiko je Trade, Depot-Hitze, Klumpen, Verlustbremse.
+- Der Zirkel-Lauf rechnet die Positionen des Depots mit (`zirkel.liste`: Revier, Watchlist, Depot).
+
+**Markt-Ampel** (`zirkel.markt_ampel`, `zirkel.markt`): der Zirkel von S&P 500 (SPY) und Nasdaq (QQQ) aus ihrem eigenen
+Kreislauf, ohne Zeichen relativ zum Markt (`zeichen.zirkel_index`); der S&P 500 bestimmt, der Nasdaq steht daneben.
+🟢 Angriff: Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw. Wechsel 1 → 2 · 🟡 Vorsicht: Phase 2 mit 🍂, Phase 1 ohne 🌱, Phase 3
+ohne 🍂, Phase 4 mit 🌱 · 🔴 Rückzug: Phase 3 mit 🍂 bzw. Wechsel 3 → 4, Phase 4 ohne 🌱. Darunter Hochs gegen Tiefs;
+aufklappbar je Index alle Zeichen, die tragen, und die Keime. Gerechnet im Zirkel-Lauf (`barometer.index`). Das
+Korrekturfenster für „Stärke in der Schwäche“ öffnet, wenn die Ampel nicht 🟢 steht (vorher O'Neils Ampel). Die
+Druck-Tage des Index (O'Neils Distributionstage) bleiben nur als Messung der Stärke in der Schwäche (`tiefe.abgabetage`).
+Entfernt: `marktrichtung.py`, `marktklima.py`, `auktion.markt`, der Kasten „Zustand des Marktes“, `marktdaten.yahoo_ohlc`.
+Mac 04.11.: S&P 500 Phase 2 ohne Keim = 🟢 Angriff; Nasdaq Phase 2 · Rücksetzer mit 🍂 (Evening Star, 5 Abgabetage) = 🟡.
+

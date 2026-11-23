@@ -486,21 +486,19 @@ def enge_trocken(df):
 
 # ── Relativ zum Markt ─────────────────────────────────────────────────────────────────────────────────────────────
 def korrekturfenster(idx):
-    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: O'Neil sieht
-    Korrektur/Druck (start = Indexhoch der 60 Tage davor), oder der Index liegt ≥ 3 % unter dem Hoch der 60 Tage.
-    Vorbei (Prüf-Agent 13.11.2026: die Stärke verschwand mit dem Follow-Through-Day – genau dann brechen die Führer
-    aus): die letzte Korrektur von mindestens 3 %, deren Tief höchstens NACHWIRKUNG_TAGE Handelstage zurückliegt."""
+    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: die Markt-Ampel
+    aus dem Zirkel des Index steht nicht auf 🟢 (Micky 23.11.2026, vorher O'Neils Ampel), oder der Index liegt ≥ 3 %
+    unter dem Hoch der 60 Tage – start = Indexhoch der 60 Tage. Vorbei (Prüf-Agent 13.11.2026: die Stärke verschwand,
+    sobald der Markt wieder lief – genau dann brechen die Führer aus): die letzte Korrektur von mindestens 3 %, deren
+    Tief höchstens NACHWIRKUNG_TAGE Handelstage zurückliegt."""
     c = idx["Close"]
-    try:
-        import marktrichtung
-        mr = marktrichtung.richtung(bis=idx.index[-1])
-        if mr.get("ampel") != "grün" and mr.get("seit") is not None:
-            vor = c.loc[:pd.Timestamp(mr["seit"])].iloc[-KORREKTUR_FENSTER:]
-            return vor.idxmax(), None
-    except Exception:  # noqa: BLE001
-        pass
     c60 = c.iloc[-KORREKTUR_FENSTER:]
-    if (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:
+    try:
+        import zirkel
+        gruen = zirkel.markt_ampel(zirkel_index(idx)) == "grün"
+    except Exception:  # noqa: BLE001 – ohne Zirkel des Index zählt nur der Abstand zum Hoch
+        gruen = True
+    if not gruen or (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:
         return c60.idxmax(), None
     fenster = c.iloc[-(NACHWIRKUNG_TAGE + KORREKTUR_FENSTER):]
     tief = fenster.iloc[-NACHWIRKUNG_TAGE:].idxmin()
@@ -1042,12 +1040,18 @@ _START, _GELADEN = {}, {}
 
 
 def startdatum(idx):
-    """korrekturfenster() einmal je Indextag (die Marktrichtung lädt die Indizes) → (start, ende) oder KEIN."""
+    """korrekturfenster() einmal je Indextag → (start, ende) oder KEIN."""
     schl = (len(idx), idx.index[-1])
     if schl not in _START:
         _START.clear()
         _START[schl] = korrekturfenster(idx) or KEIN
     return _START[schl]
+
+
+def zirkel_index(idx):
+    """Der Zirkel eines Index (zirkel()) aus seinem eigenen Kreislauf – ohne die Zeichen relativ zum Markt, denn der
+    Index misst sich nicht an sich selbst (Markt-Ampel, Micky 23.11.2026)."""
+    return zirkel(kreislauf(idx))
 
 
 def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlausbruch=None):

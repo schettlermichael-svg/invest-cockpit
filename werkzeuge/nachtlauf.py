@@ -120,11 +120,12 @@ def main():
         return "Übersicht gebaut"
 
     def zirkel_():
-        import watchlists
         import zirkel
-        z_ = zirkel.rechnen(sorted(set(alle) | set(watchlists.alle())), melden=lambda x: print(x, flush=True))
+        z_ = zirkel.rechnen(zirkel.liste(alle), melden=lambda x: print(x, flush=True))
         b_ = z_["barometer"]
-        return f"{z_['titel']} Titel, {z_['trades']} mit Setup · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs"
+        ix = b_.get("index") or {}
+        ampel = " · ".join(f"{n} Phase {x['wort']} {x['ampel']}" for n, x in ix.items()) or "Index ohne Zirkel"
+        return f"{z_['titel']} Titel, {z_['trades']} mit Setup · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs · {ampel}"
 
     def revier():
         import revier_pflege
@@ -170,8 +171,8 @@ def main():
     schritt("TradingView-Kennzahlen", tradingview)
     schritt("Zahlen nach den Terminen neu laden", zahlen_nach_terminen)
     schritt("Rückenwind (RS-Dynamik, Geldfluss, Zahlen)", rueckenwind_)   # vor dem Zirkel: die Meldung liest beide
-    schritt("Zirkel (Kreislauf, Setup, Hochs/Tiefs)", zirkel_)
-    schritt("Lage (Wetter, Pendel, Breite, Front, Marktrichtung)", lage)   # nach dem Zirkel: liest Hochs und Tiefs
+    schritt("Zirkel (Kreislauf, Setup, Hochs/Tiefs, Markt-Ampel)", zirkel_)
+    schritt("Lage (Markt-Ampel, Wetter, Pendel, Breite)", lage)   # nach dem Zirkel: liest Markt-Ampel, Hochs und Tiefs
     schritt("Schrank: Titelseiten der Rückenwind-Titel und der Watchlist", schrank)
     p["datenstand"] = datenstand()
     p["ende"] = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -394,8 +395,7 @@ def seiten(prozesse=None):
     import zirkel
     if not zirkel.feld():                        # noch kein Zirkel-Lauf (erster Start nach dem Umbau 22.11.2026)
         import tpo_laden
-        import watchlists
-        zirkel.rechnen(sorted(set(tpo_laden.titel()) | set(watchlists.alle())), prozesse=prozesse)
+        zirkel.rechnen(zirkel.liste(tpo_laden.titel()), prozesse=prozesse)
         uebersicht.ablegen(uebersicht.seite_uebersicht())   # Markt-Ampel mit Hochs und Tiefs
     liste = schrank_liste()
     p["zahl"] = len(liste)

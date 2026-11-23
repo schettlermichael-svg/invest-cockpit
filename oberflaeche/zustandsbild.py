@@ -7,10 +7,6 @@ import auktion
 from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3
 from masse import ZEILENUMBRUCH  # noqa: E402
 
-KETTE = ("Anlass", "Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewicht", "Ende des Laufs")
-PLATZ_REIHE = ("Anlass", "Balance", "Test am Rand", "abgelehnt", "angenommen", "Ungleichgewicht", "Abgabe am Rand",
-               "Anführer bricht aus", "folgen die Schwestern", "Geldfluss", "Ende des Laufs")
-
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 
@@ -29,21 +25,6 @@ def pille(e, klein=False, mit_belegen=False):
             f'font-size:{gr};white-space:nowrap">{t(auktion.wort(e))}</span>')
 
 
-def _kette(e):
-    jetzt = e["zustand"]
-    teile = []
-    for i, s in enumerate(KETTE):
-        an = s == jetzt or (s == "Anlass" and e.get("anlass"))
-        f = auktion.FARBE[s]
-        stil = (f"background:{f}22;border:1px solid {f};color:{TEXT};font-weight:600" if s == jetzt else
-                f"border:1px solid {f};color:{TEXT_2}" if an else f"border:1px solid {RAND};color:{TEXT_3}")
-        teile.append(f'<span style="{stil};border-radius:6px;padding:3px 8px;font-size:12px;white-space:nowrap">'
-                     f'{t(s)}</span>')
-        if i < len(KETTE) - 1:
-            teile.append(f'<span style="color:{TEXT_3};font-size:12px">{"|" if s == "abgelehnt" else "→"}</span>')
-    return f'<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">{"".join(teile)}</div>'
-
-
 def _zeilen(titel, texte, farbe=TEXT_3):
     if not texte:
         return ""
@@ -51,33 +32,6 @@ def _zeilen(titel, texte, farbe=TEXT_3):
     return (f'<div style="margin-top:8px"><div style="font-size:12px;color:{farbe};text-transform:uppercase;'
             f'letter-spacing:.04em">{t(titel)}</div><ul style="margin:2px 0 0 18px;padding:0;color:{TEXT_2};'
             f'font-size:13px;line-height:1.45">{li}</ul></div>')
-
-
-def box(e, ueberschrift="Zustand"):
-    """Karte mit Zustand, Unterzeile, Kette und Belegen je Platz."""
-    if not e:
-        return ""
-    f = auktion.farbe(e)
-    kopf = (f'<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">'
-            f'<span style="font-size:12px;color:{TEXT_3}">{t(ueberschrift)}</span>'
-            f'<span style="font-size:20px;font-weight:600;color:{f}">{t(auktion.wort(e))}</span>'
-            f'<span style="font-size:13px;color:{TEXT_3}">{t(e.get("unterzeile") or "")}</span></div>')
-    teile = [kopf, f'<div style="margin-top:8px">{_kette(e)}</div>']
-    teile.append(_zeilen("Anlass", e.get("anlass"), auktion.FARBE["Anlass"]))
-    je = {}
-    for platz, text in e.get("belege") or []:
-        je.setdefault(platz, []).append(text)
-    for platz in PLATZ_REIHE:
-        if platz in je:
-            teile.append(_zeilen(platz, je.pop(platz), auktion.FARBE.get(platz, TEXT_3)))
-    for platz, texte in je.items():
-        teile.append(_zeilen(platz, texte))
-    teile.append(_zeilen("Was den Lauf beendet", e.get("ende"), auktion.FARBE["Ende des Laufs"]))
-    teile.append(_zeilen("Wo die Gegenseite wartet", e.get("gegenseite")))
-    if e.get("kraft"):
-        teile.append(_zeilen("Eigen oder geliehen", [e["kraft"]["text"]]))
-    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:3px solid {f};border-radius:10px;'
-            f'padding:12px 14px;margin:8px 0">{"".join(teile)}</div>')
 
 
 def strategen_karte(erg):
@@ -129,7 +83,5 @@ def strategen_karte(erg):
                      if not p else "🦊 Prüfung: " + t(" · ".join(p))) + "</div>")
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:3px solid {f};border-radius:10px;'
             f'padding:12px 14px;margin:8px 0">{"".join(zeilen)}</div>')
-
-
 
 

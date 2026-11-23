@@ -112,16 +112,16 @@ def _fenster(titel_):
 def position_knopf(tk):
     """„＋ Position“ / „● Position“: anlegen, Stopp nachziehen, schließen (bis Scalable verbunden ist, von Hand)."""
     p = depot.position(tk)
+    su = {} if p else depot.aus_setup(tk)          # neue Position: Vorgabe aus dem Setup (Micky 23.11.2026)
     with _fenster("● Position" if p else "＋ Position"):
         with st.form(f"pos_{tk}"):
             seite_ = st.radio("Seite", ["long", "short"], horizontal=True,
-                              index=0 if not p or p.get("seite", "long") == "long" else 1)
-            # die Setup-Art (M/K) entfällt seit 16.11.2026: ein System, der Stopp folgt dem 10er/20er (Schritt 5)
+                              index=0 if (p or su).get("seite", "long") == "long" else 1)
             stueck = st.number_input("Stück", min_value=0, step=1, value=int(p["stueck"]) if p else 0)
             einstieg = st.number_input("Einstieg (Kurs des Titels)", min_value=0.0, format="%.2f",
-                                       value=float(p["einstieg"] or 0) if p else 0.0)
-            stopp = st.number_input("Stopp (Kurs des Titels)", min_value=0.0, format="%.2f",
-                                    value=float(p["stopp"] or 0) if p else 0.0)
+                                       value=float((p or su).get("einstieg") or 0))
+            stopp = st.number_input("Stopp (Kurs des Titels; Vorgabe: der Stopp des Setups)", min_value=0.0,
+                                    format="%.2f", value=float((p or su).get("stopp") or 0))
             ko = (p or {}).get("ko") or {}
             schwelle = st.number_input("Knock-out-Schwelle (leer lassen bei Aktie)", min_value=0.0, format="%.2f",
                                        value=float(ko.get("schwelle") or 0))
@@ -134,7 +134,7 @@ def position_knopf(tk):
                 st.rerun()
         if p:
             with st.form(f"zu_{tk}"):
-                aus = st.number_input("Ausstiegskurs (für deine Bilanz, Minervini-Abgleich)", min_value=0.0,
+                aus = st.number_input("Ausstiegskurs (für deine Bilanz)", min_value=0.0,
                                       format="%.2f", value=0.0)
                 if st.form_submit_button("Position schließen", use_container_width=True):
                     depot.schliessen(tk, aus or None)
@@ -489,7 +489,7 @@ def strategen_call(tk, teile):
             import analyse_seite
             with st.spinner("Recherche im Netz und Einschätzung (1–3 Minuten) …"):
                 erg = strategen.rufen(tk, stand, r, float(df["Close"].iloc[-1]), atr=tag["atr"], rw=rw,
-                                      markt=mm.get("auktion"),
+                                      markt=mm or None,
                                       termin=((rw.get("zahlen") or {}).get("termin")), tiefe=analyse_seite.material(tk))
         except Exception as x:  # noqa: BLE001
             st.error(f"Strategen-Call ging nicht: {x}")

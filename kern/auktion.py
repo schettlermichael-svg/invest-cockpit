@@ -1,4 +1,5 @@
-"""Der Code für Balance und Ungleichgewicht (Micky 13.11.2026) – eine Zustandsmaschine für Titel, Gruppe und Markt.
+"""Der Code für Balance und Ungleichgewicht (Micky 13.11.2026) – eine Zustandsmaschine für Titel und Gruppe (der
+Markt seit 23.11.2026 aus dem Zirkel des Index, zirkel.markt).
 
 Das Bild: Anlass → Balance → Test am Rand → abgelehnt oder angenommen → Ungleichgewicht → eine der drei Kräfte beendet den
 Lauf (Gegner antwortet · Antrieb erlischt · Wert akzeptiert) → neue Balance. Dieselben Namen und Farben auf allen drei
@@ -62,12 +63,9 @@ ZONE_PUFFER = 1.005    # Kurs in der Zone: bis 0,5 % über der Oberkante
 WERT_WOCHEN = 3        # Wert akzeptiert: neue Wertzone seit mindestens 3 Wochen
 BREITE_PUNKTE = 10     # Gruppe: Breite steigt bzw. fällt um 10 Punkte in 4 Wochen
 ZUFLUSS_AB = 1.1       # Gruppe angenommen: Zufluss ab 1,1 (wie rueckenwind.ZUFLUSS)
-FTD_TAG = 4            # Markt: Follow-Through-Day ab Tag 4 des Erholungsversuchs (O'Neil)
-FTD_FRISCH_TAGE = 14   # Markt: Follow-Through-Day gilt als frisch bis 14 Tage
 RS_GLEICH = 1      # Kraft: RS-Änderung höchstens 1 Punkt = mit dem Markt
 MIT_MEHR = 1       # … mehr Kraft mit als gegen: über 1
 FELD_NEUTRAL = 1   # Gruppe neutral: Stärke und Schwung höchstens 1 Punkt neben 100
-MARKT_NEUTRAL = 1  # Markt neutral: Distributionstage höchstens 1
 
 
 def _z(x, f=".2f"):
@@ -616,10 +614,6 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
     return e
 
 
-
-
-
-
 # ── Gruppe ──────────────────────────────────────────────────────────────────────────────────────────────────────
 def gruppe(g):
     """Zustand einer Gruppe (Sektor, Branche, Thema) aus der Rotationskarte, der Breite und den Anführern."""
@@ -668,59 +662,3 @@ def gruppe(g):
                   unterzeile=f"Feld {f}" + (" · stabil" if g.get("stabil") else ""))
     e["rand"] = "oben" if z == "Test am Rand" else None
     return e
-
-
-# ── Markt ───────────────────────────────────────────────────────────────────────────────────────────────────────
-def markt(r, p=None):
-    """Ein Marktzustand aus O'Neil (Marktrichtung) und den Marktzonen der Lage (Unterzeile)."""
-    if not r:
-        return None
-    zst = r.get("zustand")
-    belege, ende, anlass = [], [], []
-    dt = r.get("distributionstage") or {}
-    dtt = " · ".join(f"{n} {d}" for n, d in dt.items())
-    zone = (p or {}).get("zone")
-    if zst == "Korrektur":
-        v = r.get("versuch")
-        g = r.get("gescheitert")
-        if g and (not v or v[0] <= MARKT_NEUTRAL):
-            z, ri = "abgelehnt", "aufwärts"
-            belege.append(("abgelehnt", f"Erholungsversuch am {_d(g)} gescheitert: Schluss unter dem Tief des Versuchs"))
-        elif v:
-            z, ri = "Test am Rand", None
-            belege.append(("Test am Rand", f"Erholungsversuch {v[1]} Tag {v[0]}" +
-                           (" – Follow-Through ab Tag 4 möglich" if v[0] < FTD_TAG else " – wartet auf den Follow-Through-Day")))
-        else:
-            z, ri = "Ungleichgewicht", "abwärts"
-            belege.append(("Ungleichgewicht", "Korrektur ohne Erholungsversuch"))
-        if zone == "Kapitulation":
-            ende.append("Antrieb erlischt: Kapitulation (VIX hoch, Breite unten)")
-            if z == "Ungleichgewicht":
-                z = "Ende des Laufs"
-    else:
-        f = r.get("ftd")
-        if f and _seit_tage(f["tag"]) <= FTD_FRISCH_TAGE:
-            z, ri = "angenommen", "aufwärts"
-            belege.append(("angenommen", f"Follow-Through-Day am {_d(f['tag'])} ({f['index']}, Tag {f['tag_nr']}, "
-                                         f"+{_z(f['plus'], '.1f')} %)"))
-        else:
-            z, ri = "Ungleichgewicht", "aufwärts"
-            belege.append(("Ungleichgewicht", "Bestätigter Aufwärtstrend" if zst.startswith("Bestätigt") else zst))
-        if zst == "Aufwärtstrend unter Druck":
-            ende.append(f"Gegner antwortet: Abgabe am Rand – Distributionstage {dtt} in 5 Wochen")
-        if zone in ("Überhitzung", "Topbildung"):
-            ende.append(f"Antrieb erlischt: Marktzone {zone}")
-        if ende and z == "Ungleichgewicht":
-            z = "Ende des Laufs"
-    belege.append(("Abgabe am Rand", f"Distributionstage {dtt} in 5 Wochen"))
-    for n, w in (r.get("zonen") or {}).items():
-        belege.append(("Balance", f"Wertzone {n}: {w}"))
-    m = (p or {}).get("messwerte") or {}
-    if m.get("breite") is not None:
-        belege.append(("folgen die Schwestern", f"Breite {_z(m['breite'], '.0f')} % (4 Wochen {_z(m['breite_4w'], '+.0f')})"))
-    unter = [zst] + ([f"Marktzone {zone} {p.get('pfeil', '')}".strip()] if zone else [])
-    return _ergebnis("markt", z, ri, belege=belege, ende=ende, anlass=anlass, unterzeile=" · ".join(unter))
-
-
-def _seit_tage(tag):
-    return int(np.busday_count(pd.Timestamp(tag).date(), pd.Timestamp.today().date()))

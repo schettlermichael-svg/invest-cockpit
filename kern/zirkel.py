@@ -4,10 +4,11 @@ Reviers und der Watchlist aus den gespeicherten Tageskursen
   · den Kreislauf (Phase 1–4, Zeichen der Stärke und Schwäche, Keime – zeichen.fuer_titel),
   · das Setup: Zonen-Trade der Tagesebene (zonen.basis, lage, trade) im Einklang mit dem Zirkel (setup) –
     Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – oder keines,
-  · ob der Titel heute am 52-Wochen-Hoch oder -Tief steht (für O'Neils Markt-Ampel: Hochs gegen Tiefs).
+  · ob der Titel heute am 52-Wochen-Hoch oder -Tief steht (Zeichen unter der Markt-Ampel: Hochs gegen Tiefs),
+  · den Zirkel der Indizes S&P 500 und Nasdaq – daraus die Markt-Ampel (markt_ampel, Micky 23.11.2026).
 
 Abgelegt mit dem Kreislauf in daten/kreislauf/<stand>.json (zeichen.ablegen): {"titel": Kreisläufe, "feld": je Titel
-Phase und Trade, "barometer": Hochs, Tiefs, Titel}. Die Morgenmeldung (heisse) liest Feld und Rückenwind.
+Phase und Trade, "barometer": Hochs, Tiefs, Titel, Zirkel der Indizes}. Die Morgenmeldung (heisse) liest Feld und Rückenwind.
 """
 import functools
 import json
@@ -20,7 +21,7 @@ import pandas as pd
 from masse import JAHR_TAGE
 
 KURSE_MIN = 60                  # Technik: darunter weder Base noch Kreislauf
-TRADE_FELDER = ("art", "name", "zeichen", "richtung", "einstieg", "stopp", "risiko", "ampel", "wartet")
+TRADE_FELDER = ("art", "name", "zeichen", "richtung", "einstieg", "stopp", "pivot", "risiko", "ampel", "wartet")
 MELDUNG_JE_SEITE = 5           # Morgenmeldung: die ersten 5 Long und 5 Short
 
 
@@ -70,6 +71,13 @@ def _titel(tk, start=None):
         return None
 
 
+def liste(revier):
+    """Titel des Zirkel-Laufs: Revier, Watchlist und die Positionen des Depots (Führung nach dem Kauf, 23.11.2026)."""
+    import depot
+    import watchlists
+    return sorted(set(revier) | set(watchlists.alle()) | {p["ticker"] for p in depot.laden()["positionen"]})
+
+
 def rechnen(ticker_liste, prozesse=None, melden=print):
     """Alle Titel in mehreren Prozessen; legt Kreislauf, Feld und Barometer ab → Zusammenfassung."""
     import daten
@@ -83,7 +91,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
         erg = [x for x in ex.map(functools.partial(_titel, start=start), ticker_liste, chunksize=20) if x]  # Technik
     feld = {tk: f for tk, _, f in erg}
     barometer = {"hochs": sum(f["hoch52"] for f in feld.values()), "tiefs": sum(f["tief52"] for f in feld.values()),
-                 "titel": len(feld)}
+                 "titel": len(feld), "index": indizes()}
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")   # Datei je Lauftag: die jüngste gilt (zeichen.laden)
     try:                                            # Kurstag für die Datenstand-Wache
         kurstag = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
@@ -93,6 +101,75 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     trades = sum(1 for f in feld.values() if f["trade"])
     melden(f"  {len(feld)} Titel in {time.time() - beginn:.0f} s, {trades} mit Setup")
     return {"stand": stand, "kurstag": kurstag, "titel": len(feld), "trades": trades, "barometer": barometer}
+
+
+P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
+INDIZES = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # über die ETFs (gespeicherte Tageskurse mit echtem Volumen)
+MARKT_FUEHRT = "S&P 500"                         # er bestimmt die Ampel, der Nasdaq steht daneben (Micky 23.11.2026)
+INDEX_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen")
+
+
+def indizes():
+    """Zirkel der Indizes {Name: {phase, name, ziel, wort, keim, traegt, wochen, ampel, kurstag}} – ohne Zeichen
+    relativ zum Markt (zeichen.zirkel_index)."""
+    import daten
+    import zeichen
+    aus = {}
+    for name, tk in INDIZES.items():
+        try:
+            df = daten.kurse_gespeichert(tk)
+            z = zeichen.zirkel_index(df.dropna(subset=["High", "Low", "Close"]))
+        except Exception:  # noqa: BLE001 – ein Index ohne Kurse fehlt in der Ampel
+            continue
+        if z:
+            aus[name] = {**{x: z.get(x) for x in INDEX_FELDER}, "ampel": markt_ampel(z), "ticker": tk,
+                         "kurstag": f"{df.index[-1]:%Y-%m-%d}"}
+    return aus
+
+
+# ── Markt-Ampel aus dem Zirkel des Index (Micky 23.11.2026, löst O'Neils Distributionstage und Follow-Through-Day ab):
+#   🟢 Angriff   Phase 2 ohne 🍂 · Phase 1 mit gemessenem 🌱 bzw. Wechsel 1 → 2
+#   🟡 Vorsicht  Phase 2 mit 🍂 · Phase 1 ohne 🌱 · Phase 3 ohne 🍂 · Phase 4 mit 🌱
+#   🔴 Rückzug   Phase 3 mit 🍂 bzw. Wechsel 3 → 4 · Phase 4 ohne 🌱
+MARKT_WORT = {"grün": "Angriff", "gelb": "Vorsicht", "rot": "Rückzug"}
+
+
+def markt_ampel(zk):
+    """Zirkel eines Index → "grün" | "gelb" | "rot" (Regel oben); ohne Zirkel "gelb"."""
+    p = (zk or {}).get("phase") or 0
+    keim, ziel = bool((zk or {}).get("keim")), (zk or {}).get("ziel")
+    if p == P_AUF:
+        return "gelb" if keim else "grün"
+    if p == P_BASIS:
+        return "grün" if keim or ziel == P_AUF else "gelb"
+    if p == P_VERTEILUNG:
+        return "rot" if keim or ziel == P_AB else "gelb"
+    if p == P_AB:
+        return "gelb" if keim else "rot"
+    return "gelb"
+
+
+def markt():
+    """Die eine Markt-Ampel aus dem letzten Zirkel-Lauf → {ampel, wort, fuehrt, indizes, hochs, tiefs} oder None."""
+    b = barometer()
+    ix = b.get("index") or {}
+    f = ix.get(MARKT_FUEHRT)
+    if not f:
+        return None
+    return {"ampel": f["ampel"], "wort": MARKT_WORT[f["ampel"]], "fuehrt": MARKT_FUEHRT, "indizes": ix,
+            "hochs": b.get("hochs"), "tiefs": b.get("tiefs")}
+
+
+def markt_text(m):
+    """Markt-Ampel in Worten: Phase und Keim je Index, dann Hochs gegen Tiefs."""
+    teile = []
+    for name, x in (m or {}).get("indizes", {}).items():
+        z = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}[x["ampel"]]
+        teile.append(f'{z} {name}: Phase {x["wort"]} ({x["name"]})'
+                     + (f' · Keim: {"; ".join(x["keim"])}' if x.get("keim") else " · kein Keim gemessen"))
+    if (m or {}).get("hochs") is not None:
+        teile.append(f'neue 52-Wochen-Hochs : Tiefs {m["hochs"]} : {m["tiefs"]}')
+    return teile
 
 
 def feld(tk=None):
@@ -118,7 +195,6 @@ def barometer():
 # Junge Titel ohne Zirkel (unter einem Jahr Kurse): Ausbruch und Rücktest als Aufbruch bzw. Rücktest (IPO-Base).
 SETUP = {"aufbruch": ("🦬", "Aufbruch"), "fortsetzung": ("🦬", "Fortsetzung"), "ruecktest": ("🪝", "Rücktest"),
          "abbruch": ("🐻", "Abbruch"), "abwaerts": ("🐻", "Fortsetzung abwärts")}
-P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
 
 
 def setup(t, zk):

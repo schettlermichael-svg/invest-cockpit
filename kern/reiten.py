@@ -16,7 +16,7 @@ from masse import WOCHE  # noqa: E402
 
 GD10 = 10                   # schnelle Titel reiten am 10er (Kullamägi)
 GD20 = 20                   # sonst am 20er
-NACHZIEHEN_AB_TAG = 3       # bis Tag 3 nach dem Kauf gilt der Anfangsstopp (Kullamägi: Teilgewinn Tag 3–5)
+NACHZIEHEN_AB_TAG = 3       # bis Tag 3 nach dem Kauf gilt der Anfangsstopp (der Stopp des Setups)
 
 
 def linien(df):

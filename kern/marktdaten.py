@@ -122,23 +122,6 @@ def yahoo(ticker):
     return pd.read_csv(pfad, parse_dates=["Datum"], index_col="Datum")["Close"]
 
 
-def yahoo_ohlc(ticker):
-    """Tageskerzen mit Volumen ab 1985 (Datei <ticker>_ohlc.csv) – für Distributionstage und Follow-Through-Day."""
-    pfad = _pfad(ticker + "_ohlc")
-    if not _kurs_frisch(pfad):
-        import yfinance as yf
-        df = yf.download(ticker, start="1985-01-01", auto_adjust=False, progress=False, threads=False)
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        if df is None or df.empty:
-            raise OSError(f"Yahoo: keine Kurse für {ticker}")
-        df = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
-        df.index = pd.to_datetime(df.index).tz_localize(None)
-        df.index.name = "Datum"
-        _ohne_laufende(ticker, df).to_csv(pfad)
-    return pd.read_csv(pfad, parse_dates=["Datum"], index_col="Datum")
-
-
 def _breite_nachtrag_massive(alt):
     """Neue Handelstage aus den Massive-Tagesdateien anhängen (keine Einzelabrufe). Splits mit
     Wirkung an einem neuen Tag werden in der gespeicherten Historie nachgerechnet, sonst entstünde

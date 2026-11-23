@@ -44,7 +44,7 @@ def main():
         import zirkel  # noqa: E402
         print(f"Tageskurse für {len(alle)} Titel …", flush=True)
         print(f"  {daten.kurse_viele(alle + [daten.INDEX])} Titel aktualisiert", flush=True)
-        print(f"fertig: {zirkel.rechnen(alle)}")
+        print(f"fertig: {zirkel.rechnen(zirkel.liste(alle))}")
         return
     if len(sys.argv) > 1 and sys.argv[1] == "fortsetzen":
         mit = [t for t in alle if tpo_daten.lesen(t) is not None or tpo_daten.auslaendisch(t)]
@@ -71,7 +71,7 @@ def main():
     try:
         print(f"  {daten.kurse_viele(alle + [daten.INDEX])} Titel aktualisiert", flush=True)
         print("Zirkel rechnen …", flush=True)
-        print(f"  fertig: {zirkel.rechnen(alle)}", flush=True)
+        print(f"  fertig: {zirkel.rechnen(zirkel.liste(alle))}", flush=True)
     except Exception as e:                       # der Zirkel darf die Erstbefüllung nicht aufhalten
         print(f"  Zirkel nicht gerechnet: {e}", flush=True)
     durchgang = 0
