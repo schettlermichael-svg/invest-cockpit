@@ -287,6 +287,8 @@ def dreifach_block(erg):
                 if piv and kurs:
                     lage_ += (f" · Pivot {zahl(piv)} · noch {zahl((piv / kurs - 1) * 100, 1)} %" if kurs < piv else
                               f" · {zahl((kurs / piv - 1) * 100, 1)} % über dem Pivot {zahl(piv)}")
+            b_ = bahn(x.get("frei"))
+            lage_ += f" · {b_}" if b_ else ""
             phase, keim = _zirkel(tk, kreis)
             k = klasse(x)
             zeilen.append(f'<tr><td><a href="?seite=Titelseite&t={tk}" target="_blank">{tk}</a>{t(_marke(tk, wl))}</td>'
@@ -378,6 +380,7 @@ def titel_zeile(tk):
             f'Rang {x["rang_vor4"]} → {x["rang"]}',
             "Volumen " + (_zufluss(x.get("zufluss"), x.get("trocken")) or "–"),
             *([f"Hoch {HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %"] if wort else []),
+            *([b_] if (b_ := bahn(x.get("frei"))) else []),
             "Geld " + PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
             *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
             "Zahlen " + PUNKT[z.get("ampel") or "grau"]
@@ -477,7 +480,7 @@ def _volumen_zeichen(x):
 
 TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch")
+SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch", "Bahn")
 SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
                  "Momentum": "1M · 3M · 6M: ↑ im Plus, ↓ im Minus · 🚀 unter den besten 2 % des Reviers (Kullamägi)",
@@ -486,7 +489,9 @@ SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (
                  "Geld": "Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · 🐺 Einzelkämpfer",
                  "Zahlen": "Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
                  "Keim": "🍂/🌱 der Riss gegen die Phase · 🪨 Zahl der Zeichen, die sie tragen",
-                 "Hoch": "Abstand zum 52-Wochen-Hoch"}
+                 "Hoch": "Abstand zum 52-Wochen-Hoch",
+                 "Bahn": "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ keine darunter) – Livermores Linie des "
+                         "geringsten Widerstands"}
 
 
 def liste(erg, nur=None):
@@ -517,7 +522,7 @@ def liste(erg, nur=None):
             "RS": _rs(x), "Momentum": _momentum_zeichen(x), "Volumen": _volumen_zeichen(x),
             "Geld": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
             "Zahlen": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
-            "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–"})
+            "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–", "Bahn": bahn(x.get("frei"), "")})
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur and o["tk"] not in wl[nur]:
             continue

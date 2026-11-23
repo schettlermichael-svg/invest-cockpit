@@ -1559,3 +1559,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   1M 3M 6M) · Volumen (Ampel, Faktor, 🏜️) · Geld (Ampel, 🐺) · Zahlen (Ampel, 📅 Termin bis 14 Tage) · Hoch. Erklärung an
   der Spaltenüberschrift (`SPALTEN_HILFE`). Sektor, Branche, Thema, letzte Zahlen und Zahlen im Einzelnen stehen jetzt in
   der Rückenwind-Zeile der Titelseite (`titel_zeile`); Rang und Prozente des Momentums standen dort schon.
+- ✈️ freie Bahn wieder als Spalte „Bahn“ in der Titelliste, in der Rückenwind-Zeile der Titelseite und in der ▲▲▲-Liste
+  (Micky 23.11.2026: nicht nur im Chart).
