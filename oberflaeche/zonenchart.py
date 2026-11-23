@@ -238,11 +238,14 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
-        vor = None
+        vor, auf = None, en_.get("aufsteigend")
         for k_ in en_.get("kontraktionen") or []:   # Farbe je Welle (Micky 23.11.2026): grün schrumpft (Minervini:
-            farbe = (WELLE_ERSTE if vor is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor   # höchstens 70 %
-                     else GELB if k_["tiefe"] <= vor else ROT)                       # der vorigen), gelb kaum, rot tiefer
-            vor = k_["tiefe"]
+            if auf:                                  # höchstens 70 % der vorigen), gelb kaum, rot tiefer; in O'Neils
+                farbe = WELLE_ERSTE if vor is None else GRUEN if k_["tief"] > vor["tief"] else ROT   # aufsteigender
+            else:                                                                   # Base: grün = Tief über dem vorigen
+                farbe = (WELLE_ERSTE if vor is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor["tiefe"]
+                         else GELB if k_["tiefe"] <= vor["tiefe"] else ROT)
+            vor = k_
             t_ = bdf.index[k_["tief_i"]]
             if t_ < d.index[0]:
                 continue
@@ -251,14 +254,16 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'−{zahl(k_["tiefe"], 0)} %<title>Kontraktion {bdf.index[k_["hoch_i"]]:%d.%m.} → {t_:%d.%m.}: '
               f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}</title></text>')            # Layout: unter dem Tief
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
-            amp = en_.get("ampel")
-            urteil = ("VCP 🟢 schrumpft" if amp == "grün" else "🔴 keine saubere Enge – letzte Welle tiefer" if amp == "rot"
+            amp = "grün" if auf else en_.get("ampel")
+            urteil = ("🟢 Aufsteigende Base (O'Neil)" if auf else "VCP 🟢 schrumpft" if amp == "grün"
+                      else "🔴 keine saubere Enge – letzte Welle tiefer" if amp == "rot"
                       else "🟡 Enge: " + ", ".join((en_.get("fehlt") or ["noch nicht reif"])[:2]))
             zs = pd.Timestamp(la["beginn"])
             xz_ = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
             A(f'<text x="{xz_ + 6 + len(la["name"]) * NAME_BREITE:.1f}" y="{Y(hi) - 6:.1f}" '
-              f'fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">{t_esc(urteil)}<title>Enge der Base nach Minervini: '
-              f'jede Welle höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · Wellen '
+              f'fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">{t_esc(urteil)}<title>VCP (Minervini): jede Welle '
+              f'höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · Aufsteigende Base '
+              f'(O\'Neil): drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen · Wellen '
               f'{t_esc(en_.get("folge") or "")} %</title></text>')                  # Layout: neben dem Namen der Zone
     if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
         if not fest.get("oben"):
@@ -434,8 +439,9 @@ def legende():
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
              (GRUEN, "−20 % −10 % −5 %: die Kontraktionen der Base (Minervini), unter ihrem Tief – grün: höchstens 70 % so "
-              "tief wie die vorige (schrumpft), gelb: kaum kleiner, rot: tiefer, grau: die erste; an der Zone das Urteil "
-              "der Enge"),
+              "tief wie die vorige (schrumpft), gelb: kaum kleiner, rot: tiefer, grau: die erste; in einer aufsteigenden "
+              "Base (O'Neil: drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen) grün = Tief über dem vorigen; an der "
+              "Zone das Urteil"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "🌱/🍂 Keim des Zirkels (rechts, jetzt) · Momentum 🚀 am Ende der RS-Linie"),

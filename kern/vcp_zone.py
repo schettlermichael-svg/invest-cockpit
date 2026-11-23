@@ -358,9 +358,24 @@ def _rahmen(df, i, top):
 SCHRUMPF = 0.70                # jede Kontraktion höchstens 70 % so tief wie die vorige
 ENGE_MAX = 10.0                # letzte Kontraktion höchstens 10 % tief
 KONTR_MIN_TAGE = 3             # eine Kontraktion dauert mindestens 3 Handelstage (Chart-Prüfer 14.11.2026: 1-Tages-Zucken)
+AUF_TIEFE = (10.0, 20.0)       # O'Neil, aufsteigende Base: jeder Rücksetzer 10–20 % tief …
+AUF_ZAHL = 3                   # … drei davon nacheinander, jedes Tief und jedes Hoch über dem vorigen
 KONTR_MAX = 6                  # Minervini: 2–6 Kontraktionen; mehr Wellen sind Seitwärtsrauschen, kein VCP
 BASE_TIEFE_UEBLICH = 33.0          # O'Neil: Tassen 12–33 % tief, tiefer nur im Bärenmarkt (bis 40–50 %); Minervini ähnlich –
                                # tiefer wird gezeigt, die Ampel wird aber nicht grün (Chart-Prüfer 14.11.2026)
+
+
+def aufsteigende_base(kontr):
+    """O'Neils aufsteigende Base (Micky 23.11.2026, WWW): auf der rechten Seite mindestens drei Rücksetzer nacheinander,
+    je 10–20 % tief, jedes Tief und jedes Hoch über dem vorigen – die Schwankung wird nicht kleiner, sie wandert nach
+    oben (meist in einem schwachen Markt: Stärke in der Schwäche). Die linke Seite (erste Kontraktion) zählt nicht."""
+    lauf = 0
+    for a_, b in zip([None] + kontr[1:], kontr[1:]):
+        passt = AUF_TIEFE[0] <= b["tiefe"] <= AUF_TIEFE[1]
+        lauf = (lauf + 1 if a_ is not None and lauf and b["tief"] > a_["tief"] and b["hoch"] > a_["hoch"] else 1) if passt else 0
+        if lauf >= AUF_ZAHL:
+            return True
+    return False
 
 
 def enge(df, z):
@@ -429,6 +444,7 @@ def enge(df, z):
         ph = None
     tiefs = [k["tief"] for k in kontr]
     steigend = len(tiefs) >= 2 and all(b > a_ for a_, b in zip(tiefs, tiefs[1:]))
+    aufsteigend = aufsteigende_base(kontr)
     if len(kontr) >= 2 and schrumpft and eng and ruhig and flach_genug and wenige and trocken and ph != 4:
         ampel = "grün"
     elif groesser:
@@ -450,7 +466,8 @@ def enge(df, z):
             "lage": lage, "lage_anteil": anteil,
             "groesser": groesser, "eng": eng, "enge_tiefe": letzte["tiefe"], "pivot_i": pivot_i, "pivot": pivot,
             "trocken": bool(trocken), "wenige": wenige,
-            "volumen": vol_enge, "volumen_erste": vol_erste, "ruhig": ruhig, "steigende_tiefs": steigend, "fehlt": fehlt,
+            "volumen": vol_enge, "volumen_erste": vol_erste, "ruhig": ruhig, "steigende_tiefs": steigend, "aufsteigend": aufsteigend,
+            "fehlt": fehlt,
             "abstand": (c[-1] / pivot - 1) * 100,
             "text": f"{len(kontr)} Kontraktion{'en' if len(kontr) != 1 else ''} {folge} %"
                     + (f" · fehlt: {', '.join(fehlt)}" if fehlt else "")}
