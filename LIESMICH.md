@@ -1522,3 +1522,19 @@ alten Erkennung (`erkennung.klimax`), `reiten.ungleichgewicht` und die Kästen d
 für die Reibung nach dem Kauf misst jetzt `reiten.klimax_tag` (unverändert übernommen, ebenso `MAUER_NAH`).
 Bleiben bewusst neben dem Zirkel: die Rotation der Gruppen als Strömung (Geld-Ampel, Ordnung der Wetterkarte) und die
 Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
+
+## Watchlist und Trade, Abgleich mit TradingView in beide Richtungen (23.11.2026)
+
+- Zwei Listen wie in TradingView: **Watchlist ◆** und **Trade 🎯** (`kern/watchlists.py`: `LISTEN`, `liste(name)`,
+  `zeichen(tk)`). `alle()` gibt beide zusammen (Abendlauf, Zirkel, Schrank). Ein Titel auf keiner Liste mehr wird
+  vergessen (`tpo_daten.vergessen`), egal ob in der App oder in TradingView herausgenommen (Micky: „auch aus der App“).
+- Titelseite: zwei Knöpfe „☆/★ Watchlist“ und „☆/🎯 Trade“. Übersicht: je Liste ein Fenster zum Einfügen und Herausnehmen.
+  Rückenwind: Umschalter Alle · Watchlist ◆ · Trade 🎯; die Marken kommen frisch aus der Datei (nicht mehr aus dem Lauf).
+- Abgleich: Die Claude-Aufgabe (stündlich 8–23 Uhr, Minute 13) vergleicht App (`watchlists.json`), TradingView und den
+  letzten gemeinsamen Stand (`tv_abgleich.json`, Zweig `daten`). Wer etwas geändert hat, ergibt sich aus dem Stand:
+  App neu/entfernt → in TradingView eintragen/entfernen; TradingView neu/entfernt → als `von_tv.json` auf den Zweig `daten`.
+  Erster Lauf einer Liste ohne Stand: nur zusammenführen, nichts entfernen. Abschnitte (###) und Indizes bleiben unberührt.
+- Der Server (`werkzeuge/server/watchlist_ablegen.sh`, alle 10 Minuten) übernimmt `von_tv.json` mit
+  `werkzeuge/von_tv_anwenden.py` (als Benutzer cockpit, jeder Stand nur einmal), löscht sie und legt die Listen ab.
+  `aktualisieren.sh` hält das Skript auf dem Stand des Speichers. Steht `von_tv.json` noch auf dem Zweig, wartet die
+  Aufgabe (sonst hielte sie die noch nicht übernommenen Titel für in der App entfernt). Verzögerung bis etwa 1 Stunde.

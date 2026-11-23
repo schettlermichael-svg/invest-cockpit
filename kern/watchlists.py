@@ -1,7 +1,10 @@
-"""Die Watchlist (Schritt 6, 4.11.2026; seit 6.11.2026 nur noch eine Liste): einstellungen/watchlists.json
-({"Watchlist": [Ticker, …]}). Ticker in Yahoo-Schreibweise (HWM, BRK-B, RHM.DE), jeder einmal. Ein Titel steht auf der
-Watchlist oder nicht. Heruntergenommen gilt er als gelöscht (tpo_daten.vergessen): ohne Revier fällt er aus dem Abendlauf.
-Der Server legt die Datei alle 10 Minuten ab, ein stündlicher Abgleich trägt Änderungen in TradingView ein (App → TV).
+"""Die Listen (Schritt 6, 4.11.2026): einstellungen/watchlists.json ({"Watchlist": [Ticker, …], "Trade": [Ticker, …]}).
+Ticker in Yahoo-Schreibweise (HWM, BRK-B, RHM.DE), jeder einmal je Liste. Seit 06.11.2026 die eine Watchlist, seit
+23.11.2026 daneben die Liste „Trade“ (die Titel, die Micky handeln will), wie in TradingView. Ein Titel, der auf keiner
+Liste mehr steht, gilt als gelöscht (tpo_daten.vergessen): ohne Revier fällt er aus dem Abendlauf.
+Abgleich mit TradingView in beide Richtungen (23.11.2026): Der Server legt die Datei alle 10 Minuten auf den Zweig
+„daten“; die stündliche Claude-Aufgabe vergleicht App, TradingView und den letzten gemeinsamen Stand, trägt Änderungen
+der App in TradingView ein und legt Änderungen aus TradingView als von_tv.json ab, die der Server mit anwenden() übernimmt.
 """
 import json
 import os
@@ -10,6 +13,9 @@ from dateien import json_schreiben  # noqa: E402
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEI = os.path.join(HIER, "..", "einstellungen", "watchlists.json")
 STANDARD = "Watchlist"
+TRADE = "Trade"
+LISTEN = (STANDARD, TRADE)
+ZEICHEN = {STANDARD: "◆", TRADE: "🎯"}
 
 # TradingView-Börse → Yahoo-Endung (US-Börsen ohne Endung)
 BOERSEN = {"XETR": ".DE", "FWB": ".F", "MIL": ".MI", "EURONEXT": ".PA", "OSL": ".OL", "OMXSTO": ".ST",
@@ -42,56 +48,93 @@ def zu_tv(ticker):
     return None
 
 
+def _eins(liste):
+    return list(dict.fromkeys(t.upper() for t in liste))
+
+
 def laden():
-    """Die eine Watchlist als {"Watchlist": [Ticker, …]}. Seit 06.11.2026 gibt es nur noch diese Liste: stehen in der
-    Datei noch andere Listen (z. B. „Active Watchlist“ aus dem TradingView-Import), werden ihre Titel einmalig in die
-    Watchlist übernommen und die Listen entfernt (der Abgleich leert sie dann auch in TradingView)."""
+    """Beide Listen als {"Watchlist": [Ticker, …], "Trade": [Ticker, …]}. Stehen in der Datei noch andere Listen (z. B.
+    „Active Watchlist“ aus dem ersten TradingView-Import), werden ihre Titel einmalig in die Watchlist übernommen und die
+    Listen entfernt."""
     try:
         w = json.load(open(DATEI, encoding="utf-8"))
     except (OSError, ValueError):
-        return {STANDARD: []}
-    titel = list(dict.fromkeys(t.upper() for t in w.get(STANDARD, [])))
-    titel += [t for t in dict.fromkeys(t.upper() for n, l in w.items() if n != STANDARD for t in l) if t not in titel]
-    if set(w) != {STANDARD}:
-        speichern({STANDARD: titel})
-    return {STANDARD: titel}
+        return {n: [] for n in LISTEN}
+    titel = _eins(w.get(STANDARD, []))
+    titel += [t for t in _eins(t for n, l in w.items() if n not in LISTEN for t in l) if t not in titel]
+    aus = {STANDARD: titel, TRADE: _eins(w.get(TRADE, []))}
+    if set(w) - set(LISTEN):
+        speichern(aus)
+    return aus
 
 
 def speichern(w):
     os.makedirs(os.path.dirname(DATEI), exist_ok=True)
-    w = {STANDARD: list(dict.fromkeys(t.upper() for t in w.get(STANDARD, [])))}
-    json_schreiben(DATEI, w, ensure_ascii=False, indent=1)
+    json_schreiben(DATEI, {n: _eins(w.get(n, [])) for n in LISTEN}, ensure_ascii=False, indent=1)
+
+
+def liste(name=STANDARD):
+    """Die Titel einer Liste in ihrer Reihenfolge."""
+    return laden()[name]
 
 
 def alle():
-    """Alle Titel der Watchlist in ihrer Reihenfolge."""
-    return laden()[STANDARD]
+    """Alle Titel beider Listen, jeder einmal (Watchlist zuerst) – sie werden im Abendlauf mitgerechnet."""
+    w = laden()
+    return _eins(w[STANDARD] + w[TRADE])
 
 
-def drin(ticker):
-    return ticker.upper() in alle()
+def drin(ticker, name=STANDARD):
+    return ticker.upper() in liste(name)
 
 
-
-def setzen(ticker, auf):
-    """Titel auf die Watchlist (auf=True) oder herunter. Heruntergenommen gilt er als gelöscht: ohne Revier fällt er aus
-    dem Abendlauf (tpo_daten.vergessen)."""
-    tk, liste = ticker.upper(), alle()
-    if auf and tk not in liste:
-        speichern({STANDARD: liste + [tk]})
-    elif not auf and tk in liste:
-        liste.remove(tk)
-        speichern({STANDARD: liste})
-        import tpo_daten
-        tpo_daten.vergessen(tk)
+def zeichen(ticker, w=None):
+    """Die Marken eines Titels: „◆“ (Watchlist), „🎯“ (Trade), beide oder leer."""
+    w = w or laden()
+    return " ".join(ZEICHEN[n] for n in LISTEN if ticker.upper() in w[n])
 
 
-def einfuegen(text):
-    """Eingefügte Ticker (Finviz, SEPA-Scanner, TradingView) auf die Watchlist; gibt die Zahl der neuen zurück."""
-    liste = alle()
-    neu = [t for t in aus_text(text) if t not in liste]
-    speichern({STANDARD: liste + neu})
+def setzen(ticker, auf, name=STANDARD):
+    """Titel auf eine Liste (auf=True) oder herunter. Steht er danach auf keiner Liste mehr, gilt er als gelöscht: ohne
+    Revier fällt er aus dem Abendlauf (tpo_daten.vergessen)."""
+    tk, w = ticker.upper(), laden()
+    if auf and tk not in w[name]:
+        w[name].append(tk)
+        speichern(w)
+    elif not auf and tk in w[name]:
+        w[name].remove(tk)
+        speichern(w)
+        if not any(tk in w[n] for n in LISTEN):
+            import tpo_daten
+            tpo_daten.vergessen(tk)
+
+
+def einfuegen(text, name=STANDARD):
+    """Eingefügte Ticker (Finviz, SEPA-Scanner, TradingView) auf eine Liste; gibt die Zahl der neuen zurück."""
+    w = laden()
+    neu = [t for t in aus_text(text) if t not in w[name]]
+    w[name] += neu
+    speichern(w)
     return len(neu)
+
+
+def anwenden(aenderung):
+    """Änderungen aus TradingView übernehmen (vom Server aufgerufen, werkzeuge/von_tv_anwenden.py):
+    {"listen": {"Watchlist": {"neu": [...], "weg": [...]}, "Trade": {...}}}. Entfernte Titel gehen über setzen() – wer auf
+    keiner Liste mehr steht, wird vergessen wie beim Herunternehmen in der App. → Zeilen für das Protokoll."""
+    zeilen = []
+    for name, d in (aenderung.get("listen") or {}).items():
+        if name not in LISTEN:
+            continue
+        neu = [t for t in _eins(d.get("neu") or []) if not drin(t, name)]
+        for t in neu:
+            setzen(t, True, name)
+        weg = [t for t in _eins(d.get("weg") or []) if drin(t, name)]
+        for t in weg:
+            setzen(t, False, name)
+        if neu or weg:
+            zeilen.append(f"{name}: +{', '.join(neu) or '–'} / −{', '.join(weg) or '–'}")
+    return zeilen
 
 
 def aus_text(text):

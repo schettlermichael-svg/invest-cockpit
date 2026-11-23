@@ -142,25 +142,28 @@ def position_knopf(tk):
 
 
 def watchlists_verwalten():
-    """Übersicht: die Watchlist pflegen – Ticker einfügen (auch ganze Listen), Titel herausnehmen. Einzelne Titel auch
-    über „☆ Watchlist“ auf der Titelseite. Herausgenommen = gelöscht (ohne Revier fällt der Titel aus dem Abendlauf)."""
-    drin = watchlists.alle()
-    with _fenster(f"◆ Watchlist ({len(drin)})"):
-        st.caption(f"{len(drin)} Titel: " + ", ".join(drin[:60]) + (" …" if len(drin) > 60 else ""))
-        with st.form("wl_verw_neu", clear_on_submit=True):
-            text = st.text_area("Ticker hinzufügen", height=70, placeholder="z. B. NVDA, ANET, XETR:RHM – auch ganze Listen "
-                                "aus Finviz oder TradingView einfügen")
-            if st.form_submit_button("Hinzufügen", use_container_width=True):
-                st.toast(f"{watchlists.einfuegen(text)} Titel neu auf der Watchlist")
-                st.rerun()
-        if drin:
-            with st.form("wl_verw_weg"):
-                weg = st.multiselect("Titel herausnehmen", drin)
-                if st.form_submit_button("Herausnehmen", use_container_width=True) and weg:
-                    for tk in weg:
-                        watchlists.setzen(tk, False)
-                    st.toast(f"{len(weg)} Titel von der Watchlist genommen")
+    """Übersicht: die beiden Listen pflegen (Watchlist ◆ und Trade 🎯, wie in TradingView) – Ticker einfügen (auch ganze
+    Listen), Titel herausnehmen. Einzelne Titel auch über die Knöpfe der Titelseite. Ein Titel auf keiner Liste mehr gilt
+    als gelöscht (ohne Revier fällt er aus dem Abendlauf). Änderungen gehen stündlich nach TradingView und zurück."""
+    w = watchlists.laden()
+    for name in watchlists.LISTEN:
+        drin, z = w[name], watchlists.ZEICHEN[name]
+        with _fenster(f"{z} {name} ({len(drin)})"):
+            st.caption(f"{len(drin)} Titel: " + ", ".join(drin[:60]) + (" …" if len(drin) > 60 else ""))
+            with st.form(f"wl_verw_neu_{name}", clear_on_submit=True):
+                text = st.text_area("Ticker hinzufügen", height=70, placeholder="z. B. NVDA, ANET, XETR:RHM – auch ganze "
+                                    "Listen aus Finviz oder TradingView einfügen")
+                if st.form_submit_button("Hinzufügen", use_container_width=True):
+                    st.toast(f"{watchlists.einfuegen(text, name)} Titel neu auf {name}")
                     st.rerun()
+            if drin:
+                with st.form(f"wl_verw_weg_{name}"):
+                    weg = st.multiselect("Titel herausnehmen", drin)
+                    if st.form_submit_button("Herausnehmen", use_container_width=True) and weg:
+                        for tk in weg:
+                            watchlists.setzen(tk, False, name)
+                        st.toast(f"{len(weg)} Titel von {name} genommen")
+                        st.rerun()
 
 
 sys.path.insert(0, os.path.join(HIER, "werkzeuge"))
@@ -266,19 +269,20 @@ def performance_zeigen():
     st.markdown(performance_seite.seite_performance(), unsafe_allow_html=True)
 
 
-def _watch_umschalten(tk):
-    auf = not watchlists.drin(tk)
-    watchlists.setzen(tk, auf)
-    st.toast(f"{tk} {'auf die Watchlist gesetzt' if auf else 'von der Watchlist genommen'}")
+def _watch_umschalten(tk, name):
+    auf = not watchlists.drin(tk, name)
+    watchlists.setzen(tk, auf, name)
+    st.toast(f"{tk} {'auf ' + name + ' gesetzt' if auf else 'von ' + name + ' genommen'}")
 
 
-def watchlist_knopf(tk, schluessel=""):
-    """Ein Knopf: „☆ Auf die Watchlist“ oder „★ Auf der Watchlist“ (Klick nimmt ihn herunter – ohne Revier fällt der
-    Titel dann aus dem Abendlauf)."""
-    drin = watchlists.drin(tk)
-    st.button("★ Auf der Watchlist" if drin else "☆ Auf die Watchlist", key=f"{schluessel}wl_{tk}",
-              use_container_width=True, type="primary" if drin else "secondary", on_click=_watch_umschalten, args=(tk,),
-              help="Klick nimmt den Titel von der Watchlist" if drin else "Klick setzt den Titel auf die Watchlist")
+def watchlist_knopf(tk, name=watchlists.STANDARD, schluessel=""):
+    """Ein Knopf je Liste: „☆ Watchlist“ / „★ Watchlist“, „☆ Trade“ / „🎯 Trade“. Klick setzt den Titel auf die Liste
+    oder nimmt ihn herunter – steht er dann auf keiner Liste mehr und nicht im Revier, fällt er aus dem Abendlauf."""
+    drin = watchlists.drin(tk, name)
+    an = "🎯" if name == watchlists.TRADE else "★"
+    st.button(f"{an if drin else '☆'} {name}", key=f"{schluessel}wl_{name}_{tk}",
+              use_container_width=True, type="primary" if drin else "secondary", on_click=_watch_umschalten,
+              args=(tk, name), help=f"Klick nimmt den Titel von {name}" if drin else f"Klick setzt den Titel auf {name}")
 
 
 def _codestand(mit_watchlists=False):
@@ -376,7 +380,7 @@ def rueckenwind_zeigen():
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
         w1_, w2_ = st.columns([8, 2])               # Layout
         with w1_:
-            wl_ = st.radio("Titel", ["Alle", "Watchlist ◆"], horizontal=True, key="rw_auswahl")
+            wl_ = st.radio("Titel", ["Alle", "Watchlist ◆", "Trade 🎯"], horizontal=True, key="rw_auswahl")
         with w2_:                                   # Titel neu rechnen (Micky 22.11.2026): ohne neuen Download
             if st.button("↻ Titel neu rechnen", use_container_width=True,
                          help="Rechnet den Rückenwind aller Titel neu – mit den Kursen und Zahlen des letzten Nachtlaufs, "
@@ -384,7 +388,7 @@ def rueckenwind_zeigen():
                 with st.spinner("Rechne den Rückenwind aller Titel neu …"):
                     rw_kern.rechnen(netz=False)
                 st.rerun()
-        df = rw.liste(erg, nur_watchlist=wl_ != "Alle")
+        df = rw.liste(erg, nur=None if wl_ == "Alle" else wl_.split()[0])
         st.dataframe(df, hide_index=True, use_container_width=True, height=560,  # Layout
                      column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)})
 
@@ -557,7 +561,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         st.markdown(teile["kopf"], unsafe_allow_html=True)
         import zonenchart
         import zonenseite
-        k0, k1, k2, k3 = st.columns([4, 2, 2, 2])
+        k0, k1, k2, k3, k4 = st.columns([4, 2, 2, 2, 2])
         with k0:
             ebene = st.radio("Ebene", ["Woche", "Tag", "Stunde"], index=1, horizontal=True, key="zonen_ebene")
         with k1:
@@ -566,6 +570,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             st.link_button("TradingView ↗", titel.tv_link(ticker), use_container_width=True)
         with k3:
             watchlist_knopf(ticker)
+        with k4:
+            watchlist_knopf(ticker, watchlists.TRADE)
         e_ = teile["r"]["ebenen"][ebene]
         g0, g3 = st.columns([1, 1])
         g1, g2, g4, _ = st.columns([2, 2, 2, 4])

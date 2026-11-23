@@ -91,7 +91,9 @@ def setups():
 def _mitglieder(erg, art, g, setup, drei):
     """Die Titel einer Gruppe als aufklappbare Liste (10.11.2026): nach RS-Rang, mit Klasse, Tempo, Setup und Link.
     Knapp gehalten (Stil einmal in MITGLIEDER_STIL), damit die Wetterkarte mit allen Titeln schnell lädt."""
+    import watchlists
     feld = {"Sektor": "sektor", "Branche": "branche", "Thema": "thema"}[art]
+    wl = watchlists.laden()
     liste = sorted(((tk, x) for tk, x in erg["titel"].items() if x.get(feld) == g["name"]), key=lambda p: -p[1]["rang"])
     if not liste:
         return '<div class="mg"><i>keine Titel mit Daten</i></div>'
@@ -99,7 +101,7 @@ def _mitglieder(erg, art, g, setup, drei):
     for tk, x in liste:
         k = klasse(x)
         s_ = setup.get(tk)
-        zeilen.append(f'<div><b>{"◆ " if x.get("watchlist") else ""}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
+        zeilen.append(f'<div><b>{_marke(tk, wl, " ")}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
                       f'<span class="k{k or ""}">{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</span><span>{x["rang"]}</span>'
                       f'<span>{"+" if x["tempo"] >= 0 else ""}{x["tempo"]}</span>'
                       f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Setup"}</span>'
@@ -367,14 +369,23 @@ def _link(tk, text):
 TITEL_TEXT = r"&z=(.*)$"
 
 
-def liste(erg, nur_watchlist=False):
+def _marke(tk, w, vorn=""):
+    """Die Marken der Listen, frisch aus einstellungen/watchlists.json: ◆ Watchlist, 🎯 Trade."""
+    import watchlists
+    m = watchlists.zeichen(tk, w)
+    return (m + vorn) if vorn and m else (" " + m if m else "")
+
+
+def liste(erg, nur=None):
     """Alle Titel in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund. Umschalter
-    (Micky 21.11.2026): nur_watchlist zeigt nur die Titel der Watchlist (◆). → DataFrame."""
+    (Micky 21.11.2026, Trade seit 23.11.2026): nur="Watchlist" oder "Trade" zeigt nur die Titel dieser Liste. → DataFrame."""
+    import watchlists
     import zeichen
+    wl = watchlists.laden()
     reihen, kreis = [], zeichen.laden()
     trades = setups()
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
-        if nur_watchlist and not x.get("watchlist"):
+        if nur and tk not in wl[nur]:
             continue
         z = x.get("zahlen") or {}
         termin, warn = _termin(x, erg["stand"])
@@ -385,7 +396,7 @@ def liste(erg, nur_watchlist=False):
         phase, keim = _zirkel(tk, kreis)
         reihen.append({
             "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
-            "Titel": _link(tk, tk + (" ◆" if x.get("watchlist") else "") + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
+            "Titel": _link(tk, tk + _marke(tk, wl) + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "Phase": phase, "Keim": keim, "Setup": trades.get(tk, ""),
             "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
             "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
@@ -401,8 +412,8 @@ def liste(erg, nur_watchlist=False):
             "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin,
             "Zahlen im Einzelnen": _punkte_text(x)})
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
-        if nur_watchlist and not o.get("watchlist"):
+        if nur and o["tk"] not in wl[nur]:
             continue
-        reihen.append({"Klasse": "–", "Titel": _link(o["tk"], o["tk"] + (" ◆" if o.get("watchlist") else "")), "Geld": PUNKT["grau"],
+        reihen.append({"Klasse": "–", "Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Geld": PUNKT["grau"],
                        "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
     return pd.DataFrame(reihen)

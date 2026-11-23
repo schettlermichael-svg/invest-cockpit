@@ -1,28 +1,12 @@
 #!/bin/bash
-# Einmalig: Der Server legt alle 10 Minuten die Watchlists der App (einstellungen/watchlists.json) auf den Zweig „daten“
-# des GitHub-Speichers. Von dort trägt die Claude-Aufgabe (stündlich 8–23 Uhr) Änderungen in TradingView ein
-# (nur App → TradingView). Voraussetzung: Deploy key des Servers MIT Schreibrecht.
+# Einmalig: Der Server legt alle 10 Minuten die Listen der App (einstellungen/watchlists.json) auf den Zweig „daten“
+# des GitHub-Speichers und übernimmt vorher Änderungen aus TradingView (von_tv.json). Die Claude-Aufgabe (stündlich
+# 8–23 Uhr) gleicht in beide Richtungen ab (seit 23.11.2026). Voraussetzung: Deploy key des Servers MIT Schreibrecht.
+# Das Skript selbst (watchlist_ablegen.sh) hält aktualisieren.sh danach von allein auf dem Stand des Speichers.
 # Aufruf auf dem Mac im Ordner InvestCockpit:  ssh root@2.31.188.241 'bash -s' < werkzeuge/server/watchlist_ablegen_einrichten.sh
 set -e
-cat > /usr/local/bin/invest-watchlist-ablegen <<'EOF'
-#!/bin/bash
-D=/opt/invest-daten
-QUELLE=/opt/invest-cockpit/einstellungen/watchlists.json
-[ -f "$QUELLE" ] || exit 0
-if [ ! -d $D/.git ]; then
-  git clone -q git@github.com:schettlermichael-svg/invest-cockpit.git $D || exit 0
-  cd $D
-  if git ls-remote --exit-code -q origin daten >/dev/null; then git checkout -q daten
-  else git checkout -q --orphan daten && git rm -rqf . && git clean -qfdx; fi
-fi
-cd $D
-git fetch -q origin daten 2>/dev/null && git reset -q --hard origin/daten
-cp "$QUELLE" $D/watchlists.json
-git add watchlists.json
-git diff --cached --quiet && exit 0
-git -c user.name="invest-cockpit-server" -c user.email="server@invest-cockpit" commit -qm "Watchlists $(date '+%d.%m.%Y %H:%M')"
-git push -q origin HEAD:daten && echo "$(date '+%d.%m.%Y %H:%M') Watchlists abgelegt" >> /var/log/invest-cockpit-update.log
-EOF
+install -m 755 "$(dirname "$0")/watchlist_ablegen.sh" /usr/local/bin/invest-watchlist-ablegen 2>/dev/null \
+  || install -m 755 /opt/invest-cockpit/werkzeuge/server/watchlist_ablegen.sh /usr/local/bin/invest-watchlist-ablegen
 chmod +x /usr/local/bin/invest-watchlist-ablegen
 cat > /etc/systemd/system/invest-watchlist.service <<EOF
 [Unit]

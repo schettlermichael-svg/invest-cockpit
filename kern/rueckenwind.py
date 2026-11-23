@@ -94,7 +94,7 @@ def _rang(C):
 def _zusatz(rv):
     """Titel außerhalb des Reviers, die trotzdem mitgerechnet werden: Watchlist und jeder auf der Titelseite geöffnete
     Titel (ohne SPY/QQQ/IWM). Sektor und Branche aus dem Steckbrief; sie zählen nicht in die Gruppen (wie im Rudel),
-    bekommen aber deren Geldfluss. Ergebnis: ({Ticker: {sektor, branche, etf, herkunft}}, Menge der Watchlist-Titel)."""
+    bekommen aber deren Geldfluss. Ergebnis: {Ticker: {sektor, branche, etf, herkunft}}; die Marken der Listen setzt die Seite frisch (watchlists.zeichen)."""
     import daten
     import tpo_daten
     import watchlists
@@ -112,7 +112,7 @@ def _zusatz(rv):
         aus[t] = {"sektor": sb.get("sektor", ""), "branche": sb.get("branche", ""),
                   "etf": sektoren.sektor_von(sb.get("sektor", "")) or "",
                   "herkunft": "Watchlist" if t in wl else "geöffnet"}
-    return aus, wl
+    return aus
 
 
 def richtung(jetzt, davor):
@@ -420,7 +420,7 @@ def rechnen(netz=False):
     holen, wenn älter als 12 Stunden (quellen.laden)."""
     import rudel
     rv = rudel.revier()
-    zusatz, wl = _zusatz(rv)                    # Watchlist und geöffnete Titel außerhalb des Reviers (09.11.2026)
+    zusatz = _zusatz(rv)                    # Watchlist und geöffnete Titel außerhalb des Reviers (09.11.2026)
     alle = list(rv.index) + list(zusatz)
     C = massive.kursmatrix(alle + [MARKT], TAGE)
     V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
@@ -434,8 +434,7 @@ def rechnen(netz=False):
         if n_ >= JUNG_MIN + 1:
             titel_.append(t)
         else:                                   # nicht still weglassen: auf der Seite in „Ohne Stufe“ mit Grund
-            ohne_daten.append({"tk": t, "watchlist": t in wl,
-                               "grund": (f"zu jung ({n_} Handelstage, nötig {JUNG_MIN + 1})" if n_
+            ohne_daten.append({"tk": t, "grund": (f"zu jung ({n_} Handelstage, nötig {JUNG_MIN + 1})" if n_
                                          else "keine Kurse bei Massive (Börse außerhalb der USA oder Fonds)")})
     X = C[titel_]
     r0, r4, r8 = _rang(X), _rang(X.iloc[:-WOCHEN4]), _rang(X.iloc[:-2 * WOCHEN4])
@@ -500,7 +499,7 @@ def rechnen(netz=False):
              "sektor_feld": sek["feld"] if sek else None,
              "branche": bra["name"] if bra else (zusatz[tk]["branche"] if tk in zusatz else rv.loc[tk, "branche"]),
              "branche_feld": bra["feld"] if bra else None,
-             "watchlist": tk in wl, "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
+             "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
              "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2),
              "frei": _frei(B, tk)}

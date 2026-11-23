@@ -27,6 +27,12 @@ if [ -f werkzeuge/server/pakete.txt ] && ! cmp -s werkzeuge/server/pakete.txt .v
     && chown -R cockpit:cockpit .venv
   echo "$(date '+%d.%m.%Y %H:%M') Pakete installiert: $(tr '\n' ' ' < werkzeuge/server/pakete.txt)" >> /var/log/invest-cockpit-update.log
 fi
+# Watchlist-Abgleich (23.11.2026: in beide Richtungen): das Skript aus dem Speicher übernehmen, sobald es sich unterscheidet
+if [ -f werkzeuge/server/watchlist_ablegen.sh ] && [ -f /etc/systemd/system/invest-watchlist.timer ] \
+   && ! cmp -s werkzeuge/server/watchlist_ablegen.sh /usr/local/bin/invest-watchlist-ablegen; then
+  install -m 755 werkzeuge/server/watchlist_ablegen.sh /usr/local/bin/invest-watchlist-ablegen
+  echo "$(date '+%d.%m.%Y %H:%M') Watchlist-Abgleich übernommen (beide Richtungen)" >> /var/log/invest-cockpit-update.log
+fi
 # Zugangsausweis an der Haustür (17.11.2026), einmalig
 [ -f werkzeuge/server/ausweis.sh ] && bash werkzeuge/server/ausweis.sh
 git fetch -q origin main 2>/dev/null || exit 0
