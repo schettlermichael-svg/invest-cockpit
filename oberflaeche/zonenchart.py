@@ -9,7 +9,7 @@ relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-
 import numpy as np
 import pandas as pd
 
-from gestaltung import BLAU, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, zahl
+from gestaltung import AMPEL, BLAU, GELB, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, t as t_esc, zahl
 
 B = 1200                               # Layout: Breite des Bildes
 LINKS, RECHTS, PROFIL_W = 56, 190, 110  # Layout: Preisachse, Etiketten, Profil (Zeit links, Volumen rechts)
@@ -43,7 +43,8 @@ WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
-ENGE_FARBE = "#5DCAA5"                 # Kontraktionen der Base
+WELLE_ERSTE = "#9AA7B8"                # die erste Welle der Base (linke Seite): noch ohne Vergleich
+NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
 
 def _pfeil(r):
@@ -236,15 +237,29 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
-        bdf = ba["df"]
-        for k_ in (ba.get("enge") or {}).get("kontraktionen") or []:
+        bdf, en_ = ba["df"], ba.get("enge") or {}
+        vor = None
+        for k_ in en_.get("kontraktionen") or []:   # Farbe je Welle (Micky 23.11.2026): grün schrumpft (Minervini:
+            farbe = (WELLE_ERSTE if vor is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor   # höchstens 70 %
+                     else GELB if k_["tiefe"] <= vor else ROT)                       # der vorigen), gelb kaum, rot tiefer
+            vor = k_["tiefe"]
             t_ = bdf.index[k_["tief_i"]]
             if t_ < d.index[0]:
                 continue
             j = pos(t_)
-            A(f'<text x="{X(j):.1f}" y="{Y(k_["tief"]) + 22:.1f}" fill="{ENGE_FARBE}" font-size="12" text-anchor="middle">'  # Layout
+            A(f'<text x="{X(j):.1f}" y="{Y(k_["tief"]) + 22:.1f}" fill="{farbe}" font-size="12" text-anchor="middle">'  # Layout
               f'−{zahl(k_["tiefe"], 0)} %<title>Kontraktion {bdf.index[k_["hoch_i"]]:%d.%m.} → {t_:%d.%m.}: '
               f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}</title></text>')            # Layout: unter dem Tief
+        if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
+            amp = en_.get("ampel")
+            urteil = ("VCP 🟢 schrumpft" if amp == "grün" else "🔴 keine saubere Enge – letzte Welle tiefer" if amp == "rot"
+                      else "🟡 Enge: " + ", ".join((en_.get("fehlt") or ["noch nicht reif"])[:2]))
+            zs = pd.Timestamp(la["beginn"])
+            xz_ = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
+            A(f'<text x="{xz_ + 6 + len(la["name"]) * NAME_BREITE:.1f}" y="{Y(hi) - 6:.1f}" '
+              f'fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">{t_esc(urteil)}<title>Enge der Base nach Minervini: '
+              f'jede Welle höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · Wellen '
+              f'{t_esc(en_.get("folge") or "")} %</title></text>')                  # Layout: neben dem Namen der Zone
     if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
         if not fest.get("oben"):
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
@@ -418,7 +433,9 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
+             (GRUEN, "−20 % −10 % −5 %: die Kontraktionen der Base (Minervini), unter ihrem Tief – grün: höchstens 70 % so "
+              "tief wie die vorige (schrumpft), gelb: kaum kleiner, rot: tiefer, grau: die erste; an der Zone das Urteil "
+              "der Enge"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "🌱/🍂 Keim des Zirkels (rechts, jetzt) · Momentum 🚀 am Ende der RS-Linie"),

@@ -1566,3 +1566,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   (nächste Zahlen, letzte Zahlen, im Einzelnen), je mit eigener Ampel; drei Mal grün = ▲▲▲.
 - Update ohne Warten (23.11.2026): `aktualisieren.sh` wartet nicht mehr auf den Schrank-Lauf (`nachtlauf.py --laeuft`
   entfernt) – neuer Code kommt spätestens 5 Minuten nach dem Hochladen; der Schrank füllt sich danach mit dem neuen Code.
+- Chart (23.11.2026): die Kontraktionen der Base in der Farbe ihres Urteils – grün höchstens 70 % so tief wie die vorige
+  (`vcp_zone.SCHRUMPF`), gelb kaum kleiner, rot tiefer, grau die erste; neben dem Namen der Zone das Urteil der Enge
+  („VCP 🟢 schrumpft“, „🔴 keine saubere Enge – letzte Welle tiefer“, „🟡 Enge: …“ mit den ersten Gründen).
