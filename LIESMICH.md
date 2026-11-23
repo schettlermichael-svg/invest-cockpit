@@ -1561,3 +1561,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   der Rückenwind-Zeile der Titelseite (`titel_zeile`); Rang und Prozente des Momentums standen dort schon.
 - ✈️ freie Bahn wieder als Spalte „Bahn“ in der Titelliste, in der Rückenwind-Zeile der Titelseite und in der ▲▲▲-Liste
   (Micky 23.11.2026: nicht nur im Chart).
+- Titelseite (23.11.2026): die Rückenwind-Zeile ist jetzt drei Karten (`rueckenwind_seite.titel_karten`) – ⚔️ Front (Klasse,
+  🦈, RS-Linie, Rang, Momentum, Hoch, ✈️), 💰 Nachschub (Volumen, Sektor, Branche mit Zirkel, Thema, 🐺), 📊 Fundament
+  (nächste Zahlen, letzte Zahlen, im Einzelnen), je mit eigener Ampel; drei Mal grün = ▲▲▲.

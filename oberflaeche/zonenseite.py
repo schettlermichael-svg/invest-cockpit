@@ -7,7 +7,8 @@ import time
 import pandas as pd
 
 import gestaltung
-from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, seite, t, zahl
+from gestaltung import (BLAU, GELB, GRUEN, KARTE, PUNKT_KLEIN, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, punkt, seite,
+                        t, zahl)
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 
@@ -161,9 +162,15 @@ def kopf(r):
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Setup</div>'
     import rueckenwind_seite
-    wind = rueckenwind_seite.titel_zeile(r["tk"])
-    wind_html = (f'<div style="margin-top:10px;font-size:15px;color:{TEXT}">Rückenwind: '
-                 + ' <span style="color:{0}">·</span> '.format(TEXT_3).join(t(w) for w in wind) + '</div>') if wind else (
+    karten_ = rueckenwind_seite.titel_karten(r["tk"])   # drei Karten Front · Nachschub · Fundament (Micky 23.11.2026)
+    wind_html = ('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;'
+                 'margin-top:10px">'   # Layout
+                 + "".join(f'<div style="border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
+                           f'<div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600">'
+                           f'{punkt(amp, PUNKT_KLEIN)}{t(kopf_)}</div>'
+                           + "".join(f'<div style="font-size:13px;color:{TEXT_2};margin-top:4px;line-height:1.4">{t(z)}</div>'
+                                     for z in zeilen_) + '</div>' for kopf_, amp, zeilen_ in karten_)
+                 + '</div>') if karten_ else (
         f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Rückenwind: noch kein Stand des Nachtlaufs</div>')
     zellen = "".join(_karte_ebene(n, f["lage"][n], n == "Tag") for n in zonen.EBENEN)
     return (f'<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">'

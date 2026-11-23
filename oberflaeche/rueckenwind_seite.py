@@ -364,9 +364,11 @@ def _ordnung(x):
             -x["rang"])
 
 
-def titel_zeile(tk):
-    """Rückenwind eines Titels für den Kopf der Titelseite (Micky 22.11.2026): dieselben Zeichen wie in der Liste,
-    als Liste von Teilen; leer ohne Stand des Nachtlaufs."""
+def titel_karten(tk):
+    """Rückenwind eines Titels für den Kopf der Titelseite (Micky 23.11.2026: statt einer langen Zeile drei Karten, je
+    eine Frage mit eigener Ampel und einer Angabe pro Zeile – drei Mal grün ist ▲▲▲; nichts weggelassen):
+    ⚔️ Front (Kurs), 💰 Nachschub (Geld), 📊 Fundament (Zahlen). → [(Titel, Ampel, [Zeilen])]; leer ohne Stand."""
+    import rueckenwind
     erg = laden() or {}
     x = (erg.get("titel") or {}).get(tk)
     if not x:
@@ -374,24 +376,27 @@ def titel_zeile(tk):
     k, r, ab = klasse(x), _richtung(x), x.get("abstand_hoch")
     wort, z = abstand_wort(ab), x.get("zahlen") or {}
     termin, warn = _termin(x, erg["stand"])
-    return [f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse",
-            *(["🦈 RS-Hoch vor Kurs"] if x.get("rs_hoch_vor_kurs") else []),
-            f'RS-Linie {PFEIL.get(r, "")} {r or "–"} {_rs_linie(x)}'.strip(),
-            f'Rang {x["rang_vor4"]} → {x["rang"]}',
-            "Volumen " + (_zufluss(x.get("zufluss"), x.get("trocken")) or "–"),
-            *([f"Hoch {HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %"] if wort else []),
-            *([b_] if (b_ := bahn(x.get("frei"))) else []),
-            "Geld " + PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
-            *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
-            "Zahlen " + PUNKT[z.get("ampel") or "grau"]
-            + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else ""),
-            *([zirkel_wort(zb, "Branche ")] if (zb := _branche_zirkel(tk)) else []),
-            # aus der Liste hierher (Micky 23.11.2026): Gruppen mit Feld, letzte Zahlen, Zahlen im Einzelnen
-            f'Sektor {x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
-            f'Branche {x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
-            *([f'Thema {(x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN]}'] if x.get("thema") else []),
-            *([f"letzte Zahlen {r_}"] if (r_ := _reaktion(x)) else []),
-            *([f"Zahlen im Einzelnen: {p_}"] if (p_ := _punkte_text(x)) else [])]
+    front_ampel = ("grau" if not k else "grün" if k in rueckenwind.ANGRIFF_KLASSEN
+                   else "gelb" if k in rueckenwind.VORNE_KLASSEN else "rot")
+    b_ = bahn(x.get("frei"))
+    front = [(f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse") + (" · 🦈 RS-Hoch vor Kurs" if x.get("rs_hoch_vor_kurs") else ""),
+             f'{PFEIL.get(r, "")} RS-Linie {r or "–"} {_rs_linie(x)}'.strip(),
+             f'Rang {x["rang_vor4"]} → {x["rang"]}',
+             *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
+             (f"{HOCH_PUNKT[wort]} Hoch {wort} −{zahl(ab, 0)} %" if wort else "Hoch –") + (f" · {b_}" if b_ else "")]
+    zb = _branche_zirkel(tk)
+    nachschub = ["Volumen " + (_zufluss(x.get("zufluss"), x.get("trocken")) or "–"),
+                 f'Sektor {x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
+                 f'Branche {x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})'
+                 + (f" · Zirkel {zirkel_wort(zb)}" if zb else ""),
+                 *([f'Thema {(x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN]}'] if x.get("thema") else []),
+                 *(["🐺 Einzelkämpfer – stark, aber die Branche liegt hinten"] if x.get("einzelkaempfer") else [])]
+    fundament = [*([f'📅 nächste Zahlen {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}'] if termin else []),
+                 *([f"letzte Zahlen {r_}"] if (r_ := _reaktion(x)) else []),
+                 *([f"im Einzelnen: {p_}"] if (p_ := _punkte_text(x)) else [])] or ["keine Zahlen gemessen"]
+    return [("⚔️ Front · Wie stark ist der Kurs?", front_ampel, front),
+            ("💰 Nachschub · Fließt Geld hinein?", x["geld_ampel"], nachschub),
+            ("📊 Fundament · Tragen die Zahlen?", z.get("ampel") or "grau", fundament)]
 
 
 def _branche_zirkel(tk):
