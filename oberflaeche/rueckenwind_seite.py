@@ -242,6 +242,69 @@ def dreifach_liste(erg):
     return [(tk, x) for tk, x in erg["titel"].items() if rueckenwind.dreifach(x)]
 
 
+DREI_GRUPPEN = (("🎯", "Schlagbereit", "Long-Setup am Pivot, im Ausbruch oder im Rücktest – der Angriffspunkt steht"),
+                ("⏳", "Auf der Lauer", "Base im Aufbau oder Rücksetzer – warten, bis der Kurs an den Pivot kommt"),
+                ("🏃", "Enteilt oder ohne Base", "stark, aber gerade kein Angriffspunkt – nicht hinterherlaufen"))
+
+
+def _drei_gruppe(f):
+    """Gruppe eines ▲▲▲-Titels aus seinem Feld im Zirkel-Lauf: 0 schlagbereit, 1 auf der Lauer, 2 enteilt/ohne Base."""
+    import zirkel
+    t_ = (f or {}).get("trade")
+    if t_ and t_["richtung"] > 0 and f.get("phase") in zirkel.HEISS:
+        return 0
+    return 1 if (f or {}).get("phase") in ("aufbau", "ruecksetzer", "kante") else 2
+
+
+def dreifach_block(erg):
+    """Eigene Liste „▲▲▲ Dreifacher Rückenwind“ (Micky 23.11.2026): alle Titel mit Kurs, Geld und Zahlen grün in drei
+    Gruppen – 🎯 schlagbereit (mit Einstieg, Stopp, Risiko), ⏳ auf der Lauer (Pivot und Abstand), 🏃 enteilt oder ohne
+    Base. In der Gruppe nach Klasse und Rang. Nichts gefiltert: jeder ▲▲▲-Titel steht in genau einer Gruppe."""
+    import watchlists
+    import zeichen
+    import zirkel
+    import zonen
+    feld, kreis, wl = zirkel.feld(), zeichen.laden(), watchlists.laden()
+    gruppen_ = [[], [], []]
+    for tk, x in dreifach_liste(erg):
+        gruppen_[_drei_gruppe(feld.get(tk))].append((tk, x))
+    if not any(gruppen_):
+        return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind</h3><p style="color:{TEXT_3}">heute kein Titel mit '
+                     f'Kurs, Geld und Zahlen grün</p>', oben=8, unten=0)
+    teile = []
+    for (sym, name, erkl), liste_ in zip(DREI_GRUPPEN, gruppen_):
+        zeilen = []
+        for tk, x in sorted(liste_, key=lambda p: (klasse(p[1]) or len(KLASSEN) + 1, -p[1]["rang"])):
+            f = feld.get(tk) or {}
+            t_, piv, kurs = f.get("trade"), f.get("pivot"), f.get("kurs")
+            if sym == "🎯":
+                lage_ = (f'{zirkel.trade_wort(f)} · {"Auslöser" if t_["wartet"] else "Einstieg"} {zahl(t_["einstieg"])} · '
+                         f'Stopp {zahl(t_["stopp"])} · {t_["ampel"]} {zahl(t_["risiko"], 1)} %')
+                gw = zirkel.gegenwind(tk, t_)
+                lage_ += f" · {gw}" if gw else ""
+            else:
+                lage_ = zonen.PHASE.get(f.get("phase"), ("", "ohne Zirkel-Lauf"))[1]
+                if piv and kurs:
+                    lage_ += (f" · Pivot {zahl(piv)} · noch {zahl((piv / kurs - 1) * 100, 1)} %" if kurs < piv else
+                              f" · {zahl((kurs / piv - 1) * 100, 1)} % über dem Pivot {zahl(piv)}")
+            phase, keim = _zirkel(tk, kreis)
+            k = klasse(x)
+            zeilen.append(f'<tr><td><a href="?seite=Titelseite&t={tk}" target="_blank">{tk}</a>{t(_marke(tk, wl))}</td>'
+                          f'<td>{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</td><td>{t(phase)}</td><td>{t(lage_)}</td>'
+                          f'<td>{t(keim)}</td></tr>')
+        teile.append(f'<details{" open" if sym != "🏃" else ""}><summary style="cursor:pointer;font-size:16px;'
+                     f'font-weight:600;padding:6px 0">{sym} {name} ({len(liste_)}) <span style="font-weight:400;'
+                     f'font-size:13px;color:{TEXT_3}">{erkl}</span></summary>'
+                     + (f'<table style="width:100%;border-collapse:collapse;font-size:13px;color:{TEXT_2}">'
+                        f'<tr style="color:{TEXT_3};text-align:left"><th>Titel</th><th>Klasse</th><th>Phase</th>'
+                        f'<th>Lage</th><th>Keim</th></tr>{"".join(zeilen)}</table>' if zeilen else
+                        f'<p style="color:{TEXT_3};font-size:13px;margin:0">keiner</p>') + '</details>')
+    return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
+                 f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
+                 f'Branche, Thema) und Zahlen zugleich grün – die stärkste Truppe. Am stärksten mit einem Setup am '
+                 f'Pivot (🎯).</p>' + "".join(teile), oben=8, unten=0)
+
+
 def _termin(x, stand):
     z = x.get("zahlen") or {}
     d = pd.to_datetime(z.get("termin"), errors="coerce")

@@ -63,6 +63,7 @@ def _titel(tk, start=None):
         t = setup(zonen.trade(e, la, ba), zeichen.zirkel(k))
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         feld = {"phase": la["phase"] if la else None,
+                "pivot": la["pivot"] if la else None, "kurs": la["kurs"] if la else None,   # ▲▲▲-Liste (23.11.2026)
                 "trade": {x: t[x] for x in TRADE_FELDER} if t else None,
                 "hoch52": bool(len(h) >= JAHR_TAGE and h[-1] >= h[-JAHR_TAGE:].max()),
                 "tief52": bool(len(l) >= JAHR_TAGE and l[-1] <= l[-JAHR_TAGE:].min())}

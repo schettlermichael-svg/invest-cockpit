@@ -1550,3 +1550,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Morgenmeldung; dort kommen ▲▲▲-Setups zuerst. Kein Filter.
 - Rückenwind-Liste, Spalte „Keim“ (23.11.2026): hinter dem Riss 🍂/🌱 steht 🪨 und die Zahl der Zeichen, die die
   Phase tragen – „🍂 Käufer erschöpft · 🪨 4“ ist eine Welle im Aufwärtslauf, das Kippen steht erst als „→ 3“ in der Phase.
+- Eigene Liste „▲▲▲ Dreifacher Rückenwind“ oben auf der Seite Rückenwind (23.11.2026, `rueckenwind_seite.dreifach_block`):
+  🎯 Schlagbereit (Long-Setup am Pivot, im Ausbruch, im Rücktest – mit Einstieg, Stopp, Risiko, Gegenwind) · ⏳ Auf der
+  Lauer (Base im Aufbau/Rücksetzer – Pivot und Abstand) · 🏃 Enteilt oder ohne Base. Der Zirkel-Lauf legt dafür je Titel
+  Pivot und Kurs ins Feld (ab dem nächsten Lauf).

@@ -361,6 +361,7 @@ def rueckenwind_zeigen():
         return
     with st.container(key="rueckenwind"):
         st.markdown(rw.kopf(erg, titel=False), unsafe_allow_html=True)
+        st.markdown(rw.dreifach_block(erg), unsafe_allow_html=True)    # eigene ▲▲▲-Liste (Micky 23.11.2026)
         import handbuch
         with st.expander("📖 Handbuch: Der Zirkel"):
             st.markdown(handbuch.TEXT)
