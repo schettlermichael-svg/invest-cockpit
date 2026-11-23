@@ -152,6 +152,9 @@ def kopf(r):
                       f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
                       f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>')
         import zirkel
+        if zirkel.dreifach(r["tk"], tr):               # Kurs, Geld und Zahlen grün (Micky 23.11.2026)
+            trade_html += (f'<div style="font-size:13px;color:{GRUEN}">▲▲▲ dreifacher Rückenwind – Kurs, Geld und '
+                           f'Zahlen grün</div>')
         gw = zirkel.gegenwind(r["tk"], tr)              # die Branche steht gegen die Richtung (Weinstein)
         if gw:
             trade_html += f'<div style="font-size:13px;color:{GELB}">{t(gw)} – Gegenwind der Gruppe</div>'

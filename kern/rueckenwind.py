@@ -135,6 +135,12 @@ VORNE_KLASSEN = (1, 2, 3)      # dazu die Vorhut: die Linie steigt, der Nachschu
 STEIGT = ("steigt schneller", "steigt", "dreht nach oben")
 
 
+def dreifach(x):
+    """Dreifacher Rückenwind ▲▲▲: Kurs (Garde oder Angriff), Geld (Geld-Ampel grün) und Zahlen (Ampel grün) zugleich."""
+    return bool(x) and klasse(x) in ANGRIFF_KLASSEN and x.get("geld_ampel") == "grün" \
+        and (x.get("zahlen") or {}).get("ampel") == "grün"
+
+
 def klasse(x):
     """Klasse 1–5 aus Front (RS-Linie) und Truppen (Volumen-Zufluss oder austrocknendes Volumen), keine Punkte: 1 Garde
     = RS-Hoch vor Kurs mit Zufluss · 2 Angriff = Linie steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt,

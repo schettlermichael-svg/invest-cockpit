@@ -260,6 +260,16 @@ def branche(tk):
     return dict(z, gruppe=name) if z else None
 
 
+def dreifach(tk, t, rw=None):
+    """▲▲▲ am Long-Setup (Micky 23.11.2026): der Titel hat dreifachen Rückenwind – Kurs, Geld und Zahlen grün
+    (rueckenwind.dreifach). rw = Titel des Rückenwinds, sonst aus dem letzten Lauf. Short-Setups: leer."""
+    if not t or t["richtung"] <= 0:
+        return ""
+    import rueckenwind
+    rw = rw if rw is not None else (rueckenwind.laden() or {}).get("titel") or {}
+    return "▲▲▲" if rueckenwind.dreifach(rw.get(tk)) else ""
+
+
 GEGEN = {1: (P_VERTEILUNG, P_AB), -1: (P_BASIS, P_AUF)}   # Phasen der Branche gegen long bzw. short …
 MIT = {1: (P_AUF,), -1: (P_VERTEILUNG, P_AB)}               # … außer der Wechsel läuft schon in die Richtung
 
@@ -278,7 +288,8 @@ def gegenwind(tk, t):
 
 def heisse(n=MELDUNG_JE_SEITE):
     """Die Morgenmeldung (Micky 22.11.2026: Schlachtordnung, Zirkel, ✈️): Long = Titel am Pivot, frisch ausgebrochen
-    (in der Kaufzone) oder im Rücktest – Garde und Angriff vor der Vorhut, dann nach Rang; Short = Bruch der Unterkante
+    (in der Kaufzone) oder im Rücktest – ▲▲▲ dreifacher Rückenwind zuerst, dann Garde und Angriff vor der Vorhut,
+    dann nach Rang; Short = Bruch der Unterkante
     mit Volumen, Rückzug zuerst. Bases im Aufbau kommen nicht in die Meldung (sie stehen in der Liste).
     Je Titel: Klasse, Trade, Einstieg, Stopp mit Risiko, ✈️ und Keim. → (Text, Anzahl)."""
     import rueckenwind
@@ -293,7 +304,7 @@ def heisse(n=MELDUNG_JE_SEITE):
         zk = zeichen.zirkel(zeichen.von(tk))
         kl = x.get("klasse")
         teile = [f"{sym} {tk}", f"{kl} · {rueckenwind.KLASSEN[kl - 1]}" if kl else "", trade_wort(f_[tk]),
-                 gegenwind(tk, t),
+                 dreifach(tk, t, rw), gegenwind(tk, t),
                  f'Einstieg {zahl(t["einstieg"])} $ · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(x.get("frei"), ""),
                  (("🌱 " if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂 ") + zeichen.kurz(zk["keim"][0]))
@@ -305,7 +316,8 @@ def heisse(n=MELDUNG_JE_SEITE):
 
     mit = [tk for tk, x in f_.items() if x.get("trade") and x.get("phase") in HEISS]
     lang = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] > 0 and klasse_nr(tk) in rueckenwind.VORNE_KLASSEN),
-                  key=lambda tk: (klasse_nr(tk), -((rw.get(tk) or {}).get("rang") or 0)))[:n]
+                  key=lambda tk: (not dreifach(tk, f_[tk]["trade"], rw), klasse_nr(tk),   # ▲▲▲ zuerst (23.11.)
+                                  -((rw.get(tk) or {}).get("rang") or 0)))[:n]
     kurz = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] < 0),
                   key=lambda tk: (-klasse_nr(tk), (rw.get(tk) or {}).get("rang") or 0))[:n]
     zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Setup am Pivot, im Ausbruch oder Rücktest"]) + \

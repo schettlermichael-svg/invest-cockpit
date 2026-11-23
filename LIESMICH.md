@@ -1545,3 +1545,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   (`uebersicht._markt_spalten`), darunter Hochs : Tiefs; die lange Erklärung unter „Instrumente“.
 - Chart: der Pivot als gestrichelte weiße Linie vom Zonenbeginn bis zum Rand, rechts „Pivot x“ („= Oberkante“, wenn er
   auf der Kante liegt; Auslöser/Einstieg am Pivot nicht doppelt). Ohne Setup blass „möglicher Pivot“. Raute bleibt.
+- ▲▲▲ dreifacher Rückenwind am Long-Setup (23.11.2026): Kurs (Garde/Angriff), Geld-Ampel und Zahlen-Ampel grün
+  (`rueckenwind.dreifach`, `zirkel.dreifach`) – in der Setup-Karte der Titelseite, in der Spalte „Setup“ und in der
+  Morgenmeldung; dort kommen ▲▲▲-Setups zuerst. Kein Filter.

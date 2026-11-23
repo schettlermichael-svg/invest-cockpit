@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 
 from gestaltung import BLAU, GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3, seite, t, zahl  # noqa: E402
 
-from rueckenwind import ANGRIFF_KLASSEN, KLASSEN, ZUFLUSS, abstand_wort, klasse, laden, richtung  # noqa: E402  eine Quelle (rueckenwind)
+from rueckenwind import KLASSEN, ZUFLUSS, abstand_wort, klasse, laden, richtung  # noqa: E402  eine Quelle (rueckenwind)
 FELD_FARBE = {"Führend": GRUEN, "Erstarkend": BLAU, "Ermüdend": GELB, "Abgehängt": ROT}
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
@@ -84,7 +84,9 @@ def setups():
     """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🦬 Fortsetzung · am Pivot“}): Zone der
     Tagesebene im Einklang mit dem Zirkel, dieselbe Regel wie Titelseite und Chart (Micky 22.11.2026)."""
     import zirkel
-    return {tk: " · ".join(x for x in (zirkel.trade_wort(f), zirkel.gegenwind(tk, f["trade"])) if x)
+    rw = (laden() or {}).get("titel") or {}
+    return {tk: " · ".join(x for x in (zirkel.trade_wort(f), zirkel.dreifach(tk, f["trade"], rw),
+                                       zirkel.gegenwind(tk, f["trade"])) if x)
             for tk, f in zirkel.feld().items() if f.get("trade")}
 
 
@@ -104,7 +106,7 @@ def _mitglieder(erg, art, g, setup, drei):
         zeilen.append(f'<div><b>{_marke(tk, wl, " ")}{tk}{" ▲▲▲" if tk in drei else ""}</b>'
                       f'<span class="k{k or ""}">{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</span><span>{x["rang"]}</span>'
                       f'<span>{"+" if x["tempo"] >= 0 else ""}{x["tempo"]}</span>'
-                      f'<span{"" if s_ else " class=o"}>{t(s_) if s_ else "kein Setup"}</span>'
+                      f'<span{"" if s_ else " class=o"}>{t(s_.replace(" · ▲▲▲", "")) if s_ else "kein Setup"}</span>'
                       f'<a href="?seite=Titelseite&t={tk}" target="_blank">Titelseite →</a></div>')
     return ('<div class="mg"><div class="k"><span>Titel</span><span>Klasse</span><span>RS-Rang</span><span>Tempo</span>'
             '<span>Setup</span><span></span></div>' + "".join(zeilen)
@@ -236,9 +238,8 @@ def _zufluss(z, trocken=False):
 
 
 def dreifach_liste(erg):
-    return [(tk, x) for tk, x in erg["titel"].items()
-            if klasse(x) in ANGRIFF_KLASSEN and x["geld_ampel"] == "grün"
-            and (x.get("zahlen") or {}).get("ampel") == "grün"]
+    import rueckenwind
+    return [(tk, x) for tk, x in erg["titel"].items() if rueckenwind.dreifach(x)]
 
 
 def _termin(x, stand):
