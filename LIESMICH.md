@@ -1538,3 +1538,10 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   `werkzeuge/von_tv_anwenden.py` (als Benutzer cockpit, jeder Stand nur einmal), löscht sie und legt die Listen ab.
   `aktualisieren.sh` hält das Skript auf dem Stand des Speichers. Steht `von_tv.json` noch auf dem Zweig, wartet die
   Aufgabe (sonst hielte sie die noch nicht übernommenen Titel für in der App entfernt). Verzögerung bis etwa 1 Stunde.
+
+## Markt-Kachel in zwei Spalten, Pivot als eigene Linie (23.11.2026)
+
+- Markt-Kachel (① Lage): S&P 500 (führt) und Nasdaq nebeneinander – je Ampel, Phase, 🍂/🌱 Keim und 🪨 was trägt
+  (`uebersicht._markt_spalten`), darunter Hochs : Tiefs; die lange Erklärung unter „Instrumente“.
+- Chart: der Pivot als gestrichelte weiße Linie vom Zonenbeginn bis zum Rand, rechts „Pivot x“ („= Oberkante“, wenn er
+  auf der Kante liegt; Auslöser/Einstieg am Pivot nicht doppelt). Ohne Setup blass „möglicher Pivot“. Raute bleibt.

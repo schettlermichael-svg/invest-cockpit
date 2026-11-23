@@ -40,6 +40,8 @@ LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen bes
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
+PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
+PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 ENGE_FARBE = "#5DCAA5"                 # Kontraktionen der Base
 
@@ -74,7 +76,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
-    Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als Raute auf seinem Wendepunkt (Micky 23.11.2026),
+    Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
     Keim des Zirkels) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
@@ -160,15 +162,20 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'<text x="{xz + 6:.1f}" y="{Y(hi) - 6:.1f}" fill="{ZONE_FARBE}" font-size="16" font-weight="700">{la["name"]}</text>')  # Layout
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["poc"]):.1f}" y2="{Y(la["poc"]):.1f}" stroke="{POC_FARBE}" '
           f'stroke-width="1.4" stroke-dasharray="2 3"/>')                           # Layout
-        eigen_pivot = la["pivot"] is not None and abs(la["pivot"] - hi) > (e["atr"] or 0) * STOPP_BAND
-        am_rand = "" if eigen_pivot or la["pivot"] is None else (
-            " = Pivot" if zahl(la["pivot"]) == zahl(hi) else f" · Pivot {zahl(la['pivot'])}")   # Pivot an der Oberkante
-        etiketten += [(Y(hi), f"Zone oben {zahl(hi)}{am_rand}", ZONE_FARBE),
-                      (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
-        if eigen_pivot and pmin <= la["pivot"] <= pmax:
-            A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["pivot"]):.1f}" y2="{Y(la["pivot"]):.1f}" stroke="{ZONE_FARBE}" '
-              f'stroke-width="1.6"/>')                                              # Layout: Pivot unter der Oberkante
-            etiketten.append((Y(la["pivot"]), f"Pivot {zahl(la['pivot'])}", ZONE_FARBE))
+    piv = la.get("pivot") if la.get("zone") else None
+    oben_ = piv is not None and abs(piv - hi) <= piv * PIVOT_GLEICH                   # Pivot auf der Oberkante
+    am_pivot = bool(t and piv is not None and abs(t["einstieg"] - piv) <= piv * PIVOT_GLEICH)   # Auslöser = Pivot
+    if la["zone"]:
+        etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
+                     [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+    if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß;
+        moeglich = bool(t and t.get("kein_setup"))       # ohne Setup blass als „möglicher Pivot“
+        A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
+          f'stroke-width="{1.4 if moeglich else 2.4}" stroke-dasharray="8 4" stroke-opacity="{PIVOT_BLASS if moeglich else 1}">'
+          f'<title>{"möglicher " if moeglich else ""}Pivot {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
+        etiketten.append((Y(piv), ("möglicher Pivot" if moeglich else "Pivot") + f" {zahl(piv)}"   # Layout: kurz, passt
+                          + (" = Oberkante" if oben_ and not moeglich else ""),                    # an den Rand
+                          TEXT_3 if moeglich else PIVOT_FARBE))
     def kurve(r_, farbe, dicke=1.6, strich=""):  # Layout
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
         if pkt:
@@ -248,6 +255,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
+            if name != "Stopp" and am_pivot:                                        # steht schon an der Pivot-Linie
+                continue
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} Risiko {zahl(t["risiko"], 1)} %'
                                                                  if name == "Stopp" else gegen), farbe))
@@ -394,8 +403,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
 def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
-    teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · "
-              "Linie darin = Pivot, wenn er unter der Oberkante liegt · POC grün gepunktet"),
+    teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · POC grün gepunktet"),
              (FESTUNG_FARBE, "Festung ▲▼: alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss "
               "darunter (Wendepunkte ab 2 ATR); überwunden tauschen sie die Rolle (Decke → Boden) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
@@ -407,8 +415,9 @@ def legende():
              (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
               "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Zone, Enge und "
               "Festungen"),
-             (ZONE_FARBE, "◆ Pivot: der eine Wendepunkt, an dem die Waage kippt – das Hoch der letzten Enge am Rand, sonst "
-              "die Oberkante (in der Stunde das Hoch der Balance)"),
+             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
+              "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
+              "ohne Setup"),
              (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
