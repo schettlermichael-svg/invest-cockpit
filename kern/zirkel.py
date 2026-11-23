@@ -239,6 +239,43 @@ def trade_wort(f):
     return f'{t["zeichen"]} {t["name"]} · ' + ("läuft" if not t["wartet"] else zonen.PHASE[f["phase"]][1])
 
 
+_GRUPPEN = {}
+
+
+def branche(tk):
+    """Zirkel der Branche eines Titels aus dem letzten Rückenwind-Lauf ({phase, name, ziel, wort, keim, traegt,
+    wochen, gruppe}) oder None – je Stand einmal gelesen."""
+    import rueckenwind
+    try:
+        pfad = rueckenwind._pfad("stand.json")
+        schluessel = (pfad, os.path.getmtime(pfad))
+    except OSError:
+        return None
+    if _GRUPPEN.get("k") != schluessel:
+        erg = rueckenwind.laden() or {}
+        zk = {g["name"]: g.get("zirkel") for g in erg.get("gruppen") or [] if g["art"] == "Branche"}
+        _GRUPPEN.update(k=schluessel, titel={t: x.get("branche") for t, x in (erg.get("titel") or {}).items()}, zk=zk)
+    name = _GRUPPEN["titel"].get(tk)
+    z = _GRUPPEN["zk"].get(name) if name else None
+    return dict(z, gruppe=name) if z else None
+
+
+GEGEN = {1: (P_VERTEILUNG, P_AB), -1: (P_BASIS, P_AUF)}   # Phasen der Branche gegen long bzw. short …
+MIT = {1: (P_AUF,), -1: (P_VERTEILUNG, P_AB)}               # … außer der Wechsel läuft schon in die Richtung
+
+
+def gegenwind(tk, t):
+    """Zeichen am Setup, wenn die Branche gegen seine Richtung steht (Micky 23.11.2026, Weinstein: keine Aktie in
+    einer schwachen Gruppe kaufen – gezeigt, nicht gefiltert): long in Phase 3/4, short in Phase 1/2, außer der
+    Wechsel der Branche läuft schon in die Richtung des Setups (3 → 2 für long; 1 → 4, 2 → 3 für short) → „🟡 Branche
+    4 (Abwärts)“, sonst ""."""
+    z = branche(tk) if t else None
+    r = 1 if t and t["richtung"] > 0 else -1
+    if not z or z.get("phase") not in GEGEN[r] or z.get("ziel") in MIT[r]:
+        return ""
+    return f'🟡 Branche {z["wort"]} ({z["name"]})'
+
+
 def heisse(n=MELDUNG_JE_SEITE):
     """Die Morgenmeldung (Micky 22.11.2026: Schlachtordnung, Zirkel, ✈️): Long = Titel am Pivot, frisch ausgebrochen
     (in der Kaufzone) oder im Rücktest – Garde und Angriff vor der Vorhut, dann nach Rang; Short = Bruch der Unterkante
@@ -256,6 +293,7 @@ def heisse(n=MELDUNG_JE_SEITE):
         zk = zeichen.zirkel(zeichen.von(tk))
         kl = x.get("klasse")
         teile = [f"{sym} {tk}", f"{kl} · {rueckenwind.KLASSEN[kl - 1]}" if kl else "", trade_wort(f_[tk]),
+                 gegenwind(tk, t),
                  f'Einstieg {zahl(t["einstieg"])} $ · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(x.get("frei"), ""),
                  (("🌱 " if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂 ") + zeichen.kurz(zk["keim"][0]))

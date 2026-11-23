@@ -1502,3 +1502,15 @@ Mac 04.11.: S&P 500 Phase 2 ohne Keim = 🟢 Angriff; Nasdaq Phase 2 · Rückset
 - **Livermores Secondary:** Wendepunkte ohne neues Extrem zeichnet der Chart kleiner und blasser
   (`vcp_zone.secondary`); als Zeichen (`zeichen.secondary`, Wendepunkt höchstens 20 Tage alt): nach einem neuen Hoch
   hält die Reaktion über dem letzten Tief = Stärke, gespiegelt Schwäche. Mac: 42 Stärke, 48 Schwäche in 300 Titeln.
+
+## Branchen auf dem Zirkel (23.11.2026)
+Micky: die Lage der Gruppen spricht dieselbe Sprache wie Markt und Titel (Weinstein: erst der Markt, dann die Gruppe,
+dann der Titel). `rueckenwind._gruppen_index` baut je Gruppe (Sektor, Branche, Thema, ab 5 Titeln) einen
+gleichgewichteten Kerzen-Index aus den Massive-Tagen der Mitglieder (zwei Jahre; Eröffnung, Hoch, Tief je gegen den
+Vortagesschluss, Volumen als Summe); `rueckenwind._gruppen_zirkel` rechnet daraus den Kreislauf mit den Zeichen relativ
+zum S&P 500 (in mehreren Prozessen) → `g["zirkel"]`. Die Spalte „Lage“ der Wetterkarte zeigt ihn statt des
+Auktions-Zustands (`auktion.gruppe` entfernt, ebenso `zustandsbild.pille`), Rotation, Breite und Geld bleiben als
+Zeichen. Titelseite: „Branche 2 (Aufwärts)“ in der Zeile Rückenwind. Gegenwind (`zirkel.gegenwind`): steht die Branche
+gegen die Richtung eines Setups (long in 3/4, short in 1/2, außer der Wechsel läuft schon in die Richtung), trägt das
+Setup „🟡 Branche …“ – Titelseite, Liste, Morgenmeldung; nicht gefiltert. Mac 04.11.: 186 Gruppen, alle mit Zirkel,
+Rückenwind-Lauf 57 s.

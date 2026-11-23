@@ -84,7 +84,8 @@ def setups():
     """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🦬 Fortsetzung · am Pivot“}): Zone der
     Tagesebene im Einklang mit dem Zirkel, dieselbe Regel wie Titelseite und Chart (Micky 22.11.2026)."""
     import zirkel
-    return {tk: zirkel.trade_wort(f) for tk, f in zirkel.feld().items() if f.get("trade")}
+    return {tk: " · ".join(x for x in (zirkel.trade_wort(f), zirkel.gegenwind(tk, f["trade"])) if x)
+            for tk, f in zirkel.feld().items() if f.get("trade")}
 
 
 def _mitglieder(erg, art, g, setup, drei):
@@ -119,6 +120,18 @@ MITGLIEDER_STIL = (
     f".wk summary::-webkit-details-marker{{display:none}}</style>")
 
 
+def _zirkel_pille(z):
+    """Die Lage einer Gruppe als Zirkel (Micky 23.11.2026, ersetzt den Auktions-Zustand): Phase mit Keim, beim
+    Darüberfahren die Zeichen, die tragen, und der Keim; ohne Zirkel „jung“."""
+    if not z:
+        return f'<span style="color:{TEXT_3};font-size:12px">ohne Zirkel</span>'
+    farbe = {1: TEXT_2, 2: GRUEN, 3: GELB, 4: ROT}.get(z["phase"], TEXT_3)
+    titel_ = " &#10;".join(t(f"trägt – {x}") for x in z.get("traegt") or []) + (" &#10;" if z.get("traegt") else "") + \
+        " &#10;".join(t(f"Keim – {x}") for x in z.get("keim") or [])
+    return (f'<span title="{titel_}" style="display:inline-block;border:1px solid {farbe};color:{farbe};'
+            f'border-radius:999px;padding:1px 9px;font-size:12px;white-space:nowrap">{t(zirkel_wort(z))}</span>')
+
+
 def wetterkarte(erg, art):
     """Wetterkarte der Strömung (10.11.2026, ersetzt die Punktwolke): je Gruppe eine Zeile mit dem Feld der letzten
     fünf Wochen als Kästchen, der Lage heute in Worten und dem Geldfluss. Alle Gruppen, geordnet nach Feld heute –
@@ -148,9 +161,7 @@ def wetterkarte(erg, art):
                         f'{zahl(g["breite"], 0)} %'
             if g.get("vorne"):
                 lage += f' · vorne {g["vorne"][0]} von {g["vorne"][1]}'
-            import auktion
-            import zustandsbild
-            lage = zustandsbild.pille(auktion.gruppe(g), klein=True, mit_belegen=True) + " " + t(lage)
+            lage = _zirkel_pille(g.get("zirkel")) + " " + t(lage)
             z = g.get("zufluss")
             if z:
                 fz, wz = ((GRUEN, "rein") if z >= ZUFLUSS[0] else (ROT, "raus") if z < ZUFLUSS[1] else (TEXT_2, "gleich"))
@@ -304,7 +315,21 @@ def titel_zeile(tk):
             "Geld " + PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
             *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
             "Zahlen " + PUNKT[z.get("ampel") or "grau"]
-            + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else "")]
+            + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else ""),
+            *([zirkel_wort(zb, "Branche ")] if (zb := _branche_zirkel(tk)) else [])]
+
+
+def _branche_zirkel(tk):
+    import zirkel
+    return zirkel.branche(tk)
+
+
+def zirkel_wort(z, vor=""):
+    """Zirkel einer Gruppe in Worten (Micky 23.11.2026, Branchen auf den Zirkel): „Branche 2 (Aufwärts) 🍂“ – der
+    Keim als Zeichen, wenn gemessen."""
+    import zeichen
+    keim = ("🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂") if z.get("keim") else ""
+    return f'{vor}{z["wort"]} ({z["name"]}) {keim}'.strip()
 
 
 def bahn(fr, wort=" freie Bahn"):

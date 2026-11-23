@@ -151,6 +151,10 @@ def kopf(r):
                       f'<div style="font-size:13px;color:{TEXT_2}">{"Auslöser" if tr["wartet"] else "Einstieg"} '
                       f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
                       f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>')
+        import zirkel
+        gw = zirkel.gegenwind(r["tk"], tr)              # die Branche steht gegen die Richtung (Weinstein)
+        if gw:
+            trade_html += f'<div style="font-size:13px;color:{GELB}">{t(gw)} – Gegenwind der Gruppe</div>'
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Setup</div>'
     import rueckenwind_seite

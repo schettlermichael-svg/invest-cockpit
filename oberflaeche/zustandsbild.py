@@ -11,18 +11,6 @@ from masse import ZEILENUMBRUCH  # noqa: E402
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 
 
-def pille(e, klein=False, mit_belegen=False):
-    """Farbiges Wort, z. B. für Tabellen: „Ungleichgewicht ↑“; mit_belegen: die Belege beim Darüberfahren."""
-    if not e:
-        return ""
-    f = auktion.farbe(e)
-    gr = "12px" if klein else "13px"
-    titel = ""
-    if mit_belegen:
-        z = [f"{p}: {x}" for p, x in e.get("belege") or []] + list(e.get("ende") or [])
-        titel = f' title="{t(chr(ZEILENUMBRUCH).join(z))}"'
-    return (f'<span{titel} style="display:inline-block;border:1px solid {f};color:{f};border-radius:999px;padding:1px 9px;'
-            f'font-size:{gr};white-space:nowrap">{t(auktion.wort(e))}</span>')
 
 
 def _zeilen(titel, texte, farbe=TEXT_3):

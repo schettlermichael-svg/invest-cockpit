@@ -50,6 +50,7 @@ HOCH_MITTEL = 25.0                      # Abstand zum 52-Wochen-Hoch: bis 25 % �
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
 GD50_MIN_TAGE = 40       # GD50 der Mitglieder ab 40 Tagen Daten
+GRUPPE_MIN = 5           # eine Gruppe ab 5 Titeln (wie das Rudel)
 VOR_4_WOCHEN_W = 5       # Wochenreihe: der 5. Wert zurück = vor 4 Wochen
 BREITE_MIN_TITEL = 5     # Breite der Gruppe ab 5 Mitgliedern mit Daten
 SCHWEIF_WOCHEN = 5       # Weg im Rotationsbild: die letzten 5 Wochen
@@ -179,7 +180,7 @@ def _ud(kurs, vol):
 
 def _gruppe(art, name, mitglieder, C, V):
     g = [m for m in mitglieder if m in C.columns]
-    if len(g) < 5:
+    if len(g) < GRUPPE_MIN:
         return None
     kurs = 100 * (1 + C[g].pct_change(fill_method=None).iloc[1:].mean(axis=1, skipna=True)).cumprod()
     vol = V[g].iloc[1:].sum(axis=1, min_count=1)
@@ -209,6 +210,58 @@ def _gruppe(art, name, mitglieder, C, V):
             "weg": [[round(float(a), 1), round(float(b), 1)] for a, b in zip(s.iloc[-SCHWEIF_WOCHEN:], w.iloc[-SCHWEIF_WOCHEN:])],
             "zufluss": round(ud, 2) if ud else None, "breite": breite, "breite_vor4": breite_vor4,
             "mitglieder": g}
+
+
+def _gruppen_index(mitglieder, B):
+    """Gleichgewichteter Tageskerzen-Index einer Gruppe aus den Massive-Tagen der Mitglieder (zwei Jahre): Schluss =
+    Index des Vortags × mittlere Rendite; Eröffnung, Hoch und Tief ebenso, jeweils gegen den Schluss des Vortags;
+    Volumen = Summe. → DataFrame oder None."""
+    g = [m for m in mitglieder if m in B["Close"].columns]
+    if len(g) < GRUPPE_MIN:
+        return None
+    c = B["Close"][g]
+    vor = c.shift()
+    r = (c / vor).mean(axis=1, skipna=True).iloc[1:]
+    kurs = 100 * r.cumprod()
+    basis = kurs.shift().fillna(100)
+    df = pd.DataFrame({k: basis * (B[k][g] / vor).mean(axis=1, skipna=True).iloc[1:] for k in ("Open", "High", "Low")})
+    df["Close"], df["Volume"] = kurs, B["Volume"][g].iloc[1:].sum(axis=1, min_count=1)
+    df["High"] = df[["High", "Close", "Open"]].max(axis=1)
+    df["Low"] = df[["Low", "Close", "Open"]].min(axis=1)
+    return df.dropna(subset=["High", "Low", "Close"])
+
+
+ZIRKEL_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen")
+
+
+def _ein_zirkel(arg):
+    """Zirkel einer Gruppe aus ihrem Index (für den Prozess-Pool) → dict oder None."""
+    name, df, idx, start = arg
+    import zeichen
+    if df is None:
+        return None
+    try:
+        z = zeichen.zirkel(zeichen.fuer_titel(name, df, idx, start=start, mit_wertzone=False))
+    except Exception:  # noqa: BLE001 – eine Gruppe ohne Zirkel steht trotzdem in der Liste
+        return None
+    return {x: z.get(x) for x in ZIRKEL_FELDER} if z else None
+
+
+def _gruppen_zirkel(gruppen, B):
+    """Der Zirkel jeder Gruppe (Micky 23.11.2026: Branchen auf den Zirkel – Weinstein: erst die Gruppe, dann der
+    Titel): Kreislauf ihres Index mit den Zeichen relativ zum S&P 500 (zeichen.fuer_titel) → g["zirkel"]; in
+    mehreren Prozessen wie der Zirkel-Lauf der Titel."""
+    from concurrent.futures import ProcessPoolExecutor
+    import daten
+    import zeichen
+    idx = daten.kurse_gespeichert(daten.INDEX)
+    if idx is None:
+        return
+    start = zeichen.startdatum(idx)
+    arg = [(g["name"], _gruppen_index(g["mitglieder"], B), idx, start) for g in gruppen]
+    with ProcessPoolExecutor(max(1, (os.cpu_count() or 2) - 1)) as ex:
+        for g, z in zip(gruppen, ex.map(_ein_zirkel, arg)):
+            g["zirkel"] = z
 
 
 def _geld_ampel(sek, bra, th=None):
@@ -373,7 +426,7 @@ def rechnen(netz=False):
     V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
     O = massive.kursmatrix(alle, 100, "Open")     # letzte Zahlen höchstens ein Quartal her
     H = massive.kursmatrix(alle, 100, "High")
-    B = massive.kursmatrix(alle, zonen.BAHN_JAHRE * JAHR_TAGE, ["High", "Low", "Close"])   # Festungen für ✈️
+    B = massive.kursmatrix(alle, zonen.BAHN_JAHRE * JAHR_TAGE, ["Open", "High", "Low", "Close", "Volume"])   # ✈️, Zirkel der Gruppen
     tv = _tv()
     titel_, ohne_daten = [], []
     for t in alle:
@@ -408,6 +461,7 @@ def rechnen(netz=False):
             g["nr"] = th.get("nr")
             gruppen.append(g)
             thema_von.update({t: g for t in th["mitglieder"]})
+    _gruppen_zirkel(gruppen, B)
     # Momentum (Kullamägi, 22.11.2026): Rendite über 1, 3, 6 Monate; die besten 2 % des Reviers je Fenster = 🚀
     mom = {k: C.iloc[-1] / C.iloc[-1 - n] - 1 for k, n in MOMENTUM_FENSTER.items()}
     spitze = {k: float(r_.reindex(rv.index).quantile(MOMENTUM_SPITZE)) for k, r_ in mom.items()}

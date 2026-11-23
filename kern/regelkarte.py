@@ -116,55 +116,26 @@ KAESTEN = {
              fuehrt="O'Neil (Basenzählung)", zeichen="",
              messung=[], stand="gemessen", pruefer=["Neue Balance/Basenzählung"]),
     ],
-    "gruppe": [
-        dict(name="Anlass: neue Information", zustand=None,
-             regel="Zins, Rohstoffe, Quad im Wirtschaftswetter – warum das Geld wandert.",
-             fuehrt="Quad (Wirtschaftswetter)", zeichen="",
-             messung=["lage.quadrant"], stand="fehlt",
-             luecke="der Quad steht im Material des Prüfers, der Zustand der Gruppe nennt keinen Anlass",
-             pruefer=["Anlass"]),
-        dict(name="Anlass: Verkäufer leer", zustand=None,
-             regel="Der Ausverkauf der Gruppe ist durch.", fuehrt="O'Neil/Weinstein", zeichen="",
-             messung=[], stand="fehlt", luecke="die App erkennt das Ende des Ausverkaufs einer Gruppe nicht",
-             pruefer=["Anlass"]),
-        dict(name="Anlass: Zwang", zustand=None,
-             regel="Umschichtung, Abfluss.", fuehrt="O'Neil/Weinstein (Geldfluss)", zeichen="",
-             messung=["auktion.gruppe"], stand="teilweise",
-             luecke="Abfluss steht als Beleg (Geldfluss unter 1), nicht als Anlass", pruefer=["Anlass", "Geldfluss"]),
-        dict(name="Balance", zustand="Balance",
-             regel="Die RS der Gruppe läuft seitwärts (RS-Stärke und Schwung nahe 100).",
-             fuehrt="O'Neil, Weinstein (Gruppen-RS seitwärts)", zeichen="",
-             messung=["auktion.gruppe", "sektoren.feld"], stand="gemessen", pruefer=["Zustand der Gruppe", "Feld (Rotation)"]),
-        dict(name="Anführer bricht aus", zustand="Test am Rand",
-             regel="Folgen die Schwestern? (App: Feld Erstarkend, Anführer genannt)",
-             fuehrt="O'Neil (das „L“: der Führer)", zeichen="Kullamägi (Führer-Rang: die Speerspitze als Zeichen)",
-             messung=["auktion.gruppe"], stand="gemessen", pruefer=["Anführer bricht aus"]),
-        dict(name="Gruppe folgt nicht", zustand="abgelehnt",
-             regel="Das Geld rotiert zurück → Fehlausbruch der Gruppe, zurück in die Mitte (App: Erstarkend kippt zurück "
-                   "nach Abgehängt = abgelehnt).",
-             fuehrt="O'Neil/Weinstein", zeichen="", messung=["auktion.gruppe"], stand="gemessen",
-             pruefer=["Gruppe folgt nicht/Fehlausbruch"]),
-        dict(name="Schwestern folgen", zustand="angenommen",
-             regel="Die Breite wächst, Zufluss (App: angenommen = Breite +10 Punkte in 4 Wochen und Zufluss ab 1,1).",
-             fuehrt="O'Neil und Weinstein (erst die Gruppe, dann der Titel; Breite, Zufluss)", zeichen="",
-             messung=["auktion.gruppe", "rudel.breite"], stand="gemessen", pruefer=["Schwestern folgen/Breite", "Geldfluss"]),
-        dict(name="Gruppe führt", zustand="Ungleichgewicht",
-             regel="Das Geld fließt stetig (App: Feld Führend = Ungleichgewicht).",
-             fuehrt="O'Neil/Weinstein", zeichen="", messung=["auktion.gruppe", "sektoren.feld"], stand="gemessen",
-             pruefer=["Zustand der Gruppe", "Feld (Rotation)"]),
-        dict(name="Ende: Geld wandert weiter", zustand="Ende des Laufs",
-             regel="Die nächste Gruppe lockt.", fuehrt="Weinstein", zeichen="",
-             messung=[], stand="fehlt", luecke="die App sieht nicht, wohin das Geld als Nächstes fließt",
-             pruefer=["Ende des Laufs"]),
-        dict(name="Ende: Breite wird schmal", zustand="Ende des Laufs",
-             regel="Der Anführer läuft allein (Breite fällt um 10 Punkte in 4 Wochen).", fuehrt="Weinstein", zeichen="",
-             messung=["auktion.gruppe"], stand="gemessen", pruefer=["Ende des Laufs", "Schwestern folgen/Breite"]),
-        dict(name="Ende: RS flacht ab", zustand="Ende des Laufs",
-             regel="Zurück zur Mitte (App: Feld Ermüdend).", fuehrt="Weinstein", zeichen="",
-             messung=["auktion.gruppe", "sektoren.feld"], stand="gemessen", pruefer=["Ende des Laufs"]),
-        dict(name="Neue Balance", zustand="Balance",
-             regel="Die Rotation geht weiter.", fuehrt="O'Neil/Weinstein", zeichen="",
-             messung=["sektoren.rotation"], stand="gemessen", pruefer=["Neue Balance"]),
+    "gruppe": [                                  # seit 23.11.2026 auf dem Zirkel (vorher Auktions-Zustand der Gruppe)
+        dict(name="Zirkel der Gruppe", zustand=None,
+             regel="Jede Gruppe (Sektor, Branche, Thema, ab 5 Titeln) bekommt Phase 1–4 und Keim aus ihrem "
+                   "gleichgewichteten Index: Kerzen aus den Massive-Tagen der Mitglieder (zwei Jahre, Hoch, Tief, "
+                   "Eröffnung je gegen den Vortagesschluss, Volumen als Summe), Kreislauf wie beim Titel mit den "
+                   "Zeichen relativ zum S&P 500. Die Spalte „Lage“ der Wetterkarte zeigt ihn.",
+             fuehrt="Weinstein (erst Markt, dann Gruppe, dann Titel)", zeichen="🌱/🍂",
+             messung=["rueckenwind._gruppen_zirkel", "rueckenwind._gruppen_index"], stand="gemessen",
+             pruefer=["Zustand der Gruppe"]),
+        dict(name="Gegenwind der Gruppe", zustand=None,
+             regel="Steht die Branche gegen die Richtung eines Setups (long in Phase 3/4, short in Phase 1/2), trägt "
+                   "das Setup das Zeichen „🟡 Branche …“ – auf der Titelseite, in der Liste und in der Morgenmeldung; "
+                   "gezeigt, nicht gefiltert (Micky 23.11.2026).",
+             fuehrt="Weinstein (keine Aktie in einer schwachen Gruppe kaufen)", zeichen="🟡",
+             messung=["zirkel.gegenwind", "zirkel.branche"], stand="gemessen", pruefer=["Zustand der Gruppe"]),
+        dict(name="Rotation und Breite", zustand=None,
+             regel="Feld aus RS-Stärke und Schwung gegen den S&P 500 (fünf Wochen als Kästchen), Breite = Anteil der "
+                   "Mitglieder über dem GD50 heute und vor 4 Wochen – als Zeichen neben dem Zirkel.",
+             fuehrt="Rotation der Sektoren, Weinstein (Breite)", zeichen="",
+             messung=["sektoren.feld", "rueckenwind._gruppe"], stand="gemessen", pruefer=["Feld (Rotation)"]),
     ],
     "markt": [                                   # seit 23.11.2026 aus dem Zirkel des Index (vorher O'Neil)
         dict(name="Zirkel des Index", zustand=None,
@@ -297,7 +268,7 @@ WERKZEUGE = {
     ],
     "gruppe": [
         dict(name="Geldfluss", regel="Zufluss = Volumen steigender ÷ fallender Tage (50 Tage); unter 1 heißt Abfluss.",
-             messung=["auktion.gruppe"], stand="gemessen", pruefer=["Geldfluss"]),
+             messung=["rueckenwind._ud"], stand="gemessen", pruefer=["Geldfluss"]),
     ],
     "markt": [],
 }
@@ -419,6 +390,13 @@ ZEICHEN = [
 # Regeln außerhalb der drei Bilder und der Setups: Rückenwind, Depot und Risiko, Fundament, Stopps, Kartentisch,
 # Erkennung, Rudel. pruefer leer = noch kein Prüfer sieht den Bereich (gelb, Micky entscheidet).
 BEREICHE = [
+    dict(name="Wirtschaftswetter (Quad)", quelle="Dalio (Quad aus Wachstum und Inflation)",
+         regel="Wachstum und Inflation steigen oder fallen nach ihren Instrumenten (Punkte- und Raten-Schwellen); die "
+               "amtlichen Zahlen bestätigen den Quad oder zeigen einen möglichen Wechsel.",
+         messung=["lage.quadrant"], pruefer=[], luecke="kein Prüfer"),
+    dict(name="Rotation der Sektoren", quelle="Rotation der Sektoren (RS-Stärke und Schwung gegen den S&P 500)",
+         regel="Elf Sektor-ETFs als Rotationsbild über 26 Wochen; Feld aus RS-Stärke und Schwung.",
+         messung=["sektoren.rotation"], pruefer=["Feld (Rotation)"]),
     dict(name="Nach dem Kauf und Depot", quelle="Micky 23.11.2026 (nur noch Zirkel und nachgezogener Stopp), Kullamägi "
                                                 "(10er/20er), Minervini (Klumpen, Verlustbremse)",
          regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Pivot wird gemerkt). Ab Tag 3 folgt der "

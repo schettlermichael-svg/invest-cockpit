@@ -61,11 +61,8 @@ TEXT_KURZ = 40         # Anzeige: Kurzname des Entscheids höchstens 40 Zeichen
 BELEGE_JUENGSTE = 3    # die drei jüngsten Ereignisse am Rand bleiben als Beleg
 ZONE_PUFFER = 1.005    # Kurs in der Zone: bis 0,5 % über der Oberkante
 WERT_WOCHEN = 3        # Wert akzeptiert: neue Wertzone seit mindestens 3 Wochen
-BREITE_PUNKTE = 10     # Gruppe: Breite steigt bzw. fällt um 10 Punkte in 4 Wochen
-ZUFLUSS_AB = 1.1       # Gruppe angenommen: Zufluss ab 1,1 (wie rueckenwind.ZUFLUSS)
 RS_GLEICH = 1      # Kraft: RS-Änderung höchstens 1 Punkt = mit dem Markt
 MIT_MEHR = 1       # … mehr Kraft mit als gegen: über 1
-FELD_NEUTRAL = 1   # Gruppe neutral: Stärke und Schwung höchstens 1 Punkt neben 100
 
 
 def _z(x, f=".2f"):
@@ -615,50 +612,3 @@ def titel(df, k, idx=None, mp=None, br=None, zone=None, profil=None, zahltag=Non
 
 
 # ── Gruppe ──────────────────────────────────────────────────────────────────────────────────────────────────────
-def gruppe(g):
-    """Zustand einer Gruppe (Sektor, Branche, Thema) aus der Rotationskarte, der Breite und den Anführern."""
-    if not g:
-        return None
-    f, f4 = g.get("feld"), g.get("feld_vor4")
-    br, br4 = g.get("breite"), g.get("breite_vor4")
-    zu = g.get("zufluss")
-    belege = [("Balance" if f not in ("Führend", "Abgehängt") else "Ungleichgewicht",
-               f"Feld {f} seit {g.get('seit_wochen')} Wochen (vor 4 Wochen {f4}), RS-Stärke {_z(g.get('staerke', 0), '.1f')}, "
-               f"Schwung {_z(g.get('schwung', 0), '.1f')}")]
-    if br is not None:
-        belege.append(("folgen die Schwestern", f"Breite: {_z(br, '.0f')} % über dem GD50 (vor 4 Wochen "
-                                                f"{_z(br4, '.0f') if br4 is not None else '–'} %)"))
-    if zu:                                       # unter 1 fließt Geld ab (Chart-Prüfer Lauf 3: stand als „Zufluss“)
-        belege.append(("Geldfluss", f"{'Zufluss' if zu >= 1 else 'Abfluss'} {_z(zu)} (Volumen steigender ÷ fallender "
-                                    "Tage, 50 Tage)"))
-    anf = g.get("anfuehrer") or []
-    if anf:
-        belege.append(("Anführer bricht aus", "Anführer: " + ", ".join(anf) + (f" · Verfolger: {', '.join(g['verfolger'])}"
-                                                                  if g.get("verfolger") else " · noch keine Verfolger")))
-    steigt = br is not None and br4 is not None and br >= br4 + BREITE_PUNKTE
-    faellt = br is not None and br4 is not None and br <= br4 - BREITE_PUNKTE
-    ende, richtung = [], None
-    if f4 == "Erstarkend" and f == "Abgehängt":
-        z, richtung = "abgelehnt", "aufwärts"
-    elif f == "Erstarkend":
-        z, richtung = ("angenommen", "aufwärts") if steigt and (zu or 0) >= ZUFLUSS_AB else ("Test am Rand", None)
-    elif f == "Führend":
-        z, richtung = "Ungleichgewicht", "aufwärts"
-        if faellt:
-            z = "Ende des Laufs"
-            ende.append(f"Antrieb erlischt: Breite wird schmal ({_z(br4, '.0f')} → {_z(br, '.0f')} %)")
-    elif f == "Ermüdend":
-        z, richtung = "Ende des Laufs", "aufwärts"
-        ende.append("Antrieb erlischt: Feld Ermüdend (RS-Stärke hoch, Schwung fällt)")
-    elif f == "Abgehängt" and steigt:
-        z, richtung = "Test am Rand", None           # die Schwestern drehen, bevor die Rotationskarte es zeigt
-    elif f == "Abgehängt":
-        z, richtung = "Ungleichgewicht", "abwärts"
-    else:
-        z = "Balance"
-    if abs(g.get("staerke", 100) - 100) <= FELD_NEUTRAL and abs(g.get("schwung", 100) - 100) <= FELD_NEUTRAL and z != "abgelehnt":
-        z, richtung = "Balance", None
-    e = _ergebnis("gruppe", z, richtung, belege=belege, ende=ende,
-                  unterzeile=f"Feld {f}" + (" · stabil" if g.get("stabil") else ""))
-    e["rand"] = "oben" if z == "Test am Rand" else None
-    return e
