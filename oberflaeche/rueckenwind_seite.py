@@ -424,6 +424,9 @@ def _momentum(x):
     return " · ".join(f'{"🚀 " if top else ""}{k} {"+" if r > 0 else ""}{zahl(r, 0)} %' for k, (r, top) in m.items())
 
 
+KEIM_NAMEN = 2                 # Layout: höchstens zwei Namen in der Spalte Keim (alle auf der Titelseite)
+
+
 def _zirkel(tk, kreis):
     """(Phase, Keim) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden). Keim: 🍂/🌱 mit Namen, dahinter
     🪨 und die Zahl der Zeichen, die die Phase tragen (Micky 23.11.2026: ein 🍂 in Phase 2 ist meist nur eine Welle)."""
@@ -437,7 +440,7 @@ def _zirkel(tk, kreis):
     if not z["keim"]:                                                 # ein Riss gegen vier tragende = eine Welle
         return phase, traegt
     zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
-    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:3])) + (
+    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:KEIM_NAMEN])) + (
         f" · {traegt}" if traegt else "")
 
 
@@ -485,6 +488,8 @@ def _volumen_zeichen(x):
 
 TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
+BREITE = {"Titel": 140, "Phase": 130, "Setup": 170, "Keim": 200, "RS": 95, "Momentum": 80, "Volumen": 75,   # Layout:
+          "Geld": 55, "Zahlen": 95, "Hoch": 70, "Bahn": 50}   # px je Spalte – Setup und Keim lesbar, alles auf einen Blick
 SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch", "Bahn")
 SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",

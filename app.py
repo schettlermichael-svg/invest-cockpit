@@ -392,9 +392,9 @@ def rueckenwind_zeigen():
                     rw_kern.rechnen(netz=False)
                 st.rerun()
         teile = rw.liste(erg, nur=None if wl_ == "Alle" else wl_.split()[0])
-        spalten = {n: st.column_config.TextColumn(n, help=h) for n, h in rw.SPALTEN_HILFE.items()}
-        spalten["Titel"] = st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)
-        spalten["Keim"] = st.column_config.TextColumn("Keim", width="large", help=rw.SPALTEN_HILFE["Keim"])
+        spalten = {n: st.column_config.TextColumn(n, width=rw.BREITE[n], help=rw.SPALTEN_HILFE.get(n))
+                   for n in rw.SPALTEN}
+        spalten["Titel"] = st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT, width=rw.BREITE["Titel"])
         for name, df in teile.items():   # je Klasse ein Abschnitt (Micky 23.11.2026), Garde und Angriff offen
             with st.expander(f"{name} ({len(df)})", expanded=name in rw.ANGRIFF_OFFEN):
                 st.dataframe(df, hide_index=True, use_container_width=True,
