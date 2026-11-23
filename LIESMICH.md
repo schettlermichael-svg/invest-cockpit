@@ -1576,3 +1576,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Titelliste nach den drei Fragen geordnet (24.11.2026): Titel | Phase | Setup | Keim ‖ ⚔️ Front (Ampel) | RS | Momentum |
   Hoch | Bahn ‖ 💰 Nachschub (Geld-Ampel, 🐺) | Volumen ‖ 📊 Fundament (Zahlen-Ampel, 📅). `front_ampel` eine Regel für
   Liste und Titelseite.
+- Chart (24.11.2026): Volumen-Schnitt als weiße Linie (50 Tage, Woche 10 Wochen, Stunde 50 Stunden; `VOL_SCHNITT`), die
+  Volumen-Achse reicht bis zum 3-fachen des höchsten Schnitts (`VOL_DECKEL`, Ausreißer abgeschnitten); unter dem Profil sein
+  Zeitraum („31.07.25 – 04.11.26 · 319 Handelstage“); Zahlentage als „E“ in der Zeichenleiste (Maus: Reaktion am Tag und
+  danach, `_zahlentage` aus dem Zwischenspeicher), rechts „📅 Zahlen 27.01. · in 65 T.“. Titelseite: Knopf ⛶ öffnet den
+  Chart in einer Großansicht (96 % der Bildschirmbreite).

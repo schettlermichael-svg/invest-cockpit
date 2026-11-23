@@ -40,6 +40,11 @@ LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen bes
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
+SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
+VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
+VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
+EINHEIT = {"Tag": "Handelstage", "Woche": "Wochen", "Stunde": "Stunden"}
+KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
@@ -65,6 +70,33 @@ def nummer(df, tag):
 def zeitpunkt(df, nr):
     """Zeitpunkt der Kerze mit Balkennummer nr (von rechts), oder None außerhalb."""
     return df.index[len(df) - int(nr)] if 1 <= int(nr) <= len(df) else None
+
+
+def _zahlentage(tk):
+    """Vergangene Zahlentage (gemeldete Gewinne) und der nächste Termin aus dem Zwischenspeicher der Fundamentaldaten,
+    ohne Abruf → ([Zeitpunkte], nächster Termin oder None)."""
+    import json
+    import os
+    import quellen
+    pfad = os.path.join(quellen.SPEICHER, f"{tk.upper()}.json")
+    try:
+        aus = quellen._aus_json(json.load(open(pfad, encoding="utf-8")))
+    except (OSError, ValueError):
+        return [], None
+    g = aus.get("gewinne")
+    tage = []
+    if g is not None and len(g):
+        idx = pd.to_datetime(g.index, errors="coerce", utc=True).tz_convert(None).normalize()
+        heute = pd.Timestamp.today().normalize()
+        tage = sorted({t_ for t_, eps in zip(idx, g.get("eps", pd.Series(index=g.index, dtype=float)))
+                       if t_ is not pd.NaT and t_ <= heute and eps == eps})
+    t = aus.get("termin")
+    naechster = None
+    if t is not None and len(t) and "datum" in t:
+        n_ = pd.to_datetime(t["datum"].iloc[0], errors="coerce")
+        naechster = None if pd.isna(n_) else pd.Timestamp(n_).tz_localize(None).normalize() if pd.Timestamp(n_).tzinfo \
+            else pd.Timestamp(n_).normalize()
+    return tage, naechster
 
 
 def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None,
@@ -304,6 +336,10 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{EINZEL_FARBE}"/>')  # Layout
     A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3 if profil is None else ANKER_FARBE[0]}" font-size="10" '  # Layout
       f'text-anchor="middle">Zeit ◂ ▸ Käufer | Verkäufer (geschätzt) seit {pd.Timestamp(pr["ab"]):%d.%m.}{" (eigener Anker)" if profil else ""}</text>')                                    # Layout
+    ab_ = pd.Timestamp(pr["ab"])                                                     # Zeitraum unter dem Profil
+    n_pr = int((df.index >= ab_).sum())                                             # (Micky 24.11.2026)
+    A(f'<text x="{mitte_x:.1f}" y="{OBEN + KURS_H + 12}" fill="{TEXT_3}" font-size="10" text-anchor="middle">'   # Layout
+      f'{ab_:%d.%m.%y} – {df.index[-1]:%d.%m.%y} · {n_pr} {EINHEIT[e["name"]]}</text>')
     if det:                                                                         # Profil-Details
         for wert, name in ((det["vah"], "VAH"), (det["val"], "VAL")):
             if pmin <= wert <= pmax:
@@ -333,14 +369,23 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             y_ += 14                                                                # Layout
         belegt.append(y_)
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
-    vmax = v.max() or 1
+    vs_ = df["Volume"].astype(float).rolling(VOL_SCHNITT[e["name"]]).mean().reindex(d.index).to_numpy()
+    vmax = min(v.max(), VOL_DECKEL * np.nanmax(vs_)) if np.isfinite(np.nanmax(vs_)) else v.max()
+    vmax = vmax or 1                                # ein Ausreißer drückt sonst alle Balken flach – darüber abgeschnitten
     schnitt = pd.Series(v).rolling(min(50, N)).mean().to_numpy()                    # Layout: 50 Kerzen Schnitt
     for i in range(N):
-        hv = VOL_H * v[i] / vmax
+        hv = min(VOL_H, VOL_H * v[i] / vmax)
         hoch = not np.isnan(schnitt[i]) and v[i] > schnitt[i]
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_vol + VOL_H - hv:.1f}" width="{bw:.1f}" height="{hv:.1f}" '
           f'fill="{GRUEN if c[i] >= o[i] else ROT}" fill-opacity="{0.85 if hoch else 0.35}"/>')  # Layout
-    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen</text>')   # Layout
+    vs = vs_                                                                        # Schnitt als
+    pkt_v = " ".join(f"{X(i):.1f},{y_vol + VOL_H - min(VOL_H, VOL_H * vs[i] / vmax):.1f}"   # weiße Linie (Micky 24.11.)
+                     for i in range(N) if not np.isnan(vs[i]))
+    if pkt_v:
+        A(f'<polyline points="{pkt_v}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
+          f'<title>Volumen-Schnitt {VOL_SCHNITT[e["name"]]} Kerzen</title></polyline>')
+    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Linie = Schnitt '
+      f'{VOL_SCHNITT[e["name"]]}</text>')   # Layout
     leiste = {}                                                                     # Zeichenleiste: Kerze → [(Zeichen, Text)]
     vv = df["Volume"].astype(float).to_numpy()
     for i in range(N):                                                              # 🏜️ leisester Tag seit 50 Kerzen
@@ -364,6 +409,25 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         if zk and zk["keim"]:
             zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂"
             leiste.setdefault(N - 1, []).append((zeichen_, "Keim im Zirkel: " + ", ".join(zk["keim"][:3])))
+    tage_, naechster = _zahlentage(tk) if tk and e["name"] != "Stunde" else ([], None)
+    cf = df["Close"].to_numpy(float)
+    for tag_ in tage_:                                                              # Ⓔ Zahlentage (Micky 24.11.2026)
+        if tag_ < d.index[0] or tag_ > d.index[-1]:
+            continue
+        g = int(df.index.searchsorted(tag_))
+        if g >= len(df):
+            continue
+        r1 = (cf[g] / cf[g - 1] - 1) * 100 if g > 0 else None
+        r2 = (cf[g + 1] / cf[g] - 1) * 100 if g + 1 < len(df) else None
+        reakt = " · ".join(f"{w} {r:+.1f} %".replace(".", ",") for w, r in zip(KERZE_WORT[e["name"]], (r1, r2))
+                           if r is not None)
+        j = g - n0
+        A(f'<text x="{X(j) + (10 if j in leiste else 0):.1f}" y="{y_zei + 15}" fill="{TEXT_2}" font-size="12" '
+          f'font-weight="700" text-anchor="middle">E<title>Zahlen am {tag_:%d.%m.%Y} – Kurs {reakt}</title></text>')  # Layout
+    if naechster is not None:                                                      # 📅 der nächste Termin rechts
+        tage_bis = (naechster - pd.Timestamp.today().normalize()).days
+        A(f'<text x="{ende + 2}" y="{y_vol + 26}" fill="{TEXT_2}" font-size="10">📅 Zahlen {naechster:%d.%m.}'
+          + (f" · in {tage_bis} T." if tage_bis >= 0 else "") + '</text>')          # Layout
     for i, liste_ in leiste.items():
         A(f'<text x="{X(i):.1f}" y="{y_zei + 15}" font-size="13" text-anchor="middle">{"".join(dict.fromkeys(z for z, _ in liste_))}'  # Layout
           f'<title>{" · ".join(x for _, x in liste_)}</title></text>')              # Layout
@@ -444,7 +508,10 @@ def legende():
               "Zone das Urteil"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
-              "🌱/🍂 Keim des Zirkels (rechts, jetzt) · Momentum 🚀 am Ende der RS-Linie"),
+              "🌱/🍂 Keim des Zirkels (rechts, jetzt) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
+              "nächste Termin · Momentum 🚀 am Ende der RS-Linie"),
+             (SCHNITT_FARBE, "Weiße Linie im Volumen: Schnitt der letzten 50 Tage (Woche: 10 Wochen) – Balken darüber "
+              "kräftig, darunter blass · unter dem Profil sein Zeitraum"),
              (TEXT_3, "Über jeder Kerze: Balkennummer (von rechts) für den eigenen AVWAP")]
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Legende</summary>'
             f'<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:13px;color:{TEXT_2}">'
