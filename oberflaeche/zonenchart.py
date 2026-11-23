@@ -43,7 +43,10 @@ WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab
 SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
 VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
 VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
-EINHEIT = {"Tag": "Handelstage", "Woche": "Wochen", "Stunde": "Stunden"}
+EINHEIT = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
+ZEILE = 14                             # Layout: Abstand der Etiketten rechts
+ETIKETT_SUCHE = 60                     # Technik: so viele Plätze sucht ein Etikett, dann ans Ende
+URTEIL_BREITE = 8                      # Layout: Breite je Zeichen des Enge-Urteils (12 px)
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
@@ -287,16 +290,19 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}</title></text>')            # Layout: unter dem Tief
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
             amp = "grün" if auf else en_.get("ampel")
-            urteil = ("🟢 Aufsteigende Base (O'Neil)" if auf else "VCP 🟢 schrumpft" if amp == "grün"
-                      else "🔴 keine saubere Enge – letzte Welle tiefer" if amp == "rot"
-                      else "🟡 Enge: " + ", ".join((en_.get("fehlt") or ["noch nicht reif"])[:2]))
+            urteil = ("🟢 Aufsteigende Base" if auf else "🟢 VCP" if amp == "grün" else "🔴 Enge" if amp == "rot"
+                      else "🟡 Enge")                                               # kurz; die Gründe beim Darüberfahren
+            grund = ("O'Neil: drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen" if auf
+                     else "schrumpft: jede Welle höchstens 70 % so tief wie die vorige" if amp == "grün"
+                     else "letzte Welle tiefer als die vorige" if amp == "rot"
+                     else ", ".join(en_.get("fehlt") or ["noch nicht reif"]))
             zs = pd.Timestamp(la["beginn"])
             xz_ = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
-            A(f'<text x="{xz_ + 6 + len(la["name"]) * NAME_BREITE:.1f}" y="{Y(hi) - 6:.1f}" '
-              f'fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">{t_esc(urteil)}<title>VCP (Minervini): jede Welle '
-              f'höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · Aufsteigende Base '
-              f'(O\'Neil): drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen · Wellen '
-              f'{t_esc(en_.get("folge") or "")} %</title></text>')                  # Layout: neben dem Namen der Zone
+            x_u = min(xz_ + 6 + len(la["name"]) * NAME_BREITE, ende - len(urteil) * URTEIL_BREITE)   # nie über den Rand
+            A(f'<text x="{x_u:.1f}" y="{Y(hi) - 6:.1f}" fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">'      # Layout
+              f'{t_esc(urteil)}<title>{t_esc(grund)} · Wellen {t_esc(en_.get("folge") or "")} % · VCP (Minervini): '
+              f'jede Welle höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · '
+              f'Aufsteigende Base (O\'Neil): drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen</title></text>')
     if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
         if not fest.get("oben"):
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
@@ -339,7 +345,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     ab_ = pd.Timestamp(pr["ab"])                                                     # Zeitraum unter dem Profil
     n_pr = int((df.index >= ab_).sum())                                             # (Micky 24.11.2026)
     A(f'<text x="{mitte_x:.1f}" y="{OBEN + KURS_H + 12}" fill="{TEXT_3}" font-size="10" text-anchor="middle">'   # Layout
-      f'{ab_:%d.%m.%y} – {df.index[-1]:%d.%m.%y} · {n_pr} {EINHEIT[e["name"]]}</text>')
+      f'{ab_:%d.%m.%y}–{df.index[-1]:%d.%m.%y} · {n_pr} {EINHEIT[e["name"]]}<title>Zeitraum des Profils: '
+      f'{n_pr} Kerzen</title></text>')
     if det:                                                                         # Profil-Details
         for wert, name in ((det["vah"], "VAH"), (det["val"], "VAL")):
             if pmin <= wert <= pmax:
@@ -364,9 +371,14 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
         etiketten.append((Y(pr["tpoc"]), f"Zeit-POC {zahl(pr['tpoc'])}", ZEIT_FARBE))
     belegt = []
-    for y_, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung
-        while any(abs(y_ - b_) < 14 for b_ in belegt):                              # Layout: 14 px je Zeile
-            y_ += 14                                                                # Layout
+    for y0, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung: der
+        y_, k_ = y0, 0                                                              # nächste freie Platz, abwechselnd
+        while any(abs(y_ - b_) < ZEILE for b_ in belegt) or not OBEN - 4 <= y_ <= OBEN + KURS_H + 4:   # darunter und
+            k_ += 1                                                                 # darüber, im Kursbereich (Micky
+            y_ = y0 + ZEILE * ((k_ + 1) // 2) * (1 if k_ % 2 else -1)              # 24.11.: nicht ins Volumen)
+            if k_ > ETIKETT_SUCHE:
+                y_ = y0 + ZEILE * len(belegt)
+                break
         belegt.append(y_)
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
     vs_ = df["Volume"].astype(float).rolling(VOL_SCHNITT[e["name"]]).mean().reindex(d.index).to_numpy()
@@ -384,8 +396,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if pkt_v:
         A(f'<polyline points="{pkt_v}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
           f'<title>Volumen-Schnitt {VOL_SCHNITT[e["name"]]} Kerzen</title></polyline>')
-    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Linie = Schnitt '
-      f'{VOL_SCHNITT[e["name"]]}</text>')   # Layout
+    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Ø {VOL_SCHNITT[e["name"]]}'
+      f'<title>weiße Linie = Schnitt der letzten {VOL_SCHNITT[e["name"]]} Kerzen</title></text>')   # Layout
     leiste = {}                                                                     # Zeichenleiste: Kerze → [(Zeichen, Text)]
     vv = df["Volume"].astype(float).to_numpy()
     for i in range(N):                                                              # 🏜️ leisester Tag seit 50 Kerzen
@@ -426,8 +438,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'font-weight="700" text-anchor="middle">E<title>Zahlen am {tag_:%d.%m.%Y} – Kurs {reakt}</title></text>')  # Layout
     if naechster is not None:                                                      # 📅 der nächste Termin rechts
         tage_bis = (naechster - pd.Timestamp.today().normalize()).days
-        A(f'<text x="{ende + 2}" y="{y_vol + 26}" fill="{TEXT_2}" font-size="10">📅 Zahlen {naechster:%d.%m.}'
-          + (f" · in {tage_bis} T." if tage_bis >= 0 else "") + '</text>')          # Layout
+        A(f'<text x="{ende + 2}" y="{y_vol + 26}" fill="{TEXT_2}" font-size="10">📅 {naechster:%d.%m.}'
+          + (f" · {tage_bis} T." if tage_bis >= 0 else "") + f'<title>nächste Zahlen am {naechster:%d.%m.%Y}'
+          + (f", in {tage_bis} Tagen" if tage_bis >= 0 else "") + '</title></text>')   # Layout
     for i, liste_ in leiste.items():
         A(f'<text x="{X(i):.1f}" y="{y_zei + 15}" font-size="13" text-anchor="middle">{"".join(dict.fromkeys(z for z, _ in liste_))}'  # Layout
           f'<title>{" · ".join(x for _, x in liste_)}</title></text>')              # Layout
