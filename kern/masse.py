@@ -15,7 +15,6 @@ ATR_N = 14                 # ATR über 14 Tage (die eine ATR: atr.reihe)
 VOL_TAGE = 50              # Volumen gegen den Schnitt der 50 Tage
 VOL_MIN_TAGE = 20          # Volumen-Schnitt erst ab 20 Tagen Daten
 LAGE_MITTE = 0.5           # Lage des Schlusses in der Tagesspanne: Mitte (ohne Spanne gilt die Mitte)
-PHASE_VERTEILUNG = 3       # Phase 3 (Weinstein: Verteilung)
 P_ABWAERTS = 4             # Phase 4 (Weinstein: Abwärts)
 DATUM = 10                 # Länge eines Datums JJJJ-MM-TT
 JAHR_ZIFFERN = 4           # Dateiname beginnt mit dem Jahr (JJJJ)

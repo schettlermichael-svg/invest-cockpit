@@ -74,14 +74,13 @@ def leiste():
     return karte(kopf + liste, "Depot · Positionen und Hitze")
 
 
-def positionsmarken(p, df, erk=None):
+def positionsmarken(p, df):
     """Marken für den Chart der Position (Depot-Seite): Einstieg, Anfangsstopp, Stopp jetzt (reiten.nachgezogen) und
     die enge Linie eines Ende-Zeichens – dieselbe Rechnung wie „Nach dem Kauf“."""
     import reiten
     if df is None or not p.get("einstieg"):
         return {}
-    a_ = (erk or {}).get("auktion") or {}
-    ende = reiten.ende_zeichen(df, p.get("seite", "long"), a_.get("messung") if a_ else None)
+    ende = reiten.ende_zeichen(df, p.get("seite", "long"))
     nz = reiten.nachgezogen(df, p.get("datum"), float(p["einstieg"]), float(p["stopp"]) if p.get("stopp") else None,
                             p.get("seite", "long"), ende) if p.get("stopp") else None
     return {"position": {"einstieg": float(p["einstieg"]), "anfang": p.get("stopp"), "seite": p.get("seite", "long"),

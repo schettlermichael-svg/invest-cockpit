@@ -849,7 +849,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     else:
         ph_, zu_, ba_ = phase_mod.rechnen(df)
         ph = ph_.reindex(w.index).ffill().fillna(1).astype(int)
-        # wie erkennung._phase_von (Karte, Weinstein-Zeichen): die laufende Woche zählt erst ab ihrem Freitag
+        # die laufende Woche zählt erst ab ihrem Freitag (Weinstein-Zeichen)
         p = phase_mod.aktuell(df, ph)
         fertig = ph_.index <= df.index[-1]
         zusatz = str(zu_[fertig].iloc[-1]) if fertig.any() else ""

@@ -1,8 +1,6 @@
-"""Der 10er und 20er (Gefechtsordnung Schritt 5, Micky 14./16.11.2026; Kullamägi führt).
+"""Der nachgezogene Stopp und die Reibung nach dem Kauf (Gefechtsordnung Schritt 5, Micky 14./16.11.2026; Kullamägi
+führt beim 10er und 20er; seit 23.11.2026 auch die Klimax, vorher in der Zustandsmaschine).
 
-Eine Quelle für zwei Fragen:
-  ungleichgewicht(df)  Reitet der Kurs? Aufwärts, wenn der Schluss über dem steigenden 10er oder 20er liegt
-                       (steigend = höher als vor einer Woche); abwärts gespiegelt. Der Kasten „Ungleichgewicht“.
   nachgezogen(...)     Der Stopp nach dem Kauf: bis Tag 3 der Anfangsstopp; danach folgt er der Linie, an der der
                        Kurs reitet – dem 10er, solange seit Tag 3 kein Schluss darunter lag, sonst dem 20er (Wechsel nur
                        von 10 auf 20). Er steigt nur (short: fällt nur), ein Schluss jenseits der Linie heißt raus. Mauer
@@ -12,10 +10,13 @@ Eine Quelle für zwei Fragen:
 import numpy as np
 import pandas as pd
 
-from masse import WOCHE  # noqa: E402
+from masse import ATR_N, LAGE_MITTE, VOL_MIN_TAGE  # noqa: E402
 
 GD10 = 10                   # schnelle Titel reiten am 10er (Kullamägi)
 GD20 = 20                   # sonst am 20er
+KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15   # Klimax: Volumen 2-fach, Spanne 1,5 ATR, letzte 15 Tage
+KLIMAX_EXTREM_TAGE = 59     # Klimax: Tief bzw. Hoch der letzten 60 Tage (Tag selbst + 59)
+MAUER_NAH = 3.0             # Mauer: Kurs höchstens 3 % vor dem Knoten (short: Stütze)
 NACHZIEHEN_AB_TAG = 3       # bis Tag 3 nach dem Kauf gilt der Anfangsstopp (der Stopp des Setups)
 
 
@@ -25,21 +26,6 @@ def linien(df):
     return c.rolling(GD10).mean(), c.rolling(GD20).mean()
 
 
-def ungleichgewicht(df):
-    """→ {richtung: "aufwärts"|"abwärts", linie: "10er"|"20er", wert} oder None (Kurs reitet an keiner Linie)."""
-    if df is None or len(df) < GD20 + WOCHE:
-        return None
-    g10, g20 = linien(df)
-    c = float(df["Close"].iloc[-1])
-    for name, g in (("10er", g10), ("20er", g20)):
-        jetzt, vor = float(g.iloc[-1]), float(g.iloc[-1 - WOCHE])
-        if c > jetzt and jetzt > vor:
-            return {"richtung": "aufwärts", "linie": name, "wert": jetzt}
-    for name, g in (("10er", g10), ("20er", g20)):
-        jetzt, vor = float(g.iloc[-1]), float(g.iloc[-1 - WOCHE])
-        if c < jetzt and jetzt < vor:
-            return {"richtung": "abwärts", "linie": name, "wert": jetzt}
-    return None
 
 
 def nachgezogen(df, kauf_tag, einstieg, anfang, seite="long", ende=None):
@@ -84,32 +70,21 @@ def nachgezogen(df, kauf_tag, einstieg, anfang, seite="long", ende=None):
     return aus
 
 
-def ende_zeichen(df, seite="long", messung=None, profil=None, zone=None):
-    """Die drei Ende-Zeichen, wie der Zustand sie misst (auktion): Mauer höchstens MAUER_NAH % über dem Kurs (short:
-    Stütze darunter), Kraft ohne Weg am oberen (unteren) Rand, Kauf-Klimax (Verkaufs-Klimax). → [(art, tag)].
-    messung: auktion-Messung des Titels, wenn sie vorliegt; sonst rechnet die Funktion selbst."""
-    import auktion
+def ende_zeichen(df, seite="long", profil=None, zone=None):
+    """Die drei Ende-Zeichen (Reibung): Mauer höchstens MAUER_NAH % über dem Kurs (short: Stütze darunter), Kraft ohne
+    Weg am oberen (unteren) Rand, Kauf-Klimax (Verkaufs-Klimax). → [(art, tag)]."""
+    import vcp_zone
+    import zeichen
     lang = seite != "short"
     aus = []
-    m = messung or {}
-    if not messung:
-        import vcp_zone
-        z = zone or vcp_zone.zone(df)
-        if z.get("zone"):
-            import zeichen
-            kw = zeichen.kraft_ohne_weg(df, oben=z["oben"], unten=z["unten"])
-            if kw:
-                m["kraft_ohne_weg"] = kw
-        kl = auktion.klimax_tag(df)
-        if kl:
-            m["klimax"] = kl
-    kw = m.get("kraft_ohne_weg")
+    z = zone or vcp_zone.zone(df)
+    kw = zeichen.kraft_ohne_weg(df, oben=z["oben"], unten=z["unten"]) if z.get("zone") else None
     if kw and kw["rand"] == ("oben" if lang else "unten"):
         aus.append(("Kraft ohne Weg", kw["tag"]))
-    kl = m.get("klimax")
+    kl = klimax_tag(df)
     if kl and kl["art"] == ("Kauf-Klimax" if lang else "Verkaufs-Klimax"):
         aus.append((kl["art"], kl["tag"]))
-    if profil is None and not messung:
+    if profil is None:
         try:
             import volumenprofil
             profil = volumenprofil.verankert(df)
@@ -119,10 +94,30 @@ def ende_zeichen(df, seite="long", messung=None, profil=None, zone=None):
     if knoten:
         c = df["Close"].to_numpy(float)
         grenze = knoten[0] if lang else knoten[1]
-        nah = (c >= grenze * (1 - auktion.MAUER_NAH / 100)) if lang else (c <= grenze * (1 + auktion.MAUER_NAH / 100))
+        nah = (c >= grenze * (1 - MAUER_NAH / 100)) if lang else (c <= grenze * (1 + MAUER_NAH / 100))
         if nah[-1]:                            # seit wann der Kurs vor der Mauer steht
             i = len(nah) - 1
             while i > 0 and nah[i - 1]:
                 i -= 1
             aus.append(("Mauer" if lang else "Stütze", df.index[i]))
     return aus
+
+
+def klimax_tag(df):
+    """Verkaufs-Klimax am Boden bzw. Kauf-Klimax am Hoch in den letzten 15 Tagen → {tag, art, volumen, spanne_atr}."""
+    if len(df) < 70:
+        return None
+    h, l, c, v = (df[x].to_numpy(float) for x in ("High", "Low", "Close", "Volume"))
+    v50 = pd.Series(v).rolling(50, min_periods=VOL_MIN_TAGE).mean().shift().to_numpy()
+    import atr as atr_
+    a = atr_.reihe(df, ATR_N).to_numpy(float)
+    for i in range(len(df) - 1, len(df) - 1 - KLIMAX_TAGE, -1):
+        sp = h[i] - l[i]
+        if not (v50[i] > 0 and a[i] > 0 and sp > 0) or v[i] < KLIMAX_VOL * v50[i] or sp < KLIMAX_SPANNE * a[i]:
+            continue
+        lage = (c[i] - l[i]) / sp
+        if l[i] <= l[i - KLIMAX_EXTREM_TAGE:i + 1].min() and lage >= LAGE_MITTE:
+            return {"tag": df.index[i], "art": "Verkaufs-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
+        if h[i] >= h[i - KLIMAX_EXTREM_TAGE:i + 1].max() and lage <= LAGE_MITTE:
+            return {"tag": df.index[i], "art": "Kauf-Klimax", "volumen": v[i] / v50[i], "spanne_atr": sp / a[i]}
+    return None

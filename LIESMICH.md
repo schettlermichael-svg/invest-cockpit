@@ -1514,3 +1514,11 @@ Zeichen. Titelseite: „Branche 2 (Aufwärts)“ in der Zeile Rückenwind. Gegen
 gegen die Richtung eines Setups (long in 3/4, short in 1/2, außer der Wechsel läuft schon in die Richtung), trägt das
 Setup „🟡 Branche …“ – Titelseite, Liste, Morgenmeldung; nicht gefiltert. Mac 04.11.: 186 Gruppen, alle mit Zirkel,
 Rückenwind-Lauf 57 s.
+
+## Zustandsmaschine nach Auktionsart entfernt (23.11.2026)
+Micky: aufräumen – die App urteilt mit dem Zirkel. `kern/auktion.py` (Anlass → Balance → Test am Rand → abgelehnt |
+angenommen → Ungleichgewicht → Ende des Laufs, für Titel, Gruppe, Markt) ist entfernt, ebenso die Klimax-Zeichen der
+alten Erkennung (`erkennung.klimax`), `reiten.ungleichgewicht` und die Kästen der Regelkarte für den Titel. Die Klimax
+für die Reibung nach dem Kauf misst jetzt `reiten.klimax_tag` (unverändert übernommen, ebenso `MAUER_NAH`).
+Bleiben bewusst neben dem Zirkel: die Rotation der Gruppen als Strömung (Geld-Ampel, Ordnung der Wetterkarte) und die
+Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.

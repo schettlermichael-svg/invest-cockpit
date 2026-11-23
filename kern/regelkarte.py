@@ -25,96 +25,12 @@ Regel = erst hier eintragen, dann bauen.
 import importlib
 
 # ── Kästen ──────────────────────────────────────────────────────────────────────────────────────────────────────
-# zustand: der Zustand der App (auktion.ZUSTAENDE bzw. gruppe/markt), zu dem der Kasten gehört (None = Anlass/Zeichen)
+# zustand: früher der Zustand der Auktions-Maschine (entfernt 23.11.2026); heute None
 # stand: "gemessen" | "teilweise" | "fehlt"; luecke: was fehlt (und wann es kommt)
 
 KAESTEN = {
-    "titel": [
-        dict(name="Anlass: neue Information", zustand=None,
-             regel="Bringt die Balance an den Rand: der Wert ändert sich (Zahlen, Lücke, Nachricht) – ein Ereignis, das den "
-                   "Wert neu bewertet. Anlass nur vor dem Ereignis am Rand und in Laufrichtung, sonst Gegenzeichen bzw. "
-                   "Beleg danach; die Zahlenreaktion zählt einmal, nach dem heutigen Kurs gegen den Schluss vor den Zahlen "
-                   "(Plan 15, Micky 16.11.2026).",
-             fuehrt="Kullamägi/Bonde (Episodic Pivot)", zeichen="O'Neil (das „N“: neues Produkt, neue Zahlen), Mickys Zahlen-Reaktion",
-             messung=["auktion.titel", "avwap.zahlentag", "zahlen_reaktion.reaktionstag"], stand="gemessen",
-             pruefer=["Anlass"]),
-        dict(name="Anlass: Verteidiger leer", zustand=None,
-             regel="Angebot aufgebraucht: Enge, Volumen trocknet aus, Einquetschung – nur bei echter Enge (letzte "
-                   "Kontraktion höchstens 10 %, Volumen der Enge unter dem Schnitt; Plan 15).",
-             fuehrt="Minervini (VCP, Volumen trocknet aus)", zeichen="Wyckoff",
-             messung=["zeichen.enge_trocken", "zeichen.einquetschung", "vcp_zone.enge"], stand="gemessen",
-             pruefer=["Anlass", "Einquetschung"]),
-        dict(name="Anlass: Zwang", zustand=None,
-             regel="Stopps, Gefangene; geht im Spring/Upthrust auf (Micky 14.11.2026, kein eigenes Zeichen): Spring = "
-                   "gefangene Verkäufer unter dem Rand, Upthrust oder Fehlausbruch = gefangene Käufer über dem Rand – nur "
-                   "solange er gilt (Plan 15).",
-             fuehrt="Wyckoff (Shakeout, Spring)", zeichen="Dalton",
-             messung=["zeichen.spring", "vcp_zone.ausbruch"], stand="gemessen", pruefer=["Anlass"]),
-        dict(name="Balance", zustand="Balance",
-             regel="Die Ursache wird aufgebaut. Die Zone des Scanners führt (Rand, Pivot, Stopp); Daltons überlappender "
-                   "Wert bestätigt nur. Weinsteins Stufe (1 Basis, 2 Fortsetzung, 3 Verteilung) steht als Rahmen daneben.",
-             fuehrt="Minervini und O'Neil (Base)", zeichen="Weinstein (Stufe 1 und 3), Wyckoff (Ursache), Dalton (überlappender Wert, bestätigt)",
-             messung=["vcp_zone.zone", "auktion.ursache", "avwap.balance_beginn"], stand="gemessen",
-             pruefer=["Zustand"]),
-        dict(name="Test am Rand", zustand="Test am Rand",
-             regel="Wer ist stärker am Rand? Der Rand ist die Oberkante (bzw. Unterkante) der Zone; der Pivot ist der "
-                   "Auslöser – liegt er darunter, ist es der frühe Einstieg (Cheat), an der Oberkante der Ausbruch. "
-                   "Kurs höchstens 3 % vom Rand.",
-             fuehrt="Minervini und O'Neil (Pivot)", zeichen="Wyckoff (Spring, Upthrust), Dalton (Test der Kante), Shannon (Zange)",
-             messung=["auktion.titel", "zeichen.kraft_ohne_weg", "auktion.exzess"], stand="gemessen",
-             pruefer=["Test am Rand: Zeichen"]),
-        dict(name="abgelehnt", zustand="abgelehnt",
-             regel="Zurück in den Wert – Wyckoff führt: Kurs bricht über den Rand und schließt zurück in der Zone "
-                   "(Spring unten, Upthrust oben; Fehlausbruch = Schluss zurück in der Zone).",
-             fuehrt="Wyckoff (Spring, Upthrust)", zeichen="Dalton (zurück in den Wert)",
-             messung=["vcp_zone.ausbruch", "zeichen.spring", "marketprofile.analyse"], stand="gemessen",
-             pruefer=["abgelehnt/angenommen"]),
-        dict(name="Lauf zum anderen Rand", zustand="abgelehnt",
-             regel="Nach „abgelehnt“: Gefangene treiben den Kurs zum anderen Rand der Zone.",
-             fuehrt="Wyckoff", zeichen="Dalton",
-             messung=["auktion.titel"], stand="teilweise",
-             luecke="die App nennt den anderen Rand als Ziel; das Setup Spring/Upthrust fehlt (Schritt 4)",
-             pruefer=["Lauf zum anderen Rand"]),
-        dict(name="angenommen", zustand="angenommen",
-             regel="Der Wert folgt dem Kurs: Ausbruch über den Pivot (Volumen ist Zeichen, keine Pflicht); Dalton "
-                   "bestätigt, wenn der Wert folgt – aus dem Market Profile erst ab 2 Tagen mit dem Wert außerhalb (der 1. Tag ist "
-                   "ein Vorstoß, Test am Rand). Höchstens 10 Tage – mehr als 5 % über dem Pivot (Kaufzone verlassen) und "
-                   "am 10er/20er wird es Ungleichgewicht (Plan 15, Micky 16.11.2026).",
-             fuehrt="O'Neil und Minervini (Ausbruch über den Pivot)",
-             zeichen="Kullamägi (Ausbruch am Tag), Shannon (Kurs über dem AVWAP vom Hoch), Dalton (Wert folgt, bestätigt)",
-             messung=["vcp_zone.ausbruch", "marketprofile.analyse"], stand="gemessen",
-             pruefer=["abgelehnt/angenommen"]),
-        dict(name="Ungleichgewicht", zustand="Ungleichgewicht",
-             regel="Schnell durch dünnes Volumen – Kullamägi führt: Schluss über dem steigenden 10er bzw. 20er (steigend "
-                   "= höher als vor einer Woche), abwärts gespiegelt; Phase und Dow-Struktur sind Zeichen.",
-             fuehrt="Kullamägi (10er/20er)", zeichen="Weinstein (Stufe 2), Dalton (dünnes Volumen)",
-             messung=["auktion.titel", "reiten.ungleichgewicht", "phase.aktuell"], stand="gemessen",
-             pruefer=["Ungleichgewicht"]),
-        dict(name="Ende: Gegner antwortet", zustand="Ende des Laufs",
-             regel="Knoten im Volumenprofil (Mauer), alter Wert, AVWAP vom alten Hoch, Exzess, Kraft ohne Weg am Rand.",
-             fuehrt="Dalton und Shannon", zeichen="Wyckoff (Kraft ohne Weg)",
-             messung=["volumenprofil.knoten", "zeichen.kraft_ohne_weg", "auktion.exzess"], stand="teilweise",
-             luecke="der AVWAP vom alten Hoch zählt noch nicht als Gegner",
-             pruefer=["Ende des Laufs"]),
-        dict(name="Ende: Antrieb erlischt", zustand="Ende des Laufs",
-             regel="Kraft ohne Weg, Klimax, Wechsel der Phase, Rückschlag.",
-             fuehrt="Wyckoff (Kraft ohne Weg, Klimax)", zeichen="Weinstein (Stufe 3)",
-             messung=["auktion.klimax_tag", "erkennung.klimax", "phase.aktuell"], stand="gemessen",
-             pruefer=["Ende des Laufs"]),
-        dict(name="Ende: Wert akzeptiert", zustand="Ende des Laufs",
-             regel="Zeit und Volumen: eine neue Wertzone auf der neuen Höhe.",
-             fuehrt="Dalton", zeichen="",
-             messung=["marketprofile.analyse"], stand="gemessen", pruefer=["Ende des Laufs"]),
-        dict(name="Ende: Stopp folgt dem 10er/20er", zustand="Ende des Laufs",
-             regel="Der Stopp folgt dem 10er (schnelle Titel) bzw. 20er, Schluss darunter heißt raus; Mauer, Kraft ohne "
-                   "Weg und Klimax ziehen ihn sofort enger (unter das Tagestief).",
-             fuehrt="Kullamägi", zeichen="Dalton, Wyckoff",
-             messung=[], stand="fehlt", luecke="kommt mit Schritt 5 (nachgezogener Stopp in „Nach dem Kauf“)",
-             pruefer=["Ende des Laufs"]),
-        dict(name="Neue Balance", zustand="Balance",
-             regel="Der Kreislauf beginnt neu, mit Gedächtnis (O'Neil: Basenzählung, späte Basen sind gefährlicher).",
-             fuehrt="O'Neil (Basenzählung)", zeichen="",
-             messung=[], stand="gemessen", pruefer=["Neue Balance/Basenzählung"]),
+    "titel": [                                   # die Zustandsmaschine nach Auktionsart ist seit 23.11.2026 entfernt – der
+                                                 # Titel urteilt mit dem Zirkel (Setup und Führung stehen unter BEREICHE)
     ],
     "gruppe": [                                  # seit 23.11.2026 auf dem Zirkel (vorher Auktions-Zustand der Gruppe)
         dict(name="Zirkel der Gruppe", zustand=None,
@@ -187,14 +103,14 @@ WERKZEUGE = {
              messung=["vcp_zone.enge", "vcp_zone.drittel"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
-                                               "Zone, mit Pivot mehr als 3 % unter deren Oberkante, ist ein früher "
-                                               "Einstieg (Low Cheat, Cheat) und kein Ausbruch – ebenso ein Schluss über dem "
-                                               "Hoch der letzten Enge, das mehr als 3 % unter der Oberkante liegt; der Ausbruch "
-                                               "ist dann der Schluss über der Oberkante. Ein Cheat zählt nicht als "
-                                               "Ausbruch, nicht als eigene Base und steht im Zustand als innere Rotation. "
-                                               "In der Historie zeigt die App dieselbe Schlacht nur einmal (überlappende "
-                                               "Zonen, die innerhalb von 5 Tagen ausbrechen: die größere).",
-             messung=["vcp_zone.cheat", "vcp_zone.drittel", "vcp_zone.ausbruch", "vcp_zone.verlauf", "auktion.titel"],
+                                               "Zone, mit Pivot im unteren oder mittleren Drittel der größeren Zone, ist ein "
+                                               "früher Einstieg (Low Cheat, Cheat) und kein Ausbruch – ebenso ein Schluss "
+                                               "über dem Hoch der letzten Enge im unteren oder mittleren Drittel (Minervini); "
+                                               "der Ausbruch ist dann der Schluss über der Oberkante. Ein Cheat zählt nicht "
+                                               "als Ausbruch und nicht als eigene Base. In der Historie zeigt die App "
+                                               "dieselbe Schlacht nur einmal (überlappende Zonen, die innerhalb von 5 Tagen "
+                                               "ausbrechen: die größere).",
+             messung=["vcp_zone.cheat", "vcp_zone.drittel", "vcp_zone.ausbruch", "vcp_zone.verlauf"],
              stand="gemessen", pruefer=["Zone: Name", "abgelehnt/angenommen", "Neue Balance/Basenzählung"]),
         dict(name="ATR (eine Rechnung)", regel="Die ATR ist das Mittel der True Range der letzten 14 Tage (Lücken zum Vortag "
                                                 "eingeschlossen) – eine Rechnung für Stopp, Zonen, Anker, Zeichen und Zustand.",
@@ -207,11 +123,6 @@ WERKZEUGE = {
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
              messung=["volumenprofil.knoten"], stand="gemessen", pruefer=["Gegenseite (Mauer/Stütze)"]),
-        dict(name="Eigen oder geliehen", regel="RS-Linie in 20 Tagen, in Laufrichtung gemessen: eigen ab 5 %; geliehen "
-                                               "höchstens ±1 % (der Markt trägt); teils eigen 1–5 %; über 1 % gegen die "
-                                               "Laufrichtung = Gegenzeichen. Stärke in der Schwäche macht eigen, solange "
-                                               "die RS nicht gegen die Laufrichtung läuft.",
-             messung=["auktion.kraft"], stand="gemessen", pruefer=["Eigen oder geliehen"]),
         dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Schritt 8, Micky 16.11.2026): Phase 2 beginnt mit "
                                  "dem Wochenschluss über dem Hoch der Basis und über der Linie, die nicht mehr fällt "
                                  "(„1 → 2 · Ausbruch“), bestätigt, sobald die Linie steigt; fehlt das Phase-2-Bild, solange "
@@ -219,12 +130,6 @@ WERKZEUGE = {
                                  "„2 · Rückschlag“, Ende-Zeichen); Phase 3 erst, wenn die Linie flach wird; Phase 4 "
                                  "unter der fallenden Linie; aus Phase 4 immer erst in die Basis (frühestens nach 8 Wochen).",
              messung=["phase.rechnen", "phase.aktuell", "zeichen.kreislauf"], stand="gemessen",
-             pruefer=["Kreislauf/Phase"]),
-        dict(name="Stufe als Rahmen", regel="Die Stufe gibt jedem Kasten den Namen: Balance in Stufe 1 = Basis, 2 = "
-                                            "Fortsetzung, 3 = Verteilung, 4 = Pause im Fall; Lauf aus Stufe 1 = Beginn, "
-                                            "in Stufe 2 = Fortsetzung. Ein Setup gegen die Stufe (Long in Phase 4, Short in "
-                                            "Phase 2) trägt ein Gegenzeichen und wird höchstens gelb – nie gefiltert.",
-             messung=["auktion.stufe_name"], stand="gemessen",
              pruefer=["Kreislauf/Phase"]),
         dict(name="AVWAP letztes Hoch", regel="Letztes Hoch = jüngstes Hoch, das der Kurs nicht überschritten hat und "
                                               "das bestätigt ist (Rückgang ab 8 % danach oder Wochen-Schwunghoch mit 2 "

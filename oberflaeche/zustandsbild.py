@@ -1,16 +1,8 @@
-"""Anzeige des Zustands im Code für Balance und Ungleichgewicht (13.11.2026) – dieselbe Kette auf allen drei Ebenen:
-Anlass → Balance → Test am Rand → abgelehnt | angenommen → Ungleichgewicht → Ende des Laufs. Zuerst der Zustand, die
-alten Wörter als Unterzeile, darunter die Belege an ihrem Platz in der Kette."""
+"""Die Karte des Strategen-Calls (seit 23.11.2026 ohne die Zustandsmaschine nach Auktionsart – die App urteilt mit dem
+Zirkel)."""
 from html import escape as t
 
-import auktion
-from gestaltung import KARTE, RAND, TEXT, TEXT_2, TEXT_3
-from masse import ZEILENUMBRUCH  # noqa: E402
-
-
-# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-
-
+from gestaltung import GELB, GRUEN, KARTE, RAND, ROT, TEXT, TEXT_2, TEXT_3
 
 
 def _zeilen(titel, texte, farbe=TEXT_3):
@@ -28,7 +20,7 @@ def strategen_karte(erg):
         return ""
     a = erg.get("antwort") or {}
     s = a.get("schuss", "kein")
-    f = {"long": auktion.FARBE["angenommen"], "short": auktion.FARBE["angenommen"]}.get(s, TEXT_3)
+    f = {"long": GRUEN, "short": ROT}.get(s, TEXT_3)
     wort = {"long": "Schuss long", "short": "Schuss short", "kein": "kein Schuss",
             "abwarten": f"Abwarten mit Tendenz {a.get('richtung', '–')}"}.get(s, s)
     mat = erg.get("material") or {}
@@ -66,7 +58,7 @@ def strategen_karte(erg):
         zeilen.append(f'<div style="margin-top:6px;font-size:12px;color:{TEXT_3}">Quellen: '
                       + " · ".join(f'<a href="{t(q)}" target="_blank">{t(q[:60])}</a>' for q in a["quellen"]) + "</div>")  # Layout
     p = erg.get("pruefung") or []
-    zeilen.append(f'<div style="margin-top:8px;font-size:12px;color:{auktion.FARBE["Ende des Laufs"] if not p else "#D29922"}">'
+    zeilen.append(f'<div style="margin-top:8px;font-size:12px;color:{GRUEN if not p else GELB}">'
                   + ("🟢 Prüfung bestanden: Felder, Zahlen und Seiten stimmen mit dem Material"
                      if not p else "🦊 Prüfung: " + t(" · ".join(p))) + "</div>")
     return (f'<div style="background:{KARTE};border:1px solid {RAND};border-left:3px solid {f};border-radius:10px;'
