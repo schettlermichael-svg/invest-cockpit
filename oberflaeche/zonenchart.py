@@ -39,7 +39,8 @@ EINZEL_FARBE = "#FFFFFF"               # Einzeldrucke im Zeitprofil
 LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen beschriftet (die breitesten)
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
-WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Livermores Pivotal Points)
+WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
+PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 ENGE_FARBE = "#5DCAA5"                 # Kontraktionen der Base
 
 
@@ -72,7 +73,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
-    Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Livermores Pivotal Points, vcp_zone.zigzag) als Punkte,
+    Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
+    Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
     Keim des Zirkels) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
@@ -158,9 +160,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'<text x="{xz + 6:.1f}" y="{Y(hi) - 6:.1f}" fill="{ZONE_FARBE}" font-size="16" font-weight="700">{la["name"]}</text>')  # Layout
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["poc"]):.1f}" y2="{Y(la["poc"]):.1f}" stroke="{POC_FARBE}" '
           f'stroke-width="1.4" stroke-dasharray="2 3"/>')                           # Layout
-        etiketten += [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE), (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE),
-                      (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
-        if la["pivot"] is not None and abs(la["pivot"] - hi) > (e["atr"] or 0) * STOPP_BAND and pmin <= la["pivot"] <= pmax:
+        eigen_pivot = la["pivot"] is not None and abs(la["pivot"] - hi) > (e["atr"] or 0) * STOPP_BAND
+        am_rand = "" if eigen_pivot or la["pivot"] is None else (
+            " = Pivot" if zahl(la["pivot"]) == zahl(hi) else f" · Pivot {zahl(la['pivot'])}")   # Pivot an der Oberkante
+        etiketten += [(Y(hi), f"Zone oben {zahl(hi)}{am_rand}", ZONE_FARBE),
+                      (Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+        if eigen_pivot and pmin <= la["pivot"] <= pmax:
             A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["pivot"]):.1f}" y2="{Y(la["pivot"]):.1f}" stroke="{ZONE_FARBE}" '
               f'stroke-width="1.6"/>')                                              # Layout: Pivot unter der Oberkante
             etiketten.append((Y(la["pivot"]), f"Pivot {zahl(la['pivot'])}", ZONE_FARBE))
@@ -201,7 +206,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
-    for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Pivotal Points)
+    for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
             y_ = Y(p_) - 6 if art == "H" else Y(p_) + 6                             # Layout: über dem Hoch, unter dem Tief
@@ -209,6 +214,15 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             A(f'<circle cx="{X(j):.1f}" cy="{y_:.1f}" r="3" fill="{"none" if letzt else WENDE_FARBE}" stroke="{WENDE_FARBE}">'
               f'<title>Wendepunkt {"Hoch" if art == "H" else "Tief"} {zahl(p_)}{" (noch nicht bestätigt)" if letzt else ""}'
               f'</title></circle>')                                                 # Layout
+    if la.get("pivot") is not None and la.get("beginn") is not None:                # der eine Pivot: sein Wendepunkt
+        seit_z = (d.index >= pd.Timestamp(la["beginn"])) & (np.abs(h - la["pivot"]) <= la["pivot"] * PIVOT_GLEICH)
+        if seit_z.any():
+            j = int(np.nonzero(seit_z)[0][-1])
+            y_ = Y(la["pivot"]) - 7                                                 # Layout: über dem Hoch
+            A(f'<path d="M{X(j):.1f},{y_ - 6:.1f} L{X(j) + 6:.1f},{y_:.1f} L{X(j):.1f},{y_ + 6:.1f} '  # Layout: Raute
+              f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
+              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot {zahl(la["pivot"])} · '
+              f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
         bdf = ba["df"]
         for k_ in (ba.get("enge") or {}).get("kontraktionen") or []:
@@ -376,7 +390,7 @@ def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
     teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · "
-              "Linie darin = Pivot unter der Oberkante · POC grün gepunktet"),
+              "Linie darin = Pivot, wenn er unter der Oberkante liegt · POC grün gepunktet"),
              (FESTUNG_FARBE, "Festung ▲▼: alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss "
               "darunter (Wendepunkte ab 2 ATR); überwunden tauschen sie die Rolle (Decke → Boden) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
@@ -385,7 +399,10 @@ def legende():
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
-             (WENDE_FARBE, "● Wendepunkte (Livermores Pivotal Points, ab 2 ATR) – hohl = noch nicht bestätigt"),
+             (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR – hohl = noch nicht bestätigt; aus ihnen "
+              "entstehen Zone, Enge und Festungen"),
+             (ZONE_FARBE, "◆ Pivot: der eine Wendepunkt, an dem die Waage kippt – das Hoch der letzten Enge am Rand, sonst "
+              "die Oberkante (in der Stunde das Hoch der Balance)"),
              (ENGE_FARBE, "−20 % −10 % −5 %: die Kontraktionen der Enge (Minervini), unter ihrem Tief"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "

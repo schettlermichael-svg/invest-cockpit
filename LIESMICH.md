@@ -1429,7 +1429,7 @@ Widerstand, Reibung, Zirkel. Kurzfassung als Tabelle in `oberflaeche/handbuch.py
 aufklappbar („📖 Handbuch: Der Zirkel“), und im Konzept-Doc.
 
 ## Der Zirkel im Chart (22.11.2026)
-`zonenchart.bild` zeigt zusätzlich: Wendepunkte (Livermores Pivotal Points, `vcp_zone.zigzag` ab 2 ATR; hohl = noch
+`zonenchart.bild` zeigt zusätzlich: Wendepunkte (Schwunghochs und -tiefs, `vcp_zone.zigzag` ab 2 ATR – seit 23.11.2026 nicht mehr „Pivotal Points“ genannt, der eine Pivot steht als Raute ◆ auf seinem Wendepunkt; hohl = noch
 nicht bestätigt), die Kontraktionen der Enge als „−20 %“ unter ihrem Tief (Woche und Tag, aus `zonen.basis`),
 ✈️/✈️↓ freie Bahn als Etikett, darunter die Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisestes Volumen seit 50
 Kerzen, ⚡ Kraft ohne Weg nach Wyckoff, 🌱/🍂 Keim des Zirkels an der letzten Kerze) und Momentum 🚀 am Ende der
