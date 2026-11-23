@@ -1554,3 +1554,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   🎯 Schlagbereit (Long-Setup am Pivot, im Ausbruch, im Rücktest – mit Einstieg, Stopp, Risiko, Gegenwind) · ⏳ Auf der
   Lauer (Base im Aufbau/Rücksetzer – Pivot und Abstand) · 🏃 Enteilt oder ohne Base. Der Zirkel-Lauf legt dafür je Titel
   Pivot und Kurs ins Feld (ab dem nächsten Lauf).
+- Titelliste übersichtlich (23.11.2026): je Klasse der Schlachtordnung ein Abschnitt (Garde und Angriff offen), 10 Spalten
+  als Zeichen – Titel (◆ 🎯 ▲▲▲) · Phase · Setup · Keim (🍂 · 🪨 n) · RS (🦈, Pfeil, Steigung 4 Wo.) · Momentum (🚀, ↑/↓ je
+  1M 3M 6M) · Volumen (Ampel, Faktor, 🏜️) · Geld (Ampel, 🐺) · Zahlen (Ampel, 📅 Termin bis 14 Tage) · Hoch. Erklärung an
+  der Spaltenüberschrift (`SPALTEN_HILFE`). Sektor, Branche, Thema, letzte Zahlen und Zahlen im Einzelnen stehen jetzt in
+  der Rückenwind-Zeile der Titelseite (`titel_zeile`); Rang und Prozente des Momentums standen dort schon.

@@ -382,7 +382,13 @@ def titel_zeile(tk):
             *(["Momentum " + _momentum(x)] if x.get("momentum") else []),
             "Zahlen " + PUNKT[z.get("ampel") or "grau"]
             + (f' · am {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}' if termin else ""),
-            *([zirkel_wort(zb, "Branche ")] if (zb := _branche_zirkel(tk)) else [])]
+            *([zirkel_wort(zb, "Branche ")] if (zb := _branche_zirkel(tk)) else []),
+            # aus der Liste hierher (Micky 23.11.2026): Gruppen mit Feld, letzte Zahlen, Zahlen im Einzelnen
+            f'Sektor {x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
+            f'Branche {x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
+            *([f'Thema {(x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN]}'] if x.get("thema") else []),
+            *([f"letzte Zahlen {r_}"] if (r_ := _reaktion(x)) else []),
+            *([f"Zahlen im Einzelnen: {p_}"] if (p_ := _punkte_text(x)) else [])]
 
 
 def _branche_zirkel(tk):
@@ -443,14 +449,58 @@ def _marke(tk, w, vorn=""):
     return (m + vorn) if vorn and m else (" " + m if m else "")
 
 
+def _rs(x):
+    """RS als Zeichen: 🦈 RS-Hoch vor Kurs, Pfeil der Richtung, Steigung in 4 Wochen – „🦈 ⏫ +6,2 %“."""
+    r, a = _richtung(x), x.get("rs_tempo")
+    return " ".join(s_ for s_ in ("🦈" if x.get("rs_hoch_vor_kurs") else "", PFEIL.get(r, ""),
+                                  f'{"+" if a >= 0 else "−"}{zahl(abs(a), 1)} %' if a is not None else "") if s_) or "–"
+
+
+def _momentum_zeichen(x):
+    """Momentum als Zeichen: je Fenster 1M, 3M, 6M ein Pfeil (↑ im Plus, ↓ im Minus), 🚀 wenn der Titel in einem
+    Fenster unter den besten 2 % des Reviers ist (Kullamägi) – „🚀 ↑↑↑“. Die Prozente stehen auf der Titelseite."""
+    m = x.get("momentum") or {}
+    if not m:
+        return "–"
+    return ("🚀 " if any(top for _, top in m.values()) else "") + "".join("↑" if r > 0 else "↓" for r, _ in m.values())
+
+
+def _volumen_zeichen(x):
+    """Volumen als Zeichen: Ampel des Zuflusses (grün ab 1,1-fach, rot unter 0,9-fach), 🏜️ trocken zählt grün."""
+    z = x.get("zufluss")
+    if x.get("trocken"):
+        return "🟢 🏜️"
+    if not z:
+        return "–"
+    return ("🟢 " if z >= ZUFLUSS[0] else "🔴 " if z < ZUFLUSS[1] else "🟡 ") + zahl(z, 1) + "×"
+
+
+TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
+ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
+SPALTEN = ("Titel", "Phase", "Setup", "Keim", "RS", "Momentum", "Volumen", "Geld", "Zahlen", "Hoch")
+SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
+                       "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
+                 "Momentum": "1M · 3M · 6M: ↑ im Plus, ↓ im Minus · 🚀 unter den besten 2 % des Reviers (Kullamägi)",
+                 "Volumen": "Zufluss: Volumen der Aufwärtstage gegen Abwärtstage · 🟢 ab 1,1× · 🔴 unter 0,9× · 🏜️ "
+                            "trocken (kaum noch Verkäufer, Minervini)",
+                 "Geld": "Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · 🐺 Einzelkämpfer",
+                 "Zahlen": "Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
+                 "Keim": "🍂/🌱 der Riss gegen die Phase · 🪨 Zahl der Zeichen, die sie tragen",
+                 "Hoch": "Abstand zum 52-Wochen-Hoch"}
+
+
 def liste(erg, nur=None):
-    """Alle Titel in der Rangfolge des Rückenwinds, nichts gefiltert; ohne Daten grau am Ende mit Grund. Umschalter
-    (Micky 21.11.2026, Trade seit 23.11.2026): nur="Watchlist" oder "Trade" zeigt nur die Titel dieser Liste. → DataFrame."""
+    """Alle Titel nach Schlachtordnung (Micky 23.11.2026: übersichtlich – je Klasse ein Abschnitt, nur die Spalten zum
+    Entscheiden, alles als Zeichen; Sektor, Branche, Thema, Rang und die Zahlen im Einzelnen auf der Titelseite).
+    Nichts gefiltert; ohne Daten grau mit Grund. nur="Watchlist" oder "Trade" zeigt nur die Titel dieser Liste.
+    → {Abschnitt: DataFrame} in der Reihenfolge Garde … Rückzug, ohne Klasse, ohne Daten."""
     import watchlists
     import zeichen
     wl = watchlists.laden()
-    reihen, kreis = [], zeichen.laden()
-    trades = setups()
+    kreis = zeichen.laden()
+    trades, drei_ = setups(), {t_ for t_, _ in dreifach_liste(erg)}
+    abschnitte = {f"{i} · {n}": [] for i, n in enumerate(KLASSEN, 1)}
+    abschnitte["ohne Klasse"], abschnitte["ohne Daten"] = [], []
     for tk, x in sorted(erg["titel"].items(), key=lambda p: _ordnung(p[1])):
         if nur and tk not in wl[nur]:
             continue
@@ -458,29 +508,20 @@ def liste(erg, nur=None):
         termin, warn = _termin(x, erg["stand"])
         ab = x.get("abstand_hoch")
         wort = abstand_wort(ab)
-        r = _richtung(x)
         k = klasse(x)
         phase, keim = _zirkel(tk, kreis)
-        reihen.append({
-            "Klasse": f"{k} · {KLASSEN[k - 1]}" if k else "–",
-            "Titel": _link(tk, tk + _marke(tk, wl) + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
-            "Phase": phase, "Keim": keim, "Setup": trades.get(tk, ""),
-            "RS-Hoch vor Kurs": "🦈" if x["rs_hoch_vor_kurs"] else "",
-            "RS-Linie": f'{PFEIL.get(r, "")} {r or "–"}', "Steigung 4 Wo.": _rs_linie(x),
-            "Momentum": _momentum(x), "Rang (Kraft)": f'{x["rang_vor4"]} → {x["rang"]}',
-            "Volumen": _zufluss(x.get("zufluss"), x.get("trocken")),
-            "Hoch": f'{HOCH_PUNKT[wort]} {wort} −{zahl(ab, 0)} %' if wort else "–",
-            "Bahn": bahn(x.get("frei"), ""),
-            "Geld": PUNKT[x["geld_ampel"]] + (" 🐺 Einzelkämpfer" if x.get("einzelkaempfer") else ""),
-            "Sektor": f'{x["sektor"]} ({_fn(x["sektor_feld"]) or "–"}{", stabil" if x.get("sektor_stabil") else ""})',
-            "Branche": f'{x["branche"]} ({_fn(x["branche_feld"]) or "–"}{", stabil" if x.get("branche_stabil") else ""})',
-            "Thema": (x["thema"] or "").split(" · ")[0][:THEMA_ZEICHEN],
-            "Zahlen": PUNKT[z.get("ampel") or "grau"], "letzte Zahlen": _reaktion(x),
-            "Zahlen am": ("🔴 " if warn == "rot" else "🟡 " if warn else "") + termin,
-            "Zahlen im Einzelnen": _punkte_text(x)})
+        drei = " ▲▲▲" if tk in drei_ else ""
+        abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
+            "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
+            "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Keim": keim,
+            "RS": _rs(x), "Momentum": _momentum_zeichen(x), "Volumen": _volumen_zeichen(x),
+            "Geld": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
+            "Zahlen": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
+            "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–"})
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur and o["tk"] not in wl[nur]:
             continue
-        reihen.append({"Klasse": "–", "Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Geld": PUNKT["grau"],
-                       "Zahlen": PUNKT["grau"], "Zahlen im Einzelnen": o["grund"]})
-    return pd.DataFrame(reihen)
+        abschnitte["ohne Daten"].append({"Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Phase": o["grund"],
+                                         "Geld": PUNKT["grau"], "Zahlen": PUNKT["grau"]})
+    return {n: pd.DataFrame(r, columns=SPALTEN) for n, r in abschnitte.items() if r}
+

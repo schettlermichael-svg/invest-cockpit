@@ -377,7 +377,9 @@ def rueckenwind_zeigen():
                                      "Front (RS-Linie) und Truppen (Volumen; 🏜️ trocken zählt wie Zufluss): 1 Garde = 🦈 mit Zufluss · 2 Angriff = Linie "
                                      "steigt mit Zufluss · 3 Vorhut = steigt, Volumen gemischt · 4 Ohne Nachschub = steigt, "
                                      "Abfluss · 5 Rückzug = Linie dreht nach unten oder fällt. In der Klasse: 🦈, Geld der "
-                                     "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert; Titel anklicken → Titelseite."
+                                     "Branche, Zahlen, Rang. Alle Titel, nichts gefiltert. Maus auf eine Spaltenüberschrift erklärt ihre Zeichen; "
+                                     "Sektor, Branche, Thema, Rang und die Zahlen im Einzelnen stehen auf der Titelseite – "
+                                     "Titel anklicken."
                                      "</p>", oben=8, unten=0), unsafe_allow_html=True)
         w1_, w2_ = st.columns([8, 2])               # Layout
         with w1_:
@@ -389,12 +391,15 @@ def rueckenwind_zeigen():
                 with st.spinner("Rechne den Rückenwind aller Titel neu …"):
                     rw_kern.rechnen(netz=False)
                 st.rerun()
-        df = rw.liste(erg, nur=None if wl_ == "Alle" else wl_.split()[0])
-        st.dataframe(df, hide_index=True, use_container_width=True, height=560,  # Layout
-                     column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT),
-                                    "Keim": st.column_config.TextColumn("Keim", width="large",   # 🍂 … · 🪨 4 ganz lesbar
-                                                                        help="🍂/🌱 der Riss gegen die Phase · 🪨 "
-                                                                             "Zahl der Zeichen, die sie tragen")})
+        teile = rw.liste(erg, nur=None if wl_ == "Alle" else wl_.split()[0])
+        spalten = {n: st.column_config.TextColumn(n, help=h) for n, h in rw.SPALTEN_HILFE.items()}
+        spalten["Titel"] = st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)
+        spalten["Keim"] = st.column_config.TextColumn("Keim", width="large", help=rw.SPALTEN_HILFE["Keim"])
+        for name, df in teile.items():   # je Klasse ein Abschnitt (Micky 23.11.2026), Garde und Angriff offen
+            with st.expander(f"{name} ({len(df)})", expanded=name in rw.ANGRIFF_OFFEN):
+                st.dataframe(df, hide_index=True, use_container_width=True,
+                             height=min(rw.TABELLE_HOEHE, rw.TABELLE_ZEILE * (len(df) + 1) + rw.TABELLE_RAND),
+                             column_config=spalten)
 
 
 
