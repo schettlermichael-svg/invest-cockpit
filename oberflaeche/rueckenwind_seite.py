@@ -348,17 +348,20 @@ def _momentum(x):
 
 
 def _zirkel(tk, kreis):
-    """(Phase, Keim) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden)."""
+    """(Phase, Keim) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden). Keim: 🍂/🌱 mit Namen, dahinter
+    🪨 und die Zahl der Zeichen, die die Phase tragen (Micky 23.11.2026: ein 🍂 in Phase 2 ist meist nur eine Welle)."""
     import zeichen
     z = zeichen.zirkel((kreis.get("titel") or {}).get(tk))
     if not z:
         return "–", ""
     phase = (f'{z["phase"]} {z["name"]}' + (f' · {z["wochen"]} Wo.' if z["wochen"] else "")
              + (f' → {z["ziel"]}' if z["ziel"] else "")) if z["phase"] else "jung"
-    if not z["keim"]:
-        return phase, ""
+    traegt = f'🪨 {len(z["traegt"])}' if z["traegt"] else ""        # wie viele Zeichen die Phase tragen (23.11.2026):
+    if not z["keim"]:                                                 # ein Riss gegen vier tragende = eine Welle
+        return phase, traegt
     zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
-    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:3]))
+    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:3])) + (
+        f" · {traegt}" if traegt else "")
 
 
 def _link(tk, text):

@@ -390,7 +390,10 @@ def rueckenwind_zeigen():
                 st.rerun()
         df = rw.liste(erg, nur=None if wl_ == "Alle" else wl_.split()[0])
         st.dataframe(df, hide_index=True, use_container_width=True, height=560,  # Layout
-                     column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT)})
+                     column_config={"Titel": st.column_config.LinkColumn("Titel", display_text=rw.TITEL_TEXT),
+                                    "Keim": st.column_config.TextColumn("Keim", width="large",   # 🍂 … · 🪨 4 ganz lesbar
+                                                                        help="🍂/🌱 der Riss gegen die Phase · 🪨 "
+                                                                             "Zahl der Zeichen, die sie tragen")})
 
 
 

@@ -1548,3 +1548,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - ▲▲▲ dreifacher Rückenwind am Long-Setup (23.11.2026): Kurs (Garde/Angriff), Geld-Ampel und Zahlen-Ampel grün
   (`rueckenwind.dreifach`, `zirkel.dreifach`) – in der Setup-Karte der Titelseite, in der Spalte „Setup“ und in der
   Morgenmeldung; dort kommen ▲▲▲-Setups zuerst. Kein Filter.
+- Rückenwind-Liste, Spalte „Keim“ (23.11.2026): hinter dem Riss 🍂/🌱 steht 🪨 und die Zahl der Zeichen, die die
+  Phase tragen – „🍂 Käufer erschöpft · 🪨 4“ ist eine Welle im Aufwärtslauf, das Kippen steht erst als „→ 3“ in der Phase.
