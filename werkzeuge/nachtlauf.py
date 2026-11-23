@@ -393,7 +393,7 @@ def seiten(prozesse=None):
     p = {"start": datetime.now().strftime("%d.%m.%Y %H:%M"), "ende": None, "pid": os.getpid(), "zahl": 0, "fertig": 0}
     _schreiben(p, SEITEN_PROTOKOLL)
     import zirkel
-    if not zirkel.feld():                        # noch kein Zirkel-Lauf (erster Start nach dem Umbau 22.11.2026)
+    if not zirkel.feld() or not zirkel.barometer().get("index"):   # noch kein Zirkel-Lauf bzw. ohne Markt-Ampel (23.11.)
         import tpo_laden
         zirkel.rechnen(zirkel.liste(tpo_laden.titel()), prozesse=prozesse)
         uebersicht.ablegen(uebersicht.seite_uebersicht())   # Markt-Ampel mit Hochs und Tiefs
