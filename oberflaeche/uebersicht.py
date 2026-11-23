@@ -20,13 +20,13 @@ LEVY_HEISS = 1.10                    # Pendel: S&P 500 ab 10 % über dem 26-Woch
 import marktdaten                                            # noqa: E402
 from frontkarte import quad_abgleich  # noqa: E402
 import quadbild                                              # noqa: E402
-from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, ampelzeile, punkt, seite, sprungleiste,
+from gestaltung import (KARTE, RAND, TEXT_2, TEXT_3, AMPEL, PUNKT_KLEIN, ampelzeile, punkt, seite, sprungleiste,
                         station, t, zahl)  # noqa: E402
 
 QUAD_AMPEL = {1: "grün", 2: "grün", 3: "gelb", 4: "rot"}
 
 
-def _kachel(label, ampel, wert, pfeil, zeile, mehr=""):
+def _kachel(label, ampel, wert, pfeil, zeile, mehr="", zeile_html=""):
     # lange Wörter (z. B. „Abwärtsbeschleunigung“) kleiner setzen und notfalls trennen, damit nichts aus der Kachel ragt
     wort = max((len(w) for w in str(wert).split()), default=0)
     groesse = 26 if wort <= 14 else 22 if wort <= 17 else 19  # Layout
@@ -38,9 +38,35 @@ def _kachel(label, ampel, wert, pfeil, zeile, mehr=""):
             f'<span lang="de" style="font-size:{groesse}px;font-weight:600;min-width:0;overflow-wrap:anywhere;'
             f'hyphens:auto">{t(wert)}</span>'
             f'<span style="font-size:24px;color:{TEXT_2}">{t(pfeil)}</span></div>'
-            f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div>'
+            + (zeile_html or f'<div style="font-size:14px;color:{TEXT_2};line-height:1.5">{t(zeile)}</div>')
             + (f'<details><summary style="cursor:pointer;font-size:13px;color:{TEXT_3}">Instrumente</summary>'
                f'<div style="margin-top:8px">{mehr}</div></details>' if mehr else "") + '</div>')
+
+
+def _markt_spalten(mm):
+    """Markt-Kachel (Micky 23.11.2026): S&P 500 und Nasdaq nebeneinander – je Index Ampel, Phase und die Zeichen als
+    Symbole (🍂/🌱 Keim wie in der Rückenwind-Liste, 🪨 was die Phase trägt), darunter Hochs : Tiefs."""
+    import zeichen
+    import zirkel
+    spalten = []
+    for name, x in (mm.get("indizes") or {}).items():
+        keim = "🌱" if zeichen.KEIM_SEITE.get(x.get("phase")) == "stärke" else "🍂"
+        zeilen_ = [(keim, zeichen.kurz(k)) for k in x.get("keim") or []] + \
+                  [("🪨", zeichen.kurz(k)) for k in x.get("traegt") or []]
+        phase = f'Phase {x["wort"]}' if x.get("wort") else "jung"
+        spalten.append(
+            f'<div style="flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:4px">'
+            f'<div style="font-size:13px;color:{TEXT_3}">{t(name)}{" · führt" if name == zirkel.MARKT_FUEHRT else ""}</div>'
+            f'<div style="display:flex;align-items:center;gap:8px">{punkt(x["ampel"], PUNKT_KLEIN)}'
+            f'<span style="font-size:15px;font-weight:600">{t(phase)}</span></div>'
+            f'<div style="font-size:13px;color:{TEXT_2}">{t(x.get("name") or "")}</div>'
+            + "".join(f'<div style="font-size:13px;color:{TEXT_2};line-height:1.4">{z} {t(k)}</div>'
+                      for z, k in dict.fromkeys(zeilen_))
+            + ("" if zeilen_ else f'<div style="font-size:13px;color:{TEXT_3}">keine Zeichen gemessen</div>')
+            + '</div>')
+    hochs = (f'<div style="font-size:13px;color:{TEXT_2};border-top:1px solid {RAND};padding-top:6px">'
+             f'neue 52-Wochen-Hochs : Tiefs {mm["hochs"]} : {mm["tiefs"]}</div>' if mm.get("hochs") is not None else "")
+    return f'<div style="display:flex;gap:16px;flex-wrap:wrap">{"".join(spalten)}</div>' + hochs
 
 
 def _pendel_instrumente(m):
@@ -153,7 +179,7 @@ def seite_uebersicht():
                          for n, x in ((mm or {}).get("indizes") or {}).items())
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
-        _kachel("Markt", mm["ampel"], mm["wort"], "", " · ".join(zirkel.markt_text(mm)), markt_mehr)
+        _kachel("Markt", mm["ampel"], mm["wort"], "", "", markt_mehr, _markt_spalten(mm))
         if mm else "",   # eine Ampel (Micky 12.11.2026), seit 23.11.2026 aus dem Zirkel des Index
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
