@@ -307,15 +307,13 @@ def anker_setzen(tk, ebene, k, tag):
 
 # ── Reife-Leiste (Micky 24.11.2026): fünf Stufen über dem Chart – wie weit ist die Base? ──
 REIFE_STUFEN = ("Base", "enger", "leise", "am Pivot", "Ausbruch")
-REIFE_SCHNITT = 50         # Ausbruchsvolumen über dem 50-Tage-Schnitt (Micky: über dem Schnitt reicht, O'Neil 1,4× zu streng)
 
 
 def reife(r):
     """Die Base des Tages in fünf Stufen → [(Stufe, Ampel, Grund)]. Base: mindestens zwei Wellen (Minervini 2–6);
     enger: jede Welle höchstens 70 % der vorigen und die letzte eng; leise: das Volumen leiser als in der ersten Welle
-    und unter dem Schnitt; am Pivot: höchstens RAND_PCT darunter; Ausbruch: Schluss über dem Pivot, mit Volumen über
-    dem 50-Tage-Schnitt grün (Micky: über dem Schnitt reicht)."""
-    import numpy as np
+    und unter dem Schnitt; am Pivot: höchstens RAND_PCT darunter; letzte Stufe nach vcp_zone.ausbruch (Regel vom
+    13.11.2026): Ausbruch hält (grün mit Volumen über dem 50-Tage-Schnitt), Rücktest, Fehlausbruch, 2. Anlauf."""
     import vcp_zone
     ba = (r.get("fuehrte") or {}).get("basis") or {}
     en_ = ba.get("enge") or {}
@@ -343,18 +341,19 @@ def reife(r):
     kurs = la.get("kurs") or (float(df["Close"].iloc[-1]) if df is not None and len(df) else piv)
     ab = (kurs / piv - 1) * 100
     aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau", f"{zahl(ab, 1)} % zum Pivot {zahl(piv)}"))
-    stufe = ("Ausbruch", "grau", "noch kein Schluss über dem Pivot")
-    if df is not None and len(df) and ab > 0:
-        c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
-        v50 = np.convolve(v, np.ones(REIFE_SCHNITT) / REIFE_SCHNITT, mode="full")[:len(v)]
-        i = len(c) - 1                                                             # Beginn der jetzigen Strecke über
-        while i > 0 and c[i - 1] > piv:                                            # dem Pivot
-            i -= 1
-        if c[i] > piv:
-            mit = i >= REIFE_SCHNITT and v[i] > v50[i - 1]
-            stufe = ("Ausbruch", "grün" if mit else "gelb",
-                     f"Schluss über dem Pivot am {df.index[i]:%d.%m.}" + (" mit Volumen über dem Schnitt" if mit
-                                                                          else " – Volumen unter dem Schnitt"))
+    a_ = ba.get("ausbruch") or {}                     # dieselbe Regel wie Phase und Setup (vcp_zone.ausbruch, 13.11.):
+    alt_ = a_.get("gescheitert") or []                # Rücktest knapp unter dem Pivot, Fehlausbruch unter dem Tief des
+    if not a_:                                        # Ausbruchstags oder mehr als 3 % darunter
+        stufe = ("Ausbruch", "grau", "noch kein Schluss über dem Pivot")
+    elif a_.get("fehl"):
+        stufe = ("Fehlausbruch", "rot", vcp_zone.ausbruch_text(a_))
+    elif a_.get("ruecktest"):
+        stufe = ("Rücktest", "gelb", vcp_zone.ausbruch_text(a_))
+    elif alt_:
+        stufe = ("2. Anlauf", "gelb", f"Fehlausbruch am {alt_[-1][0]:%d.%m.} (Hoch {zahl(alt_[-1][1])} = Decke der "
+                 f"Gefangenen) · {vcp_zone.ausbruch_text(a_)}")
+    else:
+        stufe = ("Ausbruch hält", "grün" if a_.get("mit_volumen") else "gelb", vcp_zone.ausbruch_text(a_))
     aus.append(stufe)
     return aus
 

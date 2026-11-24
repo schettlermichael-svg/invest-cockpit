@@ -55,6 +55,7 @@ PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – 
 WELLE_B = 9                            # Layout: Breite eines Balkens im Wellenmesser
 WELLE_DECK = 0.35                      # Layout
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
+MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
 KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
 KORRIDOR_RAND = 0.5                    # Layout
@@ -363,6 +364,26 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'</title></rect>')
             A(f'<text x="{X(j_m):.1f}" y="{min(y_t + 13, OBEN + KURS_H - 2):.1f}" fill="{f_w}" font-size="11" '   # Layout
               f'text-anchor="middle">T{nr_}</text>')
+        aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Regel vom 13.11.:
+        marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # unter dem Tief des
+        if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Ausbruchstags oder > 3 % unter
+            marken.append((aus_["rueck_tag"], "⚠ Rücktest", AMPEL["gelb"]))                  # dem Pivot; knapp darunter = Rücktest)
+        for t_, wort_, f_m in marken:
+            if t_ < d.index[0]:
+                continue
+            j_ = pos(t_)
+            y_m = min(Y(max(l[j_], pmin)) + 26, OBEN + KURS_H - 4)                  # Layout: unter der Kerze
+            anker_ = "end" if X(j_) > ende - MARKE_RAND else "middle"                # Layout: nicht ins Profil
+            A(f'<text x="{X(j_):.1f}" y="{y_m:.1f}" fill="{f_m}" font-size="11" text-anchor="{anker_}">{wort_}'
+              f'<title>{t_esc(vcp_zone.ausbruch_text(aus_))}</title></text>')
+        if aus_.get("gescheitert"):                                                 # Decke der Gefangenen: das Hoch
+            t_g, h_g = aus_["gescheitert"][-1]                                      # des gescheiterten Vorstoßes – wer
+            if pmin <= h_g <= pmax:                                                 # dort kaufte, will bei Einstand raus
+                x_g = X(max(0, pos(t_g) - 8)) if t_g >= d.index[0] else X(0)        # Layout
+                A(f'<line x1="{x_g:.1f}" x2="{ende}" y1="{Y(h_g):.1f}" y2="{Y(h_g):.1f}" stroke="{ROT}" '
+                  f'stroke-width="1.2" stroke-dasharray="6 4"><title>Decke der Gefangenen: Hoch des Fehlausbruchs '
+                  f'{zahl(h_g)} – wer dort kaufte, sitzt im Verlust und verkauft gern bei Einstand</title></line>')
+                etiketten.append((Y(h_g), f"Decke der Gefangenen {zahl(h_g)}", ROT))
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
             amp = "grün" if auf else en_.get("ampel")
             urteil = ("🟢 Aufsteigende Base" if auf else "🟢 VCP" if amp == "grün" else "🔴 Enge" if amp == "rot"

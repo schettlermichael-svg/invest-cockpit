@@ -591,7 +591,8 @@ FEHL_PCT = 3.0                 # Fehlausbruch: Schluss mehr als 3 % unter dem Pi
 
 def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
     """Ausbruch über den Pivot in den letzten `tage` Handelstagen oder None:
-    {tag, tage_her, erster_tag, pivot, zone, enge, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, innen, eltern}.
+    {tag, tage_her, erster_tag, pivot, zone, enge, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, innen, eltern,
+    gescheitert: [(Tag des Fehlausbruchs, Hoch des gescheiterten Vorstoßes)]}.
     Zone und Enge so, wie sie am Vortag des ersten Ausbruchs standen (Indizes passen zu df). Schließt der Kurs danach
     wieder unter dem Pivot, ist es ein Fehlausbruch (fehl) – Zone und Pivot bleiben; ein neuer Schluss darüber ist ein
     neuer Ausbruch (tag, volumen von diesem Tag). Hat sich über dem Ausbruch schon eine neue fertige Zone gebildet
@@ -639,10 +640,12 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
             # Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest. Ein Schluss
             # über dem Pivot nach einem Fehlausbruch ist ein neuer Ausbruch (Tag und Volumen von dort).
             letzter, fehl_tag, rueck_tag = t, None, None
-            lo = df["Low"].to_numpy(float)
-            for u in range(t + 1, n):
+            lo, hh = df["Low"].to_numpy(float), df["High"].to_numpy(float)
+            gescheitert = []                               # frühere Fehlausbrüche (Micky 24.11.2026): Tag und Hoch
+            for u in range(t + 1, n):                      # des gescheiterten Vorstoßes – dort sitzen die Gefangenen
                 if c[u] > pivot:
                     if fehl_tag is not None:
+                        gescheitert.append((df.index[fehl_tag], float(hh[letzter:fehl_tag + 1].max())))
                         letzter = u
                     fehl_tag = rueck_tag = None
                 elif fehl_tag is None and (c[u] < lo[letzter] or c[u] < pivot * (1 - FEHL_PCT / 100)):
@@ -658,7 +661,8 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, passt=None, cheats=False):
                     "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None,
                     "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
                     "tief_ausbruchstag": float(lo[letzter]), "innen": b is not z,
-                    "eltern": z["name"], "cheat": ch}
+                    "eltern": z["name"], "cheat": ch, "gescheitert": gescheitert + (
+                        [(df.index[fehl_tag], float(hh[letzter:fehl_tag + 1].max()))] if fehl else [])}
     return None
 
 

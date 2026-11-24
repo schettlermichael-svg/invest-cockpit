@@ -1633,3 +1633,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
     mit Volumen über dem 50-Tage-Schnitt (`REIFE_SCHNITT`), sonst gelb; derselbe Pivot wie im Chart.
   - Schlachtplan (Tag, nur mit echtem Setup – nicht bei „kein Setup“): grüne Fläche vom Einstieg bis zur nächsten Decke (sonst bis zum Rand = freie Bahn), rote
     bis zum Stopp (`PLAN_DECK`).
+- Fehlausbruch sichtbar (24.11.2026, Micky: Regel vom 13.11. bleibt): vcp_zone.ausbruch liefert zusätzlich „gescheitert“
+  [(Tag, Hoch des gescheiterten Vorstoßes)]. Chart: „✗ Fehlausbruch“ (rot) bzw. „⚠ Rücktest“ (gelb) unter der Kerze, Linie
+  „Decke der Gefangenen“ am Hoch des Fehlausbruchs. Reife-Leiste, letzte Stufe: Ausbruch hält · Rücktest · Fehlausbruch ·
+  2. Anlauf – dieselbe Regel wie Phase 🦊 und Setup 🪝 (keine eigene Volumenrechnung mehr, `REIFE_SCHNITT` entfernt).
