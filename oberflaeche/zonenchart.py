@@ -30,7 +30,7 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details"}
+LINIEN_WAHL = {"details": "Profil-Details", "bollinger": "Bollinger"}   # Bollinger als Schalter (Micky 24.11.2026)
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -116,7 +116,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte POC-Linien (LINIEN_WAHL), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Bollinger), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
@@ -279,7 +279,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         for pk in (oben_, unten_[::-1]):
             A(f'<polyline points="{" ".join(pk)}" fill="none" stroke="{ENGE_FARBE}" stroke-width="{rand}" '
               f'stroke-opacity="0.8"/>')                                            # Layout
-    if len(ok_) >= 2:
+    if len(ok_) >= 2 and "bollinger" in linien_:
         band(ok_, KORRIDOR_DECK, KORRIDOR_RAND)
         lauf = []
         for i in ok_ + [None]:                                                     # zusammenhängende Squeeze-Strecken
@@ -302,7 +302,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
-    for g, art in sprung.items():                                                  # Feder springt (Bollinger: Bandbruch
+    for g, art in (sprung.items() if "bollinger" in linien_ else ()):              # Feder springt (Bollinger: Bandbruch
         j = g - n0                                                                 # nach dem Squeeze; Vorsicht Head Fake)
         if 0 <= j < N:
             y_ = Y(h[j]) - 12 if art == "H" else Y(l[j]) + 12                       # Layout: über dem Hoch, unter dem Tief

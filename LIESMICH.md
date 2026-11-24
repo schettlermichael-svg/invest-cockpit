@@ -1605,4 +1605,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   sonst blass; leuchtet er, ist die Weite (BandWidth) so schmal wie seit ~6 Monaten nicht (`SQUEEZE_RUECK`: 125 Tage, 26 Wochen –
   Bollingers Squeeze, „Feder gespannt“). Der erste Schluss über/unter dem Band danach bekommt ▲/▼ (`SPRUNG_FARBE`, „Feder
   springt“); Bollinger warnt vor der Finte (Head Fake). Vorher ±halbe Spanne über 10 Kerzen – zu eng, drei von vier Schlüssen
-  lagen außerhalb.
+  lagen außerhalb.- Bollinger als Schalter (24.11.2026): Korridor, Squeeze und ▲/▼ erscheinen nur, wenn unter „Einblenden“ (vorher „Profil“)
+  „Bollinger“ gewählt ist (`LINIEN_WAHL`); Grundstellung aus.
