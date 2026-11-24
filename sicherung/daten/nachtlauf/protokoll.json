@@ -1,112 +1,75 @@
 {
- "start": "21.11.2026 06:05",
- "ende": "21.11.2026 09:02",
+ "start": "24.11.2026 06:05",
+ "ende": "24.11.2026 08:05",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
-   "text": "bis 20.11.2026",
+   "text": "bis 23.11.2026",
    "sekunden": 13
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
-   "text": "Stand 20.11.2026",
-   "sekunden": 99
+   "text": "Stand 23.11.2026",
+   "sekunden": 106
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
-   "text": "1960 von 1972 Titeln ergänzt",
-   "sekunden": 503
+   "text": "1959 von 1978 Titeln ergänzt",
+   "sekunden": 549
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
-   "text": "1973 Titel",
-   "sekunden": 286
-  },
-  {
-   "name": "Revier-Pflege",
-   "ok": true,
-   "text": "7 Zugänge (TU, HZN, BANF, BKE, JJSF, NHP, SIBN) · Abgänge gemeldet: KVUE, ROKU, INDV, CBZ, LXP, RAMP",
-   "sekunden": 13
+   "text": "1980 Titel",
+   "sekunden": 305
   },
   {
    "name": "TradingView-Kennzahlen",
    "ok": true,
-   "text": "1956 Titel (99%)",
+   "text": "1963 Titel (99%)",
    "sekunden": 1
-  },
-  {
-   "name": "RS-Rang, Führer-Rang (Kullamägi)",
-   "ok": true,
-   "text": "RS-Rang 1877, Führer-Rang 1948 Titel (Stand 2026-11-20)",
-   "sekunden": 11
   },
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "4 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 66
+   "text": "31 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 121
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
-   "text": "Stand 2026-11-20: Entsteht 260, Läuft 256, Ermüdet 38, Abfluss 142",
-   "sekunden": 1367
+   "text": "Stand 2026-11-23: Garde 6, Angriff 578, Vorhut 242, Ohne Nachschub 350, Rückzug 767",
+   "sekunden": 1522
   },
   {
-   "name": "Kartentisch",
+   "name": "Zirkel (Kreislauf, Setup, Hochs/Tiefs, Markt-Ampel)",
    "ok": true,
-   "text": "1176 Titel auf dem Tisch, 333 Neuigkeiten",
-   "sekunden": 8006
+   "text": "1967 Titel, 158 mit Setup · 17 Hochs, 21 Tiefs · S&P 500 Phase 2 → 3 · Rücksetzer gelb · Nasdaq Phase 2 · Rücksetzer gelb",
+   "sekunden": 2422
   },
   {
-   "name": "Lage (Wetter, Pendel, Breite, Front, Marktrichtung)",
+   "name": "Lage (Markt-Ampel, Wetter, Pendel, Breite)",
    "ok": true,
    "text": "Übersicht gebaut",
-   "sekunden": 12
+   "sekunden": 20
   },
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "78 von 78 Titelseiten abgelegt",
-   "sekunden": 278
-  },
-  {
-   "name": "Wachen: Gleichlauf, Plausibilität, Gegenprobe TradingView",
-   "ok": true,
-   "text": "30 Akten geprüft · alles im Gleichlauf",
-   "sekunden": 2
+   "text": "932 von 932 Titelseiten abgelegt",
+   "sekunden": 2150
   }
  ],
- "pid": 413606,
- "neu": 333,
- "reihen": {
-  "m_spitze": 2,
-  "m_weitere": 26,
-  "k_breakout": 18,
-  "k_ep": 8,
-  "zahlen": 436,
-  "k_ermuedung": 51,
-  "k_baerenflagge": 90,
-  "k_bruch": 259,
-  "vcp": 7,
-  "flagge": 56
- },
- "wachen": {
-  "ampel": "grün",
-  "rot": 0,
-  "gelb": 0
- },
+ "pid": 571115,
  "datenstand": {
-  "Massive-Tageskurse": "2026-11-20",
-  "Yahoo-Tageskurse": "2026-11-20",
+  "Massive-Tageskurse": "2026-11-23",
+  "Yahoo-Tageskurse": "2026-11-23",
   "Marktdaten (Indizes)": "2026-11-20",
-  "Rückenwind": "2026-11-20",
-  "RS-Rang": "2026-11-20",
-  "Führer-Rang": "2026-11-20"
+  "Rückenwind": "2026-11-23",
+  "Zirkel": "2026-11-23"
  },
- "massive_durchgaenge": 1
+ "massive_durchgaenge": 3
 }

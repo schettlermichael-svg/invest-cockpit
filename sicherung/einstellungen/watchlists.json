@@ -177,6 +177,18 @@
   "WST",
   "XEL",
   "XMTR",
-  "XPO"
+  "XPO",
+  "DHR"
+ ],
+ "Trade": [
+  "WST",
+  "HWM",
+  "LUV",
+  "BNY",
+  "CAT",
+  "FDX",
+  "NVDA",
+  "TTWO",
+  "ANT"
  ]
 }
