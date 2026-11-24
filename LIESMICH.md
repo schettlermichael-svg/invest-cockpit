@@ -1598,3 +1598,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   unter der RS-Linie die Leiste „Wellen der Base“: ein Balken je Welle, so hoch wie ihre Tiefe, gefärbt wie bisher die
   Zahlen (grün kleiner, gelb kaum, rot tiefer; aufsteigende Base: grün = Tief über dem vorigen). Die Tiefe steht beim
   Darüberfahren.
+- Enge je Kerze (24.11.2026, statt der farbigen Wellenbalken): unter der RS-Linie ein Balken je Kerze in einer Farbe, so
+  hoch wie die Spanne Hoch–Tief in % des Schlusses (Achse bis zum 95. Perzentil, `ENGE_DECKEL`) – kleiner = enger, gleich
+  hoch = gleichmäßig; auf allen Ebenen. Der Trichter in der Base bleibt.

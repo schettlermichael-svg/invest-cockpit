@@ -9,7 +9,7 @@ relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-
 import numpy as np
 import pandas as pd
 
-from gestaltung import AMPEL, BLAU, GELB, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, t as t_esc, zahl
+from gestaltung import AMPEL, BLAU, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, t as t_esc, zahl
 
 B = 1200                               # Layout: Breite des Bildes
 LINKS, RECHTS, PROFIL_W = 56, 190, 110  # Layout: Preisachse, Etiketten, Profil (Zeit links, Volumen rechts)
@@ -52,10 +52,10 @@ PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über alle
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
-WELLE_BREITE = 10                      # Layout: Breite eines Wellenbalkens
-WELLEN_H = 26                          # Layout: Höhe der Wellenleiste unter der RS-Linie
-WELLEN_ABSTAND = 10                    # Layout: Abstand der Wellenleiste zur RS-Linie
-WELLE_ERSTE = "#9AA7B8"                # die erste Welle der Base (linke Seite): noch ohne Vergleich
+ENGE_FARBE = "#7DA7D9"                 # Enge je Kerze: eine Farbe, die Höhe spricht
+ENGE_DECKEL = 95                       # Layout: Achse bis zum 95. Perzentil der Spannen (Ausreißer abgeschnitten)
+WELLEN_H = 30                          # Layout: Höhe der Enge-Leiste unter der RS-Linie
+WELLEN_ABSTAND = 10                    # Layout: Abstand der Enge-Leiste zur RS-Linie
 NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
 
@@ -159,9 +159,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     y_vol = OBEN + KURS_H + LUECKE
     y_zei = y_vol + VOL_H + 4                                                       # Layout: Zeichenleiste
     y_rs = y_zei + ZEICHEN_H + LUECKE + 14                                          # Layout: Platz für die Überschrift
-    wellen_ = ((ba or {}).get("enge") or {}).get("kontraktionen") if e["name"] != "Stunde" else None
-    y_wel = y_rs + RS_H + WELLEN_ABSTAND                                            # Wellen unter der RS-Linie
-    H = (y_wel + WELLEN_H if wellen_ else y_rs + RS_H) + 24                         # Layout: Zeitachse
+    y_wel = y_rs + RS_H + WELLEN_ABSTAND                                            # Enge unter der RS-Linie
+    H = y_wel + WELLEN_H + 24                                                       # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
@@ -494,27 +493,18 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                     if not np.isnan(r_i[i]):
                         A(f'<circle cx="{X(i):.1f}" cy="{YR(r_i[i]):.1f}" r="3" fill="{farbe}"/>')  # Layout
     letzter = None
-    if wellen_:                                                                     # Wellen als Balken unter der RS-
-        bdf_, en_w = ba["df"], ba.get("enge") or {}                                 # Linie (Micky 24.11.2026): einer je
-        rechts = wellen_[1:] or wellen_                                             # Welle der rechten Seite, so hoch
-        tmax = max(k_["tiefe"] for k_ in rechts) or 1                               # wie ihre Tiefe; die erste Welle
-        for n_, k_ in enumerate(wellen_):                                           # (linke Seite) bleibt außen vor
-            vor_w = wellen_[n_ - 1] if n_ else None
-            if n_ == 0 and len(wellen_) > 1:
-                continue
-            if en_w.get("aufsteigend"):
-                farbe = WELLE_ERSTE if vor_w is None else GRUEN if k_["tief"] > vor_w["tief"] else ROT
-            else:
-                farbe = (WELLE_ERSTE if vor_w is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor_w["tiefe"]
-                         else GELB if k_["tiefe"] <= vor_w["tiefe"] else ROT)
-            t0, t1 = bdf_.index[k_["hoch_i"]], bdf_.index[k_["tief_i"]]
-            if t1 < d.index[0]:
-                continue
-            hb = WELLEN_H * k_["tiefe"] / tmax
-            A(f'<rect x="{X(pos(t1)) - WELLE_BREITE / 2:.1f}" y="{y_wel + WELLEN_H - hb:.1f}" width="{WELLE_BREITE}" '
-              f'height="{hb:.1f}" fill="{farbe}" fill-opacity="0.85" rx="2"><title>Welle {t0:%d.%m.} → {t1:%d.%m.}: '
-              f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}, −{zahl(k_["tiefe"], 1)} %</title></rect>')   # Layout
-        A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Wellen der Base</text>')  # Layout
+    spanne = ((d["High"] - d["Low"]) / d["Close"] * 100).to_numpy(float)          # Enge je Kerze (Micky 24.11.2026):
+    deckel = float(np.nanpercentile(spanne, ENGE_DECKEL)) or 1                      # Spanne Hoch–Tief in % des Schlusses,
+    for i in range(N):                                                              # ein Balken je Kerze in einer Farbe –
+        if np.isnan(spanne[i]):                                                     # kleiner = enger, gleich hoch = ruhig
+            continue
+        hb = WELLEN_H * min(spanne[i], deckel) / deckel
+        A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_wel + WELLEN_H - hb:.1f}" width="{bw:.1f}" height="{hb:.1f}" '
+          f'fill="{ENGE_FARBE}" fill-opacity="0.8"><title>{d.index[i]:%d.%m.%Y}: Spanne {zahl(spanne[i], 1)} %'
+          f'</title></rect>')                                                       # Layout
+    A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Enge · Spanne je Kerze'
+      f'<title>Hoch bis Tief jeder Kerze in % des Schlusses – werden die Balken kleiner, wird der Kurs enger '
+      f'(Minervini: die Volatilität zieht sich zusammen)</title></text>')          # Layout
     for i, tag in enumerate(d.index):                                               # Zeitachse
         schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())  # Layout
         if schl != letzter and letzter is not None and (e["name"] != "Stunde" or tag.dayofweek == 0):
@@ -545,9 +535,10 @@ def legende():
               "ohne Setup"),
              (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen in der Base – schließt er sich, "
               "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
-              "noch nicht reif, rot = die letzte Welle tiefer · Wellen der Base: unter der RS-Linie ein Balken je Welle, "
-              "so hoch wie ihre Tiefe – grau die erste, grün kleiner (höchstens 70 % der vorigen), gelb kaum, rot tiefer; "
-              "in der aufsteigenden Base grün = Tief über dem vorigen"),
+              "noch nicht reif, rot = die letzte Welle tiefer"),
+             (ENGE_FARBE, "Enge: unter der RS-Linie ein Balken je Kerze, so hoch wie ihre Spanne (Hoch bis Tief in % des "
+              "Schlusses) – werden die Balken kleiner, wird der Kurs enger; gleich hohe Balken = gleichmäßig, springende "
+              "= unruhig"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
