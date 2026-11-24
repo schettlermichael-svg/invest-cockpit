@@ -51,6 +51,10 @@ KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in 
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
+TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
+WELLE_BREITE = 10                      # Layout: Breite eines Wellenbalkens
+WELLEN_H = 26                          # Layout: Höhe der Wellenleiste unter der RS-Linie
+WELLEN_ABSTAND = 10                    # Layout: Abstand der Wellenleiste zur RS-Linie
 WELLE_ERSTE = "#9AA7B8"                # die erste Welle der Base (linke Seite): noch ohne Vergleich
 NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
@@ -155,7 +159,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     y_vol = OBEN + KURS_H + LUECKE
     y_zei = y_vol + VOL_H + 4                                                       # Layout: Zeichenleiste
     y_rs = y_zei + ZEICHEN_H + LUECKE + 14                                          # Layout: Platz für die Überschrift
-    H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
+    wellen_ = ((ba or {}).get("enge") or {}).get("kontraktionen") if e["name"] != "Stunde" else None
+    y_wel = y_rs + RS_H + WELLEN_ABSTAND                                            # Wellen unter der RS-Linie
+    H = (y_wel + WELLEN_H if wellen_ else y_rs + RS_H) + 24                         # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
@@ -273,21 +279,21 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
-        vor, auf = None, en_.get("aufsteigend")
-        for k_ in en_.get("kontraktionen") or []:   # Farbe je Welle (Micky 23.11.2026): grün schrumpft (Minervini:
-            if auf:                                  # höchstens 70 % der vorigen), gelb kaum, rot tiefer; in O'Neils
-                farbe = WELLE_ERSTE if vor is None else GRUEN if k_["tief"] > vor["tief"] else ROT   # aufsteigender
-            else:                                                                   # Base: grün = Tief über dem vorigen
-                farbe = (WELLE_ERSTE if vor is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor["tiefe"]
-                         else GELB if k_["tiefe"] <= vor["tiefe"] else ROT)
-            vor = k_
-            t_ = bdf.index[k_["tief_i"]]
-            if t_ < d.index[0]:
-                continue
-            j = pos(t_)
-            A(f'<text x="{X(j):.1f}" y="{Y(k_["tief"]) + 22:.1f}" fill="{farbe}" font-size="12" text-anchor="middle">'  # Layout
-              f'−{zahl(k_["tiefe"], 0)} %<title>Kontraktion {bdf.index[k_["hoch_i"]]:%d.%m.} → {t_:%d.%m.}: '
-              f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}</title></text>')            # Layout: unter dem Tief
+        auf, punkte_o, punkte_u = en_.get("aufsteigend"), [], []
+        for k_ in (en_.get("kontraktionen") or [])[1:]:   # Trichter (Micky 24.11.2026): über die Hochs und unter die
+            # Tiefs der Wellen der rechten Seite – die erste Welle ist der Fall der linken Seite (die Tiefe der Base)
+            for i_, w_, liste_ in ((k_["hoch_i"], k_["hoch"], punkte_o), (k_["tief_i"], k_["tief"], punkte_u)):
+                if bdf.index[i_] >= d.index[0]:                                     # Linie unter die Tiefs
+                    liste_.append((X(pos(bdf.index[i_])), Y(w_)))
+        if len(punkte_o) >= 2 and len(punkte_u) >= 2:
+            f_t = AMPEL.get("grün" if auf else en_.get("ampel"), TEXT_3)
+            flaeche = " ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in punkte_o + punkte_u[::-1])
+            A(f'<polygon points="{flaeche}" fill="{f_t}" fill-opacity="{TRICHTER_DECK}" stroke="none"/>')
+            for pk in (punkte_o, punkte_u):
+                A(f'<polyline points="{" ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in pk)}" fill="none" stroke="{f_t}" '
+                  f'stroke-width="1.6" stroke-opacity="0.9"><title>Trichter der Base: Wellen '   # Layout
+                  f'{t_esc(en_.get("folge") or "")} % – schließt er sich, trocknen die Verkäufer aus (Minervini)'
+                  f'</title></polyline>')
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
             amp = "grün" if auf else en_.get("ampel")
             urteil = ("🟢 Aufsteigende Base" if auf else "🟢 VCP" if amp == "grün" else "🔴 Enge" if amp == "rot"
@@ -488,6 +494,27 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                     if not np.isnan(r_i[i]):
                         A(f'<circle cx="{X(i):.1f}" cy="{YR(r_i[i]):.1f}" r="3" fill="{farbe}"/>')  # Layout
     letzter = None
+    if wellen_:                                                                     # Wellen als Balken unter der RS-
+        bdf_, en_w = ba["df"], ba.get("enge") or {}                                 # Linie (Micky 24.11.2026): einer je
+        rechts = wellen_[1:] or wellen_                                             # Welle der rechten Seite, so hoch
+        tmax = max(k_["tiefe"] for k_ in rechts) or 1                               # wie ihre Tiefe; die erste Welle
+        for n_, k_ in enumerate(wellen_):                                           # (linke Seite) bleibt außen vor
+            vor_w = wellen_[n_ - 1] if n_ else None
+            if n_ == 0 and len(wellen_) > 1:
+                continue
+            if en_w.get("aufsteigend"):
+                farbe = WELLE_ERSTE if vor_w is None else GRUEN if k_["tief"] > vor_w["tief"] else ROT
+            else:
+                farbe = (WELLE_ERSTE if vor_w is None else GRUEN if k_["tiefe"] <= vcp_zone.SCHRUMPF * vor_w["tiefe"]
+                         else GELB if k_["tiefe"] <= vor_w["tiefe"] else ROT)
+            t0, t1 = bdf_.index[k_["hoch_i"]], bdf_.index[k_["tief_i"]]
+            if t1 < d.index[0]:
+                continue
+            hb = WELLEN_H * k_["tiefe"] / tmax
+            A(f'<rect x="{X(pos(t1)) - WELLE_BREITE / 2:.1f}" y="{y_wel + WELLEN_H - hb:.1f}" width="{WELLE_BREITE}" '
+              f'height="{hb:.1f}" fill="{farbe}" fill-opacity="0.85" rx="2"><title>Welle {t0:%d.%m.} → {t1:%d.%m.}: '
+              f'{zahl(k_["hoch"])} → {zahl(k_["tief"])}, −{zahl(k_["tiefe"], 1)} %</title></rect>')   # Layout
+        A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Wellen der Base</text>')  # Layout
     for i, tag in enumerate(d.index):                                               # Zeitachse
         schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())  # Layout
         if schl != letzter and letzter is not None and (e["name"] != "Stunde" or tag.dayofweek == 0):
@@ -516,10 +543,11 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (GRUEN, "−20 % −10 % −5 %: die Kontraktionen der Base (Minervini), unter ihrem Tief – grün: höchstens 70 % so "
-              "tief wie die vorige (schrumpft), gelb: kaum kleiner, rot: tiefer, grau: die erste; in einer aufsteigenden "
-              "Base (O'Neil: drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen) grün = Tief über dem vorigen; an der "
-              "Zone das Urteil"),
+             (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen in der Base – schließt er sich, "
+              "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
+              "noch nicht reif, rot = die letzte Welle tiefer · Wellen der Base: unter der RS-Linie ein Balken je Welle, "
+              "so hoch wie ihre Tiefe – grau die erste, grün kleiner (höchstens 70 % der vorigen), gelb kaum, rot tiefer; "
+              "in der aufsteigenden Base grün = Tief über dem vorigen"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "

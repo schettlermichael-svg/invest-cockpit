@@ -1593,3 +1593,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Datenstand-Wache (24.11.2026): prüft statt der nicht mehr gepflegten Datei ^GSPC_ohlc die Indizes der Markt-Ampel (SPY,
   QQQ aus dem Kursspeicher) und die Sektor-ETFs von Yahoo – der rote Hinweis „abweichend Marktdaten (Indizes) Fr 20.11.“
   war ein Fehlalarm.
+- Kontraktionen grafisch (24.11.2026): statt der Prozentzahlen ein Trichter in der Base (Linie über die Hochs, Linie unter
+  die Tiefs der Wellen der rechten Seite, Fläche dazwischen; Farbe = Urteil der Enge, grün auch bei aufsteigender Base) und
+  unter der RS-Linie die Leiste „Wellen der Base“: ein Balken je Welle, so hoch wie ihre Tiefe, gefärbt wie bisher die
+  Zahlen (grün kleiner, gelb kaum, rot tiefer; aufsteigende Base: grün = Tief über dem vorigen). Die Tiefe steht beim
+  Darüberfahren.
