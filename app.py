@@ -104,13 +104,17 @@ def _aktualisieren(tk):
 
 
 
-GROSS_BREITE = 96                              # Layout: Großansicht in % der Bildschirmbreite
+GROSS_BREITE = 98                              # Layout: Großansicht in % der Bildschirmbreite
+GROSS_RAND = 180                               # Layout: Platz für Kopf und Ränder, der Rest der Bildschirmhöhe ist Chart
 
 
 @st.dialog("Chart", width="large")
 def _chart_gross(titel_, bild_):
-    """Großansicht des Charts (Micky 24.11.2026): derselbe Chart, fast bildschirmbreit – Einzelheiten besser erkennen."""
-    st.markdown(f'<style>div[role="dialog"]{{width:{GROSS_BREITE}vw!important;max-width:{GROSS_BREITE}vw!important}}</style>'
+    """Großansicht des Charts (Micky 24.11.2026) als Vollbild: derselbe Chart über die ganze Breite oder Höhe, je
+    nachdem, was zuerst voll ist. Die Box ist eine section, kein div – daher der Wähler [role="dialog"]."""
+    st.markdown(f'<style>[role="dialog"]{{width:{GROSS_BREITE}vw!important;max-width:{GROSS_BREITE}vw!important;'   # Layout
+                f'margin:1vh auto!important}}[role="dialog"] svg[role="img"]{{max-height:calc(100vh - {GROSS_RAND}px)}}'  # Layout
+                '</style>'
                 f'<div style="font-weight:600;margin-bottom:6px">{gestaltung.t(titel_)}</div>'
                 + gestaltung.karte(bild_), unsafe_allow_html=True)
 

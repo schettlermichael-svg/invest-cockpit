@@ -1607,3 +1607,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   springt“); Bollinger warnt vor der Finte (Head Fake). Vorher ±halbe Spanne über 10 Kerzen – zu eng, drei von vier Schlüssen
   lagen außerhalb.- Bollinger als Schalter (24.11.2026): Korridor, Squeeze und ▲/▼ erscheinen nur, wenn unter „Einblenden“ (vorher „Profil“)
   „Bollinger“ gewählt ist (`LINIEN_WAHL`); Grundstellung aus.
+- Großansicht als Vollbild (24.11.2026): der Wähler traf die Box nicht (sie ist eine section) – jetzt `[role="dialog"]`, 98 %
+  der Breite, und der Chart wird höchstens so hoch wie der Bildschirm minus `GROSS_RAND`, sodass er ganz hineinpasst.
