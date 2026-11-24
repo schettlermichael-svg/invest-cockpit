@@ -1615,3 +1615,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Kanal um den Zickzack (24.11.2026, am Schalter „Zickzack“): Linie durch die letzten zwei bestätigten Schwunghochs und eine
   durch die letzten zwei Schwungtiefs, bis zum rechten Rand – nicht erzwungen parallel (Brooks: parallel, zusammen- oder
   auseinanderlaufend). Am Ende steht die Form: Kanal (Breite ±20 %, `KANAL_TOLERANZ`), Trichter (enger), Megafon (weiter).
+- Trichter als gerade Linien (24.11.2026): Ausgleichsgerade durch die Wellenhochs und eine durch die Wellentiefs der rechten
+  Seite, vom ersten Punkt bis zur Ausbruchsstelle (erster Schluss über dem Pivot, sonst rechter Rand); die Punkte, die zählen,
+  bekommen einen Ring (`RING_R`). Die linke Seite zählt nur fürs Urteil.
