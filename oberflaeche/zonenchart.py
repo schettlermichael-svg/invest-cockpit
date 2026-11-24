@@ -383,10 +383,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
         if not fest.get("unten"):
             etiketten.append((OBEN + KURS_H - 4, "✈️↓ freie Bahn", ROT))   # Layout: ganz unten
-    if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
-        gegen = " · kein Setup" if t.get("kein_setup") else ""                         # Zone gegen den Zirkel: Linien bleiben
+    if t and not t.get("kein_setup"):                                               # Schlachtplan (Micky 24.11.2026):
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
-        ein_, stopp_ = t["einstieg"], t["stopp"]                                     # Schlachtplan (Micky 24.11.2026):
+        ein_, stopp_ = t["einstieg"], t["stopp"]                                     # nur mit echtem Setup
         decken = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]   # grün bis zur nächsten
         ziel_ = min(decken) if decken else None                                     # Decke, rot bis zum Stopp
         y_e, y_z, y_s = Y(min(max(ein_, pmin), pmax)), Y(min(ziel_, pmax) if ziel_ else pmax), Y(max(stopp_, pmin))
@@ -397,6 +396,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<rect x="{x_t:.1f}" y="{y_e:.1f}" width="{ende - x_t:.1f}" height="{max(0, y_s - y_e):.1f}" fill="{ROT}" '
           f'fill-opacity="{PLAN_DECK}"><title>Risiko: vom Einstieg {zahl(ein_)} bis zum Stopp {zahl(stopp_)} '
           f'(−{zahl(t["risiko"], 1)} %)</title></rect>')
+    if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
+        gegen = " · kein Setup" if t.get("kein_setup") else ""                         # Zone gegen den Zirkel: Linien bleiben
+        x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
             if name != "Stopp" and am_pivot:                                        # steht schon an der Pivot-Linie

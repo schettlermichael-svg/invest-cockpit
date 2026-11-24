@@ -337,17 +337,20 @@ def reife(r):
     vol_txt = f"Volumen der Enge {zahl(en_.get('volumen') or 0, 0)} % des Schnitts"
     aus.append(("leise", "grau" if not zwei else "grün" if ruhig and trocken else "gelb" if ruhig or trocken else "rot",
                 vol_txt))
-    ab = en_.get("abstand") or 0.0
-    aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau",
-                f"{zahl(ab, 1)} % zum Pivot {zahl(en_['pivot'])}"))
+    la = ((r.get("fuehrte") or {}).get("lage") or {}).get("Tag") or {}
+    piv = la.get("pivot") or en_["pivot"]                                          # derselbe Pivot wie im Chart
     df = ba.get("df")
+    kurs = la.get("kurs") or (float(df["Close"].iloc[-1]) if df is not None and len(df) else piv)
+    ab = (kurs / piv - 1) * 100
+    aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau", f"{zahl(ab, 1)} % zum Pivot {zahl(piv)}"))
     stufe = ("Ausbruch", "grau", "noch kein Schluss über dem Pivot")
-    if df is not None and len(df):
+    if df is not None and len(df) and ab > 0:
         c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
         v50 = np.convolve(v, np.ones(REIFE_SCHNITT) / REIFE_SCHNITT, mode="full")[:len(v)]
-        ueber = [i for i in range(en_["pivot_i"] + 1, len(c)) if c[i] > en_["pivot"]]
-        if ueber and ab > 0:                                                         # wie „am Pivot“: der Abstand der Enge
-            i = ueber[0]
+        i = len(c) - 1                                                             # Beginn der jetzigen Strecke über
+        while i > 0 and c[i - 1] > piv:                                            # dem Pivot
+            i -= 1
+        if c[i] > piv:
             mit = i >= REIFE_SCHNITT and v[i] > v50[i - 1]
             stufe = ("Ausbruch", "grün" if mit else "gelb",
                      f"Schluss über dem Pivot am {df.index[i]:%d.%m.}" + (" mit Volumen über dem Schnitt" if mit

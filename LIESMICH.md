@@ -1630,6 +1630,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   - Wellenmesser (Schalter „Wellen“, an): je Welle der Base ein Balken vom Hoch bis zum Tief, T1, T2 …; grün = höchstens
     70 % der vorigen (vcp_zone.SCHRUMPF), gelb = kleiner, aber nicht genug, rot = tiefer; % im Hinweis (`WELLE_B`, `WELLE_DECK`).
   - Reife-Leiste über dem Chart (zonenseite.reife): Base → enger → leise → am Pivot → Ausbruch als Ampeln; Ausbruch grün
-    mit Volumen über dem 50-Tage-Schnitt (`REIFE_SCHNITT`), sonst gelb.
-  - Schlachtplan (Tag, mit Trade): grüne Fläche vom Einstieg bis zur nächsten Decke (sonst bis zum Rand = freie Bahn), rote
+    mit Volumen über dem 50-Tage-Schnitt (`REIFE_SCHNITT`), sonst gelb; derselbe Pivot wie im Chart.
+  - Schlachtplan (Tag, nur mit echtem Setup – nicht bei „kein Setup“): grüne Fläche vom Einstieg bis zur nächsten Decke (sonst bis zum Rand = freie Bahn), rote
     bis zum Stopp (`PLAN_DECK`).
