@@ -207,7 +207,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß;
         moeglich = bool(t and t.get("kein_setup"))       # ohne Setup blass als „möglicher Pivot“
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
-          f'stroke-width="{1.4 if moeglich else 2.4}" stroke-dasharray="8 4" stroke-opacity="{PIVOT_BLASS if moeglich else 1}">'
+          f'stroke-width="{1.4 if moeglich else 2.4}" stroke-dasharray="8 4" stroke-opacity="{PIVOT_BLASS if moeglich else 1}">'   # Layout
           f'<title>{"möglicher " if moeglich else ""}Pivot {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
         etiketten.append((Y(piv), ("möglicher Pivot" if moeglich else "Pivot") + f" {zahl(piv)}"   # Layout: kurz, passt
                           + (" = Oberkante" if oben_ and not moeglich else ""),                    # an den Rand
@@ -298,7 +298,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                      else ", ".join(en_.get("fehlt") or ["noch nicht reif"]))
             zs = pd.Timestamp(la["beginn"])
             xz_ = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
-            x_u = min(xz_ + 6 + len(la["name"]) * NAME_BREITE, ende - len(urteil) * URTEIL_BREITE)   # nie über den Rand
+            x_u = min(xz_ + 6 + len(la["name"]) * NAME_BREITE, ende - len(urteil) * URTEIL_BREITE)   # nie über den Rand  (Layout)
             A(f'<text x="{x_u:.1f}" y="{Y(hi) - 6:.1f}" fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">'      # Layout
               f'{t_esc(urteil)}<title>{t_esc(grund)} · Wellen {t_esc(en_.get("folge") or "")} % · VCP (Minervini): '
               f'jede Welle höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · '
@@ -373,7 +373,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     belegt = []
     for y0, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung: der
         y_, k_ = y0, 0                                                              # nächste freie Platz, abwechselnd
-        while any(abs(y_ - b_) < ZEILE for b_ in belegt) or not OBEN - 4 <= y_ <= OBEN + KURS_H + 4:   # darunter und
+        while any(abs(y_ - b_) < ZEILE for b_ in belegt) or not OBEN - 4 <= y_ <= OBEN + KURS_H + 4:   # darunter und  (Layout)
             k_ += 1                                                                 # darüber, im Kursbereich (Micky
             y_ = y0 + ZEILE * ((k_ + 1) // 2) * (1 if k_ % 2 else -1)              # 24.11.: nicht ins Volumen)
             if k_ > ETIKETT_SUCHE:
@@ -396,7 +396,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if pkt_v:
         A(f'<polyline points="{pkt_v}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
           f'<title>Volumen-Schnitt {VOL_SCHNITT[e["name"]]} Kerzen</title></polyline>')
-    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Ø {VOL_SCHNITT[e["name"]]}'
+    A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Ø {VOL_SCHNITT[e["name"]]}'   # Layout
       f'<title>weiße Linie = Schnitt der letzten {VOL_SCHNITT[e["name"]]} Kerzen</title></text>')   # Layout
     leiste = {}                                                                     # Zeichenleiste: Kerze → [(Zeichen, Text)]
     vv = df["Volume"].astype(float).to_numpy()
@@ -434,11 +434,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         reakt = " · ".join(f"{w} {r:+.1f} %".replace(".", ",") for w, r in zip(KERZE_WORT[e["name"]], (r1, r2))
                            if r is not None)
         j = g - n0
-        A(f'<text x="{X(j) + (10 if j in leiste else 0):.1f}" y="{y_zei + 15}" fill="{TEXT_2}" font-size="12" '
+        A(f'<text x="{X(j) + (10 if j in leiste else 0):.1f}" y="{y_zei + 15}" fill="{TEXT_2}" font-size="12" '   # Layout
           f'font-weight="700" text-anchor="middle">E<title>Zahlen am {tag_:%d.%m.%Y} – Kurs {reakt}</title></text>')  # Layout
     if naechster is not None:                                                      # 📅 der nächste Termin rechts
         tage_bis = (naechster - pd.Timestamp.today().normalize()).days
-        A(f'<text x="{ende + 2}" y="{y_vol + 26}" fill="{TEXT_2}" font-size="10">📅 {naechster:%d.%m.}'
+        A(f'<text x="{ende + 2}" y="{y_vol + 26}" fill="{TEXT_2}" font-size="10">📅 {naechster:%d.%m.}'   # Layout
           + (f" · {tage_bis} T." if tage_bis >= 0 else "") + f'<title>nächste Zahlen am {naechster:%d.%m.%Y}'
           + (f", in {tage_bis} Tagen" if tage_bis >= 0 else "") + '</title></text>')   # Layout
     for i, liste_ in leiste.items():

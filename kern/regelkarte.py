@@ -330,7 +330,8 @@ BEREICHE = [
                "Rückschlag höchstens 8 %; Kurs am Hoch: höchstens 3 % darunter. Qualität: Eigenkapitalrendite ab 17 %, "
                "Jahresgewinn ab 25 %; Reaktion auf Zahlen: Lücke mit 1,5-fachem Volumen, Abverkauf ab −3 %.",
          messung=["rueckenwind.rechnen", "rueckenwind_seite.wetterkarte", "rueckenwind_seite.gruppen",
-                  "rueckenwind_seite._zufluss"], pruefer=[],
+                  "rueckenwind_seite._zufluss", "rueckenwind_seite.liste", "rueckenwind_seite.titel_karten",
+                  "rueckenwind_seite.dreifach_block"], pruefer=[],
          luecke="kein Prüfer sieht die Rückenwind-Seite (der Gruppen-Prüfer sieht nur Geldfluss und Feld der Gruppen)"),
     dict(name="Fundament (Zahlen)", quelle="Minervini (Regelkatalog Kap. 7–8), O'Neil",
          regel="Gewinn je Quartal und Beschleunigung, Umsatz kräftig ab 15 % (Rate muss um mindestens 1 Punkt steigen), "
@@ -467,7 +468,7 @@ BEREICHE = [
 # Karte, wenn eine Messfunktion der Karte sie benutzt – direkt oder über Funktionen, die sie aufruft. Was keiner gehört,
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
-    "chart.ETIKETT": "Layout", "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
+    "chart.ETIKETT": "Layout", **{f"rueckenwind_seite.TABELLE_{n_}": "Layout" for n_ in ("HOEHE", "ZEILE", "RAND")}, "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
     "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",

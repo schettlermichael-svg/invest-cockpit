@@ -21,7 +21,7 @@ KOPF_SCHRIFT = 12        # Schriftgröße der Kopfzeile
 KOPF_ABSTAND = 8         # Abstand der Kopfzeile
 KARTE_RAND = 8           # Rand der Wetterkarte
 TERMIN_TAGE_ZEIGEN = 60  # „in n T.“ zeigen bis 60 Tage
-THEMA_ZEICHEN = 40       # Thema in der Tabelle: höchstens 40 Zeichen
+THEMA_ZEICHEN = 40       # Layout: Thema höchstens 40 Zeichen
 
 
 def _fn(f):
@@ -270,7 +270,7 @@ def dreifach_block(erg):
         gruppen_[_drei_gruppe(feld.get(tk))].append((tk, x))
     if not any(gruppen_):
         return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind</h3><p style="color:{TEXT_3}">heute kein Titel mit '
-                     f'Kurs, Geld und Zahlen grün</p>', oben=8, unten=0)
+                     f'Kurs, Geld und Zahlen grün</p>', oben=8, unten=0)   # Layout
     teile = []
     for (sym, name, erkl), liste_ in zip(DREI_GRUPPEN, gruppen_):
         zeilen = []
@@ -304,7 +304,7 @@ def dreifach_block(erg):
     return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
                  f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
                  f'Branche, Thema) und Zahlen zugleich grün – die stärkste Truppe. Am stärksten mit einem Setup am '
-                 f'Pivot (🎯).</p>' + "".join(teile), oben=8, unten=0)
+                 f'Pivot (🎯).</p>' + "".join(teile), oben=8, unten=0)   # Layout
 
 
 def _termin(x, stand):
@@ -492,7 +492,9 @@ def _volumen_zeichen(x):
     return ("🟢 " if z >= ZUFLUSS[0] else "🔴 " if z < ZUFLUSS[1] else "🟡 ") + zahl(z, 1) + "×"
 
 
-TABELLE_HOEHE, TABELLE_ZEILE, TABELLE_RAND = 560, 35, 3   # Layout: Höhe der Tabelle je Klasse (Zeile 35 px)
+TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
+TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
+TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
 BREITE = {"Titel": 120, "Phase": 105, "Setup": 130, "Keim": 140, "⚔️ Front": 70, "RS": 85, "Momentum": 70,   # Layout:
           "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 110}   # px, zusammen 1100 = Seitenbreite
