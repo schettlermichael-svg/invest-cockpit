@@ -1625,3 +1625,11 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   grauen Punkten.
 - Trichter ab der ersten Welle (24.11.2026, Micky): WST hatte nur zwei Wellen (12 → 8 %) – Urteil 🟢 VCP, aber rechts nur
   eine Welle, also kein Trichter. Jetzt zeichnet er alle Wellen, die das Urteil zählt; die erste (T1) ist die Öffnung.
+- Formation neu (24.11.2026, Micky: „Trichter und Zickzack holen mich nicht ab“): Trichter, Zickzack und Kanal entfernt.
+  Dafür drei Dinge, die ein Blick erklärt:
+  - Wellenmesser (Schalter „Wellen“, an): je Welle der Base ein Balken vom Hoch bis zum Tief, T1, T2 …; grün = höchstens
+    70 % der vorigen (vcp_zone.SCHRUMPF), gelb = kleiner, aber nicht genug, rot = tiefer; % im Hinweis (`WELLE_B`, `WELLE_DECK`).
+  - Reife-Leiste über dem Chart (zonenseite.reife): Base → enger → leise → am Pivot → Ausbruch als Ampeln; Ausbruch grün
+    mit Volumen über dem 50-Tage-Schnitt (`REIFE_SCHNITT`), sonst gelb.
+  - Schlachtplan (Tag, mit Trade): grüne Fläche vom Einstieg bis zur nächsten Decke (sonst bis zum Rand = freie Bahn), rote
+    bis zum Stopp (`PLAN_DECK`).

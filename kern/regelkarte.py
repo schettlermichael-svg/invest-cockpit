@@ -100,7 +100,7 @@ WERKZEUGE = {
                                           "Minervinis Drittel der Base (Micky 23.11.2026): im oberen Drittel ist das Hoch der "
                                           "letzten Enge der Pivot (O'Neils Henkel), im mittleren ein Cheat, im unteren ein Low "
                                           "Cheat – dann ist die Oberkante der Pivot.",
-             messung=["vcp_zone.enge", "vcp_zone.drittel"], stand="gemessen",
+             messung=["vcp_zone.enge", "vcp_zone.drittel", "zonenseite.reife"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
                                                "Zone, mit Pivot im unteren oder mittleren Drittel der größeren Zone, ist ein "

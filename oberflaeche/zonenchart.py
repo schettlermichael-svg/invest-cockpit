@@ -30,8 +30,8 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "trichter": "Trichter", "zickzack": "Zickzack", "bollinger": "Bollinger"}   # Schalter (Micky
-LINIEN_START = ["trichter"]                                                                # 24.11.2026); Trichter an
+LINIEN_WAHL = {"details": "Profil-Details", "wellen": "Wellen", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_START = ["wellen"]                                                     # 24.11.2026); Wellen an
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -41,11 +41,6 @@ LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen bes
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
-ZICK_BREITE = 1.0                      # Layout: Zickzack durch die Wendepunkte
-ZICK_DECK = 0.6                        # Layout
-KANAL_FARBE = "#5DCAA5"                # Kanal um den Zickzack: Kanal und Trichter
-MEGAFON_FARBE = "#F0997B"              # … Megafon (Schwünge werden größer)
-KANAL_TOLERANZ = 0.2                   # Technik: Breite am Ende ±20 % der Breite am Anfang gilt noch als parallel
 SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
 VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
 VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
@@ -57,8 +52,9 @@ KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in 
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
-TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
-RING_R = 5                             # Layout: Ring um die Punkte des Trichters
+WELLE_B = 9                            # Layout: Breite eines Balkens im Wellenmesser
+WELLE_DECK = 0.35                      # Layout
+PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
 KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
 KORRIDOR_RAND = 0.5                    # Layout
@@ -123,7 +119,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Trichter, Zickzack, Bollinger), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Wellen, Bollinger), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
@@ -324,40 +320,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
-    zick = [f"{X(i_ - n0):.1f},{Y(p_):.1f}" for i_, p_, _ in zz if 0 <= i_ - n0 < N]   # Zickzack (Micky 24.11.2026):
-    if "zickzack" in linien_ and len(zick) >= 2:                                    # alle Schwungpunkte verbunden – die
-        A(f'<polyline points="{" ".join(zick)}" fill="none" stroke="{WENDE_FARBE}" stroke-width="{ZICK_BREITE}" '
-          f'stroke-opacity="{ZICK_DECK}"><title>Zickzack: alle Wendepunkte ab 2 × ATR verbunden – jeder Strich ist ein '
-          f'Schwung; werden sie kürzer, zieht sich der Kurs zusammen</title></polyline>')   # Wellen selbst
-    fest_ = zz[:-1]                                                                 # Kanal (Micky 24.11.2026): Linie durch
-    hochs = [(i_ - n0, p_) for i_, p_, art in fest_ if art == "H"][-2:]             # die letzten zwei bestätigten Hochs
-    tiefs = [(i_ - n0, p_) for i_, p_, art in fest_ if art == "T"][-2:]             # und Tiefs, bis zum rechten Rand –
-    if ("zickzack" in linien_ and len(hochs) == 2 and len(tiefs) == 2               # nicht erzwungen parallel (Brooks)
-            and min(hochs[0][0], tiefs[0][0]) >= 0):
-        def k_wert(pk, j):
-            (j1, p1), (j2, p2) = pk
-            return p1 + (p2 - p1) * (j - j1) / (j2 - j1) if j2 != j1 else p2
-        j0, j_rand = min(hochs[0][0], tiefs[0][0]), N - 1
-        w0, w1 = k_wert(hochs, j0) - k_wert(tiefs, j0), k_wert(hochs, j_rand) - k_wert(tiefs, j_rand)
-        form = ("Megafon" if w1 > w0 * (1 + KANAL_TOLERANZ) else "Trichter" if w1 < w0 * (1 - KANAL_TOLERANZ)
-                else "Kanal")
-        sinn = {"Kanal": "die Linien laufen parallel – der Trend läuft geordnet",
-                "Trichter": "die Linien laufen zusammen – die Schwünge werden kleiner, die Feder spannt sich",
-                "Megafon": "die Linien laufen auseinander – die Schwünge werden größer, die Unruhe wächst"}[form]
-        k_farbe = MEGAFON_FARBE if form == "Megafon" else KANAL_FARBE
-        y_oben, y_unten = Y(pmax), Y(pmin)
-        for pk in (hochs, tiefs):
-            xa, ya, xe, ye = X(pk[0][0]), Y(pk[0][1]), X(j_rand), Y(k_wert(pk, j_rand))
-            if not y_oben <= ye <= y_unten and ye != ya:                            # an der Kante des Kursfelds enden
-                grenze = y_oben if ye < y_oben else y_unten
-                xe, ye = xa + (xe - xa) * (grenze - ya) / (ye - ya), grenze
-            A(f'<line x1="{xa:.1f}" y1="{ya:.1f}" x2="{xe:.1f}" y2="{ye:.1f}" stroke="{k_farbe}" stroke-width="1.3" '
-              f'stroke-opacity="0.85"><title>{form}: Linie durch die letzten zwei '
-              f'{"Schwunghochs" if pk is hochs else "Schwungtiefs"} – {sinn}</title></line>')   # Layout
-        ym = (Y(k_wert(hochs, j_rand)) + Y(k_wert(tiefs, j_rand))) / 2
-        if y_oben + 10 <= ym <= y_unten - 4:                                         # Layout
-            A(f'<text x="{X(j_rand) - 4:.1f}" y="{ym:.1f}" fill="{k_farbe}" font-size="11" text-anchor="end">{form}'   # Layout
-              f'<title>{form}: {sinn}</title></text>')                              # Layout
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
@@ -379,43 +341,28 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
-    if ba and e["name"] != "Stunde" and "trichter" in linien_:                      # Enge: die Kontraktionen der Base
+    if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
-        auf, punkte_o, punkte_u = en_.get("aufsteigend"), [], []
-        for k_ in en_.get("kontraktionen") or []:   # Trichter (Micky 24.11.2026): alle Wellen, die das Urteil zählt –
-            # die erste (Minervinis T1, der Fall der linken Seite) ist die Öffnung des Trichters
-            for i_, w_, liste_ in ((k_["hoch_i"], k_["hoch"], punkte_o), (k_["tief_i"], k_["tief"], punkte_u)):
-                if bdf.index[i_] >= d.index[0]:
-                    liste_.append((pos(bdf.index[i_]), w_))
-        if len(punkte_o) >= 2 and len(punkte_u) >= 2:                               # Wellenform (Micky 24.11.2026): mit
-            f_t = AMPEL.get("grün" if auf else en_.get("ampel"), TEXT_3)           # den Punkten mitgehen, gestrichelt
-            j_b = N - 1                                                            # weiter bis zur Ausbruchsstelle
-            p_i, p_w = en_.get("pivot_i"), en_.get("pivot")
-            if p_i is not None and p_w is not None:
-                bs = bdf["Close"].to_numpy(float)
-                drueber = [k for k in range(p_i + 1, len(bdf)) if bs[k] > p_w]
-                if drueber:
-                    j_b = pos(bdf.index[drueber[0]])
-            ende_o = (max(j_b, punkte_o[-1][0]), punkte_o[-1][1])                  # oben: waagrecht an der Kante
-            (j1, w1), (j2, w2) = punkte_u[-2:]                                     # unten: in der Richtung der letzten
-            w_e = w2 + (w2 - w1) * (max(j_b, j2) - j2) / (j2 - j1) if j2 != j1 else w2   # Welle, nie über die Kante
-            ende_u = (max(j_b, j2), min(w_e, ende_o[1]))
-            xy = lambda pk: [(X(j_), Y(min(max(w_, pmin), pmax))) for j_, w_ in pk]   # noqa: E731
-            flaeche = " ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(punkte_o + [ende_o]) + xy(punkte_u + [ende_u])[::-1])
-            A(f'<polygon points="{flaeche}" fill="{f_t}" fill-opacity="{TRICHTER_DECK}" stroke="none"/>')
-            titel_t = (f'Trichter der Base: Wellen ({t_esc(en_.get("folge") or "")} %) – schließt er '
-                       f'sich, trocknen die Verkäufer aus (Minervini); gestrichelt bis zur Ausbruchsstelle')
-            for pk, ende_ in ((punkte_o, ende_o), (punkte_u, ende_u)):
-                A(f'<polyline points="{" ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(pk))}" fill="none" '
-                  f'stroke="{f_t}" stroke-width="1.6" stroke-opacity="0.9"><title>{titel_t}</title></polyline>')   # Layout
-                if ende_[0] > pk[-1][0]:
-                    (xa_, ya_), (xb_, yb_) = xy([pk[-1], ende_])
-                    A(f'<line x1="{xa_:.1f}" y1="{ya_:.1f}" x2="{xb_:.1f}" y2="{yb_:.1f}" stroke="{f_t}" '
-                      f'stroke-width="1.4" stroke-dasharray="5 4" stroke-opacity="0.9"><title>{titel_t}</title></line>')
-            for j_, w_ in punkte_o + punkte_u:                                      # Ringe: die Punkte, die zählen –
-                y_r = Y(w_) - 6 if (j_, w_) in punkte_o else Y(w_) + 6              # auf den grauen Punkten (Layout)
-                A(f'<circle cx="{X(j_):.1f}" cy="{y_r:.1f}" r="{RING_R}" fill="none" stroke="{f_t}" '
-                  f'stroke-width="1.4"><title>zählt für den Trichter</title></circle>')
+        auf = en_.get("aufsteigend")
+        vorige = None
+        for nr_, k_ in enumerate(en_.get("kontraktionen") or [], 1):   # Wellenmesser (Micky 24.11.2026): je Welle ein
+            t_ = k_["tiefe"]                                           # Balken vom Hoch bis zum Tief – werden sie
+            f_w = (TEXT_3 if vorige is None else AMPEL["grün"] if t_ <= vcp_zone.SCHRUMPF * vorige   # kleiner, zieht sich der
+                   else AMPEL["gelb"] if t_ < vorige else AMPEL["rot"])                     # Kurs zusammen (Minervini)
+            vorige_txt = "" if vorige is None else (
+                " · höchstens 70 % der vorigen – sauber geschrumpft" if t_ <= vcp_zone.SCHRUMPF * vorige
+                else " · kleiner als die vorige, aber über 70 %" if t_ < vorige else " · tiefer als die vorige")
+            vorige = t_
+            if "wellen" not in linien_ or bdf.index[k_["tief_i"]] < d.index[0]:
+                continue
+            j_m = (pos(bdf.index[k_["hoch_i"]]) + pos(bdf.index[k_["tief_i"]])) / 2
+            y_h, y_t = Y(min(k_["hoch"], pmax)), Y(max(k_["tief"], pmin))
+            A(f'<rect x="{X(j_m) - WELLE_B / 2:.1f}" y="{y_h:.1f}" width="{WELLE_B}" height="{max(1, y_t - y_h):.1f}" '
+              f'rx="2" fill="{f_w}" fill-opacity="{WELLE_DECK}" stroke="{f_w}" stroke-width="0.8">'
+              f'<title>T{nr_}: {zahl(t_, 1)} % vom Hoch {zahl(k_["hoch"])} bis zum Tief {zahl(k_["tief"])}{vorige_txt}'
+              f'</title></rect>')
+            A(f'<text x="{X(j_m):.1f}" y="{min(y_t + 13, OBEN + KURS_H - 2):.1f}" fill="{f_w}" font-size="11" '   # Layout
+              f'text-anchor="middle">T{nr_}</text>')
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
             amp = "grün" if auf else en_.get("ampel")
             urteil = ("🟢 Aufsteigende Base" if auf else "🟢 VCP" if amp == "grün" else "🔴 Enge" if amp == "rot"
@@ -439,6 +386,17 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
         gegen = " · kein Setup" if t.get("kein_setup") else ""                         # Zone gegen den Zirkel: Linien bleiben
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
+        ein_, stopp_ = t["einstieg"], t["stopp"]                                     # Schlachtplan (Micky 24.11.2026):
+        decken = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]   # grün bis zur nächsten
+        ziel_ = min(decken) if decken else None                                     # Decke, rot bis zum Stopp
+        y_e, y_z, y_s = Y(min(max(ein_, pmin), pmax)), Y(min(ziel_, pmax) if ziel_ else pmax), Y(max(stopp_, pmin))
+        chance = (f"bis zur nächsten Decke {zahl(ziel_)} (+{zahl((ziel_ / ein_ - 1) * 100, 1)} %)" if ziel_
+                  else "keine Decke darüber – freie Bahn")
+        A(f'<rect x="{x_t:.1f}" y="{y_z:.1f}" width="{ende - x_t:.1f}" height="{max(0, y_e - y_z):.1f}" fill="{GRUEN}" '
+          f'fill-opacity="{PLAN_DECK}"><title>Chance: vom Einstieg {zahl(ein_)} {chance}</title></rect>')
+        A(f'<rect x="{x_t:.1f}" y="{y_e:.1f}" width="{ende - x_t:.1f}" height="{max(0, y_s - y_e):.1f}" fill="{ROT}" '
+          f'fill-opacity="{PLAN_DECK}"><title>Risiko: vom Einstieg {zahl(ein_)} bis zum Stopp {zahl(stopp_)} '
+          f'(−{zahl(t["risiko"], 1)} %)</title></rect>')
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
             if name != "Stopp" and am_pivot:                                        # steht schon an der Pivot-Linie
@@ -644,10 +602,10 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs aller Wellen der Base, ab der ersten (T1) (Ringe = Punkte, die "
-              "zählen), gestrichelt bis zur Ausbruchsstelle – schließt er sich, "
-              "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
-              "noch nicht reif, rot = die letzte Welle tiefer"),
+             (GRUEN, "▮ Wellenmesser: je Welle der Base ein Balken vom Hoch bis zum Tief (T1, T2 …) – grün = höchstens "
+              "70 % der vorigen (Minervinis VCP), gelb = kleiner, aber nicht genug, rot = tiefer als die vorige"),
+             (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
+              "rote Fläche bis zum Stopp (das Risiko)"),
              (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "
               "sonst blass; leuchtet er, ist er so schmal wie seit ~6 Monaten nicht (Bollingers Squeeze: Feder gespannt)"),
              (SPRUNG_FARBE, "▲▼ Feder springt: erster Schluss über bzw. unter dem Korridor nach dem Squeeze – "

@@ -604,7 +604,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
                     anker = zonenseite.anker_laden(ticker, ebene)
         bild_ = zonenseite.chart(teile["r"], ebene, sorted(gd), anker[:zonenseite.PROFIL_PLATZ], set(poc_wahl),
                                  anker[zonenseite.PROFIL_PLATZ])
-        st.markdown(gestaltung.seite(gestaltung.karte(bild_ + teile["legende"]), oben=0, unten=12), unsafe_allow_html=True)
+        st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.reife_html(teile["r"]) + bild_ + teile["legende"]),   # Reife-Leiste
+                                     oben=0, unten=12), unsafe_allow_html=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 

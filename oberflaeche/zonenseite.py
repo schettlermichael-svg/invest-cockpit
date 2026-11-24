@@ -303,3 +303,65 @@ def anker_setzen(tk, ebene, k, tag):
     w[k] = f"{pd.Timestamp(tag):%Y-%m-%d %H:%M}" if tag is not None else None
     alle[tk.upper()][ebene] = w
     json_schreiben(_anker_pfad(), alle)
+
+
+# ── Reife-Leiste (Micky 24.11.2026): fünf Stufen über dem Chart – wie weit ist die Base? ──
+REIFE_STUFEN = ("Base", "enger", "leise", "am Pivot", "Ausbruch")
+REIFE_SCHNITT = 50         # Ausbruchsvolumen über dem 50-Tage-Schnitt (Micky: über dem Schnitt reicht, O'Neil 1,4× zu streng)
+
+
+def reife(r):
+    """Die Base des Tages in fünf Stufen → [(Stufe, Ampel, Grund)]. Base: mindestens zwei Wellen (Minervini 2–6);
+    enger: jede Welle höchstens 70 % der vorigen und die letzte eng; leise: das Volumen leiser als in der ersten Welle
+    und unter dem Schnitt; am Pivot: höchstens RAND_PCT darunter; Ausbruch: Schluss über dem Pivot, mit Volumen über
+    dem 50-Tage-Schnitt grün (Micky: über dem Schnitt reicht)."""
+    import numpy as np
+    import vcp_zone
+    ba = (r.get("fuehrte") or {}).get("basis") or {}
+    en_ = ba.get("enge") or {}
+    kontr = en_.get("kontraktionen") or []
+    if len(kontr) < 1 or en_.get("pivot") is None:
+        return [(s_, "grau", "keine Base mit Wellen") for s_ in REIFE_STUFEN]
+    zwei = len(kontr) >= 2
+    aus = [("Base", "grün" if zwei else "gelb", f"{len(kontr)} Welle{'n' if zwei else ''} {en_.get('folge', '')} %")]
+    if not zwei:
+        aus.append(("enger", "grau", "erst eine Welle"))
+    elif en_.get("schrumpft") and en_.get("eng"):
+        aus.append(("enger", "grün", f"jede Welle höchstens 70 % der vorigen, die letzte {zahl(en_['enge_tiefe'], 1)} %"))
+    elif en_.get("groesser"):
+        aus.append(("enger", "rot", "die letzte Welle ist tiefer als die vorige"))
+    else:
+        aus.append(("enger", "gelb", "schrumpft nicht sauber" if not en_.get("schrumpft")
+                    else f"die letzte Welle noch {zahl(en_['enge_tiefe'], 1)} % tief"))
+    ruhig, trocken = en_.get("ruhig"), en_.get("trocken")
+    vol_txt = f"Volumen der Enge {zahl(en_.get('volumen') or 0, 0)} % des Schnitts"
+    aus.append(("leise", "grau" if not zwei else "grün" if ruhig and trocken else "gelb" if ruhig or trocken else "rot",
+                vol_txt))
+    ab = en_.get("abstand") or 0.0
+    aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau",
+                f"{zahl(ab, 1)} % zum Pivot {zahl(en_['pivot'])}"))
+    df = ba.get("df")
+    stufe = ("Ausbruch", "grau", "noch kein Schluss über dem Pivot")
+    if df is not None and len(df):
+        c, v = df["Close"].to_numpy(float), df["Volume"].to_numpy(float)
+        v50 = np.convolve(v, np.ones(REIFE_SCHNITT) / REIFE_SCHNITT, mode="full")[:len(v)]
+        ueber = [i for i in range(en_["pivot_i"] + 1, len(c)) if c[i] > en_["pivot"]]
+        if ueber and ab > 0:                                                         # wie „am Pivot“: der Abstand der Enge
+            i = ueber[0]
+            mit = i >= REIFE_SCHNITT and v[i] > v50[i - 1]
+            stufe = ("Ausbruch", "grün" if mit else "gelb",
+                     f"Schluss über dem Pivot am {df.index[i]:%d.%m.}" + (" mit Volumen über dem Schnitt" if mit
+                                                                          else " – Volumen unter dem Schnitt"))
+    aus.append(stufe)
+    return aus
+
+
+def reife_html(r):
+    """Die Reife-Leiste als Zeile über dem Chart."""
+    teile = []
+    for s_, amp, grund in reife(r):
+        f_ = gestaltung.AMPEL.get(amp, gestaltung.GRAU)
+        teile.append(f'<span title="{gestaltung.t(grund)}" style="flex:1;text-align:center;padding:5px 4px;'   # Layout
+                     f'border-radius:6px;border:1px solid {f_};color:{f_};font-size:13px;'                    # Layout
+                     f'background:{f_}22">{"✓ " if amp == "grün" else ""}{s_}</span>')                         # Layout
+    return ('<div style="display:flex;gap:6px;margin:0 0 8px 0">' + "".join(teile) + "</div>")              # Layout
