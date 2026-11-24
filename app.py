@@ -105,7 +105,7 @@ def _aktualisieren(tk):
 
 
 GROSS_BREITE = 98                              # Layout: Großansicht in % der Bildschirmbreite
-GROSS_RAND = 180                               # Layout: Platz für Kopf und Ränder, der Rest der Bildschirmhöhe ist Chart
+GROSS_RAND = 230                               # Layout: Platz für Kopf und Ränder, der Rest der Bildschirmhöhe ist Chart
 
 
 @st.dialog("Chart", width="large")
