@@ -43,6 +43,9 @@ RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Ku
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
 ZICK_BREITE = 1.0                      # Layout: Zickzack durch die Wendepunkte
 ZICK_DECK = 0.6                        # Layout
+KANAL_FARBE = "#5DCAA5"                # Kanal um den Zickzack: Kanal und Trichter
+MEGAFON_FARBE = "#F0997B"              # … Megafon (Schwünge werden größer)
+KANAL_TOLERANZ = 0.2                   # Technik: Breite am Ende ±20 % der Breite am Anfang gilt noch als parallel
 SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
 VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
 VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
@@ -325,6 +328,35 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<polyline points="{" ".join(zick)}" fill="none" stroke="{WENDE_FARBE}" stroke-width="{ZICK_BREITE}" '
           f'stroke-opacity="{ZICK_DECK}"><title>Zickzack: alle Wendepunkte ab 2 × ATR verbunden – jeder Strich ist ein '
           f'Schwung; werden sie kürzer, zieht sich der Kurs zusammen</title></polyline>')   # Wellen selbst
+    fest_ = zz[:-1]                                                                 # Kanal (Micky 24.11.2026): Linie durch
+    hochs = [(i_ - n0, p_) for i_, p_, art in fest_ if art == "H"][-2:]             # die letzten zwei bestätigten Hochs
+    tiefs = [(i_ - n0, p_) for i_, p_, art in fest_ if art == "T"][-2:]             # und Tiefs, bis zum rechten Rand –
+    if ("zickzack" in linien_ and len(hochs) == 2 and len(tiefs) == 2               # nicht erzwungen parallel (Brooks)
+            and min(hochs[0][0], tiefs[0][0]) >= 0):
+        def wert(pk, j):
+            (j1, p1), (j2, p2) = pk
+            return p1 + (p2 - p1) * (j - j1) / (j2 - j1) if j2 != j1 else p2
+        j0, ende = min(hochs[0][0], tiefs[0][0]), N - 1
+        w0, w1 = wert(hochs, j0) - wert(tiefs, j0), wert(hochs, ende) - wert(tiefs, ende)
+        form = ("Megafon" if w1 > w0 * (1 + KANAL_TOLERANZ) else "Trichter" if w1 < w0 * (1 - KANAL_TOLERANZ)
+                else "Kanal")
+        sinn = {"Kanal": "die Linien laufen parallel – der Trend läuft geordnet",
+                "Trichter": "die Linien laufen zusammen – die Schwünge werden kleiner, die Feder spannt sich",
+                "Megafon": "die Linien laufen auseinander – die Schwünge werden größer, die Unruhe wächst"}[form]
+        farbe = MEGAFON_FARBE if form == "Megafon" else KANAL_FARBE
+        y_oben, y_unten = Y(pmax), Y(pmin)
+        for pk in (hochs, tiefs):
+            xa, ya, xe, ye = X(pk[0][0]), Y(pk[0][1]), X(ende), Y(wert(pk, ende))
+            if not y_oben <= ye <= y_unten and ye != ya:                            # an der Kante des Kursfelds enden
+                grenze = y_oben if ye < y_oben else y_unten
+                xe, ye = xa + (xe - xa) * (grenze - ya) / (ye - ya), grenze
+            A(f'<line x1="{xa:.1f}" y1="{ya:.1f}" x2="{xe:.1f}" y2="{ye:.1f}" stroke="{farbe}" stroke-width="1.3" '
+              f'stroke-opacity="0.85"><title>{form}: Linie durch die letzten zwei '
+              f'{"Schwunghochs" if pk is hochs else "Schwungtiefs"} – {sinn}</title></line>')   # Layout
+        ym = (Y(wert(hochs, ende)) + Y(wert(tiefs, ende))) / 2
+        if y_oben + 10 <= ym <= y_unten - 4:                                         # Layout
+            A(f'<text x="{X(ende) - 4:.1f}" y="{ym:.1f}" fill="{farbe}" font-size="11" text-anchor="end">{form}'   # Layout
+              f'<title>{form}: {sinn}</title></text>')                              # Layout
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:

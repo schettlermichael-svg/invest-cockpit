@@ -1612,3 +1612,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Trichter als Schalter (24.11.2026): unter „Einblenden“ wie Bollinger, Grundstellung an (`LINIEN_START`).
 - Zickzack (24.11.2026): feine Linie durch alle Wendepunkte (ab 2 × ATR) über den ganzen Chart, eigener Schalter
   „Zickzack“ unter „Einblenden“, Grundstellung aus (`ZICK_BREITE`, `ZICK_DECK`) – zeigt die Wellen selbst, der Trichter bleibt die Hülle der rechten Seite.
+- Kanal um den Zickzack (24.11.2026, am Schalter „Zickzack“): Linie durch die letzten zwei bestätigten Schwunghochs und eine
+  durch die letzten zwei Schwungtiefs, bis zum rechten Rand – nicht erzwungen parallel (Brooks: parallel, zusammen- oder
+  auseinanderlaufend). Am Ende steht die Form: Kanal (Breite ±20 %, `KANAL_TOLERANZ`), Trichter (enger), Megafon (weiter).
