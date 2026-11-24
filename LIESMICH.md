@@ -1623,3 +1623,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Wellen (WWW: 16 → 11 → 10 → 9 %). Jetzt Linie von Welle zu Welle, gestrichelt weiter bis zur Ausbruchsstelle – oben
   waagrecht auf der Höhe des Pivots, unten in der Richtung der letzten Welle (nie über die Kante); Ringe sitzen auf den
   grauen Punkten.
+- Trichter ab der ersten Welle (24.11.2026, Micky): WST hatte nur zwei Wellen (12 → 8 %) – Urteil 🟢 VCP, aber rechts nur
+  eine Welle, also kein Trichter. Jetzt zeichnet er alle Wellen, die das Urteil zählt; die erste (T1) ist die Öffnung.

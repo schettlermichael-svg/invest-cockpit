@@ -382,8 +382,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if ba and e["name"] != "Stunde" and "trichter" in linien_:                      # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
         auf, punkte_o, punkte_u = en_.get("aufsteigend"), [], []
-        for k_ in (en_.get("kontraktionen") or [])[1:]:   # Trichter (Micky 24.11.2026): die Wellen der rechten Seite –
-            # die erste Welle ist der Fall der linken Seite (die Tiefe der Base) und zählt nur fürs Urteil
+        for k_ in en_.get("kontraktionen") or []:   # Trichter (Micky 24.11.2026): alle Wellen, die das Urteil zählt –
+            # die erste (Minervinis T1, der Fall der linken Seite) ist die Öffnung des Trichters
             for i_, w_, liste_ in ((k_["hoch_i"], k_["hoch"], punkte_o), (k_["tief_i"], k_["tief"], punkte_u)):
                 if bdf.index[i_] >= d.index[0]:
                     liste_.append((pos(bdf.index[i_]), w_))
@@ -403,7 +403,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             xy = lambda pk: [(X(j_), Y(min(max(w_, pmin), pmax))) for j_, w_ in pk]   # noqa: E731
             flaeche = " ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(punkte_o + [ende_o]) + xy(punkte_u + [ende_u])[::-1])
             A(f'<polygon points="{flaeche}" fill="{f_t}" fill-opacity="{TRICHTER_DECK}" stroke="none"/>')
-            titel_t = (f'Trichter der Base: Wellen der rechten Seite ({t_esc(en_.get("folge") or "")} %) – schließt er '
+            titel_t = (f'Trichter der Base: Wellen ({t_esc(en_.get("folge") or "")} %) – schließt er '
                        f'sich, trocknen die Verkäufer aus (Minervini); gestrichelt bis zur Ausbruchsstelle')
             for pk, ende_ in ((punkte_o, ende_o), (punkte_u, ende_u)):
                 A(f'<polyline points="{" ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(pk))}" fill="none" '
@@ -644,7 +644,7 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen auf der rechten Seite der Base (Ringe = Punkte, die "
+             (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs aller Wellen der Base, ab der ersten (T1) (Ringe = Punkte, die "
               "zählen), gestrichelt bis zur Ausbruchsstelle – schließt er sich, "
               "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
               "noch nicht reif, rot = die letzte Welle tiefer"),
