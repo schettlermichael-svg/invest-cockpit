@@ -53,6 +53,7 @@ PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
 ENGE_FARBE = "#7DA7D9"                 # Enge je Kerze: eine Farbe, die Höhe spricht
+ENGE_SCHNITT = 10                      # Schnitt der Spanne über 10 Kerzen (wie der GD10: kurz genug für die Enge)
 ENGE_DECKEL = 95                       # Layout: Achse bis zum 95. Perzentil der Spannen (Ausreißer abgeschnitten)
 WELLEN_H = 30                          # Layout: Höhe der Enge-Leiste unter der RS-Linie
 WELLEN_ABSTAND = 10                    # Layout: Abstand der Enge-Leiste zur RS-Linie
@@ -502,7 +503,14 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_wel + WELLEN_H - hb:.1f}" width="{bw:.1f}" height="{hb:.1f}" '
           f'fill="{ENGE_FARBE}" fill-opacity="0.8"><title>{d.index[i]:%d.%m.%Y}: Spanne {zahl(spanne[i], 1)} %'
           f'</title></rect>')                                                       # Layout
-    A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Enge · Spanne je Kerze'
+    sp_voll = (df["High"] - df["Low"]) / df["Close"] * 100                         # Schnitt als weiße Linie (wie beim
+    sp_s = sp_voll.rolling(ENGE_SCHNITT).mean().reindex(d.index).to_numpy(float)   # Volumen, Micky 24.11.2026)
+    pkt_e = " ".join(f"{X(i):.1f},{y_wel + WELLEN_H - WELLEN_H * min(sp_s[i], deckel) / deckel:.1f}"
+                     for i in range(N) if not np.isnan(sp_s[i]))
+    if pkt_e:
+        A(f'<polyline points="{pkt_e}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
+          f'<title>Schnitt der Spanne über {ENGE_SCHNITT} Kerzen – fällt die Linie, wird der Kurs enger</title></polyline>')
+    A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Enge · Ø {ENGE_SCHNITT}'
       f'<title>Hoch bis Tief jeder Kerze in % des Schlusses – werden die Balken kleiner, wird der Kurs enger '
       f'(Minervini: die Volatilität zieht sich zusammen)</title></text>')          # Layout
     for i, tag in enumerate(d.index):                                               # Zeitachse
@@ -538,7 +546,7 @@ def legende():
               "noch nicht reif, rot = die letzte Welle tiefer"),
              (ENGE_FARBE, "Enge: unter der RS-Linie ein Balken je Kerze, so hoch wie ihre Spanne (Hoch bis Tief in % des "
               "Schlusses) – werden die Balken kleiner, wird der Kurs enger; gleich hohe Balken = gleichmäßig, springende "
-              "= unruhig"),
+              "= unruhig; weiße Linie = Schnitt über 10 Kerzen, fällt sie, zieht sich der Kurs zusammen"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "

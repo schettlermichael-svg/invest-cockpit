@@ -1600,4 +1600,4 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Darüberfahren.
 - Enge je Kerze (24.11.2026, statt der farbigen Wellenbalken): unter der RS-Linie ein Balken je Kerze in einer Farbe, so
   hoch wie die Spanne Hoch–Tief in % des Schlusses (Achse bis zum 95. Perzentil, `ENGE_DECKEL`) – kleiner = enger, gleich
-  hoch = gleichmäßig; auf allen Ebenen. Der Trichter in der Base bleibt.
+  hoch = gleichmäßig; auf allen Ebenen; weiße Linie = Schnitt über 10 Kerzen (`ENGE_SCHNITT`). Der Trichter bleibt.
