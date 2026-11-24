@@ -408,6 +408,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         ein_, stopp_ = t["einstieg"], t["stopp"]                                     # nur mit echtem Setup
         decken = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]   # grün bis zur nächsten
+        decken += [h_ for _, h_ in ((ba or {}).get("ausbruch") or {}).get("gescheitert") or [] if h_ > ein_]   # + Gefangene
         ziel_ = min(decken) if decken else None                                     # Decke, rot bis zum Stopp
         y_e, y_z, y_s = Y(min(max(ein_, pmin), pmax)), Y(min(ziel_, pmax) if ziel_ else pmax), Y(max(stopp_, pmin))
         chance = (f"bis zur nächsten Decke {zahl(ziel_)} (+{zahl((ziel_ / ein_ - 1) * 100, 1)} %)" if ziel_
