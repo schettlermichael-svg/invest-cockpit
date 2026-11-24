@@ -53,8 +53,14 @@ PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
-KORRIDOR_DECK = 0.12                   # Layout: Füllung des Korridors
-ENGE_SCHNITT = 10                      # Korridor über 10 Kerzen (wie der GD10: kurz genug für die Enge)
+KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
+KORRIDOR_RAND = 0.5                    # Layout
+SQUEEZE_DECK = 0.32                    # Layout: im Squeeze leuchtend
+SQUEEZE_RAND = 1.2                     # Layout
+SQUEEZE_RUECK = {"Tag": 125, "Woche": 26, "Stunde": 125}   # Bollinger: tiefste Weite seit ~6 Monaten (125 Tage)
+SPRUNG_FARBE = "#EF9F27"               # Feder springt: Schluss außerhalb des Korridors nach dem Squeeze
+ENGE_SCHNITT = 20                      # Korridor = Bollinger-Bänder: 20 Kerzen …
+ENGE_SD = 2.0                          # … ± 2 Standardabweichungen (Bollingers Grundeinstellung)
 NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
 
@@ -238,19 +244,51 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         if len(w_):
             etiketten.append((Y(float(w_.iloc[-1])), f"AVWAP {k + 1} {zahl(float(w_.iloc[-1]))}", ANKER_FARBE[k]))
     mitte = df["Close"].rolling(ENGE_SCHNITT).mean()                               # Korridor der Enge (Micky 24.11.
-    halbe = (df["High"] - df["Low"]).rolling(ENGE_SCHNITT).mean() / 2             # 2026): Schnitt des Schlusses ± die
-    ko = (mitte + halbe).reindex(d.index).to_numpy(float)                          # halbe Spanne der letzten 10 Kerzen –
-    ku = (mitte - halbe).reindex(d.index).to_numpy(float)                          # wird das Band schmaler, zieht sich
-    ok_ = [i for i in range(N) if not (np.isnan(ko[i]) or np.isnan(ku[i]))]        # der Kurs zusammen
+    halbe = ENGE_SD * df["Close"].rolling(ENGE_SCHNITT).std(ddof=0)                # 2026) = Bollinger-Bänder 20/2:
+    weite = (2 * halbe / mitte)                                                    # BandWidth = Weite / Mitte
+    tief_ = weite.rolling(SQUEEZE_RUECK[e["name"]], min_periods=ENGE_SCHNITT).min()
+    oben_g, unten_g = (mitte + halbe).to_numpy(float), (mitte - halbe).to_numpy(float)
+    schluss_g, weite_g, tief_g = df["Close"].to_numpy(float), weite.to_numpy(float), tief_.to_numpy(float)
+    gespannt = np.zeros(len(df), bool)                                             # Bollinger-Squeeze: Weite auf dem
+    sprung = {}                                                                    # tiefsten Stand seit ~6 Monaten –
+    an_ = False                                                                    # gespannt bis zum ersten Schluss
+    for g in range(1, len(df)):                                                    # außerhalb des Bandes (Feder springt)
+        if np.isnan(weite_g[g]) or np.isnan(oben_g[g - 1]):
+            continue
+        if an_ and (schluss_g[g] > oben_g[g - 1] or schluss_g[g] < unten_g[g - 1]):
+            sprung[g] = "H" if schluss_g[g] > oben_g[g - 1] else "T"
+            an_ = False
+            continue
+        if weite_g[g] <= tief_g[g]:
+            an_ = True
+        gespannt[g] = an_
+    ko = pd.Series(oben_g, df.index).reindex(d.index).to_numpy(float)
+    ku = pd.Series(unten_g, df.index).reindex(d.index).to_numpy(float)
+    gs = pd.Series(gespannt, df.index).reindex(d.index).fillna(False).to_numpy(bool)
+    ok_ = [i for i in range(N) if not (np.isnan(ko[i]) or np.isnan(ku[i]))]
+
+    def band(idx, deck, rand):
+        oben_ = [f"{X(i):.1f},{Y(min(max(ko[i], pmin), pmax)):.1f}" for i in idx]
+        unten_ = [f"{X(i):.1f},{Y(min(max(ku[i], pmin), pmax)):.1f}" for i in idx[::-1]]
+        titel = (f"Feder gespannt: der Korridor ist so schmal wie seit {SQUEEZE_RUECK[e['name']]} Kerzen nicht "
+                 f"(Bollingers Squeeze) – Ausbruch abwarten" if rand > KORRIDOR_RAND else
+                 f"Korridor der Enge: Bollinger-Bänder – Schnitt der letzten {ENGE_SCHNITT} Schlusskurse ± "
+                 f"{ENGE_SD:g} Standardabweichungen")
+        A(f'<polygon points="{" ".join(oben_ + unten_)}" fill="{ENGE_FARBE}" fill-opacity="{deck}" '
+          f'stroke="none"><title>{titel}</title></polygon>')
+        for pk in (oben_, unten_[::-1]):
+            A(f'<polyline points="{" ".join(pk)}" fill="none" stroke="{ENGE_FARBE}" stroke-width="{rand}" '
+              f'stroke-opacity="0.8"/>')                                            # Layout
     if len(ok_) >= 2:
-        oben_ = [f"{X(i):.1f},{Y(min(max(ko[i], pmin), pmax)):.1f}" for i in ok_]
-        unten_ = [f"{X(i):.1f},{Y(min(max(ku[i], pmin), pmax)):.1f}" for i in ok_[::-1]]
-        A(f'<polygon points="{" ".join(oben_ + unten_)}" fill="{ENGE_FARBE}" fill-opacity="{KORRIDOR_DECK}" '
-          f'stroke="none"><title>Korridor der Enge: Schnitt der letzten {ENGE_SCHNITT} Schlusskurse ± die halbe '
-          f'Spanne (Hoch bis Tief) – wird er schmaler, wird der Kurs enger</title></polygon>')
-        for pk in (oben_, unten_):
-            A(f'<polyline points="{" ".join(pk)}" fill="none" stroke="{ENGE_FARBE}" stroke-width="0.8" '
-              f'stroke-opacity="0.7"/>')                                            # Layout
+        band(ok_, KORRIDOR_DECK, KORRIDOR_RAND)
+        lauf = []
+        for i in ok_ + [None]:                                                     # zusammenhängende Squeeze-Strecken
+            if i is not None and gs[i]:
+                lauf.append(i)
+                continue
+            if len(lauf) >= 2:
+                band(lauf, SQUEEZE_DECK, SQUEEZE_RAND)
+            lauf = []
     bw = max(1.0, breite / NZ * 0.6)                                                # Layout: Kerzenbreite
     n_ges = len(df)
     for i in range(N):
@@ -264,6 +302,18 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
+    for g, art in sprung.items():                                                  # Feder springt (Bollinger: Bandbruch
+        j = g - n0                                                                 # nach dem Squeeze; Vorsicht Head Fake)
+        if 0 <= j < N:
+            y_ = Y(h[j]) - 12 if art == "H" else Y(l[j]) + 12                       # Layout: über dem Hoch, unter dem Tief
+            if y_ < OBEN + 16:                                                     # Layout: nicht in die Kopfzeile
+                y_ = Y(l[j]) + 12                                                  # Layout
+            spitze = -5 if art == "H" else 5                                       # Layout
+            A(f'<polygon points="{X(j) - 5:.1f},{y_ - spitze / 2:.1f} {X(j) + 5:.1f},{y_ - spitze / 2:.1f} '   # Layout
+              f'{X(j):.1f},{y_ + spitze / 2:.1f}" fill="{SPRUNG_FARBE}"><title>Feder springt '
+              f'{"nach oben" if art == "H" else "nach unten"}: Schluss {"über" if art == "H" else "unter"} dem '
+              f'Korridor nach dem Squeeze (Bollinger) – der erste Ausbruch kann eine Finte sein (Head Fake)'
+              f'</title></polygon>')
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
@@ -536,9 +586,10 @@ def legende():
              (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen in der Base – schließt er sich, "
               "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
               "noch nicht reif, rot = die letzte Welle tiefer"),
-             (ENGE_FARBE, "Korridor der Enge: Band um den Kurs aus dem Schnitt der letzten 10 Schlusskurse ± der halben "
-              "Spanne (Hoch bis Tief) – wird es schmaler, zieht sich der Kurs zusammen (Minervini: die Volatilität "
-              "schrumpft); gleich breit = gleichmäßig, aufgehend = unruhig"),
+             (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "
+              "sonst blass; leuchtet er, ist er so schmal wie seit ~6 Monaten nicht (Bollingers Squeeze: Feder gespannt)"),
+             (SPRUNG_FARBE, "▲▼ Feder springt: erster Schluss über bzw. unter dem Korridor nach dem Squeeze – "
+              "Bollinger warnt: der erste Ausbruch kann eine Finte sein"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "

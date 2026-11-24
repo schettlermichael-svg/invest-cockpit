@@ -1601,6 +1601,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Enge je Kerze (24.11.2026, statt der farbigen Wellenbalken): unter der RS-Linie ein Balken je Kerze in einer Farbe, so
   hoch wie die Spanne Hoch–Tief in % des Schlusses (Achse bis zum 95. Perzentil, `ENGE_DECKEL`) – kleiner = enger, gleich
   hoch = gleichmäßig; auf allen Ebenen; weiße Linie = Schnitt über 10 Kerzen (`ENGE_SCHNITT`). Der Trichter bleibt.
-- Korridor der Enge (24.11.2026, statt der Balken unter der RS-Linie): ein Band um den Kurs aus dem Schnitt der letzten 10
-  Schlusskurse ± der halben mittleren Spanne (`ENGE_SCHNITT`, `ENGE_FARBE`, `KORRIDOR_DECK`) – wird es schmaler, zieht sich
-  der Kurs zusammen. Die Leiste unter der RS-Linie ist entfernt.
+- Korridor der Enge (24.11.2026, statt der Balken unter der RS-Linie) = Bollinger-Bänder 20/2 (`ENGE_SCHNITT`, `ENGE_SD`):
+  sonst blass; leuchtet er, ist die Weite (BandWidth) so schmal wie seit ~6 Monaten nicht (`SQUEEZE_RUECK`: 125 Tage, 26 Wochen –
+  Bollingers Squeeze, „Feder gespannt“). Der erste Schluss über/unter dem Band danach bekommt ▲/▼ (`SPRUNG_FARBE`, „Feder
+  springt“); Bollinger warnt vor der Finte (Head Fake). Vorher ±halbe Spanne über 10 Kerzen – zu eng, drei von vier Schlüssen
+  lagen außerhalb.
