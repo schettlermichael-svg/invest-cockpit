@@ -333,29 +333,29 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     tiefs = [(i_ - n0, p_) for i_, p_, art in fest_ if art == "T"][-2:]             # und Tiefs, bis zum rechten Rand –
     if ("zickzack" in linien_ and len(hochs) == 2 and len(tiefs) == 2               # nicht erzwungen parallel (Brooks)
             and min(hochs[0][0], tiefs[0][0]) >= 0):
-        def wert(pk, j):
+        def k_wert(pk, j):
             (j1, p1), (j2, p2) = pk
             return p1 + (p2 - p1) * (j - j1) / (j2 - j1) if j2 != j1 else p2
-        j0, ende = min(hochs[0][0], tiefs[0][0]), N - 1
-        w0, w1 = wert(hochs, j0) - wert(tiefs, j0), wert(hochs, ende) - wert(tiefs, ende)
+        j0, j_rand = min(hochs[0][0], tiefs[0][0]), N - 1
+        w0, w1 = k_wert(hochs, j0) - k_wert(tiefs, j0), k_wert(hochs, j_rand) - k_wert(tiefs, j_rand)
         form = ("Megafon" if w1 > w0 * (1 + KANAL_TOLERANZ) else "Trichter" if w1 < w0 * (1 - KANAL_TOLERANZ)
                 else "Kanal")
         sinn = {"Kanal": "die Linien laufen parallel – der Trend läuft geordnet",
                 "Trichter": "die Linien laufen zusammen – die Schwünge werden kleiner, die Feder spannt sich",
                 "Megafon": "die Linien laufen auseinander – die Schwünge werden größer, die Unruhe wächst"}[form]
-        farbe = MEGAFON_FARBE if form == "Megafon" else KANAL_FARBE
+        k_farbe = MEGAFON_FARBE if form == "Megafon" else KANAL_FARBE
         y_oben, y_unten = Y(pmax), Y(pmin)
         for pk in (hochs, tiefs):
-            xa, ya, xe, ye = X(pk[0][0]), Y(pk[0][1]), X(ende), Y(wert(pk, ende))
+            xa, ya, xe, ye = X(pk[0][0]), Y(pk[0][1]), X(j_rand), Y(k_wert(pk, j_rand))
             if not y_oben <= ye <= y_unten and ye != ya:                            # an der Kante des Kursfelds enden
                 grenze = y_oben if ye < y_oben else y_unten
                 xe, ye = xa + (xe - xa) * (grenze - ya) / (ye - ya), grenze
-            A(f'<line x1="{xa:.1f}" y1="{ya:.1f}" x2="{xe:.1f}" y2="{ye:.1f}" stroke="{farbe}" stroke-width="1.3" '
+            A(f'<line x1="{xa:.1f}" y1="{ya:.1f}" x2="{xe:.1f}" y2="{ye:.1f}" stroke="{k_farbe}" stroke-width="1.3" '
               f'stroke-opacity="0.85"><title>{form}: Linie durch die letzten zwei '
               f'{"Schwunghochs" if pk is hochs else "Schwungtiefs"} – {sinn}</title></line>')   # Layout
-        ym = (Y(wert(hochs, ende)) + Y(wert(tiefs, ende))) / 2
+        ym = (Y(k_wert(hochs, j_rand)) + Y(k_wert(tiefs, j_rand))) / 2
         if y_oben + 10 <= ym <= y_unten - 4:                                         # Layout
-            A(f'<text x="{X(ende) - 4:.1f}" y="{ym:.1f}" fill="{farbe}" font-size="11" text-anchor="end">{form}'   # Layout
+            A(f'<text x="{X(j_rand) - 4:.1f}" y="{ym:.1f}" fill="{k_farbe}" font-size="11" text-anchor="end">{form}'   # Layout
               f'<title>{form}: {sinn}</title></text>')                              # Layout
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
