@@ -1601,3 +1601,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Enge je Kerze (24.11.2026, statt der farbigen Wellenbalken): unter der RS-Linie ein Balken je Kerze in einer Farbe, so
   hoch wie die Spanne Hoch–Tief in % des Schlusses (Achse bis zum 95. Perzentil, `ENGE_DECKEL`) – kleiner = enger, gleich
   hoch = gleichmäßig; auf allen Ebenen; weiße Linie = Schnitt über 10 Kerzen (`ENGE_SCHNITT`). Der Trichter bleibt.
+- Korridor der Enge (24.11.2026, statt der Balken unter der RS-Linie): ein Band um den Kurs aus dem Schnitt der letzten 10
+  Schlusskurse ± der halben mittleren Spanne (`ENGE_SCHNITT`, `ENGE_FARBE`, `KORRIDOR_DECK`) – wird es schmaler, zieht sich
+  der Kurs zusammen. Die Leiste unter der RS-Linie ist entfernt.

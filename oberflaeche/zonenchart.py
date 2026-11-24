@@ -52,11 +52,9 @@ PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über alle
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 TRICHTER_DECK = 0.10                   # Layout: Füllung des Trichters
-ENGE_FARBE = "#7DA7D9"                 # Enge je Kerze: eine Farbe, die Höhe spricht
-ENGE_SCHNITT = 10                      # Schnitt der Spanne über 10 Kerzen (wie der GD10: kurz genug für die Enge)
-ENGE_DECKEL = 95                       # Layout: Achse bis zum 95. Perzentil der Spannen (Ausreißer abgeschnitten)
-WELLEN_H = 30                          # Layout: Höhe der Enge-Leiste unter der RS-Linie
-WELLEN_ABSTAND = 10                    # Layout: Abstand der Enge-Leiste zur RS-Linie
+ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
+KORRIDOR_DECK = 0.12                   # Layout: Füllung des Korridors
+ENGE_SCHNITT = 10                      # Korridor über 10 Kerzen (wie der GD10: kurz genug für die Enge)
 NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
 
@@ -160,8 +158,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     y_vol = OBEN + KURS_H + LUECKE
     y_zei = y_vol + VOL_H + 4                                                       # Layout: Zeichenleiste
     y_rs = y_zei + ZEICHEN_H + LUECKE + 14                                          # Layout: Platz für die Überschrift
-    y_wel = y_rs + RS_H + WELLEN_ABSTAND                                            # Enge unter der RS-Linie
-    H = y_wel + WELLEN_H + 24                                                       # Layout: Zeitachse
+    H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
@@ -240,6 +237,20 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         w_ = r_.dropna()
         if len(w_):
             etiketten.append((Y(float(w_.iloc[-1])), f"AVWAP {k + 1} {zahl(float(w_.iloc[-1]))}", ANKER_FARBE[k]))
+    mitte = df["Close"].rolling(ENGE_SCHNITT).mean()                               # Korridor der Enge (Micky 24.11.
+    halbe = (df["High"] - df["Low"]).rolling(ENGE_SCHNITT).mean() / 2             # 2026): Schnitt des Schlusses ± die
+    ko = (mitte + halbe).reindex(d.index).to_numpy(float)                          # halbe Spanne der letzten 10 Kerzen –
+    ku = (mitte - halbe).reindex(d.index).to_numpy(float)                          # wird das Band schmaler, zieht sich
+    ok_ = [i for i in range(N) if not (np.isnan(ko[i]) or np.isnan(ku[i]))]        # der Kurs zusammen
+    if len(ok_) >= 2:
+        oben_ = [f"{X(i):.1f},{Y(min(max(ko[i], pmin), pmax)):.1f}" for i in ok_]
+        unten_ = [f"{X(i):.1f},{Y(min(max(ku[i], pmin), pmax)):.1f}" for i in ok_[::-1]]
+        A(f'<polygon points="{" ".join(oben_ + unten_)}" fill="{ENGE_FARBE}" fill-opacity="{KORRIDOR_DECK}" '
+          f'stroke="none"><title>Korridor der Enge: Schnitt der letzten {ENGE_SCHNITT} Schlusskurse ± die halbe '
+          f'Spanne (Hoch bis Tief) – wird er schmaler, wird der Kurs enger</title></polygon>')
+        for pk in (oben_, unten_):
+            A(f'<polyline points="{" ".join(pk)}" fill="none" stroke="{ENGE_FARBE}" stroke-width="0.8" '
+              f'stroke-opacity="0.7"/>')                                            # Layout
     bw = max(1.0, breite / NZ * 0.6)                                                # Layout: Kerzenbreite
     n_ges = len(df)
     for i in range(N):
@@ -494,25 +505,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                     if not np.isnan(r_i[i]):
                         A(f'<circle cx="{X(i):.1f}" cy="{YR(r_i[i]):.1f}" r="3" fill="{farbe}"/>')  # Layout
     letzter = None
-    spanne = ((d["High"] - d["Low"]) / d["Close"] * 100).to_numpy(float)          # Enge je Kerze (Micky 24.11.2026):
-    deckel = float(np.nanpercentile(spanne, ENGE_DECKEL)) or 1                      # Spanne Hoch–Tief in % des Schlusses,
-    for i in range(N):                                                              # ein Balken je Kerze in einer Farbe –
-        if np.isnan(spanne[i]):                                                     # kleiner = enger, gleich hoch = ruhig
-            continue
-        hb = WELLEN_H * min(spanne[i], deckel) / deckel
-        A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_wel + WELLEN_H - hb:.1f}" width="{bw:.1f}" height="{hb:.1f}" '
-          f'fill="{ENGE_FARBE}" fill-opacity="0.8"><title>{d.index[i]:%d.%m.%Y}: Spanne {zahl(spanne[i], 1)} %'
-          f'</title></rect>')                                                       # Layout
-    sp_voll = (df["High"] - df["Low"]) / df["Close"] * 100                         # Schnitt als weiße Linie (wie beim
-    sp_s = sp_voll.rolling(ENGE_SCHNITT).mean().reindex(d.index).to_numpy(float)   # Volumen, Micky 24.11.2026)
-    pkt_e = " ".join(f"{X(i):.1f},{y_wel + WELLEN_H - WELLEN_H * min(sp_s[i], deckel) / deckel:.1f}"
-                     for i in range(N) if not np.isnan(sp_s[i]))
-    if pkt_e:
-        A(f'<polyline points="{pkt_e}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
-          f'<title>Schnitt der Spanne über {ENGE_SCHNITT} Kerzen – fällt die Linie, wird der Kurs enger</title></polyline>')
-    A(f'<text x="{ende + 2}" y="{y_wel + WELLEN_H - 2}" fill="{TEXT_3}" font-size="10">Enge · Ø {ENGE_SCHNITT}'
-      f'<title>Hoch bis Tief jeder Kerze in % des Schlusses – werden die Balken kleiner, wird der Kurs enger '
-      f'(Minervini: die Volatilität zieht sich zusammen)</title></text>')          # Layout
     for i, tag in enumerate(d.index):                                               # Zeitachse
         schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())  # Layout
         if schl != letzter and letzter is not None and (e["name"] != "Stunde" or tag.dayofweek == 0):
@@ -544,9 +536,9 @@ def legende():
              (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen in der Base – schließt er sich, "
               "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
               "noch nicht reif, rot = die letzte Welle tiefer"),
-             (ENGE_FARBE, "Enge: unter der RS-Linie ein Balken je Kerze, so hoch wie ihre Spanne (Hoch bis Tief in % des "
-              "Schlusses) – werden die Balken kleiner, wird der Kurs enger; gleich hohe Balken = gleichmäßig, springende "
-              "= unruhig; weiße Linie = Schnitt über 10 Kerzen, fällt sie, zieht sich der Kurs zusammen"),
+             (ENGE_FARBE, "Korridor der Enge: Band um den Kurs aus dem Schnitt der letzten 10 Schlusskurse ± der halben "
+              "Spanne (Hoch bis Tief) – wird es schmaler, zieht sich der Kurs zusammen (Minervini: die Volatilität "
+              "schrumpft); gleich breit = gleichmäßig, aufgehend = unruhig"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
