@@ -2,7 +2,6 @@
 
 fred(reihe)        amtliche und Hochfrequenz-Reihen der US-Notenbank (FRED, ohne Schlüssel)
 yahoo(ticker)      Tagesschlüsse ab 2006 (Rohstoffe, ETFs, VIX, Index)
-yahoo_ohlc(ticker) Tageskerzen mit Volumen ab 1985 (S&P 500, Nasdaq – für die Marktrichtung)
 breite()           Anteil der Aktien der Breite-Liste (einstellungen/breite.txt, 515 große US-Werte)
                    über ihrem GD200, täglich – fest, weil das Pendel an dieser Liste geeicht ist;
                    neue Tage aus Massive, Ersatz Yahoo

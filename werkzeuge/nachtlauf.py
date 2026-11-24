@@ -213,7 +213,8 @@ def main():
 QUELLEN_DATENSTAND = {                       # Teil der App → woher sein Kurstag kommt (Datenstand-Wache, 12.11.2026)
     "Massive-Tageskurse": "Rückenwind (RS-Rang, Klassen, Momentum, ✈️), Rudel, Breite",
     "Yahoo-Tageskurse": "Charts, Zirkel, Setups, Morgenmeldung",
-    "Marktdaten (Indizes)": "Markt-Ampel, Pendel, Sektor-Rotation, O'Neil-Marktrichtung (Yahoo)",
+    "Indizes (SPY, QQQ)": "Markt-Ampel (Zirkel der Indizes)",
+    "Marktdaten (Sektor-ETFs)": "Pendel, Sektor-Rotation, Wirtschaftswetter (Yahoo)",
     "Rückenwind": "Schlachtordnung, Geldfluss, dreifacher Rückenwind",
     "Zirkel": "Kreislauf, Setups, Hochs/Tiefs der Markt-Ampel",
 }
@@ -237,13 +238,21 @@ def datenstand():
         aus["Yahoo-Tageskurse"] = f"{i.index[-1]:%Y-%m-%d}" if i is not None and len(i) else None
     except Exception:  # noqa: BLE001
         aus["Yahoo-Tageskurse"] = None
-    try:                                        # Marktdaten der Lage (Prüfung 12.11.2026 – vorher nicht bewacht)
-        import marktdaten
-        pf = marktdaten._pfad("^GSPC_ohlc")
-        aus["Marktdaten (Indizes)"] = (f"{pd.read_csv(pf, parse_dates=['Datum']).Datum.iloc[-1]:%Y-%m-%d}"
-                                       if os.path.exists(pf) else None)
+    try:                                        # Indizes der Markt-Ampel (24.11.2026: der Zirkel liest SPY und QQQ aus dem
+        import daten                            # Kursspeicher – die frühere Datei ^GSPC_ohlc wird nicht mehr gepflegt)
+        import zirkel
+        tage_i = [daten.kurse_gespeichert(tk).index[-1] for tk in zirkel.INDIZES.values()]
+        aus["Indizes (SPY, QQQ)"] = f"{min(tage_i):%Y-%m-%d}"
     except Exception:  # noqa: BLE001
-        aus["Marktdaten (Indizes)"] = None
+        aus["Indizes (SPY, QQQ)"] = None
+    try:                                        # Sektor-ETFs von Yahoo (Pendel, Rotation, Wirtschaftswetter)
+        import marktdaten
+        import sektoren
+        pf = marktdaten._pfad(sektoren.MARKT)
+        aus["Marktdaten (Sektor-ETFs)"] = (f"{pd.read_csv(pf, parse_dates=['Datum']).Datum.iloc[-1]:%Y-%m-%d}"
+                                           if os.path.exists(pf) else None)
+    except Exception:  # noqa: BLE001
+        aus["Marktdaten (Sektor-ETFs)"] = None
     try:
         import rueckenwind
         aus["Rückenwind"] = (rueckenwind.laden() or {}).get("stand")

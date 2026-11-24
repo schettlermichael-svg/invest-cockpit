@@ -1590,3 +1590,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Läufe: Zahl der Zeichen). Überall: Spalte „Halt“ der Titelliste und der ▲▲▲-Liste, Zirkel der Titelseite, rechts in der
   Zeichenleiste des Charts, Branchen-Pillen, Morgenmeldung, Markt-Kachel („dagegen:“ / „trägt:“ in Klartext).
   🍂/🌱 bleiben nur an den einzelnen Zeichen der Titelseite.
+- Datenstand-Wache (24.11.2026): prüft statt der nicht mehr gepflegten Datei ^GSPC_ohlc die Indizes der Markt-Ampel (SPY,
+  QQQ aus dem Kursspeicher) und die Sektor-ETFs von Yahoo – der rote Hinweis „abweichend Marktdaten (Indizes) Fr 20.11.“
+  war ein Fehlalarm.
