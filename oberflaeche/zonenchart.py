@@ -387,37 +387,34 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             for i_, w_, liste_ in ((k_["hoch_i"], k_["hoch"], punkte_o), (k_["tief_i"], k_["tief"], punkte_u)):
                 if bdf.index[i_] >= d.index[0]:
                     liste_.append((pos(bdf.index[i_]), w_))
-        if len(punkte_o) >= 2 and len(punkte_u) >= 2:                               # gerade Linien (Micky 24.11.2026):
-            f_t = AMPEL.get("grün" if auf else en_.get("ampel"), TEXT_3)           # Ausgleichsgerade durch die Hochs und
-            g_o = np.polyfit([j_ for j_, _ in punkte_o], [w_ for _, w_ in punkte_o], 1)   # eine durch die Tiefs, bis
-            g_u = np.polyfit([j_ for j_, _ in punkte_u], [w_ for _, w_ in punkte_u], 1)   # zur Ausbruchsstelle
-            j_a = min(punkte_o[0][0], punkte_u[0][0])
-            j_b = N - 1
+        if len(punkte_o) >= 2 and len(punkte_u) >= 2:                               # Wellenform (Micky 24.11.2026): mit
+            f_t = AMPEL.get("grün" if auf else en_.get("ampel"), TEXT_3)           # den Punkten mitgehen, gestrichelt
+            j_b = N - 1                                                            # weiter bis zur Ausbruchsstelle
             p_i, p_w = en_.get("pivot_i"), en_.get("pivot")
             if p_i is not None and p_w is not None:
                 bs = bdf["Close"].to_numpy(float)
                 drueber = [k for k in range(p_i + 1, len(bdf)) if bs[k] > p_w]
                 if drueber:
-                    j_b = max(pos(bdf.index[drueber[0]]), j_a + 1)
-
-            def strecke(g):                                                         # an der Kante des Kursfelds enden
-                xa_, ya_, xb_, yb_ = X(j_a), Y(float(np.polyval(g, j_a))), X(j_b), Y(float(np.polyval(g, j_b)))
-                t0, t1 = 0.0, 1.0
-                if yb_ != ya_:
-                    ta, tb = sorted(((Y(pmax) - ya_) / (yb_ - ya_), (Y(pmin) - ya_) / (yb_ - ya_)))
-                    t0, t1 = max(t0, ta), min(t1, tb)
-                t1 = max(t1, t0)
-                return (xa_ + (xb_ - xa_) * t0, ya_ + (yb_ - ya_) * t0, xa_ + (xb_ - xa_) * t1, ya_ + (yb_ - ya_) * t1)
-            so, su = strecke(g_o), strecke(g_u)
-            flaeche = " ".join(f"{a_:.1f},{b_:.1f}" for a_, b_ in (so[:2], so[2:], su[2:], su[:2]))
+                    j_b = pos(bdf.index[drueber[0]])
+            ende_o = (max(j_b, punkte_o[-1][0]), punkte_o[-1][1])                  # oben: waagrecht an der Kante
+            (j1, w1), (j2, w2) = punkte_u[-2:]                                     # unten: in der Richtung der letzten
+            w_e = w2 + (w2 - w1) * (max(j_b, j2) - j2) / (j2 - j1) if j2 != j1 else w2   # Welle, nie über die Kante
+            ende_u = (max(j_b, j2), min(w_e, ende_o[1]))
+            xy = lambda pk: [(X(j_), Y(min(max(w_, pmin), pmax))) for j_, w_ in pk]   # noqa: E731
+            flaeche = " ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(punkte_o + [ende_o]) + xy(punkte_u + [ende_u])[::-1])
             A(f'<polygon points="{flaeche}" fill="{f_t}" fill-opacity="{TRICHTER_DECK}" stroke="none"/>')
-            for (xa_, ya_, xb_, yb_), art_ in ((so, "Hochs"), (su, "Tiefs")):
-                A(f'<line x1="{xa_:.1f}" y1="{ya_:.1f}" x2="{xb_:.1f}" y2="{yb_:.1f}" stroke="{f_t}" '
-                  f'stroke-width="1.6" stroke-opacity="0.9"><title>Trichter der Base: Ausgleichsgerade durch die '   # Layout
-                  f'{art_} der Wellen der rechten Seite ({t_esc(en_.get("folge") or "")} %) bis zur Ausbruchsstelle – '
-                  f'schließt er sich, trocknen die Verkäufer aus (Minervini)</title></line>')
-            for j_, w_ in punkte_o + punkte_u:                                      # Ringe: die Punkte, die zählen
-                A(f'<circle cx="{X(j_):.1f}" cy="{Y(w_):.1f}" r="{RING_R}" fill="none" stroke="{f_t}" '
+            titel_t = (f'Trichter der Base: Wellen der rechten Seite ({t_esc(en_.get("folge") or "")} %) – schließt er '
+                       f'sich, trocknen die Verkäufer aus (Minervini); gestrichelt bis zur Ausbruchsstelle')
+            for pk, ende_ in ((punkte_o, ende_o), (punkte_u, ende_u)):
+                A(f'<polyline points="{" ".join(f"{x_:.1f},{y_:.1f}" for x_, y_ in xy(pk))}" fill="none" '
+                  f'stroke="{f_t}" stroke-width="1.6" stroke-opacity="0.9"><title>{titel_t}</title></polyline>')   # Layout
+                if ende_[0] > pk[-1][0]:
+                    (xa_, ya_), (xb_, yb_) = xy([pk[-1], ende_])
+                    A(f'<line x1="{xa_:.1f}" y1="{ya_:.1f}" x2="{xb_:.1f}" y2="{yb_:.1f}" stroke="{f_t}" '
+                      f'stroke-width="1.4" stroke-dasharray="5 4" stroke-opacity="0.9"><title>{titel_t}</title></line>')
+            for j_, w_ in punkte_o + punkte_u:                                      # Ringe: die Punkte, die zählen –
+                y_r = Y(w_) - 6 if (j_, w_) in punkte_o else Y(w_) + 6              # auf den grauen Punkten (Layout)
+                A(f'<circle cx="{X(j_):.1f}" cy="{y_r:.1f}" r="{RING_R}" fill="none" stroke="{f_t}" '
                   f'stroke-width="1.4"><title>zählt für den Trichter</title></circle>')
         if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
             amp = "grün" if auf else en_.get("ampel")
@@ -647,7 +644,8 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (GRUEN, "Trichter: gerade Linie durch die Hochs und durch die Tiefs der Wellen auf der rechten Seite der Base (Ringe = Punkte, die zählen), bis zur Ausbruchsstelle – schließt er sich, "
+             (GRUEN, "Trichter: Linie über die Hochs und unter die Tiefs der Wellen auf der rechten Seite der Base (Ringe = Punkte, die "
+              "zählen), gestrichelt bis zur Ausbruchsstelle – schließt er sich, "
               "trocknen die Verkäufer aus (Minervinis VCP); grün = sauber (oder aufsteigende Base nach O'Neil), gelb = "
               "noch nicht reif, rot = die letzte Welle tiefer"),
              (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "

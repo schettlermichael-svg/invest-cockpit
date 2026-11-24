@@ -1619,3 +1619,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Seite, vom ersten Punkt bis zur Ausbruchsstelle (erster Schluss über dem Pivot, sonst rechter Rand); die Punkte, die zählen,
   bekommen einen Ring (`RING_R`). Die linke Seite zählt nur fürs Urteil.
 - Großansicht ⛶ wieder entfernt (24.11.2026, Micky): im Vollbild des Browsers ist der Chart größer als im Fenster.
+- Trichter wieder in Wellenform (24.11.2026, Micky): die geraden Ausgleichslinien verwischten die Verengung der letzten
+  Wellen (WWW: 16 → 11 → 10 → 9 %). Jetzt Linie von Welle zu Welle, gestrichelt weiter bis zur Ausbruchsstelle – oben
+  waagrecht auf der Höhe des Pivots, unten in der Richtung der letzten Welle (nie über die Kante); Ringe sitzen auf den
+  grauen Punkten.
