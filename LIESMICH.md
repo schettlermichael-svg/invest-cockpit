@@ -1584,3 +1584,9 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Chart entrümpelt (24.11.2026): Urteil der Enge kurz („🟢 VCP“, „🟡 Enge“, „🔴 Enge“, „🟢 Aufsteigende Base“, Gründe beim
   Darüberfahren, nie über den Rand); unter dem Profil „16.10.26–20.11.26 · 26 T.“, „Volumen · Ø 50“, „📅 18.02. · 86 T.“ –
   alles in der Breite des Profils; die Etiketten rechts bleiben im Kursbereich (nächster freier Platz darüber oder darunter).
+- Halt der Phase (24.11.2026, statt der Spalte „Keim“): `zeichen.halt` → 🏰 hält (kein Keim) · 🌊 Welle (Keim wiegt weniger
+  als das, was trägt) · ⛈️ Sturm (Keim wiegt mindestens so viel oder der Wechsel zeichnet sich ab), dahinter der stärkste
+  Grund in Klartext (`zeichen.KLARTEXT`, `klartext`). Gewichte aus dem Kreislauf (`gewicht_keim`, `gewicht_traegt`; ältere
+  Läufe: Zahl der Zeichen). Überall: Spalte „Halt“ der Titelliste und der ▲▲▲-Liste, Zirkel der Titelseite, rechts in der
+  Zeichenleiste des Charts, Branchen-Pillen, Morgenmeldung, Markt-Kachel („dagegen:“ / „trägt:“ in Klartext).
+  🍂/🌱 bleiben nur an den einzelnen Zeichen der Titelseite.

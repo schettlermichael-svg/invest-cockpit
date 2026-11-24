@@ -114,8 +114,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
     Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
-    Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende 🌱/🍂 der
-    Keim des Zirkels) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
+    Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
+    Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
     import avwap
     import rueckenwind
     import tiefe
@@ -416,11 +416,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                                (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot")):
             if tag_ is not None and (z_ == "🦬" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
-    if tk and e["name"] != "Stunde":                                                # 🌱/🍂 Keim des Zirkels: jetzt
+    if tk and e["name"] != "Stunde":                                                # Halt der Phase: jetzt
         zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
-        if zk and zk["keim"]:
-            zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂"
-            leiste.setdefault(N - 1, []).append((zeichen_, "Keim im Zirkel: " + ", ".join(zk["keim"][:3])))
+        sym, wort, grund = zeichen.halt(zk)                                         # Halt der Phase (24.11.2026)
+        if sym:
+            leiste.setdefault(N - 1, []).append((sym, f"Phase {wort}" + (f" – {grund}" if grund else "")
+                                                 + "".join(f" · Keim: {x}" for x in (zk or {}).get("keim", [])[:3])))
     tage_, naechster = _zahlentage(tk) if tk and e["name"] != "Stunde" else ([], None)
     cf = df["Close"].to_numpy(float)
     for tag_ in tage_:                                                              # Ⓔ Zahlentage (Micky 24.11.2026)
@@ -521,7 +522,7 @@ def legende():
               "Zone das Urteil"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
-              "🌱/🍂 Keim des Zirkels (rechts, jetzt) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
+              "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
               "nächste Termin · Momentum 🚀 am Ende der RS-Linie"),
              (SCHNITT_FARBE, "Weiße Linie im Volumen: Schnitt der letzten 50 Tage (Woche: 10 Wochen) – Balken darüber "
               "kräftig, darunter blass · unter dem Profil sein Zeitraum"),

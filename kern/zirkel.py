@@ -107,7 +107,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
 P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
 INDIZES = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # über die ETFs (gespeicherte Tageskurse mit echtem Volumen)
 MARKT_FUEHRT = "S&P 500"                         # er bestimmt die Ampel, der Nasdaq steht daneben (Micky 23.11.2026)
-INDEX_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen")
+INDEX_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen", "gewicht_keim", "gewicht_traegt")
 
 
 def indizes():
@@ -308,8 +308,7 @@ def heisse(n=MELDUNG_JE_SEITE):
                  dreifach(tk, t, rw), gegenwind(tk, t),
                  f'Einstieg {zahl(t["einstieg"])} $ · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(x.get("frei"), ""),
-                 (("🌱 " if zeichen.KEIM_SEITE.get(zk["phase"]) == "stärke" else "🍂 ") + zeichen.kurz(zk["keim"][0]))
-                 if zk and zk["keim"] else ""]
+                 " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Phase in Klartext (24.11.2026)
         return " · ".join(s for s in teile if s)
 
     def klasse_nr(tk):

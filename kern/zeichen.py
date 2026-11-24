@@ -1034,6 +1034,79 @@ KURZ_KLAMMER = 30           # Technik: Klammer am Ende als Kurzform, wenn sie so
 KURZ_MIN = 8                # … und nicht bloß „(Woche)“
 
 
+# ── Halt der Phase (Micky 24.11.2026): statt Fachnamen ein Urteil und ein Wort in Klartext ─────────────────────────
+HALT = {"hält": "🏰", "welle": "🌊", "sturm": "⛈️"}   # Burg hält · Welle schlägt (ein Riss) · Sturm zieht auf (kippt)
+# Klartext je Zeichen: (Anfang oder Teil des Textes, Seite, Klartext) – das erste Muster, das passt, gilt
+KLARTEXT = (
+    ("Secondary Reaction", "stärke", "Rücksetzer hielt über dem Tief"),
+    ("Secondary Rally", "schwäche", "Erholung scheiterte unter dem Hoch"),
+    ("Spring", "stärke", "Verkäufer unten erschöpft"),
+    ("Upthrust", "schwäche", "Käufer scheitern an der Decke"),
+    ("keine Gewinnmitnahme", "stärke", "keine Gewinnmitnahmen"),
+    ("keine Eindeckung", "schwäche", "Verkäufer halten übers Wochenende"),
+    ("3 Wochen eng", "stärke", "drei Wochen eng"),
+    ("Volumen trocknet aus", "stärke", "kaum noch Verkäufer"),
+    ("höheres Tief gegen den Index", "stärke", "stärker als der Markt"),
+    ("tieferes Hoch gegen den Index", "schwäche", "schwächer als der Markt"),
+    ("schwachen", "stärke", "steigt an schwachen Markttagen"),
+    ("starken", "schwäche", "fällt an starken Markttagen"),
+    ("RS-Linie steigt", "stärke", "RS steigt, der Kurs nicht"),
+    ("RS-Linie fällt", "schwäche", "RS fällt, der Kurs nicht"),
+    ("RS-Linie macht ein höheres Tief", "stärke", "RS stärker als der Kurs"),
+    ("RS-Linie macht ein tieferes Hoch", "schwäche", "RS schwächer als der Kurs"),
+    ("52-Wochen-Tief", "schwäche", "Schwäche in der Stärke"),
+    ("Indexhoch", "stärke", "Stärke in der Schwäche"), ("Indextief", "stärke", "Stärke in der Schwäche"),
+    ("52-Wochen-Hoch", "stärke", "Stärke in der Schwäche"), ("Indextief", "schwäche", "Schwäche in der Stärke"),
+    ("Zahlen", "stärke", "Zahlen gekauft"), ("Zahlen", "schwäche", "Zahlen verkauft"),
+    ("Käufer erschöpft", "schwäche", "Käufer erschöpft"),
+    ("Market Profile", "stärke", "Käufer übernehmen das Profil"),
+    ("Market Profile", "schwäche", "Verkäufer übernehmen das Profil"),
+    ("Einquetschung", "stärke", "wird nach oben gequetscht"),
+    ("Einquetschung", "schwäche", "wird nach unten gedrückt"),
+    ("Akkumulation", "stärke", "große Käufer sammeln"),
+    ("Distribution", "schwäche", "große Verkäufer steigen aus"),
+    ("verdeckte Abgabe", "schwäche", "verdeckter Verkauf"),
+    ("Pocket Pivot", "stärke", "Kauf mit Volumen"),
+    ("Fehlausbruch", "schwäche", "Ausbruch gescheitert"),
+    ("Ausbruch", "stärke", "Ausbruch aus der Basis"),
+    ("Schluss unter dem Tief", "schwäche", "Boden gebrochen"),
+    ("Schluss über dem Hoch", "stärke", "Decke durchbrochen"),
+    ("Schluss unter dem letzten höheren Tief", "schwäche", "Aufwärtstrend gebrochen"),
+    ("Schluss über dem letzten tieferen Hoch", "stärke", "Abwärtstrend gebrochen"),
+    ("erstes höheres Tief", "stärke", "erstes höheres Tief"),
+    ("erstes tieferes Hoch", "schwäche", "erstes tieferes Hoch"),
+    ("Hammer", "stärke", "Umkehrkerze nach oben"), ("Morning Star", "stärke", "Umkehrkerze nach oben"),
+    ("Engulfing", "stärke", "Umkehrkerze nach oben"),
+    ("Shooting Star", "schwäche", "Umkehrkerze nach unten"), ("Evening Star", "schwäche", "Umkehrkerze nach unten"),
+    ("Engulfing", "schwäche", "Umkehrkerze nach unten"),
+)
+
+
+def klartext(text, seite):
+    """Ein Zeichen in einfacher Sprache („Käufer scheitern an der Decke“ statt „Upthrust am 11.11.: …“); unbekannt:
+    die Kurzform."""
+    for muster, s_, wort in KLARTEXT:
+        if s_ == seite and muster in text:
+            return wort
+    return kurz(text)
+
+
+def halt(z):
+    """Hält die Phase? → (Zeichen, Wort, Klartext des stärksten Keims): 🏰 hält (kein Keim) · 🌊 Welle (ein Riss, die
+    Phase trägt aber mehr) · ⛈️ Sturm (der Keim wiegt so schwer wie das, was trägt, oder der Wechsel zeichnet sich
+    ab). Leer ohne Zirkel oder Phase."""
+    if not z or not z.get("phase") or z["phase"] not in KEIM_SEITE:
+        return "", "", ""
+    if not z["keim"] and not z.get("ziel"):
+        return HALT["hält"], "hält", ""
+    grund = klartext(z["keim"][0], KEIM_SEITE[z["phase"]]) if z["keim"] else ""
+    gk, gt = ((z["gewicht_keim"], z["gewicht_traegt"]) if z.get("gewicht_keim") is not None   # ohne Gewichte (ältere
+              else (len(z["keim"]), len(z.get("traegt") or [])))                         # Läufe): die Zahl der Zeichen
+    if z.get("ziel") or gk >= gt:
+        return HALT["sturm"], "Sturm", grund or f'Wechsel zu Phase {z["ziel"]}'
+    return HALT["welle"], "Welle", grund
+
+
 def kurz(text):
     """Kurzform eines Zeichens für die Liste: die Klammer am Ende („hält in der Schwäche“), sonst der Text vor dem
     Doppelpunkt bzw. vor der ersten Zahl („erstes höheres Tief“, „Zahlen“, „Pocket Pivot“)."""
@@ -1060,7 +1133,9 @@ def zirkel(k):
     keim = st_ if KEIM_SEITE[p] == "stärke" else sw_
     traegt = sw_ if KEIM_SEITE[p] == "stärke" else st_
     ph = k.get("phasen") or []
+    gew = {x["text"]: x.get("gewicht", 1) for x in k.get("zeichen") or []}
     return {"phase": p, "name": PHASE_NAME[p], "wochen": _lauf(ph) if ph else None, "ziel": k.get("ziel"),
+            "gewicht_keim": sum(gew.get(x, 1) for x in keim), "gewicht_traegt": sum(gew.get(x, 1) for x in traegt),
             "wort": k.get("wort"), "traegt": traegt, "keim": keim, "rolle": ZIRKEL_ROLLE[p]}
 
 

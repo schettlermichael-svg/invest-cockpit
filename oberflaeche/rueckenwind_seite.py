@@ -289,17 +289,17 @@ def dreifach_block(erg):
                               f" · {zahl((kurs / piv - 1) * 100, 1)} % über dem Pivot {zahl(piv)}")
             b_ = bahn(x.get("frei"))
             lage_ += f" · {b_}" if b_ else ""
-            phase, keim = _zirkel(tk, kreis)
+            phase, halt_ = _zirkel(tk, kreis)
             k = klasse(x)
             zeilen.append(f'<tr><td><a href="?seite=Titelseite&t={tk}" target="_blank">{tk}</a>{t(_marke(tk, wl))}</td>'
                           f'<td>{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</td><td>{t(phase)}</td><td>{t(lage_)}</td>'
-                          f'<td>{t(keim)}</td></tr>')
+                          f'<td>{t(halt_)}</td></tr>')
         teile.append(f'<details{" open" if sym != "🏃" else ""}><summary style="cursor:pointer;font-size:16px;'
                      f'font-weight:600;padding:6px 0">{sym} {name} ({len(liste_)}) <span style="font-weight:400;'
                      f'font-size:13px;color:{TEXT_3}">{erkl}</span></summary>'
                      + (f'<table style="width:100%;border-collapse:collapse;font-size:13px;color:{TEXT_2}">'
                         f'<tr style="color:{TEXT_3};text-align:left"><th>Titel</th><th>Klasse</th><th>Phase</th>'
-                        f'<th>Lage</th><th>Keim</th></tr>{"".join(zeilen)}</table>' if zeilen else
+                        f'<th>Lage</th><th>Halt</th></tr>{"".join(zeilen)}</table>' if zeilen else
                         f'<p style="color:{TEXT_3};font-size:13px;margin:0">keiner</p>') + '</details>')
     return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
                  f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
@@ -411,11 +411,10 @@ def _branche_zirkel(tk):
 
 
 def zirkel_wort(z, vor=""):
-    """Zirkel einer Gruppe in Worten (Micky 23.11.2026, Branchen auf den Zirkel): „Branche 2 (Aufwärts) 🍂“ – der
-    Keim als Zeichen, wenn gemessen."""
+    """Zirkel einer Gruppe in Worten (Micky 23.11.2026, Branchen auf den Zirkel): „Branche 2 (Aufwärts) 🌊“ – dahinter
+    der Halt der Phase (🏰 hält · 🌊 Welle · ⛈️ Sturm, zeichen.halt)."""
     import zeichen
-    keim = ("🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂") if z.get("keim") else ""
-    return f'{vor}{z["wort"]} ({z["name"]}) {keim}'.strip()
+    return f'{vor}{z["wort"]} ({z["name"]}) {zeichen.halt(z)[0]}'.strip()
 
 
 def bahn(fr, wort=" freie Bahn"):
@@ -430,24 +429,17 @@ def _momentum(x):
     return " · ".join(f'{"🚀 " if top else ""}{k} {"+" if r > 0 else ""}{zahl(r, 0)} %' for k, (r, top) in m.items())
 
 
-KEIM_NAMEN = 2                 # Layout: höchstens zwei Namen in der Spalte Keim (alle auf der Titelseite)
-
-
 def _zirkel(tk, kreis):
-    """(Phase, Keim) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden). Keim: 🍂/🌱 mit Namen, dahinter
-    🪨 und die Zahl der Zeichen, die die Phase tragen (Micky 23.11.2026: ein 🍂 in Phase 2 ist meist nur eine Welle)."""
+    """(Phase, Halt) für die Liste aus dem gespeicherten Kreislauf (zeichen.laden). Halt (Micky 24.11.2026, statt der
+    Fachnamen des Keims): 🏰 hält · 🌊 Welle · ⛈️ Sturm mit einem Wort in Klartext (zeichen.halt)."""
     import zeichen
     z = zeichen.zirkel((kreis.get("titel") or {}).get(tk))
     if not z:
         return "–", ""
     phase = (f'{z["phase"]} {z["name"]}' + (f' · {z["wochen"]} Wo.' if z["wochen"] else "")
              + (f' → {z["ziel"]}' if z["ziel"] else "")) if z["phase"] else "jung"
-    traegt = f'🪨 {len(z["traegt"])}' if z["traegt"] else ""        # wie viele Zeichen die Phase tragen (23.11.2026):
-    if not z["keim"]:                                                 # ein Riss gegen vier tragende = eine Welle
-        return phase, traegt
-    zeichen_ = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
-    return phase, f'{zeichen_} ' + ", ".join(dict.fromkeys(zeichen.kurz(t) for t in z["keim"][:KEIM_NAMEN])) + (
-        f" · {traegt}" if traegt else "")
+    sym, wort, grund = zeichen.halt(z)
+    return phase, (f"{sym} {grund or wort}" if sym else "")
 
 
 def _link(tk, text):
@@ -496,9 +488,9 @@ TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
 TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
 TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 120, "Phase": 105, "Setup": 130, "Keim": 140, "⚔️ Front": 70, "RS": 85, "Momentum": 70,   # Layout:
+BREITE = {"Titel": 120, "Phase": 105, "Setup": 130, "Halt": 140, "⚔️ Front": 70, "RS": 85, "Momentum": 70,   # Layout:
           "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 110}   # px, zusammen 1100 = Seitenbreite
-SPALTEN = ("Titel", "Phase", "Setup", "Keim", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+SPALTEN = ("Titel", "Phase", "Setup", "Halt", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
            "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
 SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
@@ -509,7 +501,9 @@ SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (
                  "💰 Nachschub": "Fließt Geld hinein? Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · "
                                 "🐺 Einzelkämpfer",
                  "📊 Fundament": "Tragen die Zahlen? Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
-                 "Keim": "🍂/🌱 der Riss gegen die Phase · 🪨 Zahl der Zeichen, die sie tragen",
+                 "Halt": "Hält die Phase? 🏰 hält · 🌊 Welle: ein Riss, die Phase trägt aber mehr · ⛈️ Sturm: der Riss "
+                         "wiegt so schwer wie das, was trägt, oder der Wechsel zeichnet sich ab – dahinter der stärkste "
+                         "Grund in Klartext (alle Zeichen auf der Titelseite)",
                  "Hoch": "Abstand zum 52-Wochen-Hoch",
                  "Bahn": "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ keine darunter) – Livermores Linie des "
                          "geringsten Widerstands"}
@@ -535,11 +529,11 @@ def liste(erg, nur=None):
         ab = x.get("abstand_hoch")
         wort = abstand_wort(ab)
         k = klasse(x)
-        phase, keim = _zirkel(tk, kreis)
+        phase, halt_ = _zirkel(tk, kreis)
         drei = " ▲▲▲" if tk in drei_ else ""
         abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
-            "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Keim": keim,
+            "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
             "⚔️ Front": PUNKT[front_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
             "Volumen": _volumen_zeichen(x),

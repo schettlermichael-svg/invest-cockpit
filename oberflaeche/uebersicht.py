@@ -44,15 +44,18 @@ def _kachel(label, ampel, wert, pfeil, zeile, mehr="", zeile_html=""):
 
 
 def _markt_spalten(mm):
-    """Markt-Kachel (Micky 23.11.2026): S&P 500 und Nasdaq nebeneinander – je Index Ampel, Phase und die Zeichen als
-    Symbole (🍂/🌱 Keim wie in der Rückenwind-Liste, 🪨 was die Phase trägt), darunter Hochs : Tiefs."""
+    """Markt-Kachel (Micky 23.11.2026): S&P 500 und Nasdaq nebeneinander – je Index Ampel, Phase und der Halt der Phase
+    (24.11.2026: 🏰 hält · 🌊 Welle · ⛈️ Sturm), darunter die Zeichen in Klartext („dagegen:“, „trägt:“), dann Hochs : Tiefs."""
     import zeichen
     import zirkel
     spalten = []
     for name, x in (mm.get("indizes") or {}).items():
-        keim = "🌱" if zeichen.KEIM_SEITE.get(x.get("phase")) == "stärke" else "🍂"
-        zeilen_ = [(keim, zeichen.kurz(k)) for k in x.get("keim") or []] + \
-                  [("🪨", zeichen.kurz(k)) for k in x.get("traegt") or []]
+        seite_k = zeichen.KEIM_SEITE.get(x.get("phase"), "schwäche")
+        seite_t = "stärke" if seite_k == "schwäche" else "schwäche"
+        sym, wort, _ = zeichen.halt(x)
+        zeilen_ = ([(sym, wort)] if sym else []) + \
+                  [("dagegen:", zeichen.klartext(k, seite_k)) for k in x.get("keim") or []] + \
+                  [("trägt:", zeichen.klartext(k, seite_t)) for k in x.get("traegt") or []]
         phase = f'Phase {x["wort"]}' if x.get("wort") else "jung"
         spalten.append(
             f'<div style="flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:4px">'

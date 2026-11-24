@@ -129,8 +129,13 @@ def zirkel_html(tk):
         return (f'<div style="flex:1;min-width:260px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:2px">'
                 f'{titel}</div><div style="font-size:13px;color:{TEXT_2}">{inhalt}</div></div>')
     traeger_z = "🍂" if keim_z == "🌱" else "🌱"
+    sym, wort, grund = zeichen.halt(z)                # Halt der Phase (Micky 24.11.2026)
+    halt_html = (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}">{sym} <b>{wort}</b>'
+                 + (f' – {t(grund)}' if grund else "") + f'<span style="color:{TEXT_3};font-size:12px"> · 🏰 hält · '
+                 f'🌊 Welle: ein Riss, die Phase trägt mehr · ⛈️ Sturm: der Riss wiegt so schwer wie das, was trägt'
+                 f'</span></div>') if sym else ""
     return (f'<div style="margin-top:12px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:4px">Zirkel · Stand '
-            f'{k.get("stand", "")}</div>{leiste}'
+            f'{k.get("stand", "")}</div>{leiste}{halt_html}'
             f'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">'
             + spalte(z["rolle"][0], z["traegt"], traeger_z if z["phase"] else "•")
             + (spalte(z["rolle"][1], z["keim"], keim_z) if z["phase"] else "") + '</div></div>')

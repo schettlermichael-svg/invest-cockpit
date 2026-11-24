@@ -237,7 +237,7 @@ def _gruppen_index(mitglieder, B):
     return df.dropna(subset=["High", "Low", "Close"])
 
 
-ZIRKEL_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen")
+ZIRKEL_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen", "gewicht_keim", "gewicht_traegt")
 
 
 def _ein_zirkel(arg):
