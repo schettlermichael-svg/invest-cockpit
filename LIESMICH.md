@@ -1618,3 +1618,4 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Trichter als gerade Linien (24.11.2026): Ausgleichsgerade durch die Wellenhochs und eine durch die Wellentiefs der rechten
   Seite, vom ersten Punkt bis zur Ausbruchsstelle (erster Schluss über dem Pivot, sonst rechter Rand); die Punkte, die zählen,
   bekommen einen Ring (`RING_R`). Die linke Seite zählt nur fürs Urteil.
+- Großansicht ⛶ wieder entfernt (24.11.2026, Micky): im Vollbild des Browsers ist der Chart größer als im Fenster.

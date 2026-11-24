@@ -102,23 +102,6 @@ def _aktualisieren(tk):
     st.session_state.laufend = (tk, time.time())
 
 
-
-
-GROSS_BREITE = 98                              # Layout: Großansicht in % der Bildschirmbreite
-GROSS_RAND = 230                               # Layout: Platz für Kopf und Ränder, der Rest der Bildschirmhöhe ist Chart
-
-
-@st.dialog("Chart", width="large")
-def _chart_gross(titel_, bild_):
-    """Großansicht des Charts (Micky 24.11.2026) als Vollbild: derselbe Chart über die ganze Breite oder Höhe, je
-    nachdem, was zuerst voll ist. Die Box ist eine section, kein div – daher der Wähler [role="dialog"]."""
-    st.markdown(f'<style>[role="dialog"]{{width:{GROSS_BREITE}vw!important;max-width:{GROSS_BREITE}vw!important;'   # Layout
-                f'margin:1vh auto!important}}[role="dialog"] svg[role="img"]{{max-height:calc(100vh - {GROSS_RAND}px)}}'  # Layout
-                '</style>'
-                f'<div style="font-weight:600;margin-bottom:6px">{gestaltung.t(titel_)}</div>'
-                + gestaltung.karte(bild_), unsafe_allow_html=True)
-
-
 def _fenster(titel_):
     return (st.popover(titel_, use_container_width=True) if hasattr(st, "popover")   # ab Streamlit 1.31
             else st.expander(titel_))
@@ -585,7 +568,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         st.markdown(teile["kopf"], unsafe_allow_html=True)
         import zonenchart
         import zonenseite
-        k0, k1, k2, k3, k4, k5 = st.columns([4, 2, 2, 2, 2, 1])
+        k0, k1, k2, k3, k4 = st.columns([4, 2, 2, 2, 2])
         with k0:
             ebene = st.radio("Ebene", ["Woche", "Tag", "Stunde"], index=1, horizontal=True, key="zonen_ebene")
         with k1:
@@ -596,8 +579,6 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             watchlist_knopf(ticker)
         with k4:
             watchlist_knopf(ticker, watchlists.TRADE)
-        with k5:                                     # Großansicht (Micky 24.11.2026): derselbe Chart bildschirmbreit
-            gross = st.button("⛶", use_container_width=True, help="Chart groß ansehen", key=f"gross_{ticker}")
         e_ = teile["r"]["ebenen"][ebene]
         g0, g3 = st.columns([1, 1])
         g1, g2, g4, _ = st.columns([2, 2, 2, 4])
@@ -624,8 +605,6 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         bild_ = zonenseite.chart(teile["r"], ebene, sorted(gd), anker[:zonenseite.PROFIL_PLATZ], set(poc_wahl),
                                  anker[zonenseite.PROFIL_PLATZ])
         st.markdown(gestaltung.seite(gestaltung.karte(bild_ + teile["legende"]), oben=0, unten=12), unsafe_allow_html=True)
-        if gross:
-            _chart_gross(f"{ticker} · {ebene}", bild_)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 
