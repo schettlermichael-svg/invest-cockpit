@@ -1610,3 +1610,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Großansicht als Vollbild (24.11.2026): der Wähler traf die Box nicht (sie ist eine section) – jetzt `[role="dialog"]`, 98 %
   der Breite, und der Chart wird höchstens so hoch wie der Bildschirm minus `GROSS_RAND`, sodass er ganz hineinpasst.
 - Trichter als Schalter (24.11.2026): unter „Einblenden“ wie Bollinger, Grundstellung an (`LINIEN_START`).
+- Zickzack (24.11.2026): feine Linie durch alle Wendepunkte (ab 2 × ATR) über den ganzen Chart, eigener Schalter
+  „Zickzack“ unter „Einblenden“, Grundstellung aus (`ZICK_BREITE`, `ZICK_DECK`) – zeigt die Wellen selbst, der Trichter bleibt die Hülle der rechten Seite.

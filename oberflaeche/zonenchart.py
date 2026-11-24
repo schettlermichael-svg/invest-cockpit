@@ -30,7 +30,7 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "trichter": "Trichter", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_WAHL = {"details": "Profil-Details", "trichter": "Trichter", "zickzack": "Zickzack", "bollinger": "Bollinger"}   # Schalter (Micky
 LINIEN_START = ["trichter"]                                                                # 24.11.2026); Trichter an
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
@@ -41,6 +41,8 @@ LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen bes
 STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
+ZICK_BREITE = 1.0                      # Layout: Zickzack durch die Wendepunkte
+ZICK_DECK = 0.6                        # Layout
 SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
 VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
 VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
@@ -117,7 +119,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Trichter, Bollinger), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Trichter, Zickzack, Bollinger), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
@@ -318,6 +320,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
+    zick = [f"{X(i_ - n0):.1f},{Y(p_):.1f}" for i_, p_, _ in zz if 0 <= i_ - n0 < N]   # Zickzack (Micky 24.11.2026):
+    if "zickzack" in linien_ and len(zick) >= 2:                                    # alle Schwungpunkte verbunden – die
+        A(f'<polyline points="{" ".join(zick)}" fill="none" stroke="{WENDE_FARBE}" stroke-width="{ZICK_BREITE}" '
+          f'stroke-opacity="{ZICK_DECK}"><title>Zickzack: alle Wendepunkte ab 2 × ATR verbunden – jeder Strich ist ein '
+          f'Schwung; werden sie kürzer, zieht sich der Kurs zusammen</title></polyline>')   # Wellen selbst
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
