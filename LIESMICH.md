@@ -1609,3 +1609,4 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   „Bollinger“ gewählt ist (`LINIEN_WAHL`); Grundstellung aus.
 - Großansicht als Vollbild (24.11.2026): der Wähler traf die Box nicht (sie ist eine section) – jetzt `[role="dialog"]`, 98 %
   der Breite, und der Chart wird höchstens so hoch wie der Bildschirm minus `GROSS_RAND`, sodass er ganz hineinpasst.
+- Trichter als Schalter (24.11.2026): unter „Einblenden“ wie Bollinger, Grundstellung an (`LINIEN_START`).

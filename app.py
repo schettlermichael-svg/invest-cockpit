@@ -605,7 +605,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             gd = st.pills("Durchschnitte", list(zonenchart.GD_WAHL), selection_mode="multi", default=[],
                           format_func=lambda g: f"GD{g}", key="zonen_gd") or []
         with g3:                                 # Profil-Details nach Wahl (Micky 21.11.2026; POC-Linien raus 22.11.)
-            poc_wahl = st.pills("Einblenden", list(zonenchart.LINIEN_WAHL), selection_mode="multi", default=[],
+            poc_wahl = st.pills("Einblenden", list(zonenchart.LINIEN_WAHL), selection_mode="multi",
+                                default=zonenchart.LINIEN_START,
                                 format_func=zonenchart.LINIEN_WAHL.get, key="zonen_poc") or []
         anker = zonenseite.anker_laden(ticker, ebene)
         hilfe = ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den Anker. Sind beide gesetzt, ist "

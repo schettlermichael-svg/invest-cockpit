@@ -30,7 +30,8 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "bollinger": "Bollinger"}   # Bollinger als Schalter (Micky 24.11.2026)
+LINIEN_WAHL = {"details": "Profil-Details", "trichter": "Trichter", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_START = ["trichter"]                                                                # 24.11.2026); Trichter an
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -116,7 +117,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Bollinger), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Trichter, Bollinger), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
@@ -338,7 +339,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
-    if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
+    if ba and e["name"] != "Stunde" and "trichter" in linien_:                      # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
         auf, punkte_o, punkte_u = en_.get("aufsteigend"), [], []
         for k_ in (en_.get("kontraktionen") or [])[1:]:   # Trichter (Micky 24.11.2026): über die Hochs und unter die
