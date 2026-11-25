@@ -1,72 +1,77 @@
 """Der nachgezogene Stopp und die Reibung nach dem Kauf (Gefechtsordnung Schritt 5, Micky 14./16.11.2026; Kullamägi
 führt beim 10er und 20er; seit 23.11.2026 auch die Klimax, vorher in der Zustandsmaschine).
 
-  nachgezogen(...)     Der Stopp nach dem Kauf: bis Tag 3 der Anfangsstopp; danach folgt er der Linie, an der der
-                       Kurs reitet – dem 10er, solange seit Tag 3 kein Schluss darunter lag, sonst dem 20er (Wechsel nur
-                       von 10 auf 20). Er steigt nur (short: fällt nur), ein Schluss jenseits der Linie heißt raus. Mauer
-                       (höchstens 3 % über dem Kurs), Kraft ohne Weg am oberen Rand und Kauf-Klimax ziehen ihn sofort
-                       unter das Tief des Tages, an dem das Zeichen kam (Stopp im Markt); short gespiegelt.
+  nachgezogen(...)     Der Stopp nach dem Kauf nach Livermore (Micky 25.11.2026, vorher 10er/20er nach Kullamägi): er
+                       folgt Livermores Pivotal Points unten (¼ ATR darunter), raus bei Regel 10b, Gefahrensignal 10e
+                       zieht ihn eng; der 20er bleibt als Notbremse ab Tag 3. Short gespiegelt.
+  ende_zeichen(...)    Mauer, Kraft ohne Weg und Klimax – seit 25.11.2026 nur noch Zeichen (sie ziehen den Stopp nicht).
 """
 import numpy as np
 import pandas as pd
 
 from masse import ATR_N, LAGE_MITTE, VOL_MIN_TAGE  # noqa: E402
 
-GD10 = 10                   # schnelle Titel reiten am 10er (Kullamägi)
-GD20 = 20                   # sonst am 20er
+GD20 = 20                   # Notbremse nach dem Kauf: Schluss jenseits des 20er (Micky 25.11.2026)
 KLIMAX_VOL, KLIMAX_SPANNE, KLIMAX_TAGE = 2.0, 1.5, 15   # Klimax: Volumen 2-fach, Spanne 1,5 ATR, letzte 15 Tage
 KLIMAX_EXTREM_TAGE = 59     # Klimax: Tief bzw. Hoch der letzten 60 Tage (Tag selbst + 59)
 MAUER_NAH = 3.0             # Mauer: Kurs höchstens 3 % vor dem Knoten (short: Stütze)
-NACHZIEHEN_AB_TAG = 3       # bis Tag 3 nach dem Kauf gilt der Anfangsstopp (der Stopp des Setups)
+NACHZIEHEN_AB_TAG = 3       # die Notbremse am 20er greift ab Tag 3 nach dem Kauf
 
 
-def linien(df):
-    """10er und 20er als Reihen der Schlusskurse."""
-    c = df["Close"].astype(float)
-    return c.rolling(GD10).mean(), c.rolling(GD20).mean()
-
-
-
-
-def nachgezogen(df, kauf_tag, einstieg, anfang, seite="long", ende=None):
-    """Nachgezogener Stopp einer Position → {stopp, linie, regel, raus, tag_nr, enger: {art, tag, stopp} oder None}.
-    ende: Ende-Zeichen [(art, tag)] (aus ende_zeichen) – sie ziehen den Stopp unter das Tief jenes Tages."""
+def nachgezogen(df, kauf_tag, einstieg, anfang, seite="long"):
+    """Nachgezogener Stopp einer Position nach Livermore (Micky 25.11.2026) → {stopp, linie, regel, raus, raus_grund,
+    tag_nr, enger: {art, tag, stopp} oder None}.
+      Stopp      der Anfangsstopp (Stopp des Setups); jede Reaktion nach dem Kauf, die Livermore als Pivotal Point unten
+                 einträgt, hebt ihn auf ¼ ATR darunter (short: Pivotal Point oben, ¼ ATR darüber) – er steigt nur.
+      raus       Schluss jenseits des Stopps · Regel 10b nach dem Kauf: die Reaktion fällt 1 ATR unter das letzte
+                 Reaktionstief, der Aufwärtstrend ist vorbei (short: 10d) · Notbremse ab Tag 3: Schluss unter dem 20er
+                 (short: darüber) – falls der Lauf steil ist und der nächste Pivotal Point weit weg liegt.
+      enger      Gefahrensignal nach dem Kauf (Regel 10e, short 10f): die Erholung stockte knapp unter dem Pivotal Point
+                 – Stopp eng unter das Tief jenes Tages (short: über das Hoch); überholt, sobald der Kurs danach ein neues
+                 Hoch macht (short: Tief)."""
+    import livermore
+    import vcp_zone
+    from tiefe import STOPP_ATR
     if df is None or not len(df):
         return None
+    df = df.dropna(subset=["High", "Low", "Close"])
     lang = seite != "short"
-    seit = df[df.index >= pd.Timestamp(kauf_tag)] if kauf_tag is not None else df.iloc[-1:]
-    tag_nr = len(seit) - 1
-    c = df["Close"].astype(float)
-    g10, g20 = linien(df)
-    aus = {"stopp": anfang, "linie": None, "regel": "Anfangsstopp (bis Tag 3)", "raus": False, "tag_nr": tag_nr,
-           "enger": None}
-    if tag_nr >= NACHZIEHEN_AB_TAG and anfang:
-        ab = seit.index[NACHZIEHEN_AB_TAG]
-        teil = df.index >= ab
-        cc, a10, a20 = c[teil].to_numpy(), g10[teil].to_numpy(), g20[teil].to_numpy()
-        unter10 = np.nonzero((cc < a10) if lang else (cc > a10))[0]
-        if len(unter10):                       # einmal jenseits des 10er: ab da gilt der 20er (nur von 10 auf 20)
-            name, reihe = "20er", a20[unter10[0]:]
-        else:
-            name, reihe = "10er", a10
-        reihe = reihe[~np.isnan(reihe)]
-        if len(reihe):
-            hoch = float(reihe.max() if lang else reihe.min())          # der Stopp steigt nur (short: fällt nur)
-            stopp = max(anfang, hoch) if lang else min(anfang, hoch)
-            raus = bool((cc[-1] < stopp) if lang else (cc[-1] > stopp))
-            aus.update(stopp=stopp, linie=name, raus=raus,
-                       regel=f"folgt dem {name} (Schluss {'darunter' if lang else 'darüber'} heißt raus)"
-                       + ("" if stopp != anfang else " – noch unter dem Anfangsstopp, der gilt"))
-    for art, tag in ende or []:                # Ende-Zeichen: Stopp im Markt unter das Tief jenes Tages
-        if kauf_tag is not None and pd.Timestamp(tag) < pd.Timestamp(kauf_tag):
+    kauf_i = int(df.index.searchsorted(pd.Timestamp(kauf_tag))) if kauf_tag is not None else len(df) - 1
+    tag_nr = len(df) - 1 - kauf_i
+    c = df["Close"].astype(float).to_numpy()
+    a = vcp_zone.atr(df).to_numpy(float)
+    nb = livermore.notizbuch(df) or {"pivotal": [], "ereignisse": []}
+    aus = {"stopp": anfang, "linie": None, "regel": "Anfangsstopp (Stopp des Setups)", "raus": False, "raus_grund": "",
+           "tag_nr": tag_nr, "enger": None}
+    if anfang is None:
+        return aus
+    for p_ in nb["pivotal"]:                   # Livermores Pivotal Points nach dem Kauf heben den Stopp
+        if p_["art"] != ("tief" if lang else "hoch") or p_["i"] < kauf_i or not a[p_["i"]] == a[p_["i"]]:
             continue
-        zeile = df.loc[pd.Timestamp(tag)] if pd.Timestamp(tag) in df.index else None
-        if zeile is None:
+        kand = p_["preis"] - STOPP_ATR * a[p_["i"]] if lang else p_["preis"] + STOPP_ATR * a[p_["i"]]
+        if (kand > aus["stopp"]) if lang else (kand < aus["stopp"]):
+            aus.update(stopp=float(kand), linie="Livermore",
+                       regel=f"¼ ATR {'unter' if lang else 'über'} Livermores Pivotal Point {'unten' if lang else 'oben'} "
+                             f"{p_['preis']:.2f} ({p_['tag']:%d.%m.})")
+    seit_kauf = [(t_, k_, w_) for t_, k_, w_ in nb["ereignisse"] if df.index.searchsorted(t_) > kauf_i]
+    vorbei = next((x for x in seit_kauf if x[1] == ("auf_vorbei" if lang else "ab_vorbei")), None)
+    gefahr = [x for x in seit_kauf if x[1] == ("gefahr_auf" if lang else "gefahr_ab")]
+    g20 = df["Close"].astype(float).rolling(GD20).mean().to_numpy()
+    if (c[-1] < aus["stopp"]) if lang else (c[-1] > aus["stopp"]):
+        aus.update(raus=True, raus_grund=f"Schluss {'unter' if lang else 'über'} dem Stopp {aus['stopp']:.2f} ({aus['regel']})")
+    elif vorbei:
+        aus.update(raus=True, raus_grund=f"{livermore.EREIGNIS[vorbei[1]]} am {vorbei[0]:%d.%m.} bei {vorbei[2]:.2f}")
+    elif tag_nr >= NACHZIEHEN_AB_TAG and g20[-1] == g20[-1] and ((c[-1] < g20[-1]) if lang else (c[-1] > g20[-1])):
+        aus.update(raus=True, raus_grund=f"Notbremse: Schluss {'unter' if lang else 'über'} dem 20er {g20[-1]:.2f}")
+    h_, l_ = df["High"].to_numpy(float), df["Low"].to_numpy(float)
+    for t_, k_, _ in gefahr:                   # Gefahrensignal: Stopp im Markt eng an das Extrem jenes Tages – bis der
+        j = int(df.index.searchsorted(t_))     # Kurs danach ein neues Hoch (short: Tief) macht, dann ist es überholt
+        if (h_[j + 1:].max(initial=-np.inf) > h_[:j + 1].max()) if lang else (l_[j + 1:].min(initial=np.inf) < l_[:j + 1].min()):
             continue
-        eng = float(zeile["Low"] if lang else zeile["High"])
+        eng = float(df.loc[t_, "Low"] if lang else df.loc[t_, "High"])
         if (eng > aus["stopp"]) if lang else (eng < aus["stopp"]):
             if not aus["enger"] or ((eng > aus["enger"]["stopp"]) if lang else (eng < aus["enger"]["stopp"])):
-                aus["enger"] = {"art": art, "tag": pd.Timestamp(tag), "stopp": eng}
+                aus["enger"] = {"art": "Gefahrensignal (Regel " + ("10e" if lang else "10f") + ")", "tag": t_, "stopp": eng}
     return aus
 
 

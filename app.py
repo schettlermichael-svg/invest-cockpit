@@ -196,7 +196,7 @@ def konto_knopf():
 
 def depot_zeigen():
     """Seite Depot: Konto und Risiko, Depot-Hitze und Positionen; für die gewählte Position der Chart der Position
-    (Einstieg, Anfangsstopp, Stopp jetzt am 10er/20er, Ende-Zeichen), „Nach dem Kauf“, TradingView und Deep Dive."""
+    (Einstieg, Anfangsstopp, Stopp jetzt nach Livermore, Gefahrensignal), „Nach dem Kauf“, TradingView und Deep Dive."""
     import depotleiste
     _, k_ = st.columns([10, 2])
     with k_:

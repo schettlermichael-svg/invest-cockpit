@@ -301,14 +301,14 @@ BEREICHE = [
     dict(name="Rotation der Sektoren", quelle="Rotation der Sektoren (RS-Stärke und Schwung gegen den S&P 500)",
          regel="Elf Sektor-ETFs als Rotationsbild über 26 Wochen; Feld aus RS-Stärke und Schwung.",
          messung=["sektoren.rotation"], pruefer=["Feld (Rotation)"]),
-    dict(name="Nach dem Kauf und Depot", quelle="Micky 23.11.2026 (nur noch Zirkel und nachgezogener Stopp), Kullamägi "
-                                                "(10er/20er), Minervini (Klumpen, Verlustbremse)",
-         regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Pivot wird gemerkt). Ab Tag 3 folgt der "
-               "Stopp dem 10er (solange seit Tag 3 kein Schluss darunter lag) bzw. dem 20er, er steigt nur, Schluss "
-               "darunter heißt raus. Reibung: Mauer (höchstens 3 % über dem Kurs), Kraft ohne Weg am oberen Rand und "
-               "Kauf-Klimax ziehen ihn sofort unter das Tief jenes Tages (Stopp im Markt). Zirkel: 🟢 Phase 2 (bzw. "
-               "Wechsel 1 → 2) ohne 🍂 – laufen lassen; 🟡 🍂 gemessen in Phase 2 – Stopp eng unter das Tagestief; 🔴 "
-               "Wechsel 2 → 3 läuft oder Phase 3/4 – raus; 🔴 Schluss zurück unter dem Pivot – raus. Short gespiegelt. "
+    dict(name="Nach dem Kauf und Depot", quelle="Micky 25.11.2026 (Livermore führt, Zirkel und Reibung sind Zeichen; "
+                                                "20er als Notbremse nach Kullamägi), Minervini (Klumpen, Verlustbremse)",
+         regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Pivot wird gemerkt). Jede Reaktion nach dem "
+               "Kauf, die Livermore als Pivotal Point unten einträgt, hebt den Stopp auf ¼ ATR darunter; er steigt nur, "
+               "Schluss darunter heißt raus. Raus auch bei Regel 10b (Aufwärtstrend vorbei) und als Notbremse ab Tag 3 bei "
+               "Schluss unter dem 20er; Gefahrensignal 10e zieht den Stopp eng unter das Tief jenes Tages; Schluss zurück "
+               "unter dem Pivot – raus. Zeichen ohne Befehl: Zirkel (✓ Phase 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
+               "Reibung (Mauer, Kraft ohne Weg, Klimax). Short gespiegelt. "
                "Kriegskasse: Positionswert über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = "
                "Zeichen, das Risiko je Trade zu halbieren; Depot-Hitze höchstens 6 % des Kontos.",
          messung=["depot._nach_dem_kauf", "depot.aus_setup", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen",

@@ -1689,3 +1689,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   ✓/✗ mit Grund (dieselben Phasenregeln wie vorher als Bedingung). „Kein Setup“ nur noch ohne Livermore-Signal;
   Morgenmeldung ✓ vor ✗; Liste und Kopf mit ✓/✗; im Chart „· ✗ Zirkel“ am Auslöser, Schlachtplan zu jedem Setup, der
   „mögliche Pivot“ (blass) entfällt. Mac-Probe 150 Titel: 78 Setups, davon 15 ✓.
+- Führung nach dem Kauf nach Livermore (25.11.2026, Micky: „Livermore + GD als Notbremse“): reiten.nachgezogen – Stopp
+  steigt mit jedem Pivotal Point unten nach dem Kauf auf ¼ ATR darunter; raus bei Schluss darunter, bei Regel 10b und als
+  Notbremse ab Tag 3 bei Schluss unter dem 20er; Gefahrensignal 10e zieht ihn eng unter das Tief jenes Tages (überholt
+  bei neuem Hoch danach); short gespiegelt. Zirkel (✓/⚠) und Reibung (Mauer, Kraft ohne Weg, Klimax) sind nur noch
+  Zeichen. Entfernt: der 10er-Stopp, reiten.linien, GD10 und der ende-Parameter. Mac-Probe MSFT, AAPL, NVDA (short).

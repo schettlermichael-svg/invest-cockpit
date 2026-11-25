@@ -427,7 +427,7 @@ def _x0(m, d, pos, X):
 
 def _position(p, d, pos, X, Y, A, spaete, platz, ENDE):
     """Chart der Position (Depot-Seite, 16.11.2026): Einstieg ab dem Kauftag, Anfangsstopp gestrichelt, der Stopp, der
-    jetzt gilt (10er/20er, reiten.nachgezogen), durchgezogen und – wenn ein Ende-Zeichen ihn enger zieht – die enge Linie."""
+    jetzt gilt (Livermore, reiten.nachgezogen), durchgezogen und – wenn ein Gefahrensignal ihn enger zieht – die enge Linie."""
     if not p or not p.get("einstieg"):
         return
     x0 = X(pos(p["tag"])) if p.get("tag") is not None and pd.Timestamp(p["tag"]) >= d.index[0] else X(0)
