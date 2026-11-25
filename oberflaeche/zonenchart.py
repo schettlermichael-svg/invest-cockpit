@@ -1,6 +1,6 @@
 """Der Zonenchart (Micky 21.11.2026): wenig, aber aussagekräftig – dasselbe Bild für Woche, Tag und Stunde.
 
-Kursfeld: Kerzen; die Zone von heute (Base nach Minervini/O'Neil, in der Stunde die Balance) als gelber Rahmen mit
+Kursfeld: Kerzen; die Zone von heute (Livermores Spanne seit 25.11.2026, in der Stunde die Balance) als gelber Rahmen mit
 Namen, Pivot und POC; in der Stunde die
 Base des Tages als feiner Rahmen; Festungen und Schluchten quer über das Gelände; der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
@@ -130,7 +130,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
     Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
-    Zeichenleiste (🦬 Ausbruch, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
+    Zeichenleiste (🦬 Ausbruch, 📒 Livermores Bestätigung, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
     Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
     import avwap
     import rueckenwind
@@ -357,7 +357,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             y_ = Y(la["pivot"]) - 7                                                 # Layout: über dem Hoch
             A(f'<path d="M{X(j):.1f},{y_ - 6:.1f} L{X(j) + 6:.1f},{y_:.1f} L{X(j):.1f},{y_ + 6:.1f} '  # Layout: Raute
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
-              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot {zahl(la["pivot"])} · '
+              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
         bdf, en_ = ba["df"], ba.get("enge") or {}
@@ -541,8 +541,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if a_b:                                                                         # 🦬 Ausbruch, 🦊 Fehlausbruch
         for tag_, z_, text in ((a_b["tag"], "🦬", "Ausbruch über den Pivot"
                                 + (" mit Volumen" if a_b["mit_volumen"] else " ohne Volumen")),
-                               (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot")):
-            if tag_ is not None and (z_ == "🦬" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
+                               (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot"),
+                               (a_b.get("bestaetigt_tag"), "📒", "Livermore: Ausbruch bestätigt – Hoch 1 ATR über dem Pivot")):
+            if tag_ is not None and (z_ != "🦊" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
     if tk and e["name"] != "Stunde":                                                # Halt der Phase: jetzt
         zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
@@ -641,9 +642,9 @@ def legende():
              (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
               "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Zone, Enge und "
               "Festungen"),
-             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
-              "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
-              "ohne Setup"),
+             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores jüngster "
+              "Pivotal Point oben seit der Oberkante der Spanne (in der Stunde das Hoch der Balance); blass = möglicher "
+              "Pivot ohne Setup"),
              (GRUEN, "╲ Wellenmesser: je Welle der Base eine Linie vom Schwunghoch zum Schwungtief (T1, T2 …) – grün = höchstens "
               "70 % der vorigen (Minervinis VCP), gelb = kleiner, aber nicht genug, rot = tiefer als die vorige"),
              (ROT, "═ Livermores Pivotal Points (Schalter „Livermore“, Tag): doppelt unterstrichen wie in seinem Notizbuch – "

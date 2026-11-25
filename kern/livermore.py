@@ -39,12 +39,31 @@ EREIGNIS = {"auf_vorbei": "Aufwärtstrend vorbei (Regel 10b)", "ab_vorbei": "Abw
             "bestaetigt_ab": "Pivotal Point nach unten bestätigt (Regel 10a)"}
 
 
+_SPEICHER = {}             # Technik: dasselbe Notizbuch wird je Seite mehrfach gebraucht (Zone, Chart, Zeichen, Tabelle)
+SPEICHER_MAX = 400         # Technik: höchstens so viele Notizbücher im Speicher
+
+
 def notizbuch(df, atr=None):
-    """Livermores Notizbuch über die Tageskerzen → {spalte, eintraege: [(Tag, Spalte, Preis)], pivotal:
-    [{tag, preis, farbe, aus, art}], ereignisse: [(Tag, Schlüssel, Preis)], letzte: {Spalte: Preis}} oder None."""
+    """Livermores Notizbuch über die Tageskerzen → {spalte, trend, eintraege: [(Tag, Spalte, Preis)], pivotal:
+    [{tag, preis, farbe, aus, art, i, gesetzt_i}], ereignisse: [(Tag, Schlüssel, Preis)], letzte: {Spalte: Preis},
+    je_tag: [(Spalte, Trend)] je Zeile} oder None. Das Notizbuch schaut nie voraus: die Einträge bis Zeile t sind
+    dieselben wie im Notizbuch über df.iloc[:t + 1] (gesetzt_i = Zeile, an der ein Pivotal Point eingetragen wurde)."""
     import vcp_zone
     if df is None or len(df) <= vcp_zone.ATR_TAGE + 2:
         return None
+    if atr is None:
+        schl = (len(df), df.index[0], df.index[-1], float(df["High"].iloc[-1]), float(df["Low"].iloc[-1]),
+                float(df["High"].sum()))
+        if schl not in _SPEICHER:
+            if len(_SPEICHER) > SPEICHER_MAX:
+                _SPEICHER.clear()
+            _SPEICHER[schl] = _notizbuch(df, None)
+        return _SPEICHER[schl]
+    return _notizbuch(df, atr)
+
+
+def _notizbuch(df, atr):
+    import vcp_zone
     h, lo = df["High"].to_numpy(float), df["Low"].to_numpy(float)
     a = (atr if atr is not None else vcp_zone.atr(df)).to_numpy(float)
     idx = df.index
@@ -58,16 +77,17 @@ def notizbuch(df, atr=None):
     def eintragen(i, sp, preis):
         eintraege.append((idx[i], sp, float(preis)))
 
-    def linie(i_ext, aus):
+    def linie(i_ext, aus, i_jetzt):
         farbe = "rot" if aus in ("AT", "NR") else "schwarz"
         pp[aus] = float(ext)
-        pivotal.append({"tag": idx[i_ext], "preis": float(ext), "farbe": farbe, "aus": aus,
-                        "art": "hoch" if aus in ("AT", "NE") else "tief"})
+        pivotal.append({"tag": idx[i_ext], "preis": float(ext), "farbe": farbe, "aus": aus, "i": i_ext,
+                        "gesetzt_i": i_jetzt, "art": "hoch" if aus in ("AT", "NE") else "tief"})
 
     def ereignis(i, k, preis):
         ereignisse.append((idx[i], k, float(preis)))
 
     start = vcp_zone.ATR_TAGE
+    je_tag = [(None, None)] * len(df)            # (Spalte, Trend) am Ende jedes Tages – für die Spanne an früheren Tagen
     for i in range(start, len(df)):
         c = BESTAETIGUNG * a[i]
         s = SCHWUNG * (a[ext_i] if ext_i is not None else a[i])       # wie die Wendepunkte: ATR am Extrem
@@ -84,6 +104,7 @@ def notizbuch(df, atr=None):
                 spalte = trend = "AB"
                 ext, ext_i = lo[i], i
                 eintragen(i, "AB", lo[i])
+            je_tag[i] = (spalte, trend)
             continue
 
         if spalte == "AT":
@@ -92,7 +113,7 @@ def notizbuch(df, atr=None):
                 eintragen(i, "AT", h[i])
             elif ext - lo[i] >= s:                                  # Regel 6a, 4a: rote Linie unter dem letzten AT-Kurs
                 letzte["AT"] = ext
-                linie(ext_i, "AT")
+                linie(ext_i, "AT", i)
                 spalte, ext, ext_i = "NR", lo[i], i
                 eintragen(i, "NR", lo[i])
         elif spalte == "AB":
@@ -101,7 +122,7 @@ def notizbuch(df, atr=None):
                 eintragen(i, "AB", lo[i])
             elif h[i] - ext >= s:                                   # Regel 6c, 4c: schwarze Linie unter dem letzten AB-Kurs
                 letzte["AB"] = ext
-                linie(ext_i, "AB")
+                linie(ext_i, "AB", i)
                 spalte, ext, ext_i = "NE", h[i], i
                 eintragen(i, "NE", h[i])
         elif spalte in ("NR", "SR"):
@@ -117,7 +138,7 @@ def notizbuch(df, atr=None):
             elif h[i] - ext >= s:                                   # Erholung um einen Schwung
                 if spalte == "NR":
                     letzte["NR"] = ext
-                    linie(ext_i, "NR")                              # Regel 4b: rote Linie unter dem letzten NR-Kurs
+                    linie(ext_i, "NR", i)                              # Regel 4b: rote Linie unter dem letzten NR-Kurs
                 else:
                     letzte["SR"] = ext
                 neu = "SE" if ("NE" in letzte and h[i] <= letzte["NE"]) else "NE"   # Regel 6g
@@ -143,7 +164,7 @@ def notizbuch(df, atr=None):
                 if ext - lo[i] >= s:                                # Reaktion um einen Schwung
                     if spalte == "NE":
                         letzte["NE"] = ext
-                        linie(ext_i, "NE")                          # Regel 4d: schwarze Linie unter dem letzten NE-Kurs
+                        linie(ext_i, "NE", i)                          # Regel 4d: schwarze Linie unter dem letzten NE-Kurs
                     else:
                         letzte["SE"] = ext
                     neu = "SR" if ("NR" in letzte and lo[i] >= letzte["NR"]) else "NR"   # Regel 6h
@@ -155,10 +176,49 @@ def notizbuch(df, atr=None):
                 and h[i] - ext >= c and ("10f", ext_i) not in gefahr_gemeldet:
             ereignis(i, "gefahr_ab", h[i])                          # Regel 10f: stockt kurz über dem Pivotal Point
             gefahr_gemeldet.add(("10f", ext_i))
+        je_tag[i] = (spalte, trend)
     if spalte is None:
         return None
     return {"spalte": spalte, "trend": trend, "eintraege": eintraege, "pivotal": pivotal, "ereignisse": ereignisse,
-            "letzte": {k: float(v) for k, v in letzte.items()}, "extrem": float(ext)}
+            "letzte": {k: float(v) for k, v in letzte.items()}, "extrem": float(ext), "je_tag": je_tag}
+
+
+def spanne(nb, n=None, schluss=None):
+    """Livermores Spanne am Ende der Zeile n − 1 (Micky 25.11.2026: Livermore wird die Grundlage für Base und Pivot) →
+    {kopf, pivot, trend, spalte} oder None. schluss = Schlusskurse (numpy, mindestens n), sonst ohne Prüfung „über
+    dem Kopf geschlossen“.
+    Kopf (Oberkante): der älteste Pivotal Point oben seit Beginn des letzten Aufwärtstrends (des laufenden oder – im
+    Abwärtstrend – des vorigen), über dem seitdem kein Schluss lag. Die Hochs danach liegen tiefer, so bleiben alle
+    Wellen einer Base in einer Spanne: Regel 5a hebt den Trend schon über einem Erholungshoch wieder auf „Aufwärtstrend“,
+    Regel 10b schon bei 1 ATR unter dem vorigen Reaktionstief auf „Abwärtstrend“ – beides beendet die Spanne nicht, erst
+    ein Schluss über dem Kopf. Gibt es dort keinen, gilt der letzte Pivotal Point oben ohne Schluss darüber. Pivot = der
+    jüngste Pivotal Point oben seit dem Kopf (Regel 5a; ohne Erholung seitdem der Kopf selbst)."""
+    if not nb:
+        return None
+    n = len(nb["je_tag"]) if n is None else n
+    if n < 1 or n > len(nb["je_tag"]):
+        return None
+    spalte, trend = nb["je_tag"][n - 1]
+    hochs = [p_ for p_ in nb["pivotal"] if p_["gesetzt_i"] <= n - 1 and p_["art"] == "hoch"]
+
+    def offen(p_):                                           # seit dem Hoch kein Schluss darüber
+        return schluss is None or p_["i"] >= n - 1 or schluss[p_["i"] + 1:n].max() <= p_["preis"]
+
+    if trend not in ("AT", "AB"):
+        return None
+    ende = n - 1                                             # letzter Tag des letzten Aufwärtstrends
+    while ende >= 0 and nb["je_tag"][ende][1] != "AT":
+        ende -= 1
+    beginn = ende
+    while beginn > 0 and nb["je_tag"][beginn - 1][1] == "AT":
+        beginn -= 1
+    kopf = next((p_ for p_ in hochs if ende >= 0 and p_["i"] >= beginn and offen(p_)), None)
+    if kopf is None and hochs and offen(hochs[-1]):
+        kopf = hochs[-1]
+    if kopf is None:
+        return None
+    pivot = next(p_ for p_ in reversed(hochs) if p_["i"] >= kopf["i"])
+    return {"kopf": kopf, "pivot": pivot, "trend": trend, "spalte": spalte}
 
 
 def spalte_text(nb):

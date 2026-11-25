@@ -1,8 +1,7 @@
 """Der Chart der Titelseite als SVG – VCP-Scanner (06.11.2026): nur, was wir gerade erarbeiten.
 
-Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), auf Wunsch GD10 und GD20 (Kullamägi, nur Tageschart), die
-Zonen des VCP-Scanners (Baustein 1: Base, Flagge, Konsolidierung mit Vorgeschichte, Fahnenstange und grobem ZigZag) –
-„Aktuell“ nur das Setup jetzt, „Historie“ dazu alle abgeschlossenen Zonen mit ↑ am Ausbruch.
+Hauptfenster: Kerzen, GD50/150/200 (Woche: GD10W/30W/40W), auf Wunsch GD10 und GD20 (Kullamägi, nur Tageschart).
+Die Zonen zeichnet seit 25.11.2026 nur noch der Zonenchart der Titelseite (zonenchart, Livermores Spanne).
 Darunter Volumen mit 50er-Schnitt und dem Volumenband (türkis = Ruhe, grün/rot = viel Volumen am Aufwärts-/Abwärtstag), ganz unten die relative Stärke gegen den S&P 500 und gestrichelt gegen den eigenen
 Sektor-ETF (beide links bei 100).
 Erweitert 09.11.2026 (Lagekarte des Setups): Kaufzone Pivot bis +5 %, eine Stopp-Linie 1,5 ATR vom Einstieg (Short darüber),
@@ -53,7 +52,6 @@ RS_HOCH = "#FFD166"          # RS-Hoch vor Kurs
 RS_TIEF = "#FF6B6B"          # RS-Tief vor Kurs (Spiegelbild, 13.11.2026)
 INDEX_SCHATTEN = "#9AA3AF"   # S&P 500 im Kurschart, gestrichelt, am linken Rand auf den Kurs gelegt
 KAUFZONE_FARBE = GRUEN
-ZONE_FARBE = {"Base": BLAU, "Flagge": GELB, "Konsolidierung": LILA}
 
 # Ausschnitte je Zeitebene: Knopf → Zahl der Balken (feste Knöpfe statt Regler)
 AUSSCHNITT = {"Tag": {"3 M": 63, "6 M": 126, "1 J": 252, "2 J": 504},
@@ -107,9 +105,9 @@ def _woche(df):
 
 
 
-def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", zonen=None,
-          zonen_ansicht="Aktuell", gd_kurz=False, marken=None, avwap_wahl=None, tiefe_=None):
-    """Kerzen mit GD, Zonen des VCP-Scanners, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT.
+def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name="", gd_kurz=False, marken=None,
+          avwap_wahl=None, tiefe_=None):
+    """Kerzen mit GD, Volumen mit 50er-Schnitt, RS-Linien. ausschnitt: Knopf aus AUSSCHNITT.
     marken: Kaufzone, Stopp 1,5 ATR, Ausbruchstag, AVWAP, Earnings, RS-Rang, Short.
     ebene „Stunde“: df, index und sektor sind Stundenkerzen. tiefe_ (tiefe.ebene, Micky 21.11.2026): Dalton-Flächen
     und -Linien, PbD auf den Kerzen mit Zeit- und Volumenprofil rechts, POC je Kerze und nackte POCs."""
@@ -135,10 +133,8 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         return min(int(d.index.searchsorted(pd.Timestamp(tag))), N - 1)
 
     grenzen = [x for x in (marken.get("kz_oben"), marken.get("stopp"), (marken.get("short") or {}).get("stopp"),
-                           *(w_["wert"] for w_ in (marken.get("short") or {}).get("weitere") or []),
                            (marken.get("struktur") or {}).get("stopp"),
                            ((marken.get("short") or {}).get("struktur") or {}).get("stopp"))
-               + tuple(w_["wert"] for w_ in marken.get("weitere") or [])
                + tuple(x_ for x_ in ((marken.get("position") or {}).get(k_) for k_ in ("einstieg", "anfang", "stopp", "enger"))
                        if x_) if x and preis_ebene] + _tiefe_grenzen(tiefe_)
     # Linien im Ausschnitt (Durchschnitte, Anchored VWAP) gehören in die Skala (WST 16.11.2026: GD150, GD200 und AVWAP
@@ -184,9 +180,6 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
         A(f'<text x="{LINKS - 8}" y="{Y(yv) + 4:.1f}" fill="{TEXT_3}" font-size="12" text-anchor="end">{yv:.0f}</text>')  # Layout
 
     spaete = []                                  # Beschriftungen, die über den Kerzen liegen müssen
-    if zonen:
-        _zonen(zonen, zonen_ansicht, d, pos, X, Y, A, spaete, platz, ENDE, breite / N / 2)
-
     if tag_ebene:
         _profil(marken.get("profil"), d, pos, X, Y, A, spaete, platz, ENDE, pmin, pmax)
     if preis_ebene:
@@ -415,130 +408,6 @@ def chart(df, ebene="Tag", index=None, ausschnitt=None, sektor=None, sektor_name
     return "".join(s)
 
 
-def _zonen(ka, ansicht, d, pos, X, Y, A, spaete, platz, ENDE, halb):
-    """VCP-Scanner Baustein 1 im Chart: Zone (Base blau, Flagge gelb, Konsolidierung lila), Vorgeschichte als gelber
-    Pfeil, Fahnenstange als grüner Pfeil, grobes ZigZag grau. Aktuell = nur das Setup jetzt (ZigZag ab der Vorgeschichte),
-    Historie = dazu alle abgeschlossenen Zonen im Ausschnitt mit ↑ am Ausbruch, davor die Basennummer (IBD, basen.py)."""
-    erster = d.index[0]
-    jetzt = ka.get("jetzt") or {}
-
-    def rahmen(b, x1, dick, deck, strich=""):
-        if b.get("ende_t") is not None and b["ende_t"] < erster:
-            return None
-        fa = ZONE_FARBE.get(b.get("name"), TEXT_3)
-        x0 = X(pos(b["start_t"])) - halb if b["start_t"] >= erster else X(0) - halb   # links angeschnitten
-        A(f'<rect x="{x0:.1f}" y="{Y(b["oben"]):.1f}" width="{max(2, x1 - x0):.1f}" height="{Y(b["unten"]) - Y(b["oben"]):.1f}" '
-          f'fill="{fa}" fill-opacity="{deck}" stroke="{fa}" stroke-width="{dick}"' + (f' stroke-dasharray="{strich}"' if strich else "")
-          + f'><title>{b.get("name", "Zone offen")} {b["start_t"]:%d.%m.%Y}' + (f'–{b["ende_t"]:%d.%m.%Y}' if b.get("ende_t") else "–heute")
-          + f' · {zahl(b["wochen"], 1)} Wochen · Tiefe {zahl(b["tiefe"], 1)} % · Oberkante {zahl(b["oben"])} $ · Unterkante {zahl(b["unten"])} $'
-          + '</title></rect>')
-        return x0
-
-    def pfeil(t0, p0, t1, p1, farbe, marke, dick=2):
-        if t0 < erster:
-            return
-        A(f'<line x1="{X(pos(t0)):.1f}" y1="{Y(p0):.1f}" x2="{X(pos(t1)):.1f}" y2="{Y(p1):.1f}" stroke="{farbe}" '
-          f'stroke-width="{dick}" stroke-opacity="0.9" marker-end="url(#spitze{marke})"/>')
-
-    # ZigZag (grob, 2 × ATR)
-    ab = erster
-    if ansicht == "Aktuell":
-        v_ = jetzt.get("vorgeschichte") or {}
-        ab = max(erster, v_.get("von_t") or jetzt.get("start_t") or d.index[max(0, len(d) - 60)])  # Layout
-    zz = [(X(pos(t)), Y(p)) for t, p in ka.get("zigzag") or [] if t >= ab]
-    if len(zz) >= 2:
-        A(f'<polyline points="{" ".join(f"{x:.1f},{y:.1f}" for x, y in zz)}" fill="none" stroke="{TEXT_3}" '
-          f'stroke-width="1.2" stroke-opacity="0.8"/>')
-
-    if ansicht == "Historie":
-        stangen_ende = []
-        for b in ka.get("verlauf") or []:
-            if b.get("cheat"):                   # Cheat in einer größeren Zone: dünn gestrichelt, ohne Nummer (Gefechtsordnung)
-                x0 = rahmen(b, X(pos(b["ende_t"])), 0.8, 0.0, "3 3")  # Layout
-                if x0 is not None:
-                    spaete.append(f'<text x="{X(pos(b["ende_t"])):.1f}" y="{Y(b["oben"]) - 4:.1f}" fill="{TEXT_2}" '  # Layout
-                                  f'font-size="12" text-anchor="middle">Cheat</text>')
-                continue
-            x0 = rahmen(b, X(pos(b["ende_t"])), 1.2, 0.07)  # Layout
-            if x0 is None:
-                continue
-            spaete.append(f'<text x="{X(pos(b["ende_t"])):.1f}" y="{Y(b["oben"]) - 4:.1f}" fill="{GRUEN}" font-size="15" '  # Layout
-                          f'font-weight="700" text-anchor="middle">{str(b["nummer"]) + ". " if b.get("nummer") else ""}↑</text>')
-            st_ = b.get("stange") or {}
-            if b["name"] == "Flagge" and st_ and not any(st_["von_t"] < e for e in stangen_ende):
-                pfeil(st_["von_t"], st_["von"], b["start_t"], b["oben"], GRUEN, "G", 1.6)  # Layout
-            if b["name"] == "Flagge":
-                stangen_ende.append(b["ende_t"])
-
-    if jetzt.get("zone") or jetzt.get("offen"):
-        offen = not jetzt.get("zone")
-        x0 = rahmen(jetzt, ENDE, 2 if not offen else 1.4, 0.09 if not offen else 0, "6 4" if offen else "")  # Layout
-        if x0 is not None:
-            if offen:
-                text_ = f'Zone offen · Rücksetzer {zahl(jetzt["tiefe"], 1)} % · noch keine Erholung'
-            else:
-                text_ = (f'{str(jetzt["nummer"]) + ". " if jetzt.get("nummer") else ""}'
-                         f'{jetzt["name"]} · {zahl(jetzt["wochen"], 1)} W · {zahl(jetzt["tiefe"], 0)} %'
-                         + (" · zu kurz" if jetzt["laenge"] == "zu kurz" else ""))
-                inn_ = jetzt.get("innen")
-                if inn_ and inn_["start_t"] >= erster:      # Flagge in der Zone: ein Etikett statt zwei übereinander
-                    text_ += f' · darin Flagge {zahl(inn_["wochen"], 1)} W · {zahl(inn_["tiefe"], 0)} %'
-            fa = ZONE_FARBE.get(jetzt.get("name"), TEXT_2)
-            rechts = x0 + len(text_) * 6.6 > ENDE            # schmale Zone am rechten Rand: Text endet am Rand · Layout
-            xt, anker = (ENDE, "end") if rechts else (x0 + 4, "start")  # Layout
-            oben_ = max([jetzt["oben"]] + list(d["High"][d.index >= jetzt["start_t"]]))   # über allen Kerzen der Zone
-            spaete.append(f'<text x="{xt:.1f}" y="{platz(xt, Y(oben_) - 8, text_, 12, anker):.1f}" '  # Layout
-                          f'fill="{fa}" font-size="12" font-weight="600" text-anchor="{anker}">{text_}</text>')
-            v_ = jetzt.get("vorgeschichte") or {}
-            st_ = jetzt.get("stange") or {}
-            if jetzt.get("name") == "Flagge" and st_:
-                pfeil(st_["von_t"], st_["von"], jetzt["start_t"], jetzt["oben"], GRUEN, "G", 2.2)  # Layout
-            elif v_.get("von_t") is not None:
-                pfeil(v_["von_t"], v_["von"], v_["bis_t"], v_["bis"], GELB, "Y", 2)
-        _enge(ka.get("enge") or {}, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster)
-        innen = jetzt.get("innen")
-        if innen and innen["start_t"] >= erster:
-            rahmen(innen, ENDE, 1.8, 0.0)  # Layout
-            st_ = innen.get("stange") or {}
-            if st_:
-                pfeil(st_["von_t"], st_["von"], innen["start_t"], innen["oben"], GRUEN, "G", 2)
-
-
-AMPEL_FARBE = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": TEXT_3}
-
-
-def _enge(e, x0, d, pos, X, Y, A, spaete, platz, ENDE, erster):
-    """Baustein 2 im Chart: jede Kontraktion als feine Linie Hoch → Tief mit ihrer Tiefe, die Enge (letzte
-    Kontraktion) als eigener Rahmen bis heute, Pivot als gestrichelte Linie mit Preis, Ampel der Enge am Rahmen."""
-    kontr = e.get("kontraktionen") or []
-    if not kontr or x0 is None:
-        return
-    for k in kontr:
-        if k["hoch_t"] < erster:
-            continue
-        xa, xb = X(pos(k["hoch_t"])), X(pos(k["tief_t"]))
-        A(f'<line x1="{xa:.1f}" y1="{Y(k["hoch"]):.1f}" x2="{xb:.1f}" y2="{Y(k["tief"]):.1f}" stroke="{TEXT_2}" '
-          f'stroke-width="1.3" stroke-dasharray="4 3"/>')
-        t_ = f'−{zahl(k["tiefe"], 0)} %'
-        spaete.append(f'<text x="{xb:.1f}" y="{platz(xb, Y(k["tief"]) + 16, t_, 12, nach_oben=False):.1f}" fill="{TEXT}" '  # Layout
-                      f'font-size="12" font-weight="600" text-anchor="middle">{t_}</text>')
-    letzte = kontr[-1]
-    farbe = AMPEL_FARBE.get(e.get("ampel"), TEXT_3)
-    if letzte["hoch_t"] >= erster:
-        xe = X(pos(letzte["hoch_t"])) - 3  # Layout
-        A(f'<rect x="{xe:.1f}" y="{Y(letzte["hoch"]):.1f}" width="{ENDE - xe:.1f}" '
-          f'height="{Y(letzte["tief"]) - Y(letzte["hoch"]):.1f}" fill="{farbe}" fill-opacity="0.10" stroke="{farbe}" '
-          f'stroke-width="1.6"><title>Enge: {zahl(letzte["tiefe"], 1)} % · Pivot {zahl(e["pivot"])} $</title></rect>')
-        A(f'<line x1="{xe:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(e["pivot"]):.1f}" y2="{Y(e["pivot"]):.1f}" stroke="{TEXT}" '  # Layout
-          f'stroke-width="1.4" stroke-dasharray="6 4"/>')
-        wort = e["lage"] if "Cheat" in str(e.get("lage")) else "Pivot der Base"   # eine Cheat-Regel (vcp_zone.drittel)
-        t_ = f'{wort} {zahl(e["pivot"])} $'       # 12.11.2026: nicht mit dem Einstieg verwechseln; Drittel 14.11.2026
-        y_, strich = _rechts(platz, ENDE, Y(e["pivot"]), t_)
-        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{TEXT}" font-size="12" font-weight="600">{t_}</text>')  # Layout
-    t_ = f'● Enge {e.get("ampel", "")} · {e.get("text", "")}'
-    spaete.append(f'<text x="{ENDE:.1f}" y="{platz(ENDE, 20, t_, 12, "end", False):.1f}" fill="{farbe}" font-size="12" '  # Layout
-                  f'font-weight="600" text-anchor="end">{t_}</text>')
-
 def _rechts(platz, ENDE, y_linie, text, nach_oben=True):
     """Etikett in der Spalte rechts neben dem Chart: y der Schrift und – wenn es wegen eines anderen Etiketts verschoben
     werden musste – ein feiner Strich zurück zur Höhe seiner Linie, damit klar bleibt, wozu es gehört."""
@@ -615,14 +484,6 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
                   + (" · zu weit" if sx.get("zu_weit") else ""))
             y_, strich = _rechts(platz, ENDE, Y(sx["stopp"]), t_, False)
             spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12" font-weight="600">{t_}</text>')  # Layout
-    for w_ in m.get("weitere") or []:            # zweiter Einstieg (Cheat bzw. Ausbruch), gestrichelt, ohne eigene Kaufzone
-        x0 = _x0(m, d, pos, X)
-        A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(w_["wert"]):.1f}" y2="{Y(w_["wert"]):.1f}" stroke="{KAUFZONE_FARBE}" '  # Layout
-          f'stroke-width="1.4" stroke-dasharray="6 4"><title>{w_["quelle"]} {zahl(w_["wert"])} $'
-          + (f' · Stopp 1,5 ATR {zahl(w_["stopp"])} $' if w_.get("stopp") else "") + '</title></line>')
-        t_ = f'{w_["quelle"].split(":")[0].replace("Ausbruch über die Oberkante", "Ausbruch")} {zahl(w_["wert"])} $'
-        y_, strich = _rechts(platz, ENDE, Y(w_["wert"]), t_)
-        spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{KAUFZONE_FARBE}" font-size="12">{t_}</text>')  # Layout
     sh = m.get("short") or {}
     if sh.get("stopp") and pd.Timestamp(sh["tag"]) >= d.index[0]:
         x0 = X(pos(sh["tag"]))
@@ -635,12 +496,6 @@ def _kaufzone(m, d, pos, X, Y, A, spaete, platz, ENDE):
         t_ = f'Stopp Short 1,5 ATR {zahl(sh["stopp"])} $ · +{zahl((sh["stopp"] / sh["einstieg"] - 1) * 100, 1)} %'
         y_, strich = _rechts(platz, ENDE, Y(sh["stopp"]), t_)
         spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')  # Layout
-        for w_ in sh.get("weitere") or []:         # zweiter Short-Einstieg (früher Short bzw. Bruch), gestrichelt
-            A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(w_["wert"]):.1f}" y2="{Y(w_["wert"]):.1f}" stroke="{ROT}" '  # Layout
-              f'stroke-width="1.4" stroke-dasharray="6 4"><title>{w_["quelle"]} {zahl(w_["wert"])} $</title></line>')
-            t_ = f'{w_["quelle"].split(":")[0]} {zahl(w_["wert"])} $'
-            y_, strich = _rechts(platz, ENDE, Y(w_["wert"]), t_, nach_oben=False)
-            spaete.append(f'{strich}<text x="{ENDE + 8:.1f}" y="{y_:.1f}" fill="{ROT}" font-size="12">{t_}</text>')  # Layout
         sx = sh.get("struktur") or {}
         if sx.get("stopp"):                        # Struktur-Stopp (Schritt 3) durchgezogen
             A(f'<line x1="{x0:.1f}" x2="{ENDE + 4:.1f}" y1="{Y(sx["stopp"]):.1f}" y2="{Y(sx["stopp"]):.1f}" stroke="{ROT}" '  # Layout

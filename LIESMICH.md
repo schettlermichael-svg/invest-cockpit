@@ -1654,3 +1654,17 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Livermores Key Price (25.11.2026): livermore.schwester = stärkster anderer Titel derselben Branche (RS-Rang aus dem
   Rückenwind), livermore.key_price = beide über 2 Jahre auf 100 gesetzt und addiert (unsere Anpassung: Livermore nahm zwei
   ähnlich teure Aktien), Notizbuch darüber; auf der Titelseite „🔑 Key Price mit … ✓ bestätigt / ✗ bestätigt nicht“.
+- Livermore wird die Grundlage für Base und Pivot (25.11.2026, Micky: „konsequent wäre die Umstellung auf Livermore“):
+  vcp_zone.zone liest die Spanne aus dem Notizbuch (livermore.spanne). Oberkante = ältester Pivotal Point oben seit Beginn
+  des letzten Aufwärtstrends ohne Schluss darüber (sonst der letzte Pivotal Point oben ohne Schluss darüber), Unterkante =
+  tiefstes Tief seitdem, Pivot = jüngster Pivotal Point oben seit der Oberkante (Regel 5a). Schluss über der Oberkante =
+  keine Zone; Spalte Abwärtstrend heute = Zone offen („Abwärtstrend läuft“). Entfernt: alle Formregeln der alten Zone
+  (3–65 Wochen, 50 % Absturz, Erholung in die obere Hälfte, gescheiterte Tasse, flache Base, Flagge in der Base),
+  Minervinis Drittel und die Cheat-Regel (cheat, drittel, rand, einstiege, verlauf, _einordnen), die tote Zonen-Zeichnung
+  in chart.py (_zonen, _enge, „weitere“ Einstiege) und tote Short-Texte/Konstanten in vcp_zone. Minervinis Wellen bleiben
+  als Reife-Zeichen (enge: Pivot aus der Zone, Volumen der Enge ab dem Hoch der letzten Welle). ausbruch: Pivot der Zone
+  vom Vortag; trägt Livermore danach einen neuen Pivotal Point oben ein, gilt der neue; neu bestaetigt/bestaetigt_tag/
+  bestaetigung = ein Hoch 1 ATR über dem Pivot (Zeichen). Reife-Leiste: „Ausbruch bestätigt“ (grün: Bestätigung und
+  Volumen) bzw. „Ausbruch hält“ (gelb); Zeichenleiste 📒 am Tag der Bestätigung. Notizbuch: Pivotal Points mit i und
+  gesetzt_i, je_tag (Spalte, Trend je Zeile), Zwischenspeicher. Mac-Probe 04.11. (400 Titel): JPM, HON, PEP, ABNB
+  dieselben Pivots wie vorher; CRM nach neuem Pivotal Point 252,42 statt des alten Ausbruchs über 239,45.

@@ -310,10 +310,12 @@ REIFE_STUFEN = ("Base", "enger", "leise", "am Pivot", "Ausbruch")
 
 
 def reife(r):
-    """Die Base des Tages in fünf Stufen → [(Stufe, Ampel, Grund)]. Base: mindestens zwei Wellen (Minervini 2–6);
-    enger: jede Welle höchstens 70 % der vorigen und die letzte eng; leise: das Volumen leiser als in der ersten Welle
-    und unter dem Schnitt; am Pivot: höchstens RAND_PCT darunter; letzte Stufe nach vcp_zone.ausbruch (Regel vom
-    13.11.2026): Ausbruch hält (grün mit Volumen über dem 50-Tage-Schnitt), Rücktest, Fehlausbruch, 2. Anlauf."""
+    """Livermores Spanne des Tages in fünf Stufen → [(Stufe, Ampel, Grund)] – Minervinis Wellen als Reife-Zeichen
+    (Micky 25.11.2026). Base: mindestens zwei Wellen (Minervini 2–6); enger: jede Welle höchstens 70 % der vorigen und
+    die letzte eng; leise: das Volumen leiser als in der ersten Welle und unter dem Schnitt; am Pivot (Livermores
+    Pivotal Point): höchstens RAND_PCT darunter; letzte Stufe nach vcp_zone.ausbruch (Regel vom 13.11.2026): Ausbruch
+    bestätigt (grün: Livermores Bestätigung 1 ATR über dem Pivot und Volumen über dem 50-Tage-Schnitt), Ausbruch hält
+    (gelb: eines davon fehlt), Rücktest, Fehlausbruch, 2. Anlauf."""
     import vcp_zone
     ba = (r.get("fuehrte") or {}).get("basis") or {}
     en_ = ba.get("enge") or {}
@@ -321,7 +323,9 @@ def reife(r):
     if len(kontr) < 1 or en_.get("pivot") is None:
         return [(s_, "grau", "keine Base mit Wellen") for s_ in REIFE_STUFEN]
     zwei = len(kontr) >= 2
-    aus = [("Base", "grün" if zwei else "gelb", f"{len(kontr)} Welle{'n' if zwei else ''} {en_.get('folge', '')} %")]
+    z_ = ba.get("z") or {}
+    seit = f"Spanne seit {pd.Timestamp(z_['start_t']):%d.%m.} (Livermore) · " if z_.get("start_t") is not None else ""
+    aus = [("Base", "grün" if zwei else "gelb", f"{seit}{len(kontr)} Welle{'n' if zwei else ''} {en_.get('folge', '')} %")]
     if not zwei:
         aus.append(("enger", "grau", "erst eine Welle"))
     elif en_.get("schrumpft") and en_.get("eng"):
@@ -340,7 +344,8 @@ def reife(r):
     df = ba.get("df")
     kurs = la.get("kurs") or (float(df["Close"].iloc[-1]) if df is not None and len(df) else piv)
     ab = (kurs / piv - 1) * 100
-    aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau", f"{zahl(ab, 1)} % zum Pivot {zahl(piv)}"))
+    aus.append(("am Pivot", "grün" if ab >= -vcp_zone.RAND_PCT else "grau",
+                f"{zahl(ab, 1)} % zum Pivot {zahl(piv)} (Livermores Pivotal Point)"))
     a_ = ba.get("ausbruch") or {}                     # dieselbe Regel wie Phase und Setup (vcp_zone.ausbruch, 13.11.):
     alt_ = a_.get("gescheitert") or []                # Rücktest knapp unter dem Pivot, Fehlausbruch unter dem Tief des
     if not a_:                                        # Ausbruchstags oder mehr als 3 % darunter
@@ -352,8 +357,10 @@ def reife(r):
     elif alt_:
         stufe = ("2. Anlauf", "gelb", f"Fehlausbruch am {alt_[-1][0]:%d.%m.} (Hoch {zahl(alt_[-1][1])} = Decke der "
                  f"Gefangenen) · {vcp_zone.ausbruch_text(a_)}")
+    elif a_.get("bestaetigt") and a_.get("mit_volumen"):
+        stufe = ("Ausbruch bestätigt", "grün", vcp_zone.ausbruch_text(a_))
     else:
-        stufe = ("Ausbruch hält", "grün" if a_.get("mit_volumen") else "gelb", vcp_zone.ausbruch_text(a_))
+        stufe = ("Ausbruch hält", "gelb", vcp_zone.ausbruch_text(a_))
     aus.append(stufe)
     return aus
 
