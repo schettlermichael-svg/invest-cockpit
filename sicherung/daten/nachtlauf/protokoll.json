@@ -1,75 +1,76 @@
 {
- "start": "24.11.2026 06:05",
- "ende": "24.11.2026 08:05",
+ "start": "25.11.2026 06:05",
+ "ende": "25.11.2026 07:16",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
-   "text": "bis 23.11.2026",
+   "text": "bis 24.11.2026",
    "sekunden": 13
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
-   "text": "Stand 23.11.2026",
-   "sekunden": 106
+   "text": "Stand 24.11.2026",
+   "sekunden": 105
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
-   "text": "1959 von 1978 Titeln ergänzt",
-   "sekunden": 549
+   "text": "1046 von 1980 Titeln ergänzt",
+   "sekunden": 541
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
-   "text": "1980 Titel",
-   "sekunden": 305
+   "text": "1981 Titel",
+   "sekunden": 295
   },
   {
    "name": "TradingView-Kennzahlen",
    "ok": true,
    "text": "1963 Titel (99%)",
-   "sekunden": 1
+   "sekunden": 2
   },
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "31 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 121
+   "text": "18 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 93
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
-   "text": "Stand 2026-11-23: Garde 6, Angriff 578, Vorhut 242, Ohne Nachschub 350, Rückzug 767",
-   "sekunden": 1522
+   "text": "Stand 2026-11-24: Garde 18, Angriff 625, Vorhut 249, Ohne Nachschub 327, Rückzug 724",
+   "sekunden": 539
   },
   {
    "name": "Zirkel (Kreislauf, Setup, Hochs/Tiefs, Markt-Ampel)",
    "ok": true,
-   "text": "1967 Titel, 158 mit Setup · 17 Hochs, 21 Tiefs · S&P 500 Phase 2 → 3 · Rücksetzer gelb · Nasdaq Phase 2 · Rücksetzer gelb",
-   "sekunden": 2422
+   "text": "1967 Titel, 200 mit Setup · 55 Hochs, 29 Tiefs · S&P 500 Phase 2 → 3 · Rücksetzer gelb · Nasdaq Phase 2 · Rückschlag gelb",
+   "sekunden": 2466
   },
   {
    "name": "Lage (Markt-Ampel, Wetter, Pendel, Breite)",
    "ok": true,
    "text": "Übersicht gebaut",
-   "sekunden": 20
+   "sekunden": 16
   },
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "932 von 932 Titelseiten abgelegt",
-   "sekunden": 2150
+   "text": "113 von 113 Titelseiten abgelegt",
+   "sekunden": 199
   }
  ],
- "pid": 571115,
+ "pid": 19331,
  "datenstand": {
-  "Massive-Tageskurse": "2026-11-23",
-  "Yahoo-Tageskurse": "2026-11-23",
-  "Marktdaten (Indizes)": "2026-11-20",
-  "Rückenwind": "2026-11-23",
-  "Zirkel": "2026-11-23"
+  "Massive-Tageskurse": "2026-11-24",
+  "Yahoo-Tageskurse": "2026-11-24",
+  "Indizes (SPY, QQQ)": "2026-11-24",
+  "Marktdaten (Sektor-ETFs)": "2026-11-24",
+  "Rückenwind": "2026-11-24",
+  "Zirkel": "2026-11-24"
  },
- "massive_durchgaenge": 3
+ "massive_durchgaenge": 1
 }
