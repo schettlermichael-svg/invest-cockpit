@@ -1639,3 +1639,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   2. Anlauf – dieselbe Regel wie Phase 🦊 und Setup 🪝 (keine eigene Volumenrechnung mehr, `REIFE_SCHNITT` entfernt).
 - Wellenmesser als schräge Linie (25.11.2026, Micky): statt eines Balkens in der zeitlichen Mitte (AEE: T1 stand im August,
   weit weg von Hoch und Tief) eine kräftige Linie vom Schwunghoch zum Schwungtief, T1, T2 … am Tief (`WELLE_STRICH`).
+- Livermores Notizbuch (25.11.2026, Micky: „Der Zirkel deutet, Livermore liefert das System“): kern/livermore.py führt
+  den Market Key (How to Trade in Stocks, 1940, Regeln 1–10) über die Tageskerzen – sechs Spalten, Schwung 2 ATR (wie die
+  Wendepunkte), Bestätigung 1 ATR, Pivotal Points beim Spaltenwechsel (rot/schwarz wie im Buch), Ereignisse: Trend vorbei
+  (10b/d), bestätigt (10a), Gefahrensignal (10e/f). Entscheidungen im Konzept-Doc, Abschnitt „Livermore-System“.

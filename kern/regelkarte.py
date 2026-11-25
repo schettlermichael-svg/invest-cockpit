@@ -102,6 +102,12 @@ WERKZEUGE = {
                                           "Cheat – dann ist die Oberkante der Pivot.",
              messung=["vcp_zone.enge", "vcp_zone.drittel", "zonenseite.reife"], stand="gemessen",
              pruefer=["Pivot", "Drittel des Pivots", "Enge/Kontraktionen"]),
+        dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
+                                                 "Spalten (Aufwärts-/Abwärtstrend, natürliche und sekundäre Erholung/Reaktion); "
+                                                 "Schwung = 2 ATR wie die Wendepunkte (seine ~6 Punkte), Bestätigung = 1 ATR "
+                                                 "(seine ~3 Punkte, Micky 25.11.2026); Pivotal Points beim Spaltenwechsel; "
+                                                 "Trend vorbei, bestätigt und Gefahrensignal nach Regel 10.",
+             messung=["livermore.notizbuch"], stand="gemessen", pruefer=["Livermore-Spalte"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
                                                "Zone, mit Pivot im unteren oder mittleren Drittel der größeren Zone, ist ein "
                                                "früher Einstieg (Low Cheat, Cheat) und kein Ausbruch – ebenso ein Schluss "
