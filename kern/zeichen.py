@@ -598,7 +598,7 @@ def enge_trocken(df):
 # ── Relativ zum Markt ─────────────────────────────────────────────────────────────────────────────────────────────
 def korrekturfenster(idx):
     """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: die Markt-Ampel
-    aus dem Zirkel des Index steht nicht auf 🟢 (Micky 23.11.2026, vorher O'Neils Ampel), oder der Index liegt ≥ 3 %
+    (Livermores Frontbericht des Index, Micky 25.11.2026; vorher der Zirkel, davor O'Neils Ampel) steht nicht auf 🟢, oder der Index liegt ≥ 3 %
     unter dem Hoch der 60 Tage – start = Indexhoch der 60 Tage. Vorbei (Prüf-Agent 13.11.2026: die Stärke verschwand,
     sobald der Markt wieder lief – genau dann brechen die Führer aus): die letzte Korrektur von mindestens 3 %, deren
     Tief höchstens NACHWIRKUNG_TAGE Handelstage zurückliegt."""
@@ -606,7 +606,7 @@ def korrekturfenster(idx):
     c60 = c.iloc[-KORREKTUR_FENSTER:]
     try:
         import zirkel
-        gruen = zirkel.markt_ampel(zirkel_index(idx)) == "grün"
+        gruen = zirkel.livermore_ampel(idx) == "grün"
     except Exception:  # noqa: BLE001 – ohne Zirkel des Index zählt nur der Abstand zum Hoch
         gruen = True
     if not gruen or (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:

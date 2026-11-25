@@ -124,7 +124,8 @@ def main():
         z_ = zirkel.rechnen(zirkel.liste(alle), melden=lambda x: print(x, flush=True))
         b_ = z_["barometer"]
         ix = b_.get("index") or {}
-        ampel = " · ".join(f"{n} Phase {x['wort']} {x['ampel']}" for n, x in ix.items()) or "Index ohne Zirkel"
+        ampel = " · ".join(f"{n} {x.get('spalte', '')} {x['ampel']} (Zirkel {x.get('zirkel', '')})"
+                           for n, x in ix.items()) or "Index ohne Notizbuch"
         return f"{z_['titel']} Titel, {z_['trades']} mit Setup · {b_['hochs']} Hochs, {b_['tiefs']} Tiefs · {ampel}"
 
     def revier():

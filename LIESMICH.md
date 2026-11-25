@@ -1694,3 +1694,10 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Notbremse ab Tag 3 bei Schluss unter dem 20er; Gefahrensignal 10e zieht ihn eng unter das Tief jenes Tages (überholt
   bei neuem Hoch danach); short gespiegelt. Zirkel (✓/⚠) und Reibung (Mauer, Kraft ohne Weg, Klimax) sind nur noch
   Zeichen. Entfernt: der 10er-Stopp, reiten.linien, GD10 und der ende-Parameter. Mac-Probe MSFT, AAPL, NVDA (short).
+- Markt-Ampel nach Livermore (25.11.2026, Micky: „Frontbericht + Führer“): zirkel.indizes legt Livermores Notizbuch auf
+  SPY und QQQ (Tageskerzen) – 🟢 Vormarsch (Aufwärtstrend), 🟡 Gefechtspause (Erholung/Reaktion), 🔴 Rückzug
+  (Abwärtstrend); der Zirkel des Index (markt_ampel, Weinstein) bestätigt mit ✓/✗. zirkel.fuehrer: Garde und Angriff
+  im Aufwärts- gegen Abwärtstrend des Notizbuchs (feld lv_trend), als Zeichen unter der Ampel neben Hochs : Tiefs.
+  zeichen.korrekturfenster nimmt die neue Ampel (livermore_ampel). Alte Läufe ohne Livermore: keine Ampel bis zum
+  nächsten Nachtlauf. Mac-Probe (04.11.): S&P 500 🟡 Natürliche Erholung, Zirkel ✓; Nasdaq 🔴 Abwärtstrend, Zirkel ✗;
+  Führer 53 vor, 7 zurück (60 Titel).

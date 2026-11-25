@@ -60,11 +60,15 @@ KAESTEN = {
              fuehrt="Micky (Zirkel), Weinstein (Phasen)", zeichen="🌱/🍂",
              messung=["zirkel.indizes", "zeichen.zirkel_index"], stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Markt-Ampel", zustand=None,
-             regel="Der S&P 500 bestimmt, der Nasdaq steht daneben. 🟢 Angriff: Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw. "
-                   "Wechsel 1 → 2 · 🟡 Vorsicht: Phase 2 mit 🍂, Phase 1 ohne 🌱, Phase 3 ohne 🍂, Phase 4 mit 🌱 · "
-                   "🔴 Rückzug: Phase 3 mit 🍂 bzw. Wechsel 3 → 4, Phase 4 ohne 🌱.",
-             fuehrt="Micky 23.11.2026 (Zirkel ersetzt O'Neil)", zeichen="🟢/🟡/🔴",
-             messung=["zirkel.markt_ampel", "zirkel.markt"], stand="gemessen", pruefer=["Markt-Ampel"]),
+             regel="Livermores Frontbericht (Micky 25.11.2026): sein Notizbuch auf den Tageskerzen des S&P 500 bestimmt, "
+                   "der Nasdaq steht daneben. 🟢 Vormarsch: Spalte Aufwärtstrend · 🟡 Gefechtspause: natürliche oder "
+                   "sekundäre Erholung bzw. Reaktion · 🔴 Rückzug: Spalte Abwärtstrend. Der Zirkel des Index bestätigt mit "
+                   "✓ (dieselbe Farbe) oder ✗: 🟢 Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw. Wechsel 1 → 2 · 🔴 Phase 3 mit 🍂 "
+                   "bzw. Wechsel 3 → 4, Phase 4 ohne 🌱 · sonst 🟡. Darunter als Zeichen ohne Schwelle: Führer (Garde und "
+                   "Angriff) im Aufwärts- gegen Abwärtstrend des Notizbuchs.",
+             fuehrt="Micky 25.11.2026 (Livermore; 23.11.2026 Zirkel, davor O'Neil)", zeichen="🟢/🟡/🔴",
+             messung=["zirkel.indizes", "zirkel.livermore_ampel", "zirkel.markt_ampel", "zirkel.markt", "zirkel.fuehrer"],
+             stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Hochs gegen Tiefs", zustand=None,
              regel="Neue 52-Wochen-Hochs gegen Tiefs im Revier – Zeichen unter der Ampel, ohne Urteil.",
              fuehrt="O'Neil (Zeichen)", zeichen="", messung=["zirkel.rechnen"], stand="gemessen", pruefer=["Markt-Ampel"]),

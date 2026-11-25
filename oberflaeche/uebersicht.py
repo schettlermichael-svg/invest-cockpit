@@ -44,8 +44,9 @@ def _kachel(label, ampel, wert, pfeil, zeile, mehr="", zeile_html=""):
 
 
 def _markt_spalten(mm):
-    """Markt-Kachel (Micky 23.11.2026): S&P 500 und Nasdaq nebeneinander – je Index Ampel, Phase und der Halt der Phase
-    (24.11.2026: 🏰 hält · 🌊 Welle · ⛈️ Sturm), darunter die Zeichen in Klartext („dagegen:“, „trägt:“), dann Hochs : Tiefs."""
+    """Markt-Kachel (Micky 23.11.2026): S&P 500 und Nasdaq nebeneinander – je Index Livermores Spalte mit Ampel (25.11.2026,
+    Frontbericht), darunter die Bestätigung des Zirkels (✓/✗ mit Phase und Halt: 🏰 hält · 🌊 Welle · ⛈️ Sturm) und
+    die Zeichen in Klartext („dagegen:“, „trägt:“); unten die Führer und Hochs : Tiefs."""
     import zeichen
     import zirkel
     spalten = []
@@ -56,19 +57,21 @@ def _markt_spalten(mm):
         zeilen_ = ([(sym, wort)] if sym else []) + \
                   [("dagegen:", zeichen.klartext(k, seite_k)) for k in x.get("keim") or []] + \
                   [("trägt:", zeichen.klartext(k, seite_t)) for k in x.get("traegt") or []]
-        phase = f'Phase {x["wort"]}' if x.get("wort") else "jung"
+        phase = f'Zirkel {x.get("zirkel", "")} Phase {x["wort"]}' if x.get("wort") else "Zirkel: jung"
         spalten.append(
             f'<div style="flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:4px">'
             f'<div style="font-size:13px;color:{TEXT_3}">{t(name)}{" · führt" if name == zirkel.MARKT_FUEHRT else ""}</div>'
             f'<div style="display:flex;align-items:center;gap:8px">{punkt(x["ampel"], PUNKT_KLEIN)}'
-            f'<span style="font-size:15px;font-weight:600">{t(phase)}</span></div>'
-            f'<div style="font-size:13px;color:{TEXT_2}">{t(x.get("name") or "")}</div>'
+            f'<span style="font-size:15px;font-weight:600">{t(x.get("spalte") or "")}</span></div>'
+            f'<div style="font-size:13px;color:{TEXT_2}">{t(phase)} ({t(x.get("name") or "")})</div>'
             + "".join(f'<div style="font-size:13px;color:{TEXT_2};line-height:1.4">{z} {t(k)}</div>'
                       for z, k in dict.fromkeys(zeilen_))
             + ("" if zeilen_ else f'<div style="font-size:13px;color:{TEXT_3}">keine Zeichen gemessen</div>')
             + '</div>')
+    fu = mm.get("fuehrer")
     hochs = (f'<div style="font-size:13px;color:{TEXT_2};border-top:1px solid {RAND};padding-top:6px">'
-             f'neue 52-Wochen-Hochs : Tiefs {mm["hochs"]} : {mm["tiefs"]}</div>' if mm.get("hochs") is not None else "")
+             + (f'Führer (Garde und Angriff): {fu["auf"]} rücken vor · {fu["ab"]} ziehen sich zurück · ' if fu else "")
+             + f'neue 52-Wochen-Hochs : Tiefs {mm["hochs"]} : {mm["tiefs"]}</div>' if mm.get("hochs") is not None else "")
     return f'<div style="display:flex;gap:16px;flex-wrap:wrap">{"".join(spalten)}</div>' + hochs
 
 
@@ -172,18 +175,19 @@ def seite_uebersicht():
     if p["ampel"] == "grün" and gegen:
         pendel_zeile += " Gegenstimmen: " + ", ".join(gegen) + "."
     import zirkel
-    try:                                         # Markt-Ampel aus dem Zirkel des Index (Micky 23.11.2026)
+    try:                                         # Markt-Ampel: Livermore auf dem Index, der Zirkel bestätigt (25.11.2026)
         mm = zirkel.markt()
     except Exception:  # noqa: BLE001
         mm = None
-    markt_mehr = "".join(ampelzeile(f'{n}: {x["name"]} ({x["wort"]})', x["ampel"],
+    markt_mehr = "".join(ampelzeile(f'{n}: {x.get("spalte", "")} · Zirkel {x.get("zirkel", "")} {x["name"]} ({x["wort"]})',
+                                    x["ampel"],
                                     " · ".join([f"trägt – {y}" for y in x.get("traegt") or []]
                                                + [f"Keim – {y}" for y in x.get("keim") or []]) or "keine Zeichen gemessen")
                          for n, x in ((mm or {}).get("indizes") or {}).items())
     pendel = "".join(ampelzeile(n, a, x) for n, (a, x) in instr.items())
     kacheln = [
         _kachel("Markt", mm["ampel"], mm["wort"], "", "", markt_mehr, _markt_spalten(mm))
-        if mm else "",   # eine Ampel (Micky 12.11.2026), seit 23.11.2026 aus dem Zirkel des Index
+        if mm else "",   # eine Ampel (Micky 12.11.2026), seit 25.11.2026 Livermores Frontbericht
         _kachel("Moral der Truppe", pendel_ampel, p["zone"], "", pendel_zeile, pendel),
         _kachel("Wirtschaftswetter", "gelb" if q["wechsel_moeglich"] else QUAD_AMPEL[q["quad"]],
                 f'Quad {q["quad"]} · {q["name"]}', "", quad_zeile),
