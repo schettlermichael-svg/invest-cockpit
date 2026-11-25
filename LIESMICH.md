@@ -1643,3 +1643,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   den Market Key (How to Trade in Stocks, 1940, Regeln 1–10) über die Tageskerzen – sechs Spalten, Schwung 2 ATR (wie die
   Wendepunkte), Bestätigung 1 ATR, Pivotal Points beim Spaltenwechsel (rot/schwarz wie im Buch), Ereignisse: Trend vorbei
   (10b/d), bestätigt (10a), Gefahrensignal (10e/f). Entscheidungen im Konzept-Doc, Abschnitt „Livermore-System“.
+- Livermore im Zirkel (25.11.2026): zeichen.livermore – Regel 10 (Trend vorbei, bestätigt, Gefahrensignal; überholt,
+  sobald das Notizbuch danach wieder in die Gegen-Trendspalte schrieb) und Tape Reading aus Tageskerzen (Reaktion
+  leise/laut, jüngster Durchbruch eines Pivotal Points mit Umsatz, Gefahrensignal an einem Tag) fließen in Keim und Halt.
+  Dow-Struktur nutzt jetzt dieselben 2-ATR-Wendepunkte (DOW_N_TAG entfernt).

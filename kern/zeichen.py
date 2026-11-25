@@ -12,7 +12,8 @@ oder Ereignis (Zahlen, Wertzone). Ein Wechsel der Phase zeichnet sich erst ab, w
 aus Volumen oder RS auf derselben Seite stehen und die Seite klar überwiegt (Gewicht mindestens 4 und
 doppelt so schwer wie die Gegenseite; Prüf-Agent 13.11.2026: vorher genügte das bloße Zählen).
 
-  Dow-Struktur      Schwungpunkte (Tag n = 5, Woche n = 2); höhere Hochs und Tiefs = aufwärts, tiefere = abwärts.
+  Dow-Struktur      Schwungpunkte = Wendepunkte ab 2 ATR (Tag und Wochenkerzen, wie Livermore und der Chart);
+                    höhere Hochs und Tiefs = aufwärts, tiefere = abwärts.
                     Schwäche: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief. Stärke: Schluss mindestens
                     0,5 ATR über dem letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber
                     steht (gespiegelt: erstes tieferes Hoch, Kurs darunter).
@@ -41,7 +42,7 @@ import os
 
 import numpy as np
 import pandas as pd
-from masse import ATR_N, JAHR_TAGE, JAHR_WOCHEN, LAGE_MITTE  # noqa: E402
+from masse import ATR_N, JAHR_TAGE, JAHR_WOCHEN, LAGE_MITTE, VOL_TAGE  # noqa: E402
 
 MIN_RUECKGANG = 3.0       # Index mindestens 3 % unter seinem Hoch (bzw. über seinem Tief)
 HAELT_PUNKTE = 15.0      # „hält“: am Indextief mindestens 15 Punkte vor dem Index (Messung 13.11.: mit 10 Punkten
@@ -58,12 +59,13 @@ from phase import RUECKSETZER  # noqa: E402  Phase 2 · Rücksetzer (Phase-2-Bil
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-DOW_N_TAG = 5               # Dow-Struktur im Tageschart: Schwungpunkt mit 5 Tagen davor und danach (Woche: 2)
 DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief (bzw. über dem tieferen Hoch)
 DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
 STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
 SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
 SECONDARY_TAGE = 20         # Livermores Secondary: der Wendepunkt höchstens 20 Handelstage alt
+LIVERMORE_AUSBRUCH_TAGE = 5 # Ausbruch mit Umsatz und Gefahrensignal an einem Tag: die letzten 5 Handelstage
+LIVERMORE_PIVOTS = 4        # … über bzw. unter einen der letzten 4 Pivotal Points (die zwei Hochs und zwei Tiefs davor)
 SECONDARY_PUNKTE = 4        # Technik: Hoch, Tief, neues Extrem, Secondary – die letzten vier Wendepunkte
 VOLUMEN_TAGE = 20           # Kauf- und Abgabetage: die letzten 20 Tage
 PP_TAGE = 5                 # Pocket Pivot in den letzten 5 Tagen
@@ -168,12 +170,16 @@ def schwungpunkte(h, l, n):
     return hochs, tiefs
 
 
-def dow(df, n=DOW_N_TAG):
+def dow(df):
     """→ {struktur: aufwärts/abwärts/balance, signal, richtung: stärke/schwäche/None, letztes_tief, letztes_hoch,
-    tief_tag, hoch_tag}."""
-    if df is None or len(df) < 4 * n + 4:
+    tief_tag, hoch_tag}. Schwungpunkte = die bestätigten Wendepunkte ab 2 ATR (vcp_zone.zigzag) – dieselben Punkte wie
+    Livermores Notizbuch, die Zone und der Chart (Micky 25.11.2026; vorher 5 Kerzen links und rechts)."""
+    import vcp_zone
+    if df is None or len(df) <= vcp_zone.ATR_TAGE + 2:
         return None
-    hochs, tiefs = schwungpunkte(df["High"], df["Low"], n)
+    zz = vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]                       # nur bestätigte Wendepunkte
+    hochs = [(i, p_) for i, p_, art in zz if art == "H"]
+    tiefs = [(i, p_) for i, p_, art in zz if art == "T"]
     if len(hochs) < 2 or len(tiefs) < 2:
         return {"struktur": "balance", "signal": None, "richtung": None}
     (_, h1), (ih2, h2) = hochs[-2], hochs[-1]
@@ -241,6 +247,82 @@ def secondary(df, tage=SECONDARY_TAGE):
                          f"die Erholung am {df.index[i_l]:%d.%m.} bei {_z(l_, '.2f')} $ unter dem letzten Hoch "
                          f"{_z(b, '.2f')} $ – die Käufer kommen nicht mehr durch", tag=df.index[i_l])]
     return []
+
+
+LIVERMORE_SEITE = {"auf_vorbei": "schwäche", "ab_vorbei": "stärke", "gefahr_auf": "schwäche", "gefahr_ab": "stärke",
+                   "bestaetigt_auf": "stärke", "bestaetigt_ab": "schwäche"}
+LIVERMORE_GEWICHT = {"auf_vorbei": 2, "ab_vorbei": 2, "gefahr_auf": 2, "gefahr_ab": 2, "bestaetigt_auf": 1,
+                     "bestaetigt_ab": 1}          # Trendende und Gefahrensignal wiegen wie ein Dow-Bruch auf Wochenkerzen
+LIVERMORE_REAKTION_TAGE = 3                       # Reaktion leise/laut: erst ab 3 Tagen in der Gegenspalte
+
+
+def livermore(df, tage=SECONDARY_TAGE, nb=None):
+    """Livermores Notizbuch als Zeichen im Zirkel (Micky 25.11.2026: „Der Zirkel deutet, Livermore liefert das System“):
+    Regel 10 der letzten `tage` Handelstage (Trend vorbei, bestätigt, Gefahrensignal) und sein Tape Reading aus den
+    Tageskerzen – Reaktion leise oder laut (Umsatz in der Gegenspalte gegen den 50-Tage-Schnitt), Ausbruch über bzw.
+    unter einen Pivotal Point mit Umsatz über dem Schnitt, Gefahrensignal an einem Tag (Schluss 2 ATR unter dem
+    Tageshoch, gespiegelt über dem Tagestief). → [Zeichen]."""
+    import livermore as lv
+    import vcp_zone
+    nb = nb or lv.notizbuch(df)
+    if not nb:
+        return []
+    aus, n = [], len(df)
+    ab = df.index[max(0, n - tage)]
+    zuletzt = {sp_: max((t for t, s_, _ in nb["eintraege"] if s_ == sp_), default=None) for sp_ in ("AT", "AB")}
+    for tag, k, preis in nb["ereignisse"]:                             # überholt, wenn das Notizbuch danach wieder in
+        gegen_ = "AT" if LIVERMORE_SEITE[k] == "schwäche" else "AB"     # die Gegen-Trendspalte schrieb
+        if tag >= ab and not (zuletzt[gegen_] is not None and zuletzt[gegen_] > tag):
+            aus.append(_zeichen(LIVERMORE_SEITE[k], "struktur", f"{lv.EREIGNIS[k]} am {tag:%d.%m.} bei {_z(preis, '.2f')} $ "
+                                "(Livermore)", LIVERMORE_GEWICHT[k], tag=tag))
+    v = df["Volume"].to_numpy(float)
+    c, h, lo = (df[x].to_numpy(float) for x in ("Close", "High", "Low"))
+    v50 = pd.Series(v).rolling(VOL_TAGE).mean().shift(1).to_numpy()
+    a = vcp_zone.atr(df).to_numpy(float)
+    sp, tr = nb["spalte"], nb.get("trend")                              # Reaktion leise oder laut
+    gegen = (tr == "AT" and sp in ("NR", "SR")) or (tr == "AB" and sp in ("NE", "SE"))
+    if gegen:
+        gruppe = ("NR", "SR") if tr == "AT" else ("NE", "SE")
+        erster = df.index[-1]
+        for t, s_, _ in reversed(nb["eintraege"]):                     # Beginn der laufenden Gegenbewegung
+            if s_ not in gruppe:
+                break
+            erster = t
+        lauf = [i for i in range(n) if df.index[i] >= erster]
+        if len(lauf) >= LIVERMORE_REAKTION_TAGE and v50[lauf[-1]] == v50[lauf[-1]] and v50[lauf[-1]] > 0:
+            q = float(np.nanmean(v[lauf])) / float(v50[lauf[-1]])
+            wort = "Reaktion" if tr == "AT" else "Erholung"
+            if q < 1:
+                aus.append(_zeichen("stärke" if tr == "AT" else "schwäche", "volumen",
+                                    f"{wort} leise: Umsatz {_z(q, '.2f')}-fach des Schnitts seit {erster:%d.%m.} – die "
+                                    "Gegenseite hat keine Kraft (Livermore)"))
+            elif q > 1:
+                aus.append(_zeichen("schwäche" if tr == "AT" else "stärke", "volumen",
+                                    f"{wort} laut: Umsatz {_z(q, '.2f')}-fach des Schnitts seit {erster:%d.%m.} – die "
+                                    "Gegenseite drückt mit Kraft (Livermore)"))
+    durchbrueche = []
+    for p_ in nb["pivotal"][-LIVERMORE_PIVOTS:]:                        # Ausbruch mit Umsatz über/unter einem Pivotal Point
+        j0 = df.index.get_indexer([p_["tag"]])[0]
+        for i in range(max(j0 + 1, n - LIVERMORE_AUSBRUCH_TAGE), n):
+            hoch = p_["art"] == "hoch"
+            durch = c[i] > p_["preis"] and c[i - 1] <= p_["preis"] if hoch else c[i] < p_["preis"] and c[i - 1] >= p_["preis"]
+            if durch and v50[i] == v50[i] and v[i] > v50[i]:
+                durchbrueche.append(_zeichen("stärke" if hoch else "schwäche", "volumen",
+                                    f"Ausbruch {'über' if hoch else 'unter'} den Pivotal Point {_z(p_['preis'], '.2f')} $ am "
+                                    f"{df.index[i]:%d.%m.} mit Umsatz {_z(v[i] / v50[i], '.1f')}-fach (Livermore)",
+                                    tag=df.index[i]))
+                break
+    if durchbrueche:                                                    # nur der jüngste Durchbruch zählt
+        aus.append(max(durchbrueche, key=lambda z_: z_["tag"]))
+    for i in range(max(1, n - LIVERMORE_AUSBRUCH_TAGE), n):            # Gefahrensignal an einem Tag
+        if a[i] == a[i] and h[i] - c[i] >= lv.SCHWUNG * a[i]:
+            aus.append(_zeichen("schwäche", "struktur", f"Gefahrensignal am {df.index[i]:%d.%m.}: Schluss "
+                                f"{_z((h[i] - c[i]) / a[i], '.1f')} ATR unter dem Tageshoch (Livermore)", 2, tag=df.index[i]))
+        elif a[i] == a[i] and c[i] - lo[i] >= lv.SCHWUNG * a[i]:
+            aus.append(_zeichen("stärke", "struktur", f"Umkehr am {df.index[i]:%d.%m.}: Schluss "
+                                f"{_z((c[i] - lo[i]) / a[i], '.1f')} ATR über dem Tagestief (Livermore, gespiegelt)", 2,
+                                tag=df.index[i]))
+    return aus
 
 
 def spring(df, tage=SPRING_TAGE):
@@ -862,8 +944,8 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         for i in range(len(phl)):                 # Rücksetzer in Phase 2 (die Linie steigt noch) – eigene Farbe
             if phl[i] == 2 and zu_w.iloc[i] == "Rücksetzer" and (i < len(phl) - 1 or zusatz == "Rücksetzer"):
                 phl[i] = RUECKSETZER
-    zs = secondary(df)
-    dt, dw = dow(df, DOW_N_TAG), dow(w, 2)
+    zs = secondary(df) + livermore(df)
+    dt, dw = dow(df), dow(w)
     if dt and dt.get("signal"):
         zs.append(_zeichen(dt["richtung"], "struktur", dt["signal"]))
     if dw and dw.get("signal") and not (dt and dt.get("richtung") == dw["richtung"]):
@@ -1038,6 +1120,17 @@ KURZ_MIN = 8                # … und nicht bloß „(Woche)“
 HALT = {"hält": "🏰", "welle": "🌊", "sturm": "⛈️"}   # Burg hält · Welle schlägt (ein Riss) · Sturm zieht auf (kippt)
 # Klartext je Zeichen: (Anfang oder Teil des Textes, Seite, Klartext) – das erste Muster, das passt, gilt
 KLARTEXT = (
+    ("Aufwärtstrend vorbei", "schwäche", "Aufwärtstrend vorbei (Livermore)"),
+    ("Abwärtstrend vorbei", "stärke", "Abwärtstrend vorbei (Livermore)"),
+    ("Gefahrensignal", "schwäche", "Gefahrensignal (Livermore)"),
+    ("Gefahrensignal", "stärke", "Abwärtstrend stockt (Livermore)"),
+    ("Pivotal Point nach oben", "stärke", "Pivotal Point bestätigt"),
+    ("Pivotal Point nach unten", "schwäche", "Pivotal Point nach unten bestätigt"),
+    ("Reaktion leise", "stärke", "Rücksetzer ohne Verkäufer"), ("Reaktion laut", "schwäche", "Rücksetzer mit Druck"),
+    ("Erholung leise", "schwäche", "Erholung ohne Käufer"), ("Erholung laut", "stärke", "Erholung mit Druck"),
+    ("Ausbruch über den Pivotal Point", "stärke", "Ausbruch mit Umsatz"),
+    ("Ausbruch unter den Pivotal Point", "schwäche", "Bruch mit Umsatz"),
+    ("Umkehr am", "stärke", "Käufer drehten den Tag"),
     ("Secondary Reaction", "stärke", "Rücksetzer hielt über dem Tief"),
     ("Secondary Rally", "schwäche", "Erholung scheiterte unter dem Hoch"),
     ("Spring", "stärke", "Verkäufer unten erschöpft"),

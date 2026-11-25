@@ -189,7 +189,8 @@ WERKZEUGE = {
 # der Wachposten liest zeichen.py und schlägt Alarm, wenn ein Zeichen fehlt (Micky 15.11.2026).
 ZEICHEN = [
     dict(name="Dow-Struktur", art="Struktur", meister="Dow",
-         regel="Schwungpunkte (Tag n = 5, Woche n = 2); höhere Hochs und Tiefs = aufwärts, tiefere = abwärts. Schwäche: "
+         regel="Schwungpunkte = Wendepunkte ab 2 ATR (Tag und Wochenkerzen, wie Livermore, Zone und Chart – Micky "
+               "25.11.2026); höhere Hochs und Tiefs = aufwärts, tiefere = abwärts. Schwäche: "
                "Schluss mindestens 0,5 ATR unter dem letzten höheren Tief. Stärke: Schluss mindestens 0,5 ATR über dem "
                "letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber steht "
                "(gespiegelt: erstes tieferes Hoch, Kurs darunter).",
@@ -200,6 +201,17 @@ ZEICHEN = [
                "scheitert die Erholung unter dem letzten Hoch (Secondary Rally). Der Wendepunkt höchstens 20 Handelstage "
                "alt. Im Chart sind Wendepunkte ohne neues Extrem kleiner gezeichnet.",
          messung=["zeichen.secondary", "vcp_zone.secondary"], pruefer=["Kreislauf/Phase"]),
+    dict(name="Livermores Notizbuch (Regel 10)", art="Struktur", meister="Livermore (How to Trade in Stocks, 1940: Market Key)",
+         regel="Aus dem Notizbuch (livermore.notizbuch) in den letzten 20 Handelstagen: Aufwärts- bzw. Abwärtstrend vorbei "
+               "(10b/d, Gewicht 2), Pivotal Point bestätigt (10a), Gefahrensignal – die Erholung stockt kurz unter dem "
+               "Pivotal Point und fällt um 1 ATR (10e/f, Gewicht 2).",
+         messung=["zeichen.livermore", "livermore.notizbuch"], pruefer=["Kreislauf/Phase"]),
+    dict(name="Tape Reading (Livermore)", art="Volumen", meister="Livermore (How to Trade in Stocks, 1940; Reminiscences)",
+         regel="Aus Tageskerzen: Reaktion leise/laut – Umsatz in der laufenden Gegenspalte (mindestens 3 Tage) gegen den "
+               "50-Tage-Schnitt; Ausbruch über bzw. unter einen der letzten 4 Pivotal Points mit Umsatz über dem Schnitt "
+               "(letzte 5 Tage); Gefahrensignal an einem Tag – Schluss mindestens 2 ATR unter dem Tageshoch (gespiegelt "
+               "über dem Tagestief, letzte 5 Tage, Gewicht 2).",
+         messung=["zeichen.livermore"], pruefer=["Kreislauf/Phase"]),
     dict(name="Spring/Upthrust", art="Struktur", meister="Wyckoff; O'Neil („undercut and rally“)",
          regel="An der Zone des Scanners, wie sie am Vortag stand (dieselbe Regel wie das Setup): Tief höchstens 1 ATR "
                "unter der Unterkante und ein Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach = Spring; "
