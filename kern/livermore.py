@@ -213,6 +213,26 @@ def spanne(nb, n=None):
     return {"oben": oben, "unten": unten, "trend": trend, "spalte": spalte}
 
 
+def offene(df, nb=None):
+    """Livermores Pivotal Points, die noch stehen (Micky 25.11.2026): durchbrochen ist ein Punkt erst, wenn ein
+    Schluss BESTAETIGUNG × ATR (Livermores ~3 Punkte, Regel 10) jenseits liegt – oben darüber, unten darunter; ein
+    Schluss knapp jenseits oder ein Ausflug im Tagesverlauf zählt nicht. → [Pivotal Point] in der Reihenfolge des
+    Notizbuchs."""
+    import vcp_zone
+    nb = nb or notizbuch(df)
+    if not nb:
+        return []
+    c = df["Close"].to_numpy(float)
+    a = vcp_zone.atr(df).to_numpy(float)
+    aus = []
+    for p_ in nb["pivotal"]:
+        c_, a_ = c[p_["i"] + 1:], a[p_["i"] + 1:]
+        weg = c_ > p_["preis"] + BESTAETIGUNG * a_ if p_["art"] == "hoch" else c_ < p_["preis"] - BESTAETIGUNG * a_
+        if not weg.any():
+            aus.append(p_)
+    return aus
+
+
 def spalte_text(nb):
     """„📈 Aufwärtstrend“ usw. – die Spalte, in der Livermore heute schreiben würde."""
     if not nb:

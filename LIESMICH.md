@@ -1722,3 +1722,10 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Etiketten rechts (25.11.2026): in der Reihenfolge der Preise gestapelt (von oben nach unten, dann in den Kursbereich
   geschoben) statt abwechselnd darüber/darunter zu suchen – ein Etikett springt nicht mehr weit weg (TTWO: „unten 181,86“
   stand oben bei 225). ETIKETT_SUCHE entfernt.
+- Pivotal Points nach Rang (25.11.2026, Micky): neu livermore.offene – ein Punkt steht, bis ein Schluss 1 ATR jenseits
+  liegt (Livermores 3 Punkte, Regel 10); gefallene werden nicht mehr gezeichnet. Kräftig mit Preis: die Front
+  (Spanne oben und unten) und je die nächste stehende Stellung über und unter dem Kurs; alle übrigen stehenden blass
+  (PP_BLASS_DECK 0,3, PP_BLASS_DICKE 1,0) ohne Etikett – wird die nähere Stellung genommen, rückt die nächste auf und
+  wird kräftig. Die kräftigen ziehen den Preisbereich mit (höchstens eine Bildhöhe). Festungen (zonen._swing_kanten)
+  nutzen dieselbe Regel; ihr Grund heißt nach der Lage zum Kurs Decke bzw. Boden. PP_DURCH_DECK entfernt.
+  Nebenbei: Etiketten-Stapel ohne namenlose Zahlen (Inventur 0/0/0).

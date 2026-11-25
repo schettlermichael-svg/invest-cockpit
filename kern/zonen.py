@@ -245,26 +245,17 @@ FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sons
 
 def _swing_kanten(e):
     """Festungen aus Livermores Pivotal Points der Ebene (Micky 25.11.2026: nur Livermore; vorher Swing-Hochs und
-    -Tiefs mit Rollentausch nach O'Neil/Dalton): jeder Pivotal Point oben bzw. unten der letzten BAHN_JAHRE Jahre, den
-    seitdem kein Schluss durchbrochen hat – oben eine Decke, unten ein Boden. → [(Preis, Grund)]."""
+    -Tiefs mit Rollentausch nach O'Neil/Dalton): jeder Pivotal Point oben bzw. unten der letzten BAHN_JAHRE Jahre, der
+    noch steht (livermore.offene: durchbrochen erst bei einem Schluss 1 ATR jenseits) – oben eine Decke, unten ein
+    Boden. → [(Preis, Grund)]."""
     import livermore
     df = e["df"].dropna(subset=["High", "Low", "Close"])
     if len(df) < vcp_zone.ATR_TAGE + 2:
         return []
-    nb = livermore.notizbuch(df)
-    if not nb:
-        return []
-    C = df["Close"].to_numpy(float)
     ab = int(df.index.searchsorted(df.index[-1] - pd.DateOffset(years=BAHN_JAHRE)))
-    aus = []
-    for p_ in nb["pivotal"]:
-        if p_["i"] < ab:
-            continue
-        nach = C[p_["i"] + 1:]
-        oben = p_["art"] == "hoch"
-        if not ((nach > p_["preis"]).any() if oben else (nach < p_["preis"]).any()):
-            aus.append((float(p_["preis"]), f'{"Decke" if oben else "Boden"} ═ {p_["tag"]:%d.%m.%y}'))
-    return aus
+    kurs = float(df["Close"].iloc[-1])                                              # Decke über, Boden unter dem Kurs
+    return [(float(p_["preis"]), f'{"Decke" if p_["preis"] > kurs else "Boden"} ═ {p_["tag"]:%d.%m.%y}')
+            for p_ in livermore.offene(df) if p_["i"] >= ab]
 
 
 def festungen(e, la):
