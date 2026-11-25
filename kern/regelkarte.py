@@ -9,7 +9,7 @@ fehlten am 14.11. Kästen der drei Bilder in den Prüfern, ohne dass es auffiel.
              dem der Prüfer ihn prüft
   Zeichen    jedes Zeichen der Stärke und Schwäche aus zeichen.py mit Regel, Meister, Messung und Prüf-Element (der
              Wachposten liest zeichen.py und meldet jede Funktion, die ein Zeichen setzt und nicht auf der Karte steht)
-  Werkzeug   was die Kästen misst (Zone, Enge, Pivot, Anker, Profil, Phase …) – mit der Regel der App, die der Prüfer
+  Werkzeug   was die Kästen misst (Zone, Pivot, Anker, Profil, Phase …) – mit der Regel der App, die der Prüfer
              kennen muss
   Setup      jedes Setup als Weg durch den Kreislauf (Gefechtsordnung): Weg, Lehrer, Regel, Einstieg, Stopp, widerlegt,
              eigene Abweichung mit Grund, Messung, Stand
@@ -79,28 +79,18 @@ KAESTEN = {
 # ── Werkzeuge ───────────────────────────────────────────────────────────────────────────────────────────────────
 WERKZEUGE = {
     "titel": [
-        dict(name="Zone", regel="Livermores Spanne (Micky 25.11.2026: Livermore ist die Grundlage für Base und Pivot). "
-                                "Wendepunkte und Notizbuch: ein Schwung zählt ab 2 ATR (unsere Übersetzung von Livermores "
-                                "6 Punkten in die Schwankung des Titels, ungemessen). Oberkante = der älteste Pivotal Point "
-                                "oben seit Beginn des letzten Aufwärtstrends im Notizbuch, über dem seitdem kein Schluss lag "
-                                "(sonst der letzte Pivotal Point oben ohne Schluss darüber); Unterkante = tiefstes Tief "
-                                "seitdem. Ein Schluss über der Oberkante: keine Zone (Kurs läuft am Hoch). Schreibt Livermore "
-                                "heute in die Spalte Abwärtstrend, ist die Zone offen (noch keine Base). Keine Formregeln "
-                                "(Dauer, Tiefe, obere Hälfte, Tasse, flache Base – am 25.11.2026 entfernt); Länge und Tiefe "
-                                "sind Zeichen. Name: Flagge = Fahnenstange ab 30 % direkt davor, 1–8 Wochen, höchstens 25 % "
-                                "tief, die Tiefs halten; sonst Base (nach einem Anstieg) bzw. Konsolidierung (nach einem "
-                                "Absturz).",
+        dict(name="Zone", regel="Livermores Spanne, streng nach seinem Notizbuch (Micky 25.11.2026: Livermore ist die "
+                                "Grundlage für Base und Pivot). Ein Schwung zählt ab 2 ATR (unsere Übersetzung von "
+                                "Livermores 6 Punkten in die Schwankung des Titels, ungemessen). Oberkante = der letzte "
+                                "Pivotal Point oben = der Pivot (Regel 5a, 6d); Unterkante = der letzte Pivotal Point unten "
+                                "(ohne ihn das tiefste Tief seit der Oberkante). Ein Schluss über der Oberkante: keine Zone "
+                                "(Kurs läuft am Hoch). Schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen "
+                                "(noch keine Base). Keine Formregeln, keine Wellen und keine Reife-Leiste (am 25.11.2026 "
+                                "entfernt); Länge und Tiefe sind Zeichen. Name nach der Vorgeschichte: Flagge = Fahnenstange "
+                                "ab 30 % direkt davor, 1–8 Wochen, höchstens 25 % tief, die Tiefs halten; sonst Base (nach "
+                                "einem Anstieg) bzw. Konsolidierung (nach einem Absturz).",
              messung=["vcp_zone.zone", "livermore.spanne"], stand="gemessen",
-             pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen"]),
-        dict(name="Enge und Pivot", regel="Pivot = Livermores jüngster Pivotal Point oben seit der Oberkante (Regel 5a; "
-                                          "ohne Erholung seitdem die Oberkante selbst). Kontraktionen (Minervini, die "
-                                          "Reife-Zeichen der Spanne): die linke Seite bis zum Tief der Base, dann jede Welle "
-                                          "der rechten Seite (jede mindestens 3 Handelstage, höchstens 6 Wellen); grün nur "
-                                          "mit ausgetrocknetem Volumen und nicht in Phase 4. Die letzte Kontraktion am "
-                                          "rechten Rand zählt ab 1 ATR (unsere Zahl, ungemessen). Minervinis Drittel und "
-                                          "Cheats sind seit 25.11.2026 entfernt.",
-             messung=["vcp_zone.enge", "zonenseite.reife"], stand="gemessen",
-             pruefer=["Pivot", "Enge/Kontraktionen"]),
+             pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot"]),
         dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
                                                  "Spalten (Aufwärts-/Abwärtstrend, natürliche und sekundäre Erholung/Reaktion); "
                                                  "Schwung = 2 ATR wie die Wendepunkte (seine ~6 Punkte), Bestätigung = 1 ATR "
@@ -116,8 +106,7 @@ WERKZEUGE = {
                                             "50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils 1,4-fach ist ihm zu "
                                             "streng); ein Ausbruch mit wenig Volumen ist kein Widerspruch, höchstens ein "
                                             "schwaches Zeichen. Ebenso ein Zeichen: Livermores Bestätigung – ein Hoch 1 ATR "
-                                            "über dem Pivot (seine ~3 Punkte, Micky 25.11.2026); mit beidem heißt die "
-                                            "Reife-Stufe „Ausbruch bestätigt“.",
+                                            "über dem Pivot (seine ~3 Punkte, Micky 25.11.2026), im Chart als 📒.",
              messung=["vcp_zone.ausbruch"], stand="gemessen", pruefer=["abgelehnt/angenommen"]),
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
@@ -399,11 +388,11 @@ BEREICHE = [
          messung=["strategen.pruefen", "strategen.rufen", "strategen.material"], pruefer=[],
          luecke="kein Prüfer – der Code prüft jede Antwort"),
     dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Livermore, Minervini, O'Neil, Kullamägi, Dalton, Micky 22./25.11.2026",
-         regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = ältester Pivotal Point "
-               "oben des letzten Aufwärtstrends ohne Schluss darüber, Unterkante = tiefstes Tief seitdem; Base, Flagge, "
-               "Konsolidierung; Pivot = jüngster Pivotal Point oben seit der Oberkante), während eines Ausbruchs (bis 20 "
-               "Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er kam. Stunde: die Balance "
-               "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp Tief der letzten Kontraktion, "
+         regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = letzter Pivotal Point "
+               "oben = Pivot, Unterkante = letzter Pivotal Point unten; Base, Flagge, Konsolidierung), während eines "
+               "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
+               "kam. Stunde: die Balance "
+               "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "
                "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
                "Ebene ab Beginn der Zone. PbD-Kette nach Vorwald am 22.11.2026 entfernt.",

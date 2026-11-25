@@ -59,7 +59,7 @@ def struktur_zeilen(st_, alt, fallen, enge, kurs):
                     f"{_tests(st_['tests_oben'])}: {', '.join(_d(x) for x in st_['tests_oben'])}) · Pivot short "
                     f"{_k(st_['short_pivot'])} ({_d(st_['short_pivot_tag'])}, {_tests(st_['tests_unten'])})"))
     if enge and enge.get("pivot"):
-        z.append(("🦬", f"Pivot der Enge (VCP) {_k(enge['pivot'])}" + (f" · Unterkante der Zone {_k(enge['unten'])}"
+        z.append(("🦬", f"Pivot (Livermores Pivotal Point oben) {_k(enge['pivot'])}" + (f" · Unterkante der Zone {_k(enge['unten'])}"
                                                                           if enge.get("unten") else "")))
     q = st_["quetsch"]
     if q and q["art"] == "aufsteigend":
@@ -301,9 +301,8 @@ def rechnen(tk):
         zone_start = tiefe.zone_beginn(df)
         a_ = vcp_zone.ausbruch(df)
         z_ = vcp_zone.datiert(df, a_["zone"] if a_ else vcp_zone.zone(df))
-        if zone_start is not None:
-            e_ = vcp_zone.enge(df, vcp_zone.zone(df)) if not a_ else (a_.get("enge") or {})
-            enge = {"pivot": (a_ or {}).get("pivot") or e_.get("pivot"), "unten": z_.get("unten")}
+        if zone_start is not None:                 # Pivot und Unterkante: Livermores Pivotal Points (vcp_zone.zone)
+            enge = {"pivot": (a_ or {}).get("pivot") or z_.get("pivot"), "unten": z_.get("unten")}
     except Exception:  # noqa: BLE001 – Technik: ohne Zone kein Zonenbeginn
         pass
     ebenen = {"Tag": tiefe.ebene("Tag", df, d30, zt, zone_start=zone_start),

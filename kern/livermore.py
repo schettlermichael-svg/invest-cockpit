@@ -183,42 +183,25 @@ def _notizbuch(df, atr):
             "letzte": {k: float(v) for k, v in letzte.items()}, "extrem": float(ext), "je_tag": je_tag}
 
 
-def spanne(nb, n=None, schluss=None):
-    """Livermores Spanne am Ende der Zeile n − 1 (Micky 25.11.2026: Livermore wird die Grundlage für Base und Pivot) →
-    {kopf, pivot, trend, spalte} oder None. schluss = Schlusskurse (numpy, mindestens n), sonst ohne Prüfung „über
-    dem Kopf geschlossen“.
-    Kopf (Oberkante): der älteste Pivotal Point oben seit Beginn des letzten Aufwärtstrends (des laufenden oder – im
-    Abwärtstrend – des vorigen), über dem seitdem kein Schluss lag. Die Hochs danach liegen tiefer, so bleiben alle
-    Wellen einer Base in einer Spanne: Regel 5a hebt den Trend schon über einem Erholungshoch wieder auf „Aufwärtstrend“,
-    Regel 10b schon bei 1 ATR unter dem vorigen Reaktionstief auf „Abwärtstrend“ – beides beendet die Spanne nicht, erst
-    ein Schluss über dem Kopf. Gibt es dort keinen, gilt der letzte Pivotal Point oben ohne Schluss darüber. Pivot = der
-    jüngste Pivotal Point oben seit dem Kopf (Regel 5a; ohne Erholung seitdem der Kopf selbst)."""
+def spanne(nb, n=None):
+    """Livermores Spanne am Ende der Zeile n − 1 (Micky 25.11.2026: streng nach Livermore) → {oben, unten, trend,
+    spalte} oder None: oben = der letzte Pivotal Point oben (aus Aufwärtstrend oder natürlicher Erholung), unten = der
+    letzte Pivotal Point unten (aus Abwärtstrend oder natürlicher Reaktion) – die beiden Linien, die Livermore im
+    Notizbuch beobachtet. Der Pivot ist der Pivotal Point oben (Regel 5a, 6d). Ohne Pivotal Point oben: None."""
     if not nb:
         return None
     n = len(nb["je_tag"]) if n is None else n
     if n < 1 or n > len(nb["je_tag"]):
         return None
     spalte, trend = nb["je_tag"][n - 1]
-    hochs = [p_ for p_ in nb["pivotal"] if p_["gesetzt_i"] <= n - 1 and p_["art"] == "hoch"]
-
-    def offen(p_):                                           # seit dem Hoch kein Schluss darüber
-        return schluss is None or p_["i"] >= n - 1 or schluss[p_["i"] + 1:n].max() <= p_["preis"]
-
     if trend not in ("AT", "AB"):
         return None
-    ende = n - 1                                             # letzter Tag des letzten Aufwärtstrends
-    while ende >= 0 and nb["je_tag"][ende][1] != "AT":
-        ende -= 1
-    beginn = ende
-    while beginn > 0 and nb["je_tag"][beginn - 1][1] == "AT":
-        beginn -= 1
-    kopf = next((p_ for p_ in hochs if ende >= 0 and p_["i"] >= beginn and offen(p_)), None)
-    if kopf is None and hochs and offen(hochs[-1]):
-        kopf = hochs[-1]
-    if kopf is None:
+    pps = [p_ for p_ in nb["pivotal"] if p_["gesetzt_i"] <= n - 1]
+    oben = next((p_ for p_ in reversed(pps) if p_["art"] == "hoch"), None)
+    unten = next((p_ for p_ in reversed(pps) if p_["art"] == "tief"), None)
+    if oben is None:
         return None
-    pivot = next(p_ for p_ in reversed(hochs) if p_["i"] >= kopf["i"])
-    return {"kopf": kopf, "pivot": pivot, "trend": trend, "spalte": spalte}
+    return {"oben": oben, "unten": unten, "trend": trend, "spalte": spalte}
 
 
 def spalte_text(nb):

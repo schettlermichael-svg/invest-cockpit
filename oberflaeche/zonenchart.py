@@ -30,8 +30,8 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "wellen": "Wellen", "livermore": "Livermore", "bollinger": "Bollinger"}   # Schalter (Micky
-LINIEN_START = ["wellen", "livermore"]                                        # 24./25.11.2026); Wellen, Livermore an
+LINIEN_WAHL = {"details": "Profil-Details", "livermore": "Livermore", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_START = ["livermore"]                                                  # 24./25.11.2026); Livermore an
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -47,13 +47,10 @@ VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schni
 EINHEIT = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
 ZEILE = 14                             # Layout: Abstand der Etiketten rechts
 ETIKETT_SUCHE = 60                     # Technik: so viele Plätze sucht ein Etikett, dann ans Ende
-URTEIL_BREITE = 8                      # Layout: Breite je Zeichen des Enge-Urteils (12 px)
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
-WELLE_STRICH = 3                       # Layout: Stärke der Wellenlinie
-WELLE_DECK = 0.85                      # Layout
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 LIVERMORE_PP = 6                       # Layout: die letzten 6 Pivotal Points aus Livermores Notizbuch
@@ -68,7 +65,6 @@ SQUEEZE_RUECK = {"Tag": 125, "Woche": 26, "Stunde": 125}   # Bollinger: tiefste 
 SPRUNG_FARBE = "#EF9F27"               # Feder springt: Schluss außerhalb des Korridors nach dem Squeeze
 ENGE_SCHNITT = 20                      # Korridor = Bollinger-Bänder: 20 Kerzen …
 ENGE_SD = 2.0                          # … ± 2 Standardabweichungen (Bollingers Grundeinstellung)
-NAME_BREITE = 10                       # Layout: Breite je Buchstabe des Zonennamens (16 px fett)
 
 
 def _pfeil(r):
@@ -123,13 +119,13 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Wellen, Bollinger), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Livermore, Bollinger), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
-    Rechnung wie Zone, Enge und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
-    die Kontraktionen der Enge (ba = zonen.basis, Woche und Tag) als Zahlen, ✈️ freie Bahn als Etikett, darunter die
+    Rechnung wie Notizbuch und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
+    Fehlausbruch, Rücktest und Decke der Gefangenen (ba = zonen.basis), ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 📒 Livermores Bestätigung, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
     Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
     import avwap
@@ -359,29 +355,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
-    if ba and e["name"] != "Stunde":                                                # Enge: die Kontraktionen der Base
-        bdf, en_ = ba["df"], ba.get("enge") or {}
-        auf = en_.get("aufsteigend")
-        vorige = None
-        for nr_, k_ in enumerate(en_.get("kontraktionen") or [], 1):   # Wellenmesser (Micky 24.11.2026): je Welle ein
-            t_ = k_["tiefe"]                                           # Linie vom Hoch bis zum Tief – werden sie 
-            f_w = (TEXT_3 if vorige is None else AMPEL["grün"] if t_ <= vcp_zone.SCHRUMPF * vorige   # kleiner, zieht sich der
-                   else AMPEL["gelb"] if t_ < vorige else AMPEL["rot"])                     # Kurs zusammen (Minervini)
-            vorige_txt = "" if vorige is None else (
-                " · höchstens 70 % der vorigen – sauber geschrumpft" if t_ <= vcp_zone.SCHRUMPF * vorige
-                else " · kleiner als die vorige, aber über 70 %" if t_ < vorige else " · tiefer als die vorige")
-            vorige = t_
-            if "wellen" not in linien_ or bdf.index[k_["tief_i"]] < d.index[0]:
-                continue
-            j_h, j_t = pos(bdf.index[k_["hoch_i"]]), pos(bdf.index[k_["tief_i"]])   # schräge Linie vom Schwunghoch
-            x_h, x_t_ = X(max(j_h, 0)), X(j_t)                                      # zum Schwungtief (Micky 25.11.2026,
-            y_h, y_t = Y(min(k_["hoch"], pmax)), Y(max(k_["tief"], pmin))         # wie Minervini von Hand)
-            A(f'<line x1="{x_h:.1f}" y1="{y_h:.1f}" x2="{x_t_:.1f}" y2="{y_t:.1f}" stroke="{f_w}" '
-              f'stroke-width="{WELLE_STRICH}" stroke-opacity="{WELLE_DECK}" stroke-linecap="round">'
-              f'<title>T{nr_}: {zahl(t_, 1)} % vom Hoch {zahl(k_["hoch"])} bis zum Tief {zahl(k_["tief"])}{vorige_txt}'
-              f'</title></line>')
-            A(f'<text x="{x_t_:.1f}" y="{min(y_t + 15, OBEN + KURS_H - 2):.1f}" fill="{f_w}" font-size="11" '   # Layout
-              f'text-anchor="middle">T{nr_}</text>')
+    if ba and e["name"] != "Stunde":                                                # Fehlausbruch und Rücktest
         aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Regel vom 13.11.:
         marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # unter dem Tief des
         if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Ausbruchstags oder > 3 % unter
@@ -402,21 +376,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                   f'stroke-width="1.2" stroke-dasharray="6 4"><title>Decke der Gefangenen: Hoch des Fehlausbruchs '
                   f'{zahl(h_g)} – wer dort kaufte, sitzt im Verlust und verkauft gern bei Einstand</title></line>')
                 etiketten.append((Y(h_g), f"Decke der Gefangenen {zahl(h_g)}", ROT))
-        if en_.get("kontraktionen") and la.get("zone") and la.get("beginn") is not None:   # Urteil an der Zone
-            amp = "grün" if auf else en_.get("ampel")
-            urteil = ("🟢 Aufsteigende Base" if auf else "🟢 VCP" if amp == "grün" else "🔴 Enge" if amp == "rot"
-                      else "🟡 Enge")                                               # kurz; die Gründe beim Darüberfahren
-            grund = ("O'Neil: drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen" if auf
-                     else "schrumpft: jede Welle höchstens 70 % so tief wie die vorige" if amp == "grün"
-                     else "letzte Welle tiefer als die vorige" if amp == "rot"
-                     else ", ".join(en_.get("fehlt") or ["noch nicht reif"]))
-            zs = pd.Timestamp(la["beginn"])
-            xz_ = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
-            x_u = min(xz_ + 6 + len(la["name"]) * NAME_BREITE, ende - len(urteil) * URTEIL_BREITE)   # nie über den Rand  (Layout)
-            A(f'<text x="{x_u:.1f}" y="{Y(hi) - 6:.1f}" fill="{AMPEL.get(amp, TEXT_3)}" font-size="12">'      # Layout
-              f'{t_esc(urteil)}<title>{t_esc(grund)} · Wellen {t_esc(en_.get("folge") or "")} % · VCP (Minervini): '
-              f'jede Welle höchstens 70 % so tief wie die vorige, die letzte eng, das Volumen trocknet aus · '
-              f'Aufsteigende Base (O\'Neil): drei Rücksetzer von 10–20 %, Tiefs und Hochs steigen</title></text>')
     if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
         if not fest.get("oben"):
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
@@ -630,7 +589,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
 def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
-    teile = [(ZONE_FARBE, "Zone von heute: Base, Flagge oder Konsolidierung (Minervini, O'Neil), in der Stunde die Balance · POC grün gepunktet"),
+    teile = [(ZONE_FARBE, "Zone von heute: Livermores Spanne zwischen dem letzten Pivotal Point oben und unten – Base, "
+                          "Flagge oder Konsolidierung nach der Vorgeschichte; in der Stunde die Balance · POC grün gepunktet"),
              (FESTUNG_FARBE, "Festung ▲▼: alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss "
               "darunter (Wendepunkte ab 2 ATR); überwunden tauschen sie die Rolle (Decke → Boden) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
@@ -640,13 +600,11 @@ def legende():
              (WOCHE_FARBE, "Rahmen in der Stunde: die Base des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
-              "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Zone, Enge und "
+              "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Notizbuch, Zone und "
               "Festungen"),
-             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores jüngster "
-              "Pivotal Point oben seit der Oberkante der Spanne (in der Stunde das Hoch der Balance); blass = möglicher "
-              "Pivot ohne Setup"),
-             (GRUEN, "╲ Wellenmesser: je Welle der Base eine Linie vom Schwunghoch zum Schwungtief (T1, T2 …) – grün = höchstens "
-              "70 % der vorigen (Minervinis VCP), gelb = kleiner, aber nicht genug, rot = tiefer als die vorige"),
+             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
+              "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
+              "ohne Setup"),
              (ROT, "═ Livermores Pivotal Points (Schalter „Livermore“, Tag): doppelt unterstrichen wie in seinem Notizbuch – "
               "rot aus Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
@@ -656,7 +614,7 @@ def legende():
              (SPRUNG_FARBE, "▲▼ Feder springt: erster Schluss über bzw. unter dem Korridor nach dem Squeeze – "
               "Bollinger warnt: der erste Ausbruch kann eine Finte sein"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
-             (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
+             (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 📒 Livermores Bestätigung (1 ATR über dem Pivot) · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
               "nächste Termin · Momentum 🚀 am Ende der RS-Linie"),
              (SCHNITT_FARBE, "Weiße Linie im Volumen: Schnitt der letzten 50 Tage (Woche: 10 Wochen) – Balken darüber "

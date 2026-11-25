@@ -16,8 +16,8 @@ Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Abwärtstrend läuft (Livermor
   🦬 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Base
   (Kurs läuft am Hoch).
 Die drei Trades (Tageszone, Micky 22.11.2026):
-  Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = Tief der letzten
-              Kontraktion, höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
+  Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = ¼ ATR unter
+              Livermores Pivotal Point unten (der Unterkante, 25.11.2026), höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
   Rücktest    nach dem Ausbruch zurück an den Pivot (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
               Einstieg am Pivot, Stopp ¼ ATR darunter.
   Short       Bruch der Unterkante: Schluss unter der Unterkante der fertigen Base von gestern, mit Volumen über dem
@@ -92,8 +92,8 @@ def profil_seit(e, ab_):
 
 
 def basis(df):
-    """Die Base des Titels aus Tageskerzen für Woche und Tag (vcp_zone, Livermores Spanne): {"z", "enge", "ausbruch",
-    "jetzt", "bruch", "nb"}
+    """Die Base des Titels aus Tageskerzen für Woche und Tag (vcp_zone, Livermores Spanne): {"z", "ausbruch", "jetzt",
+    "bruch", "nb", "df"}
     – z datiert (Index → Datum), oder None, wenn der Kurs am Hoch läuft."""
     import livermore
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -103,14 +103,12 @@ def basis(df):
     gestern = vcp_zone.zone(df.iloc[:-1], nb) if len(df) > 1 else {}
     bruch = bool(not a and gestern.get("zone") and float(df["Close"].iloc[-1]) < gestern["unten"])
     if bruch:                                    # Bruch der Unterkante einer fertigen Base: die Base von gestern
-        b, en = gestern, {}
+        b = gestern
     elif a:
-        b, en = a["zone"], a["enge"]
+        b = a["zone"]
     else:
         b = jetzt if jetzt.get("start_i") is not None else None
-        en = vcp_zone.enge(df, jetzt) if jetzt.get("zone") else {}
-    return {"z": vcp_zone.datiert(df, b) if b else None, "enge": en or {}, "ausbruch": a, "jetzt": jetzt, "df": df,
-            "bruch": bruch, "nb": nb}
+    return {"z": vcp_zone.datiert(df, b) if b else None, "ausbruch": a, "jetzt": jetzt, "df": df, "bruch": bruch, "nb": nb}
 
 
 def _volumen_hoch(df):
@@ -133,7 +131,7 @@ def lage(e, ba=None, profil=True):
         phase = "rand_oben" if kurs >= hi - nah else "rand_unten" if kurs <= lo + nah else "balance"
         name, pivot, info = "Balance", hi, f"seit {beginn:%d.%m. %H:%M}"
     else:
-        z, en, a = ba["z"], ba["enge"], ba["ausbruch"]
+        z, a = ba["z"], ba["ausbruch"]
         if z is None:                              # Kurs läuft am Hoch: keine Zone, das Profil ab dem Anker der Balance
             z_, w_ = PHASE["hoch"]
             pr = profil_seit(e, e["struktur"]["balance_start"]) if profil else None
@@ -157,8 +155,6 @@ def lage(e, ba=None, profil=True):
             phase = "aufbau"
         name = z.get("name") or "Abwärtstrend"
         teile = [f'{z["wochen"]:.0f} Wo.', f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
-        if en.get("zahl"):
-            teile.append(f'{en["zahl"]} Kontr. {en["folge"]} %')
         if a and not a["fehl"]:
             teile.append(f'Ausbruch vor {a["tage_her"]} T. ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
         info = " · ".join(teile)
@@ -175,14 +171,13 @@ def trade(e, la, ba):
     None; pivot = die Kante, die der Trade überwinden bzw. brechen muss (long der Pivot, short die Unterkante)."""
     if not e or not la or la.get("zone") is None or ba is None or ba["z"] is None:
         return None
-    a, en = ba["ausbruch"], ba["enge"]
+    a = ba["ausbruch"]
     atr = e["atr"] or 0
     kurs, pivot, lo = la["kurs"], la["pivot"], la["zone"][0]
     t = None
     if la["phase"] in ("ausbruch", "kante", "aufbau"):
-        kontr = en.get("kontraktionen") or []          # Struktur-Stopp: unter dem Tief der letzten Kontraktion
-        struktur = min(float(kontr[-1]["tief"]), pivot) if kontr else None
-        stopp = max(struktur, pivot * (1 - MAX_STOPP)) if struktur is not None else pivot * (1 - MAX_STOPP)
+        struktur = min(lo, pivot) - atr * STOPP_ATR     # Struktur-Stopp: ¼ ATR unter Livermores Pivotal Point unten
+        stopp = max(struktur, pivot * (1 - MAX_STOPP))  # … höchstens 8 % (Minervini)
         if la["phase"] != "ausbruch" or a.get("kaufzone"):
             t = {"art": "ausbruch", "richtung": 1, "einstieg": pivot, "stopp": stopp, "wartet": la["phase"] != "ausbruch"}
     elif la["phase"] == "ruecktest":

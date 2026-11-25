@@ -1668,3 +1668,10 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Volumen) bzw. „Ausbruch hält“ (gelb); Zeichenleiste 📒 am Tag der Bestätigung. Notizbuch: Pivotal Points mit i und
   gesetzt_i, je_tag (Spalte, Trend je Zeile), Zwischenspeicher. Mac-Probe 04.11. (400 Titel): JPM, HON, PEP, ABNB
   dieselben Pivots wie vorher; CRM nach neuem Pivotal Point 252,42 statt des alten Ausbruchs über 239,45.
+- Streng nach Livermore (25.11.2026, Micky: „das ist aber nicht Livermore-konform“ – „1 und die Wellen können raus, die
+  Reife auch“): livermore.spanne = letzter Pivotal Point oben (Oberkante = Pivot) und letzter Pivotal Point unten
+  (Unterkante; ohne ihn das tiefste Tief seit der Oberkante); der eigene Rahmen „ältester nicht überwundener Pivotal Point
+  des Aufwärtstrends“ ist wieder entfernt. Entfernt: vcp_zone.enge, aufsteigende_base und ihre Konstanten (Wellen, Enge,
+  VCP-Urteil), der Wellenmesser und das Urteil im Zonenchart (Schalter „Wellen“), die Reife-Leiste (zonenseite.reife,
+  reife_html), die Kontraktionen in der Info-Zeile. Stopp des Ausbruchs: ¼ ATR unter dem Pivotal Point unten, höchstens
+  8 %. Analyse-Seite: „Pivot (Livermores Pivotal Point oben)“. Mac-Probe 04.11., 400 Titel, ohne Fehler.
