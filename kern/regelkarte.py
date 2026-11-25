@@ -85,10 +85,9 @@ WERKZEUGE = {
                                 "Pivotal Point oben = der Pivot (Regel 5a, 6d); Unterkante = der letzte Pivotal Point unten "
                                 "(ohne ihn das tiefste Tief seit der Oberkante). Ein Schluss über der Oberkante: keine Zone "
                                 "(Kurs läuft am Hoch). Schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen "
-                                "(noch keine Base). Keine Formregeln, keine Wellen und keine Reife-Leiste (am 25.11.2026 "
-                                "entfernt); Länge und Tiefe sind Zeichen. Name nach der Vorgeschichte: Flagge = Fahnenstange "
-                                "ab 30 % direkt davor, 1–8 Wochen, höchstens 25 % tief, die Tiefs halten; sonst Base (nach "
-                                "einem Anstieg) bzw. Konsolidierung (nach einem Absturz).",
+                                "(noch keine Spanne). Keine Formregeln, keine Wellen, keine Reife-Leiste und keine Namen nach "
+                                "der Vorgeschichte (Base, Flagge, Konsolidierung – am 25.11.2026 entfernt): die Zone heißt "
+                                "immer „Spanne“; Länge und Tiefe sind Zeichen.",
              messung=["vcp_zone.zone", "livermore.spanne"], stand="gemessen",
              pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot"]),
         dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
@@ -389,7 +388,7 @@ BEREICHE = [
          luecke="kein Prüfer – der Code prüft jede Antwort"),
     dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Livermore, Minervini, O'Neil, Kullamägi, Dalton, Micky 22./25.11.2026",
          regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = letzter Pivotal Point "
-               "oben = Pivot, Unterkante = letzter Pivotal Point unten; Base, Flagge, Konsolidierung), während eines "
+               "oben = Pivot, Unterkante = letzter Pivotal Point unten; Name „Spanne“), während eines "
                "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
                "kam. Stunde: die Balance "
                "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "

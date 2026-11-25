@@ -1680,3 +1680,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Vorher kippte TTWO am 17.11. über einen Reaktions-Pivot aus dem Oktober, den der Abwärtstrend am 30.10. längst
   unterschritten hatte, fälschlich in den Abwärtstrend. Im Chart (Schalter „Livermore“) sind die letzten 6 Pivotal Points
   jetzt Doppellinien ab ihrem Tag bis zum ersten Schluss jenseits (danach blass), offene mit „═ oben/unten Preis“ am Rand.
+- Nur noch „Spanne“ (25.11.2026, Micky: rein Livermore): die Zone heißt immer „Spanne“; entfernt: Namen nach der
+  Vorgeschichte (Base, Flagge, Konsolidierung), _vorgeschichte, _stange, tiefs_fallen, _rahmen und die FLAGGE_/VOR_-
+  Konstanten, die tote Legende in chart.py. Phasen: „Spanne im Aufbau“, „keine Spanne – Kurs läuft am Hoch“.

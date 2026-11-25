@@ -5,22 +5,21 @@ Ausbruch aus der Zone, der Rücktest an die gebrochene Kante und der Bruch der U
 
 Die Zone je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
   Woche und Tag  Livermores Spanne (vcp_zone.zone, livermore.spanne – Micky 25.11.2026: Livermore ist die Grundlage):
-                 Oberkante = Kopf der Spanne (ältester Pivotal Point oben des laufenden Aufwärtstrends ohne Schluss
-                 darüber bzw. im Abwärtstrend der letzte Pivotal Point oben), Unterkante = tiefstes Tief seitdem; Name Base, Flagge (Kullamägi) oder
-                 Konsolidierung (nach einem Absturz); Pivot = der jüngste Pivotal Point oben seit der Oberkante.
-                 Beide Ebenen zeigen dieselbe Base – die Woche im großen Bild, der Tag im Detail.
-                 Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Base, aus der er kam.
+                 Oberkante = letzter Pivotal Point oben = Pivot, Unterkante = letzter Pivotal Point unten; Name immer
+                 „Spanne“ (Base, Flagge, Konsolidierung am 25.11.2026 entfernt).
+                 Beide Ebenen zeigen dieselbe Spanne – die Woche im großen Bild, der Tag im Detail.
+                 Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Spanne, aus der er kam.
   Stunde         die Balance nach Dalton (tiefe.struktur): höchstes Hoch und tiefstes Tief seit dem Anker – die
                  Feinzeichnung für den Einstieg.
-Phase (Zeichenliste): 🟡 Base im Aufbau · 🟡 Abwärtstrend läuft (Livermore schreibt rot, Zone noch offen) · 🦬 am Pivot (bis 3 % darunter) ·
-  🦬 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Base
+Phase (Zeichenliste): 🟡 Spanne im Aufbau · 🟡 Abwärtstrend läuft (Livermore schreibt rot, Zone noch offen) · 🦬 am Pivot (bis 3 % darunter) ·
+  🦬 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Spanne
   (Kurs läuft am Hoch).
 Die drei Trades (Tageszone, Micky 22.11.2026):
   Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = ¼ ATR unter
               Livermores Pivotal Point unten (der Unterkante, 25.11.2026), höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
   Rücktest    nach dem Ausbruch zurück an den Pivot (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
               Einstieg am Pivot, Stopp ¼ ATR darunter.
-  Short       Bruch der Unterkante: Schluss unter der Unterkante der fertigen Base von gestern, mit Volumen über dem
+  Short       Bruch der Unterkante: Schluss unter der Unterkante der Spanne von gestern, mit Volumen über dem
               50-Tage-Schnitt; Stopp ¼ ATR über der gebrochenen Kante (ein laufender Rücksetzer bricht nichts).
 Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
@@ -43,9 +42,9 @@ from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Mick
 
 EBENEN = ("Woche", "Tag", "Stunde")
 BAHN_JAHRE = 2              # Festungen und ✈️: zwei Jahre zurück
-PHASE = {"aufbau": ("🟡", "Base im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "am Pivot"),
+PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "am Pivot"),
          "ausbruch": ("🦬", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
-         "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Base – Kurs läuft am Hoch"),
+         "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Spanne – Kurs läuft am Hoch"),
          "balance": ("🟡", "Balance"), "rand_oben": ("🦬", "am oberen Rand"), "rand_unten": ("🐻", "am unteren Rand")}
 RICHTUNG = {"ausbruch": 1, "ruecktest": 1, "fehl": -1, "bruch": -1}
 TRADE_NAME = {"ausbruch": "Ausbruch", "ruecktest": "Rücktest", "short": "Bruch der Unterkante"}
@@ -102,7 +101,7 @@ def basis(df):
     a = vcp_zone.ausbruch(df, jetzt=jetzt, nb=nb)
     gestern = vcp_zone.zone(df.iloc[:-1], nb) if len(df) > 1 else {}
     bruch = bool(not a and gestern.get("zone") and float(df["Close"].iloc[-1]) < gestern["unten"])
-    if bruch:                                    # Bruch der Unterkante einer fertigen Base: die Base von gestern
+    if bruch:                                    # Bruch der Unterkante: die Spanne von gestern
         b = gestern
     elif a:
         b = a["zone"]

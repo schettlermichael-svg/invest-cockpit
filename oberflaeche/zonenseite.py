@@ -91,7 +91,7 @@ def _karte_ebene(name, la, aktiv=False):
                   + f' · POC {zahl(la["poc"])}')
     return (f'<div style="{rahmen}">{kopf_}'
             f'<div style="font-size:20px;margin:2px 0">{la["pfeil"]} {la["zeichen"]} <span style="font-size:15px">'
-            f'{t(la["wort"])}{(" · " + t(la["name"])) if la["name"] else ""}</span></div>'
+            f'{t(la["wort"])}{(" · " + t(la["name"])) if la["name"] and la["name"] not in la["wort"] else ""}</span></div>'
             f'<div style="font-size:13px;color:{TEXT_2}">{zeile2}</div>'
             + (f'<div style="font-size:12px;color:{TEXT_3};margin-top:2px">{t(la["info"])}</div>' if la.get("info") else "")
             + '</div>')

@@ -10,18 +10,10 @@ Schwünge über 2 × ATR 14 (seine ~6 Punkte in der Schwankung des Titels, ungem
   Oberkante  = der letzte Pivotal Point oben = der Pivot (Regel 5a, 6d)
   Unterkante = der letzte Pivotal Point unten (ohne ihn das tiefste Tief seit der Oberkante)
   keine Zone = ein Schluss über der Oberkante (Kurs läuft am Hoch) · offen = Livermore schreibt heute in die Spalte
-               Abwärtstrend (noch keine Base)
+               Abwärtstrend (noch keine Spanne)
   Länge, Tiefe = Zeichen, keine Schwellen
 
-Vorgeschichte (gehört nicht zur Zone, entscheidet den Namen):
-  Absturz ↓  = vor der Oberkante stand der Kurs höher (höchstes Hoch der 26 Wochen vor dem Anlauf-Tief über der Oberkante)
-  Schub ↑    = sonst: Anstieg vom Anlauf-Tief (tiefstes Tief seit dem letzten Hoch über der Oberkante, höchstens 52 Wochen)
-Name:
-  Flagge         = Fahnenstange ≥ 30 % in höchstens 13 Wochen (1–3 Monate, Kullamägi), Zone 1–8 Wochen und
-                   höchstens 25 % tief; Stange = Anstieg vom tiefsten Tief der 13 Wochen vor der Oberkante, ohne
-                   höheres Hoch dazwischen (sonst war es ein Absturz, keine Stange)
-  Base           = nach einem Schub, sonst
-  Konsolidierung = nach einem Absturz
+Name: immer „Spanne“ (Micky 25.11.2026) – Base, Flagge, Konsolidierung, Vorgeschichte und Fahnenstange sind entfernt.
 
 Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
   schaut ausbruch() bis 4 Wochen zurück: Schluss über dem Pivot der Zone vom Vortag. Zone und Pivot von damals gelten
@@ -39,19 +31,8 @@ from masse import VOL_MIN_TAGE, WOCHE  # noqa: E402
 
 ATR_TAGE = 14
 GROB = 2.0
-FLAGGE_SCHUB, FLAGGE_STANGE_W, FLAGGE_ZONE_W, FLAGGE_TIEFE = 0.30, 6, 8, 0.25
-# Kullamägi: ein großer Anstieg (30–100 %) in den letzten 1–3 Monaten, der „ein paar Tage bis ein paar Wochen“ dauert –
-# der Mast höchstens 6 Wochen (Micky 16.11.2026; vorher 13 Wochen: die 3 Monate sagen, wann der Mast war, nicht wie lang
-# er dauern darf – WST stieg 13 Wochen stufenweise und hieß Flagge); die Flagge kürzer als ihr Mast (klassische Lehre)
-FLAGGE_TIEF_ATR = 0.5     # Flagge: das Tief der zweiten Hälfte darf bis 0,5 ATR unter dem der ersten liegen (Shakeout)
-
-
-# ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-VOR_WOCHEN = 52         # Vorgeschichte: Anstieg in den 52 Wochen vor der Oberkante
-VOR_TIEF_WOCHEN = 26    # … Tief der 26 Wochen davor
-FLAGGE_MIN_TAGE = 4     # Tiefs der Flagge erst ab 4 Tagen vergleichbar
 NEUES_HOCH_TAGE = 5     # Ausbruch nur an einem Tag mit Schluss über den 5 Schlüssen davor
-MIN_DATEN = 80          # Ausbruch/Ermüdung ab 80 Handelstagen Daten
+MIN_DATEN = 80          # Ausbruch und Spring/Upthrust ab 80 Handelstagen Daten
 
 
 def atr(df, n=ATR_TAGE):
@@ -107,32 +88,12 @@ def secondary(punkte):
     return aus
 
 
-def _vorgeschichte(df, top_i, top):
-    h, l = df["High"].to_numpy(), df["Low"].to_numpy()
-    start = max(0, top_i - VOR_WOCHEN * WOCHE)
-    hoeher = np.where(h[start:top_i] > top)[0]
-    von = start + (hoeher[-1] + 1 if len(hoeher) else 0)
-    if von >= top_i:
-        von = max(0, top_i - 1)
-    tief_i = von + int(np.argmin(l[von:top_i + 1]))
-    tief = l[tief_i]
-    vor = max(0, tief_i - VOR_TIEF_WOCHEN * WOCHE)
-    if tief_i > vor:
-        hoch_i = vor + int(np.argmax(h[vor:tief_i]))
-        if h[hoch_i] > top:
-            return {"art": "Absturz", "pfeil": "↓", "prozent": (tief / h[hoch_i] - 1) * 100,
-                    "wochen": (tief_i - hoch_i) / WOCHE, "von_i": hoch_i, "bis_i": tief_i,
-                    "von": h[hoch_i], "bis": tief}
-    return {"art": "Schub", "pfeil": "↑", "prozent": (top / tief - 1) * 100, "wochen": (top_i - tief_i) / WOCHE,
-            "von_i": tief_i, "bis_i": top_i, "von": tief, "bis": top}
-
-
 def zone(df, nb=None):
     """Zone am rechten Rand streng nach Livermores Notizbuch (Micky 25.11.2026; livermore.spanne) oder {"zone": False,
     "grund": …}: Oberkante = der letzte Pivotal Point oben, Unterkante = der letzte Pivotal Point unten (ohne ihn das
     tiefste Tief seit der Oberkante), Pivot = die Oberkante. Liegt ein Schluss über der Oberkante, läuft der Kurs am
-    Hoch (keine Spanne); schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen (noch keine Base). Name
-    (Base, Flagge, Konsolidierung) und Vorgeschichte ab der Oberkante (_rahmen).
+    Hoch (keine Spanne); schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen (noch keine Spanne). Name
+    immer „Spanne“ (Micky 25.11.2026: rein Livermore – keine Namen nach Vorgeschichte mehr).
     nb = livermore.notizbuch über ein df, das mit diesem beginnt (auch länger: es zählt nur, was bis heute im Buch stand)."""
     import livermore
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -146,72 +107,22 @@ def zone(df, nb=None):
     i, top = sp["oben"]["i"], float(sp["oben"]["preis"])
     if i < n - 1 and c[i + 1:].max() > top:
         return {"zone": False, "grund": "Schluss über dem letzten Pivotal Point oben – Kurs läuft am Hoch, keine Spanne"}
-    k = _rahmen(df, i, top)
+    l = df["Low"].to_numpy()
     if sp["unten"] is not None:                  # die Unterkante ist Livermores Pivotal Point unten
         j, boden = sp["unten"]["i"], float(sp["unten"]["preis"])
-        s0 = min(i, j)
-        k.update(start_i=s0, start=df.index[s0], unten=boden, tief_i=j, tief_datum=df.index[j],
-                 tiefe=(top - boden) / top * 100, wochen=(n - 1 - s0) / WOCHE)
-    k.update(pivot=top, pivot_i=i, spalte=sp["spalte"], trend=sp["trend"], oben_aus=sp["oben"]["aus"])
-    if sp["spalte"] == "AB":                     # Livermore schreibt rot in den Abwärtstrend: noch keine Base
-        return {"zone": False, "offen": True, "grund": "Abwärtstrend (Livermore schreibt in rot) – noch keine Base",
+    else:
+        j = i + int(np.argmin(l[i:]))
+        boden = float(l[j])
+    s0 = min(i, j)
+    k = {"zone": True, "name": "Spanne", "start_i": s0, "start": df.index[s0], "oben": top, "unten": boden, "tief_i": j,
+         "tief_datum": df.index[j], "wochen": (n - 1 - s0) / WOCHE, "tiefe": (top - boden) / top * 100,
+         "abstand": (c[-1] / top - 1) * 100, "pivot": top, "pivot_i": i, "spalte": sp["spalte"], "trend": sp["trend"],
+         "oben_aus": sp["oben"]["aus"]}
+    if sp["spalte"] == "AB":                     # Livermore schreibt rot in den Abwärtstrend: noch keine Spanne
+        return {"zone": False, "offen": True, "grund": "Abwärtstrend (Livermore schreibt in rot) – noch keine Spanne",
                 **{x: k[x] for x in ("start_i", "start", "oben", "unten", "tief_i", "tief_datum", "wochen", "tiefe",
                                      "abstand", "pivot", "pivot_i", "spalte", "trend", "oben_aus")}}
     return k
-
-
-def _stange(df, i, top):
-    """Fahnenstange: Anstieg vom tiefsten Tief der 6 Wochen vor der Oberkante (FLAGGE_STANGE_W), ohne höheres Hoch dazwischen – und
-    direkt vor der Flagge (Micky 15.11.2026, Chart-Prüfer Lauf 4: die Stange kam aus einem Lauf, der Monate
-    zurücklag): gab es in diesen Wochen einen Rücksetzer tiefer als eine Flagge sein darf (25 %), beginnt die Stange
-    erst an dessen Tief."""
-    h, l = df["High"].to_numpy(), df["Low"].to_numpy()
-    s0 = max(0, i - FLAGGE_STANGE_W * WOCHE)
-    hm, tief_ab = h[s0], s0
-    for j in range(s0, i + 1):
-        hm = max(hm, h[j])
-        if l[j] <= hm * (1 - FLAGGE_TIEFE):
-            tief_ab, hm = j, h[j]                    # tiefer Rücksetzer: die Stange beginnt frühestens hier
-    si = tief_ab + int(np.argmin(l[tief_ab:i + 1]))
-    sauber = h[si:i].max() <= top if i > si else False
-    return {"prozent": (top / l[si] - 1) * 100, "wochen": (i - si) / WOCHE, "von_i": si, "von": l[si], "sauber": sauber}
-
-
-def tiefs_fallen(df, i, bis=None):
-    """Fallen die Tiefs einer Flagge ab Index i (bis heute bzw. bis `bis`)? Das tiefste Tief der zweiten Hälfte liegt
-    mehr als FLAGGE_TIEF_ATR unter dem der ersten (Kullamägi: steigende Tiefs; Micky 14./15.11.2026) → (fallen,
-    tief1, tief2) oder None bei weniger als 4 Tagen."""
-    l = df["Low"].to_numpy(float)
-    e = (len(df) - 1) if bis is None else bis
-    if e - i + 1 < FLAGGE_MIN_TAGE:
-        return None
-    m = i + (e - i + 1) // 2
-    t1, t2 = l[i:m].min(), l[m:e + 1].min()
-    return t2 < t1 - FLAGGE_TIEF_ATR * float(atr(df).iloc[e]), t1, t2
-
-
-def _rahmen(df, i, top):
-    """Zone ab der Oberkante (Index i) bis heute mit Vorgeschichte, Stange und Namen."""
-    c, l = df["Close"].to_numpy(), df["Low"].to_numpy()
-    n = len(df)
-    tief_i = i + int(np.argmin(l[i:]))
-    boden = l[tief_i]
-    hoehe = top - boden
-    wochen = (n - 1 - i) / WOCHE
-    v = _vorgeschichte(df, i, top)
-    stange = _stange(df, i, top)
-    tf = tiefs_fallen(df, i)
-    if (stange["sauber"] and stange["prozent"] >= FLAGGE_SCHUB * 100 and wochen <= FLAGGE_ZONE_W
-            and wochen < stange["wochen"]                                  # Atempause kürzer als der Angriff
-            and hoehe / top <= FLAGGE_TIEFE and not (tf and tf[0])):     # fallende Tiefs: die Truppe weicht – keine Flagge
-        name = "Flagge"
-    elif v["art"] == "Absturz":
-        name = "Konsolidierung"
-    else:
-        name = "Base"
-    return {"zone": True, "name": name, "start_i": i, "start": df.index[i], "oben": top, "unten": boden,
-            "tief_i": tief_i, "tief_datum": df.index[tief_i], "wochen": wochen,
-            "tiefe": hoehe / top * 100, "abstand": (c[-1] / top - 1) * 100, "vorgeschichte": v, "stange": stange}
 
 
 RAND_PCT = 3.0              # am Pivot: bis 3 % darunter (Test am Rand) – eine Quelle
@@ -390,7 +301,4 @@ def datiert(df, b):
     for k_ in ("start_i", "tief_i", "pivot_i"):
         if k_ in b:
             b[k_.replace("_i", "_t")] = ix[b[k_]]
-    for k_ in ("vorgeschichte", "stange"):
-        if k_ in b:
-            b[k_] = dict(b[k_], von_t=ix[b[k_]["von_i"]], **({"bis_t": ix[b[k_]["bis_i"]]} if "bis_i" in b[k_] else {}))
     return b
