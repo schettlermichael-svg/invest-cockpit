@@ -52,8 +52,8 @@ KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in 
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
-WELLE_B = 9                            # Layout: Breite eines Balkens im Wellenmesser
-WELLE_DECK = 0.35                      # Layout
+WELLE_STRICH = 3                       # Layout: Stärke der Wellenlinie
+WELLE_DECK = 0.85                      # Layout
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
@@ -347,7 +347,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         auf = en_.get("aufsteigend")
         vorige = None
         for nr_, k_ in enumerate(en_.get("kontraktionen") or [], 1):   # Wellenmesser (Micky 24.11.2026): je Welle ein
-            t_ = k_["tiefe"]                                           # Balken vom Hoch bis zum Tief – werden sie
+            t_ = k_["tiefe"]                                           # Linie vom Hoch bis zum Tief – werden sie 
             f_w = (TEXT_3 if vorige is None else AMPEL["grün"] if t_ <= vcp_zone.SCHRUMPF * vorige   # kleiner, zieht sich der
                    else AMPEL["gelb"] if t_ < vorige else AMPEL["rot"])                     # Kurs zusammen (Minervini)
             vorige_txt = "" if vorige is None else (
@@ -356,13 +356,14 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             vorige = t_
             if "wellen" not in linien_ or bdf.index[k_["tief_i"]] < d.index[0]:
                 continue
-            j_m = (pos(bdf.index[k_["hoch_i"]]) + pos(bdf.index[k_["tief_i"]])) / 2
-            y_h, y_t = Y(min(k_["hoch"], pmax)), Y(max(k_["tief"], pmin))
-            A(f'<rect x="{X(j_m) - WELLE_B / 2:.1f}" y="{y_h:.1f}" width="{WELLE_B}" height="{max(1, y_t - y_h):.1f}" '
-              f'rx="2" fill="{f_w}" fill-opacity="{WELLE_DECK}" stroke="{f_w}" stroke-width="0.8">'
+            j_h, j_t = pos(bdf.index[k_["hoch_i"]]), pos(bdf.index[k_["tief_i"]])   # schräge Linie vom Schwunghoch
+            x_h, x_t_ = X(max(j_h, 0)), X(j_t)                                      # zum Schwungtief (Micky 25.11.2026,
+            y_h, y_t = Y(min(k_["hoch"], pmax)), Y(max(k_["tief"], pmin))         # wie Minervini von Hand)
+            A(f'<line x1="{x_h:.1f}" y1="{y_h:.1f}" x2="{x_t_:.1f}" y2="{y_t:.1f}" stroke="{f_w}" '
+              f'stroke-width="{WELLE_STRICH}" stroke-opacity="{WELLE_DECK}" stroke-linecap="round">'
               f'<title>T{nr_}: {zahl(t_, 1)} % vom Hoch {zahl(k_["hoch"])} bis zum Tief {zahl(k_["tief"])}{vorige_txt}'
-              f'</title></rect>')
-            A(f'<text x="{X(j_m):.1f}" y="{min(y_t + 13, OBEN + KURS_H - 2):.1f}" fill="{f_w}" font-size="11" '   # Layout
+              f'</title></line>')
+            A(f'<text x="{x_t_:.1f}" y="{min(y_t + 15, OBEN + KURS_H - 2):.1f}" fill="{f_w}" font-size="11" '   # Layout
               f'text-anchor="middle">T{nr_}</text>')
         aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Regel vom 13.11.:
         marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # unter dem Tief des
@@ -626,7 +627,7 @@ def legende():
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – das Hoch der letzten "
               "Enge im oberen Drittel, sonst die Oberkante (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
               "ohne Setup"),
-             (GRUEN, "▮ Wellenmesser: je Welle der Base ein Balken vom Hoch bis zum Tief (T1, T2 …) – grün = höchstens "
+             (GRUEN, "╲ Wellenmesser: je Welle der Base eine Linie vom Schwunghoch zum Schwungtief (T1, T2 …) – grün = höchstens "
               "70 % der vorigen (Minervinis VCP), gelb = kleiner, aber nicht genug, rot = tiefer als die vorige"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
               "rote Fläche bis zum Stopp (das Risiko)"),

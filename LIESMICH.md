@@ -1637,3 +1637,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   [(Tag, Hoch des gescheiterten Vorstoßes)]. Chart: „✗ Fehlausbruch“ (rot) bzw. „⚠ Rücktest“ (gelb) unter der Kerze, Linie
   „Decke der Gefangenen“ am Hoch des Fehlausbruchs. Reife-Leiste, letzte Stufe: Ausbruch hält · Rücktest · Fehlausbruch ·
   2. Anlauf – dieselbe Regel wie Phase 🦊 und Setup 🪝 (keine eigene Volumenrechnung mehr, `REIFE_SCHNITT` entfernt).
+- Wellenmesser als schräge Linie (25.11.2026, Micky): statt eines Balkens in der zeitlichen Mitte (AEE: T1 stand im August,
+  weit weg von Hoch und Tief) eine kräftige Linie vom Schwunghoch zum Schwungtief, T1, T2 … am Tief (`WELLE_STRICH`).
