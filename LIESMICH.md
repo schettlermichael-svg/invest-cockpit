@@ -1675,3 +1675,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   VCP-Urteil), der Wellenmesser und das Urteil im Zonenchart (Schalter „Wellen“), die Reife-Leiste (zonenseite.reife,
   reife_html), die Kontraktionen in der Info-Zeile. Stopp des Ausbruchs: ¼ ATR unter dem Pivotal Point unten, höchstens
   8 %. Analyse-Seite: „Pivot (Livermores Pivotal Point oben)“. Mac-Probe 04.11., 400 Titel, ohne Fehler.
+- Notizbuch und Pivotal-Point-Linien (25.11.2026, TTWO): ein Pivotal Point, den der Trend schon überschritten hat, ist
+  verbraucht (im Aufwärtstrend NE/AT darunter, im Abwärtstrend NR/AB darüber) – Regel 10 misst am Punkt dieses Laufs.
+  Vorher kippte TTWO am 17.11. über einen Reaktions-Pivot aus dem Oktober, den der Abwärtstrend am 30.10. längst
+  unterschritten hatte, fälschlich in den Abwärtstrend. Im Chart (Schalter „Livermore“) sind die letzten 6 Pivotal Points
+  jetzt Doppellinien ab ihrem Tag bis zum ersten Schluss jenseits (danach blass), offene mit „═ oben/unten Preis“ am Rand.

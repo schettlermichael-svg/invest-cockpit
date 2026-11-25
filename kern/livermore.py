@@ -19,7 +19,8 @@ Regeln (verkürzt, Nummern wie im Buch):
       aus der NR, die die letzte NE nicht übertrifft → SE (bis sie es tut), gespiegelt SR.
   7/8 Der letzte Trendkurs wird Pivotal Point beim Wechsel in NE/NR, ebenso das Extrem der NE/NR beim Wechsel zurück.
   10  b) nach einem Aufwärtstrend fällt die NR um die Bestätigung unter den letzten rot unterstrichenen NR-Kurs (das
-      vorige Reaktionstief): Aufwärtstrend vorbei · d) gespiegelt: Abwärtstrend vorbei · a) dasselbe in Trendrichtung:
+      vorige Reaktionstief dieses Laufs – ein Punkt, den der Abwärtstrend schon unterschritten hat, ist verbraucht und
+      zählt nicht mehr; gespiegelt oben): Aufwärtstrend vorbei · d) gespiegelt: Abwärtstrend vorbei · a) dasselbe in Trendrichtung:
       Pivotal Point bestätigt · e) NE endet kurz (≤ Bestätigung) unter dem AT-Pivotal-Point und
       fällt dann um die Bestätigung: Gefahrensignal, der Aufwärtstrend ist zu Ende · f) gespiegelt.
 """
@@ -176,6 +177,14 @@ def _notizbuch(df, atr):
                 and h[i] - ext >= c and ("10f", ext_i) not in gefahr_gemeldet:
             ereignis(i, "gefahr_ab", h[i])                          # Regel 10f: stockt kurz über dem Pivotal Point
             gefahr_gemeldet.add(("10f", ext_i))
+        if spalte == "AT":                                          # verbraucht (Micky 25.11.2026, TTWO): hat der
+            for k_ in ("NE", "AT"):                                 # Aufwärtstrend einen Pivotal Point oben überschritten,
+                if k_ in pp and ext > pp[k_]:                       # gilt er nicht mehr – Regel 10 misst am Punkt dieses
+                    del pp[k_]                                      # Laufs; gespiegelt im Abwärtstrend unten
+        elif spalte == "AB":
+            for k_ in ("NR", "AB"):
+                if k_ in pp and ext < pp[k_]:
+                    del pp[k_]
         je_tag[i] = (spalte, trend)
     if spalte is None:
         return None
