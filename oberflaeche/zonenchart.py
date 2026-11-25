@@ -598,8 +598,8 @@ def legende():
     from gestaltung import t
     teile = [(ZONE_FARBE, "Zone von heute: Livermores Spanne zwischen dem letzten Pivotal Point oben und unten; in der "
                           "Stunde die Balance · POC grün gepunktet"),
-             (FESTUNG_FARBE, "Festung ▲▼: alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss "
-              "darunter (Wendepunkte ab 2 ATR); überwunden tauschen sie die Rolle (Decke → Boden) – je Richtung die 2 nächsten"),
+             (FESTUNG_FARBE, "Festung ▲▼: Livermores Pivotal Points, die noch kein Schluss durchbrochen hat – Decke oben, "
+              "Boden unten (zwei Jahre zurück) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Zeit (lila) ◂ ▸ Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "

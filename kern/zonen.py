@@ -24,11 +24,11 @@ Die drei Trades (Tageszone, Micky 22.11.2026):
 Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
   Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
-Festungen (Micky 22.11.2026): alte Decke = Swing-Hoch ohne Schluss darüber, alter Boden = Swing-Tief ohne Schluss
-darunter (Wendepunkte ab 2 ATR), überwundene Kanten mit getauschter Rolle; je Richtung die 2 nächsten; zwei Jahre
-zurück (so weit reichen die Massive-Tage der Liste – Chart, Liste und Zeichen sehen dieselben Festungen).
+Festungen (Micky 25.11.2026, nur Livermore): Decke = Pivotal Point oben, Boden = Pivotal Point unten, den seitdem kein
+Schluss durchbrochen hat (kein Rollentausch mehr); je Richtung die 2 nächsten; zwei Jahre zurück (so weit reichen die
+Massive-Tage der Liste – Chart, Liste und Zeichen sehen dieselben Festungen).
 Freie Bahn ✈️ (Micky 22.11.2026, Livermores Linie des geringsten Widerstands): über dem Kurs steht im Tageschart keine
-Festung mehr – niemand wartet oben auf seinen Einstand (O'Neil: kein Overhead Supply); ✈️↓ gespiegelt für den Short.
+Festung mehr, also kein offener Pivotal Point; ✈️↓ gespiegelt für den Short.
 Reines Zeichen ohne Schwelle: wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg.
 """
 import numpy as np
@@ -244,32 +244,33 @@ FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sons
 
 
 def _swing_kanten(e):
-    """Festungen aus Swing-Hochs und Swing-Tiefs der Ebene (Micky 22.11.2026; Wendepunkte ab 2 ATR wie die Base,
-    vcp_zone.zigzag, ohne den letzten unbestätigten): ein Swing-Hoch ohne Schluss darüber ist eine alte Decke (O'Neil,
-    Minervini: Overhead Supply), ein Swing-Tief ohne Schluss darunter ein alter Boden; per Schluss überwunden und
-    seitdem nicht zurück, tauscht die Kante die Rolle (Decke → Boden, Boden → Decke). → [(Preis, Grund)]."""
-    df = e["df"]
+    """Festungen aus Livermores Pivotal Points der Ebene (Micky 25.11.2026: nur Livermore; vorher Swing-Hochs und
+    -Tiefs mit Rollentausch nach O'Neil/Dalton): jeder Pivotal Point oben bzw. unten der letzten BAHN_JAHRE Jahre, den
+    seitdem kein Schluss durchbrochen hat – oben eine Decke, unten ein Boden. → [(Preis, Grund)]."""
+    import livermore
+    df = e["df"].dropna(subset=["High", "Low", "Close"])
     if len(df) < vcp_zone.ATR_TAGE + 2:
+        return []
+    nb = livermore.notizbuch(df)
+    if not nb:
         return []
     C = df["Close"].to_numpy(float)
     ab = int(df.index.searchsorted(df.index[-1] - pd.DateOffset(years=BAHN_JAHRE)))
     aus = []
-    for i, p_, art in vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]:
-        if i < ab:
+    for p_ in nb["pivotal"]:
+        if p_["i"] < ab:
             continue
-        nach = C[i + 1:]
-        durch = np.flatnonzero(nach > p_) if art == "H" else np.flatnonzero(nach < p_)
-        if not len(durch):
-            aus.append((float(p_), "alte Decke" if art == "H" else "alter Boden"))
-        elif not ((nach[durch[0] + 1:] < p_) if art == "H" else (nach[durch[0] + 1:] > p_)).any():
-            aus.append((float(p_), "Decke → Boden" if art == "H" else "Boden → Decke"))
+        nach = C[p_["i"] + 1:]
+        oben = p_["art"] == "hoch"
+        if not ((nach > p_["preis"]).any() if oben else (nach < p_["preis"]).any()):
+            aus.append((float(p_["preis"]), f'{"Decke" if oben else "Boden"} ═ {p_["tag"]:%d.%m.%y}'))
     return aus
 
 
 def festungen(e, la):
-    """Die Festungen (Micky 22.11.2026: nur alte Decke und alter Boden): Kanten aus Swing-Hochs und Swing-Tiefs
-    (_swing_kanten) – je Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen
-    Gründen. → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
+    """Die Festungen (Micky 25.11.2026: Livermores noch nicht durchbrochene Pivotal Points, _swing_kanten) – je
+    Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen Gründen.
+    → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
     if not e or not la:
         return {"oben": [], "unten": []}
     kurs, a = la["kurs"], e["atr"] or 0

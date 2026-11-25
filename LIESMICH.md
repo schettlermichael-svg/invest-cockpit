@@ -1701,3 +1701,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   zeichen.korrekturfenster nimmt die neue Ampel (livermore_ampel). Alte Läufe ohne Livermore: keine Ampel bis zum
   nächsten Nachtlauf. Mac-Probe (04.11.): S&P 500 🟡 Natürliche Erholung, Zirkel ✓; Nasdaq 🔴 Abwärtstrend, Zirkel ✗;
   Führer 53 vor, 7 zurück (60 Titel).
+- Festungen nur aus Livermore (25.11.2026, Micky): zonen._swing_kanten nimmt die Pivotal Points des Notizbuchs der
+  Ebene (zwei Jahre zurück), die kein Schluss durchbrochen hat – Decke oben, Boden unten, ohne Rollentausch; Grund
+  „Decke ═ TT.MM.JJ“. Schlachtplan-Ziel und ✈️ folgen daraus. Stratege-Prompt auf Livermore als System umgeschrieben.

@@ -409,15 +409,14 @@ BEREICHE = [
                "besten 2 % des Reviers je Fenster = 🚀.",
          messung=["zeichen.zirkel", "zeichen.kurz", "rueckenwind.rechnen"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Festungen", quelle="O'Neil, Minervini (Overhead Supply), Micky 22.11.2026",
-         regel="Alte Decke = Swing-Hoch (Wendepunkt ab 2 ATR, vcp_zone.zigzag) ohne Schluss darüber, alter Boden = Swing-"
-               "Tief ohne Schluss darunter; per Schluss überwunden und seitdem nicht zurück, tauscht die Kante die Rolle. "
-               "Je Richtung die 2 nächsten, näher als ½ ATR verschmolzen; zwei Jahre zurück. Umkehrpreise und AVWAP am "
-               "22.11.2026 entfernt.",
-         messung=["zonen.festungen"], pruefer=[],
+    dict(name="Festungen", quelle="Livermore (Pivotal Points), Micky 25.11.2026 (vorher Swing-Kanten nach O'Neil/Dalton)",
+         regel="Decke = Livermores Pivotal Point oben, Boden = Pivotal Point unten, den seitdem kein Schluss durchbrochen "
+               "hat (Notizbuch der Ebene, zwei Jahre zurück); kein Rollentausch. Je Richtung die 2 nächsten, näher als ½ "
+               "ATR verschmolzen. Sie geben das Ziel des Schlachtplans und ✈️.",
+         messung=["zonen.festungen", "zonen._swing_kanten"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), O'Neil (Overhead Supply), Micky 22.11.2026",
-         regel="✈️ = im Tageschart keine Festung über dem Kurs (zwei Jahre zurück), ✈️↓ = keine darunter. Reines Zeichen "
+    dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), Micky 22./25.11.2026",
+         regel="✈️ = im Tageschart kein offener Pivotal Point über dem Kurs (zwei Jahre zurück), ✈️↓ = keiner darunter. Reines Zeichen "
                "ohne Schwelle; wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg. Liste "
                "(Spalte Bahn), Rückenwind-Zeile und Kopf der Titelseite.",
          messung=["zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
