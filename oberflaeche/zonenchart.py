@@ -30,8 +30,8 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "wellen": "Wellen", "bollinger": "Bollinger"}   # Schalter (Micky
-LINIEN_START = ["wellen"]                                                     # 24.11.2026); Wellen an
+LINIEN_WAHL = {"details": "Profil-Details", "wellen": "Wellen", "livermore": "Livermore", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_START = ["wellen", "livermore"]                                        # 24./25.11.2026); Wellen, Livermore an
 FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -56,6 +56,9 @@ WELLE_STRICH = 3                       # Layout: Stärke der Wellenlinie
 WELLE_DECK = 0.85                      # Layout
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
+LIVERMORE_PP = 6                       # Layout: die letzten 6 Pivotal Points aus Livermores Notizbuch
+PP_BREITE = 26                         # Layout: Länge der Doppellinie
+PP_ABSTAND = 3                         # Layout: Abstand der beiden Striche
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
 KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
 KORRIDOR_RAND = 0.5                    # Layout
@@ -321,6 +324,20 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
+    if "livermore" in linien_ and e["name"] == "Tag":                               # Livermores Pivotal Points (Micky
+        import livermore                                                            # 25.11.2026): doppelt unterstrichen,
+        nb_ = livermore.notizbuch(df)                                               # rot unter Hochs/Tiefs aus Aufwärtstrend
+        for p_ in (nb_ or {}).get("pivotal", [])[-LIVERMORE_PP:]:                   # und Reaktion, schwarz (hell) aus
+            if p_["tag"] < d.index[0] or not pmin <= p_["preis"] <= pmax:           # Abwärtstrend und Erholung
+                continue
+            j_ = pos(p_["tag"])
+            x1_, x2_ = X(j_) - PP_BREITE / 2, min(X(j_) + PP_BREITE / 2, ende)
+            f_p = ROT if p_["farbe"] == "rot" else TEXT_2
+            for dy in (0, PP_ABSTAND):
+                y_ = Y(p_["preis"]) + (dy if p_["art"] == "tief" else -dy) + (3 if p_["art"] == "tief" else -3)   # Layout
+                A(f'<line x1="{x1_:.1f}" x2="{x2_:.1f}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{f_p}" stroke-width="1.2">'
+                  f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.}) – {p_["farbe"]} unterstrichen, '
+                  f'aus {livermore.SPALTEN[p_["aus"]]}</title></line>')
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
@@ -629,6 +646,8 @@ def legende():
               "ohne Setup"),
              (GRUEN, "╲ Wellenmesser: je Welle der Base eine Linie vom Schwunghoch zum Schwungtief (T1, T2 …) – grün = höchstens "
               "70 % der vorigen (Minervinis VCP), gelb = kleiner, aber nicht genug, rot = tiefer als die vorige"),
+             (ROT, "═ Livermores Pivotal Points (Schalter „Livermore“, Tag): doppelt unterstrichen wie in seinem Notizbuch – "
+              "rot aus Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
               "rote Fläche bis zum Stopp (das Risiko)"),
              (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "

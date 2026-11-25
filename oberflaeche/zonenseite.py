@@ -185,7 +185,7 @@ def kopf(r):
             f'<span style="font-size:15px;color:{TEXT}" title="keine Festung über (✈️) bzw. unter (✈️↓) dem Kurs – '
             f'Livermores Linie des geringsten Widerstands">{rueckenwind_seite.bahn(f.get("frei"))}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
-            f'{wind_html}{zirkel_html(r["tk"])}'
+            f'{wind_html}{zirkel_html(r["tk"])}{livermore_html(r)}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Setup</div>{trade_html}</div></div>')
@@ -367,3 +367,48 @@ def reife_html(r):
                      f'border-radius:6px;border:1px solid {f_};color:{f_};font-size:13px;'                    # Layout
                      f'background:{f_}22">{"✓ " if amp == "grün" else ""}{s_}</span>')                         # Layout
     return ('<div style="display:flex;gap:6px;margin:0 0 8px 0">' + "".join(teile) + "</div>")              # Layout
+
+
+# ── Livermores Notizbuch auf der Titelseite (Micky 25.11.2026): Spalte im Kopf, Tabelle unter dem Chart ──
+NOTIZBUCH_ZEILEN = 30      # Layout: die letzten 30 Einträge in der Tabelle
+
+
+def livermore_html(r):
+    """Eine Zeile unter dem Zirkel: in welcher Spalte Livermore heute schreibt, die zwei letzten Pivotal Points und
+    wohin der Kurs muss, damit sie bestätigt sind (1 ATR darüber bzw. darunter)."""
+    import livermore
+    import vcp_zone
+    df = r.get("df")
+    nb = livermore.notizbuch(df) if df is not None else None
+    if not nb:
+        return ""
+    a = float(vcp_zone.atr(df).iloc[-1])
+    oben = next((p_ for p_ in reversed(nb["pivotal"]) if p_["art"] == "hoch"), None)
+    unten = next((p_ for p_ in reversed(nb["pivotal"]) if p_["art"] == "tief"), None)
+    teile_ = []
+    if oben:
+        teile_.append(f'oben {zahl(oben["preis"])} ({oben["tag"]:%d.%m.}) – bestätigt über {zahl(oben["preis"] + a)}')
+    if unten:
+        teile_.append(f'unten {zahl(unten["preis"])} ({unten["tag"]:%d.%m.}) – bestätigt unter {zahl(unten["preis"] - a)}')
+    farbe = {"AT": GRUEN, "AB": ROT}.get(nb["spalte"], TEXT_2)
+    return (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}" title="Livermores Notizbuch (Market Key, 1940): '
+            f'Schwung 2 ATR, Bestätigung 1 ATR">📒 Livermore: <b style="color:{farbe}">{livermore.spalte_text(nb)}</b>'
+            + (f'<span style="color:{TEXT_2}"> · Pivotal Points {" · ".join(teile_)}</span>' if teile_ else "")
+            + '</div>')
+
+
+def notizbuch_tabelle(r):
+    """Livermores Notizbuch wie im Buch: je Eintrag eine Zeile, der Kurs in seiner Spalte; Pivotal Points mit ═."""
+    import livermore
+    df = r.get("df")
+    nb = livermore.notizbuch(df) if df is not None else None
+    if not nb:
+        return None
+    pp = {(p_["tag"], round(p_["preis"], 2)): p_["farbe"] for p_ in nb["pivotal"]}
+    zeilen = []
+    for tag, sp, preis in nb["eintraege"][-NOTIZBUCH_ZEILEN:]:
+        z_ = {"Tag": f"{tag:%d.%m.%Y}"} | {livermore.SPALTEN[k]: "" for k in livermore.REIHE}
+        marke = pp.get((tag, round(preis, 2)))
+        z_[livermore.SPALTEN[sp]] = f'{zahl(preis)}' + (" ═" if marke else "")
+        zeilen.append(z_)
+    return pd.DataFrame(zeilen[::-1])

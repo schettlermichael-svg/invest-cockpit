@@ -1647,3 +1647,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   sobald das Notizbuch danach wieder in die Gegen-Trendspalte schrieb) und Tape Reading aus Tageskerzen (Reaktion
   leise/laut, jüngster Durchbruch eines Pivotal Points mit Umsatz, Gefahrensignal an einem Tag) fließen in Keim und Halt.
   Dow-Struktur nutzt jetzt dieselben 2-ATR-Wendepunkte (DOW_N_TAG entfernt).
+- Livermore auf der Titelseite (25.11.2026): Zeile „📒 Livermore: <Spalte> · Pivotal Points oben/unten – bestätigt über/
+  unter (± 1 ATR)“ unter dem Zirkel (zonenseite.livermore_html); Notizbuch-Tabelle als Expander unter dem Chart
+  (zonenseite.notizbuch_tabelle, letzte 30 Einträge, ═ = Pivotal Point); im Chart Schalter „Livermore“ (an): die letzten
+  6 Pivotal Points als Doppellinie, rot bzw. hell (im Buch schwarz).

@@ -606,6 +606,12 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
                                  anker[zonenseite.PROFIL_PLATZ])
         st.markdown(gestaltung.seite(gestaltung.karte(zonenseite.reife_html(teile["r"]) + bild_ + teile["legende"]),   # Reife-Leiste
                                      oben=0, unten=12), unsafe_allow_html=True)
+        nb_tab = zonenseite.notizbuch_tabelle(teile["r"])  # Livermores Notizbuch (Micky 25.11.2026)
+        if nb_tab is not None:
+            with st.expander("📒 Livermores Notizbuch (Market Key) – die letzten Einträge"):
+                st.caption("Wie im Buch (1940): Trendspalten in Tinte, die übrigen in Bleistift; ═ = Pivotal Point. "
+                           "Schwung 2 ATR, Bestätigung 1 ATR.")
+                st.dataframe(nb_tab, hide_index=True, use_container_width=True)
     except Exception as e:  # noqa: BLE001
         _fehler(e)
 

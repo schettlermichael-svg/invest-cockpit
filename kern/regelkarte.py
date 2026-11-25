@@ -487,7 +487,7 @@ BEREICHE = [
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
     "chart.ETIKETT": "Layout", **{f"rueckenwind_seite.TABELLE_{n_}": "Layout" for n_ in ("HOEHE", "ZEILE", "RAND")}, "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
-    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
+    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.NOTIZBUCH_ZEILEN": "Layout", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
