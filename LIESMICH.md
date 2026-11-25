@@ -1715,3 +1715,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   bleiben nur Ziel des Schlachtplans und ✈️. Livermores letzte 6 Pivotal Points deutlicher: Strich 2,0 statt 1,2
   (PP_DICKE), Abstand 4 (PP_ABSTAND), helle Linien PP_HELL statt TEXT_2, durchbrochene 0,55 statt 0,45.
   FESTUNG_FARBE und STOPP_BAND entfernt, Legende ohne Festung.
+- Pivotal Points im Chart (25.11.2026, Micky): eine Linie statt Doppelstrich (Livermore Regel 8 unterstreicht doppelt –
+  im Chart reicht eine). Statt fester 6 (LIVERMORE_PP, eine Platzregel, entfernt): jeder offene Pivotal Point im
+  Preisbereich läuft bis zum rechten Rand mit Preis-Etikett „— oben/unten X“, durchbrochene blass bis zum Tag des
+  Durchbruchs, sofern der im Bild liegt. PP_ABSTAND entfernt.

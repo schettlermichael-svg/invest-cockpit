@@ -415,7 +415,7 @@ BEREICHE = [
          regel="Decke = Livermores Pivotal Point oben, Boden = Pivotal Point unten, den seitdem kein Schluss durchbrochen "
                "hat (Notizbuch der Ebene, zwei Jahre zurück); kein Rollentausch. Je Richtung die 2 nächsten, näher als ½ "
                "ATR verschmolzen. Sie geben das Ziel des Schlachtplans und ✈️; im Chart nicht mehr als Band gezeichnet "
-               "(Micky 25.11.2026) – dort stehen Livermores letzte 6 Pivotal Points als Doppellinie.",
+               "(Micky 25.11.2026) – dort stehen alle offenen Pivotal Points als Linie bis zum rechten Rand.",
          messung=["zonen.festungen", "zonen._swing_kanten"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), Micky 22./25.11.2026",

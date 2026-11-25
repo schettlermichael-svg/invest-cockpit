@@ -2,7 +2,7 @@
 
 Kursfeld: Kerzen; die Zone von heute (Livermores Spanne seit 25.11.2026, in der Stunde die Balance) als gelber Rahmen mit
 Namen, Pivot und POC; in der Stunde die
-Base des Tages als feiner Rahmen; Schluchten quer über das Gelände; Livermores letzte 6 Pivotal Points als Doppellinie
+Base des Tages als feiner Rahmen; Schluchten quer über das Gelände; Livermores offene Pivotal Points als Linie bis zum Rand
 (Festungen seit 25.11.2026 nicht mehr als Band, nur als Ziel des Schlachtplans und ✈️); der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
 Impulses. Darunter das Volumen und das Feld der
@@ -51,10 +51,8 @@ PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über alle
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
-LIVERMORE_PP = 6                       # Layout: die letzten 6 Pivotal Points aus Livermores Notizbuch
 PP_DURCH_DECK = 0.55                   # Layout: durchbrochene Pivotal Points blasser
-PP_ABSTAND = 4                         # Layout: Abstand der beiden Striche
-PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher)
+PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher, eine Linie)
 PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
 KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
@@ -306,12 +304,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
     if "livermore" in linien_ and e["name"] == "Tag":                               # Livermores Pivotal Points (Micky
-        import livermore                                                            # 25.11.2026): doppelt unterstrichen,
-        nb_ = livermore.notizbuch(df)                                               # rot unter Hochs/Tiefs aus Aufwärtstrend
-        c_np = df["Close"].to_numpy(float)                                          # Micky 25.11.2026: als Linie ab
-        for p_ in (nb_ or {}).get("pivotal", [])[-LIVERMORE_PP:]:                   # seinem Tag bis zum ersten Schluss
-            if not pmin <= p_["preis"] <= pmax:                                     # jenseits (Durchbruch), sonst bis
-                continue                                                            # zum rechten Rand
+        import livermore                                                            # 25.11.2026): jeder offene im Bild
+        nb_ = livermore.notizbuch(df)                                               # als Linie bis zum rechten Rand,
+        c_np = df["Close"].to_numpy(float)                                          # durchbrochene blass bis zum Tag
+        for p_ in (nb_ or {}).get("pivotal", []):                                   # des Durchbruchs (erster Schluss
+            if not pmin <= p_["preis"] <= pmax:                                     # jenseits); Livermore Regel 8 zieht
+                continue                                                            # einen Doppelstrich, hier eine Linie
             hinter = c_np[p_["i"] + 1:]
             durch = np.flatnonzero(hinter > p_["preis"] if p_["art"] == "hoch" else hinter < p_["preis"])
             bis_t = df.index[p_["i"] + 1 + durch[0]] if len(durch) else None
@@ -321,14 +319,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             x2_ = X(pos(bis_t)) if bis_t is not None else ende
             f_p = ROT if p_["farbe"] == "rot" else PP_HELL
             wann = f"durchbrochen am {bis_t:%d.%m.}" if bis_t is not None else "noch nicht durchbrochen"
-            for dy in (0, PP_ABSTAND):
-                y_ = Y(p_["preis"]) + (dy if p_["art"] == "tief" else -dy) + (3 if p_["art"] == "tief" else -3)   # Layout
-                A(f'<line x1="{x1_:.1f}" x2="{x2_:.1f}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{f_p}" stroke-width="{PP_DICKE}" '
-                  f'stroke-opacity="{1 if bis_t is None else PP_DURCH_DECK}">'
-                  f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.}) – {p_["farbe"]} unterstrichen, '
-                  f'aus {livermore.SPALTEN[p_["aus"]]} · {wann}</title></line>')
+            A(f'<line x1="{x1_:.1f}" x2="{x2_:.1f}" y1="{Y(p_["preis"]):.1f}" y2="{Y(p_["preis"]):.1f}" stroke="{f_p}" '
+              f'stroke-width="{PP_DICKE}" stroke-opacity="{1 if bis_t is None else PP_DURCH_DECK}">'
+              f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.%y}) – {p_["farbe"]} unterstrichen, '
+              f'aus {livermore.SPALTEN[p_["aus"]]} · {wann}</title></line>')
             if bis_t is None:                                                       # Preis am Rand (der offene Punkt)
-                etiketten.append((Y(p_["preis"]), f'═ {"oben" if p_["art"] == "hoch" else "unten"} {zahl(p_["preis"])}',
+                etiketten.append((Y(p_["preis"]), f'— {"oben" if p_["art"] == "hoch" else "unten"} {zahl(p_["preis"])}',
                                   f_p))
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
@@ -598,9 +594,10 @@ def legende():
               "Festungen"),
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
               "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance)"),
-             (ROT, "═ Livermores Pivotal Points (Schalter „Livermore“, Tag): doppelt unterstrichen wie in seinem Notizbuch – "
-              "rot aus Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; als Linie ab "
-              "ihrem Tag bis zum ersten Schluss jenseits (Durchbruch, danach blass), offene mit Preis am Rand"),
+             (ROT, "— Livermores Pivotal Points (Schalter „Livermore“, Tag; im Notizbuch doppelt unterstrichen): rot aus "
+              "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder noch nicht "
+              "durchbrochene im Bild als Linie ab seinem Tag bis zum rechten Rand mit Preis, durchbrochene blass bis "
+              "zum ersten Schluss jenseits"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
               "rote Fläche bis zum Stopp (das Risiko)"),
              (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "
