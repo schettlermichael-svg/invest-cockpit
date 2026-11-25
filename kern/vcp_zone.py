@@ -380,8 +380,8 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
         jz = jetzt if jetzt is not None else zone(df, nb)
         if jz.get("zone") and jz["start_i"] > t:
             return None                                    # neue Spanne über dem Ausbruch
-        if jz.get("pivot_i") is not None and jz["pivot_i"] >= t:
-            continue                                       # seit dem Ausbruch ein neuer Pivotal Point oben: er gilt
+        if jz.get("pivot_i") not in (None, b["pivot_i"]):
+            continue                                       # seitdem ein neuer Pivotal Point oben im Buch: er gilt
         # Verlauf seit dem Ausbruch (Micky 13.11.2026): Fehlausbruch erst bei Schluss unter dem Tief des
         # Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest. Ein Schluss
         # über dem Pivot nach einem Fehlausbruch ist ein neuer Ausbruch (Tag und Volumen von dort).
