@@ -19,8 +19,9 @@ Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Dam
   schaut ausbruch() bis 4 Wochen zurück: Schluss über dem Pivot der Zone vom Vortag. Zone und Pivot von damals gelten
   weiter – bis 4 Wochen, bis sich darüber eine neue Spanne gebildet hat oder Livermore einen neuen Pivotal Point oben
   einträgt. Bis +5 % über dem Pivot =
-  Kaufzone, darüber ausgedehnt. Schluss knapp unter dem Pivot, das Tief des Ausbruchstags hält = 🟡 Rücktest (keine
-  Kaufzone, beobachten; 13.11.2026). Schluss unter dem Tief des Ausbruchstags oder mehr als 3 % unter dem Pivot =
+  Kaufzone, darüber ausgedehnt. Schluss knapp unter dem Pivot, aber weniger als 1 ATR = 🟡 Rücktest (keine Kaufzone,
+  beobachten). Schluss 1 ATR unter dem Pivot (Livermores Bestätigung gespiegelt, Micky 25.11.2026; vorher 13.11.2026:
+  Tief des Ausbruchstags bzw. 3 %) =
   🔴 Fehlausbruch (Zone und Pivot bleiben; neuer Schluss darüber = neuer Ausbruch). Livermores Bestätigung: ein Hoch
   1 ATR über dem Pivot (Zeichen).
   Zeichen (kein Muss, Micky): Volumen am Ausbruchstag über dem 50-Tage-Schnitt = mit Volumen.
@@ -128,7 +129,6 @@ def zone(df, nb=None):
 RAND_PCT = 3.0              # am Pivot: bis 3 % darunter (Test am Rand) – eine Quelle
 AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter dem Pivot (Micky, 06.11.2026)
 KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
-FEHL_PCT = 3.0                 # Fehlausbruch: Schluss mehr als 3 % unter dem Pivot (oder unter dem Tief des Ausbruchstags)
 
 
 def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
@@ -166,11 +166,13 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
             return None                                    # neue Spanne über dem Ausbruch
         if jz.get("pivot_i") not in (None, b["pivot_i"]):
             continue                                       # seitdem ein neuer Pivotal Point oben im Buch: er gilt
-        # Verlauf seit dem Ausbruch (Micky 13.11.2026): Fehlausbruch erst bei Schluss unter dem Tief des
-        # Ausbruchstags oder mehr als 3 % unter dem Pivot; knapp unter dem Pivot ist ein Rücktest. Ein Schluss
-        # über dem Pivot nach einem Fehlausbruch ist ein neuer Ausbruch (Tag und Volumen von dort).
+        # Verlauf seit dem Ausbruch (Micky 25.11.2026, Livermore – vorher 13.11.2026 Tief des Ausbruchstags bzw. 3 %):
+        # Fehlausbruch bei Schluss 1 ATR (ATR am Ausbruchstag) unter dem Pivot – Livermores Bestätigung gespiegelt;
+        # knapp unter dem Pivot ist ein Rücktest. Ein Schluss über dem Pivot nach einem Fehlausbruch ist ein neuer
+        # Ausbruch (Tag und Volumen von dort).
         letzter, fehl_tag, rueck_tag = t, None, None
-        lo, hh = df["Low"].to_numpy(float), df["High"].to_numpy(float)
+        hh = df["High"].to_numpy(float)
+        a_ = atr(df).to_numpy(float)
         gescheitert = []                               # frühere Fehlausbrüche (Micky 24.11.2026): Tag und Hoch
         for u in range(t + 1, n):                      # des gescheiterten Vorstoßes – dort sitzen die Gefangenen
             if c[u] > pivot:
@@ -178,21 +180,22 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
                     gescheitert.append((df.index[fehl_tag], float(hh[letzter:fehl_tag + 1].max())))
                     letzter = u
                 fehl_tag = rueck_tag = None
-            elif fehl_tag is None and (c[u] < lo[letzter] or c[u] < pivot * (1 - FEHL_PCT / 100)):
+            elif fehl_tag is None and c[u] < pivot - livermore.BESTAETIGUNG * a_[letzter]:
                 fehl_tag, rueck_tag = u, None
             elif fehl_tag is None and rueck_tag is None:
                 rueck_tag = u
         vol = v[letzter] / v50[letzter] if v50[letzter] == v50[letzter] and v50[letzter] else None
         ab = (c[-1] / pivot - 1) * 100
         fehl = fehl_tag is not None
-        bestaetigung = pivot + livermore.BESTAETIGUNG * float(atr(df).iloc[letzter])   # Livermores ~3 Punkte
+        bestaetigung = pivot + livermore.BESTAETIGUNG * float(a_[letzter])   # Livermores ~3 Punkte
+        fehl_grenze = pivot - livermore.BESTAETIGUNG * float(a_[letzter])
         ueber = np.flatnonzero(hh[letzter:] >= bestaetigung)
         return {"tag": df.index[letzter], "tage_her": n - 1 - letzter, "erster_tag": df.index[t],
                 "vortag_i": t, "pivot": pivot, "zone": b, "volumen": vol,
                 "mit_volumen": bool(vol and vol > 1), "abstand": ab, "kaufzone": not fehl and rueck_tag is None and 0 <= ab <= KAUFZONE,
                 "fehl": fehl, "fehl_tag": df.index[fehl_tag] if fehl else None,
                 "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
-                "tief_ausbruchstag": float(lo[letzter]), "bestaetigung": bestaetigung,
+                "fehl_grenze": fehl_grenze, "bestaetigung": bestaetigung,
                 "bestaetigt": bool(len(ueber)), "bestaetigt_tag": df.index[letzter + ueber[0]] if len(ueber) else None,
                 "gescheitert": gescheitert + (
                     [(df.index[fehl_tag], float(hh[letzter:fehl_tag + 1].max()))] if fehl else [])}
@@ -209,12 +212,12 @@ def ausbruch_text(a):
     ab = ("±0,0" if round(abs(a["abstand"]), 1) == 0 else f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))}") \
         + " % zum Pivot"
     if a["fehl"]:
-        return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} unter dem Tief des "
-                f"Ausbruchstags bzw. mehr als 3 % unter dem Pivot · {ab} – kein Kauf, bleibt unter Beobachtung, bis der "
+        return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} Schluss 1 ATR unter dem "
+                f"Pivot (unter {v(a['fehl_grenze'])} $, Livermore) · {ab} – kein Kauf, bleibt unter Beobachtung, bis der "
                 f"Kurs wieder über dem Pivot schließt")
     if a.get("ruecktest"):
         return (f"🟡 Rücktest: Ausbruch am {a['tag']:%d.%m.}, seit {a['rueck_tag']:%d.%m.} knapp unter dem Pivot · {ab} – "
-                f"hält das Tief des Ausbruchstags {v(a['tief_ausbruchstag'])} $, ist der Ausbruch nicht gescheitert")
+                f"schließt er nicht 1 ATR darunter (unter {v(a['fehl_grenze'])} $), ist der Ausbruch nicht gescheitert")
     vol = (f"mit Volumen {v(a['volumen'])}-fach" if a["mit_volumen"] else
            f"ohne Volumen ({v(a['volumen'])}-fach)" if a["volumen"] else "Volumen unbekannt")
     lage = "in der Kaufzone" if a["kaufzone"] else "ausgedehnt"

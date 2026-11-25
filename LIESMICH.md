@@ -1704,3 +1704,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Festungen nur aus Livermore (25.11.2026, Micky): zonen._swing_kanten nimmt die Pivotal Points des Notizbuchs der
   Ebene (zwei Jahre zurück), die kein Schluss durchbrochen hat – Decke oben, Boden unten, ohne Rollentausch; Grund
   „Decke ═ TT.MM.JJ“. Schlachtplan-Ziel und ✈️ folgen daraus. Stratege-Prompt auf Livermore als System umgeschrieben.
+- Fehlausbruch nach Livermore (25.11.2026, Micky): vcp_zone.ausbruch – Fehlausbruch bei Schluss 1 ATR (ATR am
+  Ausbruchstag) unter dem Pivot (Livermores Bestätigung gespiegelt), knapp darunter Rücktest; ersetzt die Regel vom
+  13.11. (Tief des Ausbruchstags bzw. 3 %). FEHL_PCT und tief_ausbruchstag entfernt, neu fehl_grenze.

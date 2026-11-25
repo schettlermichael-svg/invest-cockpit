@@ -363,10 +363,10 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Fehlausbruch und Rücktest
-        aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Regel vom 13.11.:
-        marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # unter dem Tief des
-        if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Ausbruchstags oder > 3 % unter
-            marken.append((aus_["rueck_tag"], "⚠ Rücktest", AMPEL["gelb"]))                  # dem Pivot; knapp darunter = Rücktest)
+        aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Livermore, 25.11.:
+        marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # Schluss 1 ATR unter dem
+        if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Pivot; knapp darunter =
+            marken.append((aus_["rueck_tag"], "⚠ Rücktest", AMPEL["gelb"]))                  # Rücktest)
         for t_, wort_, f_m in marken:
             if t_ < d.index[0]:
                 continue

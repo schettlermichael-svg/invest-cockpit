@@ -91,7 +91,9 @@ WERKZEUGE = {
                                 "(Kurs läuft am Hoch). Schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen "
                                 "(noch keine Spanne). Keine Formregeln, keine Wellen, keine Reife-Leiste und keine Namen nach "
                                 "der Vorgeschichte (Base, Flagge, Konsolidierung – am 25.11.2026 entfernt): die Zone heißt "
-                                "immer „Spanne“; Länge und Tiefe sind Zeichen.",
+                                "immer „Spanne“; Länge und Tiefe sind Zeichen. Ausbruch = Schluss über dem Pivot; "
+                                "Fehlausbruch = danach Schluss 1 ATR unter dem Pivot (Livermores Bestätigung gespiegelt, "
+                                "25.11.2026), knapp darunter = Rücktest.",
              messung=["vcp_zone.zone", "livermore.spanne"], stand="gemessen",
              pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot"]),
         dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
