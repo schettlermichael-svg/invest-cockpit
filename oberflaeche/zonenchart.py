@@ -2,7 +2,8 @@
 
 Kursfeld: Kerzen; die Zone von heute (Livermores Spanne seit 25.11.2026, in der Stunde die Balance) als gelber Rahmen mit
 Namen, Pivot und POC; in der Stunde die
-Base des Tages als feiner Rahmen; Festungen und Schluchten quer über das Gelände; der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
+Base des Tages als feiner Rahmen; Schluchten quer über das Gelände; Livermores letzte 6 Pivotal Points als Doppellinie
+(Festungen seit 25.11.2026 nicht mehr als Band, nur als Ziel des Schlachtplans und ✈️); der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
 Impulses. Darunter das Volumen und das Feld der
 relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-Hoch bzw. RS-Tief vor Kurs)."""
@@ -32,13 +33,11 @@ ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
 LINIEN_WAHL = {"details": "Profil-Details", "livermore": "Livermore", "bollinger": "Bollinger"}   # Schalter (Micky
 LINIEN_START = ["livermore"]                                                  # 24./25.11.2026); Livermore an
-FESTUNG_FARBE = "#C9D1DC"              # Festungen der Lagekarte
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
 DUENN_FARBE = "#7DB4FF"                # dünne Stellen (LVN)
 EINZEL_FARBE = "#FFFFFF"               # Einzeldrucke im Zeitprofil
 LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen beschriftet (die breitesten)
-STOPP_BAND = 0.25                      # Layout: Festung als Band von ¼ ATR
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
 WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
 SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
@@ -53,8 +52,10 @@ PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – 
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 LIVERMORE_PP = 6                       # Layout: die letzten 6 Pivotal Points aus Livermores Notizbuch
-PP_DURCH_DECK = 0.45                   # Layout: durchbrochene Pivotal Points blasser
-PP_ABSTAND = 3                         # Layout: Abstand der beiden Striche
+PP_DURCH_DECK = 0.55                   # Layout: durchbrochene Pivotal Points blasser
+PP_ABSTAND = 4                         # Layout: Abstand der beiden Striche
+PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher)
+PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
 ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
 KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
 KORRIDOR_RAND = 0.5                    # Layout
@@ -143,10 +144,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
     lo, hi = la["zone"] or (None, None)
     werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else [])
-    spanne_bild = float(h.max() - l.min())
-    burgen = [(x, seite_) for seite_ in ("oben", "unten") for x in (fest or {}).get(seite_, [])
-              if l.min() - spanne_bild <= x["preis"] <= h.max() + spanne_bild]          # Layout: höchstens eine Bildhöhe weit
-    werte += [x["preis"] for x, _ in burgen]
     if woche:
         werte += list(woche[0]["zone"])
     linien = {g: df["Close"].rolling(g).mean().reindex(d.index) for g in gd}
@@ -187,14 +184,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     for a_, b_ in sorted(det_g["duenn"], key=lambda x: x[0] - x[1])[:SCHLUCHT_ETIKETTEN]:
         if b_ >= pmin and a_ <= pmax:
             etiketten.append((Y((a_ + b_) / 2), f"Schlucht {zahl(a_, 0)}–{zahl(b_, 0)}", DUENN_FARBE))
-    halb_b = max(1.5, KURS_H * (e["atr"] or 0) * STOPP_BAND / max(pmax - pmin, 1e-9))  # Layout: Festung ¼ ATR breit
-    for x, seite_ in burgen:                                                        # Festungen quer über das Gelände
-        A(f'<rect x="{LINKS}" y="{Y(x["preis"]) - halb_b / 2:.1f}" width="{ende - LINKS}" height="{halb_b:.1f}" '
-          f'fill="{FESTUNG_FARBE}" fill-opacity="0.10"/>'
-          f'<line x1="{LINKS}" x2="{ende}" y1="{Y(x["preis"]):.1f}" y2="{Y(x["preis"]):.1f}" stroke="{FESTUNG_FARBE}" '
-          f'stroke-width="2" stroke-opacity="0.85"><title>Festung {zahl(x["preis"])}: {" · ".join(x["grund"])}</title></line>')  # Layout
-        etiketten.append((Y(x["preis"]), f'{"▲" if seite_ == "oben" else "▼"} {zahl(x["preis"], 0)} {x["grund"][0]}'
-                                         f'{"+" if len(x["grund"]) > 1 else ""} {x["abstand"]:+.1f} %'.replace(".", ","), FESTUNG_FARBE))
     if woche:                                                                       # die Front der höheren Ebene
         wl, wh = woche[0]["zone"]
         x0 = X(pos(woche[1])) - halb if woche[1] >= d.index[0] else LINKS
@@ -330,11 +319,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                 continue
             x1_ = X(pos(p_["tag"])) if p_["tag"] >= d.index[0] else LINKS
             x2_ = X(pos(bis_t)) if bis_t is not None else ende
-            f_p = ROT if p_["farbe"] == "rot" else TEXT_2
+            f_p = ROT if p_["farbe"] == "rot" else PP_HELL
             wann = f"durchbrochen am {bis_t:%d.%m.}" if bis_t is not None else "noch nicht durchbrochen"
             for dy in (0, PP_ABSTAND):
                 y_ = Y(p_["preis"]) + (dy if p_["art"] == "tief" else -dy) + (3 if p_["art"] == "tief" else -3)   # Layout
-                A(f'<line x1="{x1_:.1f}" x2="{x2_:.1f}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{f_p}" stroke-width="1.2" '
+                A(f'<line x1="{x1_:.1f}" x2="{x2_:.1f}" y1="{y_:.1f}" y2="{y_:.1f}" stroke="{f_p}" stroke-width="{PP_DICKE}" '
                   f'stroke-opacity="{1 if bis_t is None else PP_DURCH_DECK}">'
                   f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.}) – {p_["farbe"]} unterstrichen, '
                   f'aus {livermore.SPALTEN[p_["aus"]]} · {wann}</title></line>')
@@ -598,8 +587,6 @@ def legende():
     from gestaltung import t
     teile = [(ZONE_FARBE, "Zone von heute: Livermores Spanne zwischen dem letzten Pivotal Point oben und unten; in der "
                           "Stunde die Balance · POC grün gepunktet"),
-             (FESTUNG_FARBE, "Festung ▲▼: Livermores Pivotal Points, die noch kein Schluss durchbrochen hat – Decke oben, "
-              "Boden unten (zwei Jahre zurück) – je Richtung die 2 nächsten"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Zeit (lila) ◂ ▸ Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "

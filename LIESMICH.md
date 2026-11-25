@@ -1711,3 +1711,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   der Zirkel bestätigt), „Das Zeichen im Cockpit“ in Kapitel 2–8, Kapitel 9 (Tabelle mit Zeile System, Reihenfolge der
   Schlacht), Setup, Führung, Markt und „Wie das Cockpit … erkennt“ neu; Wort, Geschichte, Leben und Meister unverändert
   (Minervinis Enge bleibt als Lehre bei den Meistern). Kurzform oberflaeche/handbuch.py mitgezogen.
+- Chart (25.11.2026, Micky): die Festungen (graue Bänder Decke/Boden quer über das Gelände) sind aus dem Bild – sie
+  bleiben nur Ziel des Schlachtplans und ✈️. Livermores letzte 6 Pivotal Points deutlicher: Strich 2,0 statt 1,2
+  (PP_DICKE), Abstand 4 (PP_ABSTAND), helle Linien PP_HELL statt TEXT_2, durchbrochene 0,55 statt 0,45.
+  FESTUNG_FARBE und STOPP_BAND entfernt, Legende ohne Festung.
