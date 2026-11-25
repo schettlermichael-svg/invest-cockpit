@@ -2,8 +2,8 @@
 Reviers und der Watchlist aus den gespeicherten Tageskursen
 
   · den Kreislauf (Phase 1–4, Zeichen der Stärke und Schwäche, Keime – zeichen.fuer_titel),
-  · das Setup: Zonen-Trade der Tagesebene (zonen.basis, lage, trade) im Einklang mit dem Zirkel (setup) –
-    Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – oder keines,
+  · das Setup: Livermores Trade der Tagesebene (zonen.basis, lage, trade), benannt nach seiner Pivot-Art, vom Zirkel
+    mit ✓/✗ bestätigt (setup) – Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts,
   · ob der Titel heute am 52-Wochen-Hoch oder -Tief steht (Zeichen unter der Markt-Ampel: Hochs gegen Tiefs),
   · den Zirkel der Indizes S&P 500 und Nasdaq – daraus die Markt-Ampel (markt_ampel, Micky 23.11.2026).
 
@@ -21,7 +21,8 @@ import pandas as pd
 from masse import JAHR_TAGE
 
 KURSE_MIN = 60                  # Technik: darunter weder Base noch Kreislauf
-TRADE_FELDER = ("art", "name", "zeichen", "richtung", "einstieg", "stopp", "pivot", "risiko", "ampel", "wartet")
+TRADE_FELDER = ("art", "name", "zeichen", "richtung", "einstieg", "stopp", "pivot", "risiko", "ampel", "wartet", "zirkel",
+                "zirkel_grund")
 MELDUNG_JE_SEITE = 5           # Morgenmeldung: die ersten 5 Long und 5 Short
 
 
@@ -64,7 +65,7 @@ def _titel(tk, start=None):
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         feld = {"phase": la["phase"] if la else None,
                 "pivot": la["pivot"] if la else None, "kurs": la["kurs"] if la else None,   # ▲▲▲-Liste (23.11.2026)
-                "trade": {x: t[x] for x in TRADE_FELDER} if t else None,
+                "trade": {x: t.get(x) for x in TRADE_FELDER} if t else None,
                 "hoch52": bool(len(h) >= JAHR_TAGE and h[-1] >= h[-JAHR_TAGE:].max()),
                 "tief52": bool(len(l) >= JAHR_TAGE and l[-1] <= l[-JAHR_TAGE:].min())}
         return tk, k, feld
@@ -185,59 +186,65 @@ def barometer():
     return zeichen.laden().get("barometer") or {}
 
 
-# ── Das Setup ergibt sich aus dem Zirkel (Micky 22.11.2026): Phase des Zirkels (Woche) + Zone (Tag), bestätigt durch
-# Stärke bzw. Schwäche nach unserer Definition (Stärke = Widerstand überwinden und Druck aushalten; ein Keim zählt nur,
-# wenn er gemessen ist). Ein Zonen-Trade gegen den Zirkel ist kein Setup und wird nicht gezeigt.
-#   1 Basis      + Ausbruch/am Pivot  + 🌱 gemessen (Widerstand überwunden, Rücksetzer gehalten)  → Aufbruch (long)
-#   2 Aufwärts   + Ausbruch/am Pivot  + kein 🍂                                                    → Fortsetzung (long)
-#   1→2 oder 2   + Rücktest des Pivots                                                             → Rücktest (long)
-#   3 Verteilung + Bruch mit Volumen  + 🍂 gemessen (Stützen geben unter Druck nach)               → Abbruch (short)
-#   4 Abwärts    + Bruch mit Volumen  + kein 🌱                                                    → Fortsetzung abwärts (short)
-# Junge Titel ohne Zirkel (unter einem Jahr Kurse): Ausbruch und Rücktest als Aufbruch bzw. Rücktest (IPO-Base).
+# ── Das Setup (Micky 25.11.2026: Livermore liefert das System, der Zirkel bestätigt nur): jedes Signal aus Livermores
+# Spanne ist ein Setup. Der Name kommt aus der Art seines Pivotal Points – Livermores Trend im Notizbuch, als die Spanne
+# stand (zone["trend"]):
+#   Ausbruch über den Pivotal Point oben, Trend aufwärts   → Fortsetzung (long, Fortsetzungs-Pivotal-Point)
+#   Ausbruch über den Pivotal Point oben, Trend abwärts    → Aufbruch (long, Umkehr – Regel 10d)
+#   Rücktest des Pivots nach dem Ausbruch                   → Rücktest (long)
+#   Bruch des Pivotal Points unten, Trend aufwärts          → Abbruch (short, Umkehr – Regel 10b)
+#   Bruch des Pivotal Points unten, Trend abwärts           → Fortsetzung abwärts (short)
+# Der Zirkel (Woche) bestätigt mit ✓ (trägt) oder ✗ (steht dagegen, mit Grund) – nichts wird weggelassen. ✓ wie bis
+# 25.11.2026 die Bedingung des Setups: long 1 Basis mit 🌱 oder Wechsel zu 2, 2 Aufwärts ohne 🍂 (Rücktest: 2, oder 1
+# mit Wechsel zu 2); short 3 Verteilung mit 🍂 oder Wechsel zu 4, 4 Abwärts ohne 🌱; junge Titel ohne Zirkel: long ✓.
 SETUP = {"aufbruch": ("🦬", "Aufbruch"), "fortsetzung": ("🦬", "Fortsetzung"), "ruecktest": ("🪝", "Rücktest"),
          "abbruch": ("🐻", "Abbruch"), "abwaerts": ("🐻", "Fortsetzung abwärts")}
 
 
-def setup(t, zk):
-    """Zonen-Trade t (zonen.trade) und Zirkel zk (zeichen.zirkel) → der Trade als Setup (Name und Zeichen des Setups)
-    oder None, wenn die Zone gegen den Zirkel steht bzw. die Bedingung fehlt."""
-    if not t:
-        return None
+def bestaetigt(t, zk):
+    """Bestätigt der Zirkel den Zonen-Trade t? → (True|False, Grund)."""
     p = (zk or {}).get("phase") or 0
     keim = bool((zk or {}).get("keim"))
     ziel = (zk or {}).get("ziel")
-    art = None
     if t["art"] == "ausbruch":
-        if p == 0 or (p == P_BASIS and (keim or ziel == P_AUF)):
-            art = "aufbruch"
-        elif p == P_AUF and not keim:
-            art = "fortsetzung"
+        ja = p == 0 or (p == P_BASIS and (keim or ziel == P_AUF)) or (p == P_AUF and not keim)
     elif t["art"] == "ruecktest":
-        if p in (0, P_AUF) or (p == P_BASIS and ziel == P_AUF):
-            art = "ruecktest"
-    elif t["art"] == "short":
-        if p == P_VERTEILUNG and (keim or ziel == P_AB):
-            art = "abbruch"
-        elif p == P_AB and not keim:
-            art = "abwaerts"
-    if not art:
+        ja = p in (0, P_AUF) or (p == P_BASIS and ziel == P_AUF)
+    else:
+        ja = (p == P_VERTEILUNG and (keim or ziel == P_AB)) or (p == P_AB and not keim)
+    if p == 0:                                    # wie bis 25.11.: junge Titel nur long (IPO-Base)
+        return t["art"] != "short", "junger Titel ohne Zirkel"
+    grund = f'Phase {p} {zk.get("name") or ""}'.strip() + (f', Wechsel zu {ziel}' if ziel else "") \
+        + (f', Keim: {(zk.get("keim") or [""])[0].split(":")[0]}' if keim else "")
+    return ja, grund
+
+
+def setup(t, zk):
+    """Zonen-Trade t (zonen.trade, mit zone_trend = Livermores Trend der Spanne) und Zirkel zk (zeichen.zirkel) → der
+    Trade als Setup: Name nach Livermores Pivot-Art, dazu zirkel ✓/✗ und zirkel_grund; None nur ohne Trade."""
+    if not t:
         return None
-    return dict(t, art=art, zeichen=SETUP[art][0], name=SETUP[art][1])
+    auf = t.get("zone_trend", "AT") == "AT"
+    art = {"ausbruch": "fortsetzung" if auf else "aufbruch", "ruecktest": "ruecktest",
+           "short": "abbruch" if auf else "abwaerts"}[t["art"]]
+    ja, grund = bestaetigt(t, zk)
+    return dict(t, art=art, zeichen=SETUP[art][0], name=SETUP[art][1], zirkel="✓" if ja else "✗", zirkel_grund=grund)
 
 
 HEISS = ("kante", "ausbruch", "ruecktest", "bruch")   # Morgenmeldung: am Pivot, frischer Ausbruch, Rücktest, Bruch
 
 
 def trade_wort(f):
-    """Setup eines Titels aus dem Feld in Worten, mit der Phase der Base: „🦬 Fortsetzung · am Pivot“, „🦬 Aufbruch ·
-    Base im Aufbau“, „🦬 Fortsetzung · läuft“, „🐻 Abbruch“; ohne Setup ""."""
+    """Setup eines Titels aus dem Feld in Worten mit der Bestätigung des Zirkels: „🦬 Fortsetzung ✓ · am Pivot“,
+    „🦬 Aufbruch ✗ · Spanne im Aufbau“, „🐻 Abbruch ✓“; ohne Setup ""."""
     import zonen
     t = (f or {}).get("trade")
     if not t:
         return ""
+    z = f' {t["zirkel"]}' if t.get("zirkel") else ""
     if t["art"] not in ("aufbruch", "fortsetzung"):
-        return f'{t["zeichen"]} {t["name"]}'
-    return f'{t["zeichen"]} {t["name"]} · ' + ("läuft" if not t["wartet"] else zonen.PHASE[f["phase"]][1])
+        return f'{t["zeichen"]} {t["name"]}{z}'
+    return f'{t["zeichen"]} {t["name"]}{z} · ' + ("läuft" if not t["wartet"] else zonen.PHASE[f["phase"]][1])
 
 
 _GRUPPEN = {}
@@ -291,7 +298,8 @@ def heisse(n=MELDUNG_JE_SEITE):
     """Die Morgenmeldung (Micky 22.11.2026: Schlachtordnung, Zirkel, ✈️): Long = Titel am Pivot, frisch ausgebrochen
     (in der Kaufzone) oder im Rücktest – ▲▲▲ dreifacher Rückenwind zuerst, dann Garde und Angriff vor der Vorhut,
     dann nach Rang; Short = Bruch der Unterkante
-    mit Volumen, Rückzug zuerst. Bases im Aufbau kommen nicht in die Meldung (sie stehen in der Liste).
+    mit Volumen, Rückzug zuerst; je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗). Spannen im Aufbau kommen
+    nicht in die Meldung (sie stehen in der Liste).
     Je Titel: Klasse, Trade, Einstieg, Stopp mit Risiko, ✈️ und Keim. → (Text, Anzahl)."""
     import rueckenwind
     import rueckenwind_seite
@@ -316,10 +324,12 @@ def heisse(n=MELDUNG_JE_SEITE):
 
     mit = [tk for tk, x in f_.items() if x.get("trade") and x.get("phase") in HEISS]
     lang = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] > 0 and klasse_nr(tk) in rueckenwind.VORNE_KLASSEN),
-                  key=lambda tk: (not dreifach(tk, f_[tk]["trade"], rw), klasse_nr(tk),   # ▲▲▲ zuerst (23.11.)
+                  key=lambda tk: (f_[tk]["trade"].get("zirkel") == "✗",                # ✓ zuerst (25.11.)
+                                  not dreifach(tk, f_[tk]["trade"], rw), klasse_nr(tk),   # ▲▲▲ zuerst (23.11.)
                                   -((rw.get(tk) or {}).get("rang") or 0)))[:n]
     kurz = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] < 0),
-                  key=lambda tk: (-klasse_nr(tk), (rw.get(tk) or {}).get("rang") or 0))[:n]
+                  key=lambda tk: (f_[tk]["trade"].get("zirkel") == "✗", -klasse_nr(tk),
+                                  (rw.get(tk) or {}).get("rang") or 0))[:n]
     zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Setup am Pivot, im Ausbruch oder Rücktest"]) + \
              ([zeile(tk, "🐻") for tk in kurz] or ["⚪ Short: heute kein Abbruch und keine Fortsetzung abwärts"])
     return "\n".join(zeilen), len(lang) + len(kurz)

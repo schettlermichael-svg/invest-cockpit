@@ -1683,3 +1683,9 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Nur noch „Spanne“ (25.11.2026, Micky: rein Livermore): die Zone heißt immer „Spanne“; entfernt: Namen nach der
   Vorgeschichte (Base, Flagge, Konsolidierung), _vorgeschichte, _stange, tiefs_fallen, _rahmen und die FLAGGE_/VOR_-
   Konstanten, die tote Legende in chart.py. Phasen: „Spanne im Aufbau“, „keine Spanne – Kurs läuft am Hoch“.
+- Setup aus Livermore, der Zirkel bestätigt nur (25.11.2026, Micky): zirkel.setup gibt jedem Trade der Spanne ein Setup –
+  Name nach Livermores Pivot-Art (zonen.trade → zone_trend: Ausbruch im Aufwärtstrend = Fortsetzung, im Abwärtstrend =
+  Aufbruch; Bruch unten im Aufwärtstrend = Abbruch, im Abwärtstrend = Fortsetzung abwärts; Rücktest) – und zirkel.bestaetigt
+  ✓/✗ mit Grund (dieselben Phasenregeln wie vorher als Bedingung). „Kein Setup“ nur noch ohne Livermore-Signal;
+  Morgenmeldung ✓ vor ✗; Liste und Kopf mit ✓/✗; im Chart „· ✗ Zirkel“ am Auslöser, Schlachtplan zu jedem Setup, der
+  „mögliche Pivot“ (blass) entfällt. Mac-Probe 150 Titel: 78 Setups, davon 15 ✓.

@@ -421,16 +421,19 @@ BEREICHE = [
     dict(name="Morgenmeldung: Setups", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest am Pivot, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
-               "Fortsetzung abwärts; Rückzug zuerst), je Titel Klasse, Setup, Einstieg, Stopp mit Risiko-Ampel, ✈️ und "
-               "Keim des Zirkels; ohne Setup sagt die Meldung das.",
+               "Fortsetzung abwärts; Rückzug zuerst), je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗), je "
+               "Titel Klasse, Setup mit ✓/✗, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
+               "die Meldung das.",
          messung=["zirkel.heisse", "zirkel.trade_wort"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
-    dict(name="Setup aus dem Zirkel", quelle="Micky 22.11.2026 (unser Setup ergibt sich aus unserem Zirkel)",
-         regel="Setup = Phase des Zirkels (Woche) + Zone (Tag), bestätigt durch Stärke bzw. Schwäche (Stärke = Widerstand "
-               "überwinden, Druck aushalten; ein Keim zählt nur gemessen): 1 Basis + Ausbruch/Pivot + 🌱 oder Wechsel 1→2 = "
-               "Aufbruch · 2 Aufwärts + Ausbruch/Pivot ohne 🍂 = Fortsetzung · Rücktest in 2 bzw. 1→2 = Rücktest · 3 "
-               "Verteilung + Bruch mit Volumen + 🍂 oder Wechsel 3→4 = Abbruch · 4 Abwärts + Bruch ohne 🌱 = Fortsetzung "
-               "abwärts; junge Titel ohne Zirkel: Aufbruch/Rücktest. Gegen den Zirkel kein Setup, nicht gezeigt.",
-         messung=["zirkel.setup", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
+    dict(name="Setup aus Livermore, bestätigt vom Zirkel", quelle="Micky 25.11.2026 (Livermore liefert das System, der "
+         "Zirkel bestätigt nur; vorher 22.11.2026: das Setup ergab sich aus dem Zirkel)",
+         regel="Jedes Signal aus Livermores Spanne ist ein Setup, benannt nach der Art seines Pivotal Points (Livermores "
+               "Trend der Spanne): Ausbruch im Aufwärtstrend = Fortsetzung, im Abwärtstrend = Aufbruch (Umkehr, Regel "
+               "10d); Rücktest; Bruch unten im Aufwärtstrend = Abbruch (Umkehr, Regel 10b), im Abwärtstrend = Fortsetzung "
+               "abwärts. Der Zirkel bestätigt mit ✓ (trägt) oder ✗ (steht dagegen, mit Grund): long ✓ in 1 Basis mit 🌱 "
+               "oder Wechsel zu 2 und in 2 Aufwärts ohne 🍂 (Rücktest in 2 bzw. 1→2), short ✓ in 3 Verteilung mit 🍂 oder "
+               "Wechsel zu 4 und in 4 Abwärts ohne 🌱; junge Titel ohne Zirkel long ✓. Nichts wird weggelassen; ✓ zuerst.",
+         messung=["zirkel.setup", "zirkel.bestaetigt", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
          regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Zone der "
                "Tagesebene im Einklang mit dem Zirkel (Setup), 52-Wochen-Hoch bzw. -Tief (Hochs gegen Tiefs) und der "

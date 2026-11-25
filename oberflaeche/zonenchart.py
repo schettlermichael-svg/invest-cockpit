@@ -49,7 +49,6 @@ ZEILE = 14                             # Layout: Abstand der Etiketten rechts
 ETIKETT_SUCHE = 60                     # Technik: so viele Plätze sucht ein Etikett, dann ans Ende
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
-PIVOT_BLASS = 0.45                     # Layout: Deckkraft des möglichen Pivots ohne Setup
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
@@ -216,14 +215,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if la["zone"]:
         etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
-    if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß;
-        moeglich = bool(t and t.get("kein_setup"))       # ohne Setup blass als „möglicher Pivot“
+    if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
-          f'stroke-width="{1.4 if moeglich else 2.4}" stroke-dasharray="8 4" stroke-opacity="{PIVOT_BLASS if moeglich else 1}">'   # Layout
-          f'<title>{"möglicher " if moeglich else ""}Pivot {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
-        etiketten.append((Y(piv), ("möglicher Pivot" if moeglich else "Pivot") + f" {zahl(piv)}"   # Layout: kurz, passt
-                          + (" = Oberkante" if oben_ and not moeglich else ""),                    # an den Rand
-                          TEXT_3 if moeglich else PIVOT_FARBE))
+          f'stroke-width="2.4" stroke-dasharray="8 4">'   # Layout
+          f'<title>Pivot {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
+        etiketten.append((Y(piv), f"Pivot {zahl(piv)}" + (" = Oberkante" if oben_ else ""), PIVOT_FARBE))
     def kurve(r_, farbe, dicke=1.6, strich=""):  # Layout
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
         if pkt:
@@ -392,9 +388,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
         if not fest.get("unten"):
             etiketten.append((OBEN + KURS_H - 4, "✈️↓ freie Bahn", ROT))   # Layout: ganz unten
-    if t and not t.get("kein_setup"):                                               # Schlachtplan (Micky 24.11.2026):
+    if t:                                                                           # Schlachtplan (Micky 24.11.2026):
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
-        ein_, stopp_ = t["einstieg"], t["stopp"]                                     # nur mit echtem Setup
+        ein_, stopp_ = t["einstieg"], t["stopp"]                                     # zu jedem Setup
         decken = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]   # grün bis zur nächsten
         decken += [h_ for _, h_ in ((ba or {}).get("ausbruch") or {}).get("gescheitert") or [] if h_ > ein_]   # + Gefangene
         ziel_ = min(decken) if decken else None                                     # Decke, rot bis zum Stopp
@@ -407,7 +403,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'fill-opacity="{PLAN_DECK}"><title>Risiko: vom Einstieg {zahl(ein_)} bis zum Stopp {zahl(stopp_)} '
           f'(−{zahl(t["risiko"], 1)} %)</title></rect>')
     if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
-        gegen = " · kein Setup" if t.get("kein_setup") else ""                         # Zone gegen den Zirkel: Linien bleiben
+        gegen = " · ✗ Zirkel" if t.get("zirkel") == "✗" else ""                       # der Zirkel steht dagegen (25.11.)
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
@@ -614,8 +610,7 @@ def legende():
               "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Notizbuch, Zone und "
               "Festungen"),
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
-              "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance); blass = möglicher Pivot "
-              "ohne Setup"),
+              "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance)"),
              (ROT, "═ Livermores Pivotal Points (Schalter „Livermore“, Tag): doppelt unterstrichen wie in seinem Notizbuch – "
               "rot aus Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; als Linie ab "
               "ihrem Tag bis zum ersten Schluss jenseits (Durchbruch, danach blass), offene mit Preis am Rand"),

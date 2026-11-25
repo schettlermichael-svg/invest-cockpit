@@ -57,8 +57,7 @@ def rechnen(tk, laufend=False):
           "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
     f = zonen.fuehrte(ebenen)
     import zeichen
-    import zirkel                                   # das Setup ergibt sich aus dem Zirkel (Micky 22.11.2026)
-    f["zone"] = f["trade"]                          # der Trade der Zone: der Chart zeichnet ihn immer (Micky 22.11.2026)
+    import zirkel                                   # Livermore liefert das Setup, der Zirkel bestätigt (Micky 25.11.2026)
     f["trade"] = zirkel.setup(f["trade"], zeichen.zirkel(zeichen.von(tk)))
     cmf = tiefe.cmf(df)["wert"]
     return {"tk": tk, "df": df, "ebenen": ebenen, "fuehrte": f, "cmf": cmf,
@@ -156,7 +155,10 @@ def kopf(r):
         trade_html = (f'<div style="font-size:20px">{tr["zeichen"]} {t(tr["name"])} {seite_}</div>'
                       f'<div style="font-size:13px;color:{TEXT_2}">{"Auslöser" if tr["wartet"] else "Einstieg"} '
                       f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
-                      f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>')
+                      f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>'
+                      + (f'<div style="font-size:13px;color:{GRUEN if tr["zirkel"] == "✓" else GELB}">'
+                         f'{tr["zirkel"]} {"der Zirkel trägt" if tr["zirkel"] == "✓" else "gegen den Zirkel"}: '
+                         f'{t(tr["zirkel_grund"])}</div>' if tr.get("zirkel") else ""))
         import zirkel
         if zirkel.dreifach(r["tk"], tr):               # Kurs, Geld und Zahlen grün (Micky 23.11.2026)
             trade_html += (f'<div style="font-size:13px;color:{GRUEN}">▲▲▲ dreifacher Rückenwind – Kurs, Geld und '
@@ -270,8 +272,7 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     la_tag = f["lage"]["Tag"]
     if ebene == "Stunde" and la_tag and la_tag["zone"]:
         rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
-    linie = f["trade"] or (f.get("zone") and dict(f["zone"], kein_setup=True))   # immer Linien (Micky 22.11.2026)
-    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], linie if ebene == "Tag" else None,
+    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
                            f["festungen"][ebene], f["basis"], r["tk"])
