@@ -1707,3 +1707,7 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Fehlausbruch nach Livermore (25.11.2026, Micky): vcp_zone.ausbruch – Fehlausbruch bei Schluss 1 ATR (ATR am
   Ausbruchstag) unter dem Pivot (Livermores Bestätigung gespiegelt), knapp darunter Rücktest; ersetzt die Regel vom
   13.11. (Tief des Ausbruchstags bzw. 3 %). FEHL_PCT und tief_ausbruchstag entfernt, neu fehl_grenze.
+- Handbuch auf Livermore (25.11.2026): Doc „Der Zirkel“ (Rev. 28) – Vorwort und Kapitel 1 (Livermore liefert das System,
+  der Zirkel bestätigt), „Das Zeichen im Cockpit“ in Kapitel 2–8, Kapitel 9 (Tabelle mit Zeile System, Reihenfolge der
+  Schlacht), Setup, Führung, Markt und „Wie das Cockpit … erkennt“ neu; Wort, Geschichte, Leben und Meister unverändert
+  (Minervinis Enge bleibt als Lehre bei den Meistern). Kurzform oberflaeche/handbuch.py mitgezogen.
