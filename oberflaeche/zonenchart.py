@@ -45,7 +45,6 @@ VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen 
 VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
 EINHEIT = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
 ZEILE = 14                             # Layout: Abstand der Etiketten rechts
-ETIKETT_SUCHE = 60                     # Technik: so viele Plätze sucht ein Etikett, dann ans Ende
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
 PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
@@ -449,16 +448,15 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'stroke-width="1" stroke-dasharray="1 4" stroke-opacity="0.8"/>')        # Layout
     if abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
         etiketten.append((Y(pr["tpoc"]), f"Zeit-POC {zahl(pr['tpoc'])}", ZEIT_FARBE))
-    belegt = []
-    for y0, text, farbe in sorted(etiketten):                                       # rechts, ohne Überlappung: der
-        y_, k_ = y0, 0                                                              # nächste freie Platz, abwechselnd
-        while any(abs(y_ - b_) < ZEILE for b_ in belegt) or not OBEN - 4 <= y_ <= OBEN + KURS_H + 4:   # darunter und  (Layout)
-            k_ += 1                                                                 # darüber, im Kursbereich (Micky
-            y_ = y0 + ZEILE * ((k_ + 1) // 2) * (1 if k_ % 2 else -1)              # 24.11.: nicht ins Volumen)
-            if k_ > ETIKETT_SUCHE:
-                y_ = y0 + ZEILE * len(belegt)
-                break
-        belegt.append(y_)
+    reihe = sorted(etiketten, key=lambda x: x[0])                                   # rechts, ohne Überlappung und in
+    platz = []                                                                      # der Reihenfolge der Preise (Micky
+    for y0, _, _ in reihe:                                                          # 25.11.2026: ein Etikett springt
+        platz.append(max(y0, OBEN - 4, platz[-1] + ZEILE if platz else -1e9))       # nicht mehr weit weg): von oben
+    grenze = OBEN + KURS_H + 4                                                      # nach unten stapeln, dann von
+    for k_ in range(len(platz) - 1, -1, -1):                                        # unten nach oben in den
+        platz[k_] = min(platz[k_], grenze)                                          # Kursbereich schieben (nicht
+        grenze = platz[k_] - ZEILE                                                  # ins Volumen)
+    for y_, (_, text, farbe) in zip(platz, reihe):
         A(f'<text x="{ende + PROFIL_W + 6}" y="{y_ + 4:.1f}" fill="{farbe}" font-size="12">{text}</text>')  # Layout
     vs_ = df["Volume"].astype(float).rolling(VOL_SCHNITT[e["name"]]).mean().reindex(d.index).to_numpy()
     vmax = min(v.max(), VOL_DECKEL * np.nanmax(vs_)) if np.isfinite(np.nanmax(vs_)) else v.max()

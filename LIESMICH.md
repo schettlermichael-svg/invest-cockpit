@@ -1719,3 +1719,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   im Chart reicht eine). Statt fester 6 (LIVERMORE_PP, eine Platzregel, entfernt): jeder offene Pivotal Point im
   Preisbereich läuft bis zum rechten Rand mit Preis-Etikett „— oben/unten X“, durchbrochene blass bis zum Tag des
   Durchbruchs, sofern der im Bild liegt. PP_ABSTAND entfernt.
+- Etiketten rechts (25.11.2026): in der Reihenfolge der Preise gestapelt (von oben nach unten, dann in den Kursbereich
+  geschoben) statt abwechselnd darüber/darunter zu suchen – ein Etikett springt nicht mehr weit weg (TTWO: „unten 181,86“
+  stand oben bei 225). ETIKETT_SUCHE entfernt.
