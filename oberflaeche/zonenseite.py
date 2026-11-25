@@ -391,10 +391,23 @@ def livermore_html(r):
     if unten:
         teile_.append(f'unten {zahl(unten["preis"])} ({unten["tag"]:%d.%m.}) – bestätigt unter {zahl(unten["preis"] - a)}')
     farbe = {"AT": GRUEN, "AB": ROT}.get(nb["spalte"], TEXT_2)
+    try:
+        kp = livermore.key_price(r["tk"], df)                  # Key Price mit der Schwesteraktie
+    except Exception:  # noqa: BLE001 – ohne Rückenwind-Lauf oder Kurse der Schwester: ohne Key Price
+        kp = None
+    kp_html = ""
+    if kp and kp["nb"]:
+        gleich = kp["nb"].get("trend") == nb.get("trend")
+        kp_html = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermore: ein Trendwechsel gilt '
+                   f'erst, wenn auch der Key Price (zwei Aktien einer Gruppe zusammen) ihn zeigt – beide auf 100 gesetzt">'
+                   f'🔑 Key Price mit {t(kp["schwester"])} ({t(kp["branche"])}): {livermore.spalte_text(kp["nb"])} · '
+                   + (f'<span style="color:{GRUEN}">✓ bestätigt den Trend</span>' if gleich
+                      else f'<span style="color:{GELB}">✗ bestätigt den Trend nicht – vielleicht ein Einzelfall</span>')
+                   + '</div>')
     return (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}" title="Livermores Notizbuch (Market Key, 1940): '
             f'Schwung 2 ATR, Bestätigung 1 ATR">📒 Livermore: <b style="color:{farbe}">{livermore.spalte_text(nb)}</b>'
             + (f'<span style="color:{TEXT_2}"> · Pivotal Points {" · ".join(teile_)}</span>' if teile_ else "")
-            + '</div>')
+            + f'</div>{kp_html}')
 
 
 def notizbuch_tabelle(r):

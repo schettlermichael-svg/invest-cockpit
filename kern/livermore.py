@@ -166,3 +166,45 @@ def spalte_text(nb):
     if not nb:
         return ""
     return f'{ZEICHEN[nb["spalte"]]} {SPALTEN[nb["spalte"]]}'
+
+
+KEY_JAHRE = 2              # Key Price: beide Titel über die letzten 2 Jahre auf 100 gesetzt und zusammengezählt
+
+
+def schwester(tk):
+    """Livermores Schwesteraktie (Micky 25.11.2026): der stärkste andere Titel derselben Branche nach RS-Rang aus dem
+    letzten Rückenwind-Lauf → (Ticker, Branche) oder (None, None)."""
+    import rueckenwind
+    erg = rueckenwind.laden() or {}
+    titel = erg.get("titel") or {}
+    br = (titel.get(tk) or {}).get("branche")
+    if not br:
+        return None, None
+    andere = [(x.get("rang") or 0, t) for t, x in titel.items() if t != tk and x.get("branche") == br]
+    return (max(andere)[1], br) if andere else (None, br)
+
+
+def key_price(tk, df):
+    """Livermores Key Price: der Titel und seine Schwesteraktie zusammen (Kapitel VIII: ein Trendwechsel gilt erst,
+    wenn der Key Price ihn bestätigt). Weil Livermore zwei ähnlich teure Aktien nahm, setzt die App beide über die
+    letzten KEY_JAHRE Jahre auf 100 und zählt sie zusammen (unsere Anpassung); das Notizbuch läuft darüber mit denselben
+    Schwellen (die ATR der Summe verdoppelt sich von selbst – Livermores 12 statt 6 Punkte).
+    → {schwester, branche, nb} oder None."""
+    import daten
+    import pandas as pd
+    sw, br = schwester(tk)
+    if not sw or df is None:
+        return None
+    df2 = daten.kurse_gespeichert(sw)
+    if df2 is None or len(df2) < 60:
+        return None
+    ab = df.index[-1] - pd.DateOffset(years=KEY_JAHRE)
+    a_, b_ = df[df.index >= ab], df2[df2.index >= ab]
+    gemein = a_.index.intersection(b_.index)
+    if len(gemein) < 60:
+        return None
+    a_, b_ = a_.loc[gemein], b_.loc[gemein]
+    fa, fb = 100 / float(a_["Close"].iloc[0]), 100 / float(b_["Close"].iloc[0])
+    summe = a_[["Open", "High", "Low", "Close"]] * fa + b_[["Open", "High", "Low", "Close"]] * fb
+    summe["Volume"] = a_["Volume"] + b_["Volume"]
+    return {"schwester": sw, "branche": br, "nb": notizbuch(summe)}

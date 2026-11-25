@@ -106,8 +106,10 @@ WERKZEUGE = {
                                                  "Spalten (Aufwärts-/Abwärtstrend, natürliche und sekundäre Erholung/Reaktion); "
                                                  "Schwung = 2 ATR wie die Wendepunkte (seine ~6 Punkte), Bestätigung = 1 ATR "
                                                  "(seine ~3 Punkte, Micky 25.11.2026); Pivotal Points beim Spaltenwechsel; "
-                                                 "Trend vorbei, bestätigt und Gefahrensignal nach Regel 10.",
-             messung=["livermore.notizbuch"], stand="gemessen", pruefer=["Livermore-Spalte"]),
+                                                 "Trend vorbei, bestätigt und Gefahrensignal nach Regel 10. Key Price: mit dem stärksten "
+                                                 "anderen Titel der Branche (RS-Rang), beide über 2 Jahre auf 100 gesetzt.",
+             messung=["livermore.notizbuch", "livermore.key_price", "livermore.schwester"], stand="gemessen",
+             pruefer=["Livermore-Spalte"]),
         dict(name="Cheat (eine Regel)", regel="Ein Ausbruch aus einer Pause, die jünger ist als die noch laufende größere "
                                                "Zone, mit Pivot im unteren oder mittleren Drittel der größeren Zone, ist ein "
                                                "früher Einstieg (Low Cheat, Cheat) und kein Ausbruch – ebenso ein Schluss "
