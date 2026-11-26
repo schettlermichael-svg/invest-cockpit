@@ -272,10 +272,10 @@ def _nach_dem_kauf(p, df):
     if not zk or not ph:
         aus.append(("grau", "Zeichen: noch kein Zirkel (unter einem Jahr Kurse oder nicht im letzten Zirkel-Lauf)"))
     elif (ph == traeg and not keim and not ziel) or (ph == vor and (keim or ziel == traeg)):
-        aus.append(("grün", f"✓ Zirkel: Phase {zk['wort']} ({zk['name']}) – die {'Stärke' if lang else 'Schwäche'} trägt"))
+        aus.append(("grün", f"✓ Zirkel: Jahreszeit {zk['wort']} ({zk['name']}) – die {'Stärke' if lang else 'Schwäche'} trägt"))
     else:
         warnung = (f"Wechsel {traeg} → {gegen} läuft" if ph == traeg and ziel == gegen else
-                   f"{'🍂 Keim der Schwäche' if lang else '🌱 Keim der Stärke'} in Phase {ph}" if ph == traeg and keim else
-                   f"Phase {zk['wort']} ({zk['name']}) steht gegen die Position")
+                   f"{'🍂 Keim der Schwäche' if lang else '🌱 Keim der Stärke'} in Jahreszeit {ph}" if ph == traeg and keim else
+                   f"Jahreszeit {zk['wort']} ({zk['name']}) steht gegen die Position")
         aus.append(("gelb", f"⚠ Zirkel: {warnung}" + (f" ({keim_text})" if keim_text else "") + " – der Stopp führt"))
     return aus

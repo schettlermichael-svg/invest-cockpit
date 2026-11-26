@@ -1822,3 +1822,8 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Live gefunden (AMAT, Kurs unter der Unterkante, ohne Setup): die Kipp-Zone stand an der fernen Front – jetzt
   gespiegelt an der Unterkante, sobald der Kurs darunter schließt. Lagebericht nach dem Preis von oben nach unten
   geordnet (Front, Decke/Ziel, Kurs, Boden/Ziel, Unterkante – wie im Chart), ✈️ an seiner Seite.
+- Entscheidungen Micky (26.11.2026): Die Zirkel-Phase heißt „Jahreszeit“ (1 Basis · 2 Aufwärts · 3 Verteilung · 4
+  Abwärts) – „Phase“ bleibt der Stand der Spanne (im Aufbau, an der Front, Ausbruch …); Liste, Wetterkarte, ▲▲▲,
+  Titelseite, Morgenmeldung, Stratege, Depot, Regelkarte nachgezogen, Wörterbuch-Eintrag mit Nebenwörtern
+  („Zirkel Phase“, „Phase 1–4“, „Halt der Phase“). Halt: kippt Basis oder Abwärts (Keim = Stärke), zeigt er
+  🌱 „Aufbruch naht“ statt ⛈️ Sturm (zeichen.halt, HALT["aufbruch"]).

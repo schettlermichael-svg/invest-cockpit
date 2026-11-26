@@ -487,11 +487,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                                (a_b.get("bestaetigt_tag"), "📒", "Livermore: Ausbruch bestätigt – Hoch 1 ATR über der Front")):
             if tag_ is not None and (z_ != "🦊" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
-    if tk and e["name"] != "Stunde":                                                # Halt der Phase: jetzt
+    if tk and e["name"] != "Stunde":                                                # Halt der Jahreszeit: jetzt
         zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
         sym, wort, grund = zeichen.halt(zk)                                         # Halt der Phase (24.11.2026)
         if sym:
-            leiste.setdefault(N - 1, []).append((sym, f"Phase {wort}" + (f" – {grund}" if grund else "")
+            leiste.setdefault(N - 1, []).append((sym, f"Jahreszeit {wort}" + (f" – {grund}" if grund else "")
                                                  + "".join(f" · Keim: {x}" for x in (zk or {}).get("keim", [])[:3])))
     tage_, naechster = _zahlentage(tk) if tk and e["name"] != "Stunde" else ([], None)
     cf = df["Close"].to_numpy(float)
@@ -599,7 +599,7 @@ def legende():
               "freie Bahn bis zum Rand), rote Fläche bis zum Stopp (das Risiko)"),
              (GRUEN, "✈️ freie Bahn: keine Stellung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 📒 Livermores Bestätigung (1 ATR über der Front) · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
-              "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
+              "Halt der Jahreszeit (Zirkel) rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm · 🌱 Aufbruch naht) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
               "nächste Termin · Momentum 🚀 am Ende der RS-Linie"),
              (SCHNITT_FARBE, "Weiße Linie im Volumen: Schnitt der letzten 50 Tage (Woche: 10 Wochen) – Balken darüber "
               "kräftig, darunter blass · unter dem Profil sein Zeitraum"),

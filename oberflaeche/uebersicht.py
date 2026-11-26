@@ -59,7 +59,7 @@ def _markt_spalten(mm):
         zeilen_ = ([(sym, wort)] if sym else []) + \
                   [("dagegen:", zeichen.klartext(k, seite_k)) for k in x.get("keim") or []] + \
                   [("trägt:", zeichen.klartext(k, seite_t)) for k in x.get("traegt") or []]
-        phase = f'Zirkel Phase {x["wort"]}' if x.get("wort") else "Zirkel: jung"
+        phase = f'Zirkel: Jahreszeit {x["wort"]}' if x.get("wort") else "Zirkel: jung"
         b_ = x.get("bestaetigt", "")
         spalten.append(
             f'<div style="flex:1 1 140px;min-width:0;display:flex;flex-direction:column;gap:4px">'

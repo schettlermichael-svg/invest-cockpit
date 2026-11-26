@@ -254,7 +254,7 @@ def markt_text(m):
             teile.append(f'{wort}: {x["auf"]} im Vormarsch, {x.get("pause", 0)} in der Gefechtspause, {x["ab"]} im Rückzug')
     for name, x in (m or {}).get("indizes", {}).items():
         teile.append(f'{name}: {x.get("spalte", "")} {x.get("bestaetigt", "")}'
-                     + (f' · Zirkel Phase {x["wort"]} ({x["name"]})' if x.get("wort") else "")
+                     + (f' · Zirkel: Jahreszeit {x["wort"]} ({x["name"]})' if x.get("wort") else "")
                      + (f' · Keim: {"; ".join(x["keim"])}' if x.get("keim") else ""))
     if (m or {}).get("hochs") is not None:
         teile.append(f'neue 52-Wochen-Hochs : Tiefs {m["hochs"]} : {m["tiefs"]}')
@@ -301,7 +301,7 @@ def bestaetigt(t, zk):
         ja = (p == P_VERTEILUNG and (keim or ziel == P_AB)) or (p == P_AB and not keim)
     if p == 0:                                    # wie bis 25.11.: junge Titel nur long (IPO-Base)
         return t["art"] != "short", "junger Titel ohne Zirkel"
-    grund = f'Phase {p} {zk.get("name") or ""}'.strip() + (f', Wechsel zu {ziel}' if ziel else "") \
+    grund = f'Jahreszeit {p} {zk.get("name") or ""}'.strip() + (f', Wechsel zu {ziel}' if ziel else "") \
         + (f', Keim: {(zk.get("keim") or [""])[0].split(":")[0]}' if keim else "")
     return ja, grund
 
@@ -412,7 +412,7 @@ def heisse(n=MELDUNG_JE_SEITE):
                   else f'Einstieg {zahl(t["einstieg"])} $')                              # nachlegen nur im Gewinn
                  + f' · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(f_[tk].get("frei"), ""),
-                 " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Phase in Klartext (24.11.2026)
+                 " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Jahreszeit in Klartext (24.11.2026)
         return " · ".join(s for s in teile if s)
 
     def klasse_nr(tk):

@@ -119,7 +119,7 @@ def zirkel_html(tk):
     leiste = ('<div style="display:flex;gap:6px;align-items:stretch">' + '<span style="align-self:center">→</span>'.join(teile)
               + '<span style="align-self:center;color:' + TEXT_3 + '">↻</span></div>')
     if not z["phase"]:
-        leiste = f'<div style="font-size:14px;color:{TEXT_2}">jung – noch keine Phase (unter 300 Handelstagen)</div>'
+        leiste = f'<div style="font-size:14px;color:{TEXT_2}">jung – noch keine Jahreszeit (unter 300 Handelstagen)</div>'
     keim_z = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
 
     def spalte(titel, liste, zeichen_):
@@ -131,7 +131,7 @@ def zirkel_html(tk):
     sym, wort, grund = zeichen.halt(z)                # Halt der Phase (Micky 24.11.2026)
     halt_html = (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}">{sym} <b>{wort}</b>'
                  + (f' – {t(grund)}' if grund else "") + f'<span style="color:{TEXT_3};font-size:12px"> · 🏰 hält · '
-                 f'🌊 Welle: ein Riss, die Phase trägt mehr · ⛈️ Sturm: der Riss wiegt so schwer wie das, was trägt'
+                 f'🌊 Welle: ein Riss, die Jahreszeit trägt mehr · ⛈️ Sturm: der Riss wiegt so schwer wie das, was trägt · 🌱 Aufbruch naht: dasselbe in Basis und Abwärts, der Keim ist Stärke'
                  f'</span></div>') if sym else ""
     return (f'<div style="margin-top:12px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:4px">Zirkel · Stand '
             f'{k.get("stand", "")}</div>{leiste}{halt_html}'

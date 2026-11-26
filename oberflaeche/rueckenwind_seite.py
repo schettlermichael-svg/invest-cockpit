@@ -146,7 +146,7 @@ def wetterkarte(erg, art):
     kopf = (f'<div style="display:grid;grid-template-columns:minmax(140px,260px) repeat(5,30px) 1fr 120px;gap:6px;'
             f'font-size:11px;color:{TEXT_3};padding:0 0 4px">'
             f'<span>{art}</span><span>−4</span><span>−3</span><span>−2</span><span>−1</span><span>heute</span>'
-            f'<span>Phase</span><span>Geld</span></div>')
+            f'<span>Jahreszeit</span><span>Geld</span></div>')
     teile = []
     for feld in ordnung:
         liste = sorted((g for g in gr if g["feld"] == feld),
@@ -301,7 +301,7 @@ def dreifach_block(erg):
                      f'font-size:13px;color:{TEXT_3}">{erkl}</span></summary>'
                      + (f'<table style="width:100%;border-collapse:collapse;font-size:13px;color:{TEXT_2}">'
                         f'<tr style="color:{TEXT_3};text-align:left"><th>Titel</th><th title="Livermores Notizbuch: 🟢 Vormarsch · '
-                        f'🟡 Gefechtspause · 🔴 Rückzug">Lage</th><th>Klasse</th><th>Phase</th><th>Stand</th><th>Halt</th></tr>{"".join(zeilen)}</table>' if zeilen else
+                        f'🟡 Gefechtspause · 🔴 Rückzug">Lage</th><th>Klasse</th><th>Jahreszeit</th><th>Stand</th><th>Halt</th></tr>{"".join(zeilen)}</table>' if zeilen else
                         f'<p style="color:{TEXT_3};font-size:13px;margin:0">keiner</p>') + '</details>')
     return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
                  f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
@@ -492,11 +492,13 @@ TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
 TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
 TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 120, "Lage": 45, "Phase": 105, "Setup": 130, "Halt": 115, "⚔️ Kraft": 70, "RS": 85,   # Layout:
+BREITE = {"Titel": 120, "Lage": 45, "Jahreszeit": 105, "Setup": 130, "Halt": 115, "⚔️ Kraft": 70, "RS": 85,   # Layout:
           "Momentum": 70, "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 90}   # px, zusammen 1100
-SPALTEN = ("Titel", "Lage", "Phase", "Setup", "Halt", "⚔️ Kraft", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+SPALTEN = ("Titel", "Lage", "Jahreszeit", "Setup", "Halt", "⚔️ Kraft", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
            "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
-SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufwärtstrend) · 🟡 Gefechtspause (Rally oder "
+SPALTEN_HILFE = {"Jahreszeit": "Zirkel des Titels: 1 Basis · 2 Aufwärts · 3 Verteilung · 4 Abwärts – dazu der Keim "
+                               "des Gegenteils (🌱/🍂)",
+                 "Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufwärtstrend) · 🟡 Gefechtspause (Rally oder "
                          "Reaktion) · 🔴 Rückzug (Abwärtstrend) – dieselbe Sprache wie Lagebericht und Markt",
                  "RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
@@ -507,7 +509,7 @@ SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufw�
                  "💰 Nachschub": "Fließt Geld hinein? Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · "
                                 "🐺 Einzelkämpfer",
                  "📊 Fundament": "Tragen die Zahlen? Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
-                 "Halt": "Hält die Phase? 🏰 hält · 🌊 Welle: ein Riss, die Phase trägt aber mehr · ⛈️ Sturm: der Riss "
+                 "Halt": "Hält die Jahreszeit? 🏰 hält · 🌊 Welle: ein Riss, sie trägt aber mehr · ⛈️ Sturm (🌱 Aufbruch naht in Basis und Abwärts): der Riss "
                          "wiegt so schwer wie das, was trägt, oder der Wechsel zeichnet sich ab – dahinter der stärkste "
                          "Grund in Klartext (alle Zeichen auf der Titelseite)",
                  "Hoch": "Abstand zum 52-Wochen-Hoch",
@@ -549,7 +551,7 @@ def liste(erg, nur=None):
         abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "Lage": _lage(feld_.get(tk)),
-            "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
+            "Jahreszeit": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
             "⚔️ Kraft": PUNKT[kraft_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
             "Volumen": _volumen_zeichen(x),
@@ -558,7 +560,7 @@ def liste(erg, nur=None):
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur and o["tk"] not in wl[nur]:
             continue
-        abschnitte["ohne Daten"].append({"Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Phase": o["grund"],
+        abschnitte["ohne Daten"].append({"Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Jahreszeit": o["grund"],
                                          "⚔️ Kraft": PUNKT["grau"], "💰 Nachschub": PUNKT["grau"],
                                          "📊 Fundament": PUNKT["grau"]})
     return {n: pd.DataFrame(r, columns=SPALTEN) for n, r in abschnitte.items() if r}

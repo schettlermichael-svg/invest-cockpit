@@ -34,7 +34,7 @@ KAESTEN = {
     ],
     "gruppe": [                                  # seit 23.11.2026 auf dem Zirkel (vorher Auktions-Zustand der Gruppe)
         dict(name="Zirkel der Gruppe", zustand=None,
-             regel="Jede Gruppe (Sektor, Branche, Thema, ab 5 Titeln) bekommt Phase 1–4 und Keim aus ihrem "
+             regel="Jede Gruppe (Sektor, Branche, Thema, ab 5 Titeln) bekommt Jahreszeit 1–4 und Keim aus ihrem "
                    "gleichgewichteten Index: Kerzen aus den Massive-Tagen der Mitglieder (zwei Jahre, Hoch, Tief, "
                    "Eröffnung je gegen den Vortagesschluss, Volumen als Summe), Kreislauf wie beim Titel mit den "
                    "Zeichen relativ zum S&P 500. Die Spalte „Lage“ der Wetterkarte zeigt ihn.",
@@ -42,7 +42,7 @@ KAESTEN = {
              messung=["rueckenwind._gruppen_zirkel", "rueckenwind._gruppen_index"], stand="gemessen",
              pruefer=["Zustand der Gruppe"]),
         dict(name="Gegenwind der Gruppe", zustand=None,
-             regel="Steht die Branche gegen die Richtung eines Setups (long in Phase 3/4, short in Phase 1/2), trägt "
+             regel="Steht die Branche gegen die Richtung eines Setups (long in Jahreszeit 3/4, short in Jahreszeit 1/2), trägt "
                    "das Setup das Zeichen „🟡 Branche …“ – auf der Titelseite, in der Liste und in der Morgenmeldung; "
                    "gezeigt, nicht gefiltert (Micky 23.11.2026).",
              fuehrt="Weinstein (keine Aktie in einer schwachen Gruppe kaufen)", zeichen="🟡",
@@ -55,7 +55,7 @@ KAESTEN = {
     ],
     "markt": [                                   # seit 23.11.2026 aus dem Zirkel des Index (vorher O'Neil)
         dict(name="Zirkel des Index", zustand=None,
-             regel="Phase 1–4 und Keim von S&P 500 (SPY) und Nasdaq (QQQ) aus ihrem eigenen Kreislauf – ohne die "
+             regel="Jahreszeit 1–4 und Keim von S&P 500 (SPY) und Nasdaq (QQQ) aus ihrem eigenen Kreislauf – ohne die "
                    "Zeichen relativ zum Markt, denn der Index misst sich nicht an sich selbst.",
              fuehrt="Micky (Zirkel), Weinstein (Phasen)", zeichen="🌱/🍂",
              messung=["zirkel.indizes", "zeichen.zirkel_index"], stand="gemessen", pruefer=["Markt-Ampel"]),
@@ -121,12 +121,12 @@ WERKZEUGE = {
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
              messung=["volumenprofil.knoten"], stand="gemessen", pruefer=["Gegenseite (Mauer/Stütze)"]),
-        dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Schritt 8, Micky 16.11.2026): Phase 2 beginnt mit "
+        dict(name="Phase", regel="Weinsteins Stufen an der 40-Wochen-Linie (Schritt 8, Micky 16.11.2026): Jahreszeit 2 beginnt mit "
                                  "dem Wochenschluss über dem Hoch der Basis und über der Linie, die nicht mehr fällt "
                                  "(„1 → 2 · Ausbruch“), bestätigt, sobald die Linie steigt; fehlt das Phase-2-Bild, solange "
                                  "die Linie steigt: „2 · Rücksetzer“ (ab 15 % unter dem Hoch und unter dem GD10W "
-                                 "„2 · Rückschlag“, Ende-Zeichen); Phase 3 erst, wenn die Linie flach wird; Phase 4 "
-                                 "unter der fallenden Linie; aus Phase 4 immer erst in die Basis (frühestens nach 8 Wochen).",
+                                 "„2 · Rückschlag“, Ende-Zeichen); Jahreszeit 3 erst, wenn die Linie flach wird; Jahreszeit 4 "
+                                 "unter der fallenden Linie; aus Jahreszeit 4 immer erst in die Basis (frühestens nach 8 Wochen).",
              messung=["phase.rechnen", "phase.aktuell", "zeichen.kreislauf"], stand="gemessen",
              pruefer=["Kreislauf/Phase"]),
         dict(name="AVWAP letztes Hoch", regel="Letztes Hoch = jüngstes Hoch, das der Kurs nicht überschritten hat und "
@@ -309,7 +309,7 @@ BEREICHE = [
                "Kauf, die Livermore als Pivotal Point unten einträgt, hebt den Stopp auf ¼ ATR darunter; er steigt nur, "
                "Schluss darunter heißt raus. Raus auch bei Regel 10b (Aufwärtstrend vorbei) und als Notbremse ab Tag 3 bei "
                "Schluss unter dem 20er; Gefahrensignal 10e zieht den Stopp eng unter das Tief jenes Tages; Schluss zurück "
-               "unter der Front – raus. Zeichen ohne Befehl: Zirkel (✓ Phase 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
+               "unter der Front – raus. Zeichen ohne Befehl: Zirkel (✓ Jahreszeit 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
                "Reibung (Mauer, Kraft ohne Weg, Klimax). Short gespiegelt. Aufstocken (26.11.2026): ½ beim Kauf, ½ bei "
                "📒 – 1 ATR (am Kauftag) über der Front – nur im Gewinn, nie verbilligen (Livermore). "
                "Kriegskasse: Positionswert über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = "
@@ -427,7 +427,7 @@ BEREICHE = [
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest an der Front, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
                "Fortsetzung abwärts; Rückzug zuerst), je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗), je "
-               "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Lage (🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug), ½ antasten · ½ aufstocken bei 📒 (beim Rücktest der Einstieg), Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
+               "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Lage (🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug), ½ antasten · ½ aufstocken bei 📒 (beim Rücktest der Einstieg), Stopp mit Risiko-Ampel, ✈️ und Halt der Jahreszeit; ohne Setup sagt "
                "die Meldung das.",
          messung=["zirkel.heisse", "zirkel.trade_wort", "daten.kurzname", "livermore.lage"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
     dict(name="Setup aus Livermore, bestätigt vom Zirkel", quelle="Micky 25.11.2026 (Livermore liefert das System, der "
@@ -524,6 +524,11 @@ WOERTERBUCH = (
     dict(sache="Spanne", wort="Spanne", quelle="livermore.spanne → zonen.lage",
          nebenwoerter=(r"(?<![-\w])(?<!dünne )(?<!Dünne )Zonen?\b", r"Wochenzone", r"Tageszone"),
          module_aus=("lage", "uebersicht", "tiefe", "volumenprofil", "marketprofile", "zahlen_reaktion", "regelkarte")),
+    dict(sache="Zirkel (Weinsteins Stufen)", wort="Jahreszeit 1 Basis · 2 Aufwärts · 3 Verteilung · 4 Abwärts",
+         quelle="zeichen.zirkel", nebenwoerter=(r"Zirkel:? Phase", r"Halt der Phase", r"Wechsel zu Phase",
+                                                r"\bPhase [1-4]\b")),
+    dict(sache="Halt der Jahreszeit", wort="🏰 hält · 🌊 Welle · ⛈️ Sturm · 🌱 Aufbruch naht (Basis, Abwärts)",
+         quelle="zeichen.halt", nebenwoerter=()),
     dict(sache="Stärke des Kurses (Klasse)", wort="⚔️ Kraft", quelle="rueckenwind_seite.kraft_ampel",
          nebenwoerter=(r"⚔️ Front",)),
     dict(sache="Bestätigung und Falle", wort="📒 (1 ATR jenseits der Kante) · 🦊 (Schluss 1 ATR zurück)",

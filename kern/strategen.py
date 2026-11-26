@@ -29,7 +29,7 @@ KURS_GENAU = 0.005              # … und müssen auf 0,5 % genau im Material st
 WETTBEWERBER = 5                # höchstens 5 Wettbewerber
 
 SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
-als nummerierte Felder (F1, F2 …): den Zirkel (Phase 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
+als nummerierte Felder (F1, F2 …): den Zirkel (Jahreszeit 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
 die ihn tragen, und dem Keim des Gegenteils), Spanne und Phase auf Woche, Tag und Stunde (Livermores Spanne zwischen
 seinem letzten Pivotal Point oben und unten, in der Stunde die Balance), das Setup der App (Livermores Signal, benannt
 nach der Art seines Pivotal Points: Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – der Zirkel bestätigt mit ✓ oder
@@ -125,7 +125,7 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
     f(f"Titel {tk}, Kurs {_z(kurs)} $" + (f", ATR (14 Tage) {_z(atr)} $" if atr else ""))
     zk = zeichen.zirkel(zeichen.von(tk))
     if zk:
-        f(f"Zirkel: Phase {zk['phase']} {zk['name']}" + (f" seit {zk['wochen']} Wochen" if zk.get("wochen") else ""))
+        f(f"Zirkel: Jahreszeit {zk['phase']} {zk['name']}" + (f" seit {zk['wochen']} Wochen" if zk.get("wochen") else ""))
         for x in zk["traegt"][:3]:
             f(f"Zirkel trägt – {x}")
         for x in zk["keim"][:3]:

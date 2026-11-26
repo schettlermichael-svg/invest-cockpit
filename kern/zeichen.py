@@ -986,13 +986,13 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
     ordnung = {"struktur": 0, "rs": 1, "volumen": 2, "ereignis": 3}
     st_.sort(key=lambda x: (-x["gewicht"], ordnung[x["art"]]))
     sw_.sort(key=lambda x: (-x["gewicht"], ordnung[x["art"]]))
-    satz = "jung (unter 300 Handelstagen, noch keine Phase)" if jung else f"Phase {p} ({PHASE_NAME[p]})"
+    satz = "jung (unter 300 Handelstagen, noch keine Jahreszeit)" if jung else f"Jahreszeit {p} ({PHASE_NAME[p]})"
     if rueckschlag:
         satz += ", Rückschlag (Wochenschluss unter dem GD10W, mindestens 15 % unter dem Hoch)"
     elif ruecksetzer:
         satz += ", Rücksetzer (das Phase-2-Bild fehlt, die 40-Wochen-Linie steigt noch)"
     if ziel:
-        satz += f", Wechsel zu Phase {ziel} ({PHASE_NAME[ziel]}) zeichnet sich ab"
+        satz += f", Wechsel zu Jahreszeit {ziel} ({PHASE_NAME[ziel]}) zeichnet sich ab"
     if st_:
         satz += " · Stärke: " + "; ".join(x["text"] for x in st_[:3])
     if sw_:
@@ -1025,7 +1025,8 @@ KURZ_MIN = 8                # … und nicht bloß „(Woche)“
 
 
 # ── Halt der Phase (Micky 24.11.2026): statt Fachnamen ein Urteil und ein Wort in Klartext ─────────────────────────
-HALT = {"hält": "🏰", "welle": "🌊", "sturm": "⛈️"}   # Burg hält · Welle schlägt (ein Riss) · Sturm zieht auf (kippt)
+HALT = {"hält": "🏰", "welle": "🌊", "sturm": "⛈️", "aufbruch": "🌱"}   # Burg hält · Welle (ein Riss) · Sturm (kippt) ·
+# Aufbruch naht (Micky 26.11.2026: kippt Basis oder Abwärts, ist das für Longs kein Sturm, sondern der Aufbruch)
 # Klartext je Zeichen: (Anfang oder Teil des Textes, Seite, Klartext) – das erste Muster, das passt, gilt
 KLARTEXT = (
     ("Aufwärtstrend vorbei", "schwäche", "Aufwärtstrend vorbei (Livermore)"),
@@ -1091,9 +1092,10 @@ def klartext(text, seite):
 
 
 def halt(z):
-    """Hält die Phase? → (Zeichen, Wort, Klartext des stärksten Keims): 🏰 hält (kein Keim) · 🌊 Welle (ein Riss, die
-    Phase trägt aber mehr) · ⛈️ Sturm (der Keim wiegt so schwer wie das, was trägt, oder der Wechsel zeichnet sich
-    ab). Leer ohne Zirkel oder Phase."""
+    """Hält die Jahreszeit? → (Zeichen, Wort, Klartext des stärksten Keims): 🏰 hält (kein Keim) · 🌊 Welle (ein Riss,
+    die Jahreszeit trägt aber mehr) · ⛈️ Sturm (der Keim der Schwäche wiegt so schwer wie das, was trägt, oder der
+    Wechsel zeichnet sich ab – in Aufwärts und Verteilung) · 🌱 Aufbruch naht (dasselbe in Basis und Abwärts: der Keim
+    ist Stärke, Micky 26.11.2026). Leer ohne Zirkel."""
     if not z or not z.get("phase") or z["phase"] not in KEIM_SEITE:
         return "", "", ""
     if not z["keim"] and not z.get("ziel"):
@@ -1102,7 +1104,9 @@ def halt(z):
     gk, gt = ((z["gewicht_keim"], z["gewicht_traegt"]) if z.get("gewicht_keim") is not None   # ohne Gewichte (ältere
               else (len(z["keim"]), len(z.get("traegt") or [])))                         # Läufe): die Zahl der Zeichen
     if z.get("ziel") or gk >= gt:
-        return HALT["sturm"], "Sturm", grund or f'Wechsel zu Phase {z["ziel"]}'
+        if KEIM_SEITE[z["phase"]] == "stärke":
+            return HALT["aufbruch"], "Aufbruch naht", grund or f'Wechsel zu Jahreszeit {z["ziel"]}'
+        return HALT["sturm"], "Sturm", grund or f'Wechsel zu Jahreszeit {z["ziel"]}'
     return HALT["welle"], "Welle", grund
 
 
