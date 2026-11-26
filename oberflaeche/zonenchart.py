@@ -214,7 +214,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if la["zone"]:                                    # Wörterbuch (Micky 26.11.2026): Front, Unterkante, Decke, Boden
         etiketten += ([] if oben_ else [(Y(hi), f"Spanne oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Unterkante {zahl(lo)}{gewicht(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
-    short_ = bool(la.get("zone")) and ((t and t["richtung"] < 0) or la.get("phase") == "bruch")
+    short_ = bool(la.get("zone")) and ((t and t["richtung"] < 0) or la.get("phase") == "bruch"   # die Kante, an der
+                                       or float(df["Close"].iloc[-1]) < lo)       # der Kurs steht (Audit 26.11.2026)
     kante = lo if short_ else piv                     # Kipp-Zone (Micky 26.11.2026, Frontkarte): long um die Front,
     if kante is not None and a_kipp > 0:              # short gespiegelt um die Unterkante; je 1 ATR (Livermores
                                                       # Bestätigung), oben grün, unten rot

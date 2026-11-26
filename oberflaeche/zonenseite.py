@@ -320,9 +320,9 @@ NOTIZBUCH_ZEILEN = 30      # Layout: die letzten 30 Einträge in der Tabelle
 
 
 def lagebericht(r):
-    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, Front (letzter Pivotal Point oben), Kurs, Ziel
-    (nächste stehende Stellung darüber), Boden (nächste darunter), Front unten, Setup mit ✓/✗ – dieselben Linien, die
-    der Chart kräftig zeichnet (livermore.front)."""
+    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, dann Front, Decke bzw. Ziel, Kurs,
+    Boden bzw. Ziel und Unterkante nach dem Preis von oben nach unten (wie im Chart; steht der Kurs unter der
+    Unterkante, steht er auch dort), ✈️, Setup mit ✓/✗ – dieselben Linien, die der Chart kräftig zeichnet."""
     import livermore
     df = r["df"].dropna(subset=["High", "Low", "Close"])
     nb = livermore.notizbuch(df)
@@ -332,18 +332,18 @@ def lagebericht(r):
     a_, w_ = livermore.lage(nb["spalte"])
     teile = [f'{a_} {w_}']
     p_ = lambda x: zahl(x["preis"]) if x else "–"                                  # noqa: E731
-    if fr["oben"]:
-        teile.append(f'Front {p_(fr["oben"])}')
-    teile.append(f'Kurs {zahl(fr["kurs"])}')
     tr = r["fuehrte"]["trade"]
     lang, kurz = bool(tr and tr["richtung"] > 0), bool(tr and tr["richtung"] < 0)   # das Ziel liegt in Richtung des
     fb = livermore.frei(df, nb)                                                     # Setups; ✈️ = keine Stellung mehr
-    teile += [x for x in ((f'{"Ziel" if lang else "Decke"} {p_(fr["ziel"])}' if fr["ziel"] else   # (auch nicht die
-                           "✈️ freie Bahn" if fb["oben"] else ""),                                  # Front)
-                          (f'{"Ziel" if kurz else "Boden"} {p_(fr["boden"])}' if fr["boden"] else
-                           "✈️↓ freie Bahn" if fb["unten"] else "")) if x]
-    if fr["unten"]:
-        teile.append(f'Unterkante {p_(fr["unten"])}')
+    karte_ = [(x["preis"], f'{wort} {p_(x)}') for x, wort in                       # (auch nicht die Front)
+              ((fr["oben"], "Front"), (fr["ziel"], "Ziel" if lang else "Decke"), (fr["boden"], "Ziel" if kurz else "Boden"),
+               (fr["unten"], "Unterkante")) if x]
+    karte_.append((fr["kurs"], f'Kurs {zahl(fr["kurs"])}'))
+    teile += [w for _, w in sorted(karte_, key=lambda x: -x[0])]                  # von oben nach unten wie im Chart
+    if not fr["ziel"] and fb["oben"]:                                               # (Audit 26.11.2026)
+        teile.insert(1, "✈️ freie Bahn")
+    if not fr["boden"] and fb["unten"]:
+        teile.append("✈️↓ freie Bahn")
     if tr:
         teile.append(f'{tr["zeichen"]} {tr["name"]} {"long" if tr["richtung"] > 0 else "short"}'
                      + (f' {tr["zirkel"]}' if tr.get("zirkel") else ""))
@@ -356,8 +356,8 @@ def lagebericht(r):
                         else " — ⬇ Einigkeit: Rückzug auf allen drei Ebenen")
         ebenen_ = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermores Notizbuch auf Wochen-, '
                    f'Tages- und Stundenkerzen">🧭 {t(ebenen_)}</div>')
-    return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht: Front = '
-            f'Front (letzter Pivotal Point oben), Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
+    return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht von oben nach unten: Front = '
+            f'letzter Pivotal Point oben, Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
             f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>'
             + ebenen_)
 

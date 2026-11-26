@@ -1819,3 +1819,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Kerzen (Yahoo); Rückenwind (RS-Rang, Momentum, Gruppen) = Massive (nur splitbereinigt) – RS-Ränge weichen bei
   Dividendentiteln geringfügig ab, die Zeichen der Titelseite rechnen aus Yahoo. Markt: ^GSPC (RS, Fenster), SPY/QQQ
   (Lagebild-Index). Testkopie auf dem Mac: alte Dateien aus früheren Ständen entfernt (sync legt nur dazu).
+- Live gefunden (AMAT, Kurs unter der Unterkante, ohne Setup): die Kipp-Zone stand an der fernen Front – jetzt
+  gespiegelt an der Unterkante, sobald der Kurs darunter schließt. Lagebericht nach dem Preis von oben nach unten
+  geordnet (Front, Decke/Ziel, Kurs, Boden/Ziel, Unterkante – wie im Chart), ✈️ an seiner Seite.
