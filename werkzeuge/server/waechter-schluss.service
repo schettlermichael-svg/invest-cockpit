@@ -1,0 +1,7 @@
+[Unit]
+Description=Invest Cockpit: Wächter vor Handelsschluss
+[Service]
+Type=oneshot
+User=cockpit
+WorkingDirectory=/opt/invest-cockpit
+ExecStart=/opt/invest-cockpit/.venv/bin/python -u werkzeuge/waechter.py schluss

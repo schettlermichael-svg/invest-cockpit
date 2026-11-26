@@ -1859,3 +1859,18 @@ freigegeben). Ein System mit wenig Variablen: jede Ebene mit denselben Regeln �
   Leiter, Beobachten, Story und Strömung (Kraft, Nachschub mit CMF, Fundament, Zirkel und Key Price je eine Zeile).
   Entfernt: Kacheln je Ebene, Zirkel-Block, 🗺️/🚦/🧭-Zeilen, Livermore-Zeile. Depot und Analyse zeigen denselben Bericht.
 - **Weiße Optik**: Farben in `gestaltung.py`, `.streamlit/config.toml`, Chart-Farben (helle Linien jetzt dunkel).
+
+## Wächter 🔔 und Messung Stopp-Kauf (26.11.2026)
+
+**Messung** (Micky: „hier ergibt die Messung Sinn, weil es konkret ist“): 38.618 Ausbrüche über Livermores Front in
+1.913 Titeln des Reviers (12/2023–09/2026), Stopp ¼ ATR unter der Unterkante (höchstens 8 %), Ergebnis nach 20 Tagen
+oder Stopp in R. Kauf am Tagesschluss: +0,16 R je Ausbruch. Sharps Stopp-Kauf beim Kreuzen des Hochs der
+Bestätigungskerze (5 Tage gültig, verfällt bei Schluss unter der Front): +0,10 bis +0,11 R – spart 35 % der
+Fehlausbrüche, verpasst 18,8 % der guten (Ø +0,58 R), Einstieg Median +0,68 % teurer. In jedem Jahr gleich, mit
+Volumen ebenso. Entscheidung Micky: **Einstieg bleibt der Tagesschluss.**
+
+**Wächter** (`kern/waechter.py`, `werkzeuge/waechter.py`): Knopf „🔔 Alarm“ auf der Titelseite (`einstellungen/
+alarme.json`, nicht in Git). Der Server prüft Mo–Fr 9:30–16:00 New York jede Minute (Yahoo 1-Minuten-Kerzen) und
+meldet über ntfy, wenn der Kurs Front oder Unterkante frisch kreuzt; um 15:45 New York eine zweite Meldung, wenn er
+jenseits steht (Schluss dort = Auslöser). Zeitpläne `werkzeuge/server/waechter*.timer`, eingerichtet von
+`aktualisieren.sh`. Die Verzögerung der Kurse wird je Lauf in `daten/waechter/stand.json` gespeichert.

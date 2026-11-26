@@ -288,6 +288,18 @@ def watchlist_knopf(tk, name=watchlists.STANDARD, schluessel=""):
               args=(tk, name), help=f"Klick nimmt den Titel von {name}" if drin else f"Klick setzt den Titel auf {name}")
 
 
+def alarm_knopf(tk):
+    """🔔 Alarm (Micky 26.11.2026): der Wächter meldet aufs Handy, wenn der Kurs Front oder Unterkante kreuzt und um
+    15:45 New York, wenn er jenseits steht (Schluss dort = Auslöser)."""
+    import waechter
+    an = waechter.aktiv(tk)
+    st.button("🔔 Alarm an" if an else "🔕 Alarm", key=f"alarm_{tk}", use_container_width=True,
+              type="primary" if an else "secondary", on_click=waechter.umschalten, args=(tk,),
+              help="Klick schaltet den Alarm aus" if an else
+              "Meldung aufs Handy, wenn der Kurs Front oder Unterkante kreuzt (jede Minute geprüft) und um 15:45 New "
+              "York, wenn er jenseits steht – schließt er dort, ist das der Auslöser")
+
+
 def _codestand(mit_watchlists=False):
     """Jüngste Änderungszeit der Programmdateien und der Datendateien, von denen die Seiten abhängen."""
     hier = os.path.dirname(os.path.abspath(__file__))
@@ -574,7 +586,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         import zonen
         import zonenchart
         import zonenseite
-        k0, k1, k2, k3, k4 = st.columns([4, 2, 2, 2, 2])
+        k0, k1, k2, k3, k4, k5 = st.columns([4, 2, 2, 2, 2, 2])
         with k0:
             ebene = st.radio("Ebene", list(zonen.EBENEN), index=1, horizontal=True, key="zonen_ebene")
         with k1:
@@ -585,6 +597,8 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
             watchlist_knopf(ticker)
         with k4:
             watchlist_knopf(ticker, watchlists.TRADE)
+        with k5:
+            alarm_knopf(ticker)
         e_ = teile["r"]["ebenen"][ebene]
         g0, g3 = st.columns([1, 1])
         g1, g2, g4, _ = st.columns([2, 2, 2, 4])
