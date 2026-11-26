@@ -1827,3 +1827,16 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Titelseite, Morgenmeldung, Stratege, Depot, Regelkarte nachgezogen, Wörterbuch-Eintrag mit Nebenwörtern
   („Zirkel Phase“, „Phase 1–4“, „Halt der Phase“). Halt: kippt Basis oder Abwärts (Keim = Stärke), zeigt er
   🌱 „Aufbruch naht“ statt ⛈️ Sturm (zeichen.halt, HALT["aufbruch"]).
+
+## Drei Tore nach Harry Sharp (26.11.2026, Micky: Richtung → Ort → Auslöser übernehmen, ohne seinen Auslöser)
+- kern/tore.py: zwei_kerzen (letzte abgeschlossene Wochen- und Tageskerze), richtung (bei gemischt entscheidet die
+  Lage der Woche nach Livermore, ruht sie, die Tageskerze), tore (R/O/A mit ✓/✗/⏳ gegen das Setup), ort_text, zeile.
+- livermore.ort: Drittel der Spanne, Weg voraus (Stellungen in den nächsten 3 ATR ab Kurs bzw. ab der Kante, wenn das
+  Setup wartet: 0 sauber, ab 2 unruhig), ⚪ Chop (Gefechtspause und ab 3 Stellungen zwischen Front und Unterkante),
+  ⚠ weit gelaufen (oberes Drittel/über der Front und ≥ 3 Schwünge über dem letzten Pivotal Point unten; gespiegelt).
+  livermore.gruppen/abpraller: Gewicht und Abpraller einer Stellung (Docht bis ¼ ATR, Schluss auf der eigenen Seite).
+- Anzeige: Lagebericht mit Abstand in % je Kante, Torzeile 🚦 mit Drittel der Stunde und 📖 Story (💰, 📊, 📅 aus
+  den Karten); Morgenmeldung „🚦 R✓ O✗ A⏳“; Liste Spalte „Tore“ (Feld „tore“ des Zirkel-Laufs); Chart-Etiketten
+  „· 🛡n“; Stratege mit Tor-Feld und Absatz im Auftrag. Regelkarte und Wörterbuch nachgezogen.
+- Nicht übernommen (Micky): Feder-Auslöser, Stopp-Kauf, 50-%-Regel, enger Stopp, Linien am Körper, Bruch ohne Puffer,
+  4-Stunden-Ebene, 1:1-Ziele.

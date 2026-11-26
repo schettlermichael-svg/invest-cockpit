@@ -492,11 +492,14 @@ TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
 TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
 TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 120, "Lage": 45, "Jahreszeit": 105, "Setup": 130, "Halt": 115, "⚔️ Kraft": 70, "RS": 85,   # Layout:
-          "Momentum": 70, "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 90}   # px, zusammen 1100
-SPALTEN = ("Titel", "Lage", "Jahreszeit", "Setup", "Halt", "⚔️ Kraft", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+BREITE = {"Titel": 120, "Lage": 45, "Jahreszeit": 100, "Setup": 125, "Tore": 75, "Halt": 105, "⚔️ Kraft": 65, "RS": 75,
+          "Momentum": 65, "Hoch": 60, "Bahn": 40, "💰 Nachschub": 85, "Volumen": 60, "📊 Fundament": 80}   # Layout: px, 1100
+SPALTEN = ("Titel", "Lage", "Jahreszeit", "Setup", "Tore", "Halt", "⚔️ Kraft", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
            "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
-SPALTEN_HILFE = {"Jahreszeit": "Zirkel des Titels: 1 Basis · 2 Aufwärts · 3 Verteilung · 4 Abwärts – dazu der Keim "
+SPALTEN_HILFE = {"Tore": "Die drei Tore vor dem Trade (Harry Sharp): R Richtung (Zwei-Kerzen-Regel Woche + Tag), "
+                         "O Ort (Drittel, Weg voraus, Chop, weit gelaufen), A Auslöser (⏳ wartet, ✓ ausgelöst, ✓📒 "
+                         "aufgestockt) – ✗ heißt: dieses Tor steht gegen das Setup, gefiltert wird nichts",
+                 "Jahreszeit": "Zirkel des Titels: 1 Basis · 2 Aufwärts · 3 Verteilung · 4 Abwärts – dazu der Keim "
                                "des Gegenteils (🌱/🍂)",
                  "Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufwärtstrend) · 🟡 Gefechtspause (Rally oder "
                          "Reaktion) · 🔴 Rückzug (Abwärtstrend) – dieselbe Sprache wie Lagebericht und Markt",
@@ -551,6 +554,7 @@ def liste(erg, nur=None):
         abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "Lage": _lage(feld_.get(tk)),
+            "Tore": ((feld_.get(tk) or {}).get("tore") or {}).get("kurz", ""),
             "Jahreszeit": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
             "⚔️ Kraft": PUNKT[kraft_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),

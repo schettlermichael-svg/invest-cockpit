@@ -42,7 +42,10 @@ fällt erst mit einem Schluss 1 ATR jenseits). Die Kipp-Zone liegt je 1 ATR um d
 (Livermores 3 Punkte), ein Schluss zurück auf der falschen Seite ist der 🦊 Fehlausbruch. Livermore baut die Position
 in zwei Hälften: ½ antasten an der Kante, ½ aufstocken bei 📒 – nachgelegt wird nur im Gewinn, nie verbilligt. Einigkeit
 der Ebenen (Woche, Tag, Stunde alle im Vormarsch oder alle im Rückzug) ist eigene Kraft. Der Markt ist das Lagebild:
-Spitze (Garde und Angriff) und Heer (alle Titel) bestimmen, der Index bestätigt ✓ oder steht ✗ dagegen. Für Kurse,
+Spitze (Garde und Angriff) und Heer (alle Titel) bestimmen, der Index bestätigt ✓ oder steht ✗ dagegen.
+Vor jedem Trade drei Tore (Harry Sharp): Richtung (letzte abgeschlossene Wochen- und Tageskerze, bei gemischt
+entscheidet die Lage der Woche) → Ort (Lage in der Spanne, Weg voraus sauber oder unruhig, ⚪ Chop, ⚠ weit gelaufen)
+→ Auslöser (unser Setup). Ein Tor mit ✗ ist ein Gegenargument, kein Verbot. Für Kurse,
 Spannen, Volumen, RS und Geldfluss gilt nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
 Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11.2026, aus der Titel-Analyse):
   Unternehmen: Geschäftsmodell, Burggraben und was ihn bedroht, Wachstumstreiber.
@@ -159,6 +162,14 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
           + (f", Front {p_(fk['oben'])}" if fk["oben"] else "") + (f", Unterkante {p_(fk['unten'])}" if fk["unten"] else "")
           + (f", nächste Decke {p_(fk['ziel'])}" if fk["ziel"] else ", darüber ✈️ freie Bahn" if fb_["oben"] else "")
           + (f", nächster Boden {p_(fk['boden'])}" if fk["boden"] else ", darunter ✈️ freie Bahn" if fb_["unten"] else ""))
+    if df_ is not None and nb:                    # die drei Tore (Sharp, Micky 26.11.2026)
+        try:
+            import tore
+            tz = tore.zeile(tore.tore(d_, fu.get("trade")), fu.get("trade"))
+            if tz:
+                f("Tore " + tz.replace("🚦 ", ""))
+        except Exception:  # noqa: BLE001 – ohne Tore bleibt das übrige Material
+            pass
     ei = fu.get("einigkeit")
     if ei:
         f("Ebenen: " + " · ".join(f"{n} {w_}" for n, (_, w_) in ei["ebenen"].items())

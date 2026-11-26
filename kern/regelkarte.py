@@ -423,6 +423,24 @@ BEREICHE = [
                "und Chart der Titelseite.",
          messung=["livermore.frei", "zonen.frei", "zirkel._titel", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
+    dict(name="Drei Tore: Richtung → Ort → Auslöser", quelle="Harry Sharp (Interview IQCapital 06.11.2026), auf "
+         "unser System übertragen von Micky 26.11.2026",
+         regel="Richtung: letzte abgeschlossene Wochenkerze und letzte Tageskerze (Sharps Zwei-Kerzen-Regel eine "
+               "Stufe höher – wir halten Wochen): beide grün aufwärts, beide rot abwärts, sonst gemischt; bei gemischt "
+               "entscheidet die Lage der Woche nach Livermore, ruht auch sie, die Tageskerze. Die Treppe ist Livermores "
+               "Lage je Ebene. Ort: Drittel der Spanne (unten, Mitte, oben, über der Front, unter der Unterkante; auch "
+               "auf der Stunde), Weg voraus = Stellungen in den nächsten 3 ATR (keine = sauber, ab 2 = unruhig), ⚪ Chop "
+               "= Gefechtspause und ab 3 Stellungen zwischen Front und Unterkante, ⚠ weit gelaufen = oberes Drittel "
+               "bzw. über der Front und ≥ 3 Schwünge (6 ATR) über dem letzten Pivotal Point unten (gespiegelt). "
+               "Auslöser = unser Setup (⏳ wartet, ✓ ausgelöst, ✓📒 aufgestockt). Tor ✗ = gegen das Setup, gefiltert "
+               "wird nichts. Story: 💰 Geld und 📊 Zahlen als Ampel, 📅 nächster Termin. Nicht übernommen: Sharps "
+               "Auslöser (Feder, Stopp-Kauf, 50-%-Regel), enger Stopp, Linien am Körper, Bruch ohne Puffer, 1:1-Ziele.",
+         messung=["tore.zwei_kerzen", "tore.richtung", "tore.tore", "tore.zeile", "livermore.ort",
+                  "zonenseite._story"], pruefer=[], luecke="kein Prüfer – ungemessen, gesetzte Voreinstellungen"),
+    dict(name="Abpraller (Dochte stärken eine Stellung)", quelle="Harry Sharp, Micky 26.11.2026",
+         regel="Eine Kerze nach dem Pivotal Point, deren Hoch bis ¼ ATR an eine Decke kam und deren Schluss darunter "
+               "blieb, ist ein Abpraller (am Boden gespiegelt); im Etikett neben dem Gewicht als 🛡 mit der Zahl.",
+         messung=["livermore.abpraller", "livermore.gruppen"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Morgenmeldung: Setups", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest an der Front, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
@@ -521,6 +539,9 @@ WOERTERBUCH = (
     dict(sache="Stehender Pivotal Point", wort="Stellung (über dem Kurs Decke, darunter Boden, in Richtung des Setups Ziel)",
          quelle="livermore.offene → livermore.stellungen", nebenwoerter=(r"Festung", r"— oben")),
     dict(sache="Freie Bahn", wort="✈️ freie Bahn", quelle="livermore.frei", nebenwoerter=()),
+    dict(sache="Drei Tore", wort="🚦 Richtung · Ort · Auslöser (✓/✗/⏳)", quelle="tore.tore", nebenwoerter=()),
+    dict(sache="Weg voraus", wort="sauber · unruhig · n Niveaus", quelle="livermore.ort", nebenwoerter=(r"Zwischenniveau",)),
+    dict(sache="Hin und Her ohne Ränder", wort="⚪ Chop", quelle="livermore.ort", nebenwoerter=()),
     dict(sache="Spanne", wort="Spanne", quelle="livermore.spanne → zonen.lage",
          nebenwoerter=(r"(?<![-\w])(?<!dünne )(?<!Dünne )Zonen?\b", r"Wochenzone", r"Tageszone"),
          module_aus=("lage", "uebersicht", "tiefe", "volumenprofil", "marketprofile", "zahlen_reaktion", "regelkarte")),

@@ -331,11 +331,12 @@ def lagebericht(r):
         return ""
     a_, w_ = livermore.lage(nb["spalte"])
     teile = [f'{a_} {w_}']
-    p_ = lambda x: zahl(x["preis"]) if x else "–"                                  # noqa: E731
     tr = r["fuehrte"]["trade"]
     lang, kurz = bool(tr and tr["richtung"] > 0), bool(tr and tr["richtung"] < 0)   # das Ziel liegt in Richtung des
     fb = livermore.frei(df, nb)                                                     # Setups; ✈️ = keine Stellung mehr
-    karte_ = [(x["preis"], f'{wort} {p_(x)}') for x, wort in                       # (auch nicht die Front)
+    pz = lambda x: f'{zahl(x["preis"])} ({"+" if x["preis"] >= fr["kurs"] else "−"}'   # noqa: E731 – Abstand zum Kurs
+    pz_ = lambda x: pz(x) + f'{zahl(abs(x["preis"] / fr["kurs"] - 1) * 100, 1)} %)'     # noqa: E731 (Sharp, 26.11.)
+    karte_ = [(x["preis"], f'{wort} {pz_(x)}') for x, wort in                      # (auch nicht die Front)
               ((fr["oben"], "Front"), (fr["ziel"], "Ziel" if lang else "Decke"), (fr["boden"], "Ziel" if kurz else "Boden"),
                (fr["unten"], "Unterkante")) if x]
     karte_.append((fr["kurs"], f'Kurs {zahl(fr["kurs"])}'))
@@ -356,10 +357,42 @@ def lagebericht(r):
                         else " — ⬇ Einigkeit: Rückzug auf allen drei Ebenen")
         ebenen_ = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermores Notizbuch auf Wochen-, '
                    f'Tages- und Stundenkerzen">🧭 {t(ebenen_)}</div>')
+    import tore                                                                     # die drei Tore (Sharp, 26.11.)
+    to = tore.tore(df, tr, bool(r.get("laufend")))
+    tz = tore.zeile(to, tr)
+    st_ = r["ebenen"].get("Stunde")                                                 # Ort auch auf der Stunde
+    if st_ is not None and st_.get("df") is not None and len(st_["df"]) > 30:
+        try:
+            os_ = livermore.ort(st_["df"].dropna(subset=["High", "Low", "Close"]))
+            if os_ and os_["drittel"]:
+                tz += f' (Stunde: {os_["drittel"]})'
+        except Exception:  # noqa: BLE001 – ohne Stundenkarte bleibt der Ort des Tages
+            pass
+    story = _story(r)
+    tore_ = (f'<div style="font-size:14px;color:{TEXT};margin-top:3px" title="Drei Tore vor dem Trade (Harry Sharp): '
+             f'Richtung aus der letzten abgeschlossenen Wochen- und Tageskerze (bei gemischt entscheidet die Lage der '
+             f'Woche), Ort aus Lage in der Spanne, Weg voraus, Chop und Lauf, Auslöser = unser Setup – ✗ heißt: dieses '
+             f'Tor steht gegen das Setup">{t(tz)}{" · " + t(story) if story else ""}</div>' if tz else "")
     return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht von oben nach unten: Front = '
             f'letzter Pivotal Point oben, Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
-            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>'
-            + ebenen_)
+            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten; in Klammern der Abstand '
+            f'zum Kurs">🗺️ {t(" · ".join(teile))}</div>' + tore_ + ebenen_)
+
+
+def _story(r):
+    """Sharps „Story der Woche“ aus dem, was schon da ist: 💰 Geld und 📊 Zahlen als Ampel, 📅 der nächste
+    Zahlentermin (rueckenwind_seite.titel_karten) – kein eigener Text, keine neue Quelle."""
+    import rueckenwind_seite
+    try:
+        karten = rueckenwind_seite.titel_karten(r["tk"], r["fuehrte"].get("frei"))
+    except Exception:  # noqa: BLE001 – ohne Rückenwind-Stand keine Story
+        return ""
+    amp = {k_.split(" ")[0]: a_ for k_, a_, _ in karten}
+    termin = next((z for _, _, zs in karten for z in zs if z.startswith("📅")), "")
+    teile = [f'{sym} {rueckenwind_seite.PUNKT.get(amp.get(sym), "⚪")}' for sym in ("💰", "📊") if sym in amp]
+    if termin:
+        teile.append(termin.replace("📅 nächste Zahlen", "📅"))
+    return "📖 Story " + " ".join(teile) if teile else ""
 
 
 def livermore_html(r):

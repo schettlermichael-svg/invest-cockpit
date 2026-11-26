@@ -105,7 +105,10 @@ def _titel(tk, start=None):
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         nb_ = ba.get("nb") or {}
         import livermore
+        import tore
+        to = tore.tore(df, t)                               # die drei Tore (Sharp, Micky 26.11.2026)
         feld = {"phase": la["phase"] if la else None, "lv_spalte": nb_.get("spalte"),   # Livermores Spalte = Lage
+                "tore": {k_: to[k_] for k_ in ("r", "o", "a", "kurz")},
                 "frei": livermore.frei(df, nb_ or None),        # ✈️ aus denselben Kursen wie die Titelseite (Audit 26.11.)
                 "pivot": la["pivot"] if la else None, "kurs": la["kurs"] if la else None,   # ▲▲▲-Liste (23.11.2026)
                 "trade": {x: t.get(x) for x in TRADE_FELDER} if t else None,
@@ -410,7 +413,8 @@ def heisse(n=MELDUNG_JE_SEITE):
                  (f'½ antasten {zahl(t["einstieg"])} $ · ½ aufstocken bei 📒 {zahl(t["aufstocken"])} $'
                   + (" ✓" if t.get("aufgestockt") else "") if t.get("aufstocken")      # Livermore: erst die Probe,
                   else f'Einstieg {zahl(t["einstieg"])} $')                              # nachlegen nur im Gewinn
-                 + f' · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
+                 + f' · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %'
+                 + (f' · 🚦 {f_[tk]["tore"]["kurz"]}' if (f_[tk].get("tore") or {}).get("kurz") else ""),
                  rueckenwind_seite.bahn(f_[tk].get("frei"), ""),
                  " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Jahreszeit in Klartext (24.11.2026)
         return " · ".join(s for s in teile if s)

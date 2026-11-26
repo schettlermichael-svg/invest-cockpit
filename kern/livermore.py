@@ -32,6 +32,13 @@ BESTAETIGUNG = 1.0        # Livermores ~3 Punkte = 1 × ATR
 STELLUNG_JAHRE = 2        # Stellungen: stehende Pivotal Points der letzten 2 Jahre (so weit reichen die Massive-Tage der
                           # Liste – Titelseite, Chart, Liste und Zeichen sehen dieselben Stellungen)
 STELLUNG_ATR = 0.5        # Pivotal Points innerhalb ½ ATR sind eine Stellung (Gewicht = wie viele dort stehen)
+# Ort nach Harry Sharp, auf Livermores Stellungen gerechnet (Micky 26.11.2026, ungemessen, gesetzte Voreinstellungen):
+ABPRALL_ATR = 0.25        # Abpraller: ein Docht kommt bis ¼ ATR an die Stellung, der Schluss bleibt auf seiner Seite
+WEG_ATR = 3.0             # Weg voraus: die nächsten 3 ATR (Schwung 2 ATR + Bestätigung 1 ATR = ein ganzer Zug)
+UNRUHIG_AB = 2            # ab 2 Stellungen auf dem Weg voraus: unruhig (Sharps Zwischenniveaus, Fallen)
+CHOP_AB = 3               # Chop: Gefechtspause und ab 3 Stellungen zwischen Front und Unterkante (Micky 26.11.2026)
+WEIT_SCHWUENGE = 3        # weit gelaufen: ≥ 3 Schwünge (3 × 2 ATR) seit dem letzten Pivotal Point der Gegenseite
+DRITTEL = ("unteres Drittel", "Mitte", "oberes Drittel")
 SPALTEN = {"SE": "Sekundäre Erholung", "NE": "Natürliche Erholung", "AT": "Aufwärtstrend",
            "AB": "Abwärtstrend", "NR": "Natürliche Reaktion", "SR": "Sekundäre Reaktion"}
 REIHE = ("SE", "NE", "AT", "AB", "NR", "SR")                  # Reihenfolge der Spalten im Buch
@@ -299,6 +306,82 @@ def frei(df, nb=None):
     kurs = float(df["Close"].iloc[-1])
     o = offene(df, nb)
     return {"oben": not any(p_["preis"] > kurs for p_ in o), "unten": not any(p_["preis"] < kurs for p_ in o)}
+
+
+def abpraller(df, preis, ab_i, seite):
+    """Wie oft ein Docht an der Stellung abprallte (Sharp: viele Dochte machen ein Niveau stärker): Kerzen nach ab_i,
+    deren Hoch (Decke, seite "oben") bis ABPRALL_ATR × ATR an den Preis kam und deren Schluss darunter blieb –
+    gespiegelt am Boden."""
+    import vcp_zone
+    d = df.iloc[ab_i + 1:]
+    if not len(d):
+        return 0
+    a = vcp_zone.atr(df).iloc[ab_i + 1:].to_numpy(float)
+    if seite == "oben":
+        return int(((d["High"].to_numpy(float) >= preis - ABPRALL_ATR * a) & (d["Close"].to_numpy(float) < preis)).sum())
+    return int(((d["Low"].to_numpy(float) <= preis + ABPRALL_ATR * a) & (d["Close"].to_numpy(float) > preis)).sum())
+
+
+def gruppen(df, nb=None):
+    """Alle Stellungen (stehende Pivotal Points innerhalb ½ ATR zusammen) → [{preis, gewicht, i, abpraller}] nach Preis
+    – die eine Liste für Gewicht, Weg voraus, Chop und die Etiketten des Charts."""
+    import vcp_zone
+    a = float(vcp_zone.atr(df).iloc[-1] or 0)
+    kurs = float(df["Close"].iloc[-1])
+    aus = []
+    for p_ in sorted(offene(df, nb), key=lambda x: x["preis"]):
+        nah = next((g for g in aus if abs(g["preis"] - p_["preis"]) <= a * STELLUNG_ATR), None)
+        if nah:
+            nah["gewicht"] += 1
+            nah["i"] = min(nah["i"], p_["i"])
+            continue
+        aus.append({"preis": float(p_["preis"]), "gewicht": 1, "i": p_["i"]})
+    for g in aus:
+        g["abpraller"] = abpraller(df, g["preis"], g["i"], "oben" if g["preis"] > kurs else "unten")
+    return aus
+
+
+def ort(df, nb=None, fr=None, ab=None):
+    """Ort nach Sharp auf Livermores Karte: Lage in der Spanne (Drittel), Weg voraus je Richtung (Stellungen in den
+    nächsten WEG_ATR × ATR: 0 = sauber, ab UNRUHIG_AB = unruhig), Chop (Gefechtspause und ab CHOP_AB Stellungen zwischen
+    Front und Unterkante), weit gelaufen (oberes Drittel bzw. über der Front und ≥ WEIT_SCHWUENGE Schwünge seit dem
+    letzten Pivotal Point unten; gespiegelt). ab = {"oben"/"unten": Preis}, von wo der Weg voraus zählt (beim Setup,
+    das noch wartet, die Kante – die Front ist dann der Auslöser, kein Hindernis), sonst der Kurs. → dict oder None."""
+    import vcp_zone
+    nb = nb or notizbuch(df)
+    if not nb:
+        return None
+    fr = fr or front(df, nb)
+    kurs = float(df["Close"].iloc[-1])
+    a = float(vcp_zone.atr(df).iloc[-1] or 0)
+    gr = gruppen(df, nb)
+    o_, u_ = (fr["oben"] or {}).get("preis"), (fr["unten"] or {}).get("preis")
+    drittel = None
+    if o_ and u_ and o_ > u_:
+        x = (kurs - u_) / (o_ - u_)
+        drittel = ("über der Front" if x > 1 else "unter der Unterkante" if x < 0
+                   else DRITTEL[min(len(DRITTEL) - 1, int(x * len(DRITTEL)))])
+    weg = {}
+    for seite, sg in (("oben", 1), ("unten", -1)):
+        ref = (ab or {}).get(seite) or kurs
+        rand = a * STELLUNG_ATR if ref != kurs else 0                   # die Kante selbst zählt nicht mit
+        voraus = [g for g in gr if rand < sg * (g["preis"] - ref) <= WEG_ATR * a]
+        naechste = min((g for g in gr if sg * (g["preis"] - ref) > rand), key=lambda g: abs(g["preis"] - ref), default=None)
+        weg[seite] = {"n": len(voraus), "sauber": not voraus, "unruhig": len(voraus) >= UNRUHIG_AB, "ab": ref,
+                      "von_kante": ref != kurs,
+                      "bis": round((naechste["preis"] / kurs - 1) * 100, 1) if naechste else None}
+    chop = False
+    if o_ and u_ and nb["spalte"] not in ("AT", "AB"):
+        innen = [g for g in gr if u_ + a * STELLUNG_ATR < g["preis"] < o_ - a * STELLUNG_ATR]
+        chop = len(innen) >= CHOP_AB
+    weit = None
+    tiefs = [p_ for p_ in nb["pivotal"] if p_["art"] == "tief"]
+    hochs = [p_ for p_ in nb["pivotal"] if p_["art"] == "hoch"]
+    if a and tiefs and drittel in ("oberes Drittel", "über der Front") and kurs - tiefs[-1]["preis"] >= WEIT_SCHWUENGE * SCHWUNG * a:
+        weit = "auf"
+    if a and hochs and drittel in (DRITTEL[0], "unter der Unterkante") and hochs[-1]["preis"] - kurs >= WEIT_SCHWUENGE * SCHWUNG * a:
+        weit = "ab"
+    return {"drittel": drittel, "weg": weg, "chop": chop, "weit": weit, "gruppen": gr}
 
 
 LAGE = {"AT": ("🟢", "Vormarsch"), "AB": ("🔴", "Rückzug")}   # eine Sprache für Titel und Markt (Micky 26.11.2026);

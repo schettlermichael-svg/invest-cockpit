@@ -208,9 +208,14 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     a_kipp = float(e.get("atr") or 0)
     import livermore                                                                # Gewicht einer Stellung (26.11.):
 
-    def gewicht(preis):                                                             # stehende Pivotal Points innerhalb
-        n_ = sum(abs(q_["preis"] - preis) <= livermore.STELLUNG_ATR * a_kipp for q_ in pp_offen)   # ½ ATR
-        return f' · {n_} {"Decken" if preis > float(df["Close"].iloc[-1]) else "Böden"}' if n_ > 1 else ""
+    gr_ = livermore.gruppen(df) if pp_offen else []                                 # Gewicht einer Stellung (26.11.):
+
+    def gewicht(preis):                                                             # Pivotal Points innerhalb ½ ATR und
+        g_ = next((g for g in gr_ if abs(g["preis"] - preis) <= livermore.STELLUNG_ATR * a_kipp), None)   # Abpraller
+        if not g_:                                                                  # der Dochte (Sharp)
+            return ""
+        teil = f' · {g_["gewicht"]} {"Decken" if preis > float(df["Close"].iloc[-1]) else "Böden"}' if g_["gewicht"] > 1 else ""
+        return teil + (f' · 🛡{g_["abpraller"]}' if g_["abpraller"] else "")        # 🛡 = abgewehrte Angriffe
     if la["zone"]:                                    # Wörterbuch (Micky 26.11.2026): Front, Unterkante, Decke, Boden
         etiketten += ([] if oben_ else [(Y(hi), f"Spanne oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Unterkante {zahl(lo)}{gewicht(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
@@ -594,7 +599,8 @@ def legende():
               "gespiegelt an der Unterkante: ein Tief 1 ATR darunter bestätigt den Rückzug (📒), ein Schluss 1 ATR "
               "darüber ist die Falle (🦊)"),
              (TEXT_2, "Gewicht einer Stellung: „· 4 Böden“ am Etikett = so viele stehende Pivotal Points liegen "
-              "innerhalb ½ ATR zusammen"),
+              "innerhalb ½ ATR zusammen; „· 🛡3“ = 3 Abpraller: so oft kam ein Docht bis ¼ ATR heran und der Schluss blieb "
+              "auf seiner Seite (Sharp: Dochte machen ein Niveau stärker)"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zum Ziel (nächste Stellung in Richtung des Setups; "
               "freie Bahn bis zum Rand), rote Fläche bis zum Stopp (das Risiko)"),
              (GRUEN, "✈️ freie Bahn: keine Stellung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
