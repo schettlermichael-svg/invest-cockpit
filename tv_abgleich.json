@@ -1,5 +1,5 @@
 {
- "stand": "25.11.2026 16:14",
+ "stand": "26.11.2026 05:38",
  "listen": {
   "Watchlist": [
    "AAOI",
@@ -187,11 +187,14 @@
    "ANT",
    "BNY",
    "CAT",
+   "EXPD",
    "FDX",
    "HWM",
    "LUV",
    "NVDA",
    "TTWO",
+   "UNM",
+   "VIA",
    "WST"
   ]
  }
