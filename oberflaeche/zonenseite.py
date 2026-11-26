@@ -268,8 +268,9 @@ def abgelegt(tk):
         return None
 
 
-def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
-    """Zonenchart einer Ebene aus der Rechnung von seite_zonen."""
+def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None, position=None):
+    """Zonenchart einer Ebene aus der Rechnung von seite_zonen; position = die gehaltene Position (Depot-Seite) – dann
+    zeichnet der Chart ihre Linien statt des Schlachtplans eines neuen Setups."""
     import zonen
     import zonenchart
     f = r["fuehrte"]
@@ -277,10 +278,10 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None):
     la_tag = f["lage"]["Tag"]
     if ebene == "Stunde" and la_tag and la_tag["zone"]:
         rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
-    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" else None,
+    return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" and not position else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
-                           f["festungen"][ebene], f["basis"], r["tk"])
+                           f["festungen"][ebene], f["basis"], r["tk"], position if ebene == "Tag" else None)
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──

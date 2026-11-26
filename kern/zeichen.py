@@ -465,33 +465,6 @@ def kraft_ohne_weg(df, tage=KOW_TAGE, oben=None, unten=None, alle=False):
     return aus if alle else None
 
 
-def tagesmarken(df, tage=MARKEN_TAGE):
-    """Für den Chart (13.11.2026): Pocket Pivots, Abgabetage (Distributionstage des Titels) und verdeckte Abgabe der
-    letzten `tage` Handelstage, nach denselben Regeln wie akkumulation() → {pocket, abgabe, churning: [Datum]}."""
-    aus = {"pocket": [], "abgabe": [], "churning": []}
-    if df is None or len(df) < 70:
-        return aus
-    c, h, l, v = (df[x].to_numpy(float) for x in ("Close", "High", "Low", "Volume"))
-    s50 = pd.Series(v).rolling(50).mean().to_numpy()
-    g10 = pd.Series(c).rolling(10).mean().to_numpy()
-    g50 = pd.Series(c).rolling(50).mean().to_numpy()
-    for i in range(max(MARKEN_START, len(df) - tage), len(df)):
-        sp = h[i] - l[i]
-        lage = (c[i] - l[i]) / sp if sp > 0 else LAGE_MITTE
-        auf, ab, laut = c[i] > c[i - 1], c[i] < c[i - 1], v[i] > s50[i]
-        if ab and laut and lage <= 1 / 3:
-            aus["abgabe"].append(df.index[i])
-        if auf and laut and lage <= 1 / 3:
-            aus["churning"].append(df.index[i])
-        if (auf and c[i] > g10[i] and c[i] > g50[i] and lage >= LAGE_MITTE and c[i] <= g10[i] * PP_GD10_MAX
-                and c[i - 1] / c[i - PP_RUECK] - 1 <= PP_VORLAUF_MAX):
-            vor = range(i - PP_ABGABE_TAGE, i)
-            ab_vol = [v[j] for j in vor if c[j] < c[j - 1]]
-            if ab_vol and v[i] > max(ab_vol):
-                aus["pocket"].append(df.index[i])
-    return aus
-
-
 def freitag(df, n_atr=2.0):
     """Keine Gewinnmitnahme am Freitag (Micky 13.11.2026): Wer nach einer starken Woche am Freitagabend nicht
     verkauft, trägt zwei Tage Risiko ohne Handel – die Käufer trauen dem Lauf. Letzte fertige Woche: Wochenschluss
@@ -532,8 +505,9 @@ def freitag(df, n_atr=2.0):
 
 # ── Relativ zum Markt ─────────────────────────────────────────────────────────────────────────────────────────────
 def korrekturfenster(idx):
-    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: die Markt-Ampel
-    (Livermores Frontbericht des Index, Micky 25.11.2026; vorher der Zirkel, davor O'Neils Ampel) steht nicht auf 🟢, oder der Index liegt ≥ 3 %
+    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: das Lagebild aus
+    dem letzten Lauf (Spitze und Heer, Micky 26.11.2026 – die Führer, nicht der Durchschnitt; ohne Lagebild Livermores
+    Frontbericht des Index) steht nicht auf 🟢, oder der Index liegt ≥ 3 %
     unter dem Hoch der 60 Tage – start = Indexhoch der 60 Tage. Vorbei (Prüf-Agent 13.11.2026: die Stärke verschwand,
     sobald der Markt wieder lief – genau dann brechen die Führer aus): die letzte Korrektur von mindestens 3 %, deren
     Tief höchstens NACHWIRKUNG_TAGE Handelstage zurückliegt."""
@@ -541,8 +515,9 @@ def korrekturfenster(idx):
     c60 = c.iloc[-KORREKTUR_FENSTER:]
     try:
         import zirkel
-        gruen = zirkel.livermore_ampel(idx) == "grün"
-    except Exception:  # noqa: BLE001 – ohne Zirkel des Index zählt nur der Abstand zum Hoch
+        m = zirkel.markt()
+        gruen = (m["ampel"] if m else zirkel.livermore_ampel(idx)) == "grün"
+    except Exception:  # noqa: BLE001 – ohne Lagebild und Notizbuch des Index zählt nur der Abstand zum Hoch
         gruen = True
     if not gruen or (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:
         return c60.idxmax(), None

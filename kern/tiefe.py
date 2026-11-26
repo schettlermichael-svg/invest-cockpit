@@ -484,7 +484,7 @@ def ebene_zeit(df, tag, name):
     return df.index[i] if i < len(df) else None
 
 
-def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
+def ebene(name, df, d30, zahltag=None, tage=None):
     """Bausteine einer Zeitebene mit denselben Regeln (Micky 20.11.2026, Titel-Analyse), gezählt in Kerzen der Ebene:
     Struktur (Anker, Profil, Pivots, Quetschung), alte Wertzone, Wertwanderung (PbD entfernt 22.11.2026). df = Kerzen der Ebene, d30 =
     30-Minuten-Kerzen, tage = Tageskerzen (für die Woche). Woche: Zeitprofil und Schwänze aus Tageskerzen,
@@ -493,8 +493,7 @@ def ebene(name, df, d30, zahltag=None, tage=None, zone_start=None):
     if df is None or len(df) < 2 * IMPULS_SCHLUESSE + ALT_MIN:
         return None
     h1 = stunde(d30)
-    st_ = struktur(df, d30 if name == "Stunde" else h1, ebene_zeit(df, zahltag, name),
-                   zone_start if name == "Tag" else None)
+    st_ = struktur(df, d30 if name == "Stunde" else h1, ebene_zeit(df, zahltag, name))
     a = st_["atr"]
     return {"name": name, "df": df, "struktur": st_, "atr": a, "alt": alte_balance(df, st_["anker_i"]),
             "fein": d30 if name == "Stunde" else h1,

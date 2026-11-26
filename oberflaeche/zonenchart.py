@@ -10,7 +10,7 @@ relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-
 import numpy as np
 import pandas as pd
 
-from gestaltung import AMPEL, BLAU, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, t as t_esc, zahl
+from gestaltung import AMPEL, BLAU, GELB, GRUEN, LILA, RAND, ROT, TEXT_2, TEXT_3, t as t_esc, zahl
 
 B = 1200                               # Layout: Breite des Bildes
 LINKS, RECHTS, PROFIL_W = 56, 190, 110  # Layout: Preisachse, Etiketten, Profil (Zeit links, Volumen rechts)
@@ -106,7 +106,7 @@ def _zahlentage(tk):
 
 
 def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None,
-         ba=None, tk=None):
+         ba=None, tk=None, position=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
@@ -118,7 +118,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     Rechnung wie Notizbuch und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     Fehlausbruch, Rücktest und Decke der Gefangenen (ba = zonen.basis), ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 📒 Livermores Bestätigung, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
-    Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum)."""
+    Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum). position = die gehaltene
+    Position (depotleiste.positionsmarken): Einstieg ab dem Kauftag, Anfangsstopp, Stopp jetzt, enge Linie (Depot-Seite,
+    Micky 26.11.2026: derselbe Chart wie die Titelseite, mit der Frontkarte)."""
     import avwap
     import rueckenwind
     import tiefe
@@ -134,7 +136,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     N = len(d)
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
     lo, hi = la["zone"] or (None, None)
-    werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else [])
+    werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else []) \
+        + [x for x in ((position or {}).get(k_) for k_ in ("einstieg", "anfang", "stopp", "enger")) if x]
     pp_offen, pp_stark, front_k = [], set(), set()                                  # Livermores Pivotal Points, die noch
     if "livermore" in linien_:                                                      # stehen (Micky 25.11.2026): kräftig
         import livermore                                                            # die Front (Spanne oben und unten)
@@ -207,20 +210,42 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
     a_kipp = float(e.get("atr") or 0)
-    if piv is not None and a_kipp > 0:                                              # Kipp-Zone (Micky 26.11.2026,
-        import livermore                                                            # Frontkarte): je 1 ATR (Livermores
-        b_ = livermore.BESTAETIGUNG * a_kipp                                        # Bestätigung) über dem Pivot grün =
-        for y_a, y_b, farbe, text in ((piv, piv + b_, GRUEN, "📒 Angriff bestätigt"),   # Angriff bestätigt, darunter
-                                      (piv - b_, piv, ROT, "🦊 Fehlausbruch")):     # rot = Fehlausbruch
+    short_ = bool(la.get("zone")) and ((t and t["richtung"] < 0) or la.get("phase") == "bruch")
+    kante = lo if short_ else piv                     # Kipp-Zone (Micky 26.11.2026, Frontkarte): long um den Pivot,
+    if kante is not None and a_kipp > 0:              # short gespiegelt um die Unterkante; je 1 ATR (Livermores
+        import livermore                              # Bestätigung), oben grün, unten rot
+        b_ = livermore.BESTAETIGUNG * a_kipp
+        if short_:
+            baender = ((kante, kante + b_, GRUEN, "🦊 Fehlausbruch", f"ein Schluss über {zahl(kante + b_)} (1 ATR über der Unterkante)", kante + b_),
+                       (kante - b_, kante, ROT, "📒 Rückzug bestätigt", f"ein Tief unter {zahl(kante - b_)} (1 ATR unter der Unterkante)", kante - b_))
+        else:
+            baender = ((kante, kante + b_, GRUEN, "📒 Angriff bestätigt", f"ein Hoch über {zahl(kante + b_)} (1 ATR über dem Pivot)", kante + b_),
+                       (kante - b_, kante, ROT, "🦊 Fehlausbruch", f"ein Schluss unter {zahl(kante - b_)} (1 ATR unter dem Pivot)", kante - b_))
+        for y_a, y_b, farbe, text, wie, wert_ in baender:
             if y_b < pmin or y_a > pmax:
                 continue
             A(f'<rect x="{LINKS}" y="{Y(min(y_b, pmax)):.1f}" width="{ende - LINKS}" '
               f'height="{max(1, Y(max(y_a, pmin)) - Y(min(y_b, pmax))):.1f}" fill="{farbe}" fill-opacity="{KIPP_DECK}">'
-              f'<title>Kipp-Zone: {text} – {"ein Hoch über " + zahl(piv + b_) if farbe == GRUEN else "ein Schluss unter " + zahl(piv - b_)}'
-              f' (1 ATR {"über" if farbe == GRUEN else "unter"} dem Pivot)</title></rect>')
-            wert_ = piv + b_ if farbe == GRUEN else piv - b_
+              f'<title>Kipp-Zone: {text} – {wie}</title></rect>')
             if pmin <= wert_ <= pmax:
                 etiketten.append((Y(wert_), f"{text[:2]} {zahl(wert_)}", farbe))
+    if position and position.get("einstieg"):            # die gehaltene Position (Depot-Seite)
+        kt = pd.Timestamp(position["tag"]) if position.get("tag") else None
+        xk = X(pos(kt)) if kt is not None and kt >= d.index[0] else LINKS
+        for wert, farbe, strich, dicke, vor in ((position["einstieg"], BLAU, "6 4", 1.6, "Einstieg"),   # Layout
+                                                (position.get("anfang"), TEXT_3, "4 4", 1.2, "Anfangsstopp"),   # Layout
+                                                (position.get("stopp"), ROT, "", 2.2, "Stopp jetzt"),   # Layout
+                                                (position.get("enger"), GELB, "", 2.0, f'enger: {position.get("enger_art", "")}')):
+            if not wert or (vor == "Anfangsstopp" and wert == position.get("stopp")) or not pmin <= wert <= pmax:
+                continue
+            text = f'{vor} {zahl(wert)}'                                            # Etikett kurz, die Linie im Titel
+            titel_ = text + (f' · {position.get("linie") or "Anfang"}' if vor == "Stopp jetzt" else "")
+            A(f'<line x1="{xk:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="{dicke}"'
+              + (f' stroke-dasharray="{strich}"' if strich else "") + f'><title>{t_esc(titel_)}</title></line>')
+            etiketten.append((Y(wert), text, farbe))
+        if kt is not None and kt >= d.index[0]:
+            A(f'<line x1="{xk:.1f}" x2="{xk:.1f}" y1="{OBEN}" y2="{OBEN + KURS_H}" stroke="{BLAU}" stroke-opacity="0.5" '
+              f'stroke-dasharray="2 4"><title>Kauf am {kt:%d.%m.%Y}</title></line>')   # Layout
     if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
           f'stroke-width="2.4" stroke-dasharray="8 4">'   # Layout
@@ -554,8 +579,10 @@ def legende():
               "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
               "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis die Front (Spanne oben und unten) und je "
               "die nächste Stellung über und unter dem Kurs, die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
-             (GRUEN, "Kipp-Zone (Frontkarte): 1 ATR über dem Pivot grün – ein Hoch darüber bestätigt den Angriff (📒, "
-              "Livermores 3 Punkte); 1 ATR darunter rot – ein Schluss darunter ist der Fehlausbruch (🦊)"),
+             (GRUEN, "Kipp-Zone (Frontkarte): long 1 ATR über dem Pivot grün – ein Hoch darüber bestätigt den Angriff (📒, "
+              "Livermores 3 Punkte); 1 ATR darunter rot – ein Schluss darunter ist der Fehlausbruch (🦊). Short "
+              "gespiegelt an der Unterkante: ein Tief 1 ATR darunter bestätigt den Rückzug (📒), ein Schluss 1 ATR "
+              "darüber ist die Falle (🦊)"),
              (TEXT_2, "Gewicht einer Stellung: „· 4 Böden“ am Etikett = so viele stehende Pivotal Points liegen "
               "innerhalb ½ ATR zusammen"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "

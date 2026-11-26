@@ -65,7 +65,7 @@ def _titel(tk, start=None):
         t = setup(zonen.trade(e, la, ba), zeichen.zirkel(k))
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         nb_ = ba.get("nb") or {}
-        feld = {"phase": la["phase"] if la else None, "lv_trend": nb_.get("trend"),   # Livermores Trend (Führer)
+        feld = {"phase": la["phase"] if la else None, "lv_spalte": nb_.get("spalte"),   # Livermores Spalte = Lage
                 "pivot": la["pivot"] if la else None, "kurs": la["kurs"] if la else None,   # ▲▲▲-Liste (23.11.2026)
                 "trade": {x: t.get(x) for x in TRADE_FELDER} if t else None,
                 "hoch52": bool(len(h) >= JAHR_TAGE and h[-1] >= h[-JAHR_TAGE:].max()),
@@ -134,28 +134,38 @@ def indizes():
     return aus
 
 
+def spalte(x):
+    """Livermores Spalte eines Titels aus dem Feld (ältere Läufe: der Trend)."""
+    return x.get("lv_spalte", x.get("lv_trend"))
+
+
+def _zaehlen(xs):
+    """{auf, pause, ab}: wie viele im Vormarsch (Spalte Aufwärtstrend), in der Gefechtspause, im Rückzug – dieselbe
+    Sprache wie der Lagebericht des Titels (livermore.lage, Micky 26.11.2026)."""
+    sp = [spalte(x) for x in xs]
+    return {"auf": sp.count("AT"), "pause": sum(1 for s_ in sp if s_ and s_ not in ("AT", "AB")), "ab": sp.count("AB")}
+
+
 def fuehrer(f_):
-    """Die Spitze (Schicht 1 der Lage): die Führer – Garde und Angriff im Rückenwind – im Notizbuch: {auf, ab} – wie
-    viele rücken vor (Livermores Trend aufwärts), wie viele ziehen sich zurück (abwärts)."""
+    """Die Spitze (Schicht 1 der Lage): die Führer – Garde und Angriff im Rückenwind – im Notizbuch → {auf, pause, ab}."""
     import rueckenwind
     rw = (rueckenwind.laden() or {}).get("titel") or {}
-    vorn = [tk for tk, x in rw.items() if x.get("klasse") in rueckenwind.ANGRIFF_KLASSEN and tk in f_]
-    return {"auf": sum(f_[tk].get("lv_trend") == "AT" for tk in vorn),
-            "ab": sum(f_[tk].get("lv_trend") == "AB" for tk in vorn)}
+    return _zaehlen([f_[tk] for tk, x in rw.items() if x.get("klasse") in rueckenwind.ANGRIFF_KLASSEN and tk in f_])
 
 
 def heer(f_):
-    """Das Heer (Schicht 2 der Lage): alle Titel des Laufs (Revier, Watchlist, Depot) im Notizbuch → {auf, ab}."""
-    return {"auf": sum(x.get("lv_trend") == "AT" for x in f_.values()),
-            "ab": sum(x.get("lv_trend") == "AB" for x in f_.values())}
+    """Das Heer (Schicht 2 der Lage): alle Titel des Laufs (Revier, Watchlist, Depot) im Notizbuch → {auf, pause, ab}."""
+    return _zaehlen(list(f_.values()))
 
 
 # ── Markt-Ampel: das Lagebild in drei Schichten (Micky 26.11.2026; Livermore las den Markt an den Führern, nie am
 # Index – How to Trade in Stocks, Kap. I und III; Weinstein: vom Wald zu den Bäumen). Davor 25.11. das Notizbuch des
 # S&P 500, 23.–25.11. der Zirkel des Index, bis 23.11. O'Neil.
-#   Spitze (fuehrer) und Heer (heer) bestimmen nach der Mehrheit im Notizbuch – keine eigene Prozentzahl, ungemessen:
-#   🟢 Vormarsch      in beiden mehr Titel im Aufwärtstrend als im Abwärtstrend
-#   🔴 Rückzug        in beiden mehr im Abwärtstrend
+#   Spitze (fuehrer) und Heer (heer) bestimmen nach der Mehrheit im Notizbuch, je Titel die Spalte von heute
+#   (livermore.lage: Aufwärtstrend = Vormarsch, Rally und Reaktion = Gefechtspause, Abwärtstrend = Rückzug) – keine
+#   eigene Prozentzahl, ungemessen:
+#   🟢 Vormarsch      in beiden mehr Titel im Vormarsch als im Rückzug
+#   🔴 Rückzug        in beiden mehr im Rückzug
 #   🟡 Gefechtspause  sonst (auch wenn Spitze und Heer uneins sind)
 #   Der Durchschnitt (indizes: Notizbuch des S&P 500 und des Nasdaq) bestätigt mit ✓ (dieselbe Farbe) oder ✗.
 LIVERMORE_AMPEL = {"AT": "grün", "AB": "rot"}
@@ -198,7 +208,7 @@ def markt_text(m):
     for wort, k in (("Spitze (Garde und Angriff)", "fuehrer"), ("Heer (alle Titel)", "heer")):
         x = (m or {}).get(k)
         if x:
-            teile.append(f'{wort}: {x["auf"]} im Vormarsch, {x["ab"]} im Rückzug')
+            teile.append(f'{wort}: {x["auf"]} im Vormarsch, {x.get("pause", 0)} in der Gefechtspause, {x["ab"]} im Rückzug')
     for name, x in (m or {}).get("indizes", {}).items():
         teile.append(f'{name}: {x.get("spalte", "")} {x.get("bestaetigt", "")}'
                      + (f' · Zirkel Phase {x["wort"]} ({x["name"]})' if x.get("wort") else "")
@@ -334,9 +344,11 @@ def heisse(n=MELDUNG_JE_SEITE):
     dann nach Rang; Short = Bruch der Unterkante
     mit Volumen, Rückzug zuerst; je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗). Spannen im Aufbau kommen
     nicht in die Meldung (sie stehen in der Liste).
-    Je Titel: Kürzel mit Firmenname (26.11.2026), Klasse, Trade, Einstieg, Stopp mit Risiko, ✈️ und Keim.
+    Je Titel: Kürzel mit Firmenname (26.11.2026), Klasse, Trade, Lage, ½ antasten · ½ aufstocken bei 📒 (sonst Einstieg),
+    Stopp mit Risiko, ✈️ und Keim.
     → (Text, Anzahl)."""
     import daten
+    import livermore
     import rueckenwind
     import rueckenwind_seite
     import zeichen
@@ -351,7 +363,11 @@ def heisse(n=MELDUNG_JE_SEITE):
         nm = daten.kurzname(tk)                                                     # Name hinter dem Kürzel (26.11.)
         teile = [f"{sym} {tk}" + (f" ({nm})" if nm else ""), f"{kl} · {rueckenwind.KLASSEN[kl - 1]}" if kl else "", trade_wort(f_[tk]),
                  dreifach(tk, t, rw), gegenwind(tk, t),
-                 f'Einstieg {zahl(t["einstieg"])} $ · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
+                 " ".join(livermore.lage(spalte(f_[tk]))) if spalte(f_[tk]) else "",      # Lage (26.11.)
+                 (f'½ antasten {zahl(t["einstieg"])} $ · ½ aufstocken bei 📒 {zahl(t["aufstocken"])} $'
+                  + (" ✓" if t.get("aufgestockt") else "") if t.get("aufstocken")      # Livermore: erst die Probe,
+                  else f'Einstieg {zahl(t["einstieg"])} $')                              # nachlegen nur im Gewinn
+                 + f' · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(x.get("frei"), ""),
                  " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Phase in Klartext (24.11.2026)
         return " · ".join(s for s in teile if s)

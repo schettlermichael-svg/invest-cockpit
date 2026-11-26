@@ -20,7 +20,6 @@ sys.path.insert(0, os.path.join(HIER, "oberflaeche"))
 sys.path.insert(0, os.path.join(HIER, "kern"))
 
 from gestaltung import BLAU, KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
-import chart  # noqa: E402
 import titel  # noqa: E402
 import zonenseite  # noqa: E402
 import uebersicht  # noqa: E402
@@ -220,12 +219,18 @@ def depot_zeigen():
         st.link_button("Deep Dive →", f"?seite=Titelseite&t={tk}", use_container_width=True)
     with c_:
         position_knopf(tk)
-    marken = depotleiste.positionsmarken(p, df)
-    svg = chart.chart(df, "Tag", None, "6 M", gd_kurz=True, marken=marken)
+    try:                                          # derselbe Zonenchart wie die Titelseite, mit der Frontkarte und
+                                                  # den Linien der Position (Micky 26.11.2026)
+        teile = zonenseite.abgelegt(tk) or _gebaut("zonen", _codestand(), tk)
+        marken = depotleiste.positionsmarken(p, teile["r"]["df"])
+        svg = zonenseite.chart(teile["r"], "Tag", (10, 20), (), {"livermore"}, position=marken.get("position"))
+        kopf_ = zonenseite.lagebericht(teile["r"])
+    except Exception as e:  # noqa: BLE001 – ohne Chart bleibt die Karte der Position
+        svg, kopf_ = f'<p style="color:{TEXT_2}">Chart nicht gerechnet: {e}</p>', ""
     st.markdown(gestaltung.seite(gestaltung.karte(
-        f'<div style="color:{TEXT_2};font-size:14px;margin-bottom:6px">Chart der Position · GD10 orange, GD20 rosa · '
-        f'Einstieg blau, Anfangsstopp grau, Stopp jetzt rot, Ende-Zeichen gelb</div>' + svg, f"{tk} · Chart der Position")
-        + depotleiste.titelkarte(tk, df), oben=0, unten=12), unsafe_allow_html=True)
+        f'<div style="color:{TEXT_2};font-size:14px;margin-bottom:6px">Chart der Position · Livermores Frontkarte · '
+        f'GD10 orange, GD20 rosa · Einstieg blau, Anfangsstopp grau, Stopp jetzt rot, enge Linie gelb</div>' + kopf_ + svg,
+        f"{tk} · Chart der Position") + depotleiste.titelkarte(tk, df), oben=0, unten=12), unsafe_allow_html=True)
 
 
 def performance_zeigen():

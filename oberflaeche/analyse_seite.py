@@ -1,10 +1,10 @@
 """Seite „Analyse“ (Micky 21.11.2026): die Tiefenanalyse der App „Titel-Analyse“ im Cockpit – je Titel die
 Aussagezeilen mit genau einem Zeichen der Zeichenliste (gestaltung.ZEICHEN_LISTE).
 
-Reihenfolge wie in der Titel-Analyse: Struktur nach Dalton · PbD nach Tom Vorwald (Tag, Woche, Stunde) · Wertwanderung
-(Tag, Woche) · AVWAP nach Shannon mit Zange · Relative Stärke (Tabelle, Stärke in der Schwäche, RS-Linie) · Geldfluss
-(Rückenwind, Rangtabelle der Sektoren, CMF). Die Einschätzung (Stratege mit Websuche) setzt app.py darunter.
-Gerechnet in kern/tiefe.py; Fallen (Spring, Upthrust, Fehlausbruch) und Pivot der Enge nach den Regeln des Cockpits.
+Seit 26.11.2026 auf unserem System (Micky: „Analyse auch auf Livermore“): oben der Lagebericht, dann Struktur nach
+Livermore (Notizbuch, Frontkarte, Spanne und Phase, Kipp-Zone, Setup, Einigkeit der Ebenen, Fallen) aus derselben Fährte
+wie Titelseite und Chart (zonenseite.rechnen) · Gelände nach Dalton (Profil der Spanne als Zeichen) · Wertwanderung (Tag,
+Woche) · AVWAP nach Shannon mit Zange · Relative Stärke · Geldfluss. Die Einschätzung (Stratege) setzt app.py darunter.
 """
 import pandas as pd
 
@@ -33,62 +33,100 @@ def _p(x):
     return f"{'+' if x >= 0 else '−'}{gestaltung.zahl(abs(x), 1)} %"
 
 
-# ── Struktur nach Dalton ─────────────────────────────────────────────────────────────────────────────────────────
-def struktur_zeilen(st_, alt, fallen, enge, kurs):
-    import tiefe
-    pr = st_["profil"]
-    z = [("🟡", f"Anker {_d(st_['anker'])} – {st_['anker_grund']}"),
-         ("🟡", f"Profil aus {pr['kerzen']} {pr['quelle']} ab {_d(pr['ab'])}, Stufen {_k(pr['schritt'])} $: POC "
-                f"{_k(pr['poc'])} · Wertzone 70 % {_k(pr['val'])}–{_k(pr['vah'])}")]
-    if kurs > pr["vah"]:
-        z.append(("🦬", f"Kurs über der Wertzone ({_p((kurs / pr['vah'] - 1) * 100)} über der Oberkante)"))
-    elif kurs < pr["val"]:
-        z.append(("🐻", f"Kurs unter der Wertzone ({_p((kurs / pr['val'] - 1) * 100)} unter der Unterkante)"))
+# ── Struktur nach Livermore (26.11.2026) ─────────────────────────────────────────────────────────────────────────
+def livermore_zeilen(rz, fallen):
+    """Struktur nach Livermore aus der Fährte der Titelseite (rz = zonenseite.rechnen): Lage, Frontkarte, Spanne und
+    Phase der Tagesebene, Kipp-Zone, Setup mit Antasten und Aufstocken, Einigkeit der Ebenen, Fallen."""
+    import livermore
+    df = rz["df"].dropna(subset=["High", "Low", "Close"])
+    nb = livermore.notizbuch(df)
+    if not nb:
+        return [("⚪", "Livermores Notizbuch: zu wenige Kerzen")]
+    fu = rz["fuehrte"]
+    la, tr, e_ = fu["lage"]["Tag"], fu["trade"], rz["ebenen"]["Tag"]
+    fr = livermore.front(df, nb)
+    a_, w_ = livermore.lage(nb["spalte"])
+    z = [(a_, f"Lage {w_} – Livermore schreibt heute in der Spalte {livermore.SPALTEN[nb['spalte']]}")]
+    if fr["oben"]:
+        z.append(("🪝", f"Front oben (Pivot, letzter Pivotal Point oben) {_k(fr['oben']['preis'])} ({_d(fr['oben']['tag'])})"))
+    if fr["unten"]:
+        z.append(("🪝", f"Unterkante (letzter Pivotal Point unten) {_k(fr['unten']['preis'])} ({_d(fr['unten']['tag'])})"))
+    for p_, wo, frei_ in ((fr["ziel"], "darüber", "✈️ freie Bahn darüber – keine stehende Stellung über dem Kurs"),
+                          (fr["boden"], "darunter", "✈️ freie Bahn darunter – keine stehende Stellung unter dem Kurs")):
+        if p_:
+            z.append(("🪝", f"Nächste stehende Stellung {wo}: {_k(p_['preis'])} ({_d(p_['tag'])}) – "
+                            f"{_p((p_['preis'] / fr['kurs'] - 1) * 100)} vom Kurs"))
+        else:
+            z.append(("✈️", frei_[2:].strip()))
+    z.append(("⚪", f"{len(fr['offen'])} Pivotal Points stehen noch (gefallen erst mit einem Schluss 1 ATR jenseits)"))
+    if la and la.get("zone"):
+        z.append(("🟡" if la["richtung"] == 0 else "🦬" if la["richtung"] > 0 else "🐻",
+                  f"{la['name']} {_k(la['zone'][0])}–{_k(la['zone'][1])}: {la['zeichen']} {la['wort']}"
+                  + (f" · {la['info']}" if la.get("info") else "")))
+    elif la:
+        z.append(("🦬", f"{la['zeichen']} {la['wort']} – keine Spanne, der Kurs läuft"))
+    atr = e_["atr"] if e_ else None
+    if tr:
+        kante, b_ = tr["pivot"], livermore.BESTAETIGUNG * (atr or 0)
+        z.append(("🦬" if tr["richtung"] > 0 else "🐻",
+                  f"Setup {tr['zeichen']} {tr['name']} {'long' if tr['richtung'] > 0 else 'short'} {tr.get('zirkel') or ''}: "
+                  + (f"½ antasten {_k(tr['einstieg'])} · ½ aufstocken bei 📒 {_k(tr['aufstocken'])}"
+                     + (" (erreicht)" if tr.get("aufgestockt") else "") if tr.get("aufstocken") else f"Einstieg {_k(tr['einstieg'])}")
+                  + f" · Stopp {_k(tr['stopp'])} {tr['ampel']} {gestaltung.zahl(tr['risiko'], 1)} %"))
+        if b_:
+            z.append(("🪝", (f"Kipp-Zone um den Pivot {_k(kante)}: 📒 bestätigt mit einem Hoch über {_k(kante + b_)}, "
+                             f"Fehlausbruch bei einem Schluss unter {_k(kante - b_)}") if tr["richtung"] > 0 else
+                            (f"Kipp-Zone um die Unterkante {_k(kante)}: 📒 bestätigt mit einem Tief unter {_k(kante - b_)}, "
+                             f"Falle bei einem Schluss über {_k(kante + b_)}")))
     else:
-        z.append(("🟡", f"Kurs {_k(kurs)} in der Wertzone – {_p((kurs / pr['vah'] - 1) * 100)} zur Oberkante, "
-                        f"{_p((kurs / pr['val'] - 1) * 100)} zur Unterkante"))
-    for lo, hi in pr["duenn"]:
-        z.append(("🟡", f"Dünne Zone {_k(lo)}–{_k(hi)} (weniger als ⅓ des POC-Volumens) – hier läuft der Kurs schnell"))
-    if pr["docht_unten"]:
-        z.append(("🟢", f"Docht unten {_k(pr['docht_unten'][0])}–{_k(pr['docht_unten'][1])}: dort zurückgekauft"))
-    if pr["docht_oben"]:
-        z.append(("🔴", f"Docht oben {_k(pr['docht_oben'][0])}–{_k(pr['docht_oben'][1])}: dort abverkauft"))
-    z.append(("🟡", f"Balance seit {_d(st_['balance_roh'])} (überlappender Wert, Regel des Cockpits) · Pivots ab "
-                    f"{_d(st_['balance_start'])}"))
-    z.append(("🦬", f"Pivot long am Rand der Balance {_k(st_['pivot'])} ({_d(st_['pivot_tag'])}, "
-                    f"{_tests(st_['tests_oben'])}: {', '.join(_d(x) for x in st_['tests_oben'])}) · Pivot short "
-                    f"{_k(st_['short_pivot'])} ({_d(st_['short_pivot_tag'])}, {_tests(st_['tests_unten'])})"))
-    if enge and enge.get("pivot"):
-        z.append(("🦬", f"Pivot (Livermores Pivotal Point oben) {_k(enge['pivot'])}" + (f" · Unterkante der Zone {_k(enge['unten'])}"
-                                                                          if enge.get("unten") else "")))
-    q = st_["quetsch"]
-    if q and q["art"] == "aufsteigend":
-        z.append(("🦈", f"Einquetschen seit {_d(q['ab'])}: Tiefs der Drittel steigen "
-                        f"{' → '.join(_k(x) for x in q['tiefs'])}, Hochs bleiben bei {_k(min(q['hochs']))}–{_k(max(q['hochs']))}"))
-    elif q:
-        z.append(("🦈", f"Einquetschen nach unten seit {_d(q['ab'])}: Hochs der Drittel fallen "
-                        f"{' → '.join(_k(x) for x in q['hochs'])}, Tiefs bleiben bei {_k(min(q['tiefs']))}–{_k(max(q['tiefs']))}"))
-    elif st_["drittel"]:
-        ti, ho = st_["drittel"]
-        z.append(("🟡", f"Kein Einquetschen seit {_d(st_['anker'])}: Tiefs der Drittel {' / '.join(_k(x) for x in ti)}, "
-                        f"Hochs {' / '.join(_k(x) for x in ho)}"))
-    else:
-        z.append(("🟡", "Kein Einquetschen: seit dem Anker zu wenige Kerzen für drei Drittel"))
+        z.append(("⚪", "Kein Setup heute"))
+    ei = fu.get("einigkeit")
+    if ei:
+        z.append(({"auf": "🦬", "ab": "🐻"}.get(ei["alle"], "🟡"),
+                  "Ebenen: " + " · ".join(f"{n} {a__} {w__}" for n, (a__, w__) in ei["ebenen"].items())
+                  + {"auf": " – Einigkeit: Vormarsch auf allen drei", "ab": " – Einigkeit: Rückzug auf allen drei"}.get(ei["alle"], "")))
     for f in fallen:
         z.append(("🦊", f))
     if not fallen:
         z.append(("🟢", "Keine Falle: kein Spring, Upthrust oder Fehlausbruch nach den Regeln des Cockpits"))
+    q = (e_ or {}).get("struktur", {}).get("quetsch")
+    if q:                                         # Mickys Zeichen: steigende Tiefs bei gleichen Hochs (gespiegelt)
+        auf_ = q["art"] == "aufsteigend"
+        z.append(("🦈", (f"Einquetschen seit {_d(q['ab'])}: Tiefs der Drittel steigen {' → '.join(_k(x) for x in q['tiefs'])}, "
+                         f"Hochs bleiben bei {_k(min(q['hochs']))}–{_k(max(q['hochs']))}") if auf_ else
+                        (f"Einquetschen nach unten seit {_d(q['ab'])}: Hochs der Drittel fallen "
+                         f"{' → '.join(_k(x) for x in q['hochs'])}, Tiefs bleiben bei {_k(min(q['tiefs']))}–{_k(max(q['tiefs']))}")))
+    return z
+
+
+# ── Gelände nach Dalton: das Profil der Spanne als Zeichen ───────────────────────────────────────────────────────
+def gelaende_zeilen(pr, alt, kurs, quelle):
+    """Profil der Spanne (dasselbe wie im Chart der Titelseite: ab Livermores Spanne, ohne Spanne ab dem letzten
+    Pivotal Point unten) nach Dalton: Wertzone, Lage des Kurses, Knoten, dünne Zonen, Einzeldrucke, alte Wertzone."""
+    import tiefe
+    import zonen
+    if not pr:
+        return [("⚪", "Profil: ungemessen")]
+    det = zonen.profil_details(pr)
+    z = [("🟡", f"Profil {quelle}: POC {_k(pr['poc'])} · Wertzone 70 % {_k(det['val'])}–{_k(det['vah'])}")]
+    if kurs > det["vah"]:
+        z.append(("🦬", f"Kurs über der Wertzone ({_p((kurs / det['vah'] - 1) * 100)} über der Oberkante)"))
+    elif kurs < det["val"]:
+        z.append(("🐻", f"Kurs unter der Wertzone ({_p((kurs / det['val'] - 1) * 100)} unter der Unterkante)"))
+    else:
+        z.append(("🟡", f"Kurs {_k(kurs)} in der Wertzone – {_p((kurs / det['vah'] - 1) * 100)} zur Oberkante, "
+                        f"{_p((kurs / det['val'] - 1) * 100)} zur Unterkante"))
+    for x in det["knoten"]:
+        z.append(("🪝", f"Knoten {_k(x)} – dort wurde viel gehandelt, der Kurs bremst"))
+    for lo, hi in det["duenn"]:
+        z.append(("🟡", f"Dünne Zone {_k(lo)}–{_k(hi)} (weniger als ⅓ des POC-Volumens) – hier läuft der Kurs schnell"))
+    for lo, hi in det["einzel"]:
+        z.append(("🟡", f"Einzeldrucke {_k(lo)}–{_k(hi)} – nur eine Kerze war dort, eine Lücke im Wert"))
     if alt:
         nah = abs(alt["poc"] / kurs - 1) <= tiefe.NAH_PCT
         z.append(("🪝" if nah else "🟡", f"Alte Wertzone (Balance {_d(alt['start'])}–{_d(alt['ende'])}): POC {_k(alt['poc'])}, "
                                          f"Wertzone {_k(alt['val'])}–{_k(alt['vah'])}"))
-    else:
-        z.append(("⚪", "Alte Wertzone: keine Balance von mindestens 10 Tagen vor dem Anker"))
     return z
-
-
-def _tests(liste):
-    return f"{len(liste)} {'Test' if len(liste) == 1 else 'Tests'}"
 
 
 def fallen_texte(df):
@@ -146,14 +184,14 @@ def wander_zeilen(w, kurs, kerze, quelle):
 
 # ── AVWAP nach Shannon ───────────────────────────────────────────────────────────────────────────────────────────
 def avwap_zeilen(av, zange, pr):
-    import chart
+    import avwap
     import tiefe
     z = []
     for e in av:
         ueber = e["abstand"] >= 0
         haken = (not ueber) and e["abstand"] >= -tiefe.DECKEL_PCT
         z.append(("🪝" if haken else "🟢" if ueber else "🔴",
-                  f"AVWAP {chart.AVWAP_KURZ.get(e['anker'], e['anker'])} ({_d(e['tag'])}): {_k(e['wert'])} – Kurs "
+                  f"AVWAP {avwap.ANKER_NAME.get(e['anker'], e['anker'])} ({_d(e['tag'])}): {_k(e['wert'])} – Kurs "
                   f"{_p(e['abstand'])}" + (" (nächster Deckel)" if haken else "")))
     if zange:
         schliesst = zange["heute"] < zange["vorher"]
@@ -165,7 +203,7 @@ def avwap_zeilen(av, zange, pr):
     else:
         z.append(("⚪", "Zange: ungemessen (kein letztes Hoch oder kein Tief der Bewegung)"))
     for e in av:
-        if e["anker"] == "zahlen" and (abs(e["wert"] / pr["poc"] - 1) <= tiefe.DOPPEL_PCT
+        if pr and e["anker"] == "zahlen" and (abs(e["wert"] / pr["poc"] - 1) <= tiefe.DOPPEL_PCT
                                        or pr["val"] <= e["wert"] <= pr["val"] * (1 + tiefe.DOPPEL_PCT)):
             z.append(("🪝", f"AVWAP vom Zahlentag ({_k(e['wert'])}) liegt an POC bzw. Unterkante der Wertzone – doppelte Marke"))
     return z
@@ -275,39 +313,23 @@ def rang_tabelle(rang, sek):
 
 # ── Daten und Seite ──────────────────────────────────────────────────────────────────────────────────────────────
 def rechnen(tk):
-    """Alles, was die Seite und der Chart brauchen (Tageskurse, 30-Minuten-Kerzen, drei Ebenen, AVWAP, RS, Geld)."""
+    """Alles, was die Seite braucht: die Fährte der Titelseite (zonenseite.rechnen, aus dem Schrank, wenn vorgebaut –
+    dieselben Ebenen, dasselbe Notizbuch, dasselbe Profil), dazu AVWAP, RS und Geld."""
     import avwap
     import daten
     import quellen
     import sektoren
     import tiefe
-    import tpo_daten
-    import vcp_zone
-    df = daten.kurse(tk)
-    df.attrs["ticker"] = tk
+    import zonenseite
+    ab_ = zonenseite.abgelegt(tk)
+    rz = ab_["r"] if ab_ else zonenseite.rechnen(tk)
+    df = rz["df"]
     idx = daten.kurse(daten.INDEX)
     sb = daten.steckbrief(tk) or {}
-    try:
-        tpo_daten.merken(tk)
-        d30 = tpo_daten.kerzen(tk, df, abruf=True)
-    except Exception:  # noqa: BLE001 – Technik: ohne Netz bleibt der Speicher
-        d30 = tiefe.dreissig(df)
     try:
         zt = avwap.zahlentag(df, quellen.laden(tk)["gewinne"])
     except Exception:  # noqa: BLE001 – ohne Zahlen kein Zahlentag
         zt = None
-    zone_start, enge = None, None
-    try:
-        zone_start = tiefe.zone_beginn(df)
-        a_ = vcp_zone.ausbruch(df)
-        z_ = vcp_zone.datiert(df, a_["zone"] if a_ else vcp_zone.zone(df))
-        if zone_start is not None:                 # Pivot und Unterkante: Livermores Pivotal Points (vcp_zone.zone)
-            enge = {"pivot": (a_ or {}).get("pivot") or z_.get("pivot"), "unten": z_.get("unten")}
-    except Exception:  # noqa: BLE001 – Technik: ohne Zone kein Zonenbeginn
-        pass
-    ebenen = {"Tag": tiefe.ebene("Tag", df, d30, zt, zone_start=zone_start),
-              "Woche": tiefe.ebene("Woche", tiefe.woche(df), d30, zt, tage=df),
-              "Stunde": tiefe.ebene("Stunde", tiefe.stunde(d30), d30, zt)}
     sek = sektoren.sektor_von(sb.get("sektor", ""))
     bra = sektoren.BRANCHEN_ETF.get(sb.get("branche"))
     alle = {}
@@ -317,10 +339,28 @@ def rechnen(tk):
         except Exception:  # noqa: BLE001 – ein fehlender ETF bleibt ungemessen
             alle[s] = None
     av, zange = tiefe.avwap_liste(df, zt)
-    return {"tk": tk, "df": df, "idx": idx, "sb": sb, "d30": d30, "zahltag": zt, "ebenen": ebenen, "avwap": av,
-            "zange": zange, "sek": sek, "bra": bra, "alle": alle, "enge": enge,
+    return {"tk": tk, "df": df, "idx": idx, "sb": sb, "rz": rz, "ebenen": rz["ebenen"], "avwap": av,
+            "zange": zange, "sek": sek, "bra": bra, "alle": alle,
             "fallen": fallen_texte(df), "sis": tiefe.staerke_in_schwaeche(df, idx),
             "rang": tiefe.sektor_rang({s: alle[s] for s in sektoren.SEKTOREN if alle.get(s) is not None})}
+
+
+def _wert(pr):
+    """POC und Unterkante der Wertzone des Profils für die doppelte Marke mit dem AVWAP vom Zahlentag (oder None)."""
+    if not pr:
+        return None
+    import zonen
+    return {"poc": float(pr["poc"]), "val": zonen.profil_details(pr)["val"]}
+
+
+def _profil_tag(r):
+    """Das Profil der Tagesebene wie im Chart der Titelseite (Spanne bzw. letzter Pivotal Point unten) und seine Quelle."""
+    la = r["rz"]["fuehrte"]["lage"]["Tag"] or {}
+    pr = la.get("profil")
+    if not pr:
+        return None, ""
+    return pr, (f"der Spanne seit {_d(la['beginn'])}" if la.get("beginn") is not None
+                else f"seit dem letzten Pivotal Point unten ({_d(pr['ab'])})")
 
 
 def seite_analyse(tk):
@@ -338,19 +378,19 @@ def seite_analyse(tk):
                    f'{t(r["sb"].get("branche") or "–")} ({r["bra"] or "kein Branchen-ETF"}) · Tagesebene; Woche und Stunde '
                    f'mit denselben Regeln · Chart mit allen Bausteinen auf der Titelseite</div>'
                    + gestaltung.zeichen_legende(), f"{r['tk']} · Tiefenanalyse")]
+    import zonenseite
+    teile.append(karte(zonenseite.lagebericht(r["rz"])
+                       + zeilen(livermore_zeilen(r["rz"], r["fallen"])), "Struktur nach Livermore · Frontkarte"))
+    pr, quelle = _profil_tag(r)
     if et:
-        st_ = et["struktur"]
-        teile.append(karte(zeilen(struktur_zeilen(st_, et["alt"], r["fallen"], r["enge"], kurs)),
-                           "Struktur nach Dalton"))
+        teile.append(karte(zeilen(gelaende_zeilen(pr, et["alt"], kurs, quelle)), "Gelände nach Dalton · Profil der Spanne"))
         ew = r["ebenen"]["Woche"]
         teile.append(karte('<div style="font-weight:600">je Tag</div>'
                            + zeilen(wander_zeilen(et["wander"], kurs, "Tag", "30-Minuten-Kerzen"))
                            + '<div style="font-weight:600;margin-top:10px">je Woche</div>'
                            + zeilen(wander_zeilen(ew["wander"] if ew else None, kurs, "Woche", "Stundenkerzen")),
                            "Wertwanderung · POC je Kerze"))
-        teile.append(karte(zeilen(avwap_zeilen(r["avwap"], r["zange"], st_["profil"])), "AVWAP nach Shannon · Zange"))
-    else:
-        teile.append(karte(zeilen([("⚪", "Zu wenige Tageskerzen für die Tiefenanalyse")]), "Struktur nach Dalton"))
+        teile.append(karte(zeilen(avwap_zeilen(r["avwap"], r["zange"], _wert(pr))), "AVWAP nach Shannon · Zange"))
     tab = [(f"Titel {r['tk']}", tiefe.leistung(df["Close"])), ("S&P 500", tiefe.leistung(idx["Close"]))]
     for name, sym in ((f"Sektor {sektoren.SEKTOREN.get(r['sek'], '')}", r["sek"]), ("Branche", r["bra"])):
         if sym and r["alle"].get(sym) is not None:
@@ -380,11 +420,12 @@ def material(tk):
     df, idx = r["df"], r["idx"]
     kurs = float(df["Close"].iloc[-1])
     et = r["ebenen"]["Tag"]
-    z = []
+    z = livermore_zeilen(r["rz"], r["fallen"])
+    pr, quelle = _profil_tag(r)
     if et:
-        z += struktur_zeilen(et["struktur"], et["alt"], r["fallen"], r["enge"], kurs)
+        z += gelaende_zeilen(pr, et["alt"], kurs, quelle)
         z += wander_zeilen(et["wander"], kurs, "Tag", "30-Minuten-Kerzen")
-        z += avwap_zeilen(r["avwap"], r["zange"], et["struktur"]["profil"])
+        z += avwap_zeilen(r["avwap"], r["zange"], _wert(pr))
     try:
         rel = zeichen.relativ(df, idx)
     except Exception:  # noqa: BLE001

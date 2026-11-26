@@ -49,7 +49,7 @@ def _markt_spalten(mm):
     als Zeichen (Phase und Halt: 🏰 hält · 🌊 Welle · ⛈️ Sturm, Zeichen in Klartext); unten Hochs : Tiefs."""
     import zeichen
     schichten = "".join(
-        f'<div style="font-size:14px;color:{TEXT}">{wort}: <b>{x["auf"]}</b> im Vormarsch · <b>{x["ab"]}</b> im Rückzug</div>'
+        f'<div style="font-size:14px;color:{TEXT}">{wort}: <b>{x["auf"]}</b> im Vormarsch · <b>{x.get("pause", 0)}</b> in der Gefechtspause · <b>{x["ab"]}</b> im Rückzug</div>'
         for wort, x in (("Spitze (Garde und Angriff)", mm.get("fuehrer")), ("Heer (alle Titel)", mm.get("heer"))) if x)
     spalten = []
     for name, x in (mm.get("indizes") or {}).items():

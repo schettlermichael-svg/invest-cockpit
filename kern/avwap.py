@@ -117,6 +117,11 @@ def _wochen_hochs(df):
     return aus
 
 
+ANKER_NAME = {"gipfel": "Hoch des Rückgangs", "hoch": "letztes Hoch", "tief": "Tief der Bewegung",   # Anker in Worten
+              "hoeher": "letztes höheres Tief", "zahlen": "Zahlentag", "ereignis": "Lücke/Volumen",
+              "ipo": "Börsengang", "ausbruch": "Ausbruch (Handoff)"}
+
+
 def anker(df, zahltag=None):
     """{"hoch"|"tief"|"hoeher"|"gipfel"|"zahlen"|"ereignis"|"ipo"|"ausbruch": Tag} aus Tageskerzen (fehlt ein Anker, fehlt der Schlüssel). zahltag:
     Reaktionstag der Zahlen (zahlentag()), wenn bekannt."""

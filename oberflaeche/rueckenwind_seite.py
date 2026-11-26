@@ -138,7 +138,7 @@ def _zirkel_pille(z):
 
 def wetterkarte(erg, art):
     """Wetterkarte der Strömung (10.11.2026, ersetzt die Punktwolke): je Gruppe eine Zeile mit dem Feld der letzten
-    fünf Wochen als Kästchen, der Lage heute in Worten und dem Geldfluss. Alle Gruppen, geordnet nach Feld heute –
+    fünf Wochen als Kästchen, der Phase des Zirkels heute in Worten und dem Geldfluss. Alle Gruppen, geordnet nach Feld heute –
     Erstarkend zuerst (dort entsteht die Strömung), dann Führend offen, Schwächelnd und Zurückfallend zugeklappt."""
     ordnung = ("Erstarkend", "Führend", "Ermüdend", "Abgehängt")
     gr = [g for g in erg["gruppen"] if g["art"] == art]
@@ -146,7 +146,7 @@ def wetterkarte(erg, art):
     kopf = (f'<div style="display:grid;grid-template-columns:minmax(140px,260px) repeat(5,30px) 1fr 120px;gap:6px;'
             f'font-size:11px;color:{TEXT_3};padding:0 0 4px">'
             f'<span>{art}</span><span>−4</span><span>−3</span><span>−2</span><span>−1</span><span>heute</span>'
-            f'<span>Lage</span><span>Geld</span></div>')
+            f'<span>Phase</span><span>Geld</span></div>')
     teile = []
     for feld in ordnung:
         liste = sorted((g for g in gr if g["feld"] == feld),
@@ -278,8 +278,10 @@ def dreifach_block(erg):
             f = feld.get(tk) or {}
             t_, piv, kurs = f.get("trade"), f.get("pivot"), f.get("kurs")
             if sym == "🎯":
-                lage_ = (f'{zirkel.trade_wort(f)} · {"Auslöser" if t_["wartet"] else "Einstieg"} {zahl(t_["einstieg"])} · '
-                         f'Stopp {zahl(t_["stopp"])} · {t_["ampel"]} {zahl(t_["risiko"], 1)} %')
+                lage_ = (f'{zirkel.trade_wort(f)} · '
+                         + (f'½ antasten {zahl(t_["einstieg"])} · ½ aufstocken bei 📒 {zahl(t_["aufstocken"])}'
+                            if t_.get("aufstocken") else f'{"Auslöser" if t_["wartet"] else "Einstieg"} {zahl(t_["einstieg"])}')
+                         + f' · Stopp {zahl(t_["stopp"])} · {t_["ampel"]} {zahl(t_["risiko"], 1)} %')
                 gw = zirkel.gegenwind(tk, t_)
                 lage_ += f" · {gw}" if gw else ""
             else:
@@ -292,14 +294,14 @@ def dreifach_block(erg):
             phase, halt_ = _zirkel(tk, kreis)
             k = klasse(x)
             zeilen.append(f'<tr><td><a href="?seite=Titelseite&t={tk}" target="_blank">{tk}</a>{t(_marke(tk, wl))}</td>'
-                          f'<td>{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</td><td>{t(phase)}</td><td>{t(lage_)}</td>'
-                          f'<td>{t(halt_)}</td></tr>')
+                          f'<td>{_lage(f)}</td><td>{f"{k} · {KLASSEN[k - 1]}" if k else "–"}</td><td>{t(phase)}</td>'
+                          f'<td>{t(lage_)}</td><td>{t(halt_)}</td></tr>')
         teile.append(f'<details{" open" if sym != "🏃" else ""}><summary style="cursor:pointer;font-size:16px;'
                      f'font-weight:600;padding:6px 0">{sym} {name} ({len(liste_)}) <span style="font-weight:400;'
                      f'font-size:13px;color:{TEXT_3}">{erkl}</span></summary>'
                      + (f'<table style="width:100%;border-collapse:collapse;font-size:13px;color:{TEXT_2}">'
-                        f'<tr style="color:{TEXT_3};text-align:left"><th>Titel</th><th>Klasse</th><th>Phase</th>'
-                        f'<th>Lage</th><th>Halt</th></tr>{"".join(zeilen)}</table>' if zeilen else
+                        f'<tr style="color:{TEXT_3};text-align:left"><th>Titel</th><th title="Livermores Notizbuch: 🟢 Vormarsch · '
+                        f'🟡 Gefechtspause · 🔴 Rückzug">Lage</th><th>Klasse</th><th>Phase</th><th>Stand</th><th>Halt</th></tr>{"".join(zeilen)}</table>' if zeilen else
                         f'<p style="color:{TEXT_3};font-size:13px;margin:0">keiner</p>') + '</details>')
     return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
                  f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
@@ -488,11 +490,13 @@ TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
 TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
 TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 120, "Phase": 105, "Setup": 130, "Halt": 140, "⚔️ Front": 70, "RS": 85, "Momentum": 70,   # Layout:
-          "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 110}   # px, zusammen 1100 = Seitenbreite
-SPALTEN = ("Titel", "Phase", "Setup", "Halt", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+BREITE = {"Titel": 120, "Lage": 45, "Phase": 105, "Setup": 130, "Halt": 115, "⚔️ Front": 70, "RS": 85,   # Layout:
+          "Momentum": 70, "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 90}   # px, zusammen 1100
+SPALTEN = ("Titel", "Lage", "Phase", "Setup", "Halt", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
            "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
-SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
+SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufwärtstrend) · 🟡 Gefechtspause (Rally oder "
+                         "Reaktion) · 🔴 Rückzug (Abwärtstrend) – dieselbe Sprache wie Lagebericht und Markt",
+                 "RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (⏫ schneller, ⬆️ steigt, ↗️ dreht hoch, ↘️ "
                        "dreht runter, ⬇️ fällt) · Steigung in 4 Wochen",
                  "Momentum": "1M · 3M · 6M: ↑ im Plus, ↓ im Minus · 🚀 unter den besten 2 % des Reviers (Kullamägi)",
                  "Volumen": "Zufluss: Volumen der Aufwärtstage gegen Abwärtstage · 🟢 ab 1,1× · 🔴 unter 0,9× · 🏜️ "
@@ -509,6 +513,14 @@ SPALTEN_HILFE = {"RS": "🦈 RS-Hoch vor Kurs · Pfeil = Richtung der RS-Linie (
                          "geringsten Widerstands"}
 
 
+def _lage(f):
+    """Ampel der Lage aus Livermores Spalte im Feld (livermore.lage); ohne Notizbuch ⚪."""
+    import livermore
+    import zirkel
+    sp = zirkel.spalte(f or {})
+    return livermore.lage(sp)[0] if sp else "⚪"
+
+
 def liste(erg, nur=None):
     """Alle Titel nach Schlachtordnung (Micky 23.11.2026: übersichtlich – je Klasse ein Abschnitt, nur die Spalten zum
     Entscheiden, alles als Zeichen; Sektor, Branche, Thema, Rang und die Zahlen im Einzelnen auf der Titelseite).
@@ -518,6 +530,7 @@ def liste(erg, nur=None):
     import zeichen
     wl = watchlists.laden()
     kreis = zeichen.laden()
+    feld_ = kreis.get("feld") or {}
     trades, drei_ = setups(), {t_ for t_, _ in dreifach_liste(erg)}
     abschnitte = {f"{i} · {n}": [] for i, n in enumerate(KLASSEN, 1)}
     abschnitte["ohne Klasse"], abschnitte["ohne Daten"] = [], []
@@ -533,6 +546,7 @@ def liste(erg, nur=None):
         drei = " ▲▲▲" if tk in drei_ else ""
         abschnitte[f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse"].append({
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
+            "Lage": _lage(feld_.get(tk)),
             "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
             "⚔️ Front": PUNKT[front_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),

@@ -21,7 +21,7 @@ und Deutung – entscheiden tust du.
   - SIC-13 (Mickys Raster) und Fonds-Fußabdruck: am 11.11.2026 entfernt (`_to_delete/sic13_2026-11-11`); TradingView-Kennzahlen je Titel liest `tv_kennzahlen.zeile()` aus `daten/tv/revier.csv`
   - `namen_de.py` – deutsche Namen der Sektoren und Branchen; deutsche Unternehmensbeschreibungen aus `daten/steckbrief_de/beschreibungen.json` (von Claude aus Yahoos englischem Text übertragen, 03.11.2026 für alle 1.884 Titel; neue Titel ergänzt der Nachtlauf)
   - später: `risiko.py`
-- `oberflaeche/` – alles Sichtbare als HTML/SVG nach der Designvorlage: `gestaltung.py` (Farben, Bausteine), `chart.py` (Chart), `titel.py` (Titelseite), `uebersicht.py` (Lage am Abend), `frontkarte.py` (Rotationsbild der Sektoren und Themen-Gruppen), `uebergaenge.py` (Tafel „Übergänge“: Quad-Türen, Sektoren und Themen-Gruppen an der Tür, Haken, Breite je Gruppe), `rudelkarte.py` (Rudel und Kursverwandte auf der Titelseite), `stimmung.py` (Stimmungskurve)
+- `oberflaeche/` – alles Sichtbare als HTML/SVG nach der Designvorlage: `gestaltung.py` (Farben, Bausteine), `zonenchart.py` (der eine Chart – Titelseite und Depot; `chart.py` am 26.11.2026 entfernt), `titel.py` (Titelseite), `uebersicht.py` (Lage am Abend), `frontkarte.py` (Rotationsbild der Sektoren und Themen-Gruppen), `uebergaenge.py` (Tafel „Übergänge“: Quad-Türen, Sektoren und Themen-Gruppen an der Tür, Haken, Breite je Gruppe), `rudelkarte.py` (Rudel und Kursverwandte auf der Titelseite), `stimmung.py` (Stimmungskurve)
 - `kern/daten.py` – Kurse und Steckbrief von Yahoo, Speicher in `daten/kurse/`
 - `daten/` – Kursspeicher der App, je Titel eine Datei, wird nur ergänzt
 - `einstellungen/` – Watchlists, Revier, eigene Einstellungen; optional `sec_kontakt.txt` (Absender für die SEC); `fred_schluessel.txt` (FRED-Schlüssel); `breite.txt` (515 große US-Werte für die Marktbreite), `revier.csv` (Revier: Ticker, Sektor, Branche, Sektor-ETF, Börsenwert, Umsatz), `massive_schluessel.txt` (Massive-Schlüssel)
@@ -1765,3 +1765,22 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Geldführung (Schritt 8): zonen.trade liefert aufstocken (1 ATR jenseits der Kante) und aufgestockt; Setup-Karte
   „½ antasten beim Schluss über … · ½ aufstocken bei 📒 …“ bzw. „📒 erreicht“; Führung nach dem Kauf meldet 📒
   (ATR am Kauftag) als „zweite Hälfte aufstocken – nur im Gewinn“. Stückzahl aus dem 1-%-Risiko bleibt offen.
+
+## Ganze App auf unserem System (26.11.2026, Micky: „hat die app jetzt durchgehend dieses system integriert“)
+- Fenster „Stärke in der Schwäche“ (zeichen.korrekturfenster): offen, wenn das Lagebild des letzten Laufs nicht 🟢
+  steht (ohne Lagebild das Notizbuch des Index) oder der Index ≥ 3 % unter dem Hoch der 60 Tage liegt.
+- Eine Sprache auch im Markt: Spitze und Heer zählen nach Livermores Spalte von heute (Feld „lv_spalte“, zirkel.spalte;
+  ältere Läufe: lv_trend) – {auf, pause, ab}; vorher zählte der Trend, der Lagebericht aber die Spalte.
+- Kipp-Zone für Shorts (zonenchart): bei Short-Setup oder Bruch gespiegelt um die Unterkante – ein Tief 1 ATR darunter
+  bestätigt (📒, rot), ein Schluss 1 ATR darüber ist die Falle (🦊, grün).
+- Morgenmeldung (zirkel.heisse): Lage, „½ antasten … · ½ aufstocken bei 📒 …“ (Rücktest: Einstieg). Liste: Spalte
+  „Lage“ (🟢/🟡/🔴); ▲▲▲-Tabelle mit Lage und Antasten; Wetterkarte: Spalte „Lage“ heißt jetzt „Phase“ (Zirkel).
+- Depot-Chart: zonenseite.chart mit position= (zonenchart.bild: Einstieg, Anfangsstopp, Stopp jetzt, enge Linie,
+  Kauftag) statt des alten chart.py; darüber der Lagebericht; der Schlachtplan eines neuen Setups entfällt dort.
+  oberflaeche/chart.py und zeichen.tagesmarken entfernt; AVWAP-Namen jetzt avwap.ANKER_NAME.
+- Stratege: Auftrag mit Lage, Frontkarte, Kipp-Zone, Antasten/Aufstocken, Einigkeit und Lagebild; Material neu mit
+  Lagebericht, Ebenen, Setup in zwei Hälften und Kipp-Zone.
+- Analyse-Seite auf Livermore: Rechnung aus der Fährte der Titelseite (zonenseite.rechnen bzw. Schrank); Karte
+  „Struktur nach Livermore · Frontkarte“ (Lagebericht, Lage, Front, Unterkante, nächste Stellungen, Spanne, Setup,
+  Kipp-Zone, Ebenen, Fallen, Einquetschen) und „Gelände nach Dalton · Profil der Spanne“ (Wertzone, Knoten, dünne
+  Zonen, Einzeldrucke, alte Wertzone). Dalton-Anker, Balance-Pivots und tiefe.ebene(zone_start) entfernt.

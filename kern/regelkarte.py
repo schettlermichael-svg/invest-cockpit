@@ -62,13 +62,14 @@ KAESTEN = {
         dict(name="Markt-Ampel", zustand=None,
              regel="Lagebild in drei Schichten (Micky 26.11.2026; Livermore las den Markt an den Führern, nie am "
                    "Index – How to Trade in Stocks, Kap. I und III; Weinstein: vom Wald zu den Bäumen). Spitze = Garde "
-                   "und Angriff, Heer = alle Titel des Laufs, je im Notizbuch: 🟢 Vormarsch, wenn in beiden mehr Titel "
-                   "im Aufwärtstrend stehen als im Abwärtstrend · 🔴 Rückzug, wenn in beiden mehr im Abwärtstrend · sonst "
-                   "🟡 Gefechtspause. Grenze = Mehrheit, ungemessen. Der Durchschnitt (Notizbuch des S&P 500 und des "
+                   "und Angriff, Heer = alle Titel des Laufs, je im Notizbuch nach der Spalte von heute (dieselbe Sprache "
+                   "wie der Lagebericht: Aufwärtstrend = Vormarsch, Rally und Reaktion = Gefechtspause, Abwärtstrend = "
+                   "Rückzug): 🟢 Vormarsch, wenn in beiden mehr Titel im Vormarsch stehen als im Rückzug · 🔴 Rückzug, "
+                   "wenn in beiden mehr im Rückzug · sonst 🟡 Gefechtspause. Grenze = Mehrheit, ungemessen. Der Durchschnitt (Notizbuch des S&P 500 und des "
                    "Nasdaq) bestätigt mit ✓ (dieselbe Farbe) oder ✗; der Zirkel des Index steht als Zeichen daneben.",
              fuehrt="Micky 26.11.2026 (25.11. Notizbuch des Index, 23.11. Zirkel, davor O'Neil)", zeichen="🟢/🟡/🔴",
              messung=["zirkel.indizes", "zirkel.livermore_ampel", "zirkel.lage_ampel", "zirkel.markt", "zirkel.fuehrer",
-                      "zirkel.heer"],
+                      "zirkel.heer", "zirkel.spalte"],
              stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Hochs gegen Tiefs", zustand=None,
              regel="Neue 52-Wochen-Hochs gegen Tiefs im Revier – Zeichen unter der Ampel, ohne Urteil.",
@@ -215,11 +216,11 @@ ZEICHEN = [
                "Abgabetag = Schluss unter dem Vortag, Volumen über dem Schnitt, Schluss im unteren Drittel; Saldo ≥ 3 und "
                "doppelt so viele = Akkumulation, gespiegelt Distribution. Verdeckte Abgabe (Churning): mindestens 3 Tage "
                "im Plus mit Volumen, die im unteren Drittel schließen.",
-         messung=["zeichen.akkumulation", "zeichen.tagesmarken"], pruefer=["Test am Rand: Zeichen"]),
+         messung=["zeichen.akkumulation"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="Pocket Pivot", art="Volumen", meister="Morales/Kacher",
          regel="In den letzten 5 Tagen: Tag im Plus über GD10 und GD50, höchstens 4 % über dem GD10, Volumen über dem "
                "größten Abgabetag der 10 Tage davor, die 5 Tage davor zusammen höchstens +3 %.",
-         messung=["zeichen.akkumulation", "zeichen.tagesmarken"], pruefer=["Test am Rand: Zeichen"]),
+         messung=["zeichen.akkumulation"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="Umkehrkerzen", art="Struktur", meister="Homma (Regeln nach Nison)",
          regel="Nur an einer Marke (höchstens 1 ATR von 52-Wochen-Hoch/-Tief, Rand der Zone oder AVWAP-Linie) und nach "
                "einem Trend, den sie umkehren kann (Vortag gegen 5 Tage davor): Hammer (unterer Schatten mindestens "
@@ -240,13 +241,15 @@ ZEICHEN = [
                "Käufer trauen dem Lauf. Gespiegelt keine Eindeckung nach einer schwachen Woche.",
          messung=["zeichen.freitag"], pruefer=["Test am Rand: Zeichen", "Ungleichgewicht"]),
     dict(name="Stärke in der Schwäche", art="RS", meister="Micky, Minervini, O'Neil",
-         regel="Im Fenster der Korrektur (bis 45 Handelstage nach ihrem Tief): hält = der Index fiel mindestens 3 %, der "
+         regel="Das Fenster der Korrektur öffnet sich, wenn das Lagebild (Spitze und Heer aus dem letzten Lauf) nicht auf "
+               "🟢 steht oder der Index ≥ 3 % unter dem Hoch der 60 Tage liegt; es wirkt bis 45 Handelstage nach dem Tief "
+               "nach. Darin hält = der Index fiel mindestens 3 %, der "
                "Titel steht am Indextief mindestens so weit im Plus wie der Index im Minus und mindestens 15 Punkte vor "
                "ihm; führt = seit dem Indextief mindestens 10 Punkte vor dem Index, Kurs höchstens 15 % unter dem "
                "52-Wochen-Hoch; nah = am Indextief höchstens halb so weit vom eigenen Hoch wie der Index und höchstens "
                "15 %; RS-Linie am 52-Wochen-Hoch, während der Index fällt. Gespiegelt Schwäche in der Stärke (Index ≥ 3 % "
                "über dem Tief der 60 Tage): Titel seit dem Indextief im Minus, RS-Linie am 52-Wochen-Tief.",
-         messung=["zeichen.relativ"], pruefer=["Test am Rand: Zeichen", "Eigen oder geliehen"]),
+         messung=["zeichen.relativ", "zeichen.korrekturfenster"], pruefer=["Test am Rand: Zeichen", "Eigen oder geliehen"]),
     dict(name="Höheres Tief gegen den Index", art="RS", meister="O'Neil, Minervini (Divergenz)",
          regel="Der Titel fiel seit dem Indexhoch bis zu seinem Tief um mindestens max(5 %, 3 ATR, den Rückgang des "
                "Index); dieses Tief liegt mindestens 3 Handelstage vor dem Tief des Index, der Index fällt danach "
@@ -346,23 +349,18 @@ BEREICHE = [
                "GD200 grün, ab 40 % gelb. Überdehnung (Levy): S&P 500 ab 10 % über dem 26-Wochen-Schnitt gelb, darunter "
                "bis zum Schnitt grün, unter dem Schnitt rot.",
          messung=["uebersicht._pendel_instrumente"], pruefer=[], luecke="kein Prüfer – die Seite Übersicht"),
-    dict(name="Bänder und Zeichen im Chart", quelle="O'Neil (Volumen), Dow (Schwungpunkte), Micky",
-         regel="Volumenband: Ruhe bis 50 % des 50-Tage-Schnitts (kräftig), bis 75 % blass, deutlich ab 150 %. RS-Pfeil: "
-               "Änderung der letzten 10 Tage (Wochenchart 3 Wochen), ↗/↘ ab 1 Punkt, ↑/↓ ab 3 Punkten. Dow-Schwungpunkte "
-               "mit 5 Tagen links und rechts. RS-Hoch vor dem Kurs: RS-Linie am Jahreshoch, Kurs mehr als 3 % darunter "
-               "(wie Rückenwind).",
-         messung=["chart.chart", "chart._signale"], pruefer=[],
-         luecke="kein Prüfer – Zeichnung"),
-    dict(name="Tiefenanalyse: Struktur nach Dalton", quelle="Dalton (Mind Over Markets), Titel-Analyse, Micky 21.11.2026",
-         regel="Anker: der Zahlentag, wenn sein Schluss mindestens 1 ATR vom Vortag lag und die Balance daraus hervorging "
-               "(höchstens 10 Kerzen vor ihrem Beginn), sonst der Beginn der Balance (Regel des Cockpits). Profil ab dem "
-               "Anker aus Stundenkerzen in Stufen von 0,25 % (ohne Stundenkerzen Tageskerzen), Wertzone 70 % vom POC nach "
-               "außen; dünne Zone unter ⅓ des POC-Volumens ab 2 Stufen, dünne Ränder = Dochte. Alte Wertzone: letzte "
-               "Balance ab 10 Kerzen vor dem Anker. Pivot long/short: Rand der Balance (Tests bis 1 %) neben dem Pivot der "
-               "Enge. Dasselbe Profil ist das graue Volumenprofil des Cockpits.",
-         messung=["tiefe.struktur", "tiefe.anker", "tiefe.profil_ab", "tiefe.zonen", "tiefe.alte_balance",
-                  "volumenprofil.verankert", "analyse_seite.struktur_zeilen"], pruefer=[],
-         luecke="kein Prüfer – neu aus der Titel-Analyse"),
+    dict(name="Tiefenanalyse: Struktur nach Livermore, Gelände nach Dalton",
+         quelle="Livermore (Market Key), Dalton (Mind Over Markets), Titel-Analyse; auf Livermore umgestellt Micky 26.11.2026",
+         regel="Struktur aus derselben Fährte wie Titelseite und Chart (zonenseite.rechnen): Lage nach Livermores Spalte, "
+               "Frontkarte (Front oben, Unterkante, nächste stehende Stellung darüber und darunter oder ✈️ freie Bahn, Zahl "
+               "der stehenden Pivotal Points), Spanne und Phase der Tagesebene, Setup mit ½ antasten und ½ aufstocken bei "
+               "📒, Kipp-Zone je 1 ATR um die Kante, Einigkeit der Ebenen, Fallen (Spring, Upthrust, Fehlausbruch) und "
+               "Mickys Einquetschen. Gelände nach Dalton als Zeichen: das Profil der Spanne wie im Chart (ohne Spanne ab "
+               "dem letzten Pivotal Point unten) mit Wertzone 70 %, Lage des Kurses, Knoten, dünnen Zonen, Einzeldrucken; "
+               "alte Wertzone = letzte Balance ab 10 Kerzen vor dem Anker.",
+         messung=["analyse_seite.livermore_zeilen", "analyse_seite.gelaende_zeilen", "analyse_seite.rechnen",
+                  "zonen.profil_details", "tiefe.alte_balance", "tiefe.quetschung"], pruefer=[],
+         luecke="kein Prüfer – Anzeige"),
     dict(name="Tiefenanalyse: Wertwanderung", quelle="Dalton (überlappender Wert), Titel-Analyse",
          regel="POC und Wertzone je Kerze aus feineren Kerzen (Tag aus 30 Minuten, Woche aus Stunden), 6 Klassen zur "
                "vorigen; Treppe ab 3 POCs in Folge, Ballen = letzte 5 POCs innerhalb 1 ATR, Abtasten = Schluss außerhalb "
@@ -427,9 +425,9 @@ BEREICHE = [
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest am Pivot, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
                "Fortsetzung abwärts; Rückzug zuerst), je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗), je "
-               "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
+               "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Lage (🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug), ½ antasten · ½ aufstocken bei 📒 (beim Rücktest der Einstieg), Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
                "die Meldung das.",
-         messung=["zirkel.heisse", "zirkel.trade_wort", "daten.kurzname"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
+         messung=["zirkel.heisse", "zirkel.trade_wort", "daten.kurzname", "livermore.lage"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
     dict(name="Setup aus Livermore, bestätigt vom Zirkel", quelle="Micky 25.11.2026 (Livermore liefert das System, der "
          "Zirkel bestätigt nur; vorher 22.11.2026: das Setup ergab sich aus dem Zirkel)",
          regel="Jedes Signal aus Livermores Spanne ist ein Setup, benannt nach der Art seines Pivotal Points (Livermores "
@@ -478,8 +476,8 @@ BEREICHE = [
 # Karte, wenn eine Messfunktion der Karte sie benutzt – direkt oder über Funktionen, die sie aufruft. Was keiner gehört,
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
-    "chart.ETIKETT": "Layout", **{f"rueckenwind_seite.TABELLE_{n_}": "Layout" for n_ in ("HOEHE", "ZEILE", "RAND")}, "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
-    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.NOTIZBUCH_ZEILEN": "Layout", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", "chart.LINKS": "Layout", "chart.RECHTS": "Layout", "chart.LINIEN_SPIEL": "Layout (Skala)",
+    **{f"rueckenwind_seite.TABELLE_{n_}": "Layout" for n_ in ("HOEHE", "ZEILE", "RAND")}, "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
+    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.NOTIZBUCH_ZEILEN": "Layout", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", 
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
