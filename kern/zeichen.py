@@ -504,9 +504,9 @@ def freitag(df, n_atr=2.0):
 
 
 # ── Relativ zum Markt ─────────────────────────────────────────────────────────────────────────────────────────────
-def korrekturfenster(idx):
-    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: das Lagebild aus
-    dem letzten Lauf (Spitze und Heer, Micky 26.11.2026 – die Führer, nicht der Durchschnitt; ohne Lagebild Livermores
+def korrekturfenster(idx, ampel=None):
+    """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: das Lagebild von
+    heute (ampel aus zirkel.rechnen, das den Vorlauf rechnet; sonst das gespeicherte; Spitze und Heer, Micky 26.11.2026 – die Führer, nicht der Durchschnitt; ohne Lagebild Livermores
     Frontbericht des Index) steht nicht auf 🟢, oder der Index liegt ≥ 3 %
     unter dem Hoch der 60 Tage – start = Indexhoch der 60 Tage. Vorbei (Prüf-Agent 13.11.2026: die Stärke verschwand,
     sobald der Markt wieder lief – genau dann brechen die Führer aus): die letzte Korrektur von mindestens 3 %, deren
@@ -515,8 +515,8 @@ def korrekturfenster(idx):
     c60 = c.iloc[-KORREKTUR_FENSTER:]
     try:
         import zirkel
-        m = zirkel.markt()
-        gruen = (m["ampel"] if m else zirkel.livermore_ampel(idx)) == "grün"
+        m = None if ampel else zirkel.markt()      # ampel: das Lagebild dieses Laufs (zirkel.rechnen)
+        gruen = (ampel or (m["ampel"] if m else zirkel.livermore_ampel(idx))) == "grün"
     except Exception:  # noqa: BLE001 – ohne Lagebild und Notizbuch des Index zählt nur der Abstand zum Hoch
         gruen = True
     if not gruen or (1 - c60.iloc[-1] / c60.max()) * 100 >= MIN_RUECKGANG:
@@ -1143,12 +1143,12 @@ SPEICHER = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 _START, _GELADEN = {}, {}
 
 
-def startdatum(idx):
-    """korrekturfenster() einmal je Indextag → (start, ende) oder KEIN."""
-    schl = (len(idx), idx.index[-1])
+def startdatum(idx, ampel=None):
+    """korrekturfenster() einmal je Indextag (und Lagebild) → (start, ende) oder KEIN."""
+    schl = (len(idx), idx.index[-1], ampel)
     if schl not in _START:
         _START.clear()
-        _START[schl] = korrekturfenster(idx) or KEIN
+        _START[schl] = korrekturfenster(idx, ampel) or KEIN
     return _START[schl]
 
 
@@ -1185,7 +1185,7 @@ def ablegen(stand, alle, behalten=ABLAGE_BEHALTEN, **mehr):
     """Kreisläufe {tk: kreislauf} des Tages ablegen; mehr = weitere Teile des Zirkel-Laufs (feld, barometer)."""
     from dateien import json_schreiben
     os.makedirs(SPEICHER, exist_ok=True)
-    for f in sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json"))[:-behalten]:
+    for f in sorted(f for f in os.listdir(SPEICHER) if f.endswith(".json") and f[:4].isdigit())[:-behalten]:  # Technik
         try:                                     # nur die jüngsten Tage behalten (Prüf-Agent 13.11.2026)
             os.remove(os.path.join(SPEICHER, f))
         except OSError:
@@ -1197,7 +1197,8 @@ def laden():
     """Jüngster gespeicherter Kreislauf {stand, titel: {tk: kreislauf}} oder {} – einmal je Datei gelesen."""
     if not os.path.isdir(SPEICHER):
         return {}
-    for f in sorted((f for f in os.listdir(SPEICHER) if f.endswith(".json")), reverse=True):
+    for f in sorted((f for f in os.listdir(SPEICHER) if f.endswith(".json") and f[:4].isdigit()), reverse=True):  # Technik:
+        # nur die Tagesdateien (daneben liegt lagebild.json des Vorlaufs)
         p = os.path.join(SPEICHER, f)
         m = os.path.getmtime(p)
         if _GELADEN.get("pfad") == (p, m):

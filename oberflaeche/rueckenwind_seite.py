@@ -289,7 +289,7 @@ def dreifach_block(erg):
                 if piv and kurs:
                     lage_ += (f" · Front {zahl(piv)} · noch {zahl((piv / kurs - 1) * 100, 1)} %" if kurs < piv else
                               f" · {zahl((kurs / piv - 1) * 100, 1)} % über der Front {zahl(piv)}")
-            b_ = bahn(x.get("frei"))
+            b_ = bahn(f.get("frei"))
             lage_ += f" · {b_}" if b_ else ""
             phase, halt_ = _zirkel(tk, kreis)
             k = klasse(x)
@@ -375,7 +375,7 @@ def kraft_ampel(x):
             else "gelb" if k in rueckenwind.VORNE_KLASSEN else "rot")
 
 
-def titel_karten(tk):
+def titel_karten(tk, frei=None):
     """Rückenwind eines Titels für den Kopf der Titelseite (Micky 23.11.2026: statt einer langen Zeile drei Karten, je
     eine Frage mit eigener Ampel und einer Angabe pro Zeile – drei Mal grün ist ▲▲▲; nichts weggelassen):
     ⚔️ Kraft (Kurs), 💰 Nachschub (Geld), 📊 Fundament (Zahlen). → [(Titel, Ampel, [Zeilen])]; leer ohne Stand."""
@@ -386,7 +386,8 @@ def titel_karten(tk):
     k, r, ab = klasse(x), _richtung(x), x.get("abstand_hoch")
     wort, z = abstand_wort(ab), x.get("zahlen") or {}
     termin, warn = _termin(x, erg["stand"])
-    b_ = bahn(x.get("frei"))
+    import zirkel
+    b_ = bahn(frei if frei is not None else zirkel.feld(tk).get("frei"))
     front = [(f"{k} · {KLASSEN[k - 1]}" if k else "ohne Klasse") + (" · 🦈 RS-Hoch vor Kurs" if x.get("rs_hoch_vor_kurs") else ""),
              f'{PFEIL.get(r, "")} RS-Linie {r or "–"} {_rs_linie(x)}'.strip(),
              f'Rang {x["rang_vor4"]} → {x["rang"]}',
@@ -420,7 +421,8 @@ def zirkel_wort(z, vor=""):
 
 
 def bahn(fr, wort=" freie Bahn"):
-    """✈️ freie Bahn (Livermore: Linie des geringsten Widerstands) aus zonen.frei: keine Stellung über dem Kurs,
+    """✈️ freie Bahn (Livermore: Linie des geringsten Widerstands) aus livermore.frei (Feld des Zirkel-Laufs bzw.
+    Fährte der Titelseite – dieselben Yahoo-Kurse): keine Stellung über dem Kurs,
     ✈️↓ keine darunter; sonst leer. In der Liste ohne Wort (wort=""), die Spalte heißt schon „Bahn“."""
     return " ".join(z + wort for z, ja in (("✈️", (fr or {}).get("oben")), ("✈️↓", (fr or {}).get("unten"))) if ja)
 
@@ -552,7 +554,7 @@ def liste(erg, nur=None):
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
             "Volumen": _volumen_zeichen(x),
             "📊 Fundament": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
-            "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–", "Bahn": bahn(x.get("frei"), "")})
+            "Hoch": f'{HOCH_PUNKT[wort]} −{zahl(ab, 0)} %' if wort else "–", "Bahn": bahn((feld_.get(tk) or {}).get("frei"), "")})
     for o in erg.get("ohne_daten") or []:       # nicht rechenbar: grau mit Grund, damit nichts still fehlt
         if nur and o["tk"] not in wl[nur]:
             continue

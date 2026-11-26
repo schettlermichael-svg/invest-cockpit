@@ -39,6 +39,45 @@ def _gewinne(tk):
         return None
 
 
+def lagebild_vorab(ticker_liste, prozesse=None, rw=None):
+    """Das Lagebild von heute vor dem großen Lauf (Audit 26.11.2026: eine Lage für Titel, Gruppen und Fenster): je Titel
+    nur Livermores Spalte aus den gespeicherten Tageskursen → {fuehrer, heer, ampel, kurstag}. Einmal je Kurstag
+    gerechnet und abgelegt (daten/kreislauf/lagebild.json) – der Rückenwind-Lauf (Zirkel der Gruppen) und der
+    Zirkel-Lauf lesen dasselbe. rw = Titel des Rückenwinds mit Klasse (sonst der gespeicherte Stand)."""
+    import daten
+    from dateien import json_lesen, json_schreiben
+    pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "daten", "kreislauf", "lagebild.json")
+    try:
+        kurstag = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
+    except Exception:  # noqa: BLE001
+        kurstag = None
+    alt_ = json_lesen(pfad) or {}
+    if kurstag and alt_.get("kurstag") == kurstag and rw is None:
+        return alt_
+    with ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1)) as ex:
+        vorab = {tk: {"lv_spalte": sp}                                              # Technik: Pakete je Prozess
+                 for tk, sp in zip(ticker_liste, ex.map(_spalte_titel, ticker_liste, chunksize=20)) if sp}  # Technik
+    sp_, he_ = fuehrer(vorab, rw), heer(vorab)
+    aus = {"fuehrer": sp_, "heer": he_, "ampel": lage_ampel(sp_, he_), "kurstag": kurstag}
+    os.makedirs(os.path.dirname(pfad), exist_ok=True)
+    json_schreiben(pfad, aus)
+    return aus
+
+
+def _spalte_titel(tk):
+    """Livermores Spalte eines Titels aus den gespeicherten Tageskursen (Vorlauf für das Lagebild) oder None."""
+    import daten
+    import livermore
+    try:
+        df = daten.kurse_gespeichert(tk)
+        if df is None or len(df) < KURSE_MIN:
+            return None
+        nb = livermore.notizbuch(df.dropna(subset=["High", "Low", "Close"]))
+        return nb["spalte"] if nb else None
+    except Exception:  # noqa: BLE001 – ein Titel scheitert, das Lagebild steht trotzdem
+        return None
+
+
 def _titel(tk, start=None):
     """Kreislauf, Phase, Trade und Hoch/Tief eines Titels → (tk, kreislauf, feld) oder None."""
     import atr as atr_modul
@@ -65,7 +104,9 @@ def _titel(tk, start=None):
         t = setup(zonen.trade(e, la, ba), zeichen.zirkel(k))
         h, l = df["High"].to_numpy(float), df["Low"].to_numpy(float)
         nb_ = ba.get("nb") or {}
+        import livermore
         feld = {"phase": la["phase"] if la else None, "lv_spalte": nb_.get("spalte"),   # Livermores Spalte = Lage
+                "frei": livermore.frei(df, nb_ or None),        # ✈️ aus denselben Kursen wie die Titelseite (Audit 26.11.)
                 "pivot": la["pivot"] if la else None, "kurs": la["kurs"] if la else None,   # ▲▲▲-Liste (23.11.2026)
                 "trade": {x: t.get(x) for x in TRADE_FELDER} if t else None,
                 "hoch52": bool(len(h) >= JAHR_TAGE and h[-1] >= h[-JAHR_TAGE:].max()),
@@ -87,11 +128,12 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
     import daten
     import zeichen
     beginn = time.time()
-    try:                                            # Beginn der Marktschwäche einmal für alle Titel
-        start = zeichen.startdatum(daten.kurse_gespeichert(daten.INDEX))
-    except Exception:  # noqa: BLE001
-        start = zeichen.KEIN
-    with ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1)) as ex:
+    ampel = lagebild_vorab(ticker_liste, prozesse)["ampel"]   # das Lagebild von heute zuerst (Audit 26.11.2026): das
+    with ProcessPoolExecutor(prozesse or max(1, (os.cpu_count() or 2) - 1)) as ex:   # Fenster der Stärke in der
+        try:                                                                         # Schwäche liest es                                        # Beginn der Marktschwäche einmal für alle Titel
+            start = zeichen.startdatum(daten.kurse_gespeichert(daten.INDEX), ampel)
+        except Exception:  # noqa: BLE001
+            start = zeichen.KEIN
         erg = [x for x in ex.map(functools.partial(_titel, start=start), ticker_liste, chunksize=20) if x]  # Technik
     feld = {tk: f for tk, _, f in erg}
     barometer = {"hochs": sum(f["hoch52"] for f in feld.values()), "tiefs": sum(f["tief52"] for f in feld.values()),
@@ -146,10 +188,11 @@ def _zaehlen(xs):
     return {"auf": sp.count("AT"), "pause": sum(1 for s_ in sp if s_ and s_ not in ("AT", "AB")), "ab": sp.count("AB")}
 
 
-def fuehrer(f_):
-    """Die Spitze (Schicht 1 der Lage): die Führer – Garde und Angriff im Rückenwind – im Notizbuch → {auf, pause, ab}."""
+def fuehrer(f_, rw=None):
+    """Die Spitze (Schicht 1 der Lage): die Führer – Garde und Angriff im Rückenwind – im Notizbuch → {auf, pause, ab}.
+    rw = Titel des Rückenwinds mit Klasse (sonst der gespeicherte Stand)."""
     import rueckenwind
-    rw = (rueckenwind.laden() or {}).get("titel") or {}
+    rw = rw if rw is not None else (rueckenwind.laden() or {}).get("titel") or {}
     return _zaehlen([f_[tk] for tk, x in rw.items() if x.get("klasse") in rueckenwind.ANGRIFF_KLASSEN and tk in f_])
 
 
@@ -368,7 +411,7 @@ def heisse(n=MELDUNG_JE_SEITE):
                   + (" ✓" if t.get("aufgestockt") else "") if t.get("aufstocken")      # Livermore: erst die Probe,
                   else f'Einstieg {zahl(t["einstieg"])} $')                              # nachlegen nur im Gewinn
                  + f' · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
-                 rueckenwind_seite.bahn(x.get("frei"), ""),
+                 rueckenwind_seite.bahn(f_[tk].get("frei"), ""),
                  " ".join(x for x in zeichen.halt(zk)[0::2] if x)]   # Halt der Phase in Klartext (24.11.2026)
         return " · ".join(s for s in teile if s)
 

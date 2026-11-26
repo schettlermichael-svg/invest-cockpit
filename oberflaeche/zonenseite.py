@@ -152,15 +152,18 @@ def kopf(r):
     tr = f["trade"]
     if tr:
         seite_ = "long" if tr["richtung"] > 0 else "short"
+        ueber_ = "über" if tr["richtung"] > 0 else "unter"            # eine Zeile für den Einstieg (Audit 26.11.2026):
+        if tr.get("aufstocken"):                                         # Livermores zwei Hälften statt Auslöser und
+            ein_ = ("½ antasten + ½ aufgestockt – 📒 erreicht" if tr.get("aufgestockt") else   # Antasten doppelt
+                    f'½ antasten beim Schluss {ueber_} {zahl(tr["pivot"])}'
+                    + (" mit Volumen" if tr["wartet"] else "") + f' · ½ aufstocken bei 📒 {zahl(tr["aufstocken"])}')
+        else:
+            ein_ = f'Einstieg {zahl(tr["einstieg"])}'
         trade_html = (f'<div style="font-size:20px">{tr["zeichen"]} {t(tr["name"])} {seite_}</div>'
-                      f'<div style="font-size:13px;color:{TEXT_2}">{"Auslöser" if tr["wartet"] else "Einstieg"} '
-                      f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
-                      f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>'
-                      + (f'<div style="font-size:13px;color:{TEXT_2}" title="Livermore: erst eine Probe, nur im Gewinn '
-                         f'nachlegen, nie verbilligen – kommt der Fehlausbruch, ist nur die Hälfte im Feuer">'
-                         + ("½ antasten + ½ aufgestockt – 📒 erreicht" if tr.get("aufgestockt") else
-                            f'½ antasten beim Schluss {"über" if tr["richtung"] > 0 else "unter"} {zahl(tr["pivot"])} · '
-                            f'½ aufstocken bei 📒 {zahl(tr["aufstocken"])}') + '</div>' if tr.get("aufstocken") else "")
+                      f'<div style="font-size:13px;color:{TEXT_2}" title="Livermore: erst eine Probe, nur im Gewinn '
+                      f'nachlegen, nie verbilligen – kommt der Fehlausbruch, ist nur die Hälfte im Feuer">{ein_}</div>'
+                      f'<div style="font-size:13px;color:{TEXT_2}">Stopp {zahl(tr["stopp"])} · {tr["ampel"]} Risiko '
+                      f'{zahl(tr["risiko"], 1)} %</div>'
                       + (f'<div style="font-size:13px;color:{GRUEN if tr["zirkel"] == "✓" else GELB}">'
                          f'{tr["zirkel"]} {"der Zirkel trägt" if tr["zirkel"] == "✓" else "gegen den Zirkel"}: '
                          f'{t(tr["zirkel_grund"])}</div>' if tr.get("zirkel") else ""))
@@ -174,7 +177,7 @@ def kopf(r):
     else:
         trade_html = '<div style="font-size:20px">⚪ kein Setup</div>'
     import rueckenwind_seite
-    karten_ = rueckenwind_seite.titel_karten(r["tk"])   # drei Karten Front · Nachschub · Fundament (Micky 23.11.2026)
+    karten_ = rueckenwind_seite.titel_karten(r["tk"], r["fuehrte"].get("frei"))   # drei Karten Front · Nachschub · Fundament (Micky 23.11.2026)
     wind_html = ('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;'
                  'margin-top:10px">'   # Layout
                  + "".join(f'<div style="border:1px solid {RAND};border-radius:10px;padding:10px 12px">'

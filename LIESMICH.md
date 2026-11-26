@@ -1802,3 +1802,20 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
 - Einheits-Wächter: regelkarte.einheit() prüft alle sichtbaren Zeichenketten (ohne Docstrings) auf die Nebenwörter des
   Wörterbuchs und die gefallenen Doppelrechnungen (GEFALLEN, GEFALLEN_MODULE); jeder Fund ist eine rote Meldung im
   Wachposten.
+
+## Prüfung der ganzen App (26.11.2026, Micky: „einheitlichkeit, fehlerfreiheit, widersprüche, datenbeschaffung“)
+- Geprüft: pyflakes, Import aller Module, Attribute über Modulgrenzen (statisch), Wachposten komplett, alle Seiten,
+  40 Titel mit allen Ebenen und Schaltern (Titelseite, Analyse, Stratege), Liste/Morgenmeldung gegen Titelseite.
+- Fehler behoben: zeichen.laden las jede *.json im Kreislauf-Ordner – nur noch die Tagesdateien (daneben
+  lagebild.json). Setup-Karte: „Schluss darüber“ stand auch beim Short; Auslöser und Antasten standen doppelt – jetzt
+  eine Zeile „½ antasten … · ½ aufstocken bei 📒 …“, darunter Stopp und Risiko.
+- Widerspruch behoben: ✈️ der Liste kam aus den Massive-Tagen, die Titelseite aus Yahoo (5 von 300 Titeln wichen ab) –
+  jetzt rechnet der Zirkel-Lauf ✈️ aus denselben Yahoo-Kursen (Feld „frei“); rueckenwind._frei entfernt.
+- Widerspruch behoben: das Fenster „Stärke in der Schwäche“ las das Lagebild von gestern. zirkel.lagebild_vorab rechnet
+  das von heute vor dem großen Lauf (nur Livermores Spalte je Titel), legt es je Kurstag ab (daten/kreislauf/
+  lagebild.json); der Rückenwind-Lauf rechnet den Zirkel der Gruppen jetzt nach den Klassen damit, der Zirkel-Lauf
+  der Titel liest dasselbe.
+- Datenbeschaffung: Titelseite, Zirkel, Analyse, Stratege = Yahoo-Tageskurse (dividendenbereinigt) und 30-Minuten-
+  Kerzen (Yahoo); Rückenwind (RS-Rang, Momentum, Gruppen) = Massive (nur splitbereinigt) – RS-Ränge weichen bei
+  Dividendentiteln geringfügig ab, die Zeichen der Titelseite rechnen aus Yahoo. Markt: ^GSPC (RS, Fenster), SPY/QQQ
+  (Lagebild-Index). Testkopie auf dem Mac: alte Dateien aus früheren Ständen entfernt (sync legt nur dazu).

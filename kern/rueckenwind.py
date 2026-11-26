@@ -25,7 +25,6 @@ import pandas as pd
 import livermore
 import massive
 import sektoren
-import zonen
 from dateien import json_lesen, json_schreiben  # noqa: E402
 
 HIER = os.path.dirname(os.path.abspath(__file__))
@@ -254,7 +253,7 @@ def _ein_zirkel(arg):
     return {x: z.get(x) for x in ZIRKEL_FELDER} if z else None
 
 
-def _gruppen_zirkel(gruppen, B):
+def _gruppen_zirkel(gruppen, B, ampel=None):
     """Der Zirkel jeder Gruppe (Micky 23.11.2026: Branchen auf den Zirkel – Weinstein: erst die Gruppe, dann der
     Titel): Kreislauf ihres Index mit den Zeichen relativ zum S&P 500 (zeichen.fuer_titel) → g["zirkel"]; in
     mehreren Prozessen wie der Zirkel-Lauf der Titel."""
@@ -264,7 +263,7 @@ def _gruppen_zirkel(gruppen, B):
     idx = daten.kurse_gespeichert(daten.INDEX)
     if idx is None:
         return
-    start = zeichen.startdatum(idx)
+    start = zeichen.startdatum(idx, ampel)          # ampel = das Lagebild von heute (zirkel.lagebild_vorab)
     arg = [(g["name"], _gruppen_index(g["mitglieder"], B), idx, start) for g in gruppen]
     with ProcessPoolExecutor(max(1, (os.cpu_count() or 2) - 1)) as ex:
         for g, z in zip(gruppen, ex.map(_ein_zirkel, arg)):
@@ -416,12 +415,6 @@ def _themenname(g, rang):
     return ", ".join(top) + " · " + ", ".join(b for b, _ in g.get("branchen", [])[:3])
 
 
-def _frei(B, tk):
-    """✈️ freie Bahn aus den Massive-Tagen (zonen.frei, dieselbe Regel wie Chart und Titelseite) oder None."""
-    d = pd.DataFrame({k: m[tk] for k, m in B.items()}).dropna() if tk in B["Close"].columns else None
-    return zonen.frei({"df": d}) if d is not None and len(d) else None
-
-
 def rechnen(netz=False):
     """Alles rechnen und speichern; Ergebnis als dict. netz=True (Nachtlauf): Fundamentdaten der Titel in einer Stufe
     holen, wenn älter als 12 Stunden (quellen.laden)."""
@@ -433,7 +426,7 @@ def rechnen(netz=False):
     V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
     O = massive.kursmatrix(alle, 100, "Open")     # letzte Zahlen höchstens ein Quartal her
     H = massive.kursmatrix(alle, 100, "High")
-    B = massive.kursmatrix(alle, livermore.STELLUNG_JAHRE * JAHR_TAGE, ["Open", "High", "Low", "Close", "Volume"])   # ✈️, Zirkel der Gruppen
+    B = massive.kursmatrix(alle, livermore.STELLUNG_JAHRE * JAHR_TAGE, ["Open", "High", "Low", "Close", "Volume"])   # Zirkel der Gruppen
     tv = _tv()
     titel_, ohne_daten = [], []
     for t in alle:
@@ -467,7 +460,6 @@ def rechnen(netz=False):
             g["nr"] = th.get("nr")
             gruppen.append(g)
             thema_von.update({t: g for t in th["mitglieder"]})
-    _gruppen_zirkel(gruppen, B)
     # Momentum (Kullamägi, 22.11.2026): Rendite über 1, 3, 6 Monate; die besten 2 % des Reviers je Fenster = 🚀
     mom = {k: C.iloc[-1] / C.iloc[-1 - n] - 1 for k, n in MOMENTUM_FENSTER.items()}
     spitze = {k: float(r_.reindex(rv.index).quantile(MOMENTUM_SPITZE)) for k, r_ in mom.items()}
@@ -508,8 +500,7 @@ def rechnen(netz=False):
              "branche_feld": bra["feld"] if bra else None,
              "jung": round(len(c) / MONAT_TAGE) if len(c) < 252 + 2 * WOCHEN4 else None, "herkunft": zusatz[tk]["herkunft"] if tk in zusatz else "Revier",
              "thema": th["name"] if th else None, "thema_feld": th["feld"] if th else None,
-             "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2),
-             "frei": _frei(B, tk)}
+             "geld_ampel": _geld_ampel(sek, bra, th), "kurs": round(float(c.iloc[-1]), 2)}
         x["richtung"] = richtung(x["rs_tempo"], x["rs_vortempo"])
         x["klasse"] = klasse(x)                  # Schlachtordnung statt Stufe (Micky 22.11.2026)
         if x["klasse"] in VORNE_KLASSEN and netz:   # neue Zahlen holen nur für Garde, Angriff und Vorhut …
@@ -528,6 +519,10 @@ def rechnen(netz=False):
         titel[tk] = x
     for g in gruppen:                            # Anführer und Verfolger je Gruppe: folgen die Schwestern?
         anfuehrer_verfolger(g, titel)
+    import tpo_daten                             # das Lagebild von heute (Spitze aus den Klassen dieses Laufs) zuerst,
+    import zirkel                                # dann der Zirkel der Gruppen – dasselbe Fenster wie bei den Titeln
+    lb = zirkel.lagebild_vorab(zirkel.liste(tpo_daten.lauf_liste()), rw=titel)     # (Audit 26.11.2026)
+    _gruppen_zirkel(gruppen, B, lb["ampel"])
     stand = f"{C.index[-1]:%Y-%m-%d}"
     erg = {"stand": stand, "gruppen": gruppen, "titel": titel, "ohne_daten": ohne_daten}
     json_schreiben(_pfad("stand.json"), erg, ensure_ascii=False)

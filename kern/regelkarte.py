@@ -241,7 +241,7 @@ ZEICHEN = [
                "Käufer trauen dem Lauf. Gespiegelt keine Eindeckung nach einer schwachen Woche.",
          messung=["zeichen.freitag"], pruefer=["Test am Rand: Zeichen", "Ungleichgewicht"]),
     dict(name="Stärke in der Schwäche", art="RS", meister="Micky, Minervini, O'Neil",
-         regel="Das Fenster der Korrektur öffnet sich, wenn das Lagebild (Spitze und Heer aus dem letzten Lauf) nicht auf "
+         regel="Das Fenster der Korrektur öffnet sich, wenn das Lagebild von heute (Spitze und Heer; der Nachtlauf rechnet es vorab) nicht auf "
                "🟢 steht oder der Index ≥ 3 % unter dem Hoch der 60 Tage liegt; es wirkt bis 45 Handelstage nach dem Tief "
                "nach. Darin hält = der Index fiel mindestens 3 %, der "
                "Titel steht am Indextief mindestens so weit im Plus wie der Index im Minus und mindestens 15 Punkte vor "
@@ -421,7 +421,7 @@ BEREICHE = [
                "Jahre zurück); ✈️↓ = keine darunter. Reines Zeichen ohne Schwelle; wie leicht der Kurs läuft, zeigen "
                "Front, Volumen-Spur, 🏜️ und Kraft ohne Weg. Liste (Spalte Bahn), Rückenwind-Zeile, Lagebericht, Kopf "
                "und Chart der Titelseite.",
-         messung=["livermore.frei", "zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
+         messung=["livermore.frei", "zonen.frei", "zirkel._titel", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Morgenmeldung: Setups", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest an der Front, im "
