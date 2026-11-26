@@ -203,17 +203,17 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
     return None
 
 
-def wucht(a):
+def wucht(a, einheit="T."):
     """Wucht am Ausbruch (Micky 26.11.2026: Momentum = Masse mal Geschwindigkeit) – eine Ablesung, kein Urteil, ohne
     Schwelle: Masse = Volumen am Ausbruchstag gegen den 50-Tage-Schnitt, Geschwindigkeit = Handelstage bis zu
-    Livermores Bestätigung 📒 (0 = am Ausbruchstag selbst). → Text oder "" (kein Ausbruch, Fehlausbruch)."""
+    Livermores Bestätigung 📒 (0 = am Ausbruchstag selbst), in Kerzen der Ebene (einheit). → Text oder "" (kein Ausbruch, Fehlausbruch)."""
     if not a or a["fehl"]:
         return ""
     k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
     masse = f"Masse {k(a['volumen'])}-fach" if a.get("volumen") else "Masse unbekannt"
     tb = a.get("tage_bis_bestaetigt")
-    tempo = ("📒 am selben Tag" if tb == 0 else f"📒 nach {tb} T." if tb is not None
-             else f"📒 steht aus (seit {a['tage_her']} T.)")
+    tempo = ("📒 am selben Tag" if tb == 0 else f"📒 nach {tb} {einheit}" if tb is not None
+             else f"📒 steht aus (seit {a['tage_her']} {einheit})")
     return f"💥 Wucht: {masse} · {tempo}"
 
 

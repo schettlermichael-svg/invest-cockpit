@@ -1756,3 +1756,9 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Boden; ohne Stellung ✈️ freie Bahn. Die Kacheln bleiben vorerst.
 - Wucht (Schritt 6): vcp_zone.wucht – „💥 Wucht: Masse 1,4-fach · 📒 nach 2 T.“ in der Tag-Kachel und im Ausbruchstext;
   ausbruch() liefert dafür tage_bis_bestaetigt.
+- Ebenen (Schritt 7): zonen.fuehrte rechnet Livermores Spanne je Ebene aus ihren eigenen Kerzen (Woche aus Wochen-,
+  Stunde aus Stundenkerzen; vorher Woche = Spanne des Tages, Stunde = Dalton-Balance, die nur noch als Rückfall ohne
+  Notizbuch gilt). Chart: Pivotal Points und Kipp-Zone auf jeder Ebene; eine Stellung = ein Etikett (Front zuerst).
+  zonen.einigkeit: Livermores Spalte je Ebene, „🧭 Woche 🟢 Vormarsch · Tag … · Stunde …“ unter dem Lagebericht,
+  ⬆/⬇ Einigkeit bei Vormarsch bzw. Rückzug auf allen drei. Dauer der Spanne in Kalenderwochen (Stunde: „seit …“),
+  Ausbruch und Wucht in Kerzen der Ebene (zonen.KERZE: T., Wo., Std.).

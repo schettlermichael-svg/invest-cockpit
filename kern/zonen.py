@@ -116,14 +116,18 @@ def _volumen_hoch(df):
     return bool(schnitt.iloc[-1] == schnitt.iloc[-1] and v.iloc[-1] > schnitt.iloc[-1])
 
 
+KERZE = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}   # Einheit der Kerzen je Ebene
+
+
 def lage(e, ba=None, profil=True):
-    """Zone, Phase und Richtung einer Ebene → dict. Woche und Tag aus der Base ba (basis()), die Stunde aus der Balance.
+    """Zone, Phase und Richtung einer Ebene → dict, aus ihrer Spanne ba (basis() auf den Kerzen der Ebene, 26.11.2026);
+    ohne Notizbuch (zu wenig Kerzen) die Balance.
     profil=False (Zirkel-Lauf über alle Titel, nur Tageskurse): ohne Volumenprofil, poc und profil sind None."""
     if not e:
         return None
     df = e["df"]
     kurs = float(df["Close"].iloc[-1])
-    if e["name"] == "Stunde" or ba is None:
+    if ba is None:                                   # Rückfall ohne Notizbuch: die Balance (zu wenig Kerzen)
         st_ = e["struktur"]
         lo, hi, beginn = float(st_["short_pivot"]), float(st_["pivot"]), pd.Timestamp(st_["balance_start"])
         nah = (e["atr"] or 0) * STOPP_ATR
@@ -138,7 +142,7 @@ def lage(e, ba=None, profil=True):
             pr = profil_seit(e, ab_) if profil else None
             return {"zone": None, "phase": "hoch", "zeichen": z_, "wort": w_, "richtung": 0, "pfeil": "→", "kurs": kurs,
                     "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]) if pr else None, "profil": pr,
-                    "beginn": None}
+                    "beginn": None, "spalte": (ba.get("nb") or {}).get("spalte")}
         lo, hi, beginn = float(z["unten"]), float(z["oben"]), pd.Timestamp(z["start_t"])
         pivot = float(a["pivot"]) if a else float(z.get("pivot") or hi)   # Livermores Pivotal Point
         td = ba["df"]
@@ -155,17 +159,20 @@ def lage(e, ba=None, profil=True):
         else:
             phase = "aufbau"
         name = z.get("name") or "Abwärtstrend"
-        teile = [f'{z["wochen"]:.0f} Wo.', f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
+        dauer = (f'seit {beginn:%d.%m. %H:%M}' if e["name"] == "Stunde"                # Dauer in Kalenderwochen, gleich
+                 else f'{max(0, (df.index[-1] - beginn).days) / 7:.0f} Wo.')                # auf jeder Ebene (26.11.)
+        teile = [dauer, f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
         if a and not a["fehl"]:
-            teile.append(f'Ausbruch vor {a["tage_her"]} T. ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
-            teile.append(vcp_zone.wucht(a))                                         # Masse mal Geschwindigkeit (26.11.)
+            ein_ = KERZE.get(e["name"], "T.")
+            teile.append(f'Ausbruch vor {a["tage_her"]} {ein_} ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
+            teile.append(vcp_zone.wucht(a, ein_))                                   # Masse mal Geschwindigkeit (26.11.)
         info = " · ".join(teile)
     pr = profil_seit(e, beginn) if profil else None
     z_, w_ = PHASE[phase]
     r = RICHTUNG.get(phase, 0)
     return {"zone": (lo, hi), "pivot": pivot, "poc": float(pr["poc"]) if pr else None, "profil": pr, "beginn": beginn, "name": name,
             "info": info, "phase": phase, "zeichen": z_, "wort": w_, "richtung": r,
-            "pfeil": {1: "↗", -1: "↘", 0: "→"}[r], "kurs": kurs}
+            "pfeil": {1: "↗", -1: "↘", 0: "→"}[r], "kurs": kurs, "spalte": ((ba or {}).get("nb") or {}).get("spalte")}
 
 
 def trade(e, la, ba):
@@ -295,9 +302,31 @@ def frei(e):
 
 
 def fuehrte(ebenen):
-    """Alles für Kopfzeile und Chart: die Base (Woche und Tag), Lage je Ebene, Festungen, der Trade."""
+    """Alles für Kopfzeile und Chart: Livermores Spanne je Ebene (Micky 26.11.2026: sein Notizbuch auf Wochen-, Tages-
+    und Stundenkerzen – eine Sprache auf allen Ebenen; vorher Woche = Spanne des Tages, Stunde = Dalton-Balance),
+    Lage je Ebene, Festungen, der Trade (Tag), die Einigkeit der Ebenen."""
     tag = ebenen.get("Tag")
-    ba = basis(tag["df"]) if tag else None
-    la = {n: lage(ebenen.get(n), None if n == "Stunde" else ba) for n in EBENEN}
+    ba_e = {}
+    for n in EBENEN:
+        e_ = ebenen.get(n)
+        try:
+            ba_e[n] = basis(e_["df"]) if e_ and len(e_["df"]) > vcp_zone.MIN_DATEN else None
+        except Exception:  # noqa: BLE001 – ohne Notizbuch gilt auf dieser Ebene die Balance (Rückfall)
+            ba_e[n] = None
+    ba = ba_e.get("Tag")
+    la = {n: lage(ebenen.get(n), ba_e.get(n)) for n in EBENEN}
     fest = {n: festungen(ebenen.get(n), la[n]) for n in EBENEN}
-    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba, "frei": frei(tag)}
+    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba, "frei": frei(tag),
+            "einigkeit": einigkeit(la)}
+
+
+def einigkeit(la):
+    """Einigkeit der Ebenen (Micky 26.11.2026): Livermores Spalte auf Woche, Tag und Stunde → {ebenen: {Name: (Ampel,
+    Wort)}, alle: "auf" | "ab" | None}. Vormarsch auf allen drei = "auf", Rückzug auf allen drei = "ab"."""
+    import livermore
+    sp = {n: (la.get(n) or {}).get("spalte") for n in EBENEN}
+    if not any(sp.values()):
+        return None
+    werte = set(sp.values())
+    return {"ebenen": {n: livermore.lage(s_) for n, s_ in sp.items() if s_},
+            "alle": "auf" if werte == {"AT"} else "ab" if werte == {"AB"} else None}

@@ -389,14 +389,15 @@ BEREICHE = [
          regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = letzter Pivotal Point "
                "oben = Pivot, Unterkante = letzter Pivotal Point unten; Name „Spanne“), während eines "
                "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
-               "kam. Stunde: die Balance "
-               "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "
+               "kam. Woche und Stunde (26.11.2026): Livermores Notizbuch auf ihren eigenen Kerzen – Spanne, Pivotal Points, "
+               "Kipp-Zone wie am Tag; nur ohne Notizbuch (zu wenig Kerzen) die Balance nach Dalton. Einigkeit der Ebenen "
+               "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen drei Ebenen = ⬆/⬇ im Lagebericht (🧭). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "
                "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
                "Ebene ab Beginn der Spanne; ohne Spanne ab dem letzten Pivotal Point unten (26.11.2026, vorher Dalton-Balance); "
                "die eigene Balken-Nr. geht vor. Im Chart nur das Volumen, die Zeit (Market Profile) per Schalter. "
                "PbD-Kette nach Vorwald am 22.11.2026 entfernt.",
-         messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.fuehrte", "zonen.profil_details",
+         messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.fuehrte", "zonen.einigkeit", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Zirkel: Stärke, Schwäche, Momentum, Balance und Disbalance", quelle="Weinstein, Wyckoff, Dalton, Kullamägi, Micky 22.11.2026",

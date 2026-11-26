@@ -135,11 +135,12 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     o, h, l, c, v = (d[k].to_numpy(float) for k in ("Open", "High", "Low", "Close", "Volume"))
     lo, hi = la["zone"] or (None, None)
     werte = [h.max(), l.min()] + ([lo, hi] if la["zone"] else []) + ([t["einstieg"], t["stopp"]] if t else [])
-    pp_offen, pp_stark = [], set()                                                  # Livermores Pivotal Points, die noch
-    if "livermore" in linien_ and e["name"] == "Tag":                               # stehen (Micky 25.11.2026): kräftig
+    pp_offen, pp_stark, front_k = [], set(), set()                                  # Livermores Pivotal Points, die noch
+    if "livermore" in linien_:                                                      # stehen (Micky 25.11.2026): kräftig
         import livermore                                                            # die Front (Spanne oben und unten)
         fr_ = livermore.front(df) or {}                                             # und je die nächste Stellung über
         pp_offen, pp_stark = fr_.get("offen", []), fr_.get("stark", set())          # und unter dem Kurs, die übrigen
+        front_k = {(q_["i"], q_["art"]) for q_ in (fr_.get("oben"), fr_.get("unten")) if q_}   # Front zuerst beschriftet
         kurs_ = float(df["Close"].iloc[-1])                                         # blass; gefallene (Schluss 1 ATR
         schl = lambda p_: (p_["i"], p_["art"])                                      # noqa: E731  jenseits) gar nicht
         spanne_bild = float(h.max() - l.min())
@@ -206,7 +207,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
     a_kipp = float(e.get("atr") or 0)
-    if piv is not None and e["name"] == "Tag" and a_kipp > 0:                       # Kipp-Zone (Micky 26.11.2026,
+    if piv is not None and a_kipp > 0:                                              # Kipp-Zone (Micky 26.11.2026,
         import livermore                                                            # Frontkarte): je 1 ATR (Livermores
         b_ = livermore.BESTAETIGUNG * a_kipp                                        # Bestätigung) über dem Pivot grün =
         for y_a, y_b, farbe, text in ((piv, piv + b_, GRUEN, "📒 Angriff bestätigt"),   # Angriff bestätigt, darunter
@@ -263,7 +264,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
-    for p_ in pp_offen:                                                             # Livermores Pivotal Points als
+    beschriftet = []
+    for p_ in sorted(pp_offen, key=lambda q_: (q_["i"], q_["art"]) not in front_k):  # Livermores Pivotal Points als
         if not pmin <= p_["preis"] <= pmax:                                         # Linie ab ihrem Tag bis zum rechten
             continue                                                                # Rand (im Notizbuch doppelt
         stark = (p_["i"], p_["art"]) in pp_stark                                    # unterstrichen, Regel 8)
@@ -273,7 +275,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'stroke-width="{PP_DICKE if stark else PP_BLASS_DICKE}" stroke-opacity="{1 if stark else PP_BLASS_DECK}">'
           f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.%y}) – {p_["farbe"]} unterstrichen, '
           f'aus {livermore.SPALTEN[p_["aus"]]} · steht noch{"" if stark else " (weiter entfernt)"}</title></line>')
-        if stark:                                                                   # Preis am Rand nur für die kräftigen;
+        if stark and not any(abs(x_ - p_["preis"]) <= STELLUNG_ATR * a_kipp for x_ in beschriftet):  # eine Stellung,
+            beschriftet.append(p_["preis"])                                         # ein Etikett
             nah = sum(abs(q_["preis"] - p_["preis"]) <= STELLUNG_ATR * a_kipp for q_ in pp_offen)   # Gewicht der Stellung
             ob_ = p_["preis"] > kurs_                                               # (26.11.): Punkte innerhalb ½ ATR zählen
             etiketten.append((Y(p_["preis"]), f'— {"oben" if ob_ else "unten"} {zahl(p_["preis"])}'
@@ -547,7 +550,7 @@ def legende():
               "Festungen"),
              (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
               "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance)"),
-             (ROT, "— Livermores Pivotal Points (Schalter „Livermore“, Tag; im Notizbuch doppelt unterstrichen): rot aus "
+             (ROT, "— Livermores Pivotal Points (Schalter „Livermore“, auf jeder Ebene aus ihren Kerzen; im Notizbuch doppelt unterstrichen): rot aus "
               "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
               "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis die Front (Spanne oben und unten) und je "
               "die nächste Stellung über und unter dem Kurs, die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),

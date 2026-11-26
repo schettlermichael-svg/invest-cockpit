@@ -335,9 +335,19 @@ def lagebericht(r):
     if tr:
         teile.append(f'{tr["zeichen"]} {tr["name"]} {"long" if tr["richtung"] > 0 else "short"}'
                      + (f' {tr["zirkel"]}' if tr.get("zirkel") else ""))
+    ei = r["fuehrte"].get("einigkeit")                                              # Einigkeit der Ebenen (26.11.)
+    ebenen_ = ""
+    if ei:
+        ebenen_ = " · ".join(f'{n} {a__} {w__}' for n, (a__, w__) in ei["ebenen"].items())
+        if ei["alle"]:
+            ebenen_ += (" — ⬆ Einigkeit: Vormarsch auf allen drei Ebenen" if ei["alle"] == "auf"
+                        else " — ⬇ Einigkeit: Rückzug auf allen drei Ebenen")
+        ebenen_ = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermores Notizbuch auf Wochen-, '
+                   f'Tages- und Stundenkerzen">🧭 {t(ebenen_)}</div>')
     return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht: Front = '
             f'Pivot (letzter Pivotal Point oben), Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
-            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>')
+            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>'
+            + ebenen_)
 
 
 def livermore_html(r):
