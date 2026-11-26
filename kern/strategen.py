@@ -148,7 +148,7 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
           f"Geld-Ampel {rw.get('geld_ampel')}")
     if markt:
         import zirkel
-        f(f"Markt-Ampel (Livermores Notizbuch des {markt['fuehrt']}): {markt['wort']} · " + " · ".join(zirkel.markt_text(markt)))
+        f(f"Markt-Ampel (Lagebild: Spitze und Heer bestimmen, der Index bestätigt): {markt['wort']} · " + " · ".join(zirkel.markt_text(markt)))
     if termin:
         f(f"Nächste Zahlen: {termin}")
     for x in tiefe or []:                         # Aussagezeilen der Seite Analyse (Tiefenanalyse, 21.11.2026)

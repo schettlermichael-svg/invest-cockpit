@@ -1731,3 +1731,18 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Nebenbei: Etiketten-Stapel ohne namenlose Zahlen (Inventur 0/0/0).
 - Morgenmeldung (26.11.2026, Micky): hinter dem Kürzel der Firmenname ohne Rechtsform, z. B. „ONC (BeOne Medicines)“ –
   daten.kurzname aus dem gespeicherten Steckbrief (kein Abruf); ohne Steckbrief oder bei Name = Kürzel nur das Kürzel.
+
+## Unser System (26.11.2026, Doc „Unser System“)
+- Eindampfen: Bollinger-Korridor raus (Schalter, Konstanten, Legende). Market Profile (Zeit-Hälfte des Profils,
+  Zeit-POC, Einzeldrucke) nur noch per Schalter „Market Profile“, standardmäßig aus – das Volumen nutzt dann die ganze
+  Profilbreite. AVWAP nur über die eigene Balken-Nr. (wie bisher). Zirkel-Zeichen Dow-Struktur sowie Enge und
+  trockenes Volumen raus (zeichen.dow, zeichen.enge_trocken entfernt; Bruch der Phase prüft jetzt Livermores Trend
+  statt der Dow-Struktur, der Beginn des Wechsels den letzten Pivotal Point). TROCKEN_TAGE/VERGLEICH bleiben für
+  Rückenwind-Klasse und 🏜️.
+- Profil-Anker ohne Spanne: letzter Pivotal Point unten (statt Dalton-Balance); eigene Balken-Nr. geht vor.
+- Eine Sprache: livermore.lage/spalte_text – „🟢 Vormarsch · 📈 Aufwärtstrend“, „🟡 Gefechtspause · ↘ Natürliche
+  Reaktion“, „🔴 Rückzug · 📉 Abwärtstrend“ für Titel und Index.
+- Markt-Ampel als Lagebild in drei Schichten: Spitze (zirkel.fuehrer, Garde und Angriff) und Heer (zirkel.heer, alle
+  Titel des Laufs) im Notizbuch bestimmen nach der Mehrheit (zirkel.lage_ampel), der Index (Notizbuch S&P 500 und
+  Nasdaq) bestätigt mit ✓/✗, sein Zirkel steht als Zeichen daneben. zirkel.markt_ampel und MARKT_FUEHRT entfernt.
+  Barometer neu mit „heer“; ältere Läufe → markt() None bis zum nächsten Nachtlauf.

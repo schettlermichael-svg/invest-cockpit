@@ -31,7 +31,7 @@ GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}  
 GD_WAHL = (10, 20, 50, 150, 200)
 ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
-LINIEN_WAHL = {"details": "Profil-Details", "livermore": "Livermore", "bollinger": "Bollinger"}   # Schalter (Micky
+LINIEN_WAHL = {"details": "Profil-Details", "marketprofile": "Market Profile", "livermore": "Livermore"}   # Schalter (Micky
 LINIEN_START = ["livermore"]                                                  # 24./25.11.2026); Livermore an
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
 WERT_FARBE = "#E6EAF0"                 # VAH, VAL
@@ -54,15 +54,6 @@ PP_BLASS_DECK = 0.3                    # Layout: weiter entfernte offene Pivotal
 PP_BLASS_DICKE = 1.0                   # Layout
 PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher, eine Linie)
 PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
-ENGE_FARBE = "#5DCAA5"                 # Korridor der Enge
-KORRIDOR_DECK = 0.05                   # Layout: Korridor sonst blass
-KORRIDOR_RAND = 0.5                    # Layout
-SQUEEZE_DECK = 0.32                    # Layout: im Squeeze leuchtend
-SQUEEZE_RAND = 1.2                     # Layout
-SQUEEZE_RUECK = {"Tag": 125, "Woche": 26, "Stunde": 125}   # Bollinger: tiefste Weite seit ~6 Monaten (125 Tage)
-SPRUNG_FARBE = "#EF9F27"               # Feder springt: Schluss außerhalb des Korridors nach dem Squeeze
-ENGE_SCHNITT = 20                      # Korridor = Bollinger-Bänder: 20 Kerzen …
-ENGE_SD = 2.0                          # … ± 2 Standardabweichungen (Bollingers Grundeinstellung)
 
 
 def _pfeil(r):
@@ -117,7 +108,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
     woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
-    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Livermore, Bollinger), profil = Profil
+    21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Market Profile, Livermore), profil = Profil
     am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
@@ -246,52 +237,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         w_ = r_.dropna()
         if len(w_):
             etiketten.append((Y(float(w_.iloc[-1])), f"AVWAP {k + 1} {zahl(float(w_.iloc[-1]))}", ANKER_FARBE[k]))
-    mitte = df["Close"].rolling(ENGE_SCHNITT).mean()                               # Korridor der Enge (Micky 24.11.
-    halbe = ENGE_SD * df["Close"].rolling(ENGE_SCHNITT).std(ddof=0)                # 2026) = Bollinger-Bänder 20/2:
-    weite = (2 * halbe / mitte)                                                    # BandWidth = Weite / Mitte
-    tief_ = weite.rolling(SQUEEZE_RUECK[e["name"]], min_periods=ENGE_SCHNITT).min()
-    oben_g, unten_g = (mitte + halbe).to_numpy(float), (mitte - halbe).to_numpy(float)
-    schluss_g, weite_g, tief_g = df["Close"].to_numpy(float), weite.to_numpy(float), tief_.to_numpy(float)
-    gespannt = np.zeros(len(df), bool)                                             # Bollinger-Squeeze: Weite auf dem
-    sprung = {}                                                                    # tiefsten Stand seit ~6 Monaten –
-    an_ = False                                                                    # gespannt bis zum ersten Schluss
-    for g in range(1, len(df)):                                                    # außerhalb des Bandes (Feder springt)
-        if np.isnan(weite_g[g]) or np.isnan(oben_g[g - 1]):
-            continue
-        if an_ and (schluss_g[g] > oben_g[g - 1] or schluss_g[g] < unten_g[g - 1]):
-            sprung[g] = "H" if schluss_g[g] > oben_g[g - 1] else "T"
-            an_ = False
-            continue
-        if weite_g[g] <= tief_g[g]:
-            an_ = True
-        gespannt[g] = an_
-    ko = pd.Series(oben_g, df.index).reindex(d.index).to_numpy(float)
-    ku = pd.Series(unten_g, df.index).reindex(d.index).to_numpy(float)
-    gs = pd.Series(gespannt, df.index).reindex(d.index).fillna(False).to_numpy(bool)
-    ok_ = [i for i in range(N) if not (np.isnan(ko[i]) or np.isnan(ku[i]))]
-
-    def band(idx, deck, rand):
-        oben_ = [f"{X(i):.1f},{Y(min(max(ko[i], pmin), pmax)):.1f}" for i in idx]
-        unten_ = [f"{X(i):.1f},{Y(min(max(ku[i], pmin), pmax)):.1f}" for i in idx[::-1]]
-        titel = (f"Feder gespannt: der Korridor ist so schmal wie seit {SQUEEZE_RUECK[e['name']]} Kerzen nicht "
-                 f"(Bollingers Squeeze) – Ausbruch abwarten" if rand > KORRIDOR_RAND else
-                 f"Korridor der Enge: Bollinger-Bänder – Schnitt der letzten {ENGE_SCHNITT} Schlusskurse ± "
-                 f"{ENGE_SD:g} Standardabweichungen")
-        A(f'<polygon points="{" ".join(oben_ + unten_)}" fill="{ENGE_FARBE}" fill-opacity="{deck}" '
-          f'stroke="none"><title>{titel}</title></polygon>')
-        for pk in (oben_, unten_[::-1]):
-            A(f'<polyline points="{" ".join(pk)}" fill="none" stroke="{ENGE_FARBE}" stroke-width="{rand}" '
-              f'stroke-opacity="0.8"/>')                                            # Layout
-    if len(ok_) >= 2 and "bollinger" in linien_:
-        band(ok_, KORRIDOR_DECK, KORRIDOR_RAND)
-        lauf = []
-        for i in ok_ + [None]:                                                     # zusammenhängende Squeeze-Strecken
-            if i is not None and gs[i]:
-                lauf.append(i)
-                continue
-            if len(lauf) >= 2:
-                band(lauf, SQUEEZE_DECK, SQUEEZE_RAND)
-            lauf = []
     bw = max(1.0, breite / NZ * 0.6)                                                # Layout: Kerzenbreite
     n_ges = len(df)
     for i in range(N):
@@ -305,18 +250,6 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         hohl = laufend and i == N - 1
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y1:.1f}" width="{bw:.1f}" height="{max(1, y2 - y1):.1f}" '
           + (f'fill="none" stroke="{f}"/></g>' if hohl else f'fill="{f}"/></g>'))
-    for g, art in (sprung.items() if "bollinger" in linien_ else ()):              # Feder springt (Bollinger: Bandbruch
-        j = g - n0                                                                 # nach dem Squeeze; Vorsicht Head Fake)
-        if 0 <= j < N:
-            y_ = Y(h[j]) - 12 if art == "H" else Y(l[j]) + 12                       # Layout: über dem Hoch, unter dem Tief
-            if y_ < OBEN + 16:                                                     # Layout: nicht in die Kopfzeile
-                y_ = Y(l[j]) + 12                                                  # Layout
-            spitze = -5 if art == "H" else 5                                       # Layout
-            A(f'<polygon points="{X(j) - 5:.1f},{y_ - spitze / 2:.1f} {X(j) + 5:.1f},{y_ - spitze / 2:.1f} '   # Layout
-              f'{X(j):.1f},{y_ + spitze / 2:.1f}" fill="{SPRUNG_FARBE}"><title>Feder springt '
-              f'{"nach oben" if art == "H" else "nach unten"}: Schluss {"über" if art == "H" else "unter"} dem '
-              f'Korridor nach dem Squeeze (Bollinger) – der erste Ausbruch kann eine Finte sein (Head Fake)'
-              f'</title></polygon>')
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
@@ -404,8 +337,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} Risiko {zahl(t["risiko"], 1)} %'
                                                                  if name == "Stopp" else gegen), farbe))
-    mitte_x = ende + PROFIL_W / 2
-    halb_w = PROFIL_W / 2 - 4                                                       # Layout
+    mp_an = "marketprofile" in linien_                                              # Market Profile (Zeit) nur per Schalter
+    mitte_x = ende + PROFIL_W / 2 if mp_an else ende + 1                            # (Micky 26.11.2026), sonst das
+    halb_w = PROFIL_W / 2 - 4 if mp_an else PROFIL_W - 6                            # Volumen über die ganze Breite (Layout)
     vmax_p, zmax_p = float(max(pr["volumen"])) or 1.0, float(max(pr["zeit"])) or 1.0
     det = zonen.profil_details(pr) if "details" in linien_ else None
     for a_, b_, w_, z_, k_ in zip(pr["grenzen"][:-1], pr["grenzen"][1:], pr["volumen"], pr["zeit"], pr["kauf"]):
@@ -415,8 +349,9 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         hh = max(1, y2 - y1 - 0.6)  # Layout
         poc_, tpoc_ = a_ <= pr["poc"] <= b_, a_ <= pr["tpoc"] <= b_
         bz = max(1, halb_w * z_ / zmax_p)
-        A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{ZEIT_FARBE}" '  # Layout
-          f'fill-opacity="{0.9 if tpoc_ else 0.4}"/>')                              # Layout
+        if mp_an:
+            A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{ZEIT_FARBE}" '  # Layout
+              f'fill-opacity="{0.9 if tpoc_ else 0.4}"/>')                          # Layout
         deck_v = 0.95 if poc_ else (0.75 if det["val"] <= (a_ + b_) / 2 <= det["vah"] else 0.3) if det else 0.6  # Layout
         bv = max(1, halb_w * w_ / vmax_p)
         bk = bv * (k_ / w_ if w_ > 0 else 0)                                        # Truppen: Käufer grün, Verkäufer rot
@@ -424,13 +359,13 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'<rect x="{mitte_x + 1 + bk:.1f}" y="{y1 + 0.3:.1f}" width="{max(0, bv - bk):.1f}" height="{hh:.1f}" fill="{ROT}" fill-opacity="{deck_v}"/>')  # Layout
         if poc_:
             A(f'<rect x="{mitte_x + 1:.1f}" y="{y1 + 0.3:.1f}" width="{bv:.1f}" height="{hh:.1f}" fill="none" stroke="{POC_FARBE}" stroke-width="1.2"/>')  # Layout
-        if det and z_ == 1 and any(e0 <= (a_ + b_) / 2 <= e1 for e0, e1 in det["einzel"]):   # Einzeldruck
+        if mp_an and det and z_ == 1 and any(e0 <= (a_ + b_) / 2 <= e1 for e0, e1 in det["einzel"]):   # Einzeldruck
             A(f'<rect x="{mitte_x - 1 - bz:.1f}" y="{y1 + 0.3:.1f}" width="{bz:.1f}" height="{hh:.1f}" fill="{EINZEL_FARBE}"/>')  # Layout
-    A(f'<text x="{mitte_x:.1f}" y="{OBEN - 4}" fill="{TEXT_3 if profil is None else ANKER_FARBE[0]}" font-size="10" '  # Layout
-      f'text-anchor="middle">Zeit ◂ ▸ Käufer | Verkäufer (geschätzt) seit {pd.Timestamp(pr["ab"]):%d.%m.}{" (eigener Anker)" if profil else ""}</text>')                                    # Layout
+    A(f'<text x="{ende + PROFIL_W / 2:.1f}" y="{OBEN - 4}" fill="{TEXT_3 if profil is None else ANKER_FARBE[0]}" font-size="10" '  # Layout
+      f'text-anchor="middle">{"Zeit ◂ ▸ " if mp_an else ""}Käufer | Verkäufer (geschätzt) seit {pd.Timestamp(pr["ab"]):%d.%m.}{" (eigener Anker)" if profil else ""}</text>')                                    # Layout
     ab_ = pd.Timestamp(pr["ab"])                                                     # Zeitraum unter dem Profil
     n_pr = int((df.index >= ab_).sum())                                             # (Micky 24.11.2026)
-    A(f'<text x="{mitte_x:.1f}" y="{OBEN + KURS_H + 12}" fill="{TEXT_3}" font-size="10" text-anchor="middle">'   # Layout
+    A(f'<text x="{ende + PROFIL_W / 2:.1f}" y="{OBEN + KURS_H + 12}" fill="{TEXT_3}" font-size="10" text-anchor="middle">'   # Layout
       f'{ab_:%d.%m.%y}–{df.index[-1]:%d.%m.%y} · {n_pr} {EINHEIT[e["name"]]}<title>Zeitraum des Profils: '
       f'{n_pr} Kerzen</title></text>')
     if det:                                                                         # Profil-Details
@@ -454,7 +389,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         etiketten.append((Y(pr["poc"]), f"Profil-POC {zahl(pr['poc'])}", POC_FARBE))
         A(f'<line x1="{LINKS}" x2="{ende}" y1="{Y(pr["poc"]):.1f}" y2="{Y(pr["poc"]):.1f}" stroke="{POC_FARBE}" '
           f'stroke-width="1" stroke-dasharray="1 4" stroke-opacity="0.8"/>')        # Layout
-    if abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
+    if mp_an and abs(pr["tpoc"] - pr["poc"]) > tiefe.stufe(la["kurs"]) * 1.5:                # Layout: mehr als eine Stufe auseinander
         etiketten.append((Y(pr["tpoc"]), f"Zeit-POC {zahl(pr['tpoc'])}", ZEIT_FARBE))
     reihe = sorted(etiketten, key=lambda x: x[0])                                   # rechts, ohne Überlappung und in
     platz = []                                                                      # der Reihenfolge der Preise (Micky
@@ -590,7 +525,7 @@ def legende():
     teile = [(ZONE_FARBE, "Zone von heute: Livermores Spanne zwischen dem letzten Pivotal Point oben und unten; in der "
                           "Stunde die Balance · POC grün gepunktet"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
-             (GRUEN, "Profil rechts: Zeit (lila) ◂ ▸ Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen"),
+             (GRUEN, "Profil rechts: Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen; mit dem Schalter „Market Profile“ links davon die Zeit (lila, Zeit-POC, Einzeldrucke)"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
               "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Spanne des Tages"),
@@ -606,10 +541,6 @@ def legende():
               "die nächste Stellung über und unter dem Kurs, die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
               "rote Fläche bis zum Stopp (das Risiko)"),
-             (ENGE_FARBE, "Korridor der Enge: Bollinger-Bänder (Schnitt der letzten 20 Schlusskurse ± 2 Standardabweichungen) – "
-              "sonst blass; leuchtet er, ist er so schmal wie seit ~6 Monaten nicht (Bollingers Squeeze: Feder gespannt)"),
-             (SPRUNG_FARBE, "▲▼ Feder springt: erster Schluss über bzw. unter dem Korridor nach dem Squeeze – "
-              "Bollinger warnt: der erste Ausbruch kann eine Finte sein"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
              (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 📒 Livermores Bestätigung (1 ATR über dem Pivot) · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "

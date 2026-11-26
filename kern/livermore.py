@@ -233,11 +233,22 @@ def offene(df, nb=None):
     return aus
 
 
+LAGE = {"AT": ("🟢", "Vormarsch"), "AB": ("🔴", "Rückzug")}   # eine Sprache für Titel und Markt (Micky 26.11.2026);
+GEFECHTSPAUSE = ("🟡", "Gefechtspause")                         # die vier Bleistift-Spalten sind die Gefechtspause
+
+
+def lage(spalte):
+    """(Ampel, Wort) zur Spalte: Aufwärtstrend = 🟢 Vormarsch, Abwärtstrend = 🔴 Rückzug, sonst 🟡 Gefechtspause."""
+    return LAGE.get(spalte, GEFECHTSPAUSE)
+
+
 def spalte_text(nb):
-    """„📈 Aufwärtstrend“ usw. – die Spalte, in der Livermore heute schreiben würde."""
+    """„🟢 Vormarsch · 📈 Aufwärtstrend“ usw. – die Lage in unserer Sprache und die Spalte, in der Livermore heute
+    schreiben würde."""
     if not nb:
         return ""
-    return f'{ZEICHEN[nb["spalte"]]} {SPALTEN[nb["spalte"]]}'
+    a_, w_ = lage(nb["spalte"])
+    return f'{a_} {w_} · {ZEICHEN[nb["spalte"]]} {SPALTEN[nb["spalte"]]}'
 
 
 KEY_JAHRE = 2              # Key Price: beide Titel über die letzten 2 Jahre auf 100 gesetzt und zusammengezählt

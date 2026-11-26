@@ -7,16 +7,11 @@ Zone brechen lassen, und erspüren starke und schwache Zeichen – auch versteck
 1 Basis → 2 Aufwärts → 3 Verteilung → 4 Abwärts; die Phase je Woche rechnet phase.py, die Wechselzeichen kommen von hier.
 
 Die App misst, der Stratege deutet. Jedes Zeichen ist eine feste Regel und hat eine Art – Struktur (Schwungpunkte, Spring,
-Einquetschung, Bruch), Volumen (Kauf- und Abgabetage, Pocket Pivot, Enge, Trockenheit), RS (gegen den Markt, auch die Divergenz)
+Einquetschung, Bruch), Volumen (Kauf- und Abgabetage, Pocket Pivot), RS (gegen den Markt, auch die Divergenz)
 oder Ereignis (Zahlen, Wertzone). Ein Wechsel der Phase zeichnet sich erst ab, wenn ein Zeichen der Struktur UND eines
 aus Volumen oder RS auf derselben Seite stehen und die Seite klar überwiegt (Gewicht mindestens 4 und
 doppelt so schwer wie die Gegenseite; Prüf-Agent 13.11.2026: vorher genügte das bloße Zählen).
 
-  Dow-Struktur      Schwungpunkte = Wendepunkte ab 2 ATR (Tag und Wochenkerzen, wie Livermore und der Chart);
-                    höhere Hochs und Tiefs = aufwärts, tiefere = abwärts.
-                    Schwäche: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief. Stärke: Schluss mindestens
-                    0,5 ATR über dem letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber
-                    steht (gespiegelt: erstes tieferes Hoch, Kurs darunter).
   Spring/Upthrust   in den letzten 10 Tagen: Tief höchstens 1 ATR unter dem Tief der 20 Tage davor (Spanne höchstens
                     15 % breit), Schluss innerhalb von 3 Tagen wieder darüber mit Volumen über dem Schnitt = Spring
                     (Wyckoff; O'Neil „undercut and rally“). Upthrust: Hoch über der Oberkante mit Volumen über dem
@@ -28,8 +23,8 @@ doppelt so schwer wie die Gegenseite; Prüf-Agent 13.11.2026: vorher genügte da
                     viele = Akkumulation, gespiegelt Distribution. Verdeckte Abgabe (Churning): mindestens 3 Tage im Plus mit Volumen, die im
                     unteren Drittel schließen. Pocket Pivot (Morales/Kacher) in den letzten 5 Tagen: Tag im Plus über
                     GD10 und GD50, höchstens 4 % über dem GD10, Volumen über dem größten Abgabetag der 10 Tage davor,
-                    die 5 Tage davor zusammen höchstens +3 %. Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit:
-                    der leiseste Tag seit 50 Tagen in den letzten 10, in der unteren Hälfte der Spanne der 60 Tage.
+                    die 5 Tage davor zusammen höchstens +3 %. (Enge und Trockenheit raus, Micky 26.11.2026: Livermores
+                    „Reaktion leise“ sagt dasselbe.)
                     Freitag (Micky 13.11.2026): nach einer Woche von mindestens 2 Wochen-ATR keine Gewinnmitnahme
                     (Schluss oben, Woche nahe am Hoch) – gespiegelt keine Eindeckung nach einer schwachen Woche.
   RS gegen Markt    siehe relativ(), divergenz(), divergenz_short(), tage_gegen_markt(), rs_linie().
@@ -52,6 +47,8 @@ FUEHRT_NAH_HOCH = 15.0    # „führt“ und „nah“ nur höchstens 15 % unter
 NACHWIRKUNG_TAGE = 45     # Stärke in der Korrektur bleibt nach dem Tief des Index 45 Handelstage stehen
 KEIN = "kein"             # Startdatum schon gesucht, kein Fenster (statt None = noch nicht gesucht)
 RS_HOCH = 0.99            # RS-Linie „am Hoch“: höchstens 1 % darunter – ein Maßstab für die ganze App
+TROCKEN_TAGE = 10           # Volumen trocken (Rückenwind-Klasse, 🏜️ im Chart): in den letzten 10 Tagen …
+TROCKEN_VERGLEICH = 49      # … der leiseste Tag seit 50 Tagen (Tag selbst + 49 davor)
 JUNG_TAGE = 70            # Zeichen ab 70 Handelstagen; Phase erst ab 300 (vorher „jung“)
 PHASE_NAME = {0: "jung", 1: "Basis", 2: "Aufwärts", 3: "Verteilung", 4: "Abwärts"}
 RUECKSCHLAG = 21          # Phase 2 · Rückschlag (Wochenschluss unter GD10W und ≥ 15 % unter dem 52-Wochen-Hoch)
@@ -59,8 +56,6 @@ from phase import RUECKSETZER  # noqa: E402  Phase 2 · Rücksetzer (Phase-2-Bil
 
 
 # ── Feste Regeln (Generalinventur Stufe 2, 15.11.2026) ────────────────────────────────────────────────────────────
-DOW_BRUCH_ATR = 0.5         # Dow-Bruch: Schluss mindestens 0,5 ATR unter dem letzten höheren Tief (bzw. über dem tieferen Hoch)
-DOW_WECHSEL = 3             # erster Wechsel: das drittletzte Hoch/Tief bestätigt die alte Richtung
 STEIGUNG_TAGE = 21          # Steigung über 20 Tage (Wert vor 21 Handelstagen)
 SPRING_TAGE = 10            # Spring/Upthrust: in den letzten 10 Tagen
 SECONDARY_TAGE = 20         # Livermores Secondary: der Wendepunkt höchstens 20 Handelstage alt
@@ -80,11 +75,6 @@ W_ATR_FENSTER = 15          # Freitag: Wochen-ATR der 14 Wochen davor
 FREITAG_SCHLUSS_PCT = 0.5   # … letzter Handelstag nicht schwächer als −0,5 % (gespiegelt +0,5 %)
 FREITAG_WOCHE_OBEN = 0.75   # … Woche im oberen Viertel ihrer Spanne
 FREITAG_WOCHE_UNTEN = 0.25  # … gespiegelt im unteren Viertel
-ENG_WOCHEN = 3              # 3 Wochen eng (O'Neil): drei Wochenschlüsse …
-ENG_PCT = 0.015             # … innerhalb von 1,5 %
-TROCKEN_SPANNE_TAGE = 60    # Trockenheit: in der unteren Hälfte der Spanne der 60 Tage …
-TROCKEN_TAGE = 10           # … in den letzten 10 Tagen …
-TROCKEN_VERGLEICH = 49      # … der leiseste Tag seit 50 Tagen (Tag selbst + 49 davor)
 KORREKTUR_FENSTER = 60      # Korrektur des Index: Hoch und Tief in 60 Handelstagen
 DIV_ABSTAND_TAGE = 3        # Divergenz: das eigene Tief (Hoch) mindestens 3 Handelstage vor dem des Index
 DIV_FALL_MIN = 5.0          # … der Titel fiel mindestens 5 % …
@@ -157,7 +147,7 @@ def _atr(df, n=ATR_N):
 
 
 
-# ── Dow-Struktur ──────────────────────────────────────────────────────────────────────────────────────────────────
+# ── Schwungpunkte ──────────────────────────────────────────────────────────────────────────────────────────────────
 def schwungpunkte(h, l, n):
     """Schwunghochs und -tiefs: [(Position, Preis)], bestätigt erst n Kerzen danach."""
     h, l = np.asarray(h, float), np.asarray(l, float)
@@ -168,42 +158,6 @@ def schwungpunkte(h, l, n):
         if l[i] == l[i - n:i + n + 1].min() and l[i] < l[i - n:i].min():
             tiefs.append((i, l[i]))
     return hochs, tiefs
-
-
-def dow(df):
-    """→ {struktur: aufwärts/abwärts/balance, signal, richtung: stärke/schwäche/None, letztes_tief, letztes_hoch,
-    tief_tag, hoch_tag}. Schwungpunkte = die bestätigten Wendepunkte ab 2 ATR (vcp_zone.zigzag) – dieselben Punkte wie
-    Livermores Notizbuch, die Zone und der Chart (Micky 25.11.2026; vorher 5 Kerzen links und rechts)."""
-    import vcp_zone
-    if df is None or len(df) <= vcp_zone.ATR_TAGE + 2:
-        return None
-    zz = vcp_zone.zigzag(df, vcp_zone.GROB)[:-1]                       # nur bestätigte Wendepunkte
-    hochs = [(i, p_) for i, p_, art in zz if art == "H"]
-    tiefs = [(i, p_) for i, p_, art in zz if art == "T"]
-    if len(hochs) < 2 or len(tiefs) < 2:
-        return {"struktur": "balance", "signal": None, "richtung": None}
-    (_, h1), (ih2, h2) = hochs[-2], hochs[-1]
-    (_, t1), (it2, t2) = tiefs[-2], tiefs[-1]
-    kurs = float(df["Close"].iloc[-1])
-    a = float(_atr(df).iloc[-1]) if len(df) > 15 else 0.0
-    a = a if a == a else 0.0
-    if h2 > h1 and t2 > t1:
-        struktur = "aufwärts"
-    elif h2 < h1 and t2 < t1:
-        struktur = "abwärts"
-    else:
-        struktur = "balance"
-    signal = richtung = None
-    if struktur == "aufwärts" and kurs < t2 - DOW_BRUCH_ATR * a:
-        signal, richtung = f"Schluss unter dem letzten höheren Tief {_z(t2, '.2f')}", "schwäche"
-    elif struktur == "abwärts" and kurs > h2 + DOW_BRUCH_ATR * a:
-        signal, richtung = f"Schluss über dem letzten tieferen Hoch {_z(h2, '.2f')}", "stärke"
-    elif (t2 > t1 and kurs > t2 and len(tiefs) >= 3 and len(hochs) >= 3 and tiefs[-DOW_WECHSEL][1] > t1 and hochs[-DOW_WECHSEL][1] > h1):
-        signal, richtung = f"erstes höheres Tief {_z(t2, '.2f')} nach tieferen Hochs und Tiefs", "stärke"
-    elif (h2 < h1 and kurs < h2 and len(hochs) >= 3 and len(tiefs) >= 3 and hochs[-DOW_WECHSEL][1] < h1 and tiefs[-DOW_WECHSEL][1] < t1):
-        signal, richtung = f"erstes tieferes Hoch {_z(h2, '.2f')} nach höheren Hochs und Tiefs", "schwäche"
-    return {"struktur": struktur, "signal": signal, "richtung": richtung, "letztes_tief": round(t2, 2),
-            "letztes_hoch": round(h2, 2), "tief_tag": df.index[it2], "hoch_tag": df.index[ih2]}
 
 
 def wochenkerzen(df):
@@ -252,7 +206,7 @@ def secondary(df, tage=SECONDARY_TAGE):
 LIVERMORE_SEITE = {"auf_vorbei": "schwäche", "ab_vorbei": "stärke", "gefahr_auf": "schwäche", "gefahr_ab": "stärke",
                    "bestaetigt_auf": "stärke", "bestaetigt_ab": "schwäche"}
 LIVERMORE_GEWICHT = {"auf_vorbei": 2, "ab_vorbei": 2, "gefahr_auf": 2, "gefahr_ab": 2, "bestaetigt_auf": 1,
-                     "bestaetigt_ab": 1}          # Trendende und Gefahrensignal wiegen wie ein Dow-Bruch auf Wochenkerzen
+                     "bestaetigt_ab": 1}          # Trendende und Gefahrensignal wiegen doppelt
 LIVERMORE_REAKTION_TAGE = 3                       # Reaktion leise/laut: erst ab 3 Tagen in der Gegenspalte
 
 
@@ -576,25 +530,6 @@ def freitag(df, n_atr=2.0):
     return None
 
 
-def enge_trocken(df):
-    """3 Wochen eng und Volumen-Trockenheit → Liste von Zeichen (Stärke)."""
-    aus = []
-    if df is None or len(df) < 70:
-        return aus
-    w = wochenkerzen(df)["Close"].iloc[-ENG_WOCHEN:]
-    if len(w) == 3 and w.max() / w.min() - 1 <= ENG_PCT:
-        aus.append(_zeichen("stärke", "volumen", f"3 Wochen eng: Wochenschlüsse innerhalb von "
-                            f"{_z((w.max() / w.min() - 1) * 100, '.1f')} % – das Angebot ist aufgebraucht"))
-    v, lo, hi, c = df["Volume"], df["Low"], df["High"], df["Close"]
-    unten, oben = float(lo.iloc[-TROCKEN_SPANNE_TAGE:].min()), float(hi.iloc[-TROCKEN_SPANNE_TAGE:].max())
-    for i in range(len(df) - TROCKEN_TAGE, len(df)):
-        if v.iloc[i] > 0 and v.iloc[i] <= v.iloc[i - TROCKEN_VERGLEICH:i + 1].min() and c.iloc[i] <= unten + (oben - unten) / 2:
-            aus.append(_zeichen("stärke", "volumen", f"Volumen trocknet aus: {df.index[i]:%d.%m.} der leiseste Tag "
-                                "seit 50 Tagen, in der unteren Hälfte der Spanne – niemand will mehr verkaufen"))
-            break
-    return aus
-
-
 # ── Relativ zum Markt ─────────────────────────────────────────────────────────────────────────────────────────────
 def korrekturfenster(idx):
     """Fenster der Marktschwäche → (start, ende) oder None; ende ist None, solange sie läuft. Läuft: die Markt-Ampel
@@ -916,7 +851,7 @@ def avwap_zahltag(df, gewinne):
 
 def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None):
     """Phase, Wechsel und Zeichen eines Titels → dict mit phase (0 jung, 1–4), ziel, wort, satz, zeichen (Liste),
-    staerke/schwaeche (Texte, stärkste zuerst), dow_tag, dow_woche, einquetschung, akkumulation, relativ, trend,
+    staerke/schwaeche (Texte, stärkste zuerst), einquetschung, akkumulation, relativ, trend,
     kurve, tiefs, index_kurve, phasen (52 Wochen; 21 = Rückschlag, 22 = Rücksetzer in Phase 2), wechsel_wochen, rueckschlag,
     ruecksetzer, ausbruch_basis (Hoch der Basis, solange der Wechsel 1 → 2 läuft), jung."""
     import phase as phase_mod
@@ -944,14 +879,10 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         for i in range(len(phl)):                 # Rücksetzer in Phase 2 (die Linie steigt noch) – eigene Farbe
             if phl[i] == 2 and zu_w.iloc[i] == "Rücksetzer" and (i < len(phl) - 1 or zusatz == "Rücksetzer"):
                 phl[i] = RUECKSETZER
-    zs = secondary(df) + livermore(df)
-    dt, dw = dow(df), dow(w)
-    if dt and dt.get("signal"):
-        zs.append(_zeichen(dt["richtung"], "struktur", dt["signal"]))
-    if dw and dw.get("signal") and not (dt and dt.get("richtung") == dw["richtung"]):
-        zs.append(_zeichen(dw["richtung"], "struktur", dw["signal"] + " (Wochenkerzen)", 2))
-    elif dw and dw.get("signal"):
-        zs[-1]["gewicht"], zs[-1]["text"] = 2, zs[-1]["text"] + " (auch auf Wochenkerzen)"
+    import livermore as lv_
+    nb_ = lv_.notizbuch(df)
+    zs = secondary(df) + livermore(df, nb=nb_)                 # Dow-Struktur raus (Micky 26.11.2026: dasselbe wie das Notizbuch)
+    lv_trend = nb_["je_tag"][-1][1] if nb_ and nb_.get("je_tag") else None
     sp = spring(df)
     if sp:
         zs.append(sp)
@@ -974,7 +905,6 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
                                "aber Schluss im unteren Drittel (Churning, 20 Tage)"))
         if ak["pocket_pivot"]:
             zs.append(_zeichen("stärke", "volumen", f"Pocket Pivot am {ak['pocket_pivot']}"))
-    zs += enge_trocken(df)
     kw = kraft_ohne_weg(df)                                # Urvater Wyckoff: Aufwand ohne Ergebnis an einer Marke
     if kw:
         zs.append(_zeichen(kw["seite"], "volumen", f"Kraft ohne Weg am {kw['tag']:%d.%m.} an der Marke {kw['marke']}: "
@@ -1013,7 +943,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         spanne = w[w.index < df.index[-1]].iloc[-lauf:]
         if len(spanne) >= 3:
             unten, oben = float(spanne["Low"].min()), float(spanne["High"].max())
-            if kurs < unten * BRUCH_PUFFER and (dt or {}).get("struktur") != "aufwärts":
+            if kurs < unten * BRUCH_PUFFER and lv_trend != "AT":
                 bruch = True
                 zs.append(_zeichen("schwäche", "struktur", f"Schluss unter dem Tief der {PHASE_NAME[p]} "
                                    f"{_z(unten, '.2f')} $", 2))
@@ -1062,17 +992,20 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         wort += " · Einquetschung"
     # seit wann sich der Wechsel abzeichnet (Kurve ab dort hell)
     wechsel_wochen = None
+    pps_ = (nb_ or {}).get("pivotal") or []
+    pp_tief = next((x for x in reversed(pps_) if x["art"] == "tief"), None)
+    pp_hoch = next((x for x in reversed(pps_) if x["art"] == "hoch"), None)
     if ziel:
         tag = None
         if ziel in (1, 2):
-            if dt and dt.get("tief_tag") is not None:
-                tag = dt["tief_tag"]
+            if pp_tief is not None:                        # letzter Pivotal Point unten (vorher Dow-Tief, 26.11.)
+                tag = pp_tief["tag"]
             if rel and rel.get("seit"):
                 s_ = pd.to_datetime(rel["seit"], format="%d.%m.%Y")
                 d_ = df["Low"].loc[s_:].idxmin()
                 tag = min(tag, d_) if tag is not None else d_
-        elif dt and dt.get("hoch_tag") is not None:
-            tag = dt["hoch_tag"]
+        elif pp_hoch is not None:
+            tag = pp_hoch["tag"]
         if tag is not None:
             wechsel_wochen = max(1, int(np.ceil((df.index[-1] - tag).days / 7)))
     ordnung = {"struktur": 0, "rs": 1, "volumen": 2, "ereignis": 3}
@@ -1097,7 +1030,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
             i_w = [round(float(x), 2) for x in iw]
     return {"phase": p, "ziel": ziel, "wort": wort, "satz": satz, "zeichen": st_ + sw_,
             "staerke": [x["text"] for x in st_], "schwaeche": [x["text"] for x in sw_],
-            "dow_tag": dt, "dow_woche": dw, "einquetschung": eq, "akkumulation": ak, "relativ": rel,
+            "einquetschung": eq, "akkumulation": ak, "relativ": rel,
             "trend": trendqualitaet(df), "jung": jung, "rueckschlag": rueckschlag,
             "ruecksetzer": ruecksetzer, "ausbruch_basis": basis if p == 1 and zusatz == "Ausbruch" else None,
             "kurve": [round(float(x), 2) for x in kurve], "tiefs": [round(float(x), 2) for x in w["Low"].iloc[-JAHR_WOCHEN:]],
@@ -1137,8 +1070,6 @@ KLARTEXT = (
     ("Upthrust", "schwäche", "Käufer scheitern an der Decke"),
     ("keine Gewinnmitnahme", "stärke", "keine Gewinnmitnahmen"),
     ("keine Eindeckung", "schwäche", "Verkäufer halten übers Wochenende"),
-    ("3 Wochen eng", "stärke", "drei Wochen eng"),
-    ("Volumen trocknet aus", "stärke", "kaum noch Verkäufer"),
     ("höheres Tief gegen den Index", "stärke", "stärker als der Markt"),
     ("tieferes Hoch gegen den Index", "schwäche", "schwächer als der Markt"),
     ("schwachen", "stärke", "steigt an schwachen Markttagen"),
@@ -1270,10 +1201,6 @@ def fuer_titel(tk, df, idx, gewinne=None, start=None, mit_wertzone=True, fehlaus
     k = kreislauf(df, i_, gewinne, mp, fehlausbruch, start=st)
     if k:
         k["stand"] = f"{df.index[-1]:%Y-%m-%d}"
-        for x in ("dow_tag", "dow_woche"):       # nur Speicherbares (keine Zeitstempel)
-            if k.get(x):
-                k[x] = {a: b for a, b in k[x].items() if a in ("struktur", "signal", "richtung", "letztes_tief",
-                                                              "letztes_hoch")}
         if k.get("relativ"):
             k["relativ"] = {a: b for a, b in k["relativ"].items() if a != "zeichen"}
     return k

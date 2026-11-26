@@ -60,14 +60,15 @@ KAESTEN = {
              fuehrt="Micky (Zirkel), Weinstein (Phasen)", zeichen="🌱/🍂",
              messung=["zirkel.indizes", "zeichen.zirkel_index"], stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Markt-Ampel", zustand=None,
-             regel="Livermores Frontbericht (Micky 25.11.2026): sein Notizbuch auf den Tageskerzen des S&P 500 bestimmt, "
-                   "der Nasdaq steht daneben. 🟢 Vormarsch: Spalte Aufwärtstrend · 🟡 Gefechtspause: natürliche oder "
-                   "sekundäre Erholung bzw. Reaktion · 🔴 Rückzug: Spalte Abwärtstrend. Der Zirkel des Index bestätigt mit "
-                   "✓ (dieselbe Farbe) oder ✗: 🟢 Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw. Wechsel 1 → 2 · 🔴 Phase 3 mit 🍂 "
-                   "bzw. Wechsel 3 → 4, Phase 4 ohne 🌱 · sonst 🟡. Darunter als Zeichen ohne Schwelle: Führer (Garde und "
-                   "Angriff) im Aufwärts- gegen Abwärtstrend des Notizbuchs.",
-             fuehrt="Micky 25.11.2026 (Livermore; 23.11.2026 Zirkel, davor O'Neil)", zeichen="🟢/🟡/🔴",
-             messung=["zirkel.indizes", "zirkel.livermore_ampel", "zirkel.markt_ampel", "zirkel.markt", "zirkel.fuehrer"],
+             regel="Lagebild in drei Schichten (Micky 26.11.2026; Livermore las den Markt an den Führern, nie am "
+                   "Index – How to Trade in Stocks, Kap. I und III; Weinstein: vom Wald zu den Bäumen). Spitze = Garde "
+                   "und Angriff, Heer = alle Titel des Laufs, je im Notizbuch: 🟢 Vormarsch, wenn in beiden mehr Titel "
+                   "im Aufwärtstrend stehen als im Abwärtstrend · 🔴 Rückzug, wenn in beiden mehr im Abwärtstrend · sonst "
+                   "🟡 Gefechtspause. Grenze = Mehrheit, ungemessen. Der Durchschnitt (Notizbuch des S&P 500 und des "
+                   "Nasdaq) bestätigt mit ✓ (dieselbe Farbe) oder ✗; der Zirkel des Index steht als Zeichen daneben.",
+             fuehrt="Micky 26.11.2026 (25.11. Notizbuch des Index, 23.11. Zirkel, davor O'Neil)", zeichen="🟢/🟡/🔴",
+             messung=["zirkel.indizes", "zirkel.livermore_ampel", "zirkel.lage_ampel", "zirkel.markt", "zirkel.fuehrer",
+                      "zirkel.heer"],
              stand="gemessen", pruefer=["Markt-Ampel"]),
         dict(name="Hochs gegen Tiefs", zustand=None,
              regel="Neue 52-Wochen-Hochs gegen Tiefs im Revier – Zeichen unter der Ampel, ohne Urteil.",
@@ -175,13 +176,6 @@ WERKZEUGE = {
 # Jede Funktion in zeichen.py, die ein Zeichen setzt, muss hier (oder bei einem Kasten/Werkzeug) als Messung stehen –
 # der Wachposten liest zeichen.py und schlägt Alarm, wenn ein Zeichen fehlt (Micky 15.11.2026).
 ZEICHEN = [
-    dict(name="Dow-Struktur", art="Struktur", meister="Dow",
-         regel="Schwungpunkte = Wendepunkte ab 2 ATR (Tag und Wochenkerzen, wie Livermore, Zone und Chart – Micky "
-               "25.11.2026); höhere Hochs und Tiefs = aufwärts, tiefere = abwärts. Schwäche: "
-               "Schluss mindestens 0,5 ATR unter dem letzten höheren Tief. Stärke: Schluss mindestens 0,5 ATR über dem "
-               "letzten tieferen Hoch; erstes höheres Tief nach tieferen Hochs und Tiefs, solange der Kurs darüber steht "
-               "(gespiegelt: erstes tieferes Hoch, Kurs darunter).",
-         messung=["zeichen.dow", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen", "Kreislauf/Phase"]),
     dict(name="Secondary (Livermore)", art="Struktur", meister="Livermore (How to Trade in Stocks, 1940: Secondary Rally/Reaction)",
          regel="Wendepunkte ab 2 ATR (wie Zone und Chart). Stärke: nach einem neuen Hoch hält die Reaktion über dem "
                "letzten Tief (Secondary Reaction), der Kurs steht darüber. Schwäche gespiegelt: nach einem neuen Tief "
@@ -237,10 +231,6 @@ ZEICHEN = [
                "Schwäche (Verkäufer schlucken die Nachfrage), nach einem Fall Stärke (Micky 17.11.2026; vorher 1,5-fach, "
                "Spanne unter 0,7 ATR, nur am Rand der Zone). Eine Regel für Kasten, Zeichen und Chart.",
          messung=["zeichen.kraft_ohne_weg", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen"]),
-    dict(name="3 Wochen eng, Volumen trocknet aus", art="Volumen", meister="O'Neil (3 Wochen eng), Minervini",
-         regel="Enge: 3 Wochenschlüsse innerhalb 1,5 %. Trockenheit: der leiseste Tag seit 50 Tagen in den letzten 10, in "
-               "der unteren Hälfte der Spanne der 60 Tage.",
-         messung=["zeichen.enge_trocken"], pruefer=["Anlass", "Test am Rand: Zeichen"]),
     dict(name="Freitag ohne Gewinnmitnahme", art="Volumen", meister="Micky (13.11.2026)",
          regel="Nach einer Woche von mindestens 2 Wochen-ATR keine Gewinnmitnahme: der letzte Handelstag der Woche "
                "schließt im oberen Drittel seiner Spanne und nicht schwächer als −0,5 %, die Woche im oberen Viertel – die "
@@ -400,7 +390,9 @@ BEREICHE = [
                "nach Dalton (tiefe.struktur). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "
                "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
-               "Ebene ab Beginn der Zone. PbD-Kette nach Vorwald am 22.11.2026 entfernt.",
+               "Ebene ab Beginn der Spanne; ohne Spanne ab dem letzten Pivotal Point unten (26.11.2026, vorher Dalton-Balance); "
+               "die eigene Balken-Nr. geht vor. Im Chart nur das Volumen, die Zeit (Market Profile) per Schalter. "
+               "PbD-Kette nach Vorwald am 22.11.2026 entfernt.",
          messung=["zonen.basis", "zonen.lage", "zonen.trade", "zonen.fuehrte", "zonen.profil_details",
                   "zonenchart.bild"], pruefer=[],
          luecke="kein Prüfer"),

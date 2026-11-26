@@ -131,9 +131,11 @@ def lage(e, ba=None, profil=True):
         name, pivot, info = "Balance", hi, f"seit {beginn:%d.%m. %H:%M}"
     else:
         z, a = ba["z"], ba["ausbruch"]
-        if z is None:                              # Kurs läuft am Hoch: keine Zone, das Profil ab dem Anker der Balance
-            z_, w_ = PHASE["hoch"]
-            pr = profil_seit(e, e["struktur"]["balance_start"]) if profil else None
+        if z is None:                              # Kurs läuft am Hoch: keine Spanne – das Profil ab dem letzten Pivotal
+            z_, w_ = PHASE["hoch"]                 # Point unten, dem Start des Vormarschs (Micky 26.11.2026; vorher Dalton-Balance)
+            pp_u = next((p_ for p_ in reversed((ba.get("nb") or {}).get("pivotal") or []) if p_["art"] == "tief"), None)
+            ab_ = pp_u["tag"] if pp_u is not None else e["struktur"]["balance_start"]
+            pr = profil_seit(e, ab_) if profil else None
             return {"zone": None, "phase": "hoch", "zeichen": z_, "wort": w_, "richtung": 0, "pfeil": "→", "kurs": kurs,
                     "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]) if pr else None, "profil": pr,
                     "beginn": None}

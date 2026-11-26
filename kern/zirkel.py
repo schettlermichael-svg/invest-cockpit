@@ -95,7 +95,7 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
         erg = [x for x in ex.map(functools.partial(_titel, start=start), ticker_liste, chunksize=20) if x]  # Technik
     feld = {tk: f for tk, _, f in erg}
     barometer = {"hochs": sum(f["hoch52"] for f in feld.values()), "tiefs": sum(f["tief52"] for f in feld.values()),
-                 "titel": len(feld), "index": indizes(), "fuehrer": fuehrer(feld)}
+                 "titel": len(feld), "index": indizes(), "fuehrer": fuehrer(feld), "heer": heer(feld)}
     stand = pd.Timestamp.now().strftime("%Y-%m-%d")   # Datei je Lauftag: die jüngste gilt (zeichen.laden)
     try:                                            # Kurstag für die Datenstand-Wache
         kurstag = f"{daten.kurse_gespeichert(daten.INDEX).index[-1]:%Y-%m-%d}"
@@ -109,13 +109,12 @@ def rechnen(ticker_liste, prozesse=None, melden=print):
 
 P_BASIS, P_AUF, P_VERTEILUNG, P_AB = 1, 2, 3, 4   # Technik: Phasen des Zirkels
 INDIZES = {"S&P 500": "SPY", "Nasdaq": "QQQ"}     # über die ETFs (gespeicherte Tageskurse mit echtem Volumen)
-MARKT_FUEHRT = "S&P 500"                         # er bestimmt die Ampel, der Nasdaq steht daneben (Micky 23.11.2026)
 INDEX_FELDER = ("phase", "name", "ziel", "wort", "keim", "traegt", "wochen", "gewicht_keim", "gewicht_traegt")
 
 
 def indizes():
-    """Markt-Ampel je Index (Micky 25.11.2026: Livermores Frontbericht, der Zirkel bestätigt) → {Name: {ampel, spalte,
-    trend, zirkel_ampel, zirkel ✓/✗, phase, name, ziel, wort, keim, traegt, wochen, ticker, kurstag}}."""
+    """Der Durchschnitt (Schicht 3 der Lage, Micky 26.11.2026): je Index Livermores Notizbuch (ampel, spalte, trend)
+    und sein Zirkel als Zeichen (phase, name, ziel, wort, keim, traegt, wochen) → {Name: {…, ticker, kurstag}}."""
     import daten
     import livermore
     import zeichen
@@ -129,17 +128,15 @@ def indizes():
             continue
         if not nb:
             continue
-        ampel = LIVERMORE_AMPEL.get(nb["spalte"], "gelb")
-        z_ampel = markt_ampel(z)
-        aus[name] = {**{x: (z or {}).get(x) for x in INDEX_FELDER}, "ampel": ampel, "spalte": livermore.spalte_text(nb),
-                     "trend": nb["trend"], "zirkel_ampel": z_ampel, "zirkel": "✓" if z_ampel == ampel else "✗",
-                     "ticker": tk, "kurstag": f"{df.index[-1]:%Y-%m-%d}"}
+        aus[name] = {**{x: (z or {}).get(x) for x in INDEX_FELDER}, "ampel": LIVERMORE_AMPEL.get(nb["spalte"], "gelb"),
+                     "spalte": livermore.spalte_text(nb), "trend": nb["trend"], "ticker": tk,
+                     "kurstag": f"{df.index[-1]:%Y-%m-%d}"}
     return aus
 
 
 def fuehrer(f_):
-    """Die Führer (Garde und Angriff im Rückenwind) im Notizbuch: {auf, ab} – wie viele rücken vor (Livermores Trend
-    aufwärts), wie viele ziehen sich zurück (abwärts). Zeichen unter der Ampel, ohne Schwelle (Micky 25.11.2026)."""
+    """Die Spitze (Schicht 1 der Lage): die Führer – Garde und Angriff im Rückenwind – im Notizbuch: {auf, ab} – wie
+    viele rücken vor (Livermores Trend aufwärts), wie viele ziehen sich zurück (abwärts)."""
     import rueckenwind
     rw = (rueckenwind.laden() or {}).get("titel") or {}
     vorn = [tk for tk, x in rw.items() if x.get("klasse") in rueckenwind.ANGRIFF_KLASSEN and tk in f_]
@@ -147,14 +144,33 @@ def fuehrer(f_):
             "ab": sum(f_[tk].get("lv_trend") == "AB" for tk in vorn)}
 
 
-# ── Markt-Ampel (Micky 25.11.2026: Livermores Frontbericht; 23.11.2026–25.11.2026 der Zirkel des Index, davor O'Neil):
-# Livermores Notizbuch auf den Tageskerzen des Index – der S&P 500 bestimmt, der Nasdaq steht daneben:
-#   🟢 Vormarsch      Spalte Aufwärtstrend
-#   🟡 Gefechtspause  natürliche oder sekundäre Erholung bzw. Reaktion (der Index pendelt zwischen seinen Pivotal Points)
-#   🔴 Rückzug        Spalte Abwärtstrend
-# Der Zirkel des Index (Weinstein-Phasen auf Wochenkerzen, markt_ampel) bestätigt mit ✓ (dieselbe Farbe) oder ✗.
+def heer(f_):
+    """Das Heer (Schicht 2 der Lage): alle Titel des Laufs (Revier, Watchlist, Depot) im Notizbuch → {auf, ab}."""
+    return {"auf": sum(x.get("lv_trend") == "AT" for x in f_.values()),
+            "ab": sum(x.get("lv_trend") == "AB" for x in f_.values())}
+
+
+# ── Markt-Ampel: das Lagebild in drei Schichten (Micky 26.11.2026; Livermore las den Markt an den Führern, nie am
+# Index – How to Trade in Stocks, Kap. I und III; Weinstein: vom Wald zu den Bäumen). Davor 25.11. das Notizbuch des
+# S&P 500, 23.–25.11. der Zirkel des Index, bis 23.11. O'Neil.
+#   Spitze (fuehrer) und Heer (heer) bestimmen nach der Mehrheit im Notizbuch – keine eigene Prozentzahl, ungemessen:
+#   🟢 Vormarsch      in beiden mehr Titel im Aufwärtstrend als im Abwärtstrend
+#   🔴 Rückzug        in beiden mehr im Abwärtstrend
+#   🟡 Gefechtspause  sonst (auch wenn Spitze und Heer uneins sind)
+#   Der Durchschnitt (indizes: Notizbuch des S&P 500 und des Nasdaq) bestätigt mit ✓ (dieselbe Farbe) oder ✗.
 LIVERMORE_AMPEL = {"AT": "grün", "AB": "rot"}
 MARKT_WORT = {"grün": "Vormarsch", "gelb": "Gefechtspause", "rot": "Rückzug"}
+
+
+def lage_ampel(spitze, heer_):
+    """Ampel aus Spitze und Heer ({auf, ab} je Schicht) → "grün" | "gelb" | "rot"."""
+    if not spitze or not heer_:
+        return "gelb"
+    if spitze["auf"] > spitze["ab"] and heer_["auf"] > heer_["ab"]:
+        return "grün"
+    if spitze["ab"] > spitze["auf"] and heer_["ab"] > heer_["auf"]:
+        return "rot"
+    return "gelb"
 
 
 def livermore_ampel(df):
@@ -164,44 +180,29 @@ def livermore_ampel(df):
     return LIVERMORE_AMPEL.get((nb or {}).get("spalte"), "gelb")
 
 
-def markt_ampel(zk):
-    """Zirkel eines Index → "grün" | "gelb" | "rot" – die Bestätigung der Ampel: 🟢 Phase 2 ohne 🍂, Phase 1 mit 🌱 bzw.
-    Wechsel 1 → 2 · 🔴 Phase 3 mit 🍂 bzw. Wechsel 3 → 4, Phase 4 ohne 🌱 · sonst 🟡; ohne Zirkel "gelb"."""
-    p = (zk or {}).get("phase") or 0
-    keim, ziel = bool((zk or {}).get("keim")), (zk or {}).get("ziel")
-    if p == P_AUF:
-        return "gelb" if keim else "grün"
-    if p == P_BASIS:
-        return "grün" if keim or ziel == P_AUF else "gelb"
-    if p == P_VERTEILUNG:
-        return "rot" if keim or ziel == P_AB else "gelb"
-    if p == P_AB:
-        return "gelb" if keim else "rot"
-    return "gelb"
-
-
 def markt():
-    """Die eine Markt-Ampel aus dem letzten Zirkel-Lauf → {ampel, wort, fuehrt, indizes, hochs, tiefs, fuehrer} oder
-    None (ältere Läufe ohne Livermore: None)."""
+    """Die eine Markt-Ampel aus dem letzten Zirkel-Lauf (Lagebild in drei Schichten) → {ampel, wort, fuehrer, heer,
+    indizes (je mit bestaetigt ✓/✗), hochs, tiefs} oder None (ältere Läufe ohne das Heer)."""
     b = barometer()
-    ix = b.get("index") or {}
-    f = ix.get(MARKT_FUEHRT)
-    if not f or "spalte" not in f:
+    if not b.get("heer") or not b.get("fuehrer"):
         return None
-    return {"ampel": f["ampel"], "wort": MARKT_WORT[f["ampel"]], "fuehrt": MARKT_FUEHRT, "indizes": ix,
-            "hochs": b.get("hochs"), "tiefs": b.get("tiefs"), "fuehrer": b.get("fuehrer")}
+    ampel = lage_ampel(b["fuehrer"], b["heer"])
+    ix = {n: {**x, "bestaetigt": "✓" if x.get("ampel") == ampel else "✗"} for n, x in (b.get("index") or {}).items()}
+    return {"ampel": ampel, "wort": MARKT_WORT[ampel], "fuehrer": b["fuehrer"], "heer": b["heer"], "indizes": ix,
+            "hochs": b.get("hochs"), "tiefs": b.get("tiefs")}
 
 
 def markt_text(m):
-    """Markt-Ampel in Worten: Livermores Spalte je Index mit der Bestätigung des Zirkels, dann Führer und Hochs."""
+    """Markt-Ampel in Worten: Spitze, Heer, dann je Index Livermores Spalte mit ✓/✗ und dem Zirkel als Zeichen."""
     teile = []
+    for wort, k in (("Spitze (Garde und Angriff)", "fuehrer"), ("Heer (alle Titel)", "heer")):
+        x = (m or {}).get(k)
+        if x:
+            teile.append(f'{wort}: {x["auf"]} im Vormarsch, {x["ab"]} im Rückzug')
     for name, x in (m or {}).get("indizes", {}).items():
-        z = {"grün": "🟢", "gelb": "🟡", "rot": "🔴"}[x["ampel"]]
-        teile.append(f'{z} {name}: {x.get("spalte", "")} · Zirkel {x.get("zirkel", "")} Phase {x["wort"]} ({x["name"]})'
+        teile.append(f'{name}: {x.get("spalte", "")} {x.get("bestaetigt", "")}'
+                     + (f' · Zirkel Phase {x["wort"]} ({x["name"]})' if x.get("wort") else "")
                      + (f' · Keim: {"; ".join(x["keim"])}' if x.get("keim") else ""))
-    fu = (m or {}).get("fuehrer")
-    if fu:
-        teile.append(f'Führer (Garde und Angriff): {fu["auf"]} rücken vor, {fu["ab"]} ziehen sich zurück')
     if (m or {}).get("hochs") is not None:
         teile.append(f'neue 52-Wochen-Hochs : Tiefs {m["hochs"]} : {m["tiefs"]}')
     return teile

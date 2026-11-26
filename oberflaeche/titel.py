@@ -44,7 +44,7 @@ def _rueckenwind(tk):
 
 
 def maerkte():
-    """Die eine Markt-Ampel: Livermores Frontbericht des Index, der Zirkel bestätigt (zirkel.markt, Micky 25.11.2026) oder None."""
+    """Die eine Markt-Ampel: Lagebild in drei Schichten (zirkel.markt, Micky 26.11.2026) oder None."""
     try:
         import zirkel
         return zirkel.markt()
