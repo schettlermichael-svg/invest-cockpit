@@ -256,6 +256,7 @@ def kopf(r):
     """Kopfzeile (Titel, Name, Kurs, Stand) und darunter der Lagebericht – Kacheln, Zirkel-Block und die alten
     Kopfzeilen sind im Bericht aufgegangen (Micky 26.11.2026)."""
     import daten
+    import titel
     df = r["df"]
     kurs = float(df["Close"].iloc[-1])
     name = daten.kurzname(r["tk"])
@@ -264,7 +265,10 @@ def kopf(r):
             + (f'<span style="font-size:15px;color:{TEXT_2}">{t(name)}</span>' if name else "")
             + f'<span style="font-size:22px;font-weight:600;color:{TEXT}">{zahl(kurs)} $</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">Schluss {df.index[-1]:%d.%m.%Y}'
-            f'{" · läuft" if r["laufend"] else ""}</span></div>' + lagebericht(r))
+            f'{" · läuft" if r["laufend"] else ""}</span>'
+            f'<a href="{titel.tv_link(r["tk"])}" target="_blank" rel="noopener" style="margin-left:auto;font-size:14px;'
+            f'font-weight:600;text-decoration:none;border:1px solid {RAND};border-radius:8px;padding:6px 14px;'
+            f'color:{BLAU}">TradingView ↗</a></div>' + lagebericht(r))
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
