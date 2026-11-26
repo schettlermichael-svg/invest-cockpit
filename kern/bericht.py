@@ -5,7 +5,7 @@ denselben Regeln gelesen – Livermores Notizbuch auf den Kerzen der Ebene – u
   Je Ebene  Lage (🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug), letzte abgeschlossene Kerze, Spanne (Front und
             Unterkante) mit dem Drittel des Kurses, die Treppe der letzten Pivotal Points (Hochs und Tiefs steigend
             oder fallend), die nächste Decke und der nächste Boden mit ihren Abprallern, die alte Plattform
-            (livermore.gefallene, Rollentausch) und in der Woche der Abstand zum Jahreshoch.
+            (livermore.gefallene, Rollentausch; im Weg voraus zählt sie wie eine Stellung) und in der Woche der Abstand zum Jahreshoch.
   Leiter    alle Stellungen aller Ebenen auf einer Preisachse (oberflaeche/leiter.py).
   Urteil    die drei Tore (tore.py).
   Beobachten  long und short: der erste Schritt auf der Stunde, der Auslöser auf dem Tag (Front bzw. Unterkante oder

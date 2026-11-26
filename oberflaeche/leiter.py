@@ -1,5 +1,5 @@
 """Die Leiter (Micky 26.11.2026): alle Stellungen aller Ebenen auf einer Preisachse neben dem Bericht – Front und
-Unterkante kräftig, Decken rot, Böden grün, die alte Plattform als blasses Band (Rollentausch, nicht gezählt), der
+Unterkante kräftig, Decken rot, Böden grün, die alte Plattform als blasses Band (Rollentausch; im Weg voraus zählt sie wie eine Stellung), der
 Kurs als Punkt. Lücken über 3 Tages-ATR (ein ganzer Zug, livermore.WEG_ATR) heißen „sauber“. Stellungen weiter als
 LEITER_ATR vom Kurs stehen mit Pfeil am Rand."""
 from gestaltung import BLAU, GRUEN, ROT, TEXT, TEXT_2, TEXT_3, t, zahl

@@ -252,8 +252,8 @@ def gefallene(df, nb=None):
     """Alte Plattform (Micky 26.11.2026, Rollentausch): durchbrochene Pivotal Points der letzten STELLUNG_JAHRE Jahre,
     die jetzt auf der anderen Seite des Kurses stehen – ein gebrochener Boden über dem Kurs wird zur Decke, eine
     gebrochene Decke unter dem Kurs zum Boden. Punkte innerhalb BESTAETIGUNG × ATR (gemessen vom untersten) bilden eine
-    Plattform. Nur für die
-    Leiter und den Bericht, nicht gezählt (Weg voraus, Chop und Gewicht bleiben bei den stehenden Stellungen).
+    Plattform. Leiter und
+    Bericht zeigen sie; im Weg voraus (ort) zählt sie wie eine Stellung (Micky 26.11.2026), bei Chop und Gewicht nicht.
     → [{unten, oben, rolle: "decke"/"boden", n}] nach Abstand zum Kurs."""
     import vcp_zone
     nb = nb or notizbuch(df)
@@ -370,8 +370,8 @@ def gruppen(df, nb=None):
 
 
 def ort(df, nb=None, fr=None, ab=None):
-    """Ort nach Sharp auf Livermores Karte: Lage in der Spanne (Drittel), Weg voraus je Richtung (Stellungen in den
-    nächsten WEG_ATR × ATR: 0 = sauber, ab UNRUHIG_AB = unruhig), Chop (Gefechtspause und ab CHOP_AB Stellungen zwischen
+    """Ort nach Sharp auf Livermores Karte: Lage in der Spanne (Drittel), Weg voraus je Richtung (Stellungen und alte
+    Plattformen in den nächsten WEG_ATR × ATR: 0 = sauber, ab UNRUHIG_AB = unruhig), Chop (Gefechtspause und ab CHOP_AB Stellungen zwischen
     Front und Unterkante), weit gelaufen (oberes Drittel bzw. über der Front und ≥ WEIT_SCHWUENGE Schwünge seit dem
     letzten Pivotal Point unten; gespiegelt). ab = {"oben"/"unten": Preis}, von wo der Weg voraus zählt (beim Setup,
     das noch wartet, die Kante – die Front ist dann der Auslöser, kein Hindernis), sonst der Kurs. → dict oder None."""
@@ -390,11 +390,15 @@ def ort(df, nb=None, fr=None, ab=None):
         drittel = ("über der Front" if x > 1 else "unter der Unterkante" if x < 0
                    else DRITTEL[min(len(DRITTEL) - 1, int(x * len(DRITTEL)))])
     weg = {}
+    alt = gefallene(df, nb)                       # die alte Plattform steht im Weg wie eine Stellung (Micky 26.11.2026)
     for seite, sg in (("oben", 1), ("unten", -1)):
         ref = (ab or {}).get(seite) or kurs
         rand = a * STELLUNG_ATR if ref != kurs else 0                   # die Kante selbst zählt nicht mit
-        voraus = [g for g in gr if rand < sg * (g["preis"] - ref) <= WEG_ATR * a]
-        naechste = min((g for g in gr if sg * (g["preis"] - ref) > rand), key=lambda g: abs(g["preis"] - ref), default=None)
+        hindernis = gr + [{"preis": g_["unten"] if sg > 0 else g_["oben"]} for g_ in alt
+                          if g_["rolle"] == ("decke" if sg > 0 else "boden")]   # vorderer Rand der Plattform
+        voraus = [g for g in hindernis if rand < sg * (g["preis"] - ref) <= WEG_ATR * a]
+        naechste = min((g for g in hindernis if sg * (g["preis"] - ref) > rand), key=lambda g: abs(g["preis"] - ref),
+                       default=None)
         weg[seite] = {"n": len(voraus), "sauber": not voraus, "unruhig": len(voraus) >= UNRUHIG_AB, "ab": ref,
                       "von_kante": ref != kurs,
                       "bis": round((naechste["preis"] / kurs - 1) * 100, 1) if naechste else None}

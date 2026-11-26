@@ -1849,7 +1849,7 @@ freigegeben). Ein System mit wenig Variablen: jede Ebene mit denselben Regeln �
 - **4 Stunden** (`tiefe.vier_stunden`, wie TradingView: 9:30–13:30 und 13:30–16:00 New York aus 30 Minuten) ist eine
   volle Ebene (`zonen.EBENEN`): Spanne, Lage, Stellungen, Chart-Reiter. `tiefe.INTRADAY` = 4 Stunden und Stunde.
 - **Alte Plattform** (`livermore.gefallene`, Rollentausch): durchbrochene Pivotal Points auf der anderen Seite des
-  Kurses, innerhalb 1 ATR eine Plattform – nur Leiter und Bericht, nicht gezählt.
+  Kurses, innerhalb 1 ATR eine Plattform – Leiter und Bericht zeigen sie; im Weg voraus (Tor „Ort“) zählt sie seit 26.11.2026 wie eine Stellung, bei Chop und Gewicht nicht.
 - **Bericht** (`kern/bericht.py`): je Ebene Lage, letzte Kerze, Spanne mit Drittel, Treppe (letzte 3 Hochs und Tiefs:
   aufwärts, abwärts, eingequetscht, weitet sich), Decke und Boden mit Abprallern (an der Kante „Decke = Front“), alte
   Plattform, in der Woche der Abstand zum 52-Wochen-Hoch. Beobachten long/short (erster Schritt Stunde, Auslöser Tag,
