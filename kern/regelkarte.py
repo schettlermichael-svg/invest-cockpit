@@ -112,8 +112,11 @@ WERKZEUGE = {
                                             "50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils 1,4-fach ist ihm zu "
                                             "streng); ein Ausbruch mit wenig Volumen ist kein Widerspruch, höchstens ein "
                                             "schwaches Zeichen. Ebenso ein Zeichen: Livermores Bestätigung – ein Hoch 1 ATR "
-                                            "über dem Pivot (seine ~3 Punkte, Micky 25.11.2026), im Chart als 📒.",
-             messung=["vcp_zone.ausbruch"], stand="gemessen", pruefer=["abgelehnt/angenommen"]),
+                                            "über dem Pivot (seine ~3 Punkte, Micky 25.11.2026), im Chart als 📒. "
+                                            "💥 Wucht (26.11.2026): Masse = Volumen am Ausbruchstag gegen den Schnitt, "
+                                            "Geschwindigkeit = Tage bis 📒 – Ablesung ohne Schwelle. Im Chart die "
+                                            "Kipp-Zone: je 1 ATR über (📒) und unter (🦊) dem Pivot.",
+             messung=["vcp_zone.ausbruch", "vcp_zone.wucht", "zonenchart.bild"], stand="gemessen", pruefer=["abgelehnt/angenommen"]),
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
              messung=["volumenprofil.knoten"], stand="gemessen", pruefer=["Gegenseite (Mauer/Stütze)"]),

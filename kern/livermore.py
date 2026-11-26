@@ -233,6 +233,28 @@ def offene(df, nb=None):
     return aus
 
 
+def front(df, nb=None):
+    """Die Frontkarte (Micky 26.11.2026): Livermores stehende Pivotal Points nach Rang → {offen: [alle stehenden],
+    stark: {(i, art)}, oben, unten (die Front = Spanne, sofern sie steht), ziel (nächste stehende Stellung über dem
+    Kurs außer der Front), boden (nächste darunter), kurs} oder None ohne Notizbuch."""
+    nb = nb or notizbuch(df)
+    if not nb:
+        return None
+    offen = offene(df, nb)
+    sp = spanne(nb) or {}
+    kurs = float(df["Close"].iloc[-1])
+    schl = lambda p_: (p_["i"], p_["art"])                                      # noqa: E731
+    k_offen = {schl(p_) for p_ in offen}
+    oben = sp.get("oben") if sp.get("oben") and schl(sp["oben"]) in k_offen else None
+    unten = sp.get("unten") if sp.get("unten") and schl(sp["unten"]) in k_offen else None
+    f_ = {schl(p_) for p_ in (oben, unten) if p_}
+    rest = [p_ for p_ in offen if schl(p_) not in f_]
+    ziel = min((p_ for p_ in rest if p_["preis"] > kurs), key=lambda p_: p_["preis"], default=None)
+    boden = max((p_ for p_ in rest if p_["preis"] < kurs), key=lambda p_: p_["preis"], default=None)
+    return {"offen": offen, "stark": f_ | {schl(p_) for p_ in (ziel, boden) if p_}, "oben": oben, "unten": unten,
+            "ziel": ziel, "boden": boden, "kurs": kurs}
+
+
 LAGE = {"AT": ("🟢", "Vormarsch"), "AB": ("🔴", "Rückzug")}   # eine Sprache für Titel und Markt (Micky 26.11.2026);
 GEFECHTSPAUSE = ("🟡", "Gefechtspause")                         # die vier Bleistift-Spalten sind die Gefechtspause
 

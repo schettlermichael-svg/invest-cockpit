@@ -158,6 +158,7 @@ def lage(e, ba=None, profil=True):
         teile = [f'{z["wochen"]:.0f} Wo.', f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
         if a and not a["fehl"]:
             teile.append(f'Ausbruch vor {a["tage_her"]} T. ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
+            teile.append(vcp_zone.wucht(a))                                         # Masse mal Geschwindigkeit (26.11.)
         info = " · ".join(teile)
     pr = profil_seit(e, beginn) if profil else None
     z_, w_ = PHASE[phase]

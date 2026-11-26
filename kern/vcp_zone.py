@@ -197,9 +197,24 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
                 "ruecktest": rueck_tag is not None, "rueck_tag": df.index[rueck_tag] if rueck_tag is not None else None,
                 "fehl_grenze": fehl_grenze, "bestaetigung": bestaetigung,
                 "bestaetigt": bool(len(ueber)), "bestaetigt_tag": df.index[letzter + ueber[0]] if len(ueber) else None,
+                "tage_bis_bestaetigt": int(ueber[0]) if len(ueber) else None,
                 "gescheitert": gescheitert + (
                     [(df.index[fehl_tag], float(hh[letzter:fehl_tag + 1].max()))] if fehl else [])}
     return None
+
+
+def wucht(a):
+    """Wucht am Ausbruch (Micky 26.11.2026: Momentum = Masse mal Geschwindigkeit) – eine Ablesung, kein Urteil, ohne
+    Schwelle: Masse = Volumen am Ausbruchstag gegen den 50-Tage-Schnitt, Geschwindigkeit = Handelstage bis zu
+    Livermores Bestätigung 📒 (0 = am Ausbruchstag selbst). → Text oder "" (kein Ausbruch, Fehlausbruch)."""
+    if not a or a["fehl"]:
+        return ""
+    k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
+    masse = f"Masse {k(a['volumen'])}-fach" if a.get("volumen") else "Masse unbekannt"
+    tb = a.get("tage_bis_bestaetigt")
+    tempo = ("📒 am selben Tag" if tb == 0 else f"📒 nach {tb} T." if tb is not None
+             else f"📒 steht aus (seit {a['tage_her']} T.)")
+    return f"💥 Wucht: {masse} · {tempo}"
 
 
 def ausbruch_text(a):
@@ -224,7 +239,7 @@ def ausbruch_text(a):
     best = (f"bestätigt am {a['bestaetigt_tag']:%d.%m.} (Livermore: 1 ATR über dem Pivot)" if a.get("bestaetigt")
             else f"noch nicht bestätigt (Livermore: über {v(a['bestaetigung'])} $)")
     return (f"{'🟢' if a['mit_volumen'] and a.get('bestaetigt') else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · {best} · "
-            f"{ab}, {lage}")
+            f"{ab}, {lage} · {wucht(a)}")
 
 
 

@@ -187,7 +187,7 @@ def kopf(r):
             f'<span style="font-size:15px;color:{TEXT}" title="keine Festung über (✈️) bzw. unter (✈️↓) dem Kurs – '
             f'Livermores Linie des geringsten Widerstands">{rueckenwind_seite.bahn(f.get("frei"))}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
-            f'{wind_html}{zirkel_html(r["tk"])}{livermore_html(r)}'
+            f'{lagebericht(r)}{wind_html}{zirkel_html(r["tk"])}{livermore_html(r)}'
             f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
             f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
             f'<div style="font-size:12px;color:{TEXT_3}">Setup</div>{trade_html}</div></div>')
@@ -308,6 +308,36 @@ def anker_setzen(tk, ebene, k, tag):
 
 # ── Livermores Notizbuch auf der Titelseite (Micky 25.11.2026): Spalte im Kopf, Tabelle unter dem Chart ──
 NOTIZBUCH_ZEILEN = 30      # Layout: die letzten 30 Einträge in der Tabelle
+
+
+def lagebericht(r):
+    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, Front oben (Pivot), Kurs, Ziel
+    (nächste stehende Stellung darüber), Boden (nächste darunter), Front unten, Setup mit ✓/✗ – dieselben Linien, die
+    der Chart kräftig zeichnet (livermore.front)."""
+    import livermore
+    df = r["df"].dropna(subset=["High", "Low", "Close"])
+    nb = livermore.notizbuch(df)
+    fr = livermore.front(df, nb)
+    if not fr:
+        return ""
+    a_, w_ = livermore.lage(nb["spalte"])
+    teile = [f'{a_} {w_}']
+    p_ = lambda x: zahl(x["preis"]) if x else "–"                                  # noqa: E731
+    if fr["oben"]:
+        teile.append(f'Front {p_(fr["oben"])}')
+    teile.append(f'Kurs {zahl(fr["kurs"])}')
+    tr = r["fuehrte"]["trade"]
+    lang, kurz = bool(tr and tr["richtung"] > 0), bool(tr and tr["richtung"] < 0)   # das Ziel liegt in Richtung des
+    teile += [(f'{"Ziel" if lang else "Decke"} {p_(fr["ziel"])}' if fr["ziel"] else "✈️ freie Bahn"),   # Setups
+              (f'{"Ziel" if kurz else "Boden"} {p_(fr["boden"])}' if fr["boden"] else "✈️↓ freie Bahn")]
+    if fr["unten"]:
+        teile.append(f'Unterkante {p_(fr["unten"])}')
+    if tr:
+        teile.append(f'{tr["zeichen"]} {tr["name"]} {"long" if tr["richtung"] > 0 else "short"}'
+                     + (f' {tr["zirkel"]}' if tr.get("zirkel") else ""))
+    return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht: Front = '
+            f'Pivot (letzter Pivotal Point oben), Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
+            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>')
 
 
 def livermore_html(r):

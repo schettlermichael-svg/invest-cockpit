@@ -1746,3 +1746,13 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   Titel des Laufs) im Notizbuch bestimmen nach der Mehrheit (zirkel.lage_ampel), der Index (Notizbuch S&P 500 und
   Nasdaq) bestätigt mit ✓/✗, sein Zirkel steht als Zeichen daneben. zirkel.markt_ampel und MARKT_FUEHRT entfernt.
   Barometer neu mit „heer“; ältere Läufe → markt() None bis zum nächsten Nachtlauf.
+- Frontkarte (Schritt 4): livermore.front – stehende Pivotal Points nach Rang (Front = Spanne oben/unten, Ziel/Decke
+  und Boden = nächste stehende Stellung über/unter dem Kurs); Chart und Lagebericht nutzen dieselbe Funktion.
+  Kipp-Zone quer über das Bild (KIPP_DECK): 1 ATR über dem Pivot grün (📒 ein Hoch darüber bestätigt), 1 ATR darunter
+  rot (🦊 ein Schluss darunter = Fehlausbruch), Preise als Etiketten. Gewicht einer Stellung: stehende Pivotal Points
+  innerhalb ½ ATR (STELLUNG_ATR) zählen zusammen – Etikett „· 4 Böden“.
+- Lagebericht in einem Satz (Schritt 5): zonenseite.lagebericht über dem Kopf – „🗺️ 🟡 Gefechtspause · Front … · Kurs
+  … · Ziel … · Boden … · Unterkante … · Setup ✓/✗“; in Richtung des Setups heißt die Stellung Ziel, sonst Decke bzw.
+  Boden; ohne Stellung ✈️ freie Bahn. Die Kacheln bleiben vorerst.
+- Wucht (Schritt 6): vcp_zone.wucht – „💥 Wucht: Masse 1,4-fach · 📒 nach 2 T.“ in der Tag-Kachel und im Ausbruchstext;
+  ausbruch() liefert dafür tage_bis_bestaetigt.

@@ -52,6 +52,8 @@ PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 PP_BLASS_DECK = 0.3                    # Layout: weiter entfernte offene Pivotal Points blass (Micky 25.11.2026)
 PP_BLASS_DICKE = 1.0                   # Layout
+STELLUNG_ATR = 0.5                     # Gewicht einer Stellung: stehende Pivotal Points innerhalb ½ ATR zählen zusammen
+KIPP_DECK = 0.10                       # Layout: Kipp-Zone um den Pivot (Micky 26.11.2026), je 1 ATR, quer über das Bild
 PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher, eine Linie)
 PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
 
@@ -136,17 +138,10 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     pp_offen, pp_stark = [], set()                                                  # Livermores Pivotal Points, die noch
     if "livermore" in linien_ and e["name"] == "Tag":                               # stehen (Micky 25.11.2026): kräftig
         import livermore                                                            # die Front (Spanne oben und unten)
-        nb_ = livermore.notizbuch(df)                                               # und je die nächste Stellung über
-        pp_offen = livermore.offene(df, nb_)                                        # und unter dem Kurs, die übrigen
-        sp_ = livermore.spanne(nb_) or {}                                           # blass; gefallene (Schluss 1 ATR
-        kurs_ = float(df["Close"].iloc[-1])                                         # jenseits) gar nicht
-        schl = lambda p_: (p_["i"], p_["art"])                                      # noqa: E731
-        offen_k = {schl(p_) for p_ in pp_offen}
-        front = {schl(p_) for p_ in (sp_.get("oben"), sp_.get("unten")) if p_ and schl(p_) in offen_k}
-        rest = [p_ for p_ in pp_offen if schl(p_) not in front]
-        ueber = min((p_ for p_ in rest if p_["preis"] > kurs_), key=lambda p_: p_["preis"], default=None)
-        unter = max((p_ for p_ in rest if p_["preis"] < kurs_), key=lambda p_: p_["preis"], default=None)
-        pp_stark = front | {schl(p_) for p_ in (ueber, unter) if p_}
+        fr_ = livermore.front(df) or {}                                             # und je die nächste Stellung über
+        pp_offen, pp_stark = fr_.get("offen", []), fr_.get("stark", set())          # und unter dem Kurs, die übrigen
+        kurs_ = float(df["Close"].iloc[-1])                                         # blass; gefallene (Schluss 1 ATR
+        schl = lambda p_: (p_["i"], p_["art"])                                      # noqa: E731  jenseits) gar nicht
         spanne_bild = float(h.max() - l.min())
         werte += [p_["preis"] for p_ in pp_offen if schl(p_) in pp_stark          # Layout: höchstens eine Bildhöhe weit
                   and l.min() - spanne_bild <= p_["preis"] <= h.max() + spanne_bild]
@@ -210,6 +205,21 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if la["zone"]:
         etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
                      [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+    a_kipp = float(e.get("atr") or 0)
+    if piv is not None and e["name"] == "Tag" and a_kipp > 0:                       # Kipp-Zone (Micky 26.11.2026,
+        import livermore                                                            # Frontkarte): je 1 ATR (Livermores
+        b_ = livermore.BESTAETIGUNG * a_kipp                                        # Bestätigung) über dem Pivot grün =
+        for y_a, y_b, farbe, text in ((piv, piv + b_, GRUEN, "📒 Angriff bestätigt"),   # Angriff bestätigt, darunter
+                                      (piv - b_, piv, ROT, "🦊 Fehlausbruch")):     # rot = Fehlausbruch
+            if y_b < pmin or y_a > pmax:
+                continue
+            A(f'<rect x="{LINKS}" y="{Y(min(y_b, pmax)):.1f}" width="{ende - LINKS}" '
+              f'height="{max(1, Y(max(y_a, pmin)) - Y(min(y_b, pmax))):.1f}" fill="{farbe}" fill-opacity="{KIPP_DECK}">'
+              f'<title>Kipp-Zone: {text} – {"ein Hoch über " + zahl(piv + b_) if farbe == GRUEN else "ein Schluss unter " + zahl(piv - b_)}'
+              f' (1 ATR {"über" if farbe == GRUEN else "unter"} dem Pivot)</title></rect>')
+            wert_ = piv + b_ if farbe == GRUEN else piv - b_
+            if pmin <= wert_ <= pmax:
+                etiketten.append((Y(wert_), f"{text[:2]} {zahl(wert_)}", farbe))
     if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
           f'stroke-width="2.4" stroke-dasharray="8 4">'   # Layout
@@ -263,9 +273,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'stroke-width="{PP_DICKE if stark else PP_BLASS_DICKE}" stroke-opacity="{1 if stark else PP_BLASS_DECK}">'
           f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.%y}) – {p_["farbe"]} unterstrichen, '
           f'aus {livermore.SPALTEN[p_["aus"]]} · steht noch{"" if stark else " (weiter entfernt)"}</title></line>')
-        if stark:                                                                   # Preis am Rand nur für die kräftigen
-            etiketten.append((Y(p_["preis"]), f'— {"oben" if p_["preis"] > kurs_ else "unten"} {zahl(p_["preis"])}',
-                              f_p))
+        if stark:                                                                   # Preis am Rand nur für die kräftigen;
+            nah = sum(abs(q_["preis"] - p_["preis"]) <= STELLUNG_ATR * a_kipp for q_ in pp_offen)   # Gewicht der Stellung
+            ob_ = p_["preis"] > kurs_                                               # (26.11.): Punkte innerhalb ½ ATR zählen
+            etiketten.append((Y(p_["preis"]), f'— {"oben" if ob_ else "unten"} {zahl(p_["preis"])}'
+                              + (f' · {nah} {"Decken" if ob_ else "Böden"}' if nah > 1 else ""), f_p))
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
@@ -539,6 +551,10 @@ def legende():
               "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
               "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis die Front (Spanne oben und unten) und je "
               "die nächste Stellung über und unter dem Kurs, die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
+             (GRUEN, "Kipp-Zone (Frontkarte): 1 ATR über dem Pivot grün – ein Hoch darüber bestätigt den Angriff (📒, "
+              "Livermores 3 Punkte); 1 ATR darunter rot – ein Schluss darunter ist der Fehlausbruch (🦊)"),
+             (TEXT_2, "Gewicht einer Stellung: „· 4 Böden“ am Etikett = so viele stehende Pivotal Points liegen "
+              "innerhalb ½ ATR zusammen"),
              (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
               "rote Fläche bis zum Stopp (das Risiko)"),
              (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
