@@ -199,6 +199,11 @@ def trade(e, la, ba):
         t["ampel"] = "🟢" if t["risiko"] <= MAX_STOPP * 100 else "🔴"
         t["name"], t["zeichen"] = TRADE_NAME[t["art"]], TRADE_ZEICHEN[t["art"]]
         t["zone_trend"] = ba["z"].get("trend") or "AT"     # Livermores Trend der Spanne: Fortsetzung oder Umkehr
+        if t["art"] in ("ausbruch", "short") and atr:      # Antasten und Aufstocken (Micky 26.11.2026, Livermore: erst
+            import livermore                               # eine Probe, nur im Gewinn nachlegen, nie verbilligen):
+            t["aufstocken"] = (pivot + livermore.BESTAETIGUNG * atr if t["richtung"] > 0     # ½ beim Schluss jenseits
+                               else lo - livermore.BESTAETIGUNG * atr)                       # der Kante, ½ bei 📒
+            t["aufgestockt"] = bool(a and a.get("bestaetigt")) if t["richtung"] > 0 else kurs <= t["aufstocken"]
     return t
 
 

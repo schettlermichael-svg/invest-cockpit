@@ -210,6 +210,7 @@ def _nach_dem_kauf(p, df):
                 unter dem 20er (ab Tag 3); Gefahrensignal 10e = Stopp eng unter das Tief jenes Tages.
       Pivot     🔴 Schluss zurück unter dem Pivot des Setups: der Widerstand ist nicht überwunden – raus (Livermore: die
                 Aktie verhält sich nach dem Pivotal Point nicht richtig).
+      Aufstocken ½ beim Kauf, ½ bei 📒 (1 ATR jenseits des Pivots, ATR am Kauftag) – nur im Gewinn (26.11.2026).
       Zeichen   der Zirkel (Phase, Keim, Wechsel) und die Reibung (Mauer, Kraft ohne Weg, Klimax) – sie bestätigen
                 (✓) oder warnen (⚠), entscheiden aber nicht."""
     import pandas as pd
@@ -243,6 +244,21 @@ def _nach_dem_kauf(p, df):
     if piv and ((k < piv) if lang else (k > piv)):
         aus.append(("rot", f"Schluss {'zurück unter dem Pivot' if lang else 'zurück über der Unterkante'} {piv:.2f}: "
                            f"der {'Widerstand' if lang else 'Boden'} ist nicht {'überwunden' if lang else 'gebrochen'} – raus"))
+    if piv and s and p.get("datum"):                     # Aufstocken (Micky 26.11.2026): ½ beim Kauf, ½ bei 📒 – nur im
+        import atr as atr_mod                            # Gewinn, nie verbilligen (Livermore); ATR am Kauftag
+        import livermore
+        seit = df[df.index >= pd.Timestamp(p["datum"])]
+        vor_ = df[df.index <= pd.Timestamp(p["datum"])]
+        a_k = float(atr_mod.wert(vor_)) if len(vor_) > 15 else 0.0
+        if a_k > 0 and len(seit):
+            marke = piv + livermore.BESTAETIGUNG * a_k if lang else piv - livermore.BESTAETIGUNG * a_k
+            treffer = seit[seit["High"] >= marke] if lang else seit[seit["Low"] <= marke]
+            im_gewinn = (k > e) if lang else (k < e)
+            if len(treffer) and im_gewinn:
+                aus.append(("grün", f"📒 am {treffer.index[0]:%d.%m.} ({marke:.2f}): zweite Hälfte aufstocken – "
+                                    f"nur im Gewinn, nie verbilligen (Livermore)"))
+            elif not len(treffer):
+                aus.append(("grau", f"Aufstocken bei 📒 {marke:.2f} (1 ATR {'über' if lang else 'unter'} dem Pivot)"))
     for art, tag in reiten.ende_zeichen(df, p.get("seite", "long")):   # Reibung: nur noch Zeichen (25.11.2026)
         if p.get("datum") and pd.Timestamp(tag) < pd.Timestamp(p["datum"]):
             continue

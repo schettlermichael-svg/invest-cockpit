@@ -1762,3 +1762,6 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   zonen.einigkeit: Livermores Spalte je Ebene, „🧭 Woche 🟢 Vormarsch · Tag … · Stunde …“ unter dem Lagebericht,
   ⬆/⬇ Einigkeit bei Vormarsch bzw. Rückzug auf allen drei. Dauer der Spanne in Kalenderwochen (Stunde: „seit …“),
   Ausbruch und Wucht in Kerzen der Ebene (zonen.KERZE: T., Wo., Std.).
+- Geldführung (Schritt 8): zonen.trade liefert aufstocken (1 ATR jenseits der Kante) und aufgestockt; Setup-Karte
+  „½ antasten beim Schluss über … · ½ aufstocken bei 📒 …“ bzw. „📒 erreicht“; Führung nach dem Kauf meldet 📒
+  (ATR am Kauftag) als „zweite Hälfte aufstocken – nur im Gewinn“. Stückzahl aus dem 1-%-Risiko bleibt offen.

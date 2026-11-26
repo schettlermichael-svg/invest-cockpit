@@ -156,6 +156,11 @@ def kopf(r):
                       f'<div style="font-size:13px;color:{TEXT_2}">{"Auslöser" if tr["wartet"] else "Einstieg"} '
                       f'{zahl(tr["einstieg"])}{" (Schluss darüber mit Volumen)" if tr["wartet"] else ""} · Stopp '
                       f'{zahl(tr["stopp"])} · {tr["ampel"]} Risiko {zahl(tr["risiko"], 1)} %</div>'
+                      + (f'<div style="font-size:13px;color:{TEXT_2}" title="Livermore: erst eine Probe, nur im Gewinn '
+                         f'nachlegen, nie verbilligen – kommt der Fehlausbruch, ist nur die Hälfte im Feuer">'
+                         + ("½ antasten + ½ aufgestockt – 📒 erreicht" if tr.get("aufgestockt") else
+                            f'½ antasten beim Schluss {"über" if tr["richtung"] > 0 else "unter"} {zahl(tr["pivot"])} · '
+                            f'½ aufstocken bei 📒 {zahl(tr["aufstocken"])}') + '</div>' if tr.get("aufstocken") else "")
                       + (f'<div style="font-size:13px;color:{GRUEN if tr["zirkel"] == "✓" else GELB}">'
                          f'{tr["zirkel"]} {"der Zirkel trägt" if tr["zirkel"] == "✓" else "gegen den Zirkel"}: '
                          f'{t(tr["zirkel_grund"])}</div>' if tr.get("zirkel") else ""))

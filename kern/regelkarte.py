@@ -307,7 +307,8 @@ BEREICHE = [
                "Schluss darunter heißt raus. Raus auch bei Regel 10b (Aufwärtstrend vorbei) und als Notbremse ab Tag 3 bei "
                "Schluss unter dem 20er; Gefahrensignal 10e zieht den Stopp eng unter das Tief jenes Tages; Schluss zurück "
                "unter dem Pivot – raus. Zeichen ohne Befehl: Zirkel (✓ Phase 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
-               "Reibung (Mauer, Kraft ohne Weg, Klimax). Short gespiegelt. "
+               "Reibung (Mauer, Kraft ohne Weg, Klimax). Short gespiegelt. Aufstocken (26.11.2026): ½ beim Kauf, ½ bei "
+               "📒 – 1 ATR (am Kauftag) über dem Pivot – nur im Gewinn, nie verbilligen (Livermore). "
                "Kriegskasse: Positionswert über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = "
                "Zeichen, das Risiko je Trade zu halbieren; Depot-Hitze höchstens 6 % des Kontos.",
          messung=["depot._nach_dem_kauf", "depot.aus_setup", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen",
@@ -436,7 +437,9 @@ BEREICHE = [
                "10d); Rücktest; Bruch unten im Aufwärtstrend = Abbruch (Umkehr, Regel 10b), im Abwärtstrend = Fortsetzung "
                "abwärts. Der Zirkel bestätigt mit ✓ (trägt) oder ✗ (steht dagegen, mit Grund): long ✓ in 1 Basis mit 🌱 "
                "oder Wechsel zu 2 und in 2 Aufwärts ohne 🍂 (Rücktest in 2 bzw. 1→2), short ✓ in 3 Verteilung mit 🍂 oder "
-               "Wechsel zu 4 und in 4 Abwärts ohne 🌱; junge Titel ohne Zirkel long ✓. Nichts wird weggelassen; ✓ zuerst.",
+               "Wechsel zu 4 und in 4 Abwärts ohne 🌱; junge Titel ohne Zirkel long ✓. Nichts wird weggelassen; ✓ zuerst. "
+               "Geldführung (26.11.2026): ½ antasten beim Schluss jenseits der Kante, ½ aufstocken bei 📒 (1 ATR "
+               "jenseits) – Livermores Probe und Bestätigung als ein Ablauf. Stückzahl aus dem 1-%-Risiko ist noch offen.",
          messung=["zirkel.setup", "zirkel.bestaetigt", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
          regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Zone der "

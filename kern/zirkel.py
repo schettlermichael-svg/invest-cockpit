@@ -23,7 +23,7 @@ from masse import JAHR_TAGE
 
 KURSE_MIN = 60                  # Technik: darunter weder Base noch Kreislauf
 TRADE_FELDER = ("art", "name", "zeichen", "richtung", "einstieg", "stopp", "pivot", "risiko", "ampel", "wartet", "zirkel",
-                "zirkel_grund")
+                "zirkel_grund", "aufstocken", "aufgestockt")
 MELDUNG_JE_SEITE = 5           # Morgenmeldung: die ersten 5 Long und 5 Short
 
 
