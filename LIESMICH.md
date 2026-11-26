@@ -1729,3 +1729,5 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   wird kräftig. Die kräftigen ziehen den Preisbereich mit (höchstens eine Bildhöhe). Festungen (zonen._swing_kanten)
   nutzen dieselbe Regel; ihr Grund heißt nach der Lage zum Kurs Decke bzw. Boden. PP_DURCH_DECK entfernt.
   Nebenbei: Etiketten-Stapel ohne namenlose Zahlen (Inventur 0/0/0).
+- Morgenmeldung (26.11.2026, Micky): hinter dem Kürzel der Firmenname ohne Rechtsform, z. B. „ONC (BeOne Medicines)“ –
+  daten.kurzname aus dem gespeicherten Steckbrief (kein Abruf); ohne Steckbrief oder bei Name = Kürzel nur das Kürzel.

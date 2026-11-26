@@ -430,9 +430,9 @@ BEREICHE = [
          regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest am Pivot, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
                "Fortsetzung abwärts; Rückzug zuerst), je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗), je "
-               "Titel Klasse, Setup mit ✓/✗, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
+               "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Einstieg, Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
                "die Meldung das.",
-         messung=["zirkel.heisse", "zirkel.trade_wort"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
+         messung=["zirkel.heisse", "zirkel.trade_wort", "daten.kurzname"], pruefer=[], luecke="kein Prüfer – eine Auswahl"),
     dict(name="Setup aus Livermore, bestätigt vom Zirkel", quelle="Micky 25.11.2026 (Livermore liefert das System, der "
          "Zirkel bestätigt nur; vorher 22.11.2026: das Setup ergab sich aus dem Zirkel)",
          regel="Jedes Signal aus Livermores Spanne ist ein Setup, benannt nach der Art seines Pivotal Points (Livermores "

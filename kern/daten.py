@@ -6,6 +6,7 @@ Die Kurse werden einmal je Tag neu geholt; ein unvollständiger heutiger Balken 
 deutscher Zeit wird verworfen, damit die Rechnung nur mit abgeschlossenen Tagen arbeitet.
 """
 import os
+import re
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -104,6 +105,20 @@ def steckbrief_gespeichert(ticker):
     """Steckbrief nur aus dem Speicher (ohne Abruf), sonst None."""
     pfad = os.path.join(SPEICHER, f"{ticker.upper()}_steckbrief.json")
     return json_lesen(pfad)
+
+
+_RECHTSFORM = re.compile(r"[,\s]+(inc\.?|incorporated|corp\.?|corporation|co\.?|company|ltd\.?|limited|plc|"
+                         r"n\.v\.|s\.a\.|ag|se|sponsored|adr|ads|class [a-c]|holdings?|group|the)$", re.I)
+
+
+def kurzname(ticker):
+    """Der Firmenname ohne Rechtsform aus dem gespeicherten Steckbrief (ohne Abruf; Micky 26.11.2026: Name hinter dem
+    Kürzel in der Morgenmeldung, z. B. ONC → BeOne Medicines) – oder "" ohne Steckbrief."""
+    name = ((steckbrief_gespeichert(ticker) or {}).get("name") or "").strip()
+    alt = None
+    while name and name != alt:                                                     # Rechtsformen von hinten abschneiden
+        alt, name = name, _RECHTSFORM.sub("", name).strip(" ,.-")
+    return "" if not name or name.upper() == ticker.upper() else name
 
 
 def steckbrief(ticker):

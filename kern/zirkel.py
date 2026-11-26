@@ -333,7 +333,9 @@ def heisse(n=MELDUNG_JE_SEITE):
     dann nach Rang; Short = Bruch der Unterkante
     mit Volumen, Rückzug zuerst; je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗). Spannen im Aufbau kommen
     nicht in die Meldung (sie stehen in der Liste).
-    Je Titel: Klasse, Trade, Einstieg, Stopp mit Risiko, ✈️ und Keim. → (Text, Anzahl)."""
+    Je Titel: Kürzel mit Firmenname (26.11.2026), Klasse, Trade, Einstieg, Stopp mit Risiko, ✈️ und Keim.
+    → (Text, Anzahl)."""
+    import daten
     import rueckenwind
     import rueckenwind_seite
     import zeichen
@@ -345,7 +347,8 @@ def heisse(n=MELDUNG_JE_SEITE):
         x, t = rw.get(tk) or {}, f_[tk]["trade"]
         zk = zeichen.zirkel(zeichen.von(tk))
         kl = x.get("klasse")
-        teile = [f"{sym} {tk}", f"{kl} · {rueckenwind.KLASSEN[kl - 1]}" if kl else "", trade_wort(f_[tk]),
+        nm = daten.kurzname(tk)                                                     # Name hinter dem Kürzel (26.11.)
+        teile = [f"{sym} {tk}" + (f" ({nm})" if nm else ""), f"{kl} · {rueckenwind.KLASSEN[kl - 1]}" if kl else "", trade_wort(f_[tk]),
                  dreifach(tk, t, rw), gegenwind(tk, t),
                  f'Einstieg {zahl(t["einstieg"])} $ · Stopp {zahl(t["stopp"])} $ {t["ampel"]} {zahl(t["risiko"], 1)} %',
                  rueckenwind_seite.bahn(x.get("frei"), ""),
