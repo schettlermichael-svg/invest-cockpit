@@ -25,9 +25,13 @@ Regeln (verkürzt, Nummern wie im Buch):
       fällt dann um die Bestätigung: Gefahrensignal, der Aufwärtstrend ist zu Ende · f) gespiegelt.
 """
 import numpy as np
+import pandas as pd
 
 SCHWUNG = 2.0             # Livermores ~6 Punkte = 2 × ATR (wie vcp_zone.GROB, die Wendepunkte)
 BESTAETIGUNG = 1.0        # Livermores ~3 Punkte = 1 × ATR
+STELLUNG_JAHRE = 2        # Stellungen: stehende Pivotal Points der letzten 2 Jahre (so weit reichen die Massive-Tage der
+                          # Liste – Titelseite, Chart, Liste und Zeichen sehen dieselben Stellungen)
+STELLUNG_ATR = 0.5        # Pivotal Points innerhalb ½ ATR sind eine Stellung (Gewicht = wie viele dort stehen)
 SPALTEN = {"SE": "Sekundäre Erholung", "NE": "Natürliche Erholung", "AT": "Aufwärtstrend",
            "AB": "Abwärtstrend", "NR": "Natürliche Reaktion", "SR": "Sekundäre Reaktion"}
 REIHE = ("SE", "NE", "AT", "AB", "NR", "SR")                  # Reihenfolge der Spalten im Buch
@@ -196,7 +200,7 @@ def spanne(nb, n=None):
     """Livermores Spanne am Ende der Zeile n − 1 (Micky 25.11.2026: streng nach Livermore) → {oben, unten, trend,
     spalte} oder None: oben = der letzte Pivotal Point oben (aus Aufwärtstrend oder natürlicher Erholung), unten = der
     letzte Pivotal Point unten (aus Abwärtstrend oder natürlicher Reaktion) – die beiden Linien, die Livermore im
-    Notizbuch beobachtet. Der Pivot ist der Pivotal Point oben (Regel 5a, 6d). Ohne Pivotal Point oben: None."""
+    Notizbuch beobachtet. Die Front ist der Pivotal Point oben (Regel 5a, 6d). Ohne Pivotal Point oben: None."""
     if not nb:
         return None
     n = len(nb["je_tag"]) if n is None else n
@@ -216,16 +220,20 @@ def spanne(nb, n=None):
 def offene(df, nb=None):
     """Livermores Pivotal Points, die noch stehen (Micky 25.11.2026): durchbrochen ist ein Punkt erst, wenn ein
     Schluss BESTAETIGUNG × ATR (Livermores ~3 Punkte, Regel 10) jenseits liegt – oben darüber, unten darunter; ein
-    Schluss knapp jenseits oder ein Ausflug im Tagesverlauf zählt nicht. → [Pivotal Point] in der Reihenfolge des
-    Notizbuchs."""
+    Schluss knapp jenseits oder ein Ausflug im Tagesverlauf zählt nicht. Nur die letzten STELLUNG_JAHRE Jahre.
+    → [Pivotal Point] in der Reihenfolge des Notizbuchs – die eine Quelle aller Stellungen der App (Micky 26.11.2026:
+    ein Heer, eine Sprache, eine Rechnung)."""
     import vcp_zone
     nb = nb or notizbuch(df)
     if not nb:
         return []
     c = df["Close"].to_numpy(float)
     a = vcp_zone.atr(df).to_numpy(float)
+    ab = df.index[-1] - pd.DateOffset(years=STELLUNG_JAHRE)
     aus = []
     for p_ in nb["pivotal"]:
+        if pd.Timestamp(p_["tag"]) < ab:
+            continue
         c_, a_ = c[p_["i"] + 1:], a[p_["i"] + 1:]
         weg = c_ > p_["preis"] + BESTAETIGUNG * a_ if p_["art"] == "hoch" else c_ < p_["preis"] - BESTAETIGUNG * a_
         if not weg.any():
@@ -253,6 +261,44 @@ def front(df, nb=None):
     boden = max((p_ for p_ in rest if p_["preis"] < kurs), key=lambda p_: p_["preis"], default=None)
     return {"offen": offen, "stark": f_ | {schl(p_) for p_ in (ziel, boden) if p_}, "oben": oben, "unten": unten,
             "ziel": ziel, "boden": boden, "kurs": kurs}
+
+
+def stellungen(df, nb=None, je_seite=None):
+    """Die Stellungen über und unter dem Kurs aus derselben Liste wie die Frontkarte (offene): stehende Pivotal Points
+    innerhalb ½ ATR (STELLUNG_ATR) sind eine Stellung; über dem Kurs heißt sie Decke, darunter Boden; die Front (Spanne
+    oben) und die Unterkante zählen mit. → {"oben": [...], "unten": [...]} nach Abstand zum Kurs, je {preis, grund,
+    abstand, gewicht}; je_seite = höchstens so viele je Richtung."""
+    import vcp_zone
+    nb = nb or notizbuch(df)
+    if not nb:
+        return {"oben": [], "unten": []}
+    kurs = float(df["Close"].iloc[-1])
+    a = float(vcp_zone.atr(df).iloc[-1] or 0)
+    aus = {}
+    for seite, auswahl in (("oben", [p_ for p_ in offene(df, nb) if p_["preis"] > kurs]),
+                           ("unten", [p_ for p_ in offene(df, nb) if p_["preis"] < kurs])):
+        liste = []
+        for p_ in sorted(auswahl, key=lambda x: abs(x["preis"] - kurs)):
+            grund = f'{"Decke" if seite == "oben" else "Boden"} ═ {p_["tag"]:%d.%m.%y}'
+            nah = next((f for f in liste if abs(f["preis"] - p_["preis"]) <= a * STELLUNG_ATR), None)
+            if nah:
+                nah["grund"].append(grund)
+                nah["gewicht"] += 1
+                continue
+            if je_seite and len(liste) >= je_seite:
+                continue
+            liste.append({"preis": float(p_["preis"]), "grund": [grund], "gewicht": 1,
+                          "abstand": round((p_["preis"] / kurs - 1) * 100, 1)})
+        aus[seite] = liste
+    return aus
+
+
+def frei(df, nb=None):
+    """✈️ freie Bahn (Livermores Linie des geringsten Widerstands): {"oben": keine Stellung über dem Kurs (auch nicht
+    die Front), "unten": keine darunter} – aus derselben Liste wie Frontkarte und Stellungen."""
+    kurs = float(df["Close"].iloc[-1])
+    o = offene(df, nb)
+    return {"oben": not any(p_["preis"] > kurs for p_ in o), "unten": not any(p_["preis"] < kurs for p_ in o)}
 
 
 LAGE = {"AT": ("🟢", "Vormarsch"), "AB": ("🔴", "Rückzug")}   # eine Sprache für Titel und Markt (Micky 26.11.2026);

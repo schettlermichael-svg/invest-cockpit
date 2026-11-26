@@ -597,7 +597,7 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
         anker = zonenseite.anker_laden(ticker, ebene)
         hilfe = ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze); 0 löscht den Anker. Sind beide gesetzt, ist "
                  "der Raum dazwischen die Zange.",) * 2 + ("Nummer aus dem Hinweis über der Kerze (1 = letzte Kerze): Zeit- "
-                 "und Volumenprofil ab dieser Kerze. 0 = automatisch ab Beginn der Zone.",)
+                 "und Volumenprofil ab dieser Kerze. 0 = automatisch ab Beginn der Spanne (ohne Spanne ab dem letzten Pivotal Point unten).",)
         for k, spalte in enumerate((g1, g2, g4)):   # eigene Anker: Balkennummer von rechts, gespeichert als Zeitpunkt
             with spalte:
                 nr_jetzt = zonenchart.nummer(e_["df"], anker[k]) if e_ is not None and anker[k] is not None else 0

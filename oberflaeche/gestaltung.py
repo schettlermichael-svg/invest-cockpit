@@ -154,7 +154,7 @@ ZEICHEN_LISTE = (("🦬", "Käufer haben die Kontrolle (long)"), ("🐻", "Verk�
                  ("⚡", "Zeit und Volumen widersprechen sich"),
                  ("🐺", "Einzelkämpfer – stark, aber die Branche liegt hinten"),
                  ("🏜️", "Volumen trocknet aus – kaum noch Verkäufer (Minervini)"),
-                 ("✈️", "freie Bahn – keine Festung über dem Kurs (↓ darunter), Livermores Linie des geringsten Widerstands"))
+                 ("✈️", "freie Bahn – keine Stellung über dem Kurs (↓ darunter), Livermores Linie des geringsten Widerstands"))
 ZEICHEN = tuple(z for z, _ in ZEICHEN_LISTE)
 
 

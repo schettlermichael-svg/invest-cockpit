@@ -66,7 +66,7 @@ def aus_setup(ticker):
 
 
 def setzen(ticker, **werte):
-    """Position anlegen oder ändern (nur übergebene Felder); eine neue Position merkt sich den Pivot ihres Setups."""
+    """Position anlegen oder ändern (nur übergebene Felder); eine neue Position merkt sich die Front ihres Setups."""
     d = laden()
     p = next((p for p in d["positionen"] if p["ticker"] == ticker.upper()), None)
     if p is None:
@@ -115,7 +115,7 @@ def uebernehmen(liste, quelle="Scalable"):
         tk = x["ticker"].upper()
         if tk in alt:
             p = dict(alt[tk])
-        else:                                      # neu: Stopp und Pivot aus dem Setup, wenn die Seite passt
+        else:                                      # neu: Stopp und Front aus dem Setup, wenn die Seite passt
             su = aus_setup(tk)
             passt = su.get("seite") == (x.get("seite") or "long")
             p = {"ticker": tk, "seite": "long", "stopp": su.get("stopp") if passt else None,
@@ -208,9 +208,9 @@ def _nach_dem_kauf(p, df):
       Stopp     reiten.nachgezogen: Anfangsstopp, dann ¼ ATR unter Livermores Pivotal Point unten jeder Reaktion nach
                 dem Kauf; raus bei Schluss darunter, bei Regel 10b (Aufwärtstrend vorbei) und als Notbremse bei Schluss
                 unter dem 20er (ab Tag 3); Gefahrensignal 10e = Stopp eng unter das Tief jenes Tages.
-      Pivot     🔴 Schluss zurück unter dem Pivot des Setups: der Widerstand ist nicht überwunden – raus (Livermore: die
+      Front     🔴 Schluss zurück unter der Front des Setups: der Widerstand ist nicht überwunden – raus (Livermore: die
                 Aktie verhält sich nach dem Pivotal Point nicht richtig).
-      Aufstocken ½ beim Kauf, ½ bei 📒 (1 ATR jenseits des Pivots, ATR am Kauftag) – nur im Gewinn (26.11.2026).
+      Aufstocken ½ beim Kauf, ½ bei 📒 (1 ATR jenseits der Front, ATR am Kauftag) – nur im Gewinn (26.11.2026).
       Zeichen   der Zirkel (Phase, Keim, Wechsel) und die Reibung (Mauer, Kraft ohne Weg, Klimax) – sie bestätigen
                 (✓) oder warnen (⚠), entscheiden aber nicht."""
     import pandas as pd
@@ -242,7 +242,7 @@ def _nach_dem_kauf(p, df):
                             f"jenes Tages {en['stopp']:.2f} (Stopp im Markt)" + (" – erreicht" if getroffen else "")))
     piv = p.get("pivot")
     if piv and ((k < piv) if lang else (k > piv)):
-        aus.append(("rot", f"Schluss {'zurück unter dem Pivot' if lang else 'zurück über der Unterkante'} {piv:.2f}: "
+        aus.append(("rot", f"Schluss {'zurück unter der Front' if lang else 'zurück über der Unterkante'} {piv:.2f}: "
                            f"der {'Widerstand' if lang else 'Boden'} ist nicht {'überwunden' if lang else 'gebrochen'} – raus"))
     if piv and s and p.get("datum"):                     # Aufstocken (Micky 26.11.2026): ½ beim Kauf, ½ bei 📒 – nur im
         import atr as atr_mod                            # Gewinn, nie verbilligen (Livermore); ATR am Kauftag
@@ -258,7 +258,7 @@ def _nach_dem_kauf(p, df):
                 aus.append(("grün", f"📒 am {treffer.index[0]:%d.%m.} ({marke:.2f}): zweite Hälfte aufstocken – "
                                     f"nur im Gewinn, nie verbilligen (Livermore)"))
             elif not len(treffer):
-                aus.append(("grau", f"Aufstocken bei 📒 {marke:.2f} (1 ATR {'über' if lang else 'unter'} dem Pivot)"))
+                aus.append(("grau", f"Aufstocken bei 📒 {marke:.2f} (1 ATR {'über' if lang else 'unter'} der Front)"))
     for art, tag in reiten.ende_zeichen(df, p.get("seite", "long")):   # Reibung: nur noch Zeichen (25.11.2026)
         if p.get("datum") and pd.Timestamp(tag) < pd.Timestamp(p["datum"]):
             continue

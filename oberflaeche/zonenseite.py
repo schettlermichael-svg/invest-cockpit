@@ -1,5 +1,5 @@
 """Titelseite des schlanken Cockpits (Micky 21./22.11.2026): Kopfzeile mit Rückenwind und den drei Ebenen (Base nach
-Minervini/O'Neil in Woche und Tag, Balance in der Stunde), das eine Setup (Zone im Einklang mit dem Zirkel), darunter der Zonenchart mit Reitern Woche ·
+Minervini/O'Neil in Woche und Tag, Balance in der Stunde), das eine Setup (Spanne im Einklang mit dem Zirkel), darunter der Zonenchart mit Reitern Woche ·
 Tag · Stunde. Wenig Text, das Bild führt."""
 import os
 import time
@@ -12,7 +12,7 @@ from gestaltung import (BLAU, GELB, GRUEN, KARTE, PUNKT_KLEIN, RAND, ROT, TEXT, 
 
 HIER = os.path.dirname(os.path.abspath(__file__))
 
-EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Zone", "Stunde": "Einstieg"}
+EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Spanne", "Stunde": "Einstieg"}
 
 
 def rechnen(tk, laufend=False):
@@ -86,7 +86,7 @@ def _karte_ebene(name, la, aktiv=False):
     zeile2 = ""
     if la["zone"]:
         lo, hi = la["zone"]
-        zeile2 = (f'{zahl(lo)} – {zahl(hi)}' + (f' · Pivot {zahl(la["pivot"])}' if la.get("pivot") and la["pivot"] < hi else "")
+        zeile2 = (f'{zahl(lo)} – {zahl(hi)}' + (f' · Front {zahl(la["pivot"])}' if la.get("pivot") and la["pivot"] < hi else "")
                   + f' · POC {zahl(la["poc"])}')
     return (f'<div style="{rahmen}">{kopf_}'
             f'<div style="font-size:20px;margin:2px 0">{la["pfeil"]} {la["zeichen"]} <span style="font-size:15px">'
@@ -141,7 +141,7 @@ def zirkel_html(tk):
 
 
 def kopf(r):
-    """Kopfzeile: Titel, Kurs, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Zone und Phase; der Trade.
+    """Kopfzeile: Titel, Kurs, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Spanne und Phase; der Trade.
     Aufgeräumt 22.11.2026: ohne Lagebeurteilung, Gedächtnis, PbD, Einigkeit und Muster."""
     import tiefe
     import zonen
@@ -189,7 +189,7 @@ def kopf(r):
             f'<span style="font-size:28px;font-weight:600">{t(r["tk"])}</span>'
             f'<span style="font-size:18px;color:{TEXT}">{zahl(kurs)} $</span>'
             f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
-            f'<span style="font-size:15px;color:{TEXT}" title="keine Festung über (✈️) bzw. unter (✈️↓) dem Kurs – '
+            f'<span style="font-size:15px;color:{TEXT}" title="keine Stellung über (✈️) bzw. unter (✈️↓) dem Kurs – '
             f'Livermores Linie des geringsten Widerstands">{rueckenwind_seite.bahn(f.get("frei"))}</span>'
             f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
             f'{lagebericht(r)}{wind_html}{zirkel_html(r["tk"])}{livermore_html(r)}'
@@ -281,7 +281,7 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None, position=None):
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" and not position else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
                            zonen.profil_seit(r["ebenen"][ebene], profil_ab) if profil_ab is not None else None,
-                           f["festungen"][ebene], f["basis"], r["tk"], position if ebene == "Tag" else None)
+                           f["stellungen"][ebene], f["basis"], r["tk"], position if ebene == "Tag" else None)
 
 
 # ── Eigene Anker (Micky 21.11.2026): AVWAP 1 und 2, dazu das Profil – je Titel und Ebene, als Zeitpunkt gespeichert ──
@@ -317,7 +317,7 @@ NOTIZBUCH_ZEILEN = 30      # Layout: die letzten 30 Einträge in der Tabelle
 
 
 def lagebericht(r):
-    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, Front oben (Pivot), Kurs, Ziel
+    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, Front (letzter Pivotal Point oben), Kurs, Ziel
     (nächste stehende Stellung darüber), Boden (nächste darunter), Front unten, Setup mit ✓/✗ – dieselben Linien, die
     der Chart kräftig zeichnet (livermore.front)."""
     import livermore
@@ -334,8 +334,11 @@ def lagebericht(r):
     teile.append(f'Kurs {zahl(fr["kurs"])}')
     tr = r["fuehrte"]["trade"]
     lang, kurz = bool(tr and tr["richtung"] > 0), bool(tr and tr["richtung"] < 0)   # das Ziel liegt in Richtung des
-    teile += [(f'{"Ziel" if lang else "Decke"} {p_(fr["ziel"])}' if fr["ziel"] else "✈️ freie Bahn"),   # Setups
-              (f'{"Ziel" if kurz else "Boden"} {p_(fr["boden"])}' if fr["boden"] else "✈️↓ freie Bahn")]
+    fb = livermore.frei(df, nb)                                                     # Setups; ✈️ = keine Stellung mehr
+    teile += [x for x in ((f'{"Ziel" if lang else "Decke"} {p_(fr["ziel"])}' if fr["ziel"] else   # (auch nicht die
+                           "✈️ freie Bahn" if fb["oben"] else ""),                                  # Front)
+                          (f'{"Ziel" if kurz else "Boden"} {p_(fr["boden"])}' if fr["boden"] else
+                           "✈️↓ freie Bahn" if fb["unten"] else "")) if x]
     if fr["unten"]:
         teile.append(f'Unterkante {p_(fr["unten"])}')
     if tr:
@@ -351,28 +354,20 @@ def lagebericht(r):
         ebenen_ = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermores Notizbuch auf Wochen-, '
                    f'Tages- und Stundenkerzen">🧭 {t(ebenen_)}</div>')
     return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht: Front = '
-            f'Pivot (letzter Pivotal Point oben), Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
+            f'Front (letzter Pivotal Point oben), Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
             f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten">🗺️ {t(" · ".join(teile))}</div>'
             + ebenen_)
 
 
 def livermore_html(r):
-    """Eine Zeile unter dem Zirkel: in welcher Spalte Livermore heute schreibt, die zwei letzten Pivotal Points und
-    wohin der Kurs muss, damit sie bestätigt sind (1 ATR darüber bzw. darunter)."""
+    """Eine Zeile unter dem Zirkel: in welcher Spalte Livermore heute schreibt, dazu der Key Price mit der
+    Schwesteraktie. Front, Unterkante und Kipp-Zone stehen nur im Lagebericht und im Chart (Micky 26.11.2026: eine
+    Rechnung, nicht doppelt)."""
     import livermore
-    import vcp_zone
     df = r.get("df")
     nb = livermore.notizbuch(df) if df is not None else None
     if not nb:
         return ""
-    a = float(vcp_zone.atr(df).iloc[-1])
-    oben = next((p_ for p_ in reversed(nb["pivotal"]) if p_["art"] == "hoch"), None)
-    unten = next((p_ for p_ in reversed(nb["pivotal"]) if p_["art"] == "tief"), None)
-    teile_ = []
-    if oben:
-        teile_.append(f'oben {zahl(oben["preis"])} ({oben["tag"]:%d.%m.}) – bestätigt über {zahl(oben["preis"] + a)}')
-    if unten:
-        teile_.append(f'unten {zahl(unten["preis"])} ({unten["tag"]:%d.%m.}) – bestätigt unter {zahl(unten["preis"] - a)}')
     farbe = {"AT": GRUEN, "AB": ROT}.get(nb["spalte"], TEXT_2)
     try:
         kp = livermore.key_price(r["tk"], df)                  # Key Price mit der Schwesteraktie
@@ -389,8 +384,7 @@ def livermore_html(r):
                    + '</div>')
     return (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}" title="Livermores Notizbuch (Market Key, 1940): '
             f'Schwung 2 ATR, Bestätigung 1 ATR">📒 Livermore: <b style="color:{farbe}">{livermore.spalte_text(nb)}</b>'
-            + (f'<span style="color:{TEXT_2}"> · Pivotal Points {" · ".join(teile_)}</span>' if teile_ else "")
-            + f'</div>{kp_html}')
+            f'</div>{kp_html}')
 
 
 def notizbuch_tabelle(r):

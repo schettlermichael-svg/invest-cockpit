@@ -1,9 +1,9 @@
 """Der Zonenchart (Micky 21.11.2026): wenig, aber aussagekräftig – dasselbe Bild für Woche, Tag und Stunde.
 
-Kursfeld: Kerzen; die Zone von heute (Livermores Spanne seit 25.11.2026, in der Stunde die Balance) als gelber Rahmen mit
-Namen, Pivot und POC; in der Stunde die
+Kursfeld: Kerzen; die Spanne von heute (Livermores Spanne seit 25.11.2026, in der Stunde die Balance) als gelber Rahmen mit
+Namen, Front und POC; in der Stunde die
 Base des Tages als feiner Rahmen; Schluchten quer über das Gelände; Livermores stehende Pivotal Points als Linie bis zum Rand (Front und nächste Stellung kräftig)
-(Festungen seit 25.11.2026 nicht mehr als Band, nur als Ziel des Schlachtplans und ✈️); der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
+(Stellungen seit 25.11.2026 nicht mehr als Band, nur als Ziel des Schlachtplans und ✈️); der Trade (Einstieg, Stopp, Ziel); nach Wahl Durchschnitte und
 der eigene AVWAP (zwei Anker, Zange). Rechts das eine Profil der Ebene: Zeit und Volumen gespiegelt, ab Beginn des
 Impulses. Darunter das Volumen und das Feld der
 relativen Stärke gegen den S&P 500 und gestrichelt gegen den Sektor (Punkte RS-Hoch bzw. RS-Tief vor Kurs)."""
@@ -22,7 +22,7 @@ ZEIGEN = {"Woche": 104, "Tag": 126, "Stunde": 140}   # Kerzen im Bild (2 Jahre, 
 JAHR = {"Woche": 52, "Tag": 252, "Stunde": 252 * 7}  # Kerzen je Jahr (RS-Hoch vor Kurs)
 PFEIL_N = 10                           # RS-Pfeil: die letzten 10 Kerzen
 PFEIL_LEICHT, PFEIL_STARK = 1, 3       # ↗/↘ ab 1 %, ↑/↓ ab 3 % (wie bisher im Cockpit)
-ZONE_FARBE = "#EDA100"                 # Zone wie in Vorwalds Bildern gelb
+ZONE_FARBE = "#EDA100"                 # Spanne wie in Vorwalds Bildern gelb
 POC_FARBE = "#1BAF7A"
 WOCHE_FARBE = "#7DB4FF"
 EINSTIEG_FARBE = "#E6EAF0"
@@ -46,14 +46,13 @@ VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schni
 EINHEIT = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
 ZEILE = 14                             # Layout: Abstand der Etiketten rechts
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
-PIVOT_FARBE = "#FFFFFF"                # der Pivot: gestrichelt weiß über allem
-PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt des Pivots – Hoch bis 0,1 % am Pivot
+PIVOT_FARBE = "#FFFFFF"                # die Front: gestrichelt weiß über allem
+PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt der Front – Hoch bis 0,1 % an der Front
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
 PP_BLASS_DECK = 0.3                    # Layout: weiter entfernte offene Pivotal Points blass (Micky 25.11.2026)
 PP_BLASS_DICKE = 1.0                   # Layout
-STELLUNG_ATR = 0.5                     # Gewicht einer Stellung: stehende Pivotal Points innerhalb ½ ATR zählen zusammen
-KIPP_DECK = 0.10                       # Layout: Kipp-Zone um den Pivot (Micky 26.11.2026), je 1 ATR, quer über das Bild
+KIPP_DECK = 0.10                       # Layout: Kipp-Zone um die Front (Micky 26.11.2026), je 1 ATR, quer über das Bild
 PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher, eine Linie)
 PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
 
@@ -108,14 +107,14 @@ def _zahlentage(tk):
 def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), linien_=(), profil=None, fest=None,
          ba=None, tk=None, position=None):
     """SVG einer Ebene. e = tiefe.ebene, la = zonen.lage, t = zonen.trade (nur Tag),
-    woche = (Lage der Wochenzone, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
+    woche = (Lage der Spanne der Woche, Beginn) für den Tageschart, rs = {"index": Kurse, "sektor": Kurse oder None},
     gd = gewählte Durchschnitte (Kerzen der Ebene), anker = bis zu zwei Zeitpunkte für den eigenen AVWAP (Micky
     21.11.2026: selbst verankert; beide gesetzt = Zange), linien_ = gewählte Einblendungen (LINIEN_WAHL: Profil-Details, Market Profile, Livermore), profil = Profil
-    am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Zone, fest = zonen.festungen der Ebene; woche =
+    am eigenen Anker (zonen.profil_seit) statt des Profils ab Beginn der Spanne, fest = zonen.stellungen der Ebene; woche =
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
-    ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Zonen-Kästen.
+    ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Spannen-Kästen.
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
-    Rechnung wie Notizbuch und Festungen) als Punkte; der eine Pivot als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
+    Rechnung wie Notizbuch und Stellungen) als Punkte; die eine Front als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     Fehlausbruch, Rücktest und Decke der Gefangenen (ba = zonen.basis), ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 📒 Livermores Bestätigung, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
     Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum). position = die gehaltene
@@ -130,7 +129,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         return f'<p style="color:{TEXT_2}">ungemessen – zu wenige Kerzen</p>'
     df = e["df"]
     n0 = max(0, len(df) - ZEIGEN[e["name"]])
-    if la.get("beginn") is not None:               # die ganze Zone im Bild
+    if la.get("beginn") is not None:               # die ganze Spanne im Bild
         n0 = min(n0, int(df.index.searchsorted(la["beginn"])))
     d = df.iloc[n0:]
     N = len(d)
@@ -194,8 +193,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         x0 = X(pos(woche[1])) - halb if woche[1] >= d.index[0] else LINKS
         A(f'<rect x="{x0:.1f}" y="{Y(wh):.1f}" width="{ende - x0:.1f}" height="{max(2, Y(wl) - Y(wh)):.1f}" fill="none" '
           f'stroke="{WOCHE_FARBE}" stroke-width="1.2" stroke-opacity="0.7"/>'                                    # Layout
-          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Wochenzone" if woche[2] == "Woche" else "Tageszone"} {woche[0]["name"]}</text>')  # Layout: unter dem Rahmen
-    if la["zone"]:                                                                  # die Zone von heute
+          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Spanne der Woche" if woche[2] == "Woche" else "Spanne des Tages"} {woche[0]["name"]}</text>')  # Layout: unter dem Rahmen
+    if la["zone"]:                                                                  # die Spanne von heute
         zs = pd.Timestamp(la["beginn"])
         xz = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
         A(f'<rect x="{xz:.1f}" y="{Y(hi):.1f}" width="{ende - xz:.1f}" height="{max(2, Y(lo) - Y(hi)):.1f}" fill="{ZONE_FARBE}" '
@@ -204,23 +203,28 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(la["poc"]):.1f}" y2="{Y(la["poc"]):.1f}" stroke="{POC_FARBE}" '
           f'stroke-width="1.4" stroke-dasharray="2 3"/>')                           # Layout
     piv = la.get("pivot") if la.get("zone") else None
-    oben_ = piv is not None and abs(piv - hi) <= piv * PIVOT_GLEICH                   # Pivot auf der Oberkante
-    am_pivot = bool(t and piv is not None and abs(t["einstieg"] - piv) <= piv * PIVOT_GLEICH)   # Auslöser = Pivot
-    if la["zone"]:
-        etiketten += ([] if oben_ else [(Y(hi), f"Zone oben {zahl(hi)}", ZONE_FARBE)]) + \
-                     [(Y(lo), f"Zone unten {zahl(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+    oben_ = piv is not None and abs(piv - hi) <= piv * PIVOT_GLEICH                   # Front auf der Oberkante
+    am_pivot = bool(t and piv is not None and abs(t["einstieg"] - piv) <= piv * PIVOT_GLEICH)   # Auslöser = Front
     a_kipp = float(e.get("atr") or 0)
+    import livermore                                                                # Gewicht einer Stellung (26.11.):
+
+    def gewicht(preis):                                                             # stehende Pivotal Points innerhalb
+        n_ = sum(abs(q_["preis"] - preis) <= livermore.STELLUNG_ATR * a_kipp for q_ in pp_offen)   # ½ ATR
+        return f' · {n_} {"Decken" if preis > float(df["Close"].iloc[-1]) else "Böden"}' if n_ > 1 else ""
+    if la["zone"]:                                    # Wörterbuch (Micky 26.11.2026): Front, Unterkante, Decke, Boden
+        etiketten += ([] if oben_ else [(Y(hi), f"Spanne oben {zahl(hi)}", ZONE_FARBE)]) + \
+                     [(Y(lo), f"Unterkante {zahl(lo)}{gewicht(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
     short_ = bool(la.get("zone")) and ((t and t["richtung"] < 0) or la.get("phase") == "bruch")
-    kante = lo if short_ else piv                     # Kipp-Zone (Micky 26.11.2026, Frontkarte): long um den Pivot,
+    kante = lo if short_ else piv                     # Kipp-Zone (Micky 26.11.2026, Frontkarte): long um die Front,
     if kante is not None and a_kipp > 0:              # short gespiegelt um die Unterkante; je 1 ATR (Livermores
-        import livermore                              # Bestätigung), oben grün, unten rot
+                                                      # Bestätigung), oben grün, unten rot
         b_ = livermore.BESTAETIGUNG * a_kipp
         if short_:
             baender = ((kante, kante + b_, GRUEN, "🦊 Fehlausbruch", f"ein Schluss über {zahl(kante + b_)} (1 ATR über der Unterkante)", kante + b_),
                        (kante - b_, kante, ROT, "📒 Rückzug bestätigt", f"ein Tief unter {zahl(kante - b_)} (1 ATR unter der Unterkante)", kante - b_))
         else:
-            baender = ((kante, kante + b_, GRUEN, "📒 Angriff bestätigt", f"ein Hoch über {zahl(kante + b_)} (1 ATR über dem Pivot)", kante + b_),
-                       (kante - b_, kante, ROT, "🦊 Fehlausbruch", f"ein Schluss unter {zahl(kante - b_)} (1 ATR unter dem Pivot)", kante - b_))
+            baender = ((kante, kante + b_, GRUEN, "📒 Angriff bestätigt", f"ein Hoch über {zahl(kante + b_)} (1 ATR über der Front)", kante + b_),
+                       (kante - b_, kante, ROT, "🦊 Fehlausbruch", f"ein Schluss unter {zahl(kante - b_)} (1 ATR unter der Front)", kante - b_))
         for y_a, y_b, farbe, text, wie, wert_ in baender:
             if y_b < pmin or y_a > pmax:
                 continue
@@ -246,11 +250,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         if kt is not None and kt >= d.index[0]:
             A(f'<line x1="{xk:.1f}" x2="{xk:.1f}" y1="{OBEN}" y2="{OBEN + KURS_H}" stroke="{BLAU}" stroke-opacity="0.5" '
               f'stroke-dasharray="2 4"><title>Kauf am {kt:%d.%m.%Y}</title></line>')   # Layout
-    if piv is not None and pmin <= piv <= pmax:          # der Pivot als eigene Linie (Micky 23.11.2026): gestrichelt weiß
+    if piv is not None and pmin <= piv <= pmax:          # die Front als eigene Linie (Micky 23.11.2026): gestrichelt weiß
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
           f'stroke-width="2.4" stroke-dasharray="8 4">'   # Layout
-          f'<title>Pivot {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
-        etiketten.append((Y(piv), f"Pivot {zahl(piv)}" + (" = Oberkante" if oben_ else ""), PIVOT_FARBE))
+          f'<title>Front {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
+        etiketten.append((Y(piv), f"Front {zahl(piv)}{gewicht(piv)}", PIVOT_FARBE))
     def kurve(r_, farbe, dicke=1.6, strich=""):  # Layout
         pkt = " ".join(f"{X(i):.1f},{Y(x):.1f}" for i, x in enumerate(r_.to_numpy(float)) if not np.isnan(x) and pmin <= x <= pmax)
         if pkt:
@@ -289,7 +293,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     import vcp_zone
     zz = vcp_zone.zigzag(df, vcp_zone.GROB) if len(df) > vcp_zone.ATR_TAGE + 1 else []
     sek = vcp_zone.secondary(zz)                                                    # Livermores Secondary: ohne neues Extrem
-    beschriftet = []
+    beschriftet = [x for x in (piv, lo) if x is not None]                           # Front und Unterkante tragen schon ein
     for p_ in sorted(pp_offen, key=lambda q_: (q_["i"], q_["art"]) not in front_k):  # Livermores Pivotal Points als
         if not pmin <= p_["preis"] <= pmax:                                         # Linie ab ihrem Tag bis zum rechten
             continue                                                                # Rand (im Notizbuch doppelt
@@ -300,12 +304,11 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
           f'stroke-width="{PP_DICKE if stark else PP_BLASS_DICKE}" stroke-opacity="{1 if stark else PP_BLASS_DECK}">'
           f'<title>Livermores Pivotal Point {zahl(p_["preis"])} ({p_["tag"]:%d.%m.%y}) – {p_["farbe"]} unterstrichen, '
           f'aus {livermore.SPALTEN[p_["aus"]]} · steht noch{"" if stark else " (weiter entfernt)"}</title></line>')
-        if stark and not any(abs(x_ - p_["preis"]) <= STELLUNG_ATR * a_kipp for x_ in beschriftet):  # eine Stellung,
-            beschriftet.append(p_["preis"])                                         # ein Etikett
-            nah = sum(abs(q_["preis"] - p_["preis"]) <= STELLUNG_ATR * a_kipp for q_ in pp_offen)   # Gewicht der Stellung
-            ob_ = p_["preis"] > kurs_                                               # (26.11.): Punkte innerhalb ½ ATR zählen
-            etiketten.append((Y(p_["preis"]), f'— {"oben" if ob_ else "unten"} {zahl(p_["preis"])}'
-                              + (f' · {nah} {"Decken" if ob_ else "Böden"}' if nah > 1 else ""), f_p))
+        if stark and not any(abs(x_ - p_["preis"]) <= livermore.STELLUNG_ATR * a_kipp for x_ in beschriftet):
+            beschriftet.append(p_["preis"])                                         # eine Stellung, ein Etikett
+            wort_ = ("Front" if (p_["i"], p_["art"]) in front_k and p_["art"] == "hoch" else "Unterkante"
+                     if (p_["i"], p_["art"]) in front_k else "Decke" if p_["preis"] > kurs_ else "Boden")
+            etiketten.append((Y(p_["preis"]), f'{wort_} {zahl(p_["preis"])}{gewicht(p_["preis"])}', f_p))
     for k_, (i_, p_, art) in enumerate(zz):                                         # Wendepunkte (Schwunghochs und -tiefs)
         j = i_ - n0
         if 0 <= j < N:
@@ -318,19 +321,19 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'<title>Wendepunkt {"Hoch" if art == "H" else "Tief"} {zahl(p_)}'
               + (f' · Secondary (Livermore): {"kein neues Hoch" if art == "H" else "kein neues Tief"}' if s_ else "")
               + f'{" (noch nicht bestätigt)" if letzt else ""}</title></circle>')    # Layout
-    if la.get("pivot") is not None and la.get("beginn") is not None:                # der eine Pivot: sein Wendepunkt
+    if la.get("pivot") is not None and la.get("beginn") is not None:                # die eine Front: sein Wendepunkt
         seit_z = (d.index >= pd.Timestamp(la["beginn"])) & (np.abs(h - la["pivot"]) <= la["pivot"] * PIVOT_GLEICH)
         if seit_z.any():
             j = int(np.nonzero(seit_z)[0][-1])
             y_ = Y(la["pivot"]) - 7                                                 # Layout: über dem Hoch
             A(f'<path d="M{X(j):.1f},{y_ - 6:.1f} L{X(j) + 6:.1f},{y_:.1f} L{X(j):.1f},{y_ + 6:.1f} '  # Layout: Raute
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
-              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Pivot (Livermores Pivotal Point) {zahl(la["pivot"])} · '
+              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Front (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] != "Stunde":                                                # Fehlausbruch und Rücktest
         aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Livermore, 25.11.:
         marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # Schluss 1 ATR unter dem
-        if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Pivot; knapp darunter =
+        if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Front; knapp darunter =
             marken.append((aus_["rueck_tag"], "⚠ Rücktest", AMPEL["gelb"]))                  # Rücktest)
         for t_, wort_, f_m in marken:
             if t_ < d.index[0]:
@@ -356,15 +359,21 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     if t:                                                                           # Schlachtplan (Micky 24.11.2026):
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         ein_, stopp_ = t["einstieg"], t["stopp"]                                     # zu jedem Setup
-        decken = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]   # grün bis zur nächsten
-        decken += [h_ for _, h_ in ((ba or {}).get("ausbruch") or {}).get("gescheitert") or [] if h_ > ein_]   # + Gefangene
-        ziel_ = min(decken) if decken else None                                     # Decke, rot bis zum Stopp
-        y_e, y_z, y_s = Y(min(max(ein_, pmin), pmax)), Y(min(ziel_, pmax) if ziel_ else pmax), Y(max(stopp_, pmin))
-        chance = (f"bis zur nächsten Decke {zahl(ziel_)} (+{zahl((ziel_ / ein_ - 1) * 100, 1)} %)" if ziel_
-                  else "keine Decke darüber – freie Bahn")
-        A(f'<rect x="{x_t:.1f}" y="{y_z:.1f}" width="{ende - x_t:.1f}" height="{max(0, y_e - y_z):.1f}" fill="{GRUEN}" '
+        lang_ = t["richtung"] > 0                                                   # Ziel = die nächste Stellung in
+        if lang_:                                                                   # Richtung des Setups (Wörterbuch)
+            ziele = [f_["preis"] for f_ in ((fest or {}).get("oben") or []) if f_["preis"] > ein_]
+            ziele += [h_ for _, h_ in ((ba or {}).get("ausbruch") or {}).get("gescheitert") or [] if h_ > ein_]   # + Gefangene
+            ziel_ = min(ziele) if ziele else None
+        else:
+            ziele = [f_["preis"] for f_ in ((fest or {}).get("unten") or []) if f_["preis"] < ein_]
+            ziel_ = max(ziele) if ziele else None
+        rand_ = pmax if lang_ else pmin
+        y_e, y_z, y_s = Y(min(max(ein_, pmin), pmax)), Y(min(max(ziel_, pmin), pmax) if ziel_ else rand_), Y(min(max(stopp_, pmin), pmax))
+        chance = (f"bis zum Ziel {zahl(ziel_)} ({'+' if lang_ else '−'}{zahl(abs(ziel_ / ein_ - 1) * 100, 1)} %)" if ziel_
+                  else "keine Stellung in Richtung des Setups – freie Bahn")
+        A(f'<rect x="{x_t:.1f}" y="{min(y_z, y_e):.1f}" width="{ende - x_t:.1f}" height="{abs(y_e - y_z):.1f}" fill="{GRUEN}" '
           f'fill-opacity="{PLAN_DECK}"><title>Chance: vom Einstieg {zahl(ein_)} {chance}</title></rect>')
-        A(f'<rect x="{x_t:.1f}" y="{y_e:.1f}" width="{ende - x_t:.1f}" height="{max(0, y_s - y_e):.1f}" fill="{ROT}" '
+        A(f'<rect x="{x_t:.1f}" y="{min(y_e, y_s):.1f}" width="{ende - x_t:.1f}" height="{abs(y_s - y_e):.1f}" fill="{ROT}" '
           f'fill-opacity="{PLAN_DECK}"><title>Risiko: vom Einstieg {zahl(ein_)} bis zum Stopp {zahl(stopp_)} '
           f'(−{zahl(t["risiko"], 1)} %)</title></rect>')
     if t:                                                                           # der Trade: Auslöser bzw. Einstieg, Stopp
@@ -372,7 +381,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         x_t = X(max(0, N - 12))                                                     # Layout: die letzten 12 Kerzen
         for wert, farbe, name in ((t["einstieg"], EINSTIEG_FARBE, "Auslöser" if t["wartet"] else "Einstieg"),
                                   (t["stopp"], ROT, "Stopp")):
-            if name != "Stopp" and am_pivot:                                        # steht schon an der Pivot-Linie
+            if name != "Stopp" and am_pivot:                                        # steht schon an die Front-Linie
                 continue
             A(f'<line x1="{x_t:.1f}" x2="{ende}" y1="{Y(wert):.1f}" y2="{Y(wert):.1f}" stroke="{farbe}" stroke-width="2"/>')
             etiketten.append((Y(wert), f"{name} {zahl(wert)}" + (f' · {t["ampel"]} Risiko {zahl(t["risiko"], 1)} %'
@@ -471,10 +480,10 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                        f'({"Verkäufer schlucken die Nachfrage" if x["rand"] == "oben" else "Käufer schlucken das Angebot"}, Wyckoff)'))
     a_b = (ba or {}).get("ausbruch") if e["name"] != "Stunde" else None
     if a_b:                                                                         # 🦬 Ausbruch, 🦊 Fehlausbruch
-        for tag_, z_, text in ((a_b["tag"], "🦬", "Ausbruch über den Pivot"
+        for tag_, z_, text in ((a_b["tag"], "🦬", "Ausbruch über die Front"
                                 + (" mit Volumen" if a_b["mit_volumen"] else " ohne Volumen")),
-                               (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter dem Pivot"),
-                               (a_b.get("bestaetigt_tag"), "📒", "Livermore: Ausbruch bestätigt – Hoch 1 ATR über dem Pivot")):
+                               (a_b.get("fehl_tag"), "🦊", "Fehlausbruch: Schluss zurück unter der Front"),
+                               (a_b.get("bestaetigt_tag"), "📒", "Livermore: Ausbruch bestätigt – Hoch 1 ATR über der Front")):
             if tag_ is not None and (z_ != "🦊" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
     if tk and e["name"] != "Stunde":                                                # Halt der Phase: jetzt
@@ -562,8 +571,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
 def legende():
     """Erklärung der Farben unter dem Chart (aufklappbar)."""
     from gestaltung import t
-    teile = [(ZONE_FARBE, "Zone von heute: Livermores Spanne zwischen dem letzten Pivotal Point oben und unten; in der "
-                          "Stunde die Balance · POC grün gepunktet"),
+    teile = [(ZONE_FARBE, "Spanne von heute: zwischen Front (letzter Pivotal Point oben) und Unterkante (letzter "
+                          "Pivotal Point unten); in der Stunde ohne Notizbuch die Balance · POC grün gepunktet"),
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen; mit dem Schalter „Market Profile“ links davon die Zeit (lila, Zeit-POC, Einzeldrucke)"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
@@ -571,24 +580,24 @@ def legende():
              (WOCHE_FARBE, "Rahmen in der Stunde: die Spanne des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
-              "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Notizbuch, Zone und "
-              "Festungen"),
-             (PIVOT_FARBE, "- - Pivot (◆ auf seinem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
-              "Pivotal Point oben = Oberkante der Spanne (in der Stunde das Hoch der Balance)"),
+              "nicht bestätigt, klein und blass = Secondary (kein neues Extrem); aus ihnen entstehen Notizbuch, Spanne und "
+              "Stellungen"),
+             (PIVOT_FARBE, "- - Front (◆ auf ihrem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
+              "Pivotal Point oben (Livermores Pivot)"),
              (ROT, "— Livermores Pivotal Points (Schalter „Livermore“, auf jeder Ebene aus ihren Kerzen; im Notizbuch doppelt unterstrichen): rot aus "
               "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
-              "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis die Front (Spanne oben und unten) und je "
-              "die nächste Stellung über und unter dem Kurs, die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
-             (GRUEN, "Kipp-Zone (Frontkarte): long 1 ATR über dem Pivot grün – ein Hoch darüber bestätigt den Angriff (📒, "
+              "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis Front und Unterkante und je die nächste "
+              "Stellung über dem Kurs (Decke) und darunter (Boden), die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
+             (GRUEN, "Kipp-Zone (Frontkarte): long 1 ATR über der Front grün – ein Hoch darüber bestätigt den Angriff (📒, "
               "Livermores 3 Punkte); 1 ATR darunter rot – ein Schluss darunter ist der Fehlausbruch (🦊). Short "
               "gespiegelt an der Unterkante: ein Tief 1 ATR darunter bestätigt den Rückzug (📒), ein Schluss 1 ATR "
               "darüber ist die Falle (🦊)"),
              (TEXT_2, "Gewicht einer Stellung: „· 4 Böden“ am Etikett = so viele stehende Pivotal Points liegen "
               "innerhalb ½ ATR zusammen"),
-             (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zur nächsten Decke (freie Bahn bis zum Rand), "
-              "rote Fläche bis zum Stopp (das Risiko)"),
-             (GRUEN, "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
-             (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 📒 Livermores Bestätigung (1 ATR über dem Pivot) · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
+             (EINSTIEG_FARBE, "Schlachtplan: grüne Fläche vom Einstieg bis zum Ziel (nächste Stellung in Richtung des Setups; "
+              "freie Bahn bis zum Rand), rote Fläche bis zum Stopp (das Risiko)"),
+             (GRUEN, "✈️ freie Bahn: keine Stellung über dem Kurs (✈️↓ darunter) – Livermores Linie des geringsten Widerstands"),
+             (TEXT_2, "Zeichenleiste: 🦬 Ausbruch · 📒 Livermores Bestätigung (1 ATR über der Front) · 🦊 Fehlausbruch · 🏜️ leisestes Volumen seit 50 Kerzen · ⚡ Kraft ohne Weg · "
               "Halt der Phase rechts, jetzt (🏰 hält · 🌊 Welle · ⛈️ Sturm) · E Zahlentag (Maus darauf: Reaktion des Kurses), rechts 📅 der "
               "nächste Termin · Momentum 🚀 am Ende der RS-Linie"),
              (SCHNITT_FARBE, "Weiße Linie im Volumen: Schnitt der letzten 50 Tage (Woche: 10 Wochen) – Balken darüber "

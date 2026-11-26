@@ -1,35 +1,35 @@
-"""Zonen, Phasen, Strömung – das schlanke Cockpit (Micky 21./22.11.2026).
+"""Spannen, Phasen, Strömung – das schlanke Cockpit (Micky 21./22.11.2026).
 
-Grundsatz: Eine Zone ist das Gerüst im Chart (der Nordstern). Reagieren statt antizipieren: gehandelt wird der
-Ausbruch aus der Zone, der Rücktest an die gebrochene Kante und der Bruch der Unterkante – sonst nichts.
+Grundsatz: Eine Spanne ist das Gerüst im Chart (der Nordstern). Reagieren statt antizipieren: gehandelt wird der
+Ausbruch aus der Spanne, der Rücktest an die gebrochene Kante und der Bruch der Unterkante – sonst nichts.
 
-Die Zone je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
+Die Spanne je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
   Woche und Tag  Livermores Spanne (vcp_zone.zone, livermore.spanne – Micky 25.11.2026: Livermore ist die Grundlage):
-                 Oberkante = letzter Pivotal Point oben = Pivot, Unterkante = letzter Pivotal Point unten; Name immer
+                 Oberkante = letzter Pivotal Point oben = Front, Unterkante = letzter Pivotal Point unten; Name immer
                  „Spanne“ (Base, Flagge, Konsolidierung am 25.11.2026 entfernt).
                  Beide Ebenen zeigen dieselbe Spanne – die Woche im großen Bild, der Tag im Detail.
                  Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Spanne, aus der er kam.
   Stunde         die Balance nach Dalton (tiefe.struktur): höchstes Hoch und tiefstes Tief seit dem Anker – die
                  Feinzeichnung für den Einstieg.
-Phase (Zeichenliste): 🟡 Spanne im Aufbau · 🟡 Abwärtstrend läuft (Livermore schreibt rot, Zone noch offen) · 🦬 am Pivot (bis 3 % darunter) ·
-  🦬 Ausbruch (Schluss über dem Pivot) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Spanne
+Phase (Zeichenliste): 🟡 Spanne im Aufbau · 🟡 Abwärtstrend läuft (Livermore schreibt rot, Spanne noch offen) · 🦬 an der Front (bis 3 % darunter) ·
+  🦬 Ausbruch (Schluss über der Front) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Spanne
   (Kurs läuft am Hoch).
-Die drei Trades (Tageszone, Micky 22.11.2026):
-  Ausbruch    long: Auslöser = Pivot (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = ¼ ATR unter
-              Livermores Pivotal Point unten (der Unterkante, 25.11.2026), höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er am Pivot.
-  Rücktest    nach dem Ausbruch zurück an den Pivot (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
-              Einstieg am Pivot, Stopp ¼ ATR darunter.
+Die drei Trades (Spanne des Tages, Micky 22.11.2026):
+  Ausbruch    long: Auslöser = Front (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = ¼ ATR unter
+              Livermores Pivotal Point unten (der Unterkante, 25.11.2026), höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er an der Front.
+  Rücktest    nach dem Ausbruch zurück an die Front (vcp_zone.ausbruch: Schluss knapp darunter, kein Fehlausbruch):
+              Einstieg an der Front, Stopp ¼ ATR darunter.
   Short       Bruch der Unterkante: Schluss unter der Unterkante der Spanne von gestern, mit Volumen über dem
               50-Tage-Schnitt; Stopp ¼ ATR über der gebrochenen Kante (ein laufender Rücksetzer bricht nichts).
 Kein festes Ziel (Micky: Gewinne laufen lassen, Stopp nachziehen) – die Ampel zeigt das Risiko: 🟢 bis 8 %, 🔴 darüber.
 Profil (Micky 21.11.2026: nur eines, aber aussagekräftig): Zeit und Volumen gespiegelt in einer Silhouette, verankert am
-  Beginn der Zone (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Zone.
-Festungen (Micky 25.11.2026, nur Livermore): Decke = Pivotal Point oben, Boden = Pivotal Point unten, den seitdem kein
-Schluss durchbrochen hat (kein Rollentausch mehr); je Richtung die 2 nächsten; zwei Jahre zurück (so weit reichen die
-Massive-Tage der Liste – Chart, Liste und Zeichen sehen dieselben Festungen).
-Freie Bahn ✈️ (Micky 22.11.2026, Livermores Linie des geringsten Widerstands): über dem Kurs steht im Tageschart keine
-Festung mehr, also kein offener Pivotal Point; ✈️↓ gespiegelt für den Short.
-Reines Zeichen ohne Schwelle: wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg.
+  Beginn der Spanne (bzw. am eigenen Anker), aus den feineren Kerzen der Ebene; sein POC ist der POC der Spanne.
+Stellungen (Micky 25./26.11.2026, nur Livermore, eine Rechnung: livermore.offene → front, stellungen, frei): jeder
+Pivotal Point der letzten 2 Jahre, den kein Schluss 1 ATR jenseits durchbrochen hat; über dem Kurs eine Decke, darunter
+ein Boden, in Richtung des Setups das Ziel; je Richtung die 2 nächsten.
+Freie Bahn ✈️ (Micky 22.11.2026, Livermores Linie des geringsten Widerstands): über dem Kurs steht keine Stellung mehr
+(auch nicht die Front); ✈️↓ gespiegelt für den Short.
+Reines Zeichen ohne Schwelle: wie leicht der Kurs läuft, zeigen Front, Volumen-Spur, 🏜️ und Kraft ohne Weg.
 """
 import numpy as np
 import pandas as pd
@@ -41,8 +41,7 @@ from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quel
 from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
 
 EBENEN = ("Woche", "Tag", "Stunde")
-BAHN_JAHRE = 2              # Festungen und ✈️: zwei Jahre zurück
-PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "am Pivot"),
+PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "an der Front"),
          "ausbruch": ("🦬", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
          "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Spanne – Kurs läuft am Hoch"),
          "balance": ("🟡", "Balance"), "rand_oben": ("🦬", "am oberen Rand"), "rand_unten": ("🐻", "am unteren Rand")}
@@ -120,7 +119,7 @@ KERZE = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}   # Einheit der Kerzen j
 
 
 def lage(e, ba=None, profil=True):
-    """Zone, Phase und Richtung einer Ebene → dict, aus ihrer Spanne ba (basis() auf den Kerzen der Ebene, 26.11.2026);
+    """Spanne, Phase und Richtung einer Ebene → dict, aus ihrer Spanne ba (basis() auf den Kerzen der Ebene, 26.11.2026);
     ohne Notizbuch (zu wenig Kerzen) die Balance.
     profil=False (Zirkel-Lauf über alle Titel, nur Tageskurse): ohne Volumenprofil, poc und profil sind None."""
     if not e:
@@ -177,7 +176,7 @@ def lage(e, ba=None, profil=True):
 
 def trade(e, la, ba):
     """Der eine Trade der Tagesebene → {art, richtung, einstieg, stopp, pivot, risiko, ampel, wartet, name, zeichen} oder
-    None; pivot = die Kante, die der Trade überwinden bzw. brechen muss (long der Pivot, short die Unterkante)."""
+    None; pivot = die Kante, die der Trade überwinden bzw. brechen muss (long die Front, short die Unterkante)."""
     if not e or not la or la.get("zone") is None or ba is None or ba["z"] is None:
         return None
     a = ba["ausbruch"]
@@ -203,7 +202,13 @@ def trade(e, la, ba):
             import livermore                               # eine Probe, nur im Gewinn nachlegen, nie verbilligen):
             t["aufstocken"] = (pivot + livermore.BESTAETIGUNG * atr if t["richtung"] > 0     # ½ beim Schluss jenseits
                                else lo - livermore.BESTAETIGUNG * atr)                       # der Kante, ½ bei 📒
-            t["aufgestockt"] = bool(a and a.get("bestaetigt")) if t["richtung"] > 0 else kurs <= t["aufstocken"]
+            if t["richtung"] > 0:                            # 📒 = ein Hoch 1 ATR über der Front (vcp_zone.ausbruch)
+                t["aufgestockt"] = bool(a and a.get("bestaetigt"))
+            else:                                            # short gespiegelt: ein Tief 1 ATR unter der Unterkante seit
+                td = ba["df"]                                # dem Bruch (die Kerzen seit dem letzten Schluss über ihr)
+                ueber = np.nonzero(td["Close"].to_numpy(float) >= lo)[0]
+                seit = td["Low"].iloc[(int(ueber[-1]) + 1) if len(ueber) else 0:]
+                t["aufgestockt"] = bool(len(seit) and float(seit.min()) <= t["aufstocken"])
     return t
 
 
@@ -252,64 +257,35 @@ def profil_details(pr):
 
 
 
-FESTUNGEN_JE_SEITE = 2     # je Richtung die 2 nächsten Festungen (Micky 21.11.2026)
-FESTUNG_ABSTAND = 0.5      # Festungen näher als ½ ATR sind eine Festung (sonst stehen Stunden-Festungen dicht an dicht)
+STELLUNGEN_JE_SEITE = 2    # je Richtung die 2 nächsten Stellungen (Micky 21.11.2026)
 
 
 
 
-def _swing_kanten(e):
-    """Festungen aus Livermores Pivotal Points der Ebene (Micky 25.11.2026: nur Livermore; vorher Swing-Hochs und
-    -Tiefs mit Rollentausch nach O'Neil/Dalton): jeder Pivotal Point oben bzw. unten der letzten BAHN_JAHRE Jahre, der
-    noch steht (livermore.offene: durchbrochen erst bei einem Schluss 1 ATR jenseits) – oben eine Decke, unten ein
-    Boden. → [(Preis, Grund)]."""
+def stellungen(e):
+    """Die Stellungen der Ebene (livermore.stellungen, dieselbe Liste wie die Frontkarte) – je Richtung die 2 nächsten
+    zum Kurs. → {"oben": [...], "unten": [...]} je {preis, grund, abstand, gewicht}."""
     import livermore
+    if not e:
+        return {"oben": [], "unten": []}
     df = e["df"].dropna(subset=["High", "Low", "Close"])
     if len(df) < vcp_zone.ATR_TAGE + 2:
-        return []
-    ab = int(df.index.searchsorted(df.index[-1] - pd.DateOffset(years=BAHN_JAHRE)))
-    kurs = float(df["Close"].iloc[-1])                                              # Decke über, Boden unter dem Kurs
-    return [(float(p_["preis"]), f'{"Decke" if p_["preis"] > kurs else "Boden"} ═ {p_["tag"]:%d.%m.%y}')
-            for p_ in livermore.offene(df) if p_["i"] >= ab]
-
-
-def festungen(e, la):
-    """Die Festungen (Micky 25.11.2026: Livermores noch nicht durchbrochene Pivotal Points, _swing_kanten) – je
-    Richtung die 2 nächsten zum Kurs; Preise innerhalb ½ ATR werden eine Festung mit allen Gründen.
-    → {"oben": [...], "unten": [...]} je {preis, grund, abstand}."""
-    if not e or not la:
         return {"oben": [], "unten": []}
-    kurs, a = la["kurs"], e["atr"] or 0
-    roh = _swing_kanten(e)
-    aus = {}
-    for seite, auswahl in (("oben", [x for x in roh if x[0] > kurs]), ("unten", [x for x in roh if x[0] < kurs])):
-        auswahl.sort(key=lambda x: abs(x[0] - kurs))
-        liste = []
-        for p_, g_ in auswahl:
-            nah = next((f for f in liste if abs(f["preis"] - p_) <= a * FESTUNG_ABSTAND), None)
-            if nah:
-                if g_ not in nah["grund"]:
-                    nah["grund"].append(g_)
-                continue
-            if len(liste) >= FESTUNGEN_JE_SEITE:
-                break
-            liste.append({"preis": float(p_), "grund": [g_], "abstand": round((p_ / kurs - 1) * 100, 1)})
-        aus[seite] = liste
-    return aus
+    return livermore.stellungen(df, je_seite=STELLUNGEN_JE_SEITE)
 
 
 def frei(e):
-    """✈️ freie Bahn der Ebene: {"oben": keine Festung über dem Schluss, "unten": keine darunter} oder None (zu kurz)."""
+    """✈️ freie Bahn der Ebene (livermore.frei) oder None (zu kurz)."""
+    import livermore
     if not e or len(e["df"]) < vcp_zone.ATR_TAGE + 2:
         return None
-    kurs, k = float(e["df"]["Close"].iloc[-1]), _swing_kanten(e)
-    return {"oben": not any(p_ > kurs for p_, _ in k), "unten": not any(p_ < kurs for p_, _ in k)}
+    return livermore.frei(e["df"].dropna(subset=["High", "Low", "Close"]))
 
 
 def fuehrte(ebenen):
     """Alles für Kopfzeile und Chart: Livermores Spanne je Ebene (Micky 26.11.2026: sein Notizbuch auf Wochen-, Tages-
     und Stundenkerzen – eine Sprache auf allen Ebenen; vorher Woche = Spanne des Tages, Stunde = Dalton-Balance),
-    Lage je Ebene, Festungen, der Trade (Tag), die Einigkeit der Ebenen."""
+    Lage je Ebene, Stellungen, der Trade (Tag), die Einigkeit der Ebenen."""
     tag = ebenen.get("Tag")
     ba_e = {}
     for n in EBENEN:
@@ -320,8 +296,8 @@ def fuehrte(ebenen):
             ba_e[n] = None
     ba = ba_e.get("Tag")
     la = {n: lage(ebenen.get(n), ba_e.get(n)) for n in EBENEN}
-    fest = {n: festungen(ebenen.get(n), la[n]) for n in EBENEN}
-    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "festungen": fest, "basis": ba, "frei": frei(tag),
+    fest = {n: stellungen(ebenen.get(n)) for n in EBENEN}
+    return {"lage": la, "trade": trade(tag, la["Tag"], ba), "stellungen": fest, "basis": ba, "frei": frei(tag),
             "einigkeit": einigkeit(la)}
 
 

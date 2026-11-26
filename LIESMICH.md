@@ -1784,3 +1784,21 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   „Struktur nach Livermore · Frontkarte“ (Lagebericht, Lage, Front, Unterkante, nächste Stellungen, Spanne, Setup,
   Kipp-Zone, Ebenen, Fallen, Einquetschen) und „Gelände nach Dalton · Profil der Spanne“ (Wertzone, Knoten, dünne
   Zonen, Einzeldrucke, alte Wertzone). Dalton-Anker, Balance-Pivots und tiefe.ebene(zone_start) entfernt.
+
+## Ein Heer, eine Sprache, eine Rechnung (26.11.2026, Leitsatz 12)
+- Wörterbuch (regelkarte.WOERTERBUCH): Front = letzter Pivotal Point oben (Livermores Pivot), Unterkante = letzter
+  unten, Stellung = jeder stehende Pivotal Point (über dem Kurs Decke, darunter Boden, in Richtung des Setups Ziel),
+  Spanne (nicht mehr „Zone“), ⚔️ Kraft (Spalte der Liste, vorher „⚔️ Front“), Lage, ✈️ freie Bahn, 📒/🦊, Lagebild.
+  Massenumbenennung Pivot → Front, Zone → Spanne, Festung → Stellung in allen sichtbaren Texten (Ausnahmen: Pocket und
+  Episodic Pivot, Dalton-Begriffe wie dünne Zone, Markt-Zonen der Übersicht).
+- Eine Rechnung: livermore.offene (2 Jahre, STELLUNG_JAHRE) → livermore.front, livermore.stellungen (Gewicht innerhalb
+  ½ ATR, STELLUNG_ATR) und livermore.frei. zonen.festungen, zonen._swing_kanten, BAHN_JAHRE und FESTUNG_ABSTAND
+  entfernt; zonen.stellungen/frei rufen livermore. ✈️ heißt jetzt: keine Stellung mehr, auch nicht die Front.
+- Schlachtplan: Ziel = nächste Stellung in Richtung des Setups (short: der nächste Boden darunter).
+- Chart-Etiketten: Front, Unterkante, Decke, Boden mit Gewicht; Front und Unterkante je nur ein Etikett.
+- 📒 beim Short: ein Tief 1 ATR unter der Unterkante seit dem Bruch (vorher der Schluss).
+- Kopf der Titelseite: die Livermore-Zeile zeigt nur noch Spalte und Key Price (Front, Unterkante, Kipp-Zone stehen im
+  Lagebericht). Analyse-Seite ohne doppelte Ebenen-Zeile; Dalton-Ränder heißen VAH/VAL.
+- Einheits-Wächter: regelkarte.einheit() prüft alle sichtbaren Zeichenketten (ohne Docstrings) auf die Nebenwörter des
+  Wörterbuchs und die gefallenen Doppelrechnungen (GEFALLEN, GEFALLEN_MODULE); jeder Fund ist eine rote Meldung im
+  Wachposten.

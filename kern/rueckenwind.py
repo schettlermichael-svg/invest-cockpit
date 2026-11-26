@@ -22,6 +22,7 @@ import os
 import numpy as np
 import pandas as pd
 
+import livermore
 import massive
 import sektoren
 import zonen
@@ -432,7 +433,7 @@ def rechnen(netz=False):
     V = massive.kursmatrix(alle + [MARKT], TAGE, "Volume")
     O = massive.kursmatrix(alle, 100, "Open")     # letzte Zahlen höchstens ein Quartal her
     H = massive.kursmatrix(alle, 100, "High")
-    B = massive.kursmatrix(alle, zonen.BAHN_JAHRE * JAHR_TAGE, ["Open", "High", "Low", "Close", "Volume"])   # ✈️, Zirkel der Gruppen
+    B = massive.kursmatrix(alle, livermore.STELLUNG_JAHRE * JAHR_TAGE, ["Open", "High", "Low", "Close", "Volume"])   # ✈️, Zirkel der Gruppen
     tv = _tv()
     titel_, ohne_daten = [], []
     for t in alle:

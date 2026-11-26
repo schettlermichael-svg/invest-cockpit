@@ -29,7 +29,7 @@ einem Zyklus, der im April endete; die Linien lagen flach und sagten nichts übe
   zahlen    der letzte Zahlentag (jeder, gleich wie stark die Reaktion), höchstens 6 Monate zurück – eigene Linie seit
             16.11.2026 (Shannon: mehrere Ereignisse übereinander; vorher verdrängte eine spätere Lücke den Zahlentag).
   ipo       Tag des Börsengangs bei jungen Aktien (Kursreihe jünger als die des Index; Shannon).
-  ausbruch  Handoff nach Shannon: der Tag des laufenden Ausbruchs aus der Zone (ohne Fehlausbruch).
+  ausbruch  Handoff nach Shannon: der Tag des laufenden Ausbruchs aus der Spanne (ohne Fehlausbruch).
   ereignis  die Neubewertung ohne Zahlen (Shannon: Lücke, große Nachricht): die jüngste Lücke ab 4 % und Volumenspitze (mindestens doppeltes 50-Tage-Volumen bei einer Bewegung
             ab 3 % – ein Tag mit viel Volumen und ohne Bewegung, etwa eine Indexanpassung, ist kein Ereignis), höchstens
             6 Monate zurück (Micky 14.11.2026; vorher nur Lücken mit doppeltem Volumen).
@@ -37,10 +37,10 @@ Letztes Hoch und Tief zusammen sind Shannons Zange („Pinch“).
 Volumenprofil (profil_anker): grau ab dem Beginn der laufenden Balance nach Dalton – dem ersten Tag, ab dem sich die
 Tagesspannen überlappen (balance_beginn; Micky 14.11.2026, vorher ab der Wertzone des Market Profile, also immer an einem
 Montag, mit Trendtagen und Lücken im Profil). Ist die laufende Balance kürzer als 2 Wochen (der Wert wandert seit
-wenigen Tagen), ab dem Beginn der Balance davor; gibt es keine, ab der Zone des Scanners, sonst ab dem Tief der
+wenigen Tagen), ab dem Beginn der Balance davor; gibt es keine, ab der Spanne des Scanners, sonst ab dem Tief der
 Bewegung. Mauer: Knoten über dem Kurs im Profil ab dem Gipfel (sonst ab dem letzten
 Hoch); Stütze: Knoten unter dem Kurs im Profil ab dem Tief der Bewegung.
-Bis 14.11.2026: Hoch = höchstes Hoch der 52 Wochen, grau = der jüngere von Zone und Ereignis."""
+Bis 14.11.2026: Hoch = höchstes Hoch der 52 Wochen, grau = der jüngere von Spanne und Ereignis."""
 import numpy as np
 import pandas as pd
 from masse import ATR_N  # noqa: E402
@@ -205,7 +205,7 @@ def _boersengang(df):
 
 
 def _ausbruch(df):
-    """Tag des laufenden Ausbruchs aus der Zone (vcp_zone.ausbruch, ohne Fehlausbruch) – Shannons „Handoff“: nach dem
+    """Tag des laufenden Ausbruchs aus der Spanne (vcp_zone.ausbruch, ohne Fehlausbruch) – Shannons „Handoff“: nach dem
     Ausbruch die AVWAP ab dem Ausbruchstag als neue Stütze (Micky 16.11.2026) – sonst None."""
     schl = (len(df), df.index[-1], float(df["Close"].iloc[-1]))
     if schl not in _AUSBRUCH:
@@ -316,7 +316,7 @@ def profil_anker(df, zahltag=None, zone_start=None):
     z0 = int(df.index.searchsorted(pd.Timestamp(zone_start))) if zone_start is not None else 0
     bb = balance_beginn(df)
     if bb is not None:
-        bb = max(bb, z0)                     # nie vor dem Beginn der Zone (Plan 10, Micky 16.11.2026)
+        bb = max(bb, z0)                     # nie vor dem Beginn der Spanne (Plan 10, Micky 16.11.2026)
     vor = balance_beginn(df, bb - 1) if bb is not None and n - bb < PROFIL_MIN_TAGE and bb > 0 else None
     if vor is not None:
         vor = max(vor, z0) if vor < bb else None
@@ -326,7 +326,7 @@ def profil_anker(df, zahltag=None, zone_start=None):
         #                                                   verlassen erst, wenn der neue Wert angenommen ist)
         grau = (df.index[vor], "Balance, Wert wandert")
     elif lang(zone_start):
-        grau = (pd.Timestamp(zone_start), "Zone")
+        grau = (pd.Timestamp(zone_start), "Spanne")
     else:
         grau = (a.get("tief", a["hoch"]), "Tief" if "tief" in a else "Hoch")
     return {"grau": grau, "mauer": a.get("gipfel", a["hoch"]), "stuetze": a.get("tief"),

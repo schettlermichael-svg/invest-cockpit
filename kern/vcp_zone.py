@@ -1,29 +1,29 @@
-"""Die Zone am rechten Rand und der Ausbruch – streng nach Livermores Notizbuch (Micky 25.11.2026).
+"""Die Spanne am rechten Rand und der Ausbruch – streng nach Livermores Notizbuch (Micky 25.11.2026).
 
-Livermore ist die Grundlage für Base und Pivot (livermore.spanne): die Spanne zwischen dem letzten Pivotal Point oben
+Livermore ist die Grundlage für Base und Front (livermore.spanne): die Spanne zwischen dem letzten Pivotal Point oben
 und dem letzten Pivotal Point unten – die beiden Linien, die er im Notizbuch beobachtet. O'Neils und Minervinis Pivot
-stammt von Livermores Pivotal Point (Fortsetzungs-Pivotal-Point). Entfernt am 25.11.2026: alle Formregeln der alten Zone
+stammt von Livermores Pivotal Point (Fortsetzungs-Pivotal-Point). Entfernt am 25.11.2026: alle Formregeln der alten Spanne
 (Dauer, Tiefe, obere Hälfte, Tasse, flache Base), Minervinis Drittel und Cheats, die Kontraktionen (Wellen, Enge,
 VCP-Urteil, aufsteigende Base) und die Reife-Leiste. Livermore filtert mit Bestätigung, Volumen und Key Price.
 Schwünge über 2 × ATR 14 (seine ~6 Punkte in der Schwankung des Titels, ungemessen) – dieselben Wendepunkte wie im Chart.
 
-  Oberkante  = der letzte Pivotal Point oben = der Pivot (Regel 5a, 6d)
+  Oberkante  = der letzte Pivotal Point oben = die Front (Regel 5a, 6d)
   Unterkante = der letzte Pivotal Point unten (ohne ihn das tiefste Tief seit der Oberkante)
-  keine Zone = ein Schluss über der Oberkante (Kurs läuft am Hoch) · offen = Livermore schreibt heute in die Spalte
+  keine Spanne = ein Schluss über der Oberkante (Kurs läuft am Hoch) · offen = Livermore schreibt heute in die Spalte
                Abwärtstrend (noch keine Spanne)
   Länge, Tiefe = Zeichen, keine Schwellen
 
 Name: immer „Spanne“ (Micky 25.11.2026) – Base, Flagge, Konsolidierung, Vorgeschichte und Fahnenstange sind entfernt.
 
-Ausbruch (06.11.2026): Am Ausbruchstag ist die Zone fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
-  schaut ausbruch() bis 4 Wochen zurück: Schluss über dem Pivot der Zone vom Vortag. Zone und Pivot von damals gelten
+Ausbruch (06.11.2026): Am Ausbruchstag ist die Spanne fertig und verschwindet. Damit Setup und Kaufzone stehen bleiben,
+  schaut ausbruch() bis 4 Wochen zurück: Schluss über der Front der Spanne vom Vortag. Spanne und Front von damals gelten
   weiter – bis 4 Wochen, bis sich darüber eine neue Spanne gebildet hat oder Livermore einen neuen Pivotal Point oben
-  einträgt. Bis +5 % über dem Pivot =
-  Kaufzone, darüber ausgedehnt. Schluss knapp unter dem Pivot, aber weniger als 1 ATR = 🟡 Rücktest (keine Kaufzone,
-  beobachten). Schluss 1 ATR unter dem Pivot (Livermores Bestätigung gespiegelt, Micky 25.11.2026; vorher 13.11.2026:
+  einträgt. Bis +5 % über der Front =
+  Kaufzone, darüber ausgedehnt. Schluss knapp unter der Front, aber weniger als 1 ATR = 🟡 Rücktest (keine Kaufzone,
+  beobachten). Schluss 1 ATR unter der Front (Livermores Bestätigung gespiegelt, Micky 25.11.2026; vorher 13.11.2026:
   Tief des Ausbruchstags bzw. 3 %) =
-  🔴 Fehlausbruch (Zone und Pivot bleiben; neuer Schluss darüber = neuer Ausbruch). Livermores Bestätigung: ein Hoch
-  1 ATR über dem Pivot (Zeichen).
+  🔴 Fehlausbruch (Spanne und Front bleiben; neuer Schluss darüber = neuer Ausbruch). Livermores Bestätigung: ein Hoch
+  1 ATR über der Front (Zeichen).
   Zeichen (kein Muss, Micky): Volumen am Ausbruchstag über dem 50-Tage-Schnitt = mit Volumen.
 """
 import numpy as np
@@ -90,10 +90,10 @@ def secondary(punkte):
 
 
 def zone(df, nb=None):
-    """Zone am rechten Rand streng nach Livermores Notizbuch (Micky 25.11.2026; livermore.spanne) oder {"zone": False,
+    """Spanne am rechten Rand streng nach Livermores Notizbuch (Micky 25.11.2026; livermore.spanne) oder {"zone": False,
     "grund": …}: Oberkante = der letzte Pivotal Point oben, Unterkante = der letzte Pivotal Point unten (ohne ihn das
-    tiefste Tief seit der Oberkante), Pivot = die Oberkante. Liegt ein Schluss über der Oberkante, läuft der Kurs am
-    Hoch (keine Spanne); schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen (noch keine Spanne). Name
+    tiefste Tief seit der Oberkante), Front = die Oberkante. Liegt ein Schluss über der Oberkante, läuft der Kurs am
+    Hoch (keine Spanne); schreibt Livermore heute in die Spalte Abwärtstrend, ist die Spanne offen (noch keine Spanne). Name
     immer „Spanne“ (Micky 25.11.2026: rein Livermore – keine Namen nach Vorgeschichte mehr).
     nb = livermore.notizbuch über ein df, das mit diesem beginnt (auch länger: es zählt nur, was bis heute im Buch stand)."""
     import livermore
@@ -126,21 +126,21 @@ def zone(df, nb=None):
     return k
 
 
-RAND_PCT = 3.0              # am Pivot: bis 3 % darunter (Test am Rand) – eine Quelle
-AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter dem Pivot (Micky, 06.11.2026)
-KAUFZONE = 5.0                 # bis 5 % über dem Pivot (Minervini)
+RAND_PCT = 3.0              # an der Front: bis 3 % darunter (Test am Rand) – eine Quelle
+AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter der Front (Micky, 06.11.2026)
+KAUFZONE = 5.0                 # bis 5 % über der Front (Minervini)
 
 
 def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
-    """Ausbruch über den Pivot (Livermores Pivotal Point, zone()) in den letzten `tage` Handelstagen oder None:
+    """Ausbruch über die Front (Livermores Pivotal Point, zone()) in den letzten `tage` Handelstagen oder None:
     {tag, tage_her, erster_tag, pivot, zone, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, ruecktest,
     rueck_tag, bestaetigt, bestaetigt_tag, bestaetigung, gescheitert: [(Tag des Fehlausbruchs, Hoch des gescheiterten
-    Vorstoßes)]}. Die Zone so, wie sie am Vortag des ersten Ausbruchs stand (Indizes passen zu df). Schließt der
-    Kurs danach wieder unter dem Pivot, ist es ein Fehlausbruch (fehl) – Zone und Pivot bleiben; ein neuer Schluss
+    Vorstoßes)]}. Die Spanne so, wie sie am Vortag des ersten Ausbruchs stand (Indizes passen zu df). Schließt der
+    Kurs danach wieder unter der Front, ist es ein Fehlausbruch (fehl) – Spanne und Front bleiben; ein neuer Schluss
     darüber ist ein neuer Ausbruch (tag, volumen von diesem Tag). Hat sich über dem Ausbruch schon eine neue Spanne
     gebildet (jetzt = zone(df), sonst gerechnet), übernimmt sie: None; hat Livermore seit dem Ausbruch einen neuen Pivotal
-    Point oben eingetragen, gilt der neue Pivot (ein Ausbruch darüber wird gesucht). Livermores Bestätigung (Regel 5a, seine ~3 Punkte):
-    ein Hoch mindestens 1 ATR über dem Pivot seit dem Ausbruchstag – ein Zeichen, keine Pflicht.
+    Point oben eingetragen, gilt die neue Front (ein Ausbruch darüber wird gesucht). Livermores Bestätigung (Regel 5a, seine ~3 Punkte):
+    ein Hoch mindestens 1 ATR über der Front seit dem Ausbruchstag – ein Zeichen, keine Pflicht.
     nb = livermore.notizbuch(df), sonst gerechnet."""
     import livermore
     df = df.dropna(subset=["High", "Low", "Close"])
@@ -167,8 +167,8 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
         if jz.get("pivot_i") not in (None, b["pivot_i"]):
             continue                                       # seitdem ein neuer Pivotal Point oben im Buch: er gilt
         # Verlauf seit dem Ausbruch (Micky 25.11.2026, Livermore – vorher 13.11.2026 Tief des Ausbruchstags bzw. 3 %):
-        # Fehlausbruch bei Schluss 1 ATR (ATR am Ausbruchstag) unter dem Pivot – Livermores Bestätigung gespiegelt;
-        # knapp unter dem Pivot ist ein Rücktest. Ein Schluss über dem Pivot nach einem Fehlausbruch ist ein neuer
+        # Fehlausbruch bei Schluss 1 ATR (ATR am Ausbruchstag) unter der Front – Livermores Bestätigung gespiegelt;
+        # knapp unter der Front ist ein Rücktest. Ein Schluss über der Front nach einem Fehlausbruch ist ein neuer
         # Ausbruch (Tag und Volumen von dort).
         letzter, fehl_tag, rueck_tag = t, None, None
         hh = df["High"].to_numpy(float)
@@ -218,25 +218,25 @@ def wucht(a, einheit="T."):
 
 
 def ausbruch_text(a):
-    """Zeichen für Karte und Plan, z. B. „🟢 Ausbruch am 04.11. mit Volumen 1,35-fach · +2,1 % zum Pivot, in der
+    """Zeichen für Karte und Plan, z. B. „🟢 Ausbruch am 04.11. mit Volumen 1,35-fach · +2,1 % zur Front, in der
     Kaufzone“ oder „🔴 Fehlausbruch: …“."""
     if not a:
         return ""
     k = lambda x: f"{x:.1f}".replace(".", ",")        # noqa: E731
     v = lambda x: f"{x:.2f}".replace(".", ",")       # noqa: E731 – zwei Stellen, damit 1,03 nicht als 1,0 erscheint
     ab = ("±0,0" if round(abs(a["abstand"]), 1) == 0 else f"{'+' if a['abstand'] >= 0 else '−'}{k(abs(a['abstand']))}") \
-        + " % zum Pivot"
+        + " % zur Front"
     if a["fehl"]:
         return (f"🔴 Fehlausbruch: Ausbruch am {a['tag']:%d.%m.}, am {a['fehl_tag']:%d.%m.} Schluss 1 ATR unter dem "
-                f"Pivot (unter {v(a['fehl_grenze'])} $, Livermore) · {ab} – kein Kauf, bleibt unter Beobachtung, bis der "
-                f"Kurs wieder über dem Pivot schließt")
+                f"Front (unter {v(a['fehl_grenze'])} $, Livermore) · {ab} – kein Kauf, bleibt unter Beobachtung, bis der "
+                f"Kurs wieder über der Front schließt")
     if a.get("ruecktest"):
-        return (f"🟡 Rücktest: Ausbruch am {a['tag']:%d.%m.}, seit {a['rueck_tag']:%d.%m.} knapp unter dem Pivot · {ab} – "
+        return (f"🟡 Rücktest: Ausbruch am {a['tag']:%d.%m.}, seit {a['rueck_tag']:%d.%m.} knapp unter der Front · {ab} – "
                 f"schließt er nicht 1 ATR darunter (unter {v(a['fehl_grenze'])} $), ist der Ausbruch nicht gescheitert")
     vol = (f"mit Volumen {v(a['volumen'])}-fach" if a["mit_volumen"] else
            f"ohne Volumen ({v(a['volumen'])}-fach)" if a["volumen"] else "Volumen unbekannt")
     lage = "in der Kaufzone" if a["kaufzone"] else "ausgedehnt"
-    best = (f"bestätigt am {a['bestaetigt_tag']:%d.%m.} (Livermore: 1 ATR über dem Pivot)" if a.get("bestaetigt")
+    best = (f"bestätigt am {a['bestaetigt_tag']:%d.%m.} (Livermore: 1 ATR über der Front)" if a.get("bestaetigt")
             else f"noch nicht bestätigt (Livermore: über {v(a['bestaetigung'])} $)")
     return (f"{'🟢' if a['mit_volumen'] and a.get('bestaetigt') else '🟡'} Ausbruch am {a['tag']:%d.%m.} {vol} · {best} · "
             f"{ab}, {lage} · {wucht(a)}")
@@ -245,16 +245,16 @@ def ausbruch_text(a):
 
 
 SU_TAGE = 10                 # Spring/Upthrust gilt bis 10 Handelstage nach dem Schluss zurück (Micky 15.11.2026)
-SU_ZURUECK = 3               # … Schluss zurück in der Zone am Tag selbst oder in den 2 Tagen danach
+SU_ZURUECK = 3               # … Schluss zurück in der Spanne am Tag selbst oder in den 2 Tagen danach
 SU_TIEFE_ATR = 1.0           # … das Tagesextrem höchstens 1 ATR jenseits des Randes (Wyckoff: flacher Spring)
 
 
 def spring_upthrust(df, tage=SU_TAGE):
-    """Spring (long) bzw. Upthrust (short) an der Zone des Scanners – die eine Regel für Zeichen, Zustand und Setup
-    (Gefechtsordnung Schritt 4, Micky 14./15.11.2026; Wyckoff). Die Zone gilt, wie sie am Vortag stand: das Tief des Tages
+    """Spring (long) bzw. Upthrust (short) an der Spanne des Scanners – die eine Regel für Zeichen, Zustand und Setup
+    (Gefechtsordnung Schritt 4, Micky 14./15.11.2026; Wyckoff). Die Spanne gilt, wie sie am Vortag stand: das Tief des Tages
     liegt unter ihrer Unterkante (Upthrust: das Hoch über der Oberkante), höchstens 1 ATR, und ein Schluss am selben Tag
-    oder in den 2 Tagen danach liegt wieder in der Zone (ein Fehlausbruch – Schluss jenseits, dann zurück – zählt auch).
-    Einstieg beim Schluss zurück in der Zone (Auslöser: der Rand), Stopp am Tief bzw. Hoch des Fehlausbruchs, Ziel der
+    oder in den 2 Tagen danach liegt wieder in der Spanne (ein Fehlausbruch – Schluss jenseits, dann zurück – zählt auch).
+    Einstieg beim Schluss zurück in der Spanne (Auslöser: der Rand), Stopp am Tief bzw. Hoch des Fehlausbruchs, Ziel der
     andere Rand. Gilt bis `tage` Handelstage nach dem Schluss zurück, solange der Stopp hält und der andere Rand nicht
     erreicht ist (sonst gelb: Zeichen, aber kein Setup mehr). Volumen und Phase sind Zeichen.
     → {art, seite, tag, zurueck_tag, tage_her, einstieg, stopp, ziel, zone, volumen, ampel, regeln, gueltig} oder None."""
@@ -292,9 +292,9 @@ def spring_upthrust(df, tage=SU_TAGE):
             gueltig = her <= tage and not gerissen and not erreicht
             vol = v[j] / v50[j] if v50[j] == v50[j] and v50[j] else None
             regeln = [(f"Tief unter der Unterkante {u:.2f}".replace(".", ",") if lang else
-                       f"Hoch über der Oberkante {o:.2f}".replace(".", ","), True,
+                       f"Hoch über der Front {o:.2f}".replace(".", ","), True,
                        f"{df.index[i]:%d.%m.} · {tiefe / a[i]:.1f} ATR jenseits".replace(".", ",")),
-                      ("Schluss zurück in der Zone binnen 3 Tagen", True, f"{df.index[j]:%d.%m.} · {c[j]:.2f}".replace(".", ",")),
+                      ("Schluss zurück in der Spanne binnen 3 Tagen", True, f"{df.index[j]:%d.%m.} · {c[j]:.2f}".replace(".", ",")),
                       ("Stopp hält", not gerissen, f"{'Tief' if lang else 'Hoch'} des Fehlausbruchs {stopp:.2f}".replace(".", ",")),
                       ("Anderer Rand noch nicht erreicht", not erreicht, f"Ziel {ziel:.2f}".replace(".", ",")),
                       (f"seit dem Schluss zurück höchstens {tage} Tage", her <= tage, f"{her} Tage"),
@@ -313,7 +313,7 @@ def spring_upthrust(df, tage=SU_TAGE):
 
 
 def datiert(df, b):
-    """Zone mit Datum zu jedem Index (für den Chart)."""
+    """Spanne mit Datum zu jedem Index (für den Chart)."""
     ix = df.dropna(subset=["High", "Low", "Close"]).index
     b = dict(b)
     for k_ in ("start_i", "tief_i", "pivot_i"):

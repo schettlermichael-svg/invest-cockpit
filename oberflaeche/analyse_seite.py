@@ -34,9 +34,10 @@ def _p(x):
 
 
 # ── Struktur nach Livermore (26.11.2026) ─────────────────────────────────────────────────────────────────────────
-def livermore_zeilen(rz, fallen):
+def livermore_zeilen(rz, fallen, mit_ebenen=True):
     """Struktur nach Livermore aus der Fährte der Titelseite (rz = zonenseite.rechnen): Lage, Frontkarte, Spanne und
-    Phase der Tagesebene, Kipp-Zone, Setup mit Antasten und Aufstocken, Einigkeit der Ebenen, Fallen."""
+    Phase der Tagesebene, Kipp-Zone, Setup mit Antasten und Aufstocken, Einigkeit der Ebenen, Fallen. mit_ebenen=False:
+    auf der Seite steht die Einigkeit schon im Lagebericht (🧭) – nicht doppelt."""
     import livermore
     df = rz["df"].dropna(subset=["High", "Low", "Close"])
     nb = livermore.notizbuch(df)
@@ -48,16 +49,17 @@ def livermore_zeilen(rz, fallen):
     a_, w_ = livermore.lage(nb["spalte"])
     z = [(a_, f"Lage {w_} – Livermore schreibt heute in der Spalte {livermore.SPALTEN[nb['spalte']]}")]
     if fr["oben"]:
-        z.append(("🪝", f"Front oben (Pivot, letzter Pivotal Point oben) {_k(fr['oben']['preis'])} ({_d(fr['oben']['tag'])})"))
+        z.append(("🪝", f"Front (letzter Pivotal Point oben) {_k(fr['oben']['preis'])} ({_d(fr['oben']['tag'])})"))
     if fr["unten"]:
         z.append(("🪝", f"Unterkante (letzter Pivotal Point unten) {_k(fr['unten']['preis'])} ({_d(fr['unten']['tag'])})"))
-    for p_, wo, frei_ in ((fr["ziel"], "darüber", "✈️ freie Bahn darüber – keine stehende Stellung über dem Kurs"),
-                          (fr["boden"], "darunter", "✈️ freie Bahn darunter – keine stehende Stellung unter dem Kurs")):
+    fb = livermore.frei(df, nb)                   # ✈️ = keine Stellung mehr, auch nicht Front bzw. Unterkante
+    for p_, wort_, frei_, offen_ in ((fr["ziel"], "Decke", "freie Bahn darüber – keine Stellung über dem Kurs", fb["oben"]),
+                                     (fr["boden"], "Boden", "freie Bahn darunter – keine Stellung unter dem Kurs", fb["unten"])):
         if p_:
-            z.append(("🪝", f"Nächste stehende Stellung {wo}: {_k(p_['preis'])} ({_d(p_['tag'])}) – "
+            z.append(("🪝", f"Nächste {wort_} (stehender Pivotal Point): {_k(p_['preis'])} ({_d(p_['tag'])}) – "
                             f"{_p((p_['preis'] / fr['kurs'] - 1) * 100)} vom Kurs"))
-        else:
-            z.append(("✈️", frei_[2:].strip()))
+        elif offen_:
+            z.append(("✈️", frei_))
     z.append(("⚪", f"{len(fr['offen'])} Pivotal Points stehen noch (gefallen erst mit einem Schluss 1 ATR jenseits)"))
     if la and la.get("zone"):
         z.append(("🟡" if la["richtung"] == 0 else "🦬" if la["richtung"] > 0 else "🐻",
@@ -74,14 +76,14 @@ def livermore_zeilen(rz, fallen):
                      + (" (erreicht)" if tr.get("aufgestockt") else "") if tr.get("aufstocken") else f"Einstieg {_k(tr['einstieg'])}")
                   + f" · Stopp {_k(tr['stopp'])} {tr['ampel']} {gestaltung.zahl(tr['risiko'], 1)} %"))
         if b_:
-            z.append(("🪝", (f"Kipp-Zone um den Pivot {_k(kante)}: 📒 bestätigt mit einem Hoch über {_k(kante + b_)}, "
+            z.append(("🪝", (f"Kipp-Zone um die Front {_k(kante)}: 📒 bestätigt mit einem Hoch über {_k(kante + b_)}, "
                              f"Fehlausbruch bei einem Schluss unter {_k(kante - b_)}") if tr["richtung"] > 0 else
                             (f"Kipp-Zone um die Unterkante {_k(kante)}: 📒 bestätigt mit einem Tief unter {_k(kante - b_)}, "
                              f"Falle bei einem Schluss über {_k(kante + b_)}")))
     else:
         z.append(("⚪", "Kein Setup heute"))
     ei = fu.get("einigkeit")
-    if ei:
+    if ei and mit_ebenen:
         z.append(({"auf": "🦬", "ab": "🐻"}.get(ei["alle"], "🟡"),
                   "Ebenen: " + " · ".join(f"{n} {a__} {w__}" for n, (a__, w__) in ei["ebenen"].items())
                   + {"auf": " – Einigkeit: Vormarsch auf allen drei", "ab": " – Einigkeit: Rückzug auf allen drei"}.get(ei["alle"], "")))
@@ -110,12 +112,12 @@ def gelaende_zeilen(pr, alt, kurs, quelle):
     det = zonen.profil_details(pr)
     z = [("🟡", f"Profil {quelle}: POC {_k(pr['poc'])} · Wertzone 70 % {_k(det['val'])}–{_k(det['vah'])}")]
     if kurs > det["vah"]:
-        z.append(("🦬", f"Kurs über der Wertzone ({_p((kurs / det['vah'] - 1) * 100)} über der Oberkante)"))
+        z.append(("🦬", f"Kurs über der Wertzone ({_p((kurs / det['vah'] - 1) * 100)} über ihrem oberen Rand VAH)"))
     elif kurs < det["val"]:
-        z.append(("🐻", f"Kurs unter der Wertzone ({_p((kurs / det['val'] - 1) * 100)} unter der Unterkante)"))
+        z.append(("🐻", f"Kurs unter der Wertzone ({_p((kurs / det['val'] - 1) * 100)} unter ihrem unteren Rand VAL)"))
     else:
-        z.append(("🟡", f"Kurs {_k(kurs)} in der Wertzone – {_p((kurs / det['vah'] - 1) * 100)} zur Oberkante, "
-                        f"{_p((kurs / det['val'] - 1) * 100)} zur Unterkante"))
+        z.append(("🟡", f"Kurs {_k(kurs)} in der Wertzone – {_p((kurs / det['vah'] - 1) * 100)} zu VAH, "
+                        f"{_p((kurs / det['val'] - 1) * 100)} zu VAL"))
     for x in det["knoten"]:
         z.append(("🪝", f"Knoten {_k(x)} – dort wurde viel gehandelt, der Kurs bremst"))
     for lo, hi in det["duenn"]:
@@ -136,13 +138,13 @@ def fallen_texte(df):
     try:
         su = vcp_zone.spring_upthrust(df)
         if su:
-            aus.append(f"{su['art']} am {_d(su['tag'])}: Schluss zurück in der Zone am {_d(su['zurueck_tag'])} · "
+            aus.append(f"{su['art']} am {_d(su['tag'])}: Schluss zurück in der Spanne am {_d(su['zurueck_tag'])} · "
                        f"Einstieg {_k(su['einstieg'])}, Stopp {_k(su['stopp'])}, Ziel {_k(su['ziel'])}")
         a = vcp_zone.ausbruch(df)
         if a and a.get("fehl"):
-            aus.append(f"Fehlausbruch: Ausbruch über den Pivot {_k(a['pivot'])} am {_d(a['tag'])}, am "
+            aus.append(f"Fehlausbruch: Ausbruch über die Front {_k(a['pivot'])} am {_d(a['tag'])}, am "
                        f"{_d(a['fehl_tag'])} wieder darunter")
-    except Exception:  # noqa: BLE001 – Technik: ohne Zone keine Falle
+    except Exception:  # noqa: BLE001 – Technik: ohne Spanne keine Falle
         pass
     return aus
 
@@ -380,7 +382,7 @@ def seite_analyse(tk):
                    + gestaltung.zeichen_legende(), f"{r['tk']} · Tiefenanalyse")]
     import zonenseite
     teile.append(karte(zonenseite.lagebericht(r["rz"])
-                       + zeilen(livermore_zeilen(r["rz"], r["fallen"])), "Struktur nach Livermore · Frontkarte"))
+                       + zeilen(livermore_zeilen(r["rz"], r["fallen"], mit_ebenen=False)), "Struktur nach Livermore · Frontkarte"))
     pr, quelle = _profil_tag(r)
     if et:
         teile.append(karte(zeilen(gelaende_zeilen(pr, et["alt"], kurs, quelle)), "Gelände nach Dalton · Profil der Spanne"))

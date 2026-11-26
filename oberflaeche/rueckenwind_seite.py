@@ -51,7 +51,7 @@ def kopf(erg, titel=True):
         + '</div></div>'
         f'<p style="color:{TEXT_2};font-size:15px;margin:8px 0 14px">Kurs, Geld und Zahlen: RS-Dynamik des Titels, '
         f'Geldfluss in Sektor, Branche und Thema (zwei von drei vorne und keine schwächelnd = grün), Fundament – die Strömung, '
-        f'das Setup aus Zirkel und Zone steht in der Spalte „Setup“. '
+        f'das Setup aus Zirkel und Spanne steht in der Spalte „Setup“. '
         f'Ampeln, nichts gefiltert.</p>'
         f'<div style="display:flex;flex-wrap:wrap;gap:12px">'
         + "".join(f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:12px 16px;'
@@ -81,7 +81,7 @@ def _wochenfeld(punkt):
 
 
 def setups():
-    """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🦬 Fortsetzung · am Pivot“}): Zone der
+    """Setup jedes Titels aus dem letzten Zirkel-Lauf als Klartext ({Ticker: „🦬 Fortsetzung · an der Front“}): Spanne der
     Tagesebene im Einklang mit dem Zirkel, dieselbe Regel wie Titelseite und Chart (Micky 22.11.2026)."""
     import zirkel
     rw = (laden() or {}).get("titel") or {}
@@ -242,8 +242,8 @@ def dreifach_liste(erg):
     return [(tk, x) for tk, x in erg["titel"].items() if rueckenwind.dreifach(x)]
 
 
-DREI_GRUPPEN = (("🎯", "Schlagbereit", "Long-Setup am Pivot, im Ausbruch oder im Rücktest – der Angriffspunkt steht"),
-                ("⏳", "Auf der Lauer", "Base im Aufbau oder Rücksetzer – warten, bis der Kurs an den Pivot kommt"),
+DREI_GRUPPEN = (("🎯", "Schlagbereit", "Long-Setup an der Front, im Ausbruch oder im Rücktest – der Angriffspunkt steht"),
+                ("⏳", "Auf der Lauer", "Base im Aufbau oder Rücksetzer – warten, bis der Kurs an die Front kommt"),
                 ("🏃", "Enteilt oder ohne Base", "stark, aber gerade kein Angriffspunkt – nicht hinterherlaufen"))
 
 
@@ -258,7 +258,7 @@ def _drei_gruppe(f):
 
 def dreifach_block(erg):
     """Eigene Liste „▲▲▲ Dreifacher Rückenwind“ (Micky 23.11.2026): alle Titel mit Kurs, Geld und Zahlen grün in drei
-    Gruppen – 🎯 schlagbereit (mit Einstieg, Stopp, Risiko), ⏳ auf der Lauer (Pivot und Abstand), 🏃 enteilt oder ohne
+    Gruppen – 🎯 schlagbereit (mit Einstieg, Stopp, Risiko), ⏳ auf der Lauer (Front und Abstand), 🏃 enteilt oder ohne
     Base. In der Gruppe nach Klasse und Rang. Nichts gefiltert: jeder ▲▲▲-Titel steht in genau einer Gruppe."""
     import watchlists
     import zeichen
@@ -287,8 +287,8 @@ def dreifach_block(erg):
             else:
                 lage_ = zonen.PHASE.get(f.get("phase"), ("", "ohne Zirkel-Lauf"))[1]
                 if piv and kurs:
-                    lage_ += (f" · Pivot {zahl(piv)} · noch {zahl((piv / kurs - 1) * 100, 1)} %" if kurs < piv else
-                              f" · {zahl((kurs / piv - 1) * 100, 1)} % über dem Pivot {zahl(piv)}")
+                    lage_ += (f" · Front {zahl(piv)} · noch {zahl((piv / kurs - 1) * 100, 1)} %" if kurs < piv else
+                              f" · {zahl((kurs / piv - 1) * 100, 1)} % über der Front {zahl(piv)}")
             b_ = bahn(x.get("frei"))
             lage_ += f" · {b_}" if b_ else ""
             phase, halt_ = _zirkel(tk, kreis)
@@ -306,7 +306,7 @@ def dreifach_block(erg):
     return seite(f'<h3 style="margin:0">▲▲▲ Dreifacher Rückenwind · {sum(map(len, gruppen_))} Titel</h3>'
                  f'<p style="color:{TEXT_2};font-size:14px;margin:6px 0 8px">Kurs (Garde oder Angriff), Geld (Sektor, '
                  f'Branche, Thema) und Zahlen zugleich grün – die stärkste Truppe. Am stärksten mit einem Setup am '
-                 f'Pivot (🎯).</p>' + "".join(teile), oben=8, unten=0)   # Layout
+                 f'Front (🎯).</p>' + "".join(teile), oben=8, unten=0)   # Layout
 
 
 def _termin(x, stand):
@@ -366,8 +366,8 @@ def _ordnung(x):
             -x["rang"])
 
 
-def front_ampel(x):
-    """⚔️ Front: 🟢 Garde oder Angriff, 🟡 Vorhut, 🔴 Ohne Nachschub oder Rückzug, ⚪ ohne Klasse – eine Regel für Liste
+def kraft_ampel(x):
+    """⚔️ Kraft: 🟢 Garde oder Angriff, 🟡 Vorhut, 🔴 Ohne Nachschub oder Rückzug, ⚪ ohne Klasse – eine Regel für Liste
     und Titelseite."""
     import rueckenwind
     k = klasse(x)
@@ -378,7 +378,7 @@ def front_ampel(x):
 def titel_karten(tk):
     """Rückenwind eines Titels für den Kopf der Titelseite (Micky 23.11.2026: statt einer langen Zeile drei Karten, je
     eine Frage mit eigener Ampel und einer Angabe pro Zeile – drei Mal grün ist ▲▲▲; nichts weggelassen):
-    ⚔️ Front (Kurs), 💰 Nachschub (Geld), 📊 Fundament (Zahlen). → [(Titel, Ampel, [Zeilen])]; leer ohne Stand."""
+    ⚔️ Kraft (Kurs), 💰 Nachschub (Geld), 📊 Fundament (Zahlen). → [(Titel, Ampel, [Zeilen])]; leer ohne Stand."""
     erg = laden() or {}
     x = (erg.get("titel") or {}).get(tk)
     if not x:
@@ -402,7 +402,7 @@ def titel_karten(tk):
     fundament = [*([f'📅 nächste Zahlen {("🔴 " if warn == "rot" else "🟡 " if warn else "")}{termin}'] if termin else []),
                  *([f"letzte Zahlen {r_}"] if (r_ := _reaktion(x)) else []),
                  *([f"im Einzelnen: {p_}"] if (p_ := _punkte_text(x)) else [])] or ["keine Zahlen gemessen"]
-    return [("⚔️ Front · Wie stark ist der Kurs?", front_ampel(x), front),
+    return [("⚔️ Kraft · Wie stark ist der Kurs?", kraft_ampel(x), front),
             ("💰 Nachschub · Fließt Geld hinein?", x["geld_ampel"], nachschub),
             ("📊 Fundament · Tragen die Zahlen?", z.get("ampel") or "grau", fundament)]
 
@@ -420,7 +420,7 @@ def zirkel_wort(z, vor=""):
 
 
 def bahn(fr, wort=" freie Bahn"):
-    """✈️ freie Bahn (Livermore: Linie des geringsten Widerstands) aus zonen.frei: keine Festung über dem Kurs,
+    """✈️ freie Bahn (Livermore: Linie des geringsten Widerstands) aus zonen.frei: keine Stellung über dem Kurs,
     ✈️↓ keine darunter; sonst leer. In der Liste ohne Wort (wort=""), die Spalte heißt schon „Bahn“."""
     return " ".join(z + wort for z, ja in (("✈️", (fr or {}).get("oben")), ("✈️↓", (fr or {}).get("unten"))) if ja)
 
@@ -490,9 +490,9 @@ TABELLE_HOEHE = 560            # Layout: Höhe der Tabelle je Klasse höchstens
 TABELLE_ZEILE = 35             # Layout: Höhe einer Zeile
 TABELLE_RAND = 3               # Layout: Rand der Tabelle
 ANGRIFF_OFFEN = tuple(f"{i} · {KLASSEN[i - 1]}" for i in (1, 2))   # Garde und Angriff aufgeklappt
-BREITE = {"Titel": 120, "Lage": 45, "Phase": 105, "Setup": 130, "Halt": 115, "⚔️ Front": 70, "RS": 85,   # Layout:
+BREITE = {"Titel": 120, "Lage": 45, "Phase": 105, "Setup": 130, "Halt": 115, "⚔️ Kraft": 70, "RS": 85,   # Layout:
           "Momentum": 70, "Hoch": 65, "Bahn": 40, "💰 Nachschub": 95, "Volumen": 70, "📊 Fundament": 90}   # px, zusammen 1100
-SPALTEN = ("Titel", "Lage", "Phase", "Setup", "Halt", "⚔️ Front", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
+SPALTEN = ("Titel", "Lage", "Phase", "Setup", "Halt", "⚔️ Kraft", "RS", "Momentum", "Hoch", "Bahn", "💰 Nachschub", "Volumen",
            "📊 Fundament")   # nach den drei Fragen der Titelseite geordnet (Micky 24.11.2026)
 SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufwärtstrend) · 🟡 Gefechtspause (Rally oder "
                          "Reaktion) · 🔴 Rückzug (Abwärtstrend) – dieselbe Sprache wie Lagebericht und Markt",
@@ -501,7 +501,7 @@ SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufw�
                  "Momentum": "1M · 3M · 6M: ↑ im Plus, ↓ im Minus · 🚀 unter den besten 2 % des Reviers (Kullamägi)",
                  "Volumen": "Zufluss: Volumen der Aufwärtstage gegen Abwärtstage · 🟢 ab 1,1× · 🔴 unter 0,9× · 🏜️ "
                             "trocken (kaum noch Verkäufer, Minervini)",
-                 "⚔️ Front": "Wie stark ist der Kurs? 🟢 Garde oder Angriff · 🟡 Vorhut · 🔴 Ohne Nachschub oder Rückzug",
+                 "⚔️ Kraft": "Wie stark ist der Kurs? 🟢 Garde oder Angriff · 🟡 Vorhut · 🔴 Ohne Nachschub oder Rückzug",
                  "💰 Nachschub": "Fließt Geld hinein? Geldfluss in Sektor, Branche, Thema: 🟢 zwei vorne, keine schwächelnd · "
                                 "🐺 Einzelkämpfer",
                  "📊 Fundament": "Tragen die Zahlen? Fundament-Ampel · 📅 Zahlen in den nächsten 14 Tagen",
@@ -509,7 +509,7 @@ SPALTEN_HILFE = {"Lage": "Livermores Notizbuch des Titels: 🟢 Vormarsch (Aufw�
                          "wiegt so schwer wie das, was trägt, oder der Wechsel zeichnet sich ab – dahinter der stärkste "
                          "Grund in Klartext (alle Zeichen auf der Titelseite)",
                  "Hoch": "Abstand zum 52-Wochen-Hoch",
-                 "Bahn": "✈️ freie Bahn: keine Festung über dem Kurs (✈️↓ keine darunter) – Livermores Linie des "
+                 "Bahn": "✈️ freie Bahn: keine Stellung über dem Kurs (✈️↓ keine darunter) – Livermores Linie des "
                          "geringsten Widerstands"}
 
 
@@ -548,7 +548,7 @@ def liste(erg, nur=None):
             "Titel": _link(tk, tk + _marke(tk, wl) + drei + (f' · jung {x["jung"]} M' if x.get("jung") else "")),
             "Lage": _lage(feld_.get(tk)),
             "Phase": phase, "Setup": trades.get(tk, "").replace(" · ▲▲▲", ""), "Halt": halt_,
-            "⚔️ Front": PUNKT[front_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
+            "⚔️ Kraft": PUNKT[kraft_ampel(x)], "RS": _rs(x), "Momentum": _momentum_zeichen(x),
             "💰 Nachschub": PUNKT[x["geld_ampel"]] + (" 🐺" if x.get("einzelkaempfer") else ""),
             "Volumen": _volumen_zeichen(x),
             "📊 Fundament": PUNKT[z.get("ampel") or "grau"] + (f' 📅 {termin.split(" (")[0]}' if warn else ""),
@@ -557,7 +557,7 @@ def liste(erg, nur=None):
         if nur and o["tk"] not in wl[nur]:
             continue
         abschnitte["ohne Daten"].append({"Titel": _link(o["tk"], o["tk"] + _marke(o["tk"], wl)), "Phase": o["grund"],
-                                         "⚔️ Front": PUNKT["grau"], "💰 Nachschub": PUNKT["grau"],
+                                         "⚔️ Kraft": PUNKT["grau"], "💰 Nachschub": PUNKT["grau"],
                                          "📊 Fundament": PUNKT["grau"]})
     return {n: pd.DataFrame(r, columns=SPALTEN) for n, r in abschnitte.items() if r}
 

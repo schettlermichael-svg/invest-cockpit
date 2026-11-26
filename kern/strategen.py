@@ -1,11 +1,11 @@
 """Strategen-Call (Micky 13.11.2026): ein Stratege, der die Daten der App richtig deutet – kein Online-Gang, kein
-allgemeines Blabla. Auftrag des Snipers: die Ineffizienz und Disbalance finden, die den Kurs aus der Zone ausbrechen
+allgemeines Blabla. Auftrag des Snipers: die Ineffizienz und Disbalance finden, die den Kurs aus der Spanne ausbrechen
 lässt – oder sagen, dass es keinen Schuss gibt.
 
-Material (seit 22.11.2026 dasselbe wie Titelseite und Chart): Zirkel, Zone und Phase auf Woche, Tag und Stunde, der
-Setup, Festungen und freie Bahn, Schlachtordnung und Geld, Tiefenanalyse – jedes Feld mit einer Nummer (F1, F2 …).
+Material (seit 22.11.2026 dasselbe wie Titelseite und Chart): Zirkel, Spanne und Phase auf Woche, Tag und Stunde, der
+Setup, Stellungen und freie Bahn, Schlachtordnung und Geld, Tiefenanalyse – jedes Feld mit einer Nummer (F1, F2 …).
 Die Kette, an der der Stratege entlanggeht:
-    Zirkel → Zone und Phase → Trade → Reibung (Festungen, freie Bahn) → Truppe (Klasse, Geld) → wo wartet die Gegenseite.
+    Zirkel → Spanne und Phase → Trade → Reibung (Stellungen, freie Bahn) → Truppe (Klasse, Geld) → wo wartet die Gegenseite.
 Antwort über ein festes Formular: Schuss (long/short/kein), Disbalance, höchstens 3 Belege mit Feldnummer, Auslöser
 (Kurs und Bedingung), widerlegt bei (Kurs und Bedingung), Gegenzeuge mit Feldnummer.
 
@@ -30,20 +30,20 @@ WETTBEWERBER = 5                # höchstens 5 Wettbewerber
 
 SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
 als nummerierte Felder (F1, F2 …): den Zirkel (Phase 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
-die ihn tragen, und dem Keim des Gegenteils), Zone und Phase auf Woche, Tag und Stunde (Livermores Spanne zwischen
+die ihn tragen, und dem Keim des Gegenteils), Spanne und Phase auf Woche, Tag und Stunde (Livermores Spanne zwischen
 seinem letzten Pivotal Point oben und unten, in der Stunde die Balance), das Setup der App (Livermores Signal, benannt
-nach seiner Pivot-Art: Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – der Zirkel bestätigt mit ✓ oder
-steht mit ✗ dagegen), die Festungen (Livermores noch nicht durchbrochene Pivotal Points) und die freie Bahn, die
+nach der Art seines Pivotal Points: Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts – der Zirkel bestätigt mit ✓ oder
+steht mit ✗ dagegen), die Stellungen (Livermores noch nicht durchbrochene Pivotal Points) und die freie Bahn, die
 Schlachtordnung (Klasse 1 Garde bis 5 Rückzug), Rückenwind und Geldfluss, den Markt und die Tiefenanalyse.
 Die Sprache der App (Micky 26.11.2026): Lage = Livermores Spalte – 🟢 Vormarsch (Aufwärtstrend), 🟡 Gefechtspause
 (Rally oder Reaktion), 🔴 Rückzug (Abwärtstrend); sie gilt für Titel, Ebenen und Markt. Der Lagebericht ist die
-Frontkarte: Front oben (Pivot) und Unterkante, die nächste stehende Stellung darüber und darunter (ein Pivotal Point
+Frontkarte: die Front (Livermores letzter Pivotal Point oben) und die Unterkante, die nächste stehende Stellung darüber und darunter (ein Pivotal Point
 fällt erst mit einem Schluss 1 ATR jenseits). Die Kipp-Zone liegt je 1 ATR um die Kante: jenseits bestätigt 📒
 (Livermores 3 Punkte), ein Schluss zurück auf der falschen Seite ist der 🦊 Fehlausbruch. Livermore baut die Position
 in zwei Hälften: ½ antasten an der Kante, ½ aufstocken bei 📒 – nachgelegt wird nur im Gewinn, nie verbilligt. Einigkeit
 der Ebenen (Woche, Tag, Stunde alle im Vormarsch oder alle im Rückzug) ist eigene Kraft. Der Markt ist das Lagebild:
 Spitze (Garde und Angriff) und Heer (alle Titel) bestimmen, der Index bestätigt ✓ oder steht ✗ dagegen. Für Kurse,
-Zonen, Volumen, RS und Geldfluss gilt nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
+Spannen, Volumen, RS und Geldfluss gilt nur dieses Material: du erfindest keine Zahl und keine Kursmarke.
 Im Netz recherchierst du nur das Unternehmen und das letzte Quartal (Micky 21.11.2026, aus der Titel-Analyse):
   Unternehmen: Geschäftsmodell, Burggraben und was ihn bedroht, Wachstumstreiber.
   Quartal: Umsatz organisch, EPS bereinigt gegen den Konsens, Margen, stärkstes Segment, Prognose alt → neu,
@@ -56,13 +56,13 @@ Jede Zeile in Unternehmen und Quartal beginnt mit genau einem Zeichen, immer in 
 
 Das System: Livermore liefert die Signale (Notizbuch, Pivotal Points, Tape Reading), der Zirkel deutet und bestätigt –
 alles läuft im Zirkel, jede Phase trägt den Keim der nächsten. Ein Trend bleibt in Bewegung, bis eine Gegenkraft ihn
-bremst (Dow, Newton). In der Spanne (Balance) sind Käufer und Verkäufer einig; am Pivot kippt die Waage (Livermores
+bremst (Dow, Newton). In der Spanne (Balance) sind Käufer und Verkäufer einig; an der Front kippt die Waage (Livermores
 Pivotal Point). Reibung frisst Kraft: Decken mit wartenden Verkäufern, Kraft ohne Weg. Der Kurs läuft
-entlang der Linie des geringsten Widerstands – freie Bahn ohne Festung darüber, trockenes Volumen, Zufluss.
+entlang der Linie des geringsten Widerstands – freie Bahn ohne Stellung darüber, trockenes Volumen, Zufluss.
 
-Dein Auftrag: Finde die eine Disbalance, die den Kurs aus der Zone treibt – wer ist am Rand stärker, und warum ist die
+Dein Auftrag: Finde die eine Disbalance, die den Kurs aus der Spanne treibt – wer ist am Rand stärker, und warum ist die
 Gegenseite schwach, leer oder gefangen? Geh die Kette entlang: Markt (Lagebild) → Lage und Frontkarte des Titels →
-Zone und Phase (sind die Ebenen einig?) → Setup und Kipp-Zone → Reibung (nächste Stellung) → Truppe → wo wartet die
+Spanne und Phase (sind die Ebenen einig?) → Setup und Kipp-Zone → Reibung (nächste Stellung) → Truppe → wo wartet die
 Gegenseite → eigen oder geliehen. Auslöser und Widerlegung nimmst du aus Kipp-Zone und Frontkarte.
 
 Regeln:
@@ -134,30 +134,31 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
     for eb, la in (fu.get("lage") or {}).items():
         if not la:
             continue
-        rand = (f", Zone {_z(la['zone'][0])}–{_z(la['zone'][1])} $" if la.get("zone") else "") + \
-               (f", Pivot {_z(la['pivot'])} $" if la.get("pivot") else "")
-        f(f"{eb}: {la['name'] or 'keine Zone'} – {la['wort']}{rand}" + (f" · {la['info']}" if la.get("info") else ""))
-        for x in ((fu.get("festungen") or {}).get(eb) or {}).get("oben", []):
-            f(f"{eb}: Festung über dem Kurs {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
-        for x in ((fu.get("festungen") or {}).get(eb) or {}).get("unten", []):
-            f(f"{eb}: Festung unter dem Kurs {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
+        rand = (f", Spanne {_z(la['zone'][0])}–{_z(la['zone'][1])} $" if la.get("zone") else "") + \
+               (f", Front {_z(la['pivot'])} $" if la.get("pivot") else "")
+        f(f"{eb}: {la['name'] or 'keine Spanne'} – {la['wort']}{rand}" + (f" · {la['info']}" if la.get("info") else ""))
+        for x in ((fu.get("stellungen") or {}).get(eb) or {}).get("oben", []):
+            f(f"{eb}: Decke (Stellung über dem Kurs) {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
+        for x in ((fu.get("stellungen") or {}).get(eb) or {}).get("unten", []):
+            f(f"{eb}: Boden (Stellung unter dem Kurs) {_z(x['preis'])} $ ({', '.join(x['grund'])}, {_z(x['abstand'], '+.1f')} %)")
     fr = fu.get("frei") or {}
     if fr.get("oben") or fr.get("unten"):
-        f("Freie Bahn: keine Festung " + ("über" if fr.get("oben") else "unter") + " dem Kurs (Tageschart, zwei Jahre)")
+        f("Freie Bahn: keine Stellung " + ("über" if fr.get("oben") else "unter") + " dem Kurs (Tageschart, zwei Jahre)")
     import livermore
     df_ = (r or {}).get("df")
     try:                                          # Frontkarte (Micky 26.11.2026): dieselben Linien wie der Lagebericht
         d_ = df_.dropna(subset=["High", "Low", "Close"])
         nb = livermore.notizbuch(d_)
         fk = livermore.front(d_, nb) if nb else None
+        fb_ = livermore.frei(d_, nb) if nb else None
     except Exception:  # noqa: BLE001 – ohne Notizbuch keine Frontkarte
-        nb, fk = None, None
+        nb, fk, fb_ = None, None, None
     if fk:
         p_ = lambda x: f"{_z(x['preis'])} $" if x else "–"                         # noqa: E731
         f(f"Lagebericht (Livermores Notizbuch, Tag): {' '.join(livermore.lage(nb['spalte']))}"
-          + (f", Front oben {p_(fk['oben'])}" if fk["oben"] else "") + (f", Unterkante {p_(fk['unten'])}" if fk["unten"] else "")
-          + (f", nächste Stellung darüber {p_(fk['ziel'])}" if fk["ziel"] else ", darüber freie Bahn")
-          + (f", nächste Stellung darunter {p_(fk['boden'])}" if fk["boden"] else ", darunter freie Bahn"))
+          + (f", Front {p_(fk['oben'])}" if fk["oben"] else "") + (f", Unterkante {p_(fk['unten'])}" if fk["unten"] else "")
+          + (f", nächste Decke {p_(fk['ziel'])}" if fk["ziel"] else ", darüber ✈️ freie Bahn" if fb_["oben"] else "")
+          + (f", nächster Boden {p_(fk['boden'])}" if fk["boden"] else ", darunter ✈️ freie Bahn" if fb_["unten"] else ""))
     ei = fu.get("einigkeit")
     if ei:
         f("Ebenen: " + " · ".join(f"{n} {w_}" for n, (_, w_) in ei["ebenen"].items())
@@ -172,7 +173,7 @@ def material(tk, r, kurs, atr=None, rw=None, markt=None, termin=None, tiefe=None
         kante = t.get("pivot")
         if kante and atr:
             b_ = livermore.BESTAETIGUNG * atr
-            f(f"Kipp-Zone um {'den Pivot' if t['richtung'] > 0 else 'die Unterkante'} {_z(kante)} $: "
+            f(f"Kipp-Zone um {'die Front' if t['richtung'] > 0 else 'die Unterkante'} {_z(kante)} $: "
               + (f"📒 bestätigt bei einem Hoch über {_z(kante + b_)} $, 🦊 Fehlausbruch bei einem Schluss unter {_z(kante - b_)} $"
                  if t["richtung"] > 0 else
                  f"📒 bestätigt bei einem Tief unter {_z(kante - b_)} $, 🦊 Falle bei einem Schluss über {_z(kante + b_)} $"))

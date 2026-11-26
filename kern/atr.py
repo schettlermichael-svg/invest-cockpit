@@ -3,7 +3,7 @@ er sich an einem gewöhnlichen Tag bewegt, Lücken zum Vortag eingeschlossen. Si
 des Titels statt in festen Prozent. Alles hier sind Zeichen, keine Filter.
 
   Stopp im Rauschen   Abstand Einstieg → Stopp in ATR.   unter 1 rot (im Tagesrauschen), bis 1,5 gelb, darüber grün
-  Zu weit gelaufen    Kurs jenseits des Pivots in ATR.   bis 1 grün, bis 2 gelb, darüber rot (nicht nachjagen)
+  Zu weit gelaufen    Kurs jenseits der Front in ATR.   bis 1 grün, bis 2 gelb, darüber rot (nicht nachjagen)
   Enge                Spannen der letzten 5 Tage gegen die ATR davor.   unter 0,6 grün (eng), bis 0,9 gelb, darüber rot
   Überdehnung         Abstand vom GD50 in ATR.   ab 4 gelb, ab 6 rot (überdehnt – für Long eine Warnung, für Short
                       der Boden, auf dem ein Bruch gedeiht)

@@ -3,7 +3,7 @@
 Grundsatz (Auction Market Theory): Ein Titel ist in Balance (Seitwärtszone) oder im Ungleichgewicht (Trend). Er verlässt
 die Balance, weil neue Information den Wert verändert oder eine Seite erschöpft ist. Stärke = die Nachfrage überwiegt,
 das Angebot weicht; Schwäche = das Spiegelbild. Wir spüren die Ineffizienzen und Disbalancen auf, die den Kurs aus der
-Zone brechen lassen, und erspüren starke und schwache Zeichen – auch versteckte. Kreislauf (Weinstein/Wyckoff):
+Spanne brechen lassen, und erspüren starke und schwache Zeichen – auch versteckte. Kreislauf (Weinstein/Wyckoff):
 1 Basis → 2 Aufwärts → 3 Verteilung → 4 Abwärts; die Phase je Woche rechnet phase.py, die Wechselzeichen kommen von hier.
 
 Die App misst, der Stratege deutet. Jedes Zeichen ist eine feste Regel und hat eine Art – Struktur (Schwungpunkte, Spring,
@@ -177,7 +177,7 @@ def trendqualitaet(df):
 
 # ── Spring und Upthrust ───────────────────────────────────────────────────────────────────────────────────────────
 def secondary(df, tage=SECONDARY_TAGE):
-    """Livermores Secondary im Trend (Micky 23.11.2026; Wendepunkte ab 2 ATR wie Zone und Chart, vcp_zone.zigzag):
+    """Livermores Secondary im Trend (Micky 23.11.2026; Wendepunkte ab 2 ATR wie Spanne und Chart, vcp_zone.zigzag):
     Stärke – nach einem neuen Hoch hielt die Reaktion über dem letzten Tief (Secondary Reaction), der Kurs steht darüber:
     der Gegner kommt nicht mehr durch. Schwäche gespiegelt – nach einem neuen Tief scheiterte die Erholung unter dem
     letzten Hoch (Secondary Rally), der Kurs steht darunter. Der Wendepunkt höchstens `tage` Handelstage alt.
@@ -280,7 +280,7 @@ def livermore(df, tage=SECONDARY_TAGE, nb=None):
 
 
 def spring(df, tage=SPRING_TAGE):
-    """Spring (Stärke) bzw. Upthrust (Schwäche) an der Zone des Scanners in den letzten `tage` Tagen → Zeichen oder None.
+    """Spring (Stärke) bzw. Upthrust (Schwäche) an der Spanne des Scanners in den letzten `tage` Tagen → Zeichen oder None.
     Eine Regel mit Zustand und Setup: vcp_zone.spring_upthrust (Gefechtsordnung Schritt 4, Micky 15.11.2026 – bis dahin
     eine eigene Spanne der letzten 20 Tage)."""
     if df is None:
@@ -292,11 +292,11 @@ def spring(df, tage=SPRING_TAGE):
     zur = ("am selben Tag" if su["zurueck_tag"] == su["tag"] else f"am {su['zurueck_tag']:%d.%m.}")
     vol = f" (Volumen {_z(su['volumen'], '.1f')}-fach)" if su.get("volumen") else ""
     if su["art"] == "Spring":
-        return _zeichen("stärke", "struktur", f"Spring am {su['tag']:%d.%m.}: Tief unter der Unterkante der Zone "
-                        f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Zone{vol} – die Verkäufer sind erschöpft",
+        return _zeichen("stärke", "struktur", f"Spring am {su['tag']:%d.%m.}: Tief unter der Unterkante der Spanne "
+                        f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Spanne{vol} – die Verkäufer sind erschöpft",
                         2, su["tag"])
-    return _zeichen("schwäche", "struktur", f"Upthrust am {su['tag']:%d.%m.}: Hoch über der Oberkante der Zone "
-                    f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Zone{vol} – die Käufer sind erschöpft", 2, su["tag"])
+    return _zeichen("schwäche", "struktur", f"Upthrust am {su['tag']:%d.%m.}: Hoch über der Front "
+                    f"{_z(su['einstieg'], '.2f')} $, {zur} zurück in der Spanne{vol} – die Käufer sind erschöpft", 2, su["tag"])
 
 
 # ── Einquetschung ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -341,7 +341,7 @@ def akkumulation(df, tage=VOLUMEN_TAGE):
 
 def _marken(df):
     """Marken je Tag für die Umkehrkerzen: [(Name, Werte je Tag)] – 52-Wochen-Hoch und -Tief (vor dem Tag),
-    Ober- und Unterkante der laufenden Zone (ab ihrem Beginn), AVWAP vom letzten Hoch, vom Hoch des Rückgangs, vom
+    Ober- und Unterkante der laufenden Spanne (ab ihrem Beginn), AVWAP vom letzten Hoch, vom Hoch des Rückgangs, vom
     Trendstart und vom letzten höheren Tief (ab ihrem Anker)."""
     import avwap
     import vcp_zone
@@ -354,7 +354,7 @@ def _marken(df):
         z = {}
     if z.get("zone") and z.get("start") is not None:
         ab = int(df.index.searchsorted(pd.Timestamp(z["start"])))
-        for name, wert in (("Oberkante der Zone", z.get("oben")), ("Unterkante der Zone", z.get("unten"))):
+        for name, wert in (("Front", z.get("oben")), ("Unterkante", z.get("unten"))):
             if wert:
                 r = np.full(n, np.nan)
                 r[ab:] = wert
@@ -432,7 +432,7 @@ def umkehr(df, tage=MARKEN_TAGE):
 def kraft_ohne_weg(df, tage=KOW_TAGE, oben=None, unten=None, alle=False):
     """Wyckoffs Aufwand ohne Ergebnis (Kraft ohne Weg): viel Volumen bei enger Spanne an einer Marke = Absorption.
     Nach einem Anstieg am Widerstand („oben“: die Verkäufer schlucken die Nachfrage), nach einem Fall an der Stütze
-    („unten“: die Käufer schlucken das Angebot). Marken wie bei den Umkehrkerzen, dazu oben/unten der Zone des Aufrufers.
+    („unten“: die Käufer schlucken das Angebot). Marken wie bei den Umkehrkerzen, dazu oben/unten der Spanne des Aufrufers.
     → jüngster Tag {tag, rand, seite, marke, volumen (Vielfaches), spanne (Anteil am 20-Tage-Schnitt)} oder None;
     alle=True: Liste aller Tage."""
     aus = []
@@ -445,7 +445,7 @@ def kraft_ohne_weg(df, tage=KOW_TAGE, oben=None, unten=None, alle=False):
     sp = h - l
     sp20 = pd.Series(sp).rolling(KOW_SPANNE_TAGE).mean().shift().to_numpy()
     v50 = pd.Series(v).rolling(50).mean().shift().to_numpy()
-    mk = _marken(df) + [(name, np.full(n, w)) for name, w in (("Oberkante der Zone", oben), ("Unterkante der Zone", unten))
+    mk = _marken(df) + [(name, np.full(n, w)) for name, w in (("Front", oben), ("Unterkante", unten))
                         if w]
     for i in range(n - 1, max(MARKEN_START, n - tage) - 1, -1):
         if not (v50[i] > 0 and sp20[i] > 0) or v[i] < KOW_VOL * v50[i] or sp[i] > KOW_SPANNE * sp20[i]:
@@ -863,7 +863,7 @@ def kreislauf(df, idx=None, gewinne=None, mp=None, fehlausbruch=None, start=None
         zs.append(sp)
     eq = einquetschung(df, avwap_zahltag(df, gewinne))
     if eq:
-        zs.append(_zeichen("stärke", "struktur", f"Einquetschung: steigende Tiefs unter der Oberkante "
+        zs.append(_zeichen("stärke", "struktur", f"Einquetschung: steigende Tiefs unter der Front "
                            f"{_z(eq['oberkante'], '.2f')} $ (Drittel seit {eq['ab']:%d.%m.}: Tiefs {' → '.join(_z(x, '.2f') for x in eq['tiefs'])})", 2) if eq["art"] == "aufsteigend" else
                   _zeichen("schwäche", "struktur", f"Einquetschung: fallende Hochs über der Unterkante "
                            f"{_z(eq['unterkante'], '.2f')} $ (Drittel seit {eq['ab']:%d.%m.}: Hochs {' → '.join(_z(x, '.2f') for x in eq['hochs'])})", 2))

@@ -9,7 +9,7 @@ fehlten am 14.11. Kästen der drei Bilder in den Prüfern, ohne dass es auffiel.
              dem der Prüfer ihn prüft
   Zeichen    jedes Zeichen der Stärke und Schwäche aus zeichen.py mit Regel, Meister, Messung und Prüf-Element (der
              Wachposten liest zeichen.py und meldet jede Funktion, die ein Zeichen setzt und nicht auf der Karte steht)
-  Werkzeug   was die Kästen misst (Zone, Pivot, Anker, Profil, Phase …) – mit der Regel der App, die der Prüfer
+  Werkzeug   was die Kästen misst (Spanne, Front, Anker, Profil, Phase …) – mit der Regel der App, die der Prüfer
              kennen muss
   Setup      jedes Setup als Weg durch den Kreislauf (Gefechtsordnung): Weg, Lehrer, Regel, Einstieg, Stopp, widerlegt,
              eigene Abweichung mit Grund, Messung, Stand
@@ -85,19 +85,19 @@ KAESTEN = {
 # ── Werkzeuge ───────────────────────────────────────────────────────────────────────────────────────────────────
 WERKZEUGE = {
     "titel": [
-        dict(name="Zone", regel="Livermores Spanne, streng nach seinem Notizbuch (Micky 25.11.2026: Livermore ist die "
-                                "Grundlage für Base und Pivot). Ein Schwung zählt ab 2 ATR (unsere Übersetzung von "
+        dict(name="Spanne", regel="Livermores Spanne, streng nach seinem Notizbuch (Micky 25.11.2026: Livermore ist die "
+                                "Grundlage für Base und Front). Ein Schwung zählt ab 2 ATR (unsere Übersetzung von "
                                 "Livermores 6 Punkten in die Schwankung des Titels, ungemessen). Oberkante = der letzte "
-                                "Pivotal Point oben = der Pivot (Regel 5a, 6d); Unterkante = der letzte Pivotal Point unten "
-                                "(ohne ihn das tiefste Tief seit der Oberkante). Ein Schluss über der Oberkante: keine Zone "
-                                "(Kurs läuft am Hoch). Schreibt Livermore heute in die Spalte Abwärtstrend, ist die Zone offen "
+                                "Pivotal Point oben = die Front (Regel 5a, 6d); Unterkante = der letzte Pivotal Point unten "
+                                "(ohne ihn das tiefste Tief seit der Front). Ein Schluss über der Front: keine Spanne "
+                                "(Kurs läuft am Hoch). Schreibt Livermore heute in die Spalte Abwärtstrend, ist die Spanne offen "
                                 "(noch keine Spanne). Keine Formregeln, keine Wellen, keine Reife-Leiste und keine Namen nach "
-                                "der Vorgeschichte (Base, Flagge, Konsolidierung – am 25.11.2026 entfernt): die Zone heißt "
-                                "immer „Spanne“; Länge und Tiefe sind Zeichen. Ausbruch = Schluss über dem Pivot; "
-                                "Fehlausbruch = danach Schluss 1 ATR unter dem Pivot (Livermores Bestätigung gespiegelt, "
+                                "der Vorgeschichte (Base, Flagge, Konsolidierung – am 25.11.2026 entfernt): die Spanne heißt "
+                                "immer „Spanne“; Länge und Tiefe sind Zeichen. Ausbruch = Schluss über der Front; "
+                                "Fehlausbruch = danach Schluss 1 ATR unter der Front (Livermores Bestätigung gespiegelt, "
                                 "25.11.2026), knapp darunter = Rücktest.",
              messung=["vcp_zone.zone", "livermore.spanne"], stand="gemessen",
-             pruefer=["Zone: Beginn", "Zone: Unterkante/Tiefe", "Zone: Name", "Zone: keine/offen", "Pivot"]),
+             pruefer=["Spanne: Beginn", "Spanne: Unterkante/Tiefe", "Spanne: Name", "Spanne: keine/offen", "Front"]),
         dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
                                                  "Spalten (Aufwärts-/Abwärtstrend, natürliche und sekundäre Erholung/Reaktion); "
                                                  "Schwung = 2 ATR wie die Wendepunkte (seine ~6 Punkte), Bestätigung = 1 ATR "
@@ -107,16 +107,16 @@ WERKZEUGE = {
              messung=["livermore.notizbuch", "livermore.key_price", "livermore.schwester"], stand="gemessen",
              pruefer=["Livermore-Spalte"]),
         dict(name="ATR (eine Rechnung)", regel="Die ATR ist das Mittel der True Range der letzten 14 Tage (Lücken zum Vortag "
-                                                "eingeschlossen) – eine Rechnung für Stopp, Zonen, Anker, Zeichen und Zustand.",
+                                                "eingeschlossen) – eine Rechnung für Stopp, Spannen, Anker, Zeichen und Zustand.",
              messung=["atr.reihe", "atr.wert"], stand="gemessen", pruefer=["Sonstiges"]),
         dict(name="Ausbruchsvolumen", regel="Ausbruchsvolumen ist bei der App ein Zeichen, keine Pflicht – über dem "
                                             "50-Tage-Schnitt reicht (Entscheidung des Nutzers, O'Neils 1,4-fach ist ihm zu "
                                             "streng); ein Ausbruch mit wenig Volumen ist kein Widerspruch, höchstens ein "
                                             "schwaches Zeichen. Ebenso ein Zeichen: Livermores Bestätigung – ein Hoch 1 ATR "
-                                            "über dem Pivot (seine ~3 Punkte, Micky 25.11.2026), im Chart als 📒. "
+                                            "über der Front (seine ~3 Punkte, Micky 25.11.2026), im Chart als 📒. "
                                             "💥 Wucht (26.11.2026): Masse = Volumen am Ausbruchstag gegen den Schnitt, "
                                             "Geschwindigkeit = Tage bis 📒 – Ablesung ohne Schwelle. Im Chart die "
-                                            "Kipp-Zone: je 1 ATR über (📒) und unter (🦊) dem Pivot.",
+                                            "Kipp-Zone: je 1 ATR über (📒) und unter (🦊) der Front.",
              messung=["vcp_zone.ausbruch", "vcp_zone.wucht", "zonenchart.bild"], stand="gemessen", pruefer=["abgelehnt/angenommen"]),
         dict(name="Gegenseite", regel="Mauer (Knoten über dem Kurs) und Stütze (Knoten darunter) aus dem Volumenprofil: "
                                       "jeder Gipfel ab 30 % des größten und 10 % über dem höheren Tal daneben.",
@@ -160,7 +160,7 @@ WERKZEUGE = {
                                             "mehr als 30 Tage nach der des Index) – Shannons wichtigster Anker bei "
                                             "Neuemissionen (Micky 16.11.2026).",
              messung=["avwap.anker", "avwap._boersengang"], stand="gemessen", pruefer=["AVWAP Börsengang"]),
-        dict(name="AVWAP Ausbruch (Handoff)", regel="Ausbruch = der Tag des laufenden Ausbruchs aus der Zone (ohne "
+        dict(name="AVWAP Ausbruch (Handoff)", regel="Ausbruch = der Tag des laufenden Ausbruchs aus der Spanne (ohne "
                                                     "Fehlausbruch) – Shannons Handoff: nach dem Ausbruch die neue Stütze "
                                                     "(Micky 16.11.2026).",
              messung=["avwap.anker", "avwap._ausbruch"], stand="gemessen", pruefer=["AVWAP Ausbruch (Handoff)"]),
@@ -181,7 +181,7 @@ WERKZEUGE = {
 # der Wachposten liest zeichen.py und schlägt Alarm, wenn ein Zeichen fehlt (Micky 15.11.2026).
 ZEICHEN = [
     dict(name="Secondary (Livermore)", art="Struktur", meister="Livermore (How to Trade in Stocks, 1940: Secondary Rally/Reaction)",
-         regel="Wendepunkte ab 2 ATR (wie Zone und Chart). Stärke: nach einem neuen Hoch hält die Reaktion über dem "
+         regel="Wendepunkte ab 2 ATR (wie Spanne und Chart). Stärke: nach einem neuen Hoch hält die Reaktion über dem "
                "letzten Tief (Secondary Reaction), der Kurs steht darüber. Schwäche gespiegelt: nach einem neuen Tief "
                "scheitert die Erholung unter dem letzten Hoch (Secondary Rally). Der Wendepunkt höchstens 20 Handelstage "
                "alt. Im Chart sind Wendepunkte ohne neues Extrem kleiner gezeichnet.",
@@ -198,9 +198,9 @@ ZEICHEN = [
                "über dem Tagestief, letzte 5 Tage, Gewicht 2).",
          messung=["zeichen.livermore"], pruefer=["Kreislauf/Phase"]),
     dict(name="Spring/Upthrust", art="Struktur", meister="Wyckoff; O'Neil („undercut and rally“)",
-         regel="An der Zone des Scanners, wie sie am Vortag stand (dieselbe Regel wie das Setup): Tief höchstens 1 ATR "
-               "unter der Unterkante und ein Schluss zurück in der Zone am selben Tag oder in den 2 Tagen danach = Spring; "
-               "Hoch höchstens 1 ATR über der Oberkante und Schluss zurück = Upthrust; ein Fehlausbruch zählt auch. Zeichen "
+         regel="An der Spanne des Scanners, wie sie am Vortag stand (dieselbe Regel wie das Setup): Tief höchstens 1 ATR "
+               "unter der Unterkante und ein Schluss zurück in der Spanne am selben Tag oder in den 2 Tagen danach = Spring; "
+               "Hoch höchstens 1 ATR über der Front und Schluss zurück = Upthrust; ein Fehlausbruch zählt auch. Zeichen "
                "in den letzten 10 Tagen; Volumen am Schluss zurück steht dabei (Zeichen, keine Bedingung).",
          messung=["zeichen.spring", "vcp_zone.spring_upthrust"], pruefer=["Test am Rand: Zeichen", "abgelehnt/angenommen"]),
     dict(name="Einquetschung", art="Struktur", meister="Micky (Titel-Analyse, 21.11.2026)",
@@ -222,7 +222,7 @@ ZEICHEN = [
                "größten Abgabetag der 10 Tage davor, die 5 Tage davor zusammen höchstens +3 %.",
          messung=["zeichen.akkumulation"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="Umkehrkerzen", art="Struktur", meister="Homma (Regeln nach Nison)",
-         regel="Nur an einer Marke (höchstens 1 ATR von 52-Wochen-Hoch/-Tief, Rand der Zone oder AVWAP-Linie) und nach "
+         regel="Nur an einer Marke (höchstens 1 ATR von 52-Wochen-Hoch/-Tief, Rand der Spanne oder AVWAP-Linie) und nach "
                "einem Trend, den sie umkehren kann (Vortag gegen 5 Tage davor): Hammer (unterer Schatten mindestens "
                "2-mal der Körper, oberer höchstens 10 % der Spanne) und Shooting Star (gespiegelt), Engulfing (der Körper "
                "umschließt den des Vortags in Gegenfarbe), Morning/Evening Star (langer Körper, Stern höchstens 35 % "
@@ -233,7 +233,7 @@ ZEICHEN = [
          regel="Volumen ab 2-fach des 50-Tage-Schnitts bei einer Spanne von höchstens 70 % der Spanne der 20 Tage "
                "davor, in den letzten 10 Tagen an einer Marke (wie die Umkehrkerzen): Absorption – nach einem Anstieg "
                "Schwäche (Verkäufer schlucken die Nachfrage), nach einem Fall Stärke (Micky 17.11.2026; vorher 1,5-fach, "
-               "Spanne unter 0,7 ATR, nur am Rand der Zone). Eine Regel für Kasten, Zeichen und Chart.",
+               "Spanne unter 0,7 ATR, nur am Rand der Spanne). Eine Regel für Kasten, Zeichen und Chart.",
          messung=["zeichen.kraft_ohne_weg", "zeichen.kreislauf"], pruefer=["Test am Rand: Zeichen"]),
     dict(name="Freitag ohne Gewinnmitnahme", art="Volumen", meister="Micky (13.11.2026)",
          regel="Nach einer Woche von mindestens 2 Wochen-ATR keine Gewinnmitnahme: der letzte Handelstag der Woche "
@@ -305,13 +305,13 @@ BEREICHE = [
          messung=["sektoren.rotation"], pruefer=["Feld (Rotation)"]),
     dict(name="Nach dem Kauf und Depot", quelle="Micky 25.11.2026 (Livermore führt, Zirkel und Reibung sind Zeichen; "
                                                 "20er als Notbremse nach Kullamägi), Minervini (Klumpen, Verlustbremse)",
-         regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Pivot wird gemerkt). Jede Reaktion nach dem "
+         regel="Stopp beim Kauf = der Stopp des Setups (Vorgabe im Formular, Front wird gemerkt). Jede Reaktion nach dem "
                "Kauf, die Livermore als Pivotal Point unten einträgt, hebt den Stopp auf ¼ ATR darunter; er steigt nur, "
                "Schluss darunter heißt raus. Raus auch bei Regel 10b (Aufwärtstrend vorbei) und als Notbremse ab Tag 3 bei "
                "Schluss unter dem 20er; Gefahrensignal 10e zieht den Stopp eng unter das Tief jenes Tages; Schluss zurück "
-               "unter dem Pivot – raus. Zeichen ohne Befehl: Zirkel (✓ Phase 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
+               "unter der Front – raus. Zeichen ohne Befehl: Zirkel (✓ Phase 2 ohne 🍂 bzw. Wechsel 1 → 2, sonst ⚠) und "
                "Reibung (Mauer, Kraft ohne Weg, Klimax). Short gespiegelt. Aufstocken (26.11.2026): ½ beim Kauf, ½ bei "
-               "📒 – 1 ATR (am Kauftag) über dem Pivot – nur im Gewinn, nie verbilligen (Livermore). "
+               "📒 – 1 ATR (am Kauftag) über der Front – nur im Gewinn, nie verbilligen (Livermore). "
                "Kriegskasse: Positionswert über 25 % des Kontos = Klumpen; Konto 10 % unter seinem Höchststand = "
                "Zeichen, das Risiko je Trade zu halbieren; Depot-Hitze höchstens 6 % des Kontos.",
          messung=["depot._nach_dem_kauf", "depot.aus_setup", "atr.stopp", "reiten.nachgezogen", "reiten.ende_zeichen",
@@ -384,14 +384,14 @@ BEREICHE = [
                "aus der Websuche.",
          messung=["strategen.pruefen", "strategen.rufen", "strategen.material"], pruefer=[],
          luecke="kein Prüfer – der Code prüft jede Antwort"),
-    dict(name="Zonen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Livermore, Minervini, O'Neil, Kullamägi, Dalton, Micky 22./25.11.2026",
+    dict(name="Spannen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Livermore, Minervini, O'Neil, Kullamägi, Dalton, Micky 22./25.11.2026",
          regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = letzter Pivotal Point "
-               "oben = Pivot, Unterkante = letzter Pivotal Point unten; Name „Spanne“), während eines "
+               "oben = Front, Unterkante = letzter Pivotal Point unten; Name „Spanne“), während eines "
                "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
                "kam. Woche und Stunde (26.11.2026): Livermores Notizbuch auf ihren eigenen Kerzen – Spanne, Pivotal Points, "
                "Kipp-Zone wie am Tag; nur ohne Notizbuch (zu wenig Kerzen) die Balance nach Dalton. Einigkeit der Ebenen "
-               "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen drei Ebenen = ⬆/⬇ im Lagebericht (🧭). Trades: Ausbruch long (Auslöser Pivot, Stopp ¼ ATR unter dem Pivotal Point unten, "
-               "höchstens 8 %), Rücktest (Einstieg am Pivot, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
+               "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen drei Ebenen = ⬆/⬇ im Lagebericht (🧭). Trades: Ausbruch long (Auslöser Front, Stopp ¼ ATR unter dem Pivotal Point unten, "
+               "höchstens 8 %), Rücktest (Einstieg an der Front, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
                "Ebene ab Beginn der Spanne; ohne Spanne ab dem letzten Pivotal Point unten (26.11.2026, vorher Dalton-Balance); "
                "die eigene Balken-Nr. geht vor. Im Chart nur das Volumen, die Zeit (Market Profile) per Schalter. "
@@ -406,23 +406,25 @@ BEREICHE = [
                "besten 2 % des Reviers je Fenster = 🚀.",
          messung=["zeichen.zirkel", "zeichen.kurz", "rueckenwind.rechnen"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Festungen", quelle="Livermore (Pivotal Points), Micky 25.11.2026 (vorher Swing-Kanten nach O'Neil/Dalton)",
-         regel="Decke = Livermores Pivotal Point über dem Kurs, Boden = darunter, der noch steht: durchbrochen erst bei "
-               "einem Schluss 1 ATR jenseits (Livermores 3 Punkte, livermore.offene; Notizbuch der Ebene, zwei Jahre "
-               "zurück); kein Rollentausch. Je Richtung die 2 nächsten, näher als ½ "
-               "ATR verschmolzen. Sie geben das Ziel des Schlachtplans und ✈️; im Chart nicht mehr als Band gezeichnet "
-               "(Micky 25.11.2026) – dort steht jeder Pivotal Point, der noch steht, als Linie bis zum rechten Rand – kräftig die Front "
-               "(Spanne oben und unten) und je die nächste Stellung über und unter dem Kurs, die übrigen blass.",
-         messung=["zonen.festungen", "zonen._swing_kanten", "livermore.offene"], pruefer=[],
+    dict(name="Stellungen", quelle="Livermore (Pivotal Points), Micky 25./26.11.2026 (vorher Swing-Kanten nach O'Neil/Dalton)",
+         regel="Eine Rechnung (Micky 26.11.2026): livermore.offene liefert jeden Pivotal Point der letzten 2 Jahre, der "
+               "noch steht – durchbrochen erst bei einem Schluss 1 ATR jenseits (Livermores 3 Punkte); daraus Frontkarte, "
+               "Stellungen und ✈️. Wörterbuch: Front = letzter Pivotal Point oben, Unterkante = letzter unten, über dem "
+               "Kurs eine Decke, darunter ein Boden, in Richtung des Setups das Ziel. Innerhalb ½ ATR eine Stellung "
+               "(Gewicht = so viele Pivotal Points). Je Richtung die 2 nächsten geben das Ziel des Schlachtplans (short: "
+               "der nächste Boden). Im Chart steht jeder als Linie bis zum rechten Rand, kräftig Front, Unterkante und je "
+               "die nächste Decke und der nächste Boden, die übrigen blass.",
+         messung=["livermore.offene", "livermore.front", "livermore.stellungen", "zonen.stellungen"], pruefer=[],
          luecke="kein Prüfer"),
-    dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), Micky 22./25.11.2026",
-         regel="✈️ = im Tageschart kein offener Pivotal Point über dem Kurs (zwei Jahre zurück), ✈️↓ = keiner darunter. Reines Zeichen "
-               "ohne Schwelle; wie leicht der Kurs läuft, zeigen Pivot, Volumen-Spur, 🏜️ und Kraft ohne Weg. Liste "
-               "(Spalte Bahn), Rückenwind-Zeile und Kopf der Titelseite.",
-         messung=["zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
+    dict(name="Freie Bahn ✈️", quelle="Livermore (Linie des geringsten Widerstands), Micky 22./25./26.11.2026",
+         regel="✈️ = keine Stellung mehr über dem Kurs, auch nicht die Front (dieselbe Liste wie die Frontkarte, zwei "
+               "Jahre zurück); ✈️↓ = keine darunter. Reines Zeichen ohne Schwelle; wie leicht der Kurs läuft, zeigen "
+               "Front, Volumen-Spur, 🏜️ und Kraft ohne Weg. Liste (Spalte Bahn), Rückenwind-Zeile, Lagebericht, Kopf "
+               "und Chart der Titelseite.",
+         messung=["livermore.frei", "zonen.frei", "rueckenwind.rechnen", "rueckenwind_seite.bahn"], pruefer=[],
          luecke="kein Prüfer"),
     dict(name="Morgenmeldung: Setups", quelle="Micky 17.11.2026, umgestellt 22.11.2026 (Schlachtordnung, Zirkel)",
-         regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest am Pivot, im "
+         regel="Nach dem Nachtlauf eine Meldung aufs Handy: bis 5 Long (Aufbruch, Fortsetzung oder Rücktest an der Front, im "
                "Ausbruch oder Rücktest, aus Garde, Angriff oder Vorhut; Klasse vor Rang) und bis 5 Short (Abbruch, "
                "Fortsetzung abwärts; Rückzug zuerst), je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗), je "
                "Titel Kürzel mit Firmenname (daten.kurzname, 26.11.2026), Klasse, Setup mit ✓/✗, Lage (🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug), ½ antasten · ½ aufstocken bei 📒 (beim Rücktest der Einstieg), Stopp mit Risiko-Ampel, ✈️ und Halt der Phase; ohne Setup sagt "
@@ -440,7 +442,7 @@ BEREICHE = [
                "jenseits) – Livermores Probe und Bestätigung als ein Ablauf. Stückzahl aus dem 1-%-Risiko ist noch offen.",
          messung=["zirkel.setup", "zirkel.bestaetigt", "zonen.trade"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Zirkel-Lauf", quelle="Micky 22.11.2026 (löst den Kartentisch ab)",
-         regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Zone der "
+         regel="Jede Nacht für Revier und Watchlist aus den Tageskursen: Kreislauf (Phase, Zeichen, Keime), Setup aus Spanne der "
                "Tagesebene im Einklang mit dem Zirkel (Setup), 52-Wochen-Hoch bzw. -Tief (Hochs gegen Tiefs) und der "
                "Zirkel der Indizes für die Markt-Ampel; dazu die Positionen des Depots. Gruppen-Listen und Spalte "
                "„Setup“ der Liste lesen daraus.",
@@ -501,6 +503,79 @@ def _quellen():
         for f in sorted(os.listdir(ordner)):
             if f.endswith(".py"):
                 aus[f[:-3]] = os.path.join(ordner, f)
+    return aus
+
+
+# ── Einheit (Micky 26.11.2026, Leitsatz 12: „Ein Heer, eine Sprache, eine Rechnung“) ─────────────────────────────────
+# Das Wörterbuch: je Sache das eine Wort, die eine Funktion, die sie rechnet, und die Nebenwörter, die im sichtbaren Text
+# (jede Zeichenkette außer Docstrings) nicht mehr vorkommen dürfen. Ausnahmen: Fachbegriffe anderer Meister, die etwas
+# anderes meinen (Pocket Pivot, Episodic Pivot), und Module, in denen das Wort eine andere Sache benennt.
+WOERTERBUCH = (
+    dict(sache="Lage", wort="🟢 Vormarsch · 🟡 Gefechtspause · 🔴 Rückzug", quelle="livermore.lage",
+         nebenwoerter=()),
+    dict(sache="Kante oben", wort="Front", quelle="livermore.front",
+         nebenwoerter=(r"(?<!Pocket )(?<!Episodic )(?<!Minervinis )(?<!Livermores )\bPivot\b(?![-a-zA-Z])", r"= Oberkante", r"(?:der|die) Oberkante(?! der Wertzone)"),
+         module_aus=("tiefe",)),
+    dict(sache="Kante unten", wort="Unterkante", quelle="livermore.front",
+         nebenwoerter=(r"Spanne unten", r"Zone unten", r"— unten")),
+    dict(sache="Stehender Pivotal Point", wort="Stellung (über dem Kurs Decke, darunter Boden, in Richtung des Setups Ziel)",
+         quelle="livermore.offene → livermore.stellungen", nebenwoerter=(r"Festung", r"— oben")),
+    dict(sache="Freie Bahn", wort="✈️ freie Bahn", quelle="livermore.frei", nebenwoerter=()),
+    dict(sache="Spanne", wort="Spanne", quelle="livermore.spanne → zonen.lage",
+         nebenwoerter=(r"(?<![-\w])(?<!dünne )(?<!Dünne )Zonen?\b", r"Wochenzone", r"Tageszone"),
+         module_aus=("lage", "uebersicht", "tiefe", "volumenprofil", "marketprofile", "zahlen_reaktion", "regelkarte")),
+    dict(sache="Stärke des Kurses (Klasse)", wort="⚔️ Kraft", quelle="rueckenwind_seite.kraft_ampel",
+         nebenwoerter=(r"⚔️ Front",)),
+    dict(sache="Bestätigung und Falle", wort="📒 (1 ATR jenseits der Kante) · 🦊 (Schluss 1 ATR zurück)",
+         quelle="livermore.BESTAETIGUNG", nebenwoerter=()),
+    dict(sache="Markt", wort="Lagebild (Spitze und Heer bestimmen, der Index bestätigt ✓/✗)", quelle="zirkel.markt",
+         nebenwoerter=(r"Markt-Ampel nach O'Neil",)),
+)
+# Gefallene Doppelrechnungen: diese Namen dürfen nicht wiederkommen (eine Sache, eine Rechnung)
+GEFALLEN = ("_swing_kanten", "festungen", "BAHN_JAHRE", "FESTUNG_ABSTAND", "FESTUNGEN_JE_SEITE", "tagesmarken")
+GEFALLEN_MODULE = ("chart",)          # der alte Chart (Dow-Punkte) – der eine Chart ist zonenchart
+
+
+def einheit():
+    """Einheits-Wächter (Micky 26.11.2026): → [(Modul, Zeile, Sache, Fund)] – Nebenwörter des Wörterbuchs in sichtbaren
+    Zeichenketten aller Module (Kern, Oberfläche, Werkzeuge, app.py) und gefallene Doppelrechnungen, die wiederkommen."""
+    import ast
+    import os
+    import re
+    hier = os.path.dirname(os.path.abspath(__file__))
+    dateien = dict(_quellen())
+    werkzeuge = os.path.normpath(os.path.join(hier, "..", "werkzeuge"))
+    for f in sorted(os.listdir(werkzeuge)):
+        if f.endswith(".py"):
+            dateien[f[:-3]] = os.path.join(werkzeuge, f)
+    dateien["app"] = os.path.normpath(os.path.join(hier, "..", "app.py"))
+    aus = []
+    for m, pfad in dateien.items():
+        baum = ast.parse(open(pfad, encoding="utf-8").read())
+        eigen = {id(c) for k in baum.body if isinstance(k, ast.Assign) and any(          # das Wörterbuch selbst
+            isinstance(tg, ast.Name) and tg.id in ("WOERTERBUCH", "GEFALLEN") for tg in k.targets) for c in ast.walk(k)}
+        doku = {id(k.body[0].value) for k in ast.walk(baum)
+                if isinstance(k, (ast.Module, ast.FunctionDef, ast.ClassDef)) and k.body
+                and isinstance(k.body[0], ast.Expr) and isinstance(k.body[0].value, ast.Constant)}
+        for n in ast.walk(baum):
+            if isinstance(n, (ast.FunctionDef, ast.ClassDef)) and n.name in GEFALLEN:
+                aus.append((m, n.lineno, "gefallene Rechnung", n.name))
+            if isinstance(n, ast.Assign):
+                for tg in n.targets:
+                    if isinstance(tg, ast.Name) and tg.id in GEFALLEN:
+                        aus.append((m, n.lineno, "gefallene Rechnung", tg.id))
+            if isinstance(n, ast.Import):
+                for a_ in n.names:
+                    if a_.name in GEFALLEN_MODULE:
+                        aus.append((m, n.lineno, "gefallene Rechnung", f"import {a_.name}"))
+            if not (isinstance(n, ast.Constant) and isinstance(n.value, str)) or id(n) in doku or id(n) in eigen:
+                continue
+            for w in WOERTERBUCH:
+                if m in w.get("module_aus", ()):
+                    continue
+                for neben in w["nebenwoerter"]:
+                    for fund in re.finditer(neben, n.value):
+                        aus.append((m, n.lineno, w["sache"], n.value[max(0, fund.start() - 30):fund.end() + 30]))
     return aus
 
 
@@ -740,6 +815,12 @@ def wachposten():
                                                          "braucht einen Namen und einen Eintrag der Karte")
     except Exception as e:  # noqa: BLE001
         melde("rot", "Regel", "inventur", "Code", f"Inventur nicht lesbar: {e}")
+    try:                                          # Einheit: ein Wort, eine Rechnung (Leitsatz 12, 26.11.2026)
+        for m, z, sache, fund in einheit():
+            melde("rot", "Einheit", "inventur", f"{m}:{z}", f"{sache}: „{fund}“ – das Wort des Wörterbuchs nehmen "
+                                                           "bzw. die eine Rechnung")
+    except Exception as e:  # noqa: BLE001
+        melde("rot", "Einheit", "inventur", "Code", f"Einheits-Wächter nicht lesbar: {e}")
     return aus
 
 

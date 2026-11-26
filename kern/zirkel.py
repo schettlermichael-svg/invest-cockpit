@@ -2,7 +2,7 @@
 Reviers und der Watchlist aus den gespeicherten Tageskursen
 
   · den Kreislauf (Phase 1–4, Zeichen der Stärke und Schwäche, Keime – zeichen.fuer_titel),
-  · das Setup: Livermores Trade der Tagesebene (zonen.basis, lage, trade), benannt nach seiner Pivot-Art, vom Zirkel
+  · das Setup: Livermores Trade der Tagesebene (zonen.basis, lage, trade), benannt nach der Art seines Pivotal Points, vom Zirkel
     mit ✓/✗ bestätigt (setup) – Aufbruch, Fortsetzung, Rücktest, Abbruch, Fortsetzung abwärts,
   · ob der Titel heute am 52-Wochen-Hoch oder -Tief steht (Zeichen unter der Markt-Ampel: Hochs gegen Tiefs),
   · die Markt-Ampel: Livermores Notizbuch auf S&P 500 und Nasdaq, der Zirkel der Indizes bestätigt (Micky 25.11.2026),
@@ -235,7 +235,7 @@ def barometer():
 # stand (zone["trend"]):
 #   Ausbruch über den Pivotal Point oben, Trend aufwärts   → Fortsetzung (long, Fortsetzungs-Pivotal-Point)
 #   Ausbruch über den Pivotal Point oben, Trend abwärts    → Aufbruch (long, Umkehr – Regel 10d)
-#   Rücktest des Pivots nach dem Ausbruch                   → Rücktest (long)
+#   Rücktest der Front nach dem Ausbruch                   → Rücktest (long)
 #   Bruch des Pivotal Points unten, Trend aufwärts          → Abbruch (short, Umkehr – Regel 10b)
 #   Bruch des Pivotal Points unten, Trend abwärts           → Fortsetzung abwärts (short)
 # Der Zirkel (Woche) bestätigt mit ✓ (trägt) oder ✗ (steht dagegen, mit Grund) – nichts wird weggelassen. ✓ wie bis
@@ -246,7 +246,7 @@ SETUP = {"aufbruch": ("🦬", "Aufbruch"), "fortsetzung": ("🦬", "Fortsetzung"
 
 
 def bestaetigt(t, zk):
-    """Bestätigt der Zirkel den Zonen-Trade t? → (True|False, Grund)."""
+    """Bestätigt der Zirkel den Spannen-Trade t? → (True|False, Grund)."""
     p = (zk or {}).get("phase") or 0
     keim = bool((zk or {}).get("keim"))
     ziel = (zk or {}).get("ziel")
@@ -264,8 +264,8 @@ def bestaetigt(t, zk):
 
 
 def setup(t, zk):
-    """Zonen-Trade t (zonen.trade, mit zone_trend = Livermores Trend der Spanne) und Zirkel zk (zeichen.zirkel) → der
-    Trade als Setup: Name nach Livermores Pivot-Art, dazu zirkel ✓/✗ und zirkel_grund; None nur ohne Trade."""
+    """Spannen-Trade t (zonen.trade, mit zone_trend = Livermores Trend der Spanne) und Zirkel zk (zeichen.zirkel) → der
+    Trade als Setup: Name nach der Art von Livermores Pivotal Point, dazu zirkel ✓/✗ und zirkel_grund; None nur ohne Trade."""
     if not t:
         return None
     auf = t.get("zone_trend", "AT") == "AT"
@@ -275,11 +275,11 @@ def setup(t, zk):
     return dict(t, art=art, zeichen=SETUP[art][0], name=SETUP[art][1], zirkel="✓" if ja else "✗", zirkel_grund=grund)
 
 
-HEISS = ("kante", "ausbruch", "ruecktest", "bruch")   # Morgenmeldung: am Pivot, frischer Ausbruch, Rücktest, Bruch
+HEISS = ("kante", "ausbruch", "ruecktest", "bruch")   # Morgenmeldung: an der Front, frischer Ausbruch, Rücktest, Bruch
 
 
 def trade_wort(f):
-    """Setup eines Titels aus dem Feld in Worten mit der Bestätigung des Zirkels: „🦬 Fortsetzung ✓ · am Pivot“,
+    """Setup eines Titels aus dem Feld in Worten mit der Bestätigung des Zirkels: „🦬 Fortsetzung ✓ · an der Front“,
     „🦬 Aufbruch ✗ · Spanne im Aufbau“, „🐻 Abbruch ✓“; ohne Setup ""."""
     import zonen
     t = (f or {}).get("trade")
@@ -339,7 +339,7 @@ def gegenwind(tk, t):
 
 
 def heisse(n=MELDUNG_JE_SEITE):
-    """Die Morgenmeldung (Micky 22.11.2026: Schlachtordnung, Zirkel, ✈️): Long = Titel am Pivot, frisch ausgebrochen
+    """Die Morgenmeldung (Micky 22.11.2026: Schlachtordnung, Zirkel, ✈️): Long = Titel an der Front, frisch ausgebrochen
     (in der Kaufzone) oder im Rücktest – ▲▲▲ dreifacher Rückenwind zuerst, dann Garde und Angriff vor der Vorhut,
     dann nach Rang; Short = Bruch der Unterkante
     mit Volumen, Rückzug zuerst; je Seite die vom Zirkel bestätigten (✓) vor den übrigen (✗). Spannen im Aufbau kommen
@@ -383,6 +383,6 @@ def heisse(n=MELDUNG_JE_SEITE):
     kurz = sorted((tk for tk in mit if f_[tk]["trade"]["richtung"] < 0),
                   key=lambda tk: (f_[tk]["trade"].get("zirkel") == "✗", -klasse_nr(tk),
                                   (rw.get(tk) or {}).get("rang") or 0))[:n]
-    zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Setup am Pivot, im Ausbruch oder Rücktest"]) + \
+    zeilen = ([zeile(tk, "🦬") for tk in lang] or ["⚪ Long: heute kein Setup an der Front, im Ausbruch oder Rücktest"]) + \
              ([zeile(tk, "🐻") for tk in kurz] or ["⚪ Short: heute kein Abbruch und keine Fortsetzung abwärts"])
     return "\n".join(zeilen), len(lang) + len(kurz)
