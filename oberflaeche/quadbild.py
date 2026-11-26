@@ -18,7 +18,7 @@ FELD = {2: (1, -1), 1: (1, 1), 3: (-1, -1), 4: (-1, 1)}   # (rechts?, unten?) je
 WERT = ("Weekly Economic Index", "GDPNow", "Breakeven-Inflation 5 Jahre")   # Stand in %, sonst Veränderung zum Vorjahr
 PFEIL = {"wachstum": {"steigt": "→", "fällt": "←", "unklar": "·"},
          "inflation": {"steigt": "↑", "fällt": "↓", "unklar": "·"}}
-STIMMFARBE = {"steigt": "#E6EAF0", "fällt": "#E6EAF0", "unklar": "#5A6475"}
+STIMMFARBE = {"steigt": "#1A1F29", "fällt": "#1A1F29", "unklar": "#9AA3B2"}
 # Typische Branchen je Quad (Lehre: Dalio, Hedgeye-Playbook) – Yahoo-Branchen wie im Revier (rudel.branche_kurse)
 QUAD_BRANCHEN = {
     1: ["Semiconductors", "Semiconductor Equipment & Materials", "Software - Application", "Software - Infrastructure",
@@ -206,7 +206,7 @@ def bild(q, spur):
 
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Dalio-Quad" style="display:block;max-width:820px;font-family:IBM Plex Sans,sans-serif">'
-         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>']
+         '<style>text{paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}</style>']
     A = s.append
     for nr, (rechts, unten) in FELD.items():
         x0 = MX if rechts > 0 else MX - RX

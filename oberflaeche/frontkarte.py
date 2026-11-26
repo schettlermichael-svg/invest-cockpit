@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(HIER, "..", "kern"))
 import sektoren                                                     # noqa: E402
 from gestaltung import KARTE, RAND, ampelzeile, feld_name  # noqa: E402
 
-FARBE = {"Führend": "#56D364", "Ermüdend": "#E3B341", "Abgehängt": "#FF7B72", "Erstarkend": "#7DB4FF"}
+FARBE = {"Führend": "#15803D", "Ermüdend": "#A16207", "Abgehängt": "#B42318", "Erstarkend": "#1D4ED8"}
 AMPEL = {"Führend": "grün", "Erstarkend": "blau", "Ermüdend": "gelb", "Abgehängt": "rot"}
 PFEILE = {"↖": "Abwärtsdruck lässt nach", "↑": "Wende kündigt sich an", "↗": "Geld fließt zu",
           "←": "verliert weiter", "·": "kaum Bewegung", "→": "gewinnt weiter",

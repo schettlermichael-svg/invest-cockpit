@@ -32,7 +32,7 @@ def _pct(r, stellen=1):
 
 
 def _kachel(name, wert, unter="", farbe=TEXT):
-    return (f'<div style="background:#1C2430;border:1px solid {RAND};border-radius:10px;padding:12px 16px;min-width:190px">'
+    return (f'<div style="background:#F2F4F7;border:1px solid {RAND};border-radius:10px;padding:12px 16px;min-width:190px">'
             f'<div style="color:{TEXT_2};font-size:13px">{t(name)}</div>'
             f'<div style="font-size:24px;font-weight:600;color:{farbe}">{t(wert)}</div>'
             f'<div style="color:{TEXT_3};font-size:13px">{t(unter)}</div></div>')

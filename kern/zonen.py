@@ -40,7 +40,7 @@ MAX_STOPP = 0.08           # Minervini: höchstens 8 % Risiko je Trade (der Stop
 from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quelle
 from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
 
-EBENEN = ("Woche", "Tag", "Stunde")
+EBENEN = ("Woche", "Tag", "4 Stunden", "Stunde")   # wie Mickys Favoriten in TradingView (1W, 1T, 4h, 1h)
 PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "an der Front"),
          "ausbruch": ("🦬", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
          "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Spanne – Kurs läuft am Hoch"),
@@ -50,7 +50,8 @@ TRADE_NAME = {"ausbruch": "Ausbruch", "ruecktest": "Rücktest", "short": "Bruch 
 TRADE_ZEICHEN = {"ausbruch": "🦬", "ruecktest": "🪝", "short": "🐻"}
 
 
-SPANNE = {"Woche": pd.Timedelta(days=7), "Tag": pd.Timedelta(days=1), "Stunde": pd.Timedelta(hours=1)}
+SPANNE = {"Woche": pd.Timedelta(days=7), "Tag": pd.Timedelta(days=1), "4 Stunden": pd.Timedelta(hours=4),
+          "Stunde": pd.Timedelta(hours=1)}
 
 
 def _von_bis(e, t):
@@ -115,7 +116,7 @@ def _volumen_hoch(df):
     return bool(schnitt.iloc[-1] == schnitt.iloc[-1] and v.iloc[-1] > schnitt.iloc[-1])
 
 
-KERZE = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}   # Einheit der Kerzen je Ebene
+KERZE = {"Tag": "T.", "Woche": "Wo.", "4 Stunden": "4h", "Stunde": "Std."}   # Einheit der Kerzen je Ebene
 
 
 def lage(e, ba=None, profil=True):
@@ -158,7 +159,7 @@ def lage(e, ba=None, profil=True):
         else:
             phase = "aufbau"
         name = z.get("name") or "Abwärtstrend"
-        dauer = (f'seit {beginn:%d.%m. %H:%M}' if e["name"] == "Stunde"                # Dauer in Kalenderwochen, gleich
+        dauer = (f'seit {beginn:%d.%m. %H:%M}' if e["name"] in tiefe.INTRADAY          # Dauer in Kalenderwochen, gleich
                  else f'{max(0, (df.index[-1] - beginn).days) / 7:.0f} Wo.')                # auf jeder Ebene (26.11.)
         teile = [dauer, f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
         if a and not a["fehl"]:

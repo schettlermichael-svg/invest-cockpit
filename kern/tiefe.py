@@ -121,10 +121,22 @@ def dreissig(df):
 
 def stunde(d30):
     """Stundenkerzen aus den 30-Minuten-Kerzen (9:30, 10:30 … New York)."""
+    return _takt(d30, "60min", "30min")
+
+
+INTRADAY = ("4 Stunden", "Stunde")   # Ebenen aus 30-Minuten-Kerzen (Profil und Zeitprofil aus 30 Minuten, ohne Wanderung)
+
+
+def vier_stunden(d30):
+    """4-Stunden-Kerzen wie TradingView (Micky 26.11.2026): 9:30–13:30 und 13:30–16:00 New York, aus 30 Minuten."""
+    return _takt(d30, "4h", "90min")
+
+
+def _takt(d30, takt, versatz):
     if d30 is None or not len(d30):
         return None
-    return d30.resample("60min", offset="30min").agg({"Open": "first", "High": "max", "Low": "min",
-                                                      "Close": "last", "Volume": "sum"}).dropna()
+    return d30.resample(takt, offset=versatz).agg({"Open": "first", "High": "max", "Low": "min",
+                                                   "Close": "last", "Volume": "sum"}).dropna()
 
 
 # ── Profil (Dalton) ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -489,14 +501,15 @@ def ebene(name, df, d30, zahltag=None, tage=None):
     Struktur (Anker, Profil, Pivots, Quetschung), alte Wertzone, Wertwanderung (PbD entfernt 22.11.2026). df = Kerzen der Ebene, d30 =
     30-Minuten-Kerzen, tage = Tageskerzen (für die Woche). Woche: Zeitprofil und Schwänze aus Tageskerzen,
     Profil und Wanderung aus Stundenkerzen; Tag: Profil aus Stunden-, Zeitprofil, Schwänze und Wanderung aus
-    30-Minuten-Kerzen; Stunde: Profil und Zeitprofil aus 30-Minuten-Kerzen, ohne Schwänze und Wanderung."""
+    30-Minuten-Kerzen; 4 Stunden und Stunde: Profil und Zeitprofil aus 30-Minuten-Kerzen, ohne Schwänze und Wanderung."""
     if df is None or len(df) < 2 * IMPULS_SCHLUESSE + ALT_MIN:
         return None
     h1 = stunde(d30)
-    st_ = struktur(df, d30 if name == "Stunde" else h1, ebene_zeit(df, zahltag, name))
+    fein = d30 if name in INTRADAY else h1
+    st_ = struktur(df, fein, ebene_zeit(df, zahltag, name))
     a = st_["atr"]
     return {"name": name, "df": df, "struktur": st_, "atr": a, "alt": alte_balance(df, st_["anker_i"]),
-            "fein": d30 if name == "Stunde" else h1,
-            "wander": None if name == "Stunde" else wanderung(df, d30 if name == "Tag" else h1, "D" if name == "Tag" else "W", a)}
+            "fein": fein,
+            "wander": None if name in INTRADAY else wanderung(df, d30 if name == "Tag" else h1, "D" if name == "Tag" else "W", a)}
 
 

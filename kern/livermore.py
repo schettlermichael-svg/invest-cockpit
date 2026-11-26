@@ -248,6 +248,34 @@ def offene(df, nb=None):
     return aus
 
 
+def gefallene(df, nb=None):
+    """Alte Plattform (Micky 26.11.2026, Rollentausch): durchbrochene Pivotal Points der letzten STELLUNG_JAHRE Jahre,
+    die jetzt auf der anderen Seite des Kurses stehen – ein gebrochener Boden über dem Kurs wird zur Decke, eine
+    gebrochene Decke unter dem Kurs zum Boden. Punkte innerhalb BESTAETIGUNG × ATR (gemessen vom untersten) bilden eine
+    Plattform. Nur für die
+    Leiter und den Bericht, nicht gezählt (Weg voraus, Chop und Gewicht bleiben bei den stehenden Stellungen).
+    → [{unten, oben, rolle: "decke"/"boden", n}] nach Abstand zum Kurs."""
+    import vcp_zone
+    nb = nb or notizbuch(df)
+    if not nb:
+        return []
+    kurs = float(df["Close"].iloc[-1])
+    a = float(vcp_zone.atr(df).iloc[-1] or 0)
+    ab = df.index[-1] - pd.DateOffset(years=STELLUNG_JAHRE)
+    k_offen = {(p_["i"], p_["art"]) for p_ in offene(df, nb)}
+    weg = [p_ for p_ in nb["pivotal"] if pd.Timestamp(p_["tag"]) >= ab and (p_["i"], p_["art"]) not in k_offen
+           and ((p_["art"] == "tief" and p_["preis"] > kurs) or (p_["art"] == "hoch" and p_["preis"] < kurs))]
+    aus = []
+    for p_ in sorted(weg, key=lambda x: x["preis"]):
+        rolle = "decke" if p_["preis"] > kurs else "boden"
+        g = next((g for g in aus if g["rolle"] == rolle and p_["preis"] - g["unten"] <= BESTAETIGUNG * a), None)
+        if g:
+            g["oben"], g["n"] = float(p_["preis"]), g["n"] + 1
+            continue
+        aus.append({"unten": float(p_["preis"]), "oben": float(p_["preis"]), "rolle": rolle, "n": 1})
+    return sorted(aus, key=lambda g: min(abs(g["unten"] - kurs), abs(g["oben"] - kurs)))
+
+
 def front(df, nb=None):
     """Die Frontkarte (Micky 26.11.2026): Livermores stehende Pivotal Points nach Rang → {offen: [alle stehenden],
     stark: {(i, art)}, oben, unten (die Front = Spanne, sofern sie steht), ziel (nächste stehende Stellung über dem

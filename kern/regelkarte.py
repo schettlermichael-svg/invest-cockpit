@@ -390,7 +390,7 @@ BEREICHE = [
                "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
                "kam. Woche und Stunde (26.11.2026): Livermores Notizbuch auf ihren eigenen Kerzen – Spanne, Pivotal Points, "
                "Kipp-Zone wie am Tag; nur ohne Notizbuch (zu wenig Kerzen) die Balance nach Dalton. Einigkeit der Ebenen "
-               "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen drei Ebenen = ⬆/⬇ im Lagebericht (🧭). Trades: Ausbruch long (Auslöser Front, Stopp ¼ ATR unter dem Pivotal Point unten, "
+               "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen vier Ebenen = ⬆/⬇ im Urteil. Trades: Ausbruch long (Auslöser Front, Stopp ¼ ATR unter dem Pivotal Point unten, "
                "höchstens 8 %), Rücktest (Einstieg an der Front, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "
                "Ebene ab Beginn der Spanne; ohne Spanne ab dem letzten Pivotal Point unten (26.11.2026, vorher Dalton-Balance); "
@@ -401,8 +401,8 @@ BEREICHE = [
          luecke="kein Prüfer"),
     dict(name="Zirkel: Stärke, Schwäche, Momentum, Balance und Disbalance", quelle="Weinstein, Wyckoff, Dalton, Kullamägi, Micky 22.11.2026",
          regel="Vier Phasen je Woche (Basis, Aufwärts, Verteilung, Abwärts); jede trägt den Keim des Gegenteils: in Basis "
-               "und Abwärts keimt die Stärke, in Aufwärts und Verteilung die Schwäche. Titelseite: Leiste und Zeichen "
-               "„trägt“ / „Keim“; Liste: Phase, Keim (🌱/🍂). Momentum nach Kullamägi: Rendite über 22, 67, 126 Tage, die "
+               "und Abwärts keimt die Stärke, in Aufwärts und Verteilung die Schwäche. Titelseite: eine Zeile im Bericht "
+               "(Jahreszeit, Dauer, Halt; „trägt“ / „Keim“ im Hinweis); Liste: Phase, Keim (🌱/🍂). Momentum nach Kullamägi: Rendite über 22, 67, 126 Tage, die "
                "besten 2 % des Reviers je Fenster = 🚀.",
          messung=["zeichen.zirkel", "zeichen.kurz", "rueckenwind.rechnen"], pruefer=[],
          luecke="kein Prüfer"),
@@ -436,7 +436,24 @@ BEREICHE = [
                "wird nichts. Story: 💰 Geld und 📊 Zahlen als Ampel, 📅 nächster Termin. Nicht übernommen: Sharps "
                "Auslöser (Feder, Stopp-Kauf, 50-%-Regel), enger Stopp, Linien am Körper, Bruch ohne Puffer, 1:1-Ziele.",
          messung=["tore.zwei_kerzen", "tore.richtung", "tore.tore", "tore.zeile", "livermore.ort",
-                  "zonenseite._story"], pruefer=[], luecke="kein Prüfer – ungemessen, gesetzte Voreinstellungen"),
+                  "zonenseite._urteil"], pruefer=[], luecke="kein Prüfer – ungemessen, gesetzte Voreinstellungen"),
+    dict(name="Lagebericht über vier Ebenen", quelle="Micky 26.11.2026 (Analyse HWM: „so und genauso möchte ich in der "
+         "app informiert werden“), Livermore, Sharp",
+         regel="Woche, Tag, 4 Stunden (wie TradingView: 9:30–13:30 und 13:30–16:00 New York, aus 30 Minuten) und Stunde "
+               "mit denselben Regeln: Livermores Notizbuch auf den Kerzen der Ebene. Je Ebene Lage und letzte Kerze, "
+               "Spanne mit Drittel, die Treppe der letzten 3 Hochs und 3 Tiefs (steigend/fallend: Treppe aufwärts, "
+               "abwärts, eingequetscht, weitet sich), nächste Decke und nächster Boden mit Abprallern, die alte "
+               "Plattform (Rollentausch: durchbrochene Pivotal Points auf der anderen Seite des Kurses, innerhalb 1 ATR "
+               "eine Plattform – nur Leiter und Bericht, nicht gezählt), in der Woche der Abstand zum 52-Wochen-Hoch. "
+               "Leiter: alle Stellungen aller Ebenen auf einer Achse, innerhalb ½ Tages-ATR eine Sprosse, Lücken über 3 "
+               "ATR „sauber“. Urteil = die drei Tore. Beobachten: erster Schritt auf der Stunde, Auslöser auf dem Tag "
+               "(unser Setup, sonst Front bzw. Unterkante), dahinter die nächste Stellung oder die alte Plattform; "
+               "Gegenzeichen = Treppen gegen die Richtung, Stellungen in Richtung mit ab 2 Abprallern, alte Plattform "
+               "im Weg. Story und Strömung: Kraft, Nachschub (mit CMF 20 des Titels), Fundament, Zirkel und Key Price "
+               "in je einer Zeile.",
+         messung=["bericht.alle", "bericht.ebene", "bericht.treppe", "bericht.saetze", "bericht.beobachten",
+                  "bericht.gegenzeichen", "bericht.leiter", "livermore.gefallene", "tiefe.vier_stunden",
+                  "zonenseite.lagebericht", "leiter.bild"], pruefer=[], luecke="kein Prüfer – ungemessen, gesetzte Voreinstellungen"),
     dict(name="Abpraller (Dochte stärken eine Stellung)", quelle="Harry Sharp, Micky 26.11.2026",
          regel="Eine Kerze nach dem Pivotal Point, deren Hoch bis ¼ ATR an eine Decke kam und deren Schluss darunter "
                "blieb, ist ein Abpraller (am Boden gespiegelt); im Etikett neben dem Gewicht als 🛡 mit der Zahl.",
@@ -497,7 +514,8 @@ BEREICHE = [
 # ist ein blinder Fleck (🚨). Technik (Layout, Kosten, Datenpflege) steht mit Grund auf der Ausnahmeliste.
 TECHNIK = {
     **{f"rueckenwind_seite.TABELLE_{n_}": "Layout" for n_ in ("HOEHE", "ZEILE", "RAND")}, "zonenchart.GD_WAHL": "Anzeige (Auswahl der Durchschnitte)",
-    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.NOTIZBUCH_ZEILEN": "Layout", "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", 
+    "zonenseite.ANKER_PLAETZE": "Speicher der eigenen Anker", "zonenseite.NOTIZBUCH_ZEILEN": "Layout",
+    **{f"leiter.{n_}": "Layout" for n_ in ("B", "H", "X0", "X1", "OBEN", "UNTEN", "ETIKETT_ABSTAND", "LEITER_ATR")}, "zonenseite.PROFIL_PLATZ": "Speicher der eigenen Anker", 
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",

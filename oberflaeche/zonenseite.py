@@ -1,19 +1,16 @@
-"""Titelseite des schlanken Cockpits (Micky 21./22.11.2026): Kopfzeile mit Rückenwind und den drei Ebenen (Base nach
-Minervini/O'Neil in Woche und Tag, Balance in der Stunde), das eine Setup (Spanne im Einklang mit dem Zirkel), darunter der Zonenchart mit Reitern Woche ·
-Tag · Stunde. Wenig Text, das Bild führt."""
+"""Titelseite des schlanken Cockpits (Micky 21./22.11.2026; seit 26.11.2026 der Lagebericht über vier Ebenen): Kopfzeile,
+darunter der Bericht (Urteil mit den drei Toren, Woche · Tag · 4 Stunden · Stunde neben der Leiter, Beobachten, Story und
+Strömung), darunter der Zonenchart mit Reitern je Ebene."""
 import os
 import time
 
 import pandas as pd
 
 import gestaltung
-from gestaltung import (BLAU, GELB, GRUEN, KARTE, PUNKT_KLEIN, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, punkt, seite,
+from gestaltung import (BLAU, GELB, GRUEN, PUNKT_KLEIN, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, punkt, seite,
                         t, zahl)
 
 HIER = os.path.dirname(os.path.abspath(__file__))
-
-EBENE_ROLLE = {"Woche": "Strömung", "Tag": "Spanne", "Stunde": "Einstieg"}
-
 
 def rechnen(tk, laufend=False):
     """Kurse, feinere Kerzen, drei Ebenen (tiefe.ebene) und die Fährte (zonen.fuehrte)."""
@@ -42,6 +39,7 @@ def rechnen(tk, laufend=False):
         zt = None
     ebenen = {"Woche": tiefe.ebene("Woche", tiefe.woche(df), d30, zt, tage=df),
               "Tag": tiefe.ebene("Tag", df, d30, zt),
+              "4 Stunden": tiefe.ebene("4 Stunden", tiefe.vier_stunden(d30), d30, zt),
               "Stunde": tiefe.ebene("Stunde", tiefe.stunde(d30), d30, zt)}
     import sektoren
     try:
@@ -54,7 +52,8 @@ def rechnen(tk, laufend=False):
     except Exception:  # noqa: BLE001
         sektor = None
     rs = {"Woche": {"index": index, "sektor": sektor}, "Tag": {"index": index, "sektor": sektor},
-          "Stunde": {"index": _stunde_bezug("SPY"), "sektor": _stunde_bezug(etf) if etf else None}}
+          **{n: {"index": _stunde_bezug("SPY", n), "sektor": _stunde_bezug(etf, n) if etf else None}
+             for n in tiefe.INTRADAY}}
     f = zonen.fuehrte(ebenen)
     import zeichen
     import zirkel                                   # Livermore liefert das Setup, der Zirkel bestätigt (Micky 25.11.2026)
@@ -64,141 +63,208 @@ def rechnen(tk, laufend=False):
             "laufend": bool(df.attrs.get("laufend")), "rs": rs}
 
 
-def _stunde_bezug(symbol):
-    """Stundenschlüsse eines Bezugs (SPY, Sektor-ETF) aus den gespeicherten 30-Minuten-Kerzen oder None."""
+def _stunde_bezug(symbol, ebene="Stunde"):
+    """Stunden- bzw. 4-Stunden-Schlüsse eines Bezugs (SPY, Sektor-ETF) aus den gespeicherten 30-Minuten-Kerzen oder
+    None."""
     import daten
     import tiefe
     import tpo_daten
     try:
         tages = daten.kurse_gespeichert(symbol)
-        h = tiefe.stunde(tpo_daten.kerzen(symbol, tages, abruf=False)) if tages is not None else None
+        takt = tiefe.vier_stunden if ebene == "4 Stunden" else tiefe.stunde
+        h = takt(tpo_daten.kerzen(symbol, tages, abruf=False)) if tages is not None else None
         return h["Close"] if h is not None and len(h) else None
     except Exception:  # noqa: BLE001 – Technik: ohne Datei keine Linie
         return None
 
 
-def _karte_ebene(name, la, aktiv=False):
-    rahmen = (f'background:{KARTE};border:{2 if aktiv else 1}px solid {BLAU if aktiv else RAND};border-radius:10px;'
-              f'padding:10px 12px')
-    kopf_ = f'<div style="font-size:12px;color:{TEXT_3}">{name} · {EBENE_ROLLE[name]}</div>'
-    if not la:
-        return f'<div style="{rahmen}">{kopf_}<div style="font-size:18px">⚪</div></div>'
-    zeile2 = ""
-    if la["zone"]:
-        lo, hi = la["zone"]
-        zeile2 = (f'{zahl(lo)} – {zahl(hi)}' + (f' · Front {zahl(la["pivot"])}' if la.get("pivot") and la["pivot"] < hi else "")
-                  + f' · POC {zahl(la["poc"])}')
-    return (f'<div style="{rahmen}">{kopf_}'
-            f'<div style="font-size:20px;margin:2px 0">{la["pfeil"]} {la["zeichen"]} <span style="font-size:15px">'
-            f'{t(la["wort"])}{(" · " + t(la["name"])) if la["name"] and la["name"] not in la["wort"] else ""}</span></div>'
-            f'<div style="font-size:13px;color:{TEXT_2}">{zeile2}</div>'
-            + (f'<div style="font-size:12px;color:{TEXT_3};margin-top:2px">{t(la["info"])}</div>' if la.get("info") else "")
-            + '</div>')
+def _setup_html(r):
+    """Unser Setup in Zeilen (Livermores zwei Hälften, Stopp, Risiko, Zirkel, dreifacher Rückenwind, Gegenwind der
+    Gruppe) – oder "" ohne Setup."""
+    tr = r["fuehrte"]["trade"]
+    if not tr:
+        return ""
+    ueber_ = "über" if tr["richtung"] > 0 else "unter"
+    if tr.get("aufstocken"):
+        ein_ = ("½ antasten + ½ aufgestockt – 📒 erreicht" if tr.get("aufgestockt") else
+                f'½ antasten beim Schluss {ueber_} {zahl(tr["pivot"])}' + (" mit Volumen" if tr["wartet"] else "")
+                + f' · ½ aufstocken bei 📒 {zahl(tr["aufstocken"])}')
+    else:
+        ein_ = f'Einstieg {zahl(tr["einstieg"])}'
+    z = [f'<span title="Livermore: erst eine Probe, nur im Gewinn nachlegen, nie verbilligen – kommt der Fehlausbruch, '
+         f'ist nur die Hälfte im Feuer">{t(ein_)}</span> · Stopp {zahl(tr["stopp"])} · {tr["ampel"]} Risiko '
+         f'{zahl(tr["risiko"], 1)} %']
+    if tr.get("zirkel"):
+        z.append(f'<span style="color:{GRUEN if tr["zirkel"] == "✓" else GELB}">{tr["zirkel"]} '
+                 f'{"der Zirkel trägt" if tr["zirkel"] == "✓" else "gegen den Zirkel"}: {t(tr["zirkel_grund"])}</span>')
+    import zirkel
+    if zirkel.dreifach(r["tk"], tr):               # Kurs, Geld und Zahlen grün (Micky 23.11.2026)
+        z.append(f'<span style="color:{GRUEN}">▲▲▲ dreifacher Rückenwind – Kurs, Geld und Zahlen grün</span>')
+    gw = zirkel.gegenwind(r["tk"], tr)              # die Branche steht gegen die Richtung (Weinstein)
+    if gw:
+        z.append(f'<span style="color:{GELB}">{t(gw)} – Gegenwind der Gruppe</span>')
+    return "".join(f'<div style="font-size:14px;color:{TEXT_2};margin-top:2px">{x}</div>' for x in z)
 
 
-def zirkel_html(tk):
-    """Der Zirkel des Titels (Micky 22.11.2026): Leiste Basis → Aufwärts → Verteilung → Abwärts mit der laufenden Phase,
-    darunter die Zeichen, die die Phase tragen, und die Keime des Gegenteils (gespeicherter Kreislauf des Nachtlaufs)."""
+def _marke(text, farbe, grund=""):
+    return (f'<span title="{t(grund)}" style="background:{farbe}1F;color:{farbe};border-radius:8px;padding:5px 11px;'
+            f'font-weight:600;font-size:14px">{t(text)}</span>')
+
+
+def _urteil(r, be):
+    """Urteil · drei Tore (Sharp): Richtung, Ort, Auslöser als drei Marken, darunter ein Satz zur Richtung und unser
+    Setup."""
+    import tore
+    tr = r["fuehrte"]["trade"]
+    df = r["df"].dropna(subset=["High", "Low", "Close"])
+    to = tore.tore(df, tr, bool(r.get("laufend")))
+    ri, ot = to["richtung"], to["ort"]
+    wert = (ri or {}).get("wert")
+    f_r = GRUEN if wert == "auf" else ROT if wert == "ab" else GELB
+    m_r = _marke(f'Richtung {to["r"] + " " if to["r"] else ""}{ {"auf": "aufwärts", "ab": "abwärts"}.get(wert, "offen")}',
+                 f_r, "Zwei-Kerzen-Regel: letzte abgeschlossene Wochen- und Tageskerze; bei gemischt entscheidet die "
+                      "Lage der Woche, ruht sie, die Tageskerze")
+    ort_ = tore.ort_text(ot, (tr or {}).get("richtung"))
+    f_o = ROT if to["o"] == "✗" else GRUEN if to["o"] == "✓" else (GELB if ot and (ot["chop"] or ot["weit"]) else TEXT_2)
+    m_o = _marke(f'Ort {to["o"] + " " if to["o"] else ""}{ort_ or "–"}', f_o,
+                 "Lage in der Spanne, Weg voraus (3 ATR: sauber oder unruhig), Chop, weit gelaufen")
+    if tr:
+        m_a = _marke(f'Auslöser {to["a"]} {tr["zeichen"]} {tr["name"]} {"long" if tr["richtung"] > 0 else "short"}',
+                     GRUEN if to["a"].startswith("✓") else BLAU, "unser Setup: ½ antasten an der Kante, ½ aufstocken bei 📒")
+    else:
+        m_a = _marke("Auslöser: keiner – kein Setup", TEXT_2, "kein Setup auf dem Tag")
+    satz = []
+    if ri:
+        k_ = ri["kerzen"]
+        satz.append(f'Woche {tore.KERZE[k_["woche"]]}, Tag {tore.KERZE[k_["tag"]]}: {ri["grund"]}.')
+    ei = r["fuehrte"].get("einigkeit")
+    if ei and ei["alle"]:
+        satz.append("⬆ Einigkeit: Vormarsch auf allen Ebenen." if ei["alle"] == "auf" else
+                    "⬇ Einigkeit: Rückzug auf allen Ebenen.")
+    return (f'<div style="font-size:12px;font-weight:600;letter-spacing:.06em;color:{TEXT_3}">URTEIL · DREI TORE</div>'
+            f'<div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0">{m_r}{m_o}{m_a}</div>'
+            f'<div style="font-size:14px;color:{TEXT_2}">{t(" ".join(satz))}</div>' + _setup_html(r))
+
+
+EBENE_TITEL = {"Woche": "Woche · das große Bild", "Tag": "Tag · das Schlachtfeld",
+               "4 Stunden": "4 Stunden · die Fronten verschieben sich", "Stunde": "Stunde · wo der nächste Schuss fällt"}
+
+
+def _ebene_html(n, b):
+    import bericht
+    farbe = {"AT": GRUEN, "AB": ROT}.get((b or {}).get("spalte"), GELB)
+    kopf_ = (f'<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">'
+             f'<b style="font-size:15px">{EBENE_TITEL[n]}</b>'
+             f'<span style="font-size:13px;color:{farbe}">{t(bericht.kurzurteil(b))}</span></div>')
+    text = " ".join(bericht.saetze(b)) if b else "Zu wenige Kerzen für das Notizbuch."
+    return (f'<div style="border:1px solid {RAND};border-radius:10px;padding:12px 14px">{kopf_}'
+            f'<div style="font-size:14px;color:{TEXT_2};margin-top:4px;line-height:1.5">{t(text)}</div></div>')
+
+
+def _beobachten_html(be, r):
+    import bericht
+    import tore
+    tr = r["fuehrte"]["trade"]
+    ri = tore.richtung(r["df"].dropna(subset=["High", "Low", "Close"]), bool(r.get("laufend")))
+    bo = bericht.beobachten(be, tr)
+    spalten = (("Long beobachten", GRUEN, bo["long"]), ("Short beobachten", ROT, bo["short"]),
+               ("Gegenzeichen", GELB, bericht.gegenzeichen(be, (ri or {}).get("wert"))))
+    return ('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">'
+            + "".join(f'<div><b style="color:{f_}">{k_}</b>'
+                      + "".join(f'<div style="font-size:14px;color:{TEXT_2};margin-top:3px">{t(z)}</div>' for z in zs)
+                      + '</div>' for k_, f_, zs in spalten) + '</div>')
+
+
+def _zirkel_zeile(tk):
+    """Der Zirkel in einer Zeile (Micky 26.11.2026): Jahreszeit, Dauer, was sich abzeichnet, der Halt – Träger und
+    Keime im Hinweis."""
     import zeichen
-    k = zeichen.von(tk)
-    z = zeichen.zirkel(k)
+    z = zeichen.zirkel(zeichen.von(tk))
     if not z:
-        return (f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Zirkel: noch kein Kreislauf aus dem '
-                f'Nachtlauf</div>')
-    farbe = {1: TEXT_2, 2: GRUEN, 3: GELB, 4: ROT}
-    teile = []
-    for p_ in farbe:                                  # die vier Phasen in ihrer Reihenfolge
-        an = p_ == z["phase"]
-        teile.append(f'<div style="flex:1;text-align:center;padding:6px 4px;border-radius:8px;'
-                     f'border:{2 if an else 1}px solid {farbe[p_] if an else RAND};'
-                     f'color:{farbe[p_] if an else TEXT_3};font-size:{14 if an else 13}px">'  # Layout
-                     f'{p_} · {zeichen.PHASE_NAME[p_]}'
-                     + (f'<br><span style="font-size:12px">{z["wochen"]} Wo.</span>' if an and z["wochen"] else "")
-                     + (f'<br><span style="font-size:12px">→ {z["ziel"]} zeichnet sich ab</span>'
-                        if an and z["ziel"] else "") + '</div>')
-    leiste = ('<div style="display:flex;gap:6px;align-items:stretch">' + '<span style="align-self:center">→</span>'.join(teile)
-              + '<span style="align-self:center;color:' + TEXT_3 + '">↻</span></div>')
+        return "🔄 Zirkel: noch kein Kreislauf aus dem Nachtlauf", ""
     if not z["phase"]:
-        leiste = f'<div style="font-size:14px;color:{TEXT_2}">jung – noch keine Jahreszeit (unter 300 Handelstagen)</div>'
-    keim_z = "🌱" if zeichen.KEIM_SEITE.get(z["phase"]) == "stärke" else "🍂"
+        return "🔄 Zirkel: jung – noch keine Jahreszeit (unter 300 Handelstagen)", ""
+    sym, wort, grund = zeichen.halt(z)
+    return (f'🔄 Zirkel: Jahreszeit {z["phase"]} · {zeichen.PHASE_NAME[z["phase"]]}'
+            + (f' · {z["wochen"]} Wo.' if z["wochen"] else "") + (f' · → {z["ziel"]} zeichnet sich ab' if z["ziel"] else "")
+            + (f' · {sym} {wort}' + (f' – {grund}' if grund else "") if sym else ""),
+            f'{z["rolle"][0]}: {"; ".join(z["traegt"]) or "–"} · {z["rolle"][1]}: {"; ".join(z["keim"]) or "–"}')
 
-    def spalte(titel, liste, zeichen_):
-        inhalt = "".join(f'<div style="margin:2px 0">{zeichen_} {t(x)}</div>' for x in liste) or (
-            f'<div style="color:{TEXT_3}">–</div>')
-        return (f'<div style="flex:1;min-width:260px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:2px">'
-                f'{titel}</div><div style="font-size:13px;color:{TEXT_2}">{inhalt}</div></div>')
-    traeger_z = "🍂" if keim_z == "🌱" else "🌱"
-    sym, wort, grund = zeichen.halt(z)                # Halt der Phase (Micky 24.11.2026)
-    halt_html = (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}">{sym} <b>{wort}</b>'
-                 + (f' – {t(grund)}' if grund else "") + f'<span style="color:{TEXT_3};font-size:12px"> · 🏰 hält · '
-                 f'🌊 Welle: ein Riss, die Jahreszeit trägt mehr · ⛈️ Sturm: der Riss wiegt so schwer wie das, was trägt · 🌱 Aufbruch naht: dasselbe in Basis und Abwärts, der Keim ist Stärke'
-                 f'</span></div>') if sym else ""
-    return (f'<div style="margin-top:12px"><div style="font-size:12px;color:{TEXT_3};margin-bottom:4px">Zirkel · Stand '
-            f'{k.get("stand", "")}</div>{leiste}{halt_html}'
-            f'<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">'
-            + spalte(z["rolle"][0], z["traegt"], traeger_z if z["phase"] else "•")
-            + (spalte(z["rolle"][1], z["keim"], keim_z) if z["phase"] else "") + '</div></div>')
+
+def _key_price(r):
+    import livermore
+    nb = livermore.notizbuch(r["df"])
+    try:
+        kp = livermore.key_price(r["tk"], r["df"])            # Key Price mit der Schwesteraktie
+    except Exception:  # noqa: BLE001 – ohne Rückenwind-Lauf oder Kurse der Schwester: ohne Key Price
+        kp = None
+    if not (kp and kp["nb"] and nb):
+        return ""
+    gleich = kp["nb"].get("trend") == nb.get("trend")
+    return (f'🔑 Key Price mit {kp["schwester"]} ({kp["branche"]}): {livermore.spalte_text(kp["nb"])} · '
+            + ("✓ bestätigt den Trend" if gleich else "✗ bestätigt den Trend nicht – vielleicht ein Einzelfall"))
+
+
+def _story_html(r):
+    """Story und Strömung: die drei Fragen des Rückenwinds (Kraft, Nachschub, Fundament) mit allen ihren Zeilen, das
+    Geld des Titels (CMF 20), der Zirkel und der Key Price in je einer Zeile."""
+    import rueckenwind_seite
+    import tiefe
+    karten_ = rueckenwind_seite.titel_karten(r["tk"], r["fuehrte"].get("frei"))
+    c = r["cmf"]
+    geld = ("🌞 Geld fließt zu" if c is not None and c > tiefe.CMF_GRENZE else
+            "❄️ Geld fließt ab" if c is not None and c < -tiefe.CMF_GRENZE else "🟡 Geld neutral")
+    geld += f' (CMF 20 {zahl(c, 2)})' if c is not None else ""
+    spalten = []
+    for i, (kopf_, amp, zeilen_) in enumerate(karten_):
+        zeilen_ = list(zeilen_) + ([geld] if i == 1 else [])
+        spalten.append(f'<div><div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600">'
+                       f'{punkt(amp, PUNKT_KLEIN)}{t(kopf_)}</div>'
+                       + "".join(f'<div style="font-size:13px;color:{TEXT_2};margin-top:3px">{t(z)}</div>' for z in zeilen_)
+                       + '</div>')
+    inhalt = ('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">'
+              + "".join(spalten) + '</div>') if spalten else (
+        f'<div style="font-size:14px;color:{TEXT_3}">Rückenwind: noch kein Stand des Nachtlaufs · {t(geld)}</div>')
+    zz, zz_hinweis = _zirkel_zeile(r["tk"])
+    kp = _key_price(r)
+    unten = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:10px" title="{t(zz_hinweis)}">{t(zz)}</div>'
+             + (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermore: ein Trendwechsel gilt erst, '
+                f'wenn auch der Key Price (zwei Aktien einer Gruppe zusammen) ihn zeigt">{t(kp)}</div>' if kp else ""))
+    return f'<b style="font-size:15px">Story und Strömung</b><div style="margin-top:8px">{inhalt}</div>{unten}'
+
+
+def _block(inhalt):
+    return f'<div style="border:1px solid {RAND};border-radius:12px;padding:14px 16px;margin-top:12px">{inhalt}</div>'
+
+
+def lagebericht(r):
+    """Der Lagebericht über alle Ebenen (Micky 26.11.2026, Analyse HWM): Urteil mit den drei Toren, je Ebene zwei, drei
+    Sätze neben der Leiter aller Stellungen, was ich beobachten würde (long, short, Gegenzeichen), Story und Strömung.
+    Dieselben Regeln auf jeder Ebene (bericht.py) – Titelseite, Depot und Analyse zeigen ihn gleich."""
+    import bericht
+    import leiter
+    be = bericht.alle(r)
+    ebenen_ = "".join(_ebene_html(n, b) for n, b in be.items())
+    mitte = (f'<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;align-items:flex-start">'
+             f'<div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:10px">{ebenen_}</div>'
+             f'<div style="flex:1 1 340px;min-width:0;border:1px solid {RAND};border-radius:10px;padding:12px 14px">'
+             f'<b style="font-size:15px">Die Leiter · alle Ebenen</b>{leiter.bild(bericht.leiter(be))}</div></div>')
+    return (_block(_urteil(r, be)) + mitte + _block(_beobachten_html(be, r)) + _block(_story_html(r)))
 
 
 def kopf(r):
-    """Kopfzeile: Titel, Kurs, Geld; die Rückenwind-Zeile wie in der Liste; je Ebene Spanne und Phase; der Trade.
-    Aufgeräumt 22.11.2026: ohne Lagebeurteilung, Gedächtnis, PbD, Einigkeit und Muster."""
-    import tiefe
-    import zonen
-    f, df = r["fuehrte"], r["df"]
+    """Kopfzeile (Titel, Name, Kurs, Stand) und darunter der Lagebericht – Kacheln, Zirkel-Block und die alten
+    Kopfzeilen sind im Bericht aufgegangen (Micky 26.11.2026)."""
+    import daten
+    df = r["df"]
     kurs = float(df["Close"].iloc[-1])
-    c = r["cmf"]
-    geld = "🌞" if c is not None and c > tiefe.CMF_GRENZE else "❄️" if c is not None and c < -tiefe.CMF_GRENZE else "🟡"
-    tr = f["trade"]
-    if tr:
-        seite_ = "long" if tr["richtung"] > 0 else "short"
-        ueber_ = "über" if tr["richtung"] > 0 else "unter"            # eine Zeile für den Einstieg (Audit 26.11.2026):
-        if tr.get("aufstocken"):                                         # Livermores zwei Hälften statt Auslöser und
-            ein_ = ("½ antasten + ½ aufgestockt – 📒 erreicht" if tr.get("aufgestockt") else   # Antasten doppelt
-                    f'½ antasten beim Schluss {ueber_} {zahl(tr["pivot"])}'
-                    + (" mit Volumen" if tr["wartet"] else "") + f' · ½ aufstocken bei 📒 {zahl(tr["aufstocken"])}')
-        else:
-            ein_ = f'Einstieg {zahl(tr["einstieg"])}'
-        trade_html = (f'<div style="font-size:20px">{tr["zeichen"]} {t(tr["name"])} {seite_}</div>'
-                      f'<div style="font-size:13px;color:{TEXT_2}" title="Livermore: erst eine Probe, nur im Gewinn '
-                      f'nachlegen, nie verbilligen – kommt der Fehlausbruch, ist nur die Hälfte im Feuer">{ein_}</div>'
-                      f'<div style="font-size:13px;color:{TEXT_2}">Stopp {zahl(tr["stopp"])} · {tr["ampel"]} Risiko '
-                      f'{zahl(tr["risiko"], 1)} %</div>'
-                      + (f'<div style="font-size:13px;color:{GRUEN if tr["zirkel"] == "✓" else GELB}">'
-                         f'{tr["zirkel"]} {"der Zirkel trägt" if tr["zirkel"] == "✓" else "gegen den Zirkel"}: '
-                         f'{t(tr["zirkel_grund"])}</div>' if tr.get("zirkel") else ""))
-        import zirkel
-        if zirkel.dreifach(r["tk"], tr):               # Kurs, Geld und Zahlen grün (Micky 23.11.2026)
-            trade_html += (f'<div style="font-size:13px;color:{GRUEN}">▲▲▲ dreifacher Rückenwind – Kurs, Geld und '
-                           f'Zahlen grün</div>')
-        gw = zirkel.gegenwind(r["tk"], tr)              # die Branche steht gegen die Richtung (Weinstein)
-        if gw:
-            trade_html += f'<div style="font-size:13px;color:{GELB}">{t(gw)} – Gegenwind der Gruppe</div>'
-    else:
-        trade_html = '<div style="font-size:20px">⚪ kein Setup</div>'
-    import rueckenwind_seite
-    karten_ = rueckenwind_seite.titel_karten(r["tk"], r["fuehrte"].get("frei"))   # drei Karten Front · Nachschub · Fundament (Micky 23.11.2026)
-    wind_html = ('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;'
-                 'margin-top:10px">'   # Layout
-                 + "".join(f'<div style="border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
-                           f'<div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600">'
-                           f'{punkt(amp, PUNKT_KLEIN)}{t(kopf_)}</div>'
-                           + "".join(f'<div style="font-size:13px;color:{TEXT_2};margin-top:4px;line-height:1.4">{t(z)}</div>'
-                                     for z in zeilen_) + '</div>' for kopf_, amp, zeilen_ in karten_)
-                 + '</div>') if karten_ else (
-        f'<div style="margin-top:10px;font-size:14px;color:{TEXT_3}">Rückenwind: noch kein Stand des Nachtlaufs</div>')
-    zellen = "".join(_karte_ebene(n, f["lage"][n], n == "Tag") for n in zonen.EBENEN)
+    name = daten.kurzname(r["tk"])
     return (f'<div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">'
-            f'<span style="font-size:28px;font-weight:600">{t(r["tk"])}</span>'
-            f'<span style="font-size:18px;color:{TEXT}">{zahl(kurs)} $</span>'
-            f'<span style="font-size:20px" title="Geld (CMF 20)">{geld}</span>'
-            f'<span style="font-size:15px;color:{TEXT}" title="keine Stellung über (✈️) bzw. unter (✈️↓) dem Kurs – '
-            f'Livermores Linie des geringsten Widerstands">{rueckenwind_seite.bahn(f.get("frei"))}</span>'
-            f'<span style="font-size:13px;color:{TEXT_3}">{df.index[-1]:%d.%m.%Y}{" · läuft" if r["laufend"] else ""}</span></div>'
-            f'{lagebericht(r)}{wind_html}{zirkel_html(r["tk"])}{livermore_html(r)}'
-            f'<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px">{zellen}'
-            f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:10px 12px">'
-            f'<div style="font-size:12px;color:{TEXT_3}">Setup</div>{trade_html}</div></div>')
+            f'<span style="font-size:28px;font-weight:700">{t(r["tk"])}</span>'
+            + (f'<span style="font-size:15px;color:{TEXT_2}">{t(name)}</span>' if name else "")
+            + f'<span style="font-size:22px;font-weight:600;color:{TEXT}">{zahl(kurs)} $</span>'
+            f'<span style="font-size:13px;color:{TEXT_3}">Schluss {df.index[-1]:%d.%m.%Y}'
+            f'{" · läuft" if r["laufend"] else ""}</span></div>' + lagebericht(r))
 
 
 def seite_zonen(tk, laufend=False, _stand=None):
@@ -279,7 +345,8 @@ def chart(r, ebene, gd=(), anker=(), linien_=(), profil_ab=None, position=None):
     f = r["fuehrte"]
     rahmen = None                                                     # in der Stunde die Base des Tages als Rahmen
     la_tag = f["lage"]["Tag"]
-    if ebene == "Stunde" and la_tag and la_tag["zone"]:
+    import tiefe
+    if ebene in tiefe.INTRADAY and la_tag and la_tag["zone"]:
         rahmen = (la_tag, pd.Timestamp(la_tag["beginn"]), "Tag")
     return zonenchart.bild(r["ebenen"][ebene], f["lage"][ebene], f["trade"] if ebene == "Tag" and not position else None,
                            r["laufend"] and ebene != "Woche", rahmen, r["rs"][ebene], gd, anker, linien_,
@@ -317,110 +384,6 @@ def anker_setzen(tk, ebene, k, tag):
 
 # ── Livermores Notizbuch auf der Titelseite (Micky 25.11.2026): Spalte im Kopf, Tabelle unter dem Chart ──
 NOTIZBUCH_ZEILEN = 30      # Layout: die letzten 30 Einträge in der Tabelle
-
-
-def lagebericht(r):
-    """Lagebericht in einem Satz (Micky 26.11.2026, Frontkarte): Lage des Titels, dann Front, Decke bzw. Ziel, Kurs,
-    Boden bzw. Ziel und Unterkante nach dem Preis von oben nach unten (wie im Chart; steht der Kurs unter der
-    Unterkante, steht er auch dort), ✈️, Setup mit ✓/✗ – dieselben Linien, die der Chart kräftig zeichnet."""
-    import livermore
-    df = r["df"].dropna(subset=["High", "Low", "Close"])
-    nb = livermore.notizbuch(df)
-    fr = livermore.front(df, nb)
-    if not fr:
-        return ""
-    a_, w_ = livermore.lage(nb["spalte"])
-    teile = [f'{a_} {w_}']
-    tr = r["fuehrte"]["trade"]
-    lang, kurz = bool(tr and tr["richtung"] > 0), bool(tr and tr["richtung"] < 0)   # das Ziel liegt in Richtung des
-    fb = livermore.frei(df, nb)                                                     # Setups; ✈️ = keine Stellung mehr
-    pz = lambda x: f'{zahl(x["preis"])} ({"+" if x["preis"] >= fr["kurs"] else "−"}'   # noqa: E731 – Abstand zum Kurs
-    pz_ = lambda x: pz(x) + f'{zahl(abs(x["preis"] / fr["kurs"] - 1) * 100, 1)} %)'     # noqa: E731 (Sharp, 26.11.)
-    karte_ = [(x["preis"], f'{wort} {pz_(x)}') for x, wort in                      # (auch nicht die Front)
-              ((fr["oben"], "Front"), (fr["ziel"], "Ziel" if lang else "Decke"), (fr["boden"], "Ziel" if kurz else "Boden"),
-               (fr["unten"], "Unterkante")) if x]
-    karte_.append((fr["kurs"], f'Kurs {zahl(fr["kurs"])}'))
-    teile += [w for _, w in sorted(karte_, key=lambda x: -x[0])]                  # von oben nach unten wie im Chart
-    if not fr["ziel"] and fb["oben"]:                                               # (Audit 26.11.2026)
-        teile.insert(1, "✈️ freie Bahn")
-    if not fr["boden"] and fb["unten"]:
-        teile.append("✈️↓ freie Bahn")
-    if tr:
-        teile.append(f'{tr["zeichen"]} {tr["name"]} {"long" if tr["richtung"] > 0 else "short"}'
-                     + (f' {tr["zirkel"]}' if tr.get("zirkel") else ""))
-    ei = r["fuehrte"].get("einigkeit")                                              # Einigkeit der Ebenen (26.11.)
-    ebenen_ = ""
-    if ei:
-        ebenen_ = " · ".join(f'{n} {a__} {w__}' for n, (a__, w__) in ei["ebenen"].items())
-        if ei["alle"]:
-            ebenen_ += (" — ⬆ Einigkeit: Vormarsch auf allen drei Ebenen" if ei["alle"] == "auf"
-                        else " — ⬇ Einigkeit: Rückzug auf allen drei Ebenen")
-        ebenen_ = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermores Notizbuch auf Wochen-, '
-                   f'Tages- und Stundenkerzen">🧭 {t(ebenen_)}</div>')
-    import tore                                                                     # die drei Tore (Sharp, 26.11.)
-    to = tore.tore(df, tr, bool(r.get("laufend")))
-    tz = tore.zeile(to, tr)
-    st_ = r["ebenen"].get("Stunde")                                                 # Ort auch auf der Stunde
-    if st_ is not None and st_.get("df") is not None and len(st_["df"]) > 30:
-        try:
-            os_ = livermore.ort(st_["df"].dropna(subset=["High", "Low", "Close"]))
-            if os_ and os_["drittel"]:
-                tz += f' (Stunde: {os_["drittel"]})'
-        except Exception:  # noqa: BLE001 – ohne Stundenkarte bleibt der Ort des Tages
-            pass
-    story = _story(r)
-    tore_ = (f'<div style="font-size:14px;color:{TEXT};margin-top:3px" title="Drei Tore vor dem Trade (Harry Sharp): '
-             f'Richtung aus der letzten abgeschlossenen Wochen- und Tageskerze (bei gemischt entscheidet die Lage der '
-             f'Woche), Ort aus Lage in der Spanne, Weg voraus, Chop und Lauf, Auslöser = unser Setup – ✗ heißt: dieses '
-             f'Tor steht gegen das Setup">{t(tz)}{" · " + t(story) if story else ""}</div>' if tz else "")
-    return (f'<div style="margin-top:10px;font-size:16px;color:{TEXT};font-weight:600" title="Lagebericht von oben nach unten: Front = '
-            f'letzter Pivotal Point oben, Decke und Boden = nächste stehende Stellung über bzw. unter dem Kurs '
-            f'(in Richtung des Setups heißt sie Ziel), Unterkante = letzter Pivotal Point unten; in Klammern der Abstand '
-            f'zum Kurs">🗺️ {t(" · ".join(teile))}</div>' + tore_ + ebenen_)
-
-
-def _story(r):
-    """Sharps „Story der Woche“ aus dem, was schon da ist: 💰 Geld und 📊 Zahlen als Ampel, 📅 der nächste
-    Zahlentermin (rueckenwind_seite.titel_karten) – kein eigener Text, keine neue Quelle."""
-    import rueckenwind_seite
-    try:
-        karten = rueckenwind_seite.titel_karten(r["tk"], r["fuehrte"].get("frei"))
-    except Exception:  # noqa: BLE001 – ohne Rückenwind-Stand keine Story
-        return ""
-    amp = {k_.split(" ")[0]: a_ for k_, a_, _ in karten}
-    termin = next((z for _, _, zs in karten for z in zs if z.startswith("📅")), "")
-    teile = [f'{sym} {rueckenwind_seite.PUNKT.get(amp.get(sym), "⚪")}' for sym in ("💰", "📊") if sym in amp]
-    if termin:
-        teile.append(termin.replace("📅 nächste Zahlen", "📅"))
-    return "📖 Story " + " ".join(teile) if teile else ""
-
-
-def livermore_html(r):
-    """Eine Zeile unter dem Zirkel: in welcher Spalte Livermore heute schreibt, dazu der Key Price mit der
-    Schwesteraktie. Front, Unterkante und Kipp-Zone stehen nur im Lagebericht und im Chart (Micky 26.11.2026: eine
-    Rechnung, nicht doppelt)."""
-    import livermore
-    df = r.get("df")
-    nb = livermore.notizbuch(df) if df is not None else None
-    if not nb:
-        return ""
-    farbe = {"AT": GRUEN, "AB": ROT}.get(nb["spalte"], TEXT_2)
-    try:
-        kp = livermore.key_price(r["tk"], df)                  # Key Price mit der Schwesteraktie
-    except Exception:  # noqa: BLE001 – ohne Rückenwind-Lauf oder Kurse der Schwester: ohne Key Price
-        kp = None
-    kp_html = ""
-    if kp and kp["nb"]:
-        gleich = kp["nb"].get("trend") == nb.get("trend")
-        kp_html = (f'<div style="font-size:13px;color:{TEXT_2};margin-top:2px" title="Livermore: ein Trendwechsel gilt '
-                   f'erst, wenn auch der Key Price (zwei Aktien einer Gruppe zusammen) ihn zeigt – beide auf 100 gesetzt">'
-                   f'🔑 Key Price mit {t(kp["schwester"])} ({t(kp["branche"])}): {livermore.spalte_text(kp["nb"])} · '
-                   + (f'<span style="color:{GRUEN}">✓ bestätigt den Trend</span>' if gleich
-                      else f'<span style="color:{GELB}">✗ bestätigt den Trend nicht – vielleicht ein Einzelfall</span>')
-                   + '</div>')
-    return (f'<div style="margin-top:8px;font-size:14px;color:{TEXT}" title="Livermores Notizbuch (Market Key, 1940): '
-            f'Schwung 2 ATR, Bestätigung 1 ATR">📒 Livermore: <b style="color:{farbe}">{livermore.spalte_text(nb)}</b>'
-            f'</div>{kp_html}')
 
 
 def notizbuch_tabelle(r):

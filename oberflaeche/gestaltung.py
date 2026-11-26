@@ -6,18 +6,18 @@ Werte aus dem Konzept (Abschnitt „Gestaltung: verbindlich wie die Designvorlag
 from html import escape
 from masse import ZEILENUMBRUCH  # noqa: E402
 
-SEITE = "#0E1217"
-KARTE = "#161C24"
-RAND = "#263040"
-TEXT = "#E6EAF0"
-TEXT_2 = "#A9B4C4"
-TEXT_3 = "#8B97A8"
-GRUEN = "#3FB950"
-GELB = "#D29922"
-ROT = "#F85149"
-BLAU = "#7DB4FF"
-LILA = "#D2A8FF"
-GRAU = "#5A6475"
+SEITE = "#FFFFFF"   # weiße Optik (Micky 26.11.2026)
+KARTE = "#F7F8FA"
+RAND = "#E3E7EE"
+TEXT = "#1A1F29"
+TEXT_2 = "#3D4655"
+TEXT_3 = "#5B6472"
+GRUEN = "#15803D"
+GELB = "#A16207"
+ROT = "#B42318"
+BLAU = "#1D4ED8"
+LILA = "#7E22CE"
+GRAU = "#9AA3B2"
 AMPEL = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": GRAU, "blau": BLAU}
 SCHRIFT = "'IBM Plex Sans', system-ui, sans-serif"
 
@@ -25,10 +25,10 @@ KOPF = (
     "<style>"
     "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600"
     "&family=IBM+Plex+Mono:wght@400;500&display=swap');"
-    f".ic a{{color:{BLAU}}}.ic a:hover{{color:#A9CDFF}}"
+    f".ic a{{color:{BLAU}}}.ic a:hover{{color:#1E3A8A}}"
     ".ic .hinweis-tip{display:none;position:absolute;right:0;bottom:calc(100% + 6px);z-index:5;width:min(560px,90%);"
-    f"background:#1C2430;border:1px solid #2F3B4E;border-radius:10px;padding:12px 14px;font-size:13px;"
-    f"line-height:1.6;color:{TEXT_2};box-shadow:0 8px 24px rgba(0,0,0,.45)}}"
+    f"background:#FFFFFF;border:1px solid #D5DBE5;border-radius:10px;padding:12px 14px;font-size:13px;"
+    f"line-height:1.6;color:{TEXT_2};box-shadow:0 8px 24px rgba(16,24,40,.12)}}"
     ".ic .hinweis-zone:hover .hinweis-tip{display:block}"
     "</style>"
 )

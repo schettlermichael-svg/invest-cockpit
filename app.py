@@ -571,11 +571,12 @@ elif ticker:                                  # Titelseite des schlanken Cockpit
                 teile = _gebaut("zonen", _codestand(), *args)
             _QUELLE["text"] = "frisch gerechnet" if time.time() - t0 > 0.5 else "aus dem Zwischenspeicher"
         st.markdown(teile["kopf"], unsafe_allow_html=True)
+        import zonen
         import zonenchart
         import zonenseite
         k0, k1, k2, k3, k4 = st.columns([4, 2, 2, 2, 2])
         with k0:
-            ebene = st.radio("Ebene", ["Woche", "Tag", "Stunde"], index=1, horizontal=True, key="zonen_ebene")
+            ebene = st.radio("Ebene", list(zonen.EBENEN), index=1, horizontal=True, key="zonen_ebene")
         with k1:
             st.button("↻ Kurse aktualisieren", use_container_width=True, on_click=_aktualisieren, args=(ticker,))
         with k2:

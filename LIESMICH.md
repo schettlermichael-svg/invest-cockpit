@@ -1840,3 +1840,22 @@ Schlachtordnung der Titel (Garde … Rückzug) – Micky 23.11.2026.
   „· 🛡n“; Stratege mit Tor-Feld und Absatz im Auftrag. Regelkarte und Wörterbuch nachgezogen.
 - Nicht übernommen (Micky): Feder-Auslöser, Stopp-Kauf, 50-%-Regel, enger Stopp, Linien am Körper, Bruch ohne Puffer,
   4-Stunden-Ebene, 1:1-Ziele.
+
+## Lagebericht über vier Ebenen und weiße Optik (26.11.2026, Micky: „so und genauso möchte ich in der app informiert werden“)
+
+Vorlage: die Analyse von HWM über 1W, 1T, 4h und 1h (Skizze auf der Design-Fläche „Titelseite neu – Lagebericht HWM“,
+freigegeben). Ein System mit wenig Variablen: jede Ebene mit denselben Regeln – Livermores Notizbuch auf ihren Kerzen.
+
+- **4 Stunden** (`tiefe.vier_stunden`, wie TradingView: 9:30–13:30 und 13:30–16:00 New York aus 30 Minuten) ist eine
+  volle Ebene (`zonen.EBENEN`): Spanne, Lage, Stellungen, Chart-Reiter. `tiefe.INTRADAY` = 4 Stunden und Stunde.
+- **Alte Plattform** (`livermore.gefallene`, Rollentausch): durchbrochene Pivotal Points auf der anderen Seite des
+  Kurses, innerhalb 1 ATR eine Plattform – nur Leiter und Bericht, nicht gezählt.
+- **Bericht** (`kern/bericht.py`): je Ebene Lage, letzte Kerze, Spanne mit Drittel, Treppe (letzte 3 Hochs und Tiefs:
+  aufwärts, abwärts, eingequetscht, weitet sich), Decke und Boden mit Abprallern (an der Kante „Decke = Front“), alte
+  Plattform, in der Woche der Abstand zum 52-Wochen-Hoch. Beobachten long/short (erster Schritt Stunde, Auslöser Tag,
+  dahinter), Gegenzeichen gegen die Richtung.
+- **Leiter** (`oberflaeche/leiter.py`): alle Stellungen aller Ebenen auf einer Achse, ±8 Tages-ATR, weiter weg mit Pfeil.
+- **Titelseite** (`zonenseite.kopf`/`lagebericht`): Kopf, Urteil mit den drei Toren und dem Setup, Ebenen neben der
+  Leiter, Beobachten, Story und Strömung (Kraft, Nachschub mit CMF, Fundament, Zirkel und Key Price je eine Zeile).
+  Entfernt: Kacheln je Ebene, Zirkel-Block, 🗺️/🚦/🧭-Zeilen, Livermore-Zeile. Depot und Analyse zeigen denselben Bericht.
+- **Weiße Optik**: Farben in `gestaltung.py`, `.streamlit/config.toml`, Chart-Farben (helle Linien jetzt dunkel).

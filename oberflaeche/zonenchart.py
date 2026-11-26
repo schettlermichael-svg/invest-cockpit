@@ -18,35 +18,35 @@ OBEN, KURS_H = 16, 360                 # Layout: Kursfeld
 VOL_H, RS_H = 60, 90                   # Layout: Volumen, relative Stärke
 ZEICHEN_H = 22                         # Layout: Zeichenleiste unter dem Volumen
 LUECKE = 14                            # Layout: Abstand zwischen den Feldern
-ZEIGEN = {"Woche": 104, "Tag": 126, "Stunde": 140}   # Kerzen im Bild (2 Jahre, 6 Monate, 20 Handelstage)
-JAHR = {"Woche": 52, "Tag": 252, "Stunde": 252 * 7}  # Kerzen je Jahr (RS-Hoch vor Kurs)
+ZEIGEN = {"Woche": 104, "Tag": 126, "4 Stunden": 120, "Stunde": 140}   # Kerzen im Bild (2 Jahre, 6 Monate, 60 und 20 Handelstage)
+JAHR = {"Woche": 52, "Tag": 252, "4 Stunden": 252 * 2, "Stunde": 252 * 7}  # Kerzen je Jahr (RS-Hoch vor Kurs)
 PFEIL_N = 10                           # RS-Pfeil: die letzten 10 Kerzen
 PFEIL_LEICHT, PFEIL_STARK = 1, 3       # ↗/↘ ab 1 %, ↑/↓ ab 3 % (wie bisher im Cockpit)
 ZONE_FARBE = "#EDA100"                 # Spanne wie in Vorwalds Bildern gelb
 POC_FARBE = "#1BAF7A"
-WOCHE_FARBE = "#7DB4FF"
-EINSTIEG_FARBE = "#E6EAF0"
-RS_HOCH_FARBE, RS_TIEF_FARBE = "#FFD166", "#FF6B6B"
-GD_FARBE = {10: "#F0883E", 20: "#FF7EB6", 50: BLAU, 150: LILA, 200: "#D9B26F"}   # wie bisher im Cockpit
+WOCHE_FARBE = "#2563EB"
+EINSTIEG_FARBE = "#1A1F29"
+RS_HOCH_FARBE, RS_TIEF_FARBE = "#D97706", "#DC2626"
+GD_FARBE = {10: "#F0883E", 20: "#DB2777", 50: BLAU, 150: LILA, 200: "#A16207"}   # wie bisher im Cockpit
 GD_WAHL = (10, 20, 50, 150, 200)
-ANKER_FARBE = ("#4DD0E1", "#FF8A65")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
+ANKER_FARBE = ("#0891B2", "#EA580C")   # eigener AVWAP: Anker 1 türkis, Anker 2 orange
 ZEIT_FARBE = LILA                      # Zeitprofil (Market Profile)
 LINIEN_WAHL = {"details": "Profil-Details", "marketprofile": "Market Profile", "livermore": "Livermore"}   # Schalter (Micky
 LINIEN_START = ["livermore"]                                                  # 24./25.11.2026); Livermore an
 SCHLUCHT_ETIKETTEN = 2                 # Layout: höchstens 2 Schluchten beschriftet (die breitesten)
-WERT_FARBE = "#E6EAF0"                 # VAH, VAL
-DUENN_FARBE = "#7DB4FF"                # dünne Stellen (LVN)
-EINZEL_FARBE = "#FFFFFF"               # Einzeldrucke im Zeitprofil
+WERT_FARBE = "#1A1F29"                 # VAH, VAL
+DUENN_FARBE = "#2563EB"                # dünne Stellen (LVN)
+EINZEL_FARBE = "#1A1F29"               # Einzeldrucke im Zeitprofil
 LVN_ETIKETTEN = 3                      # Layout: höchstens 3 dünne Stellen beschriftet (die breitesten)
 RAND_SPIEL = 0.04                      # Layout: 4 % Luft über und unter den Kursen
-WENDE_FARBE = "#9AA7B8"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
-SCHNITT_FARBE = "#E6EAF0"              # Volumen-Schnitt als weiße Linie
+WENDE_FARBE = "#6B7280"                # Wendepunkte (Schwunghochs und -tiefs ab 2 ATR)
+SCHNITT_FARBE = "#1A1F29"              # Volumen-Schnitt als dunkle Linie
 VOL_DECKEL = 3.0                       # Layout: Volumen-Achse bis zum 3-fachen des höchsten Schnitts
-VOL_SCHNITT = {"Tag": 50, "Woche": 10, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
-EINHEIT = {"Tag": "T.", "Woche": "Wo.", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
+VOL_SCHNITT = {"Tag": 50, "Woche": 10, "4 Stunden": 50, "Stunde": 50}   # Kerzen im Volumen-Schnitt (O'Neil: 50 Tage, 10 Wochen)
+EINHEIT = {"Tag": "T.", "Woche": "Wo.", "4 Stunden": "4h", "Stunde": "Std."}       # kurz: unter dem Profil ist nur seine Breite Platz
 ZEILE = 14                             # Layout: Abstand der Etiketten rechts
 KERZE_WORT = {"Tag": ("am Tag", "am Tag danach"), "Woche": ("in der Woche", "in der Woche danach")}
-PIVOT_FARBE = "#FFFFFF"                # die Front: gestrichelt weiß über allem
+PIVOT_FARBE = "#111827"                # die Front: gestrichelt dunkel über allem
 PIVOT_GLEICH = 0.001                   # Technik: der Wendepunkt der Front – Hoch bis 0,1 % an der Front
 PLAN_DECK = 0.13                       # Layout: Flächen des Schlachtplans
 MARKE_RAND = 50                        # Layout: Marken so nah am rechten Rand enden an der Kerze
@@ -54,7 +54,7 @@ PP_BLASS_DECK = 0.3                    # Layout: weiter entfernte offene Pivotal
 PP_BLASS_DICKE = 1.0                   # Layout
 KIPP_DECK = 0.10                       # Layout: Kipp-Zone um die Front (Micky 26.11.2026), je 1 ATR, quer über das Bild
 PP_DICKE = 2.0                         # Layout: Strichstärke (Micky 25.11.2026: deutlicher, eine Linie)
-PP_HELL = "#E6EAF0"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
+PP_HELL = "#374151"                    # Layout: Pivotal Points aus Abwärtstrend und Erholung
 
 
 def _pfeil(r):
@@ -114,7 +114,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     (Lage, Beginn, Name) der höheren Ebene als Rahmen (nur in der Stunde: die Base des Tages). Aufgeräumt 22.11.2026:
     ohne PbD, Phasenband, Szenarien, Gedächtnis, Treppe, Wanderung, Korridor und alte Spannen-Kästen.
     Der Zirkel im Chart (Micky 22.11.2026): Wendepunkte (Schwunghochs und -tiefs ab 2 ATR, vcp_zone.zigzag – dieselbe
-    Rechnung wie Notizbuch und Stellungen) als Punkte; die eine Front als gestrichelte weiße Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
+    Rechnung wie Notizbuch und Stellungen) als Punkte; die eine Front als gestrichelte dunkle Linie (blass ohne Setup) und als Raute auf seinem Wendepunkt (Micky 23.11.2026),
     Fehlausbruch, Rücktest und Decke der Gefangenen (ba = zonen.basis), ✈️ freie Bahn als Etikett, darunter die
     Zeichenleiste (🦬 Ausbruch, 📒 Livermores Bestätigung, 🦊 Fehlausbruch, 🏜️ leisester Tag seit 50 Kerzen, ⚡ Kraft ohne Weg, am Ende der Halt der
     Phase) und Momentum 🚀 am Ende der RS-Linie (tk = Ticker für Zirkel und Momentum). position = die gehaltene
@@ -170,7 +170,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
          f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
-         '<style>text{paint-order:stroke;stroke:#161C24;stroke-width:4px;stroke-linejoin:round}</style>'
+         '<style>text{paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}</style>'
          '<defs><marker id="spitze" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
          'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>']
     A = s.append
@@ -193,7 +193,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         x0 = X(pos(woche[1])) - halb if woche[1] >= d.index[0] else LINKS
         A(f'<rect x="{x0:.1f}" y="{Y(wh):.1f}" width="{ende - x0:.1f}" height="{max(2, Y(wl) - Y(wh)):.1f}" fill="none" '
           f'stroke="{WOCHE_FARBE}" stroke-width="1.2" stroke-opacity="0.7"/>'                                    # Layout
-          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Spanne der Woche" if woche[2] == "Woche" else "Spanne des Tages"} {woche[0]["name"]}</text>')  # Layout: unter dem Rahmen
+          f'<text x="{x0 + 4:.1f}" y="{Y(wl) + 13:.1f}" fill="{WOCHE_FARBE}" font-size="11">{"Spanne der Woche" if woche[2] == "Woche" else "Spanne des Tages"}{"" if woche[0]["name"] == "Spanne" else " " + woche[0]["name"]}</text>')  # Layout: unter dem Rahmen
     if la["zone"]:                                                                  # die Spanne von heute
         zs = pd.Timestamp(la["beginn"])
         xz = X(pos(zs)) - halb if zs >= d.index[0] else LINKS
@@ -256,7 +256,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         if kt is not None and kt >= d.index[0]:
             A(f'<line x1="{xk:.1f}" x2="{xk:.1f}" y1="{OBEN}" y2="{OBEN + KURS_H}" stroke="{BLAU}" stroke-opacity="0.5" '
               f'stroke-dasharray="2 4"><title>Kauf am {kt:%d.%m.%Y}</title></line>')   # Layout
-    if piv is not None and pmin <= piv <= pmax:          # die Front als eigene Linie (Micky 23.11.2026): gestrichelt weiß
+    if piv is not None and pmin <= piv <= pmax:          # die Front als eigene Linie (Micky 23.11.2026): gestrichelt dunkel
         A(f'<line x1="{xz:.1f}" x2="{ende}" y1="{Y(piv):.1f}" y2="{Y(piv):.1f}" stroke="{PIVOT_FARBE}" '
           f'stroke-width="2.4" stroke-dasharray="8 4">'   # Layout
           f'<title>Front {zahl(piv)} – die Kante, an der die Waage kippt</title></line>')  # Layout
@@ -288,7 +288,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     for i in range(N):
         f = GRUEN if c[i] >= o[i] else ROT
         nr = n_ges - n0 - i                                                         # Balkennummer von rechts
-        A(f'<g><title>Balken {nr} · {d.index[i]:%d.%m.%Y{" %H:%M" if e["name"] == "Stunde" else ""}} · E {zahl(o[i])} · '
+        A(f'<g><title>Balken {nr} · {d.index[i]:%d.%m.%Y{" %H:%M" if e["name"] in tiefe.INTRADAY else ""}} · E {zahl(o[i])} · '
           f'H {zahl(h[i])} · T {zahl(l[i])} · S {zahl(c[i])}</title>'
           f'<rect x="{X(i) - halb:.1f}" y="{OBEN}" width="{2 * halb:.1f}" height="{KURS_H}" fill="#000" fill-opacity="0"/>'
           f'<line x1="{X(i):.1f}" x2="{X(i):.1f}" y1="{Y(h[i]):.1f}" y2="{Y(l[i]):.1f}" stroke="{f}"/>')
@@ -336,7 +336,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
               f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Front (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
-    if ba and e["name"] != "Stunde":                                                # Fehlausbruch und Rücktest
+    if ba and e["name"] not in tiefe.INTRADAY:                                                # Fehlausbruch und Rücktest
         aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Livermore, 25.11.:
         marken = [(t_, "✗ Fehlausbruch", ROT) for t_, _ in aus_.get("gescheitert") or []]   # Schluss 1 ATR unter dem
         if aus_.get("ruecktest") and aus_.get("rueck_tag") is not None:            # Front; knapp darunter =
@@ -357,7 +357,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                   f'stroke-width="1.2" stroke-dasharray="6 4"><title>Decke der Gefangenen: Hoch des Fehlausbruchs '
                   f'{zahl(h_g)} – wer dort kaufte, sitzt im Verlust und verkauft gern bei Einstand</title></line>')
                 etiketten.append((Y(h_g), f"Decke der Gefangenen {zahl(h_g)}", ROT))
-    if fest is not None and e["name"] != "Stunde":                                  # ✈️ freie Bahn (Livermore)
+    if fest is not None and e["name"] not in tiefe.INTRADAY:                                  # ✈️ freie Bahn (Livermore)
         if not fest.get("oben"):
             etiketten.append((OBEN + 4, "✈️ freie Bahn", GRUEN))   # Layout: ganz oben
         if not fest.get("unten"):
@@ -466,13 +466,13 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         A(f'<rect x="{X(i) - bw / 2:.1f}" y="{y_vol + VOL_H - hv:.1f}" width="{bw:.1f}" height="{hv:.1f}" '
           f'fill="{GRUEN if c[i] >= o[i] else ROT}" fill-opacity="{0.85 if hoch else 0.35}"/>')  # Layout
     vs = vs_                                                                        # Schnitt als
-    pkt_v = " ".join(f"{X(i):.1f},{y_vol + VOL_H - min(VOL_H, VOL_H * vs[i] / vmax):.1f}"   # weiße Linie (Micky 24.11.)
+    pkt_v = " ".join(f"{X(i):.1f},{y_vol + VOL_H - min(VOL_H, VOL_H * vs[i] / vmax):.1f}"   # dunkle Linie (Micky 24.11.)
                      for i in range(N) if not np.isnan(vs[i]))
     if pkt_v:
         A(f'<polyline points="{pkt_v}" fill="none" stroke="{SCHNITT_FARBE}" stroke-width="1.3">'   # Layout
           f'<title>Volumen-Schnitt {VOL_SCHNITT[e["name"]]} Kerzen</title></polyline>')
     A(f'<text x="{ende + 2}" y="{y_vol + 12}" fill="{TEXT_3}" font-size="10">Volumen · Ø {VOL_SCHNITT[e["name"]]}'   # Layout
-      f'<title>weiße Linie = Schnitt der letzten {VOL_SCHNITT[e["name"]]} Kerzen</title></text>')   # Layout
+      f'<title>dunkle Linie = Schnitt der letzten {VOL_SCHNITT[e["name"]]} Kerzen</title></text>')   # Layout
     leiste = {}                                                                     # Zeichenleiste: Kerze → [(Zeichen, Text)]
     vv = df["Volume"].astype(float).to_numpy()
     for i in range(N):                                                              # 🏜️ leisester Tag seit 50 Kerzen
@@ -484,7 +484,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             leiste.setdefault(pos(x["tag"]), []).append(
                 ("⚡", f'Kraft ohne Weg an {x["marke"]}: {zahl(x["volumen"], 1)}-faches Volumen, enge Spanne '
                        f'({"Verkäufer schlucken die Nachfrage" if x["rand"] == "oben" else "Käufer schlucken das Angebot"}, Wyckoff)'))
-    a_b = (ba or {}).get("ausbruch") if e["name"] != "Stunde" else None
+    a_b = (ba or {}).get("ausbruch") if e["name"] not in tiefe.INTRADAY else None
     if a_b:                                                                         # 🦬 Ausbruch, 🦊 Fehlausbruch
         for tag_, z_, text in ((a_b["tag"], "🦬", "Ausbruch über die Front"
                                 + (" mit Volumen" if a_b["mit_volumen"] else " ohne Volumen")),
@@ -492,13 +492,13 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
                                (a_b.get("bestaetigt_tag"), "📒", "Livermore: Ausbruch bestätigt – Hoch 1 ATR über der Front")):
             if tag_ is not None and (z_ != "🦊" or a_b["fehl"]) and pd.Timestamp(tag_) >= d.index[0]:
                 leiste.setdefault(pos(tag_), []).append((z_, text))
-    if tk and e["name"] != "Stunde":                                                # Halt der Jahreszeit: jetzt
+    if tk and e["name"] not in tiefe.INTRADAY:                                                # Halt der Jahreszeit: jetzt
         zk = zeichen.zirkel((zeichen.laden().get("titel") or {}).get(tk))
         sym, wort, grund = zeichen.halt(zk)                                         # Halt der Phase (24.11.2026)
         if sym:
             leiste.setdefault(N - 1, []).append((sym, f"Jahreszeit {wort}" + (f" – {grund}" if grund else "")
                                                  + "".join(f" · Keim: {x}" for x in (zk or {}).get("keim", [])[:3])))
-    tage_, naechster = _zahlentage(tk) if tk and e["name"] != "Stunde" else ([], None)
+    tage_, naechster = _zahlentage(tk) if tk and e["name"] not in tiefe.INTRADAY else ([], None)
     cf = df["Close"].to_numpy(float)
     for tag_ in tage_:                                                              # Ⓔ Zahlentage (Micky 24.11.2026)
         if tag_ < d.index[0] or tag_ > d.index[-1]:
@@ -566,8 +566,8 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     letzter = None
     for i, tag in enumerate(d.index):                                               # Zeitachse
         schl = {"Woche": (tag.year, (tag.month - 1) // 3), "Tag": (tag.year, tag.month)}.get(e["name"], tag.normalize())  # Layout
-        if schl != letzter and letzter is not None and (e["name"] != "Stunde" or tag.dayofweek == 0):
-            text = f"{tag:%d.%m.}" if e["name"] == "Stunde" else f"{tag:%m/%y}"
+        if schl != letzter and letzter is not None and (e["name"] not in tiefe.INTRADAY or tag.dayofweek == 0):
+            text = f"{tag:%d.%m.}" if e["name"] in tiefe.INTRADAY else f"{tag:%m/%y}"
             A(f'<text x="{X(i):.1f}" y="{H - 6}" fill="{TEXT_3}" font-size="11">{text}</text>')  # Layout
         letzter = schl
     A("</svg>")
@@ -582,7 +582,7 @@ def legende():
              (DUENN_FARBE, "Schlucht: dünne Stelle des Profils quer über das Gelände – dort fällt der Kurs durch"),
              (GRUEN, "Profil rechts: Käufer grün | Verkäufer rot – geschätzt aus steigenden und fallenden Kerzen; mit dem Schalter „Market Profile“ links davon die Zeit (lila, Zeit-POC, Einzeldrucke)"),
              (WERT_FARBE, "Profil-Details: VAH/VAL = Wertzone (70 % des Volumens, kräftig) · ◀ Knoten (dicke Stellen) · "
-              "blauer Streifen = dünne Stelle · weiß im Zeitprofil = Einzeldruck (nur eine Kerze)"),
+              "blauer Streifen = dünne Stelle · dunkel im Zeitprofil = Einzeldruck (nur eine Kerze)"),
              (WOCHE_FARBE, "Rahmen in der Stunde: die Spanne des Tages"),
              (ANKER_FARBE[0], "eigener AVWAP 1 · AVWAP 2 orange · dazwischen die Zange"),
              (WENDE_FARBE, "● Wendepunkte: Schwunghochs und -tiefs ab 2 ATR (Livermores 6 Punkte in ATR) – hohl = noch "
@@ -591,7 +591,7 @@ def legende():
              (PIVOT_FARBE, "- - Front (◆ auf ihrem Wendepunkt): die Kante, an der die Waage kippt – Livermores letzter "
               "Pivotal Point oben (Livermores Pivot)"),
              (ROT, "— Livermores Pivotal Points (Schalter „Livermore“, auf jeder Ebene aus ihren Kerzen; im Notizbuch doppelt unterstrichen): rot aus "
-              "Aufwärtstrend und Reaktion, hell (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
+              "Aufwärtstrend und Reaktion, grau (im Buch schwarz) aus Abwärtstrend und Erholung; jeder, der noch steht, "
               "als Linie ab seinem Tag bis zum rechten Rand – kräftig mit Preis Front und Unterkante und je die nächste "
               "Stellung über dem Kurs (Decke) und darunter (Boden), die übrigen blass; gefallen (Schluss 1 ATR jenseits) = weg"),
              (GRUEN, "Kipp-Zone (Frontkarte): long 1 ATR über der Front grün – ein Hoch darüber bestätigt den Angriff (📒, "
