@@ -7,7 +7,7 @@ import time
 import pandas as pd
 
 import gestaltung
-from gestaltung import (BLAU, GELB, GRUEN, PUNKT_KLEIN, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, punkt, seite,
+from gestaltung import (BLAU, GELB, GRUEN, KARTE, PUNKT_KLEIN, RAND, ROT, TEXT, TEXT_2, TEXT_3, karte, punkt, seite,
                         t, zahl)
 
 HIER = os.path.dirname(os.path.abspath(__file__))
@@ -157,7 +157,7 @@ def _ebene_html(n, b):
              f'<b style="font-size:15px">{EBENE_TITEL[n]}</b>'
              f'<span style="font-size:13px;color:{farbe}">{t(bericht.kurzurteil(b))}</span></div>')
     text = " ".join(bericht.saetze(b)) if b else "Zu wenige Kerzen für das Notizbuch."
-    return (f'<div style="border:1px solid {RAND};border-radius:10px;padding:12px 14px">{kopf_}'
+    return (f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:12px 14px">{kopf_}'
             f'<div style="font-size:14px;color:{TEXT_2};margin-top:4px;line-height:1.5">{t(text)}</div></div>')
 
 
@@ -234,7 +234,7 @@ def _story_html(r):
 
 
 def _block(inhalt):
-    return f'<div style="border:1px solid {RAND};border-radius:12px;padding:14px 16px;margin-top:12px">{inhalt}</div>'
+    return f'<div style="background:{KARTE};border:1px solid {RAND};border-radius:12px;padding:14px 16px;margin-top:12px">{inhalt}</div>'
 
 
 def lagebericht(r):
@@ -247,7 +247,7 @@ def lagebericht(r):
     ebenen_ = "".join(_ebene_html(n, b) for n, b in be.items())
     mitte = (f'<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;align-items:flex-start">'
              f'<div style="flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:10px">{ebenen_}</div>'
-             f'<div style="flex:1 1 340px;min-width:0;border:1px solid {RAND};border-radius:10px;padding:12px 14px">'
+             f'<div style="flex:1 1 340px;min-width:0;background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:12px 14px">'
              f'<b style="font-size:15px">Die Leiter · alle Ebenen</b>{leiter.bild(bericht.leiter(be))}</div></div>')
     return (_block(_urteil(r, be)) + mitte + _block(_beobachten_html(be, r)) + _block(_story_html(r)))
 

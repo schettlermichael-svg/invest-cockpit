@@ -207,7 +207,7 @@ def seite_uebersicht():
             f'<span>Stand {stand:%d.%m.%Y}</span>'
             f'<span title="Datenampel aus dem Protokoll des Nachtlaufs (daten/nachtlauf/protokoll.json)" '
             f'style="display:flex;gap:6px;align-items:center">{punkt(_nacht[0], 10)}{t(_nacht[1])}</span>'  # Layout
-            f'<span style="font-family:IBM Plex Mono,monospace;color:{TEXT_3}">geladen in {zahl(time.time() - start, 1)} s</span>'
+            f'<span style="font-family:monospace;color:{TEXT_3}">geladen in {zahl(time.time() - start, 1)} s</span>'
             f'</div></header>')
     leiste = (f'<section aria-label="Lageleiste" style="display:grid;grid-template-columns:repeat(auto-fit,'
               f'minmax(240px,1fr));gap:16px">{"".join(kacheln)}</section>')

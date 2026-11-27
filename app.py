@@ -19,7 +19,7 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HIER, "oberflaeche"))
 sys.path.insert(0, os.path.join(HIER, "kern"))
 
-from gestaltung import BLAU, KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
+from gestaltung import KARTE, RAND, SEITE, TEXT, TEXT_2  # noqa: E402
 import titel  # noqa: E402
 import zonenseite  # noqa: E402
 import uebersicht  # noqa: E402
@@ -33,10 +33,11 @@ st.set_page_config(page_title="MARAGA INVESTMENT APP", page_icon=os.path.join(BI
 
 # Streamlit-Rahmen ausblenden, Hintergrund und Bedienelemente wie die Designvorlage
 st.markdown(f"""<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Cinzel:wght@500&display=swap');
+{gestaltung.schriften(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oberflaeche", "schrift"))}
 header[data-testid="stHeader"], footer, #MainMenu, [data-testid="stToolbar"],
 [data-testid="stDecoration"], [data-testid="stStatusWidget"] {{display:none !important}}
-.stApp {{background:{SEITE}; color:{TEXT}; font-family:'IBM Plex Sans',system-ui,sans-serif}}
+.stApp {{background:linear-gradient(180deg, {gestaltung.SAND} 0, {SEITE} 220px) no-repeat, {SEITE}; color:{TEXT};
+  font-family:'DM Sans',system-ui,sans-serif}}
 .block-container {{max-width:1440px; padding:16px 0 0 0 !important}}
 div[data-testid="stHorizontalBlock"] {{max-width:1392px; margin:0 auto; padding:0 24px; align-items:end}}
 div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padding:0; max-width:none; align-items:center}}
@@ -47,7 +48,11 @@ div[data-testid="stHorizontalBlock"] div[data-testid="stHorizontalBlock"] {{padd
 .stTextInput label, .stRadio label p {{color:{TEXT_2} !important; font-size:14px}}
 div[role="radiogroup"] label {{min-height:44px; padding:0 14px; border:1px solid {RAND}; border-radius:10px;
   background:{KARTE}; margin-right:8px}}
-div[role="radiogroup"] label:has(input:checked) {{border-color:{BLAU}}}
+div[role="radiogroup"] label:has(input:checked) {{border-color:{gestaltung.PETROL}; background:{gestaltung.PETROL}}}
+div[role="radiogroup"] label:has(input:checked) p {{color:{SEITE} !important}}
+.stButton button, .stLinkButton a {{border-radius:8px; font-weight:600}}
+.stButton button[kind="secondary"], .stLinkButton a {{background:transparent; color:{gestaltung.PETROL};
+  border:1px solid {RAND}}}
 /* Seitenwahl: alle Seiten in einer Reihe (Micky 16.11.2026) – auf schmalem Schirm seitlich schieben statt umbrechen */
 .st-key-ansicht {{max-width:1392px; width:100%; box-sizing:border-box; margin:0 auto; padding:0 24px}}
 .st-key-ansicht div[role="radiogroup"] {{flex-wrap:nowrap !important; overflow-x:auto; scrollbar-width:thin}}

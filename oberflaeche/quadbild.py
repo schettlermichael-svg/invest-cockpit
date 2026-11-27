@@ -205,7 +205,7 @@ def bild(q, spur):
         return MX + x * RX * 0.62, MY - y * RY * 0.55  # Layout
 
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
-         f'aria-label="Dalio-Quad" style="display:block;max-width:820px;font-family:IBM Plex Sans,sans-serif">'
+         f'aria-label="Dalio-Quad" style="display:block;max-width:820px;font-family:DM Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}</style>']
     A = s.append
     for nr, (rechts, unten) in FELD.items():

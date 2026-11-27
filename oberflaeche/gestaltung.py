@@ -6,28 +6,33 @@ Werte aus dem Konzept (Abschnitt „Gestaltung: verbindlich wie die Designvorlag
 from html import escape
 from masse import ZEILENUMBRUCH  # noqa: E402
 
-SEITE = "#FFFFFF"   # weiße Optik (Micky 26.11.2026)
-KARTE = "#F7F8FA"
-RAND = "#E3E7EE"
-TEXT = "#1A1F29"
-TEXT_2 = "#3D4655"
-TEXT_3 = "#5B6472"
-GRUEN = "#15803D"
-GELB = "#A16207"
-ROT = "#B42318"
-BLAU = "#1D4ED8"
+# MARAGA-Design wie im CRM (Micky 27.11.2026): Creme, Sand, Petrol, Cognac · Cinzel und DM Sans
+SEITE = "#F5F2ED"   # Creme
+SAND = "#E9E2D6"    # oben im Verlauf
+KARTE = "#FFFFFF"
+RAND = "#D9D1C3"
+TEXT = "#1F2A2D"    # Tinte
+TEXT_2 = "#3B4447"
+TEXT_3 = "#5F6568"
+GRUEN = "#2E7D4F"
+GELB = "#B7791F"
+ROT = "#B23A3A"
+PETROL = "#2B4A52"
+PETROL_HELL = "#3E6670"
+COGNAC = "#6B3F2A"
+BLAU = PETROL       # Akzent (Kurs, Links, Auswahl) – im MARAGA-Design Petrol
 LILA = "#7E22CE"
 GRAU = "#9AA3B2"
 AMPEL = {"grün": GRUEN, "gelb": GELB, "rot": ROT, "grau": GRAU, "blau": BLAU}
-SCHRIFT = "'IBM Plex Sans', system-ui, sans-serif"
+SCHRIFT = "'DM Sans', system-ui, sans-serif"
+TITELSCHRIFT = "Cinzel, Georgia, serif"
 
 KOPF = (
     "<style>"
-    "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600"
-    "&family=IBM+Plex+Mono:wght@400;500&display=swap');"
-    f".ic a{{color:{BLAU}}}.ic a:hover{{color:#1E3A8A}}"
+    f".ic a{{color:{PETROL}}}.ic a:hover{{color:{PETROL_HELL}}}"
+    f".ic h1,.ic h2,.ic h3{{font-family:{TITELSCHRIFT};color:{PETROL};font-weight:600;letter-spacing:.02em}}"
     ".ic .hinweis-tip{display:none;position:absolute;right:0;bottom:calc(100% + 6px);z-index:5;width:min(560px,90%);"
-    f"background:#FFFFFF;border:1px solid #D5DBE5;border-radius:10px;padding:12px 14px;font-size:13px;"
+    f"background:{KARTE};border:1px solid {RAND};border-radius:10px;padding:12px 14px;font-size:13px;"
     f"line-height:1.6;color:{TEXT_2};box-shadow:0 8px 24px rgba(16,24,40,.12)}}"
     ".ic .hinweis-zone:hover .hinweis-tip{display:block}"
     "</style>"
@@ -61,7 +66,7 @@ def punkt(farbe, groesse=PUNKT):
 def seite(inhalt, oben=SEITE_OBEN, unten=SEITE_UNTEN):
     """Äußerer Rahmen: Seitenhintergrund, Schrift, maximale Breite 1392 px. oben/unten: Innenabstand (die Titelseite
     besteht aus drei Blöcken mit den Chart-Knöpfen von Streamlit dazwischen)."""
-    return (f'{KOPF}<div class="ic" style="background:{SEITE};color:{TEXT};font-family:{SCHRIFT};'
+    return (f'{KOPF}<div class="ic" style="background:transparent;color:{TEXT};font-family:{SCHRIFT};'
             f'box-sizing:border-box;padding:{oben}px 24px {unten}px">'
             f'<div style="max-width:1392px;margin:0 auto;display:flex;flex-direction:column;gap:24px">'
             f'{inhalt}</div></div>')
@@ -177,11 +182,31 @@ LOGO_GRAU = "#404040"      # das Dunkelgrau des MARAGA-Logos (nicht umfärben)
 
 
 def marke(pfad):
-    """Kopf der App (Micky 27.11.2026): das MARAGA-Logo in Originalfarbe, daneben der Name MARAGA INVESTMENT APP."""
+    """Kopf der App wie im MARAGA CRM (Micky 27.11.2026): links der Name in Cinzel (MARAGA in Petrol, INVESTMENT APP in
+    Cognac), rechts oben das Logo in Originalfarbe."""
     import base64
     with open(pfad, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
-    return ('<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">'
-            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:96px;width:auto">'
-            f'<div style="border-left:1px solid {RAND};padding-left:18px;font-family:Cinzel,Georgia,serif;'
-            f'font-size:20px;letter-spacing:.14em;color:{LOGO_GRAU}">INVESTMENT APP</div></div>')
+    return ('<div style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">'
+            f'<div><div style="font-family:{TITELSCHRIFT};font-weight:600;font-size:26px;letter-spacing:.18em;'
+            f'color:{PETROL}">MARAGA</div><div style="font-family:{TITELSCHRIFT};font-size:13px;letter-spacing:.3em;'
+            f'color:{COGNAC};margin-top:2px">INVESTMENT APP</div></div>'
+            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:96px;width:auto"></div>')
+
+
+SCHNITTE = (("Cinzel", "cinzel-latin-400-normal", 400), ("Cinzel", "cinzel-latin-600-normal", 600),   # Technik: Dateien
+            ("DM Sans", "dm-sans-latin-400-normal", 400), ("DM Sans", "dm-sans-latin-500-normal", 500),  # Technik
+            ("DM Sans", "dm-sans-latin-600-normal", 600))                                                # Technik
+
+
+def schriften(ordner):
+    """Cinzel und DM Sans aus dem eigenen Ordner (wie im CRM: kein Abruf bei Google) als @font-face für die ganze App."""
+    import base64
+    import os
+    aus = []
+    for name, datei, gew in SCHNITTE:
+        with open(os.path.join(ordner, f"{datei}.woff2"), "rb") as f:
+            b64 = base64.b64encode(f.read()).decode()
+        aus.append(f'@font-face{{font-family:"{name}";font-weight:{gew};font-display:swap;'
+                   f'src:url(data:font/woff2;base64,{b64}) format("woff2")}}')
+    return "".join(aus)

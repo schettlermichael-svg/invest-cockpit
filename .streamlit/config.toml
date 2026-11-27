@@ -1,10 +1,10 @@
 # Farben der Designvorlage auch für die wenigen Streamlit-Bedienelemente
 [theme]
 base = "light"
-primaryColor = "#1D4ED8"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F2F4F7"
-textColor = "#1A1F29"
+primaryColor = "#2B4A52"
+backgroundColor = "#F5F2ED"
+secondaryBackgroundColor = "#E9E2D6"
+textColor = "#1F2A2D"
 
 [server]
 runOnSave = true

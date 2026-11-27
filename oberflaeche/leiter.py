@@ -8,7 +8,7 @@ B, H = 360, 470            # Layout: Breite und Höhe des Bildes
 X0, X1 = 8, 150            # Layout: die Sprossen
 OBEN, UNTEN = 18, 452      # Layout: Rand der Achse
 ETIKETT_ABSTAND = 15               # Layout: Mindestabstand der Beschriftungen
-LEITER_ATR = 8             # Layout: so viele Tages-ATR über und unter dem Kurs zeigt die Leiter
+LEITER_ATR = 5             # Layout: so viele Tages-ATR über und unter dem Kurs zeigt die Leiter
 NAME = {"front": "Front", "unterkante": "Unterkante", "decke": "Decke", "boden": "Boden"}
 
 

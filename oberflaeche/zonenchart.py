@@ -169,7 +169,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
     y_rs = y_zei + ZEICHEN_H + LUECKE + 14                                          # Layout: Platz für die Überschrift
     H = y_rs + RS_H + 24                                                            # Layout: Zeitachse
     s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {B} {H}" width="100%" role="img" '
-         f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:IBM Plex Sans,sans-serif">'
+         f'aria-label="Zonenchart {e["name"]}" style="display:block;font-family:DM Sans,sans-serif">'
          '<style>text{paint-order:stroke;stroke:#FFFFFF;stroke-width:4px;stroke-linejoin:round}</style>'
          '<defs><marker id="spitze" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" '
          'orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>']

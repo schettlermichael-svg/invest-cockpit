@@ -61,7 +61,7 @@ def kurve(d, p):
         return 20 + (H - 40) * (1 - (math.log(v) - math.log(lo)) / (math.log(hi) - math.log(lo)))  # Layout
 
     s = [f'<svg viewBox="0 0 {B} {H + UW + 40}" width="100%" xmlns="http://www.w3.org/2000/svg" '  # Layout
-         f'style="font-family:IBM Plex Sans,sans-serif">']
+         f'style="font-family:DM Sans,sans-serif">']
     for k in range(5):  # Layout
         v = lo * (hi / lo) ** (k / 4)  # Layout
         s.append(f'<line x1="{KURVE_LINKS}" x2="{B - KURVE_RECHTS}" y1="{Y(v):.1f}" y2="{Y(v):.1f}" stroke="{RAND}"/>'
