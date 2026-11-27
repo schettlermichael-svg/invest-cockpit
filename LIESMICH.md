@@ -1869,11 +1869,11 @@ Bestätigungskerze (5 Tage gültig, verfällt bei Schluss unter der Front): +0,1
 Fehlausbrüche, verpasst 18,8 % der guten (Ø +0,58 R), Einstieg Median +0,68 % teurer. In jedem Jahr gleich, mit
 Volumen ebenso. Entscheidung Micky: **Einstieg bleibt der Tagesschluss.**
 
-**Wächter** (`kern/waechter.py`, `werkzeuge/waechter.py`): Knopf „🔔 Alarm“ auf der Titelseite (`einstellungen/
-alarme.json`, nicht in Git). Der Server prüft Mo–Fr 9:30–16:00 New York jede Minute (Yahoo 1-Minuten-Kerzen) und
-meldet über ntfy, wenn der Kurs Front oder Unterkante frisch kreuzt; um 15:45 New York eine zweite Meldung, wenn er
-jenseits steht (Schluss dort = Auslöser). Zeitpläne `werkzeuge/server/waechter*.timer`, eingerichtet von
-`aktualisieren.sh`. Die Verzögerung der Kurse wird je Lauf in `daten/waechter/stand.json` gespeichert.
+**Alarme bei TradingView** (Micky 27.11.2026): Den eigenen Wächter (Minutenkerzen von Yahoo, Knopf „🔔 Alarm“) gibt
+es nicht mehr – Micky setzt die Alarme selbst bei TradingView, das ist zuverlässiger. Die Titelseite nennt unter
+„Long/Short beobachten“ je Seite den Alarm (`bericht.beobachten`): Kurs kreuzt die Linie unseres Setups, sonst Front
+bzw. Unterkante. Der Einstieg bleibt der Tagesschluss. `aktualisieren.sh` baut die alten Zeitpläne auf dem Server ab.
+Eine tägliche Prüfung der Kreuzungen im Morgenlauf wartet auf die Klärung der Setups (A+ bis D).
 
 ## MARAGA INVESTMENT APP: Name, Design, Adresse, gemeinsamer Server (27.11.2026)
 
@@ -1903,7 +1903,7 @@ unseres Caddy-Blocks, sobald er auf den Server zeigt; Caddy holt das Zertifikat 
 | Daten | /opt/invest-cockpit/daten, einstellungen | /var/lib/maraga-crm, /etc/maraga-crm/crm.env |
 | Caddyfile | erster Block (Passwort + Ausweis-Cookie `ic_zugang`) | angehängter Block (eigene Anmeldung) |
 | Aktualisierung | Timer invest-update, `aktualisieren.sh` | eigenes Skript des CRM |
-| Dienste/Timer | invest-cockpit, nachtlauf, sicherung, waechter, waechter-schluss, invest-watchlist | maraga-crm, maraga-crm-sicherung |
+| Dienste/Timer | invest-cockpit, nachtlauf, sicherung, invest-watchlist | maraga-crm, maraga-crm-sicherung |
 
 Regeln: Skripte der App ändern in der Caddyfile nur den eigenen ersten Block (ausweis.sh, adresse.sh prüfen das und
 validieren vor dem Umschalten); keine Ports, Nutzer, Ordner oder Dienstnamen des CRM verwenden; neue Dienste der App

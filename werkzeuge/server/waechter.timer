@@ -1,7 +1,0 @@
-[Unit]
-Description=Invest Cockpit: Wächter jede Minute Mo–Fr 9:30–16:00 New York (vor 9:30 beendet er sich selbst)
-[Timer]
-OnCalendar=Mon..Fri 09..15:*:00 America/New_York
-AccuracySec=5s
-[Install]
-WantedBy=timers.target

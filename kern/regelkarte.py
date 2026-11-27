@@ -454,16 +454,14 @@ BEREICHE = [
          messung=["bericht.alle", "bericht.ebene", "bericht.treppe", "bericht.saetze", "bericht.beobachten",
                   "bericht.gegenzeichen", "bericht.leiter", "livermore.gefallene", "tiefe.vier_stunden",
                   "zonenseite.lagebericht", "leiter.bild"], pruefer=[], luecke="kein Prüfer – ungemessen, gesetzte Voreinstellungen"),
-    dict(name="Wächter 🔔 (Alarm beim Kreuzen und vor Handelsschluss)", quelle="Micky 26.11.2026",
-         regel="Titel mit Alarm (Knopf auf der Titelseite): jede Minute während der US-Börse eine Meldung aufs Handy, "
-               "wenn der Kurs Front bzw. Unterkante kreuzt (einmal je Tag und Linie, nur frisch: der letzte Schluss lag "
-               "noch diesseits), um 15:45 New York eine zweite, wenn er jenseits steht – Schluss dort = Auslöser. Der "
-               "Einstieg bleibt der Tagesschluss: Messung 26.11.2026 über 38.618 Ausbrüche des Reviers (12/2023–09/2026, "
-               "20 Tage oder Stopp): Kauf am Schluss +0,16 R je Ausbruch, Sharps Stopp-Kauf beim Kreuzen des Hochs der "
-               "Bestätigungskerze +0,10 bis +0,11 R – spart 35 % der Fehlausbrüche, verpasst 18,8 % der guten. Kurse: "
-               "Yahoo 1 Minute, die Verzögerung wird je Lauf gespeichert.",
-         messung=["waechter.pruefen", "waechter.linien", "waechter.kurse_jetzt"], pruefer=[],
-         luecke="Verzögerung der Kurse erst ab dem ersten Börsentag gemessen"),
+    dict(name="Alarm für TradingView 🔔", quelle="Micky 27.11.2026",
+         regel="Unter „Long/Short beobachten“ steht je Seite der Alarm, den Micky selbst bei TradingView setzt: Kurs "
+               "kreuzt die Linie unseres Setups (sonst Front bzw. Unterkante) aufwärts bzw. abwärts – dann hinschauen. "
+               "Der Einstieg bleibt der Tagesschluss: Messung 26.11.2026 über 38.618 Ausbrüche des Reviers "
+               "(12/2023–09/2026, 20 Tage oder Stopp): Kauf am Schluss +0,16 R je Ausbruch, Sharps Stopp-Kauf beim "
+               "Kreuzen des Hochs der Bestätigungskerze +0,10 bis +0,11 R. Der eigene Wächter (Yahoo-Minutenkerzen) ist "
+               "entfernt: TradingView meldet zuverlässiger.",
+         messung=["bericht.beobachten"], pruefer=[], luecke="kein Prüfer"),
     dict(name="Abpraller (Dochte stärken eine Stellung)", quelle="Harry Sharp, Micky 26.11.2026",
          regel="Eine Kerze nach dem Pivotal Point, deren Hoch bis ¼ ATR an eine Decke kam und deren Schluss darunter "
                "blieb, ist ein Abpraller (am Boden gespiegelt); im Etikett neben dem Gewicht als 🛡 mit der Zahl.",
@@ -531,6 +529,7 @@ TECHNIK = {
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
     "revier_pflege.SMALL_WERT": "Datenpflege (Grenze des Reviers, Small Caps)",
     "revier_pflege.SMALL_UMSATZ": "Datenpflege (Grenze des Reviers, Small Caps)",
+    "meldung.NTFY_GRENZE": "Technik (Höchstlänge einer ntfy-Meldung)",
     "revier_pflege.REVIER_KURS": "Datenpflege (Grenze des Reviers)",
     "revier_pflege.REVIER_UMSATZ": "Datenpflege (Grenze des Reviers)", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",

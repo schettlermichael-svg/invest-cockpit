@@ -167,7 +167,8 @@ def alle(r):
 
 def beobachten(be, tr=None):
     """Was ich beobachten würde → {"long": [...], "short": [...]}: der erste Schritt auf der Stunde, der Auslöser auf
-    dem Tag (unser Setup, sonst Front bzw. Unterkante), der Weg dahinter (Weg voraus ab der Kante)."""
+    dem Tag (unser Setup, sonst Front bzw. Unterkante), der Alarm für TradingView an derselben Linie (Micky 27.11.2026:
+    die Alarme setzt er selbst bei TradingView), der Weg dahinter (Weg voraus ab der Kante)."""
     t_, h_ = be.get("Tag"), be.get("Stunde")
     aus = {"long": [], "short": []}
     if not t_:
@@ -179,6 +180,7 @@ def beobachten(be, tr=None):
         naechst = (h_ or {}).get("decke" if sg > 0 else "boden")
         if naechst and (not kante or sg * (kante - naechst["preis"]) > 0):
             z.append(f'Erster Schritt: Stundenschluss {"über" if sg > 0 else "unter"} {_zahl(naechst["preis"])}.')
+        linie = tr["pivot"] if tr and (tr["richtung"] > 0) == (sg > 0) else kante
         if tr and (tr["richtung"] > 0) == (sg > 0):
             z.append(f'Unser Setup {tr["zeichen"]} {tr["name"]}: ½ antasten beim Schluss '
                      f'{"über" if sg > 0 else "unter"} {_zahl(tr["pivot"])}'
@@ -191,6 +193,9 @@ def beobachten(be, tr=None):
                         if dazw else "."))
         else:
             z.append("Keine Kante mehr – ✈️ freie Bahn." if sg > 0 else "Keine Kante mehr – ✈️↓ freie Bahn.")
+        if linie:
+            z.append(f'🔔 Alarm in TradingView: Kurs kreuzt {_zahl(linie)} {"aufwärts" if linie > kurs else "abwärts"} – '
+                     f'dann hinschauen, Auslöser bleibt der Tagesschluss.')
         if kante:
             jenseits = [g for g in t_["gruppen"] if sg * (g["preis"] - kante) > t_["atr"] * livermore.STELLUNG_ATR]
             ziel = min(jenseits, key=lambda g: abs(g["preis"] - kante), default=None)

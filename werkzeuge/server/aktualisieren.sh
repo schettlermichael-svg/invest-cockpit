@@ -18,15 +18,14 @@ if [ -n "$NEU_SICHERUNG" ]; then
   systemctl daemon-reload && systemctl enable -q --now sicherung.timer
   echo "$(date '+%d.%m.%Y %H:%M') Sicherung eingerichtet: $(grep OnCalendar werkzeuge/server/sicherung.timer)" >> /var/log/invest-cockpit-update.log
 fi
-# Wächter (26.11.2026): Alarme beim Kreuzen und vor Handelsschluss – Dienste und Zeitpläne aus dem Speicher übernehmen
-for u in waechter.service waechter.timer waechter-schluss.service waechter-schluss.timer; do
-  if [ -f werkzeuge/server/$u ] && ! cmp -s werkzeuge/server/$u /etc/systemd/system/$u; then
-    cp werkzeuge/server/$u /etc/systemd/system/$u && NEU_WAECHTER=1
-  fi
-done
-if [ -n "$NEU_WAECHTER" ]; then
-  systemctl daemon-reload && systemctl enable -q --now waechter.timer waechter-schluss.timer
-  echo "$(date '+%d.%m.%Y %H:%M') Wächter eingerichtet: $(grep OnCalendar werkzeuge/server/waechter.timer)" >> /var/log/invest-cockpit-update.log
+# Wächter entfernt (Micky 27.11.2026: Alarme setzt er selbst bei TradingView) – Zeitpläne und Dienste abbauen
+if [ -f /etc/systemd/system/waechter.timer ]; then
+  systemctl disable -q --now waechter.timer waechter-schluss.timer
+  rm -f /etc/systemd/system/waechter.service /etc/systemd/system/waechter.timer \
+        /etc/systemd/system/waechter-schluss.service /etc/systemd/system/waechter-schluss.timer
+  rm -rf daten/waechter einstellungen/alarme.json
+  systemctl daemon-reload
+  echo "$(date '+%d.%m.%Y %H:%M') Wächter abgebaut" >> /var/log/invest-cockpit-update.log
 fi
 # Zusätzliche Python-Pakete (14.11.2026: matplotlib und cairosvg für die Bilder des Chart-Prüfers), sobald die Liste sich ändert
 if [ -f werkzeuge/server/pakete.txt ] && ! cmp -s werkzeuge/server/pakete.txt .venv/pakete.txt; then
