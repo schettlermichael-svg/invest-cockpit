@@ -1874,3 +1874,37 @@ alarme.json`, nicht in Git). Der Server prüft Mo–Fr 9:30–16:00 New York jed
 meldet über ntfy, wenn der Kurs Front oder Unterkante frisch kreuzt; um 15:45 New York eine zweite Meldung, wenn er
 jenseits steht (Schluss dort = Auslöser). Zeitpläne `werkzeuge/server/waechter*.timer`, eingerichtet von
 `aktualisieren.sh`. Die Verzögerung der Kurse wird je Lauf in `daten/waechter/stand.json` gespeichert.
+
+## MARAGA INVESTMENT APP: Name, Design, Adresse, gemeinsamer Server (27.11.2026)
+
+**Name:** Die App heißt **MARAGA INVESTMENT APP** (vorher Invest Cockpit). Browser-Tab, Push-Meldungen (`meldung.senden`,
+`nachtlauf._mitteilung`) und Stratege tragen den Namen. Ordner, Speicher und Dienste behalten ihre alten technischen Namen
+(`/opt/invest-cockpit`, GitHub `invest-cockpit`, Dienst `invest-cockpit`, Nutzer `cockpit`), damit nichts bricht.
+
+**Design wie im MARAGA CRM** (Vorlage: `CRM System/app/static/style.css`): Creme `#F5F2ED`, oben Sand `#E9E2D6` im Verlauf,
+Karten Weiß mit Linie `#D9D1C3`, Tinte `#1F2A2D`, Petrol `#2B4A52` (Akzent, Auswahl, Links; `gestaltung.BLAU = PETROL`),
+Cognac `#6B3F2A`, Ampeln Grün `#2E7D4F` · Gelb `#B7791F` · Rot `#B23A3A`. Schriften Cinzel (Name, Überschriften) und
+DM Sans (Text) aus `oberflaeche/schrift/` (OFL, eigene Dateien, kein Abruf bei Google). Kopf (`gestaltung.marke`): links
+MARAGA in Petrol, darunter INVESTMENT APP in Cognac, **rechts oben das Logo** (`oberflaeche/bild/logo.png`, Löwe mit THE
+MARAGA GROUP und „Make the difference“, Originalfarbe Dunkelgrau – nie umfärben, deshalb kein Petrol-Balken wie im CRM).
+Tab-Symbol: der Löwe (`oberflaeche/bild/loewe.png`). Farben nur in `gestaltung.py` und `.streamlit/config.toml`.
+
+**Adresse:** `https://invest.themaraga-group.de` (Strato: Subdomain invest, A-Eintrag auf 2.31.188.241, angelegt
+27.11.2026). `werkzeuge/server/adresse.sh` (aus `aktualisieren.sh`, alle 5 Minuten) setzt den Namen in die erste Zeile
+unseres Caddy-Blocks, sobald er auf den Server zeigt; Caddy holt das Zertifikat selbst. Die sslip-Adresse bleibt gültig.
+
+**Gemeinsamer Server mit dem MARAGA CRM** – damit es keine Überschneidungen gibt:
+
+| | MARAGA INVESTMENT APP | MARAGA CRM |
+|---|---|---|
+| Adresse | invest.themaraga-group.de (und 2-31-188-241.sslip.io) | crm.themaraga-group.de |
+| Port (nur intern) | 8510 | 8100 |
+| Code | /opt/invest-cockpit (Nutzer cockpit) | /opt/maraga-crm (Nutzer maraga-crm) |
+| Daten | /opt/invest-cockpit/daten, einstellungen | /var/lib/maraga-crm, /etc/maraga-crm/crm.env |
+| Caddyfile | erster Block (Passwort + Ausweis-Cookie `ic_zugang`) | angehängter Block (eigene Anmeldung) |
+| Aktualisierung | Timer invest-update, `aktualisieren.sh` | eigenes Skript des CRM |
+| Dienste/Timer | invest-cockpit, nachtlauf, sicherung, waechter, waechter-schluss, invest-watchlist | maraga-crm, maraga-crm-sicherung |
+
+Regeln: Skripte der App ändern in der Caddyfile nur den eigenen ersten Block (ausweis.sh, adresse.sh prüfen das und
+validieren vor dem Umschalten); keine Ports, Nutzer, Ordner oder Dienstnamen des CRM verwenden; neue Dienste der App
+heißen `invest-…` oder stehen in `werkzeuge/server/`.
