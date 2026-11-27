@@ -218,7 +218,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
         return teil + (f' · 🛡{g_["abpraller"]}' if g_["abpraller"] else "")        # 🛡 = abgewehrte Angriffe
     if la["zone"]:                                    # Wörterbuch (Micky 26.11.2026): Front, Unterkante, Decke, Boden
         etiketten += ([] if oben_ else [(Y(hi), f"Spanne oben {zahl(hi)}", ZONE_FARBE)]) + \
-                     [(Y(lo), f"Unterkante {zahl(lo)}{gewicht(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
+                     [(Y(lo), f"{'alte Unterkante' if la.get('alt') else 'Unterkante'} {zahl(lo)}{gewicht(lo)}", ZONE_FARBE), (Y(la["poc"]), f"POC {zahl(la['poc'])}", POC_FARBE)]
     short_ = bool(la.get("zone")) and ((t and t["richtung"] < 0) or la.get("phase") == "bruch"   # die Kante, an der
                                        or float(df["Close"].iloc[-1]) < lo)       # der Kurs steht (Audit 26.11.2026)
     kante = lo if short_ else piv                     # Kipp-Zone (Micky 26.11.2026, Frontkarte): long um die Front,
@@ -334,7 +334,7 @@ def bild(e, la, t=None, laufend=False, woche=None, rs=None, gd=(), anker=(), lin
             y_ = Y(la["pivot"]) - 7                                                 # Layout: über dem Hoch
             A(f'<path d="M{X(j):.1f},{y_ - 6:.1f} L{X(j) + 6:.1f},{y_:.1f} L{X(j):.1f},{y_ + 6:.1f} '  # Layout: Raute
               f'L{X(j) - 6:.1f},{y_:.1f} Z" '                                       # Layout
-              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>Front (Livermores Pivotal Point) {zahl(la["pivot"])} · '
+              f'fill="{ZONE_FARBE}" stroke="#000" stroke-width="0.6"><title>{"alte Front" if la.get("alt") else "Front"} (Livermores Pivotal Point) {zahl(la["pivot"])} · '
               f'{d.index[j]:%d.%m.%Y} – die Kante, an der die Waage kippt</title></path>')
     if ba and e["name"] not in tiefe.INTRADAY:                                                # Fehlausbruch und Rücktest
         aus_ = ba.get("ausbruch") or {}                                              # Fehlausbruch (Livermore, 25.11.:

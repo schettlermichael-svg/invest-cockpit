@@ -66,7 +66,8 @@ def livermore_zeilen(rz, fallen, mit_ebenen=True):
                   f"{la['name']} {_k(la['zone'][0])}–{_k(la['zone'][1])}: {la['zeichen']} {la['wort']}"
                   + (f" · {la['info']}" if la.get("info") else "")))
     elif la:
-        z.append(("🦬", f"{la['zeichen']} {la['wort']} – keine Spanne, der Kurs läuft"))
+        z.append(("🐻" if la["richtung"] < 0 else "🦬", f"{la['zeichen']} {la['wort']}"
+                  + (f" ({_k(la['kante'])})" if la.get("kante") else "")))
     atr = e_["atr"] if e_ else None
     if tr:
         kante, b_ = tr["pivot"], livermore.BESTAETIGUNG * (atr or 0)

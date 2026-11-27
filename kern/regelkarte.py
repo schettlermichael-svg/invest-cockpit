@@ -95,9 +95,10 @@ WERKZEUGE = {
                                 "der Vorgeschichte (Base, Flagge, Konsolidierung – am 25.11.2026 entfernt): die Spanne heißt "
                                 "immer „Spanne“; Länge und Tiefe sind Zeichen. Ausbruch = Schluss über der Front; "
                                 "Fehlausbruch = danach Schluss 1 ATR unter der Front (Livermores Bestätigung gespiegelt, "
-                                "25.11.2026), knapp darunter = Rücktest.",
+                                "25.11.2026), knapp darunter = Rücktest. Front und Unterkante stehen, bis ein Schluss 1 ATR jenseits "
+                                "liegt (Regel 1, 27.11.2026).",
              messung=["vcp_zone.zone", "livermore.spanne"], stand="gemessen",
-             pruefer=["Spanne: Beginn", "Spanne: Unterkante/Tiefe", "Spanne: Name", "Spanne: keine/offen", "Front"]),
+             pruefer=["Spanne: Beginn", "Spanne: Unterkante/Tiefe", "Spanne: Name", "Spanne: gefallen", "Front"]),
         dict(name="Livermores Notizbuch", regel="Market Key (Livermore 1940, Regeln 1–10): jeder Tag in eine von sechs "
                                                  "Spalten (Aufwärts-/Abwärtstrend, natürliche und sekundäre Erholung/Reaktion); "
                                                  "Schwung = 2 ATR wie die Wendepunkte (seine ~6 Punkte), Bestätigung = 1 ATR "
@@ -387,9 +388,11 @@ BEREICHE = [
     dict(name="Spannen, Phasen und das eine Profil (schlankes Cockpit)", quelle="Livermore, Minervini, O'Neil, Kullamägi, Dalton, Micky 22./25.11.2026",
          regel="Woche und Tag: Livermores Spanne (vcp_zone.zone, livermore.spanne – Oberkante = letzter Pivotal Point "
                "oben = Front, Unterkante = letzter Pivotal Point unten; Name „Spanne“), während eines "
-               "Ausbruchs (bis 20 Tage, solange Livermore keinen neuen Pivotal Point oben einträgt) die Spanne, aus der er "
-               "kam. Woche und Stunde (26.11.2026): Livermores Notizbuch auf ihren eigenen Kerzen – Spanne, Pivotal Points, "
-               "Kipp-Zone wie am Tag; nur ohne Notizbuch (zu wenig Kerzen) die Balance nach Dalton. Einigkeit der Ebenen "
+               "Ausbruchs (4 Wochen, in Zeit auf jeder Ebene, solange Livermore keinen neuen Pivotal Point oben einträgt) die "
+               "Spanne, aus der er kam – ist ihre Front gefallen, als alte Spanne mit alter Front. Front und Unterkante "
+               "stehen, bis ein Schluss 1 ATR jenseits liegt (Regel 1, livermore.steht – dieselben wie im Lagebericht, "
+               "27.11.2026); an der Front = in der Kipp-Zone. Alle vier Ebenen: Livermores Notizbuch auf ihren eigenen "
+               "Kerzen ab NOTIZBUCH_MIN Kerzen, darunter zu wenig Kerzen (kein zweites Messgerät). Einigkeit der Ebenen "
                "(zonen.einigkeit): Vormarsch bzw. Rückzug auf allen vier Ebenen = ⬆/⬇ im Urteil. Trades: Ausbruch long (Auslöser Front, Stopp ¼ ATR unter dem Pivotal Point unten, "
                "höchstens 8 %), Rücktest (Einstieg an der Front, Stopp ¼ ATR darunter), Bruch der Unterkante short (mit Volumen "
                "über dem 50-Tage-Schnitt, Stopp ¼ ATR über der Kante); kein festes Ziel, Risiko-Ampel bis 8 %. Ein Profil je "

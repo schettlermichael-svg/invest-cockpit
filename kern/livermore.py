@@ -27,7 +27,7 @@ Regeln (verkürzt, Nummern wie im Buch):
 import numpy as np
 import pandas as pd
 
-SCHWUNG = 2.0             # Livermores ~6 Punkte = 2 × ATR (wie vcp_zone.GROB, die Wendepunkte)
+from masse import NOTIZBUCH_MIN, SCHWUNG  # noqa: E402  Livermores ~6 Punkte = 2 × ATR – dieselbe Zahl wie die Wendepunkte (vcp_zone.GROB)
 BESTAETIGUNG = 1.0        # Livermores ~3 Punkte = 1 × ATR
 STELLUNG_JAHRE = 2        # Stellungen: stehende Pivotal Points der letzten 2 Jahre (so weit reichen die Massive-Tage der
                           # Liste – Titelseite, Chart, Liste und Zeichen sehen dieselben Stellungen)
@@ -61,7 +61,7 @@ def notizbuch(df, atr=None):
     je_tag: [(Spalte, Trend)] je Zeile} oder None. Das Notizbuch schaut nie voraus: die Einträge bis Zeile t sind
     dieselben wie im Notizbuch über df.iloc[:t + 1] (gesetzt_i = Zeile, an der ein Pivotal Point eingetragen wurde)."""
     import vcp_zone
-    if df is None or len(df) <= vcp_zone.ATR_TAGE + 2:
+    if df is None or len(df) < NOTIZBUCH_MIN:
         return None
     if atr is None:
         schl = (len(df), df.index[0], df.index[-1], float(df["High"].iloc[-1]), float(df["Low"].iloc[-1]),
@@ -237,15 +237,16 @@ def offene(df, nb=None):
     c = df["Close"].to_numpy(float)
     a = vcp_zone.atr(df).to_numpy(float)
     ab = df.index[-1] - pd.DateOffset(years=STELLUNG_JAHRE)
-    aus = []
-    for p_ in nb["pivotal"]:
-        if pd.Timestamp(p_["tag"]) < ab:
-            continue
-        c_, a_ = c[p_["i"] + 1:], a[p_["i"] + 1:]
-        weg = c_ > p_["preis"] + BESTAETIGUNG * a_ if p_["art"] == "hoch" else c_ < p_["preis"] - BESTAETIGUNG * a_
-        if not weg.any():
-            aus.append(p_)
-    return aus
+    return [p_ for p_ in nb["pivotal"] if pd.Timestamp(p_["tag"]) >= ab and steht(c, a, p_)]
+
+
+def steht(c, a, p_):
+    """Regel 1 der Systemseite (2b): ein Pivotal Point steht, bis ein Schluss BESTAETIGUNG × ATR jenseits liegt (oben
+    darüber, unten darunter). c, a = Schlüsse und ATR als Arrays über dieselben Kerzen wie das Notizbuch. Die eine
+    Rechnung für Front, Unterkante und Stellungen (offene, vcp_zone.zone)."""
+    c_, a_ = c[p_["i"] + 1:], a[p_["i"] + 1:]
+    weg = c_ > p_["preis"] + BESTAETIGUNG * a_ if p_["art"] == "hoch" else c_ < p_["preis"] - BESTAETIGUNG * a_
+    return not weg.any()
 
 
 def gefallene(df, nb=None):

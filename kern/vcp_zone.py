@@ -30,10 +30,9 @@ import numpy as np
 import pandas as pd
 from masse import VOL_MIN_TAGE, WOCHE  # noqa: E402
 
-ATR_TAGE = 14
-GROB = 2.0
+from masse import ATR_N as ATR_TAGE, NOTIZBUCH_MIN, SCHWUNG as GROB  # noqa: E402  eine Quelle
 NEUES_HOCH_TAGE = 5     # Ausbruch nur an einem Tag mit Schluss über den 5 Schlüssen davor
-MIN_DATEN = 80          # Ausbruch und Spring/Upthrust ab 80 Handelstagen Daten
+MIN_DATEN = 80          # Spring/Upthrust ab 80 Handelstagen Daten
 
 
 def atr(df, n=ATR_TAGE):
@@ -90,48 +89,49 @@ def secondary(punkte):
 
 
 def zone(df, nb=None):
-    """Spanne am rechten Rand streng nach Livermores Notizbuch (Micky 25.11.2026; livermore.spanne) oder {"zone": False,
-    "grund": …}: Oberkante = der letzte Pivotal Point oben, Unterkante = der letzte Pivotal Point unten (ohne ihn das
-    tiefste Tief seit der Oberkante), Front = die Oberkante. Liegt ein Schluss über der Oberkante, läuft der Kurs am
-    Hoch (keine Spanne); schreibt Livermore heute in die Spalte Abwärtstrend, ist die Spanne offen (noch keine Spanne). Name
-    immer „Spanne“ (Micky 25.11.2026: rein Livermore – keine Namen nach Vorgeschichte mehr).
+    """Spanne am rechten Rand nach Livermores Notizbuch und Regel 1 der Systemseite (Micky 27.11.2026: eine Regel für
+    Lagebericht, Chart, Setup und Tore) oder {"zone": False, "grund": …, "gefallen": "oben"|"unten"|None}:
+    Oberkante = Front = der letzte Pivotal Point oben, Unterkante = der letzte Pivotal Point unten (ohne ihn das tiefste
+    Tief seit der Oberkante). Beide stehen, bis ein Schluss 1 ATR jenseits liegt (livermore.steht) – ein Schluss knapp
+    jenseits ist der Kampf in der Kipp-Zone, die Spanne steht noch. Fällt die Front, läuft der Kurs am Hoch (keine
+    Spanne; die Spanne eines laufenden Ausbruchs ist dann die alte Front, ausbruch()); fällt die Unterkante, ist sie
+    gefallen (keine Spanne). Name immer „Spanne“.
     nb = livermore.notizbuch über ein df, das mit diesem beginnt (auch länger: es zählt nur, was bis heute im Buch stand)."""
     import livermore
     df = df.dropna(subset=["High", "Low", "Close"])
-    if len(df) < 60:
-        return {"zone": False, "grund": "zu wenig Kurse"}
-    c = df["Close"].to_numpy()
     n = len(df)
+    if n < NOTIZBUCH_MIN:
+        return {"zone": False, "grund": "zu wenig Kerzen", "gefallen": None}
+    c = df["Close"].to_numpy(float)
+    a = atr(df).to_numpy(float)
     sp = livermore.spanne(nb if nb is not None else livermore.notizbuch(df), n)
     if not sp:
-        return {"zone": False, "grund": "noch kein Pivotal Point oben im Notizbuch – Kurs läuft am Hoch"}
+        return {"zone": False, "grund": "noch kein Pivotal Point oben im Notizbuch – Kurs läuft am Hoch", "gefallen": None}
     i, top = sp["oben"]["i"], float(sp["oben"]["preis"])
-    if i < n - 1 and c[i + 1:].max() > top:
-        return {"zone": False, "grund": "Schluss über dem letzten Pivotal Point oben – Kurs läuft am Hoch, keine Spanne"}
+    if not livermore.steht(c, a, sp["oben"]):
+        return {"zone": False, "grund": "Front gefallen (Schluss 1 ATR darüber) – Kurs läuft am Hoch, keine Spanne",
+                "gefallen": "oben", "kante": top}
     l = df["Low"].to_numpy()
     if sp["unten"] is not None:                  # die Unterkante ist Livermores Pivotal Point unten
         j, boden = sp["unten"]["i"], float(sp["unten"]["preis"])
+        if not livermore.steht(c, a, sp["unten"]):
+            return {"zone": False, "grund": "Unterkante gefallen (Schluss 1 ATR darunter) – keine Spanne",
+                    "gefallen": "unten", "kante": boden}
     else:
         j = i + int(np.argmin(l[i:]))
         boden = float(l[j])
     s0 = min(i, j)
-    k = {"zone": True, "name": "Spanne", "start_i": s0, "start": df.index[s0], "oben": top, "unten": boden, "tief_i": j,
-         "tief_datum": df.index[j], "wochen": (n - 1 - s0) / WOCHE, "tiefe": (top - boden) / top * 100,
-         "abstand": (c[-1] / top - 1) * 100, "pivot": top, "pivot_i": i, "spalte": sp["spalte"], "trend": sp["trend"],
-         "oben_aus": sp["oben"]["aus"]}
-    if sp["spalte"] == "AB":                     # Livermore schreibt rot in den Abwärtstrend: noch keine Spanne
-        return {"zone": False, "offen": True, "grund": "Abwärtstrend (Livermore schreibt in rot) – noch keine Spanne",
-                **{x: k[x] for x in ("start_i", "start", "oben", "unten", "tief_i", "tief_datum", "wochen", "tiefe",
-                                     "abstand", "pivot", "pivot_i", "spalte", "trend", "oben_aus")}}
-    return k
+    return {"zone": True, "name": "Spanne", "start_i": s0, "start": df.index[s0], "oben": top, "unten": boden, "tief_i": j,
+            "tief_datum": df.index[j], "wochen": (n - 1 - s0) / WOCHE, "tiefe": (top - boden) / top * 100,
+            "abstand": (c[-1] / top - 1) * 100, "pivot": top, "pivot_i": i, "spalte": sp["spalte"], "trend": sp["trend"],
+            "oben_aus": sp["oben"]["aus"]}
 
 
-RAND_PCT = 3.0              # an der Front: bis 3 % darunter (Test am Rand) – eine Quelle
-AUSBRUCH_TAGE = 20             # Ausbruch gilt bis 4 Wochen, solange kein Schluss unter der Front (Micky, 06.11.2026)
+AUSBRUCH_ZEIT = pd.Timedelta(days=28)   # Ausbruch gilt 4 Wochen, auf jeder Ebene in Zeit gemessen (Micky 06./27.11.2026)
 KAUFZONE = 5.0                 # bis 5 % über der Front (Minervini)
 
 
-def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
+def ausbruch(df, tage=None, jetzt=None, nb=None):
     """Ausbruch über die Front (Livermores Pivotal Point, zone()) in den letzten `tage` Handelstagen oder None:
     {tag, tage_her, erster_tag, pivot, zone, volumen, mit_volumen, abstand, kaufzone, fehl, fehl_tag, ruecktest,
     rueck_tag, bestaetigt, bestaetigt_tag, bestaetigung, gescheitert: [(Tag des Fehlausbruchs, Hoch des gescheiterten
@@ -145,8 +145,11 @@ def ausbruch(df, tage=AUSBRUCH_TAGE, jetzt=None, nb=None):
     import livermore
     df = df.dropna(subset=["High", "Low", "Close"])
     n = len(df)
-    if n < MIN_DATEN:
+    if n < NOTIZBUCH_MIN + NEUES_HOCH_TAGE:
         return None
+    if tage is None:                             # 4 Wochen in Zeit: auf der Woche 4 Kerzen, auf dem Tag 20, in der Stunde mehr
+        tage = max(1, int((df.index > df.index[-1] - AUSBRUCH_ZEIT).sum()))
+    tage = min(tage, n - NEUES_HOCH_TAGE)
     nb = nb if nb is not None else livermore.notizbuch(df)
     c = df["Close"].to_numpy(float)
     v = df["Volume"].to_numpy(float) if "Volume" in df else np.full(n, np.nan)

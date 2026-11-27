@@ -12,6 +12,8 @@ VORJAHR_ZURUECK = 5        # Quartalsreihe: der 5. Wert zurück = Vorjahresquart
 ZWEI_JAHRE_ZURUECK = 9     # Quartalsreihe: der 9. Wert zurück = vor zwei Jahren
 GD200_TAGE = 200           # GD200
 ATR_N = 14                 # ATR über 14 Tage (die eine ATR: atr.reihe)
+SCHWUNG = 2.0              # ein Schwung = 2 × ATR (Livermores ~6 Punkte): Wendepunkte und Notizbuch
+NOTIZBUCH_MIN = ATR_N + 3  # das Notizbuch braucht mehr als ATR + 2 Kerzen – darunter: zu wenig Kerzen
 VOL_TAGE = 50              # Volumen gegen den Schnitt der 50 Tage
 VOL_MIN_TAGE = 20          # Volumen-Schnitt erst ab 20 Tagen Daten
 LAGE_MITTE = 0.5           # Lage des Schlusses in der Tagesspanne: Mitte (ohne Spanne gilt die Mitte)

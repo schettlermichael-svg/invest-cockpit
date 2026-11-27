@@ -243,7 +243,7 @@ def dreifach_liste(erg):
 
 
 DREI_GRUPPEN = (("🎯", "Schlagbereit", "Long-Setup an der Front, im Ausbruch oder im Rücktest – der Angriffspunkt steht"),
-                ("⏳", "Auf der Lauer", "Base im Aufbau oder Rücksetzer – warten, bis der Kurs an die Front kommt"),
+                ("⏳", "Auf der Lauer", "Spanne im Aufbau oder an der Front – warten, bis der Kurs über die Front schließt"),
                 ("🏃", "Enteilt oder ohne Base", "stark, aber gerade kein Angriffspunkt – nicht hinterherlaufen"))
 
 
@@ -253,7 +253,7 @@ def _drei_gruppe(f):
     t_ = (f or {}).get("trade")
     if t_ and t_["richtung"] > 0 and f.get("phase") in zirkel.HEISS:
         return 0
-    return 1 if (f or {}).get("phase") in ("aufbau", "ruecksetzer", "kante") else 2
+    return 1 if (f or {}).get("phase") in ("aufbau", "kante") else 2
 
 
 def dreifach_block(erg):

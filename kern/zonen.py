@@ -3,17 +3,15 @@
 Grundsatz: Eine Spanne ist das Gerüst im Chart (der Nordstern). Reagieren statt antizipieren: gehandelt wird der
 Ausbruch aus der Spanne, der Rücktest an die gebrochene Kante und der Bruch der Unterkante – sonst nichts.
 
-Die Spanne je Ebene (Micky 22.11.2026, die PbD-Kette nach Vorwald ist entfernt):
-  Woche und Tag  Livermores Spanne (vcp_zone.zone, livermore.spanne – Micky 25.11.2026: Livermore ist die Grundlage):
-                 Oberkante = letzter Pivotal Point oben = Front, Unterkante = letzter Pivotal Point unten; Name immer
-                 „Spanne“ (Base, Flagge, Konsolidierung am 25.11.2026 entfernt).
-                 Beide Ebenen zeigen dieselbe Spanne – die Woche im großen Bild, der Tag im Detail.
-                 Läuft gerade ein Ausbruch (vcp_zone.ausbruch, bis 20 Tage), gilt die Spanne, aus der er kam.
-  Stunde         die Balance nach Dalton (tiefe.struktur): höchstes Hoch und tiefstes Tief seit dem Anker – die
-                 Feinzeichnung für den Einstieg.
-Phase (Zeichenliste): 🟡 Spanne im Aufbau · 🟡 Abwärtstrend läuft (Livermore schreibt rot, Spanne noch offen) · 🦬 an der Front (bis 3 % darunter) ·
-  🦬 Ausbruch (Schluss über der Front) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · ⚪ keine Spanne
-  (Kurs läuft am Hoch).
+Die Spanne je Ebene (Micky 27.11.2026, Einheitlichkeit): Livermores Spanne auf allen vier Ebenen aus ihren eigenen
+  Kerzen (vcp_zone.zone, livermore.spanne): Oberkante = letzter Pivotal Point oben = Front, Unterkante = letzter
+  Pivotal Point unten; beide stehen, bis ein Schluss 1 ATR jenseits liegt (Regel 1, livermore.steht) – dieselbe Front
+  und Unterkante wie im Lagebericht. Läuft gerade ein Ausbruch (vcp_zone.ausbruch, 4 Wochen in Zeit), gilt die Spanne,
+  aus der er kam; ist ihre Front gefallen, heißt sie alte Spanne mit alter Front (die Linie des Rücktests). Unter
+  NOTIZBUCH_MIN Kerzen: zu wenig Kerzen (kein zweites Messgerät).
+Phase (Zeichenliste): 🟡 Spanne im Aufbau · 🦬 an der Front (in der Kipp-Zone, bis 1 ATR darunter) ·
+  🦬 Ausbruch (Schluss über der Front) · 🪝 Rücktest · 🦊 Fehlausbruch · 🐻 Bruch der Unterkante · 🔴 Unterkante gefallen
+  · ⚪ keine Spanne (Kurs läuft am Hoch).
 Die drei Trades (Spanne des Tages, Micky 22.11.2026):
   Ausbruch    long: Auslöser = Front (Schluss darüber, Volumen über dem 50-Tage-Schnitt); Stopp = ¼ ATR unter
               Livermores Pivotal Point unten (der Unterkante, 25.11.2026), höchstens 8 % (Minervini, MAX_STOPP). Vor dem Ausbruch wartet er an der Front.
@@ -38,14 +36,15 @@ import tiefe
 import vcp_zone
 MAX_STOPP = 0.08           # Minervini: höchstens 8 % Risiko je Trade (der Stopp wird nie weiter gesetzt)
 from tiefe import STOPP_ATR            # ¼ ATR jenseits der Kante – eine Quelle
-from masse import VOL_TAGE             # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
+from masse import NOTIZBUCH_MIN, VOL_TAGE   # Volumen über dem 50-Tage-Schnitt (Micky: reicht für den Ausbruch) – eine Quelle
+from livermore import BESTAETIGUNG     # Kipp-Zone: 1 ATR um die Kante – eine Quelle
 
 EBENEN = ("Woche", "Tag", "4 Stunden", "Stunde")   # wie Mickys Favoriten in TradingView (1W, 1T, 4h, 1h)
-PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "ruecksetzer": ("🟡", "Abwärtstrend läuft"), "kante": ("🦬", "an der Front"),
+PHASE = {"aufbau": ("🟡", "Spanne im Aufbau"), "kante": ("🦬", "an der Front"),
          "ausbruch": ("🦬", "Ausbruch"), "ruecktest": ("🪝", "Rücktest"), "fehl": ("🦊", "Fehlausbruch"),
-         "bruch": ("🐻", "Bruch der Unterkante"), "hoch": ("⚪", "keine Spanne – Kurs läuft am Hoch"),
-         "balance": ("🟡", "Balance"), "rand_oben": ("🦬", "am oberen Rand"), "rand_unten": ("🐻", "am unteren Rand")}
-RICHTUNG = {"ausbruch": 1, "ruecktest": 1, "fehl": -1, "bruch": -1}
+         "bruch": ("🐻", "Bruch der Unterkante"), "gefallen": ("🔴", "Unterkante gefallen – keine Spanne"),
+         "hoch": ("⚪", "keine Spanne – Kurs läuft am Hoch")}
+RICHTUNG = {"ausbruch": 1, "ruecktest": 1, "fehl": -1, "bruch": -1, "gefallen": -1}
 TRADE_NAME = {"ausbruch": "Ausbruch", "ruecktest": "Rücktest", "short": "Bruch der Unterkante"}
 TRADE_ZEICHEN = {"ausbruch": "🦬", "ruecktest": "🪝", "short": "🐻"}
 
@@ -103,8 +102,8 @@ def basis(df):
     bruch = bool(not a and gestern.get("zone") and float(df["Close"].iloc[-1]) < gestern["unten"])
     if bruch:                                    # Bruch der Unterkante: die Spanne von gestern
         b = gestern
-    elif a:
-        b = a["zone"]
+    elif a:                                      # Ausbruch: steht seine Front noch (Kipp-Zone), gilt die Spanne von heute –
+        b = jetzt if jetzt.get("zone") else a["zone"]   # dieselbe wie im Lagebericht; sonst die alte Spanne (27.11.)
     else:
         b = jetzt if jetzt.get("start_i") is not None else None
     return {"z": vcp_zone.datiert(df, b) if b else None, "ausbruch": a, "jetzt": jetzt, "df": df, "bruch": bruch, "nb": nb}
@@ -121,56 +120,52 @@ KERZE = {"Tag": "T.", "Woche": "Wo.", "4 Stunden": "4h", "Stunde": "Std."}   # E
 
 def lage(e, ba=None, profil=True):
     """Spanne, Phase und Richtung einer Ebene → dict, aus ihrer Spanne ba (basis() auf den Kerzen der Ebene, 26.11.2026);
-    ohne Notizbuch (zu wenig Kerzen) die Balance.
+    None ohne Notizbuch (zu wenig Kerzen – kein zweites Messgerät, Micky 27.11.2026).
     profil=False (Zirkel-Lauf über alle Titel, nur Tageskurse): ohne Volumenprofil, poc und profil sind None."""
-    if not e:
+    if not e or ba is None:
         return None
     df = e["df"]
     kurs = float(df["Close"].iloc[-1])
-    if ba is None:                                   # Rückfall ohne Notizbuch: die Balance (zu wenig Kerzen)
-        st_ = e["struktur"]
-        lo, hi, beginn = float(st_["short_pivot"]), float(st_["pivot"]), pd.Timestamp(st_["balance_start"])
-        nah = (e["atr"] or 0) * STOPP_ATR
-        phase = "rand_oben" if kurs >= hi - nah else "rand_unten" if kurs <= lo + nah else "balance"
-        name, pivot, info = "Balance", hi, f"seit {beginn:%d.%m. %H:%M}"
+    z, a = ba["z"], ba["ausbruch"]
+    if z is None:                              # keine Spanne: Front gefallen (Kurs läuft am Hoch) oder Unterkante
+        gef = "gefallen" if (ba.get("jetzt") or {}).get("gefallen") == "unten" else "hoch"   # gefallen (27.11.)
+        z_, w_ = PHASE[gef]                    # das Profil ab dem Start der Bewegung: dem letzten Pivotal Point
+        art_ = "tief" if gef == "hoch" else "hoch"                              # der Gegenseite (Micky 26.11.)
+        pp_ = next((p_ for p_ in reversed((ba.get("nb") or {}).get("pivotal") or []) if p_["art"] == art_), None)
+        ab_ = pp_["tag"] if pp_ is not None else e["struktur"]["balance_start"]
+        pr = profil_seit(e, ab_) if profil else None
+        r_ = RICHTUNG.get(gef, 0)
+        return {"zone": None, "phase": gef, "zeichen": z_, "wort": w_, "richtung": r_, "pfeil": {1: "↗", -1: "↘", 0: "→"}[r_],
+                "kurs": kurs, "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]) if pr else None,
+                "profil": pr, "beginn": None, "spalte": (ba.get("nb") or {}).get("spalte"),
+                "kante": (ba.get("jetzt") or {}).get("kante")}
+    lo, hi, beginn = float(z["unten"]), float(z["oben"]), pd.Timestamp(z["start_t"])
+    alt = not (ba.get("jetzt") or {}).get("zone")     # Kante gefallen (Ausbruch, Bruch): die alte Spanne (27.11.)
+    pivot = float(a["pivot"]) if a else float(z.get("pivot") or hi)   # Livermores Pivotal Point
+    td = ba["df"]
+    if a and a["fehl"]:
+        phase = "fehl"
+    elif a:
+        phase = "ruecktest" if a["ruecktest"] else "ausbruch"
+    elif ba["bruch"]:
+        phase = "bruch"
+    elif float(td["Close"].iloc[-1]) >= pivot - BESTAETIGUNG * float(vcp_zone.atr(td).iloc[-1] or 0):
+        phase = "kante"                                # an der Front = in der Kipp-Zone, bis 1 ATR darunter (27.11.)
     else:
-        z, a = ba["z"], ba["ausbruch"]
-        if z is None:                              # Kurs läuft am Hoch: keine Spanne – das Profil ab dem letzten Pivotal
-            z_, w_ = PHASE["hoch"]                 # Point unten, dem Start des Vormarschs (Micky 26.11.2026; vorher Dalton-Balance)
-            pp_u = next((p_ for p_ in reversed((ba.get("nb") or {}).get("pivotal") or []) if p_["art"] == "tief"), None)
-            ab_ = pp_u["tag"] if pp_u is not None else e["struktur"]["balance_start"]
-            pr = profil_seit(e, ab_) if profil else None
-            return {"zone": None, "phase": "hoch", "zeichen": z_, "wort": w_, "richtung": 0, "pfeil": "→", "kurs": kurs,
-                    "name": "", "info": "", "pivot": None, "poc": float(pr["poc"]) if pr else None, "profil": pr,
-                    "beginn": None, "spalte": (ba.get("nb") or {}).get("spalte")}
-        lo, hi, beginn = float(z["unten"]), float(z["oben"]), pd.Timestamp(z["start_t"])
-        pivot = float(a["pivot"]) if a else float(z.get("pivot") or hi)   # Livermores Pivotal Point
-        td = ba["df"]
-        if a and a["fehl"]:
-            phase = "fehl"
-        elif a:
-            phase = "ruecktest" if a["ruecktest"] else "ausbruch"
-        elif ba["bruch"]:
-            phase = "bruch"
-        elif not ba["jetzt"].get("zone"):
-            phase = "ruecksetzer"
-        elif float(td["Close"].iloc[-1]) >= pivot * (1 - vcp_zone.RAND_PCT / 100):
-            phase = "kante"
-        else:
-            phase = "aufbau"
-        name = z.get("name") or "Abwärtstrend"
-        dauer = (f'seit {beginn:%d.%m. %H:%M}' if e["name"] in tiefe.INTRADAY          # Dauer in Kalenderwochen, gleich
-                 else f'{max(0, (df.index[-1] - beginn).days) / 7:.0f} Wo.')                # auf jeder Ebene (26.11.)
-        teile = [dauer, f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
-        if a and not a["fehl"]:
-            ein_ = KERZE.get(e["name"], "T.")
-            teile.append(f'Ausbruch vor {a["tage_her"]} {ein_} ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
-            teile.append(vcp_zone.wucht(a, ein_))                                   # Masse mal Geschwindigkeit (26.11.)
-        info = " · ".join(teile)
+        phase = "aufbau"
+    name = "alte Spanne" if alt else (z.get("name") or "Spanne")
+    dauer = (f'seit {beginn:%d.%m. %H:%M}' if e["name"] in tiefe.INTRADAY          # Dauer in Kalenderwochen, gleich
+             else f'{max(0, (df.index[-1] - beginn).days) / 7:.0f} Wo.')                # auf jeder Ebene (26.11.)
+    teile = [dauer, f'{z["tiefe"]:.0f} % tief'.replace(".", ",")]
+    if a and not a["fehl"]:
+        ein_ = KERZE.get(e["name"], "T.")
+        teile.append(f'Ausbruch vor {a["tage_her"]} {ein_} ' + ("mit Volumen" if a["mit_volumen"] else "ohne Volumen"))
+        teile.append(vcp_zone.wucht(a, ein_))                                   # Masse mal Geschwindigkeit (26.11.)
+    info = " · ".join(teile)
     pr = profil_seit(e, beginn) if profil else None
     z_, w_ = PHASE[phase]
     r = RICHTUNG.get(phase, 0)
-    return {"zone": (lo, hi), "pivot": pivot, "poc": float(pr["poc"]) if pr else None, "profil": pr, "beginn": beginn, "name": name,
+    return {"zone": (lo, hi), "pivot": pivot, "alt": alt, "poc": float(pr["poc"]) if pr else None, "profil": pr, "beginn": beginn, "name": name,
             "info": info, "phase": phase, "zeichen": z_, "wort": w_, "richtung": r,
             "pfeil": {1: "↗", -1: "↘", 0: "→"}[r], "kurs": kurs, "spalte": ((ba or {}).get("nb") or {}).get("spalte")}
 
@@ -284,16 +279,15 @@ def frei(e):
 
 
 def fuehrte(ebenen):
-    """Alles für Kopfzeile und Chart: Livermores Spanne je Ebene (Micky 26.11.2026: sein Notizbuch auf Wochen-, Tages-
-    und Stundenkerzen – eine Sprache auf allen Ebenen; vorher Woche = Spanne des Tages, Stunde = Dalton-Balance),
-    Lage je Ebene, Stellungen, der Trade (Tag), die Einigkeit der Ebenen."""
+    """Alles für Kopfzeile und Chart: Livermores Spanne je Ebene (sein Notizbuch auf den Kerzen jeder Ebene – eine
+    Sprache auf allen Ebenen), Lage je Ebene, Stellungen, der Trade (Tag), die Einigkeit der Ebenen."""
     tag = ebenen.get("Tag")
     ba_e = {}
     for n in EBENEN:
         e_ = ebenen.get(n)
         try:
-            ba_e[n] = basis(e_["df"]) if e_ and len(e_["df"]) > vcp_zone.MIN_DATEN else None
-        except Exception:  # noqa: BLE001 – ohne Notizbuch gilt auf dieser Ebene die Balance (Rückfall)
+            ba_e[n] = basis(e_["df"]) if e_ and len(e_["df"]) >= NOTIZBUCH_MIN else None
+        except Exception:  # noqa: BLE001 – Technik: ohne Notizbuch zu wenig Kerzen (kein zweites Messgerät)
             ba_e[n] = None
     ba = ba_e.get("Tag")
     la = {n: lage(ebenen.get(n), ba_e.get(n)) for n in EBENEN}
