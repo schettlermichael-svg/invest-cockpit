@@ -1,4 +1,4 @@
-# Invest Cockpit
+# MARAGA INVESTMENT APP (vormals Invest Cockpit)
 
 Eine App für das ganze SEPA-System: Makro (Dalio-Quadrant), Zyklus (Marks-Pendel), Sektoren und Rotation,
 Screening und Mustererkennung nach Minervini, später Risikomanagement. Sie zeigt die Instrumente mit Ampeln
