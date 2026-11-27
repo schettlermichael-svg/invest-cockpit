@@ -1928,3 +1928,8 @@ ab 10 Mio. $ nur +87, ab 5 Mio. $ +206, mit Kurs ab 5 $ +320. Gewählt: **Kurs a
 `werkzeuge/revier_bauen.py` liest dieselben Grenzen). Die Revier-Pflege am Samstag nimmt bis zu 250 Zugänge auf einmal
 auf; ihre Kurse kommen im nächsten Frühlauf (Di), die 30-Minuten-Kerzen in den Lücken-Durchgängen. Knock-outs gibt es
 für viele Small Caps kaum – dort in der Aktie handeln. Der Frühlauf wird dadurch etwa 10 Minuten länger.
+
+## Ansicht „System“: die ganze Karte (27.11.2026)
+
+Sechster Reiter neben Performance. Er zeigt `oberflaeche/systemkarte.html`, also die ganze Karte unseres Systems: die fünf Begriffe (Balance, Disbalance, Stärke, Schwäche, Momentum) mit RS als Messgerät, die vier Ebenen und das Notizbuch als ihre Grundlage, die Titelseite von oben nach unten (Truppe, Jahreszeit, Gelände, drei Tore, Setup, Beobachten, Gegenzeichen), die Note A+ bis D (offen), den Chart, alles rund um die Titelseite und die offenen Punkte. Bei jedem Block steht, welche Zeitebenen er liest.
+**Pflege:** Die Datei ist die Quelle. Ändert sich das System, wird sie mitgeändert, wie LIESMICH und Regelkarte. Das Artboard „Unser System – die ganze Karte“ im Design ist eine Kopie. Ausführlich steht alles im Doc „Unser System“.

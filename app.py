@@ -59,9 +59,10 @@ div[role="radiogroup"] label:has(input:checked) p {{color:{SEITE} !important}}
 .st-key-ansicht div[role="radiogroup"] label {{white-space:nowrap; flex:0 0 auto}}
 </style>""", unsafe_allow_html=True)
 
-ansicht_liste = ["Rückenwind", "Titelseite", "Analyse", "Depot", "Performance"]   # Rückenwind = Lagezentrum; Depot und
+ansicht_liste = ["Rückenwind", "Titelseite", "Analyse", "Depot", "Performance", "System"]   # Rückenwind = Lagezentrum; Depot und
 # Performance seit 16.11.2026; die Übersicht ist seit 10.11.2026 Teil von Rückenwind; der Konferenzraum wurde am 13.11.2026
 # abgebaut, die Seite Setups am 21.11.2026 (Micky: Auswahl und Chart statt Setup-Listen)
+# System (Micky 27.11.2026): die ganze Karte unseres Systems (oberflaeche/systemkarte.html)
 ALTE_SEITEN = {"Übersicht": "Rückenwind", "Konferenzraum": "Rückenwind", "Setups": "Rückenwind"}   # alte Lesezeichen
 # Startwerte einmal aus der Adresszeile übernehmen; danach führt Streamlit den Zustand selbst.
 # (Ein index= aus der Adresszeile bei jedem Lauf legte das Bedienelement neu an – dann brauchte
@@ -553,6 +554,10 @@ elif ansicht == "Performance":                 # Performance (16.11.2026): Kurve
         performance_zeigen()
     except Exception as e:  # noqa: BLE001
         _fehler(e)
+elif ansicht == "System":                      # die ganze Karte unseres Systems (Micky 27.11.2026)
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "oberflaeche", "systemkarte.html"),
+              encoding="utf-8") as f_:
+        st.markdown(f_.read().split("\n", 1)[1], unsafe_allow_html=True)   # erste Zeile = Hinweis für die Pflege
 elif ansicht == "Analyse" and ticker:         # Tiefenanalyse (Micky 21.11.2026, aus der App Titel-Analyse)
     datenstand_zeigen()
     try:
