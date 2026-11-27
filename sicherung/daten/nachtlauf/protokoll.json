@@ -1,30 +1,30 @@
 {
- "start": "26.11.2026 06:05",
- "ende": "26.11.2026 07:26",
+ "start": "27.11.2026 06:05",
+ "ende": "27.11.2026 08:07",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
    "text": "bis 25.11.2026",
-   "sekunden": 13
+   "sekunden": 2108
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
    "text": "Stand 25.11.2026",
-   "sekunden": 103
+   "sekunden": 0
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
-   "text": "1639 von 1980 Titeln ergänzt",
-   "sekunden": 535
+   "text": "0 von 1980 Titeln ergänzt",
+   "sekunden": 547
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
    "text": "1981 Titel",
-   "sekunden": 304
+   "sekunden": 311
   },
   {
    "name": "TradingView-Kennzahlen",
@@ -35,35 +35,35 @@
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "3 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 70
+   "text": "1 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 66
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
    "text": "Stand 2026-11-25: Garde 26, Angriff 668, Vorhut 293, Ohne Nachschub 302, Rückzug 656",
-   "sekunden": 1877
+   "sekunden": 315
   },
   {
    "name": "Zirkel (Kreislauf, Setup, Hochs/Tiefs, Markt-Ampel)",
    "ok": true,
-   "text": "1966 Titel, 1238 mit Setup · 52 Hochs, 98 Tiefs · S&P 500 ↗ Natürliche Erholung gelb (Zirkel ✓) · Nasdaq ↘ Natürliche Reaktion gelb (Zirkel ✓)",
-   "sekunden": 1781
+   "text": "1966 Titel, 1238 mit Setup · 52 Hochs, 98 Tiefs · Lage Gefechtspause: Spitze 157↑ 48↓ · Heer 216↑ 602↓",
+   "sekunden": 1868
   },
   {
    "name": "Lage (Markt-Ampel, Wetter, Pendel, Breite)",
    "ok": true,
    "text": "Übersicht gebaut",
-   "sekunden": 20
+   "sekunden": 24
   },
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "123 von 123 Titelseiten abgelegt",
-   "sekunden": 173
+   "text": "1098 von 1098 Titelseiten abgelegt",
+   "sekunden": 2096
   }
  ],
- "pid": 43123,
+ "pid": 71033,
  "datenstand": {
   "Massive-Tageskurse": "2026-11-25",
   "Yahoo-Tageskurse": "2026-11-25",
