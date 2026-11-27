@@ -1,7 +1,7 @@
 """Baut das Revier: die US-Aktien, die die App durchsucht (Konzept, Schritt 3).
 
-Regeln: Börsenwert ab 1 Mrd. $, Kurs ab 10 $, gehandelter Wert im Schnitt der letzten 50 Tage
-ab 20 Mio. $ je Tag; nur Stammaktien und ADRs (keine Vorzugsaktien, Optionsscheine, Units).
+Regeln (eine Quelle: kern/revier_pflege.py): Kurs ab 10 $ und Börsenwert ab 1 Mrd. $ mit gehandeltem Wert im Schnitt
+der letzten 50 Tage ab 20 Mio. $ je Tag, oder Small Caps ab 300 Mio. $ mit ab 5 Mio. $ je Tag (27.11.2026); nur Stammaktien und ADRs (keine Vorzugsaktien, Optionsscheine, Units).
 Quellen: Liste aller US-Aktien vom NASDAQ-Screener (Börsenwert, Kurs, Sektor, Branche), Umsatz der
 letzten 50 Handelstage von Massive (eine Anfrage je Tag für alle Aktien, siehe kern/massive.py). Sektor und Branche nimmt das Skript von Yahoo, wo der Steckbrief schon
 gespeichert ist (wie auf der Titelseite), sonst vom NASDAQ-Screener.
@@ -26,7 +26,8 @@ import massive      # noqa: E402
 import sektoren     # noqa: E402
 
 ZIEL = os.path.join(HIER, "..", "einstellungen", "revier.csv")
-BOERSENWERT, KURS, UMSATZ = 1e9, 10.0, 20e6
+from revier_pflege import REVIER_KURS as KURS, REVIER_UMSATZ as UMSATZ, REVIER_WERT as BOERSENWERT  # noqa: E402
+from revier_pflege import SMALL_UMSATZ, SMALL_WERT  # noqa: E402
 # Sektoren des NASDAQ-Screeners → Sektor-ETF („Miscellaneous“ bleibt ohne Zuordnung)
 NASDAQ_ETF = {"Technology": "XLK", "Telecommunications": "XLC", "Health Care": "XLV", "Finance": "XLF",
               "Real Estate": "XLRE", "Consumer Discretionary": "XLY", "Consumer Staples": "XLP",
@@ -64,10 +65,10 @@ def main():
     liste["kurs"] = liste["lastsale"].map(zahl)
     liste["wert"] = liste["marketCap"].map(zahl)
     liste["ticker"] = liste["symbol"].str.strip().str.replace("/", "-", regex=False)
-    gut = liste[(liste["wert"] >= BOERSENWERT) & (liste["kurs"] >= KURS)
+    gut = liste[(liste["wert"] >= SMALL_WERT) & (liste["kurs"] >= KURS)
                 & liste["ticker"].str.fullmatch(r"[A-Z]{1,5}(-[A-Z])?")
                 & ~liste["name"].fillna("").str.contains(AUSSCHLUSS)]
-    print(f"    {len(liste)} Titel gesamt, {len(gut)} mit Börsenwert ab 1 Mrd. und Kurs ab 10 $", flush=True)
+    print(f"    {len(liste)} Titel gesamt, {len(gut)} mit Börsenwert ab 300 Mio. und Kurs ab 10 $", flush=True)
 
     print("2/4 Umsatz der letzten 50 Handelstage von Massive (1 Anfrage je Tag, 5 pro Minute) …", flush=True)
     tage = massive.letzte_tage(50, melden=lambda k, n, t: print(f"    {k} von {n} ({t:%d.%m.%Y})", flush=True))
@@ -80,8 +81,9 @@ def main():
     fehlen = gut["umsatz"].isna().sum()
     if fehlen:
         print(f"    für {fehlen} Titel keine 40 Handelstage bei Massive (nicht aufgenommen)", flush=True)
-    gut = gut[gut["umsatz"] >= UMSATZ]
-    print(f"    {len(gut)} mit mindestens 20 Mio. $ Umsatz je Tag", flush=True)
+    gross = gut["wert"] >= BOERSENWERT
+    gut = gut[(gross & (gut["umsatz"] >= UMSATZ)) | (~gross & (gut["umsatz"] >= SMALL_UMSATZ))]
+    print(f"    {len(gut)} mit genug Umsatz (ab 1 Mrd.: 20 Mio. $, Small Caps: 5 Mio. $ je Tag)", flush=True)
 
     print("3/4 Sektor und Branche …", flush=True)
     sb = {tk: daten.steckbrief_gespeichert(tk) for tk in gut["ticker"]}

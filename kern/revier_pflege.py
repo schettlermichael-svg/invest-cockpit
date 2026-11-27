@@ -1,7 +1,9 @@
 """Revier-Pflege (Nachtlauf, freitags, ab 05.11.2026): Zugänge automatisch, Abgänge nur gemeldet.
 
-Regeln des Reviers (Schritt 3): US-Börse (NYSE, NASDAQ, AMEX), Börsenwert ab 1 Mrd. $, Handelsumsatz ab 20 Mio. $ je Tag
-(30-Tage-Schnitt), Kurs ab 10 $. Quelle der Kandidaten: TradingView-Screener (wie tv_kennzahlen); Sektor und Branche
+Regeln des Reviers (Schritt 3; Small Caps seit 27.11.2026): US-Börse (NYSE, NASDAQ, AMEX), Kurs ab 10 $ und
+  · Börsenwert ab 1 Mrd. $ mit Handelsumsatz ab 20 Mio. $ je Tag (30-Tage-Schnitt), oder
+  · Small Caps: Börsenwert 300 Mio. bis 1 Mrd. $ mit Handelsumsatz ab 5 Mio. $ je Tag (Micky: wie die alte
+    Finviz-Regel, in Dollar gemessen – dort entstehen viele große Läufe; gezählt am 27.11.2026: +206 Titel). Quelle der Kandidaten: TradingView-Screener (wie tv_kennzahlen); Sektor und Branche
 für einen Zugang von Yahoo (daten.steckbrief), damit sie zur Yahoo-Einteilung des Reviers passen.
 Abgang = seit 5 Handelstagen keine neuen Kurse (Übernahme, Delisting) – wird gemeldet, nicht entfernt (nichts löschen).
 Vorher Sicherung von einstellungen/revier.csv nach _to_delete/revier/.
@@ -16,20 +18,22 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 REVIER = os.path.join(HIER, "..", "einstellungen", "revier.csv")
 SPALTEN = ["name", "exchange", "description", "market_cap_basic", "close", "average_volume_30d_calc", "type"]
 REVIER_WERT, REVIER_KURS, REVIER_UMSATZ = 1e9, 10, 20e6   # Revier: Börsenwert ab 1 Mrd $, Kurs ab 10 $, Umsatz ab 20 Mio $ am Tag
-HOECHSTENS = 40               # Zugänge je Lauf (Yahoo-Abfragen begrenzen); der Rest kommt nächste Woche
+SMALL_WERT, SMALL_UMSATZ = 3e8, 5e6   # Small Caps: Börsenwert ab 300 Mio $ (bis 1 Mrd $) mit Umsatz ab 5 Mio $ am Tag
+HOECHSTENS = 250              # Zugänge je Lauf (Yahoo-Abfragen begrenzen, 1 s Pause); deckt die Small Caps in einem Lauf
 
 
 def kandidaten():
     import tv_kennzahlen
     roh = tv_kennzahlen._abfrage("america", {
-        "filter": [{"left": "market_cap_basic", "operation": "egreater", "right": REVIER_WERT},
+        "filter": [{"left": "market_cap_basic", "operation": "egreater", "right": SMALL_WERT},
                    {"left": "close", "operation": "egreater", "right": REVIER_KURS},
                    {"left": "exchange", "operation": "in_range", "right": ["NYSE", "NASDAQ", "AMEX"]},
                    {"left": "type", "operation": "equal", "right": "stock"}],
         "markets": ["america"], "columns": SPALTEN, "range": [0, 9000]})  # Technik
     df = pd.DataFrame([dict(zip(SPALTEN, z["d"])) for z in roh])
     df["umsatz"] = df["close"] * df["average_volume_30d_calc"]
-    df = df[df["umsatz"] >= REVIER_UMSATZ].copy()
+    gross = df["market_cap_basic"] >= REVIER_WERT
+    df = df[(gross & (df["umsatz"] >= REVIER_UMSATZ)) | (~gross & (df["umsatz"] >= SMALL_UMSATZ))].copy()
     df["ticker"] = df["name"].astype(str).str.replace(".", "-", regex=False).str.upper()
     return df.drop_duplicates("ticker")
 

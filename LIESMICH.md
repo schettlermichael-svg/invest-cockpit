@@ -1918,3 +1918,13 @@ heißen `invest-…` oder stehen in `werkzeuge/server/`.
   1.847 Revier-Titeln: 6,3 % auffällig, bei Zufallskursen ohne Gedächtnis 5 % – kaum vom Zufall zu unterscheiden.
   Micky: nicht aufnehmen. Die Wiederholung an Preisen (Osler, FRBNY 2000/2001) tragen schon Stellungen, Abpraller 🛡 und
   die alte Plattform. Nicht erneut vorschlagen ohne neue Grundlage.
+
+## Revier mit Small Caps (27.11.2026)
+
+Micky verglich mit der alten Finviz-Regel (Börsenwert ab 300 Mio. $, Ø-Volumen ab 500.000 Stück). Gezählt im
+TradingView-Screener am 27.11.2026: heutiges Revier 1.783; Small Caps (300 Mio.–1 Mrd. $) mit Kurs ab 10 $ und Umsatz
+ab 10 Mio. $ nur +87, ab 5 Mio. $ +206, mit Kurs ab 5 $ +320. Gewählt: **Kurs ab 10 $ und entweder Börsenwert ab
+1 Mrd. $ mit 20 Mio. $ Umsatz je Tag oder 300 Mio.–1 Mrd. $ mit 5 Mio. $** (`revier_pflege.SMALL_WERT`, `SMALL_UMSATZ`;
+`werkzeuge/revier_bauen.py` liest dieselben Grenzen). Die Revier-Pflege am Samstag nimmt bis zu 250 Zugänge auf einmal
+auf; ihre Kurse kommen im nächsten Frühlauf (Di), die 30-Minuten-Kerzen in den Lücken-Durchgängen. Knock-outs gibt es
+für viele Small Caps kaum – dort in der Aktie handeln. Der Frühlauf wird dadurch etwa 10 Minuten länger.

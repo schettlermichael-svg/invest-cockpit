@@ -529,6 +529,8 @@ TECHNIK = {
     "modell.DECKEL_USD": "Monatsdeckel der Prüfer", "modell.CACHE_SCHREIBEN": "Preis Prompt-Caching",
     "modell.CACHE_LESEN": "Preis Prompt-Caching", "quellen.GUELTIG_STUNDEN": "Datenpflege",
     "revier_pflege.HOECHSTENS": "Datenpflege", "revier_pflege.REVIER_WERT": "Datenpflege (Grenze des Reviers)",
+    "revier_pflege.SMALL_WERT": "Datenpflege (Grenze des Reviers, Small Caps)",
+    "revier_pflege.SMALL_UMSATZ": "Datenpflege (Grenze des Reviers, Small Caps)",
     "revier_pflege.REVIER_KURS": "Datenpflege (Grenze des Reviers)",
     "revier_pflege.REVIER_UMSATZ": "Datenpflege (Grenze des Reviers)", "tpo_daten.JAHRE": "Datenpflege", "tv_kennzahlen.MINDEST": "Datenpflege",
     "datenpruefung.TAGE": "Datenprüfung", "datenpruefung.FAKTOREN": "Datenprüfung (Split-Faktoren)",
