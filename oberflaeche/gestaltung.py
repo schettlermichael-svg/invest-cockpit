@@ -191,7 +191,7 @@ def marke(pfad):
             f'<div><div style="font-family:{TITELSCHRIFT};font-weight:600;font-size:32px;letter-spacing:.18em;'
             f'color:{PETROL}">MARAGA</div><div style="font-family:{TITELSCHRIFT};font-size:14px;letter-spacing:.3em;'
             f'color:{COGNAC};margin-top:2px">INVESTMENT APP</div></div>'
-            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:150px;width:auto;margin:4px 12px 0 0"></div>')
+            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:150px;width:auto;margin:12px 64px 4px 0"></div>')
 
 
 SCHNITTE = (("Cinzel", "cinzel-latin-400-normal", 400), ("Cinzel", "cinzel-latin-600-normal", 600),   # Technik: Dateien
