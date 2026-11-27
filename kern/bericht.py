@@ -93,11 +93,12 @@ IM = {"unteres Drittel": "im unteren Drittel", "Mitte": "in der Mitte", "oberes 
 
 
 def _stelle(g, wort, kurs, kante=None, atr=0):
-    """„Decke 212,00 (+0,4 % · 2 🛡)“; liegt sie an der Kante (innerhalb ½ ATR), heißt sie „Decke = Front“."""
+    """„Decke 212,00 (+0,4 % · 2 🛡)“; enthält sie die Kante, trägt sie deren Preis (livermore.gruppen) und heißt
+    „Decke = Front“."""
     if not g:
         return ""
     pr = g["preis"]
-    if kante and abs(pr - kante) <= atr * livermore.STELLUNG_ATR:
+    if kante and pr == kante:
         wort += " = Front" if wort == "Decke" else " = Unterkante"
     zus = [_pz(pr, kurs)] + ([f'{g["abpraller"]} 🛡'] if g.get("abpraller") else []) + (
         [f'{g["gewicht"]} Punkte'] if g.get("gewicht", 1) > 1 else [])
@@ -126,8 +127,16 @@ def saetze(b):
     if len(tr["hochs"]) > 1 and len(tr["tiefs"]) > 1:
         pf = lambda xs: " → ".join(_zahl(x) for x in xs)                                   # noqa: E731
         aus.append(f'Hochs {pf(tr["hochs"])} · Tiefs {pf(tr["tiefs"])}' + (f': {tr["wort"]}.' if tr["wort"] else "."))
-    st_ = [x for x in (_stelle(b["decke"], "Decke", kurs, b["front"], b["atr"]),
-                       _stelle(b["boden"], "Boden", kurs, b["unterkante"], b["atr"])) if x]
+    st_ = []
+    for g, wort, kante, sg in ((b["decke"], "Decke", b["front"], 1), (b["boden"], "Boden", b["unterkante"], -1)):
+        x = _stelle(g, wort, kurs, kante, b["atr"])
+        if x and kante and g["preis"] == kante:          # die Stellung ist die Kante: die nächste dahinter dazu, damit
+            hinter = min((h for h in b["gruppen"] if sg * (h["preis"] - g["preis"]) > 0),   # Bericht, Leiter und Chart
+                         key=lambda h: abs(h["preis"] - g["preis"]), default=None)          # dieselben Stellungen nennen
+            if hinter:
+                x += f' · dahinter {wort} {_zahl(hinter["preis"])} ({_pz(hinter["preis"], kurs)})'
+        if x:
+            st_.append(x)
     if not b["decke"]:
         st_.insert(0, "✈️ keine Decke – freie Bahn nach oben")
     if not b["boden"]:
@@ -191,6 +200,10 @@ def beobachten(be, tr=None):
             z.append(f'Auslöser: Tagesschluss {wort} {_zahl(kante)} ({_pz(kante, kurs)})'
                      + (f' – bis dahin {len(dazw)} {"Stellung" if len(dazw) == 1 else "Stellungen"} im Weg.'
                         if dazw else "."))
+        elif t_["decke" if sg > 0 else "boden"]:            # keine Kante, aber noch Stellungen: kein ✈️ (27.11.2026)
+            g = t_["decke" if sg > 0 else "boden"]
+            z.append(f'Keine {"Front" if sg > 0 else "Unterkante"} mehr – {"nächste Decke" if sg > 0 else "nächster Boden"} '
+                     f'{_zahl(g["preis"])} ({_pz(g["preis"], kurs)}).')
         else:
             z.append("Keine Kante mehr – ✈️ freie Bahn." if sg > 0 else "Keine Kante mehr – ✈️↓ freie Bahn.")
         if linie:
@@ -237,12 +250,18 @@ def gegenzeichen(be, richtung):
 
 def leiter(be):
     """Alle Stellungen aller Ebenen für die Leiter → [{preis, art, ebenen, abpraller}] plus alte Plattformen
-    [{unten, oben, rolle, ebenen}] – Stellungen innerhalb ½ Tages-ATR werden eine Sprosse."""
+    [{unten, oben, rolle, ebenen}] (Micky 27.11.2026: eine Rechnung mit Bericht und Chart):
+      · jede Stellung jeder Ebene (livermore.gruppen), dazu Front und Unterkante;
+      · innerhalb ½ Tages-ATR eine Sprosse – nie über den Kurs hinweg; die Kante gibt den Preis;
+      · Preis und Abpraller der Sprosse von der urteilenden Ebene: Tag, dann Woche, dann 4 Stunden, dann Stunde – nie
+        die Summe (die Kerzen der kleinen Ebenen sind Teile der großen);
+      · alte Plattformen aller Ebenen."""
     import vcp_zone
     t_ = be.get("Tag")
     if not t_:
         return None
     a = float(vcp_zone.atr(t_["df"]).iloc[-1] or 0)
+    kurs = t_["kurs"]
     kurz = {"Woche": "W", "Tag": "T", "4 Stunden": "4h", "Stunde": "1h"}
     roh = []
     for n, b in be.items():
@@ -250,26 +269,33 @@ def leiter(be):
             continue
         for art, pr in (("front", b["front"]), ("unterkante", b["unterkante"])):
             if pr:
-                roh.append({"preis": pr, "art": art, "ebene": kurz[n], "abpraller": 0})
-        for g in (b["decke"], b["boden"]):
-            if g:
-                roh.append({"preis": g["preis"], "art": "decke" if g["preis"] > t_["kurs"] else "boden",
+                g = next((g for g in b["gruppen"] if g["preis"] == pr), None)
+                roh.append({"preis": pr, "art": art, "ebene": kurz[n], "abpraller": (g or {}).get("abpraller", 0)})
+        for g in b["gruppen"]:
+            if g["preis"] not in (b["front"], b["unterkante"]):
+                roh.append({"preis": g["preis"], "art": "decke" if g["preis"] > kurs else "boden",
                             "ebene": kurz[n], "abpraller": g.get("abpraller", 0)})
     rang = {"front": 0, "unterkante": 0, "decke": 1, "boden": 1}
     sprossen = []
-    for x in sorted(roh, key=lambda x: (rang[x["art"]], x["preis"])):
-        s_ = next((s_ for s_ in sprossen if abs(s_["preis"] - x["preis"]) <= a * livermore.STELLUNG_ATR), None)
+    vorrang = {"T": 0, "W": 1, "4h": 2, "1h": 3}
+    for x in sorted(roh, key=lambda x: (rang[x["art"]], vorrang[x["ebene"]], abs(x["preis"] - kurs))):
+        s_ = next((s_ for s_ in sprossen if (s_["preis"] > kurs) == (x["preis"] > kurs)
+                   and abs(s_["preis"] - x["preis"]) <= a * livermore.STELLUNG_ATR), None)
         if s_:
             if x["ebene"] not in s_["ebenen"]:
                 s_["ebenen"].append(x["ebene"])
-            s_["abpraller"] += x["abpraller"]
             continue
         sprossen.append({"preis": x["preis"], "art": x["art"], "ebenen": [x["ebene"]], "abpraller": x["abpraller"]})
     alt = []
-    for n in ("Woche", "Tag"):
-        b = be.get(n)
-        for g in ((b or {}).get("alt") or {}).values():
-            if g and not any(abs(x["unten"] - g["unten"]) <= a and abs(x["oben"] - g["oben"]) <= a for x in alt):
-                alt.append(dict(g, ebenen=[kurz[n]]))
-    return {"sprossen": sprossen, "alt": alt, "kurs": t_["kurs"], "atr": a}
-
+    for n in ("Tag", "Woche", "4 Stunden", "Stunde"):
+        for g in ((be.get(n) or {}).get("alt") or {}).values():
+            if not g:
+                continue
+            gleich = next((x for x in alt if abs(x["unten"] - g["unten"]) <= a * livermore.STELLUNG_ATR
+                           and abs(x["oben"] - g["oben"]) <= a * livermore.STELLUNG_ATR), None)
+            if gleich:
+                if kurz[n] not in gleich["ebenen"]:
+                    gleich["ebenen"].append(kurz[n])
+                continue
+            alt.append(dict(g, ebenen=[kurz[n]]))
+    return {"sprossen": sprossen, "alt": alt, "kurs": kurs, "atr": a}

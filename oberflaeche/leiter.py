@@ -8,7 +8,7 @@ B, H = 360, 470            # Layout: Breite und Höhe des Bildes
 X0, X1 = 8, 150            # Layout: die Sprossen
 OBEN, UNTEN = 18, 452      # Layout: Rand der Achse
 ETIKETT_ABSTAND = 15               # Layout: Mindestabstand der Beschriftungen
-LEITER_ATR = 5             # Layout: so viele Tages-ATR über und unter dem Kurs zeigt die Leiter
+LEITER_ATR = 8             # Layout: so viele Tages-ATR über und unter dem Kurs zeigt die Leiter
 NAME = {"front": "Front", "unterkante": "Unterkante", "decke": "Decke", "boden": "Boden"}
 
 
@@ -18,6 +18,9 @@ def bild(le):
         return ""
     import livermore
     kurs, a = le["kurs"], le["atr"] or le["kurs"] * 0.02   # Layout: ohne ATR 2 % je Stufe
+    weit = LEITER_ATR * a                                  # außerhalb nur Front und Unterkante, mit Pfeil am Rand
+    le = dict(le, sprossen=[s_ for s_ in le["sprossen"] if s_["art"] in ("front", "unterkante") or abs(s_["preis"] - kurs) <= weit],
+              alt=[g for g in le["alt"] if g["oben"] >= kurs - weit and g["unten"] <= kurs + weit])
     preise = [s_["preis"] for s_ in le["sprossen"]] + [x for g in le["alt"] for x in (g["unten"], g["oben"])] + [kurs]
     hi = min(max(preise), kurs + LEITER_ATR * a)
     lo = max(min(preise), kurs - LEITER_ATR * a)

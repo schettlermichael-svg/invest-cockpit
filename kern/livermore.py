@@ -299,32 +299,19 @@ def front(df, nb=None):
 
 
 def stellungen(df, nb=None, je_seite=None):
-    """Die Stellungen über und unter dem Kurs aus derselben Liste wie die Frontkarte (offene): stehende Pivotal Points
-    innerhalb ½ ATR (STELLUNG_ATR) sind eine Stellung; über dem Kurs heißt sie Decke, darunter Boden; die Front (Spanne
-    oben) und die Unterkante zählen mit. → {"oben": [...], "unten": [...]} nach Abstand zum Kurs, je {preis, grund,
-    abstand, gewicht}; je_seite = höchstens so viele je Richtung."""
-    import vcp_zone
+    """Die Stellungen über und unter dem Kurs – dieselbe Liste wie gruppen() (eine Rechnung für Bericht, Leiter und
+    Chart, Micky 27.11.2026): über dem Kurs heißt sie Decke, darunter Boden. → {"oben": [...], "unten": [...]} nach
+    Abstand zum Kurs, je {preis, grund, abstand, gewicht}; je_seite = höchstens so viele je Richtung."""
     nb = nb or notizbuch(df)
     if not nb:
         return {"oben": [], "unten": []}
     kurs = float(df["Close"].iloc[-1])
-    a = float(vcp_zone.atr(df).iloc[-1] or 0)
     aus = {}
-    for seite, auswahl in (("oben", [p_ for p_ in offene(df, nb) if p_["preis"] > kurs]),
-                           ("unten", [p_ for p_ in offene(df, nb) if p_["preis"] < kurs])):
-        liste = []
-        for p_ in sorted(auswahl, key=lambda x: abs(x["preis"] - kurs)):
-            grund = f'{"Decke" if seite == "oben" else "Boden"} ═ {p_["tag"]:%d.%m.%y}'
-            nah = next((f for f in liste if abs(f["preis"] - p_["preis"]) <= a * STELLUNG_ATR), None)
-            if nah:
-                nah["grund"].append(grund)
-                nah["gewicht"] += 1
-                continue
-            if je_seite and len(liste) >= je_seite:
-                continue
-            liste.append({"preis": float(p_["preis"]), "grund": [grund], "gewicht": 1,
-                          "abstand": round((p_["preis"] / kurs - 1) * 100, 1)})
-        aus[seite] = liste
+    for seite, sg in (("oben", 1), ("unten", -1)):
+        liste = sorted((g for g in gruppen(df, nb) if g["seite"] == sg), key=lambda g: abs(g["preis"] - kurs))
+        aus[seite] = [{"preis": g["preis"], "gewicht": g["gewicht"], "abstand": round((g["preis"] / kurs - 1) * 100, 1),
+                       "grund": [f'{"Decke" if sg > 0 else "Boden"} ═ {p_["tag"]:%d.%m.%y}' for p_ in g["punkte"]]}
+                      for g in liste][:je_seite or None]
     return aus
 
 
@@ -350,23 +337,39 @@ def abpraller(df, preis, ab_i, seite):
     return int(((d["Low"].to_numpy(float) <= preis + ABPRALL_ATR * a) & (d["Close"].to_numpy(float) > preis)).sum())
 
 
-def gruppen(df, nb=None):
-    """Alle Stellungen (stehende Pivotal Points innerhalb ½ ATR zusammen) → [{preis, gewicht, i, abpraller}] nach Preis
-    – die eine Liste für Gewicht, Weg voraus, Chop und die Etiketten des Charts."""
+def gruppen(df, nb=None, fr=None):
+    """Alle Stellungen → [{preis, gewicht, i, abpraller, seite, punkte}] nach Preis – die eine Liste für Gewicht, Weg
+    voraus, Chop, Bericht, Leiter und die Etiketten des Charts (Micky 27.11.2026: eine Rechnung, eine Zahl):
+      · stehende Pivotal Points innerhalb ½ ATR (STELLUNG_ATR) sind eine Stellung – gemessen vom Punkt, der dem Kurs
+        am nächsten liegt, und nie über den Kurs hinweg (über dem Kurs Decken, darunter Böden);
+      · ihr Preis ist der Punkt, den der Kurs zuerst trifft – liegt die Front bzw. Unterkante in ihr, deren Preis
+        (die Linie des Auslösers);
+      · Abpraller an diesem Preis seit dem ältesten ihrer Punkte."""
     import vcp_zone
+    nb = nb or notizbuch(df)
+    if not nb:
+        return []
     a = float(vcp_zone.atr(df).iloc[-1] or 0)
     kurs = float(df["Close"].iloc[-1])
+    fr = fr or front(df, nb) or {}
+    kanten = [k["preis"] for k in (fr.get("oben"), fr.get("unten")) if k]
+    offen = offene(df, nb)
     aus = []
-    for p_ in sorted(offene(df, nb), key=lambda x: x["preis"]):
-        nah = next((g for g in aus if abs(g["preis"] - p_["preis"]) <= a * STELLUNG_ATR), None)
-        if nah:
-            nah["gewicht"] += 1
-            nah["i"] = min(nah["i"], p_["i"])
-            continue
-        aus.append({"preis": float(p_["preis"]), "gewicht": 1, "i": p_["i"]})
+    for sg in (1, -1):
+        for p_ in sorted((p_ for p_ in offen if sg * (p_["preis"] - kurs) > 0), key=lambda x: abs(x["preis"] - kurs)):
+            nah = next((g for g in aus if g["seite"] == sg and abs(g["punkte"][0]["preis"] - p_["preis"]) <= a * STELLUNG_ATR), None)
+            if nah:
+                nah["gewicht"] += 1
+                nah["i"] = min(nah["i"], p_["i"])
+                nah["punkte"].append(p_)
+                continue
+            aus.append({"preis": float(p_["preis"]), "gewicht": 1, "i": p_["i"], "seite": sg, "punkte": [p_]})
     for g in aus:
-        g["abpraller"] = abpraller(df, g["preis"], g["i"], "oben" if g["preis"] > kurs else "unten")
-    return aus
+        k = next((k for k in kanten if any(q["preis"] == k for q in g["punkte"])), None)
+        if k is not None:
+            g["preis"] = float(k)
+        g["abpraller"] = abpraller(df, g["preis"], g["i"], "oben" if g["seite"] > 0 else "unten")
+    return sorted(aus, key=lambda g: g["preis"])
 
 
 def ort(df, nb=None, fr=None, ab=None):
@@ -382,7 +385,7 @@ def ort(df, nb=None, fr=None, ab=None):
     fr = fr or front(df, nb)
     kurs = float(df["Close"].iloc[-1])
     a = float(vcp_zone.atr(df).iloc[-1] or 0)
-    gr = gruppen(df, nb)
+    gr = gruppen(df, nb, fr)
     o_, u_ = (fr["oben"] or {}).get("preis"), (fr["unten"] or {}).get("preis")
     drittel = None
     if o_ and u_ and o_ > u_:
