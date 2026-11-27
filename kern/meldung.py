@@ -34,12 +34,13 @@ def _kopfwert(x):
     return x if x.isascii() else "=?UTF-8?B?" + base64.b64encode(x.encode("utf-8")).decode("ascii") + "?="
 
 
-def senden(text, titel="MARAGA INVESTMENT APP", wichtig=False, seite=None):
-    """Meldung an den Kanal; True bei Erfolg. seite: Ansicht der App, die ein Tipp auf die Meldung öffnet."""
+def senden(text, titel="MARAGA INVESTMENT APP", wichtig=False, seite=None, warnung=None):
+    """Meldung an den Kanal; True bei Erfolg. seite: Ansicht der App, die ein Tipp auf die Meldung öffnet. wichtig = hohe
+    Priorität (kommt als Push durch); warnung = ⚠️-Zeichen (Standard: wie wichtig)."""
     try:
         kopf = {"Title": _kopfwert(titel),
                 "Priority": "high" if wichtig else "default",
-                "Tags": "warning" if wichtig else "chart_with_upwards_trend"}
+                "Tags": "warning" if (wichtig if warnung is None else warnung) else "chart_with_upwards_trend"}
         if seite:
             kopf["Click"] = f"{APP}/?seite={urllib.parse.quote(seite)}"
         roh = text.encode("utf-8")
