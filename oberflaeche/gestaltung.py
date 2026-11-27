@@ -171,3 +171,17 @@ def zeichen_legende():
     return (f'<details><summary style="cursor:pointer;color:{TEXT_2};font-size:14px">Zeichen</summary>'
             f'<div style="display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-size:14px;color:{TEXT_2}">'
             + "".join(f'<span>{z} {t(b)}</span>' for z, b in ZEICHEN_LISTE) + '</div></details>')
+
+
+LOGO_GRAU = "#404040"      # das Dunkelgrau des MARAGA-Logos (nicht umfärben)
+
+
+def marke(pfad):
+    """Kopf der App (Micky 27.11.2026): das MARAGA-Logo in Originalfarbe, daneben der Name MARAGA INVESTMENT APP."""
+    import base64
+    with open(pfad, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
+    return ('<div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">'
+            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:96px;width:auto">'
+            f'<div style="border-left:1px solid {RAND};padding-left:18px;font-family:Cinzel,Georgia,serif;'
+            f'font-size:20px;letter-spacing:.14em;color:{LOGO_GRAU}">INVESTMENT APP</div></div>')

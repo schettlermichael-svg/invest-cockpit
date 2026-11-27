@@ -27,11 +27,13 @@ import gestaltung  # noqa: E402
 import watchlists  # noqa: E402
 import depot  # noqa: E402
 
-st.set_page_config(page_title="MARAGA INVESTMENT APP", layout="wide", initial_sidebar_state="collapsed")
+BILD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "oberflaeche", "bild")
+st.set_page_config(page_title="MARAGA INVESTMENT APP", page_icon=os.path.join(BILD, "loewe.png"), layout="wide",
+                   initial_sidebar_state="collapsed")
 
 # Streamlit-Rahmen ausblenden, Hintergrund und Bedienelemente wie die Designvorlage
 st.markdown(f"""<style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Cinzel:wght@500&display=swap');
 header[data-testid="stHeader"], footer, #MainMenu, [data-testid="stToolbar"],
 [data-testid="stDecoration"], [data-testid="stStatusWidget"] {{display:none !important}}
 .stApp {{background:{SEITE}; color:{TEXT}; font-family:'IBM Plex Sans',system-ui,sans-serif}}
@@ -65,6 +67,8 @@ if "ansicht" not in st.session_state:
     st.session_state.titel_tk = st.query_params.get("t", "HWM")
 if "titel_tk" not in st.session_state:          # offene Sitzungen von vor dem 16.11.2026
     st.session_state.titel_tk = (st.session_state.get("ticker") or st.query_params.get("t", "HWM")).strip().upper()
+st.markdown(gestaltung.seite(gestaltung.marke(os.path.join(BILD, "logo.png")), oben=0, unten=10),
+            unsafe_allow_html=True)                                      # Logo und Name (Micky 27.11.2026)
 ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")      # alle Seiten nebeneinander
 if ansicht in ("Titelseite", "Analyse"):        # das Titelfeld gehört zur Titelseite (Micky 16.11.2026) – der gewählte
     if "ticker" not in st.session_state:        # Titel bleibt erhalten, während eine andere Seite offen ist
