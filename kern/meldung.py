@@ -9,6 +9,7 @@ import urllib.request
 HIER = os.path.dirname(os.path.abspath(__file__))
 KANAL = os.path.join(HIER, "..", "einstellungen", "ntfy_kanal.txt")
 SERVER = "https://ntfy.sh"
+NTFY_GRENZE = 4096                                 # Technik: größte Meldung, die ntfy als Text zeigt (Bytes)
 APP = "https://invest.themaraga-group.de"           # Adresse der App (Tipp auf die Meldung öffnet sie; seit 27.11.2026)
 
 
@@ -41,7 +42,11 @@ def senden(text, titel="MARAGA INVESTMENT APP", wichtig=False, seite=None):
                 "Tags": "warning" if wichtig else "chart_with_upwards_trend"}
         if seite:
             kopf["Click"] = f"{APP}/?seite={urllib.parse.quote(seite)}"
-        req = urllib.request.Request(f"{SERVER}/{kanal()}", data=text.encode("utf-8"), method="POST", headers=kopf)
+        roh = text.encode("utf-8")
+        if len(roh) > NTFY_GRENZE:                 # längere Meldungen macht ntfy zum Anhang – kürzen statt verlieren
+            roh = roh[:NTFY_GRENZE - 40].decode("utf-8", "ignore").rsplit("\n", 1)[0].encode("utf-8") + \
+                "\n… (gekürzt – alles in der App)".encode("utf-8")
+        req = urllib.request.Request(f"{SERVER}/{kanal()}", data=roh, method="POST", headers=kopf)
         with urllib.request.urlopen(req, timeout=15):
             return True
     except Exception:  # noqa: BLE001 – ohne Meldung läuft alles weiter

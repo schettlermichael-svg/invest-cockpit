@@ -45,10 +45,12 @@ def _schreiben(p, datei=PROTOKOLL):
 
 
 def _mitteilung(text, wichtig=False, titel="MARAGA INVESTMENT APP", seite=None):
-    """Meldung aufs Handy (ntfy, kern/meldung.py) und – auf dem Mac – als Mitteilung am Bildschirm."""
+    """Meldung aufs Handy (ntfy, kern/meldung.py) und – auf dem Mac – als Mitteilung am Bildschirm → True, wenn ntfy sie
+    angenommen hat."""
+    ok = False
     try:
         import meldung
-        meldung.senden(text, titel, wichtig, seite)
+        ok = meldung.senden(text, titel, wichtig, seite)
     except Exception:  # noqa: BLE001
         pass
     if sys.platform == "darwin":
@@ -56,6 +58,7 @@ def _mitteilung(text, wichtig=False, titel="MARAGA INVESTMENT APP", seite=None):
             subprocess.run(["osascript", "-e", f'display notification "{text[:200]}" with title "{titel}"'], timeout=10)
         except Exception:  # noqa: BLE001 – ohne Mitteilung läuft alles weiter
             pass
+    return ok
 
 
 def main():
@@ -185,9 +188,12 @@ def main():
     try:                                          # Morgenmeldung: Setups nach Schlachtordnung (22.11.2026)
         import zirkel
         text_, n_ = zirkel.heisse()
-        _mitteilung(text_, titel=f"Setups: {n_}", seite="Rückenwind")
-    except Exception as e:  # noqa: BLE001 – ohne Liste läuft der Lauf weiter
-        print(f"Heiße Titel: {e}", flush=True)
+        if not _mitteilung(text_, titel=f"Setups: {n_}", seite="Rückenwind"):
+            raise RuntimeError("ntfy nahm die Meldung nicht an")
+    except Exception as e:  # noqa: BLE001 – ohne Liste läuft der Lauf weiter, aber nie still (Micky 27.11.2026)
+        import traceback as tb_
+        print(f"Heiße Titel: {e}\n{tb_.format_exc()}", flush=True)
+        _mitteilung(f"🔴 Morgenmeldung gescheitert: {type(e).__name__}: {e}"[:300], True)
 
     # Massive-Durchgänge für Lücken (Erstbefüllung, neue Titel) bis zum Vormittag (SCHLUSS)
     durchgang = 0
