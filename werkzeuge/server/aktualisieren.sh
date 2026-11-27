@@ -44,6 +44,8 @@ if [ -f werkzeuge/server/watchlist_ablegen.sh ] && [ -f /etc/systemd/system/inve
 fi
 # Zugangsausweis an der Haustür (17.11.2026), einmalig
 [ -f werkzeuge/server/ausweis.sh ] && bash werkzeuge/server/ausweis.sh
+# Eigene Adresse invest.themaraga-group.de (27.11.2026), sobald der A-Eintrag bei Strato auf den Server zeigt
+[ -f werkzeuge/server/adresse.sh ] && bash werkzeuge/server/adresse.sh
 git fetch -q origin main 2>/dev/null || exit 0
 [ "$(git rev-parse HEAD 2>/dev/null)" = "$(git rev-parse origin/main)" ] && exit 0
 # Kein Warten mehr auf den Schrank-Lauf (Micky 23.11.2026): er baut mit altem Code Seiten, die nach dem Update ohnehin
