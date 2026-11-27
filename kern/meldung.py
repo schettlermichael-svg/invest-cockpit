@@ -33,7 +33,7 @@ def _kopfwert(x):
     return x if x.isascii() else "=?UTF-8?B?" + base64.b64encode(x.encode("utf-8")).decode("ascii") + "?="
 
 
-def senden(text, titel="Invest Cockpit", wichtig=False, seite=None):
+def senden(text, titel="MARAGA INVESTMENT APP", wichtig=False, seite=None):
     """Meldung an den Kanal; True bei Erfolg. seite: Ansicht der App, die ein Tipp auf die Meldung öffnet."""
     try:
         kopf = {"Title": _kopfwert(titel),

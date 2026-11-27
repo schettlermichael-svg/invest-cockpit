@@ -201,7 +201,7 @@ def seite_uebersicht():
     kopf = (f'<header style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;'
             f'gap:16px;border-bottom:1px solid {RAND};padding-bottom:16px">'
             f'<div style="display:flex;flex-direction:column;gap:4px">'
-            f'<div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:{TEXT_3}">SEPA · Invest Cockpit</div>'
+            f'<div style="font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:{TEXT_3}">MARAGA INVESTMENT APP</div>'
             f'<h1 style="margin:0;font-size:32px;font-weight:600">Rückenwind</h1></div>'
             f'<div style="display:flex;gap:16px;font-size:14px;color:{TEXT_2}">'
             f'<span>Stand {stand:%d.%m.%Y}</span>'

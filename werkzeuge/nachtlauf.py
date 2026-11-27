@@ -44,7 +44,7 @@ def _schreiben(p, datei=PROTOKOLL):
     json_schreiben(datei, p, ensure_ascii=False, indent=1)
 
 
-def _mitteilung(text, wichtig=False, titel="Invest Cockpit", seite=None):
+def _mitteilung(text, wichtig=False, titel="MARAGA INVESTMENT APP", seite=None):
     """Meldung aufs Handy (ntfy, kern/meldung.py) und – auf dem Mac – als Mitteilung am Bildschirm."""
     try:
         import meldung

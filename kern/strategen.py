@@ -28,7 +28,7 @@ KURS_SPANNE = 0.4               # Prüfung: Zahlen bis 40 % um den Kurs in Fazit
 KURS_GENAU = 0.005              # … und müssen auf 0,5 % genau im Material stehen
 WETTBEWERBER = 5                # höchstens 5 Wettbewerber
 
-SYSTEM = """Du bist der Stratege des Invest Cockpits – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
+SYSTEM = """Du bist der Stratege der MARAGA INVESTMENT APP – ein Sniper, kein Kommentator. Du bekommst das Material eines Titels
 als nummerierte Felder (F1, F2 …): den Zirkel (Jahreszeit 1 Basis, 2 Aufwärts, 3 Verteilung, 4 Abwärts, mit den Zeichen,
 die ihn tragen, und dem Keim des Gegenteils), Spanne und Phase auf Woche, Tag und Stunde (Livermores Spanne zwischen
 seinem letzten Pivotal Point oben und unten, in der Stunde die Balance), das Setup der App (Livermores Signal, benannt

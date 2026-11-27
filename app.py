@@ -27,7 +27,7 @@ import gestaltung  # noqa: E402
 import watchlists  # noqa: E402
 import depot  # noqa: E402
 
-st.set_page_config(page_title="Invest Cockpit", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="MARAGA INVESTMENT APP", layout="wide", initial_sidebar_state="collapsed")
 
 # Streamlit-Rahmen ausblenden, Hintergrund und Bedienelemente wie die Designvorlage
 st.markdown(f"""<style>
@@ -424,7 +424,7 @@ ANLEITUNG_SCHLUESSEL = """**So legst du den API-Schlüssel an (einmalig, etwa 5 
 1. Öffne **console.anthropic.com** und melde dich an (oder lege dort ein Konto an).
 2. Unter **Billing** Guthaben aufladen.
 3. Unter **Limits** ein Monatslimit setzen, z. B. 50 $ (zweite Sicherung neben dem Deckel der App).
-4. Unter **API Keys** → **Create Key**, Name z. B. „Invest Cockpit“. Den Schlüssel (beginnt mit `sk-ant-`) kopieren –
+4. Unter **API Keys** → **Create Key**, Name z. B. „MARAGA INVESTMENT APP“. Den Schlüssel (beginnt mit `sk-ant-`) kopieren –
    er wird nur einmal angezeigt.
 5. Hier einfügen und speichern. Er liegt dann nur auf dem Server (nicht in GitHub)."""
 
@@ -461,7 +461,7 @@ def verbindungen_zeigen():
                     "In ntfy auf **+** tippen und diesen Kanal eintragen (Server bleibt ntfy.sh):")
         st.code(meldung.kanal(), language=None)
         if st.button("Testmeldung senden", key="ntfy_test"):
-            if meldung.senden("Test – die Leitung steht.", "Invest Cockpit", False, "Setups"):
+            if meldung.senden("Test – die Leitung steht.", "MARAGA INVESTMENT APP", False, "Setups"):
                 st.success("Gesendet.")
             else:
                 st.error("Senden ging nicht – der Server erreicht ntfy.sh nicht.")
