@@ -1908,3 +1908,13 @@ unseres Caddy-Blocks, sobald er auf den Server zeigt; Caddy holt das Zertifikat 
 Regeln: Skripte der App ändern in der Caddyfile nur den eigenen ersten Block (ausweis.sh, adresse.sh prüfen das und
 validieren vor dem Umschalten); keine Ports, Nutzer, Ordner oder Dienstnamen des CRM verwenden; neue Dienste der App
 heißen `invest-…` oder stehen in `werkzeuge/server/`.
+
+## Geprüft und verworfen (27.11.2026): Pendeln in der Spanne, Charakter des Titels
+
+- **Pendeln in der Spanne** (Kauf am Boden der Tages-Spanne mit Stunden-Treppe): Micky – weglassen. Wir bleiben bei
+  Ausbruch und Trend; Livermore handelte in der Gefechtspause nicht.
+- **Charakter des Titels** (hält er seine Ausbrüche, Tiefe der Rücksetzer, respektiert er seine Stellungen – eigene
+  Geschichte von 2 Jahren, am Durchschnitt aller Titel eingeordnet, Urteil nur bei Zufall unter 1 zu 100): geprüft an
+  1.847 Revier-Titeln: 6,3 % auffällig, bei Zufallskursen ohne Gedächtnis 5 % – kaum vom Zufall zu unterscheiden.
+  Micky: nicht aufnehmen. Die Wiederholung an Preisen (Osler, FRBNY 2000/2001) tragen schon Stellungen, Abpraller 🛡 und
+  die alte Plattform. Nicht erneut vorschlagen ohne neue Grundlage.
