@@ -9,7 +9,7 @@ import urllib.request
 HIER = os.path.dirname(os.path.abspath(__file__))
 KANAL = os.path.join(HIER, "..", "einstellungen", "ntfy_kanal.txt")
 SERVER = "https://ntfy.sh"
-APP = "https://2-31-188-241.sslip.io"                # Adresse der App (Tipp auf die Meldung öffnet sie)
+APP = "https://invest.themaraga-group.de"           # Adresse der App (Tipp auf die Meldung öffnet sie; seit 27.11.2026)
 
 
 def kanal():
