@@ -188,10 +188,10 @@ def marke(pfad):
     with open(pfad, "rb") as f:
         b64 = base64.b64encode(f.read()).decode()
     return ('<div style="display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap">'
-            f'<div><div style="font-family:{TITELSCHRIFT};font-weight:600;font-size:26px;letter-spacing:.18em;'
-            f'color:{PETROL}">MARAGA</div><div style="font-family:{TITELSCHRIFT};font-size:13px;letter-spacing:.3em;'
+            f'<div><div style="font-family:{TITELSCHRIFT};font-weight:600;font-size:32px;letter-spacing:.18em;'
+            f'color:{PETROL}">MARAGA</div><div style="font-family:{TITELSCHRIFT};font-size:14px;letter-spacing:.3em;'
             f'color:{COGNAC};margin-top:2px">INVESTMENT APP</div></div>'
-            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:96px;width:auto"></div>')
+            f'<img src="data:image/png;base64,{b64}" alt="THE MARAGA GROUP" style="height:150px;width:auto;margin:4px 12px 0 0"></div>')
 
 
 SCHNITTE = (("Cinzel", "cinzel-latin-400-normal", 400), ("Cinzel", "cinzel-latin-600-normal", 600),   # Technik: Dateien

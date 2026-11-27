@@ -72,7 +72,7 @@ if "ansicht" not in st.session_state:
     st.session_state.titel_tk = st.query_params.get("t", "HWM")
 if "titel_tk" not in st.session_state:          # offene Sitzungen von vor dem 16.11.2026
     st.session_state.titel_tk = (st.session_state.get("ticker") or st.query_params.get("t", "HWM")).strip().upper()
-st.markdown(gestaltung.seite(gestaltung.marke(os.path.join(BILD, "logo.png")), oben=0, unten=10),
+st.markdown(gestaltung.seite(gestaltung.marke(os.path.join(BILD, "logo.png")), oben=20, unten=16),
             unsafe_allow_html=True)                                      # Logo und Name (Micky 27.11.2026)
 ansicht = st.radio("Ansicht", ansicht_liste, horizontal=True, key="ansicht")      # alle Seiten nebeneinander
 if ansicht in ("Titelseite", "Analyse"):        # das Titelfeld gehört zur Titelseite (Micky 16.11.2026) – der gewählte
