@@ -1,76 +1,82 @@
 {
- "start": "27.11.2026 06:05",
- "ende": "27.11.2026 08:07",
+ "start": "28.11.2026 06:24",
+ "ende": "28.11.2026 08:15",
  "schritte": [
   {
    "name": "Massive: Tageskurse und Splits",
    "ok": true,
-   "text": "bis 25.11.2026",
-   "sekunden": 2108
+   "text": "bis 27.11.2026",
+   "sekunden": 6
   },
   {
    "name": "Rudel, Kursverwandte, Themen-Gruppen",
    "ok": true,
-   "text": "Stand 25.11.2026",
+   "text": "Stand 27.11.2026",
    "sekunden": 0
   },
   {
    "name": "30-Minuten-Kerzen (Yahoo)",
    "ok": true,
-   "text": "0 von 1980 Titeln ergänzt",
-   "sekunden": 547
+   "text": "1 von 1980 Titeln ergänzt",
+   "sekunden": 543
   },
   {
    "name": "Tageskurse und Wechselkurse",
    "ok": true,
    "text": "1981 Titel",
-   "sekunden": 311
+   "sekunden": 291
+  },
+  {
+   "name": "Revier-Pflege",
+   "ok": true,
+   "text": "210 Zugänge (FRHC, OTTR, TGLS, SA, EPAC, SATS, OMCL, RVLV, RSKD, ADNT, PAR, ELE, SBSI, EVER, EQBK) · Abgänge gemeldet: KVUE, ROKU, ITGR, INDV, CBZ, LXP, RAMP, PCRX, NWE, UTZ",
+   "sekunden": 226
   },
   {
    "name": "TradingView-Kennzahlen",
    "ok": true,
    "text": "1963 Titel (99%)",
-   "sekunden": 1
+   "sekunden": 2
   },
   {
    "name": "Zahlen nach den Terminen neu laden",
    "ok": true,
-   "text": "1 Titel nach ihren Zahlen neu geladen",
-   "sekunden": 66
+   "text": "0 Titel nach ihren Zahlen neu geladen",
+   "sekunden": 70
   },
   {
    "name": "Rückenwind (RS-Dynamik, Geldfluss, Zahlen)",
    "ok": true,
-   "text": "Stand 2026-11-25: Garde 26, Angriff 668, Vorhut 293, Ohne Nachschub 302, Rückzug 656",
-   "sekunden": 315
+   "text": "Stand 2026-11-27: Garde 15, Angriff 974, Vorhut 162, Ohne Nachschub 207, Rückzug 788",
+   "sekunden": 2405
   },
   {
    "name": "Zirkel (Kreislauf, Setup, Hochs/Tiefs, Markt-Ampel)",
    "ok": true,
-   "text": "1966 Titel, 1238 mit Setup · 52 Hochs, 98 Tiefs · Lage Gefechtspause: Spitze 157↑ 48↓ · Heer 216↑ 602↓",
-   "sekunden": 1868
+   "text": "1966 Titel, 1564 mit Setup · 61 Hochs, 1 Tiefs · Lage Gefechtspause: Spitze 209↑ 40↓ · Heer 249↑ 468↓",
+   "sekunden": 1925
   },
   {
    "name": "Lage (Markt-Ampel, Wetter, Pendel, Breite)",
    "ok": true,
    "text": "Übersicht gebaut",
-   "sekunden": 24
+   "sekunden": 21
   },
   {
    "name": "Schrank: Titelseiten der Rückenwind-Titel und der Watchlist",
    "ok": true,
-   "text": "1098 von 1098 Titelseiten abgelegt",
-   "sekunden": 2096
+   "text": "225 von 225 Titelseiten abgelegt",
+   "sekunden": 1168
   }
  ],
- "pid": 71033,
+ "pid": 109330,
  "datenstand": {
-  "Massive-Tageskurse": "2026-11-25",
-  "Yahoo-Tageskurse": "2026-11-25",
-  "Indizes (SPY, QQQ)": "2026-11-25",
-  "Marktdaten (Sektor-ETFs)": "2026-11-25",
-  "Rückenwind": "2026-11-25",
-  "Zirkel": "2026-11-25"
+  "Massive-Tageskurse": "2026-11-27",
+  "Yahoo-Tageskurse": "2026-11-27",
+  "Indizes (SPY, QQQ)": "2026-11-27",
+  "Marktdaten (Sektor-ETFs)": "2026-11-27",
+  "Rückenwind": "2026-11-27",
+  "Zirkel": "2026-11-27"
  },
  "massive_durchgaenge": 1
 }
